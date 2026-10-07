@@ -1,0 +1,125 @@
+# Testing & Troubleshooting Guide
+
+This document covers SafiHub's testing infrastructure, execution commands, acceptance criteria test scenarios, quality gates, and 16 known architectural traps and gotchas.
+
+---
+
+## 1. Testing Infrastructure & Quality Gates
+
+SafiHub centralizes test suites under `src/test/`:
+
+- **Unit Tests (`src/test/unit/`):** Fast, standalone tests mocking external calls (e.g. `order-validation.unit.test.ts`, `opening-hours.unit.test.ts`, `cash-ceiling.unit.test.ts`, `delivery-fees.unit.test.ts`).
+- **Integration Tests (`src/test/integration/`):** Database-backed and multi-service flows (`*.integration.test.ts`).
+
+### Standalone Runner Command
+Modules that import `server-only` (such as `order.service.ts` or `auth.ts`) throw runtime errors when imported by standard `tsx` scripts. You **must** pass `--conditions=react-server`:
+
+```bash
+NODE_OPTIONS='--conditions=react-server' npx tsx src/test/unit/order-validation.unit.test.ts
+```
+
+### Pre-Commit Quality Gates
+Before considering any task or PR complete, run:
+1. **Typecheck:** `pnpm tsc --noEmit`
+2. **Lint:** `pnpm lint`
+3. **Targeted Tests:** Run the specific test files covering touched code.
+
+---
+
+## 2. Acceptance Criteria Verification Scenarios
+
+Each acceptance criterion from the product specification is mapped to an automated or manual verification test:
+
+### Checkout & Validation
+1. **Outside Opening Hours:** Given a slot outside the house's operating hours, when the customer submits checkout, the server refuses it and returns the next available open slot.
+2. **Price Changed Mid-Cart:** Given an item price changed after it was added to the cart, when the customer submits checkout, the server rejects with `PRICE_CHANGED` and prompts for confirmation with updated prices.
+3. **Double Submission:** Given the same checkout submitted twice with identical `idempotencyKey`, exactly one order record is created in `orders`.
+4. **Below Minimum Order:** Given a cart item total below `house.minOrderAmount`, checkout is refused and the missing amount is displayed.
+5. **Capacity Exceeded:** Given a house's daily order capacity is reached, that slot is omitted from available selections.
+
+### Acceptance & Expiry
+6. **Opening-Hours Timer Expiry:** Given an order waiting for acceptance, the house is reminded at 50% of the delay, the admin is alerted at 75%, and the order transitions to `expired` at 100% of open-hours time, preserving the cart.
+7. **On-Behalf Actions:** Given an unreachable house, when the admin accepts on its behalf, `order_events` records `onBehalfOf: houseId`.
+
+### Pickup & Reception
+8. **Count Discrepancy Gate:** Given a courier pickup count differing from declared items, a price adjustment is generated and the order cannot transition to `washing` until the customer approves.
+9. **Mandatory Condition Photos:** Given an item flagged valuable or damaged, the courier cannot complete the pickup mission without attaching at least one condition photo.
+10. **Excluded Items Return:** Given an item the house does not treat, it is marked `returned`, removed from the order total with zero cleaning fee, and scheduled for return delivery.
+11. **Auto-Conforming Reception:** Given 1 hour of opening-hours time after reception with no reported discrepancy, Inngest automatically transitions the order to conforming (`washing`).
+
+### Delivery & Cash
+12. **Cash Ledger Update & Receipt:** Given a completed delivery, when the courier inputs cash collected, `cash_ledger` records the entry and the customer receives an automated payment confirmation message.
+13. **Cash Ceiling Lockout:** Given a courier whose held cash balance exceeds `cashCeiling`, the server blocks them from starting or accepting any new delivery missions until daily cash is remitted to the admin.
+
+### Privacy & Coverage
+14. **House Privacy Firewall:** Given a house staff account, when order details are retrieved, the returned JSON contains no customer phone number, last name, or street landmark.
+15. **Unserved Neighborhood:** Given a neighborhood marked `not_served`, no houses are listed and the user can submit a `coverage_requests` record.
+16. **Courier Dual-Zone Check:** Given a mission to dispatch, only couriers covering both the customer's zone and the house's zone are offered.
+
+---
+
+## 3. Common Gotchas & Architectural Traps
+
+### 1. Opening-Hours Timer Arithmetic
+- **Trap:** Calculating `acceptanceDeadline` using simple addition (`Date.now() + 45 * 60 * 1000`).
+- **Fix:** If the order is created near closing time, calculate remaining minutes today and roll the balance over to the house's opening time the next active business day.
+
+### 2. Client-Supplied Totals Are Untrusted
+- **Trap:** Storing `itemsTotal` or `deliveryFee` directly from client cart payloads.
+- **Fix:** Always recalculate item sums from `house_items` and delivery fees from `zone_fees` on the server inside `validateOrderPlacement()`.
+
+### 3. House Data Leaks (Privacy Firewall)
+- **Trap:** Using `db.query.orders.findFirst({ with: { customer: true } })` directly in house-facing routes.
+- **Fix:** House queries must use a restricted Drizzle projection omitting `customer.phone`, `customer.name` (projecting first name only), and `orders.landmark`.
+
+### 4. Courier Cash Ceiling Gate
+- **Trap:** Allowing dispatch or mission starts without checking courier unremitted cash.
+- **Fix:** Verify `getUnremittedCash(courierId) < cashCeiling` before allowing a courier to start a `delivery` mission.
+
+### 5. Missing Checkout Idempotency Keys
+- **Trap:** Creating orders without checking `(customer_id, idempotency_key)`.
+- **Fix:** Unstable mobile networks in Bukavu cause double taps. Always enforce unique idempotency keys on order creation.
+
+### 6. Floating-Point Currency Math
+- **Trap:** Using `0.15 * total` with JavaScript `Number` floats for commissions and prices.
+- **Fix:** Store all money as integers in minor units / CDF. Round integer divisions explicitly using `Math.round()` or integer arithmetic.
+
+### 7. Uncompressed Photo Uploads
+- **Trap:** Uploading 8MB smartphone photos over mobile 3G.
+- **Fix:** Always compress photos in-browser (< 1280px, WebP < 300KB) before requesting presigned URLs and uploading.
+
+### 8. Server File Proxying
+- **Trap:** Streaming files through Next.js server actions or API routes.
+- **Fix:** Direct uploads to Cloudflare R2 via presigned PUT URLs; direct downloads via presigned GET URLs.
+
+### 9. Synchronous External Calls in Request Paths
+- **Trap:** Awaiting SMS dispatch or background expiry timers in checkout Server Actions.
+- **Fix:** Emit typed Inngest events and return immediately to the customer.
+
+### 10. `server-only` in Unit Tests
+- **Trap:** Running `npx tsx src/test/unit/...` and receiving `Error: This module cannot be imported from a Client Component`.
+- **Fix:** Always pass `NODE_OPTIONS='--conditions=react-server'` when executing standalone tests importing server modules.
+
+### 11. Hand-Editing Applied Migrations
+- **Trap:** Modifying an existing SQL file in `drizzle/` that has already run against the database.
+- **Fix:** Always edit schema TypeScript files and generate new migrations with `pnpm drizzle-kit generate`.
+
+### 12. Async Next.js 16 Route Params
+- **Trap:** Accessing `params.orderId` directly without `await`.
+- **Fix:** In Next.js 16, route parameters are promises: `const { orderId } = await params`.
+
+### 13. Premature Washing Transition
+- **Trap:** Transitioning an order from `price_adjusted` to `washing` before receiving customer confirmation.
+- **Fix:** Washing must remain blocked until the customer approves via app, on-the-spot courier confirmation, or admin phone confirmation.
+
+### 14. Confusing Non-Accepted Items with Price Adjustments
+- **Trap:** Charging or discounting excluded garments that a house cannot treat.
+- **Fix:** Excluded garments are marked `status: 'returned'`, subtracted from the total, and returned to the customer with zero fee.
+
+### 15. Courier Dual-Zone Compatibility
+- **Trap:** Assigning a mission to a courier who only covers the house's zone but not the customer's zone.
+- **Fix:** Couriers must be verified against `courier_zones` for **both** the customer zone and house zone.
+
+### 16. Local-Only Assets in Git
+- **Trap:** Committing `.agents/` or `skills-lock.json` to version control.
+- **Fix:** Verify these paths are kept strictly in `.gitignore`.

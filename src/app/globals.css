@@ -1,0 +1,11 @@
+/*
+ * SafiHub global stylesheet (Tailwind v4 — CSS-first, no tailwind.config).
+ * Order matters: tokens → base → utilities.
+ */
+@import "tailwindcss";
+
+@import "../styles/tokens.css";
+@import "../styles/base.css";
+@import "../styles/layout.css";
+@import "../styles/controls.css";
+@import "../styles/surfaces.css";

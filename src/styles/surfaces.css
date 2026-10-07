@@ -1,0 +1,117 @@
+/*
+ * SafiHub surfaces & decoration.
+ * Crisp solid surfaces matching reference (Legitify style). Strictly NO gradients.
+ */
+
+@utility card {
+  background-color: var(--color-card);
+  color: var(--color-card-foreground);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--card-p, clamp(1.25rem, 1rem + 1vw, 1.75rem));
+  box-shadow: var(--shadow-card);
+}
+
+@utility card-interactive {
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    border-color 0.15s ease;
+
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-2px);
+      border-color: var(--color-border-strong);
+      box-shadow: var(--shadow-lift);
+    }
+  }
+
+  &:focus-within {
+    border-color: var(--color-ring);
+  }
+}
+
+@utility panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+  padding: clamp(1.5rem, 1rem + 2vw, 3rem);
+}
+
+@utility surface-float {
+  background-color: var(--color-card);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-nav);
+}
+
+@utility glass {
+  background-color: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* Solid Brand Surface: Solid #2824D5 (NO GRADIENTS) */
+@utility bg-brand {
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+}
+
+/* Solid light surface bands (NO GRADIENTS) */
+@utility bg-wash {
+  background-color: var(--color-surface); /* #F8F9FC */
+}
+
+@utility bg-wash-warm {
+  background-color: #FDFCF7;
+}
+
+/* Solid text accent: Solid primary color (NO GRADIENTS) */
+@utility text-gradient {
+  color: var(--color-primary);
+}
+
+/* Orb: Disabled (strictly no gradients) */
+@utility orb {
+  display: none;
+}
+
+@utility eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  background-color: var(--color-primary-soft); /* #EEF0FF */
+  color: var(--color-primary);                 /* #2824D5 */
+  border: 1px solid #D9DDFF;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+}
+
+@utility icon-tile {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--tile-size, 2.75rem);
+  height: var(--tile-size, 2.75rem);
+  border-radius: 0.75rem;
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+
+  & > svg {
+    width: 50%;
+    height: 50%;
+  }
+}
+
+@utility icon-tile-soft {
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  border: 1px solid #D9DDFF;
+  box-shadow: none;
+}

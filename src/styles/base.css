@@ -1,0 +1,142 @@
+/*
+ * SafiHub base layer — element defaults built on tokens.css.
+ * Keep this minimal: anything opt-in belongs in utilities.css.
+ */
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-padding-top: 5rem; /* clears the sticky header on anchor jumps */
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Headings: heavy, tight, balanced — sizes map to the fluid scale */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    color: var(--color-heading);
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-size: var(--text-h1);
+    line-height: var(--text-h1--line-height);
+    letter-spacing: var(--text-h1--letter-spacing);
+    font-weight: 700;
+  }
+
+  h2 {
+    font-size: var(--text-h2);
+    line-height: var(--text-h2--line-height);
+    letter-spacing: var(--text-h2--letter-spacing);
+    font-weight: 700;
+  }
+
+  h3 {
+    font-size: var(--text-h3);
+    line-height: var(--text-h3--line-height);
+    letter-spacing: var(--text-h3--letter-spacing);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: var(--text-h4);
+    line-height: var(--text-h4--line-height);
+    letter-spacing: var(--text-h4--letter-spacing);
+    font-weight: 700;
+  }
+
+  h5,
+  h6 {
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    font-weight: 700;
+  }
+
+  p,
+  li,
+  figcaption {
+    text-wrap: pretty;
+  }
+
+  strong,
+  b {
+    font-weight: 700;
+    color: var(--color-heading);
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  /* Interactive defaults */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-100);
+    color: var(--color-brand-900);
+  }
+
+  ::placeholder {
+    color: var(--color-muted-foreground);
+    opacity: 1;
+  }
+
+  /* Tabular digits for CDF amounts, counts, timers */
+  .tabular,
+  data,
+  time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Accessibility + low-end devices: honour reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

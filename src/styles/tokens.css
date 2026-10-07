@@ -1,0 +1,251 @@
+/*
+ * SafiHub design tokens (Tailwind v4, CSS-first).
+ * Precision color system modeled directly on reference (solid #2824D5 royal indigo, #101828 slate).
+ * Strictly NO gradients — clean, crisp, solid modern UI.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/* 1. Raw scales                                                       */
+/* ------------------------------------------------------------------ */
+@theme static {
+  /* Breakpoints — mobile-first, 360px baseline */
+  --breakpoint-xs: 22.5rem; /* 360px */
+
+  /* Reference Primary — Solid Royal Indigo #2824D5 (Legitify signature) */
+  --color-brand-50: #EEF0FF;
+  --color-brand-100: #E0E3FE;
+  --color-brand-200: #C7CBFD;
+  --color-brand-300: #A4ABFC;
+  --color-brand-400: #767EFA;
+  --color-brand-500: #4B52F2;
+  --color-brand-600: #2824D5; /* Primary */
+  --color-brand-700: #1F1BAA; /* Hover */
+  --color-brand-800: #1A178D;
+  --color-brand-900: #14126E;
+  --color-brand-950: #0C0A45;
+
+  /* Ink / Slate Neutrals — Clean crisp typography and surface contrast */
+  --color-ink-25: #FCFCFD;
+  --color-ink-50: #F8F9FC; /* Light section surface */
+  --color-ink-100: #F2F4F7;
+  --color-ink-200: #EAECF0; /* Border default */
+  --color-ink-300: #D0D5DD; /* Strong border */
+  --color-ink-400: #98A2B3;
+  --color-ink-500: #667085; /* Muted text */
+  --color-ink-600: #475467;
+  --color-ink-700: #344054; /* Body copy */
+  --color-ink-800: #1D2939;
+  --color-ink-900: #101828; /* Headings */
+  --color-ink-950: #0C111D;
+
+  /* Semantics */
+  --color-success-base: #079455;
+  --color-success-light: #ECFDF3;
+  --color-warning-base: #DC6803;
+  --color-warning-light: #FEF0C7;
+  --color-destructive-base: #D92D20;
+  --color-destructive-light: #FEF3F2;
+
+  /* Fluid type scale — balanced, not oversized (max ~42px for hero display) */
+  --text-display: clamp(1.875rem, 1.4rem + 1.5vw, 2.65rem);
+  --text-display--line-height: 1.18;
+  --text-display--letter-spacing: -0.025em;
+  --text-display--font-weight: 700;
+
+  --text-h1: clamp(1.625rem, 1.25rem + 1vw, 2.125rem);
+  --text-h1--line-height: 1.22;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h1--font-weight: 700;
+
+  --text-h2: clamp(1.375rem, 1.15rem + 0.6vw, 1.75rem);
+  --text-h2--line-height: 1.25;
+  --text-h2--letter-spacing: -0.015em;
+  --text-h2--font-weight: 700;
+
+  --text-h3: clamp(1.15rem, 1.05rem + 0.3vw, 1.35rem);
+  --text-h3--line-height: 1.3;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h3--font-weight: 700;
+
+  --text-h4: 1.125rem;
+  --text-h4--line-height: 1.4;
+  --text-h4--letter-spacing: -0.005em;
+  --text-h4--font-weight: 600;
+
+  --text-lead: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+  --text-lead--line-height: 1.6;
+  --text-lead--font-weight: 400;
+
+  /* Layout spacing */
+  --spacing-gutter: clamp(1rem, 0.75rem + 1.5vw, 2.5rem);
+  --spacing-section: clamp(3.5rem, 2.5rem + 3vw, 5.5rem);
+  --spacing-section-sm: clamp(2rem, 1.5rem + 1.5vw, 3.5rem);
+  --spacing-touch: 2.75rem; /* 44px tap target */
+
+  /* Containers — widened for generous modern widescreen layout */
+  --container-page: 90rem;
+  --container-narrow: 64rem;
+  --container-prose-tight: 48rem;
+
+  /* Radii — clean, modern, slightly rounded */
+  --radius-control: 0.625rem;
+  --radius-card: 1rem;
+  --radius-panel: 1.25rem;
+
+  /* Subtle clean shadows — no fluorescent gradients */
+  --shadow-soft: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-lift: 0 8px 20px -3px rgba(16, 24, 40, 0.08), 0 3px 6px -2px rgba(16, 24, 40, 0.04);
+  --shadow-nav: 0 1px 2px rgba(16, 24, 40, 0.05);
+
+  /* Motion */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-fade-up: fade-up 0.4s var(--ease-soft) both;
+  --animate-fade-in: fade-in 0.3s var(--ease-soft) both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 2. Semantic roles                                                   */
+/* ------------------------------------------------------------------ */
+:root {
+  --radius: 0.625rem;
+
+  --background: #FFFFFF;
+  --foreground: var(--color-ink-700); /* #344054 body copy */
+  --heading: var(--color-ink-900);    /* #101828 headings */
+  --surface: var(--color-ink-50);     /* #F8F9FC alternate section band */
+  --card: #FFFFFF;
+  --card-foreground: var(--color-ink-700);
+  --popover: #FFFFFF;
+  --popover-foreground: var(--color-ink-700);
+
+  /* Reference Solid Brand Primary */
+  --primary: var(--color-brand-600);       /* #2824D5 */
+  --primary-hover: var(--color-brand-700); /* #1F1BAA */
+  --primary-foreground: #FFFFFF;
+  --primary-soft: var(--color-brand-50);   /* #EEF0FF */
+  --primary-soft-foreground: var(--color-brand-600);
+
+  --secondary: var(--color-ink-100);       /* #F2F4F7 */
+  --secondary-foreground: var(--color-ink-900);
+  --muted: var(--color-ink-50);            /* #F8F9FC */
+  --muted-foreground: var(--color-ink-500);/* #667085 */
+  --accent: var(--color-brand-50);         /* #EEF0FF */
+  --accent-foreground: var(--color-brand-600);
+
+  --highlight: #FEF0C7;
+  --highlight-foreground: #B54708;
+  --success: var(--color-success-base);
+  --success-soft: var(--color-success-light);
+  --warning: var(--color-warning-base);
+  --warning-soft: var(--color-warning-light);
+  --destructive: var(--color-destructive-base);
+  --destructive-soft: var(--color-destructive-light);
+
+  --border: var(--color-ink-200);          /* #EAECF0 */
+  --border-strong: var(--color-ink-300);   /* #D0D5DD */
+  --input: var(--color-ink-300);
+  --ring: var(--color-brand-600);
+}
+
+.dark {
+  --background: #0C111D;
+  --foreground: #D0D5DD;
+  --heading: #F9FAFB;
+  --surface: #101828;
+  --card: #101828;
+  --card-foreground: #D0D5DD;
+  --popover: #101828;
+  --popover-foreground: #D0D5DD;
+
+  --primary: #4B52F2;
+  --primary-hover: #767EFA;
+  --primary-foreground: #FFFFFF;
+  --primary-soft: rgba(40, 36, 213, 0.18);
+  --primary-soft-foreground: #C7CBFD;
+
+  --secondary: #1D2939;
+  --secondary-foreground: #F9FAFB;
+  --muted: #101828;
+  --muted-foreground: #98A2B3;
+  --accent: rgba(40, 36, 213, 0.18);
+  --accent-foreground: #C7CBFD;
+
+  --success: #32D583;
+  --success-soft: rgba(50, 213, 131, 0.15);
+  --warning: #FDB022;
+  --warning-soft: rgba(253, 176, 34, 0.15);
+  --destructive: #F97066;
+  --destructive-soft: rgba(249, 112, 102, 0.15);
+
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #4B52F2;
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. Semantic utilities                                               */
+/* ------------------------------------------------------------------ */
+@theme inline {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-heading: var(--heading);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-foreground: var(--primary-soft-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 3px);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 3px);
+}
