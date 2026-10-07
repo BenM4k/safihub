@@ -43,5 +43,6 @@ next-env.d.ts
 
 # local agents and ide configs
 .agents/
+.gemini/
 .antigravity/
 skills-lock.json

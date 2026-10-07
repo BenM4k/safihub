@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { MobileNav } from "./mobile-nav";
 import { Button } from "@/components/ui/button";
 
@@ -9,6 +10,8 @@ interface NavbarProps {
 
 export function Navbar({ variant = "transparent" }: NavbarProps = {}) {
   const isSolid = variant === "solid";
+  const tNav = useTranslations("nav");
+  const tCommon = useTranslations("common");
 
   return (
     <header
@@ -25,29 +28,30 @@ export function Navbar({ variant = "transparent" }: NavbarProps = {}) {
             <Sparkles className="size-6 text-primary fill-primary" />
           </div>
           <span className="font-display font-black text-2xl tracking-tight text-heading">
-            SafiHub<span className="text-primary">.</span>
+            {tCommon("brand")}
+            <span className="text-primary">.</span>
           </span>
         </Link>
 
-        {/* Center Pill Segmented Nav (matching reference exactly) */}
+        {/* Center Pill Segmented Nav */}
         <nav className="hidden md:flex items-center bg-white/95 backdrop-blur-xs border border-slate-200/90 shadow-xs rounded-full px-2 py-1 text-xs sm:text-sm font-semibold text-foreground">
           <Link
             href="/#catalogue"
             className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
           >
-            Particuliers
+            {tNav("individuals")}
           </Link>
           <Link
             href="/#services"
             className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
           >
-            Entreprises
+            {tNav("businesses")}
           </Link>
           <Link
             href="/house"
             className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
           >
-            Pressings
+            {tNav("houses")}
           </Link>
         </nav>
 
@@ -57,17 +61,17 @@ export function Navbar({ variant = "transparent" }: NavbarProps = {}) {
             href="/login"
             className="text-sm font-semibold text-heading hover:text-primary transition-colors"
           >
-            Log In
+            {tNav("login")}
           </Link>
           <Button asChild variant="contrast" size="pill-sm" className="shadow-xs">
-            <Link href="/#catalogue">Commander</Link>
+            <Link href="/#catalogue">{tNav("order")}</Link>
           </Button>
         </div>
 
         {/* Mobile menu trigger */}
         <div className="flex md:hidden items-center gap-3">
           <Button asChild variant="contrast" size="sm" className="rounded-full text-xs font-semibold px-3.5">
-            <Link href="/#catalogue">Commander</Link>
+            <Link href="/#catalogue">{tNav("order")}</Link>
           </Button>
           <MobileNav />
         </div>
@@ -75,3 +79,5 @@ export function Navbar({ variant = "transparent" }: NavbarProps = {}) {
     </header>
   );
 }
+
+

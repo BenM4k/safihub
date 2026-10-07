@@ -6,23 +6,41 @@ This document covers SafiHub's testing infrastructure, execution commands, accep
 
 ## 1. Testing Infrastructure & Quality Gates
 
-SafiHub centralizes test suites under `src/test/`:
+SafiHub uses **Vitest** for unit and integration testing, centralized under `src/test/`:
 
-- **Unit Tests (`src/test/unit/`):** Fast, standalone tests mocking external calls (e.g. `order-validation.unit.test.ts`, `opening-hours.unit.test.ts`, `cash-ceiling.unit.test.ts`, `delivery-fees.unit.test.ts`).
+- **Unit Tests (`src/test/unit/`):** Fast, isolated tests mocking external calls (e.g. `order-validation.unit.test.ts`, `opening-hours.unit.test.ts`, `cash-ceiling.unit.test.ts`, `delivery-fees.unit.test.ts`).
 - **Integration Tests (`src/test/integration/`):** Database-backed and multi-service flows (`*.integration.test.ts`).
 
-### Standalone Runner Command
-Modules that import `server-only` (such as `order.service.ts` or `auth.ts`) throw runtime errors when imported by standard `tsx` scripts. You **must** pass `--conditions=react-server`:
+### Vitest Runner Commands
+
+Run tests using Vitest:
 
 ```bash
-NODE_OPTIONS='--conditions=react-server' npx tsx src/test/unit/order-validation.unit.test.ts
+# Run all tests once
+pnpm vitest run
+
+# Run tests in interactive watch mode
+pnpm vitest
+
+# Run targeted test file
+pnpm vitest run src/test/unit/order-validation.unit.test.ts
+
+# Run with coverage report
+pnpm vitest run --coverage
+```
+
+### Server-Only Resolution in Vitest
+Modules that import `server-only` (such as `order.service.ts` or `auth.ts`) require React server conditions. Configure Vitest (`vitest.config.ts`) with `resolve.conditions: ['react-server']` or provide `NODE_OPTIONS='--conditions=react-server'`:
+
+```bash
+NODE_OPTIONS='--conditions=react-server' pnpm vitest run
 ```
 
 ### Pre-Commit Quality Gates
 Before considering any task or PR complete, run:
 1. **Typecheck:** `pnpm tsc --noEmit`
 2. **Lint:** `pnpm lint`
-3. **Targeted Tests:** Run the specific test files covering touched code.
+3. **Tests (Vitest):** `pnpm vitest run` (or targeted test suite for touched code)
 
 ---
 
@@ -96,9 +114,9 @@ Each acceptance criterion from the product specification is mapped to an automat
 - **Trap:** Awaiting SMS dispatch or background expiry timers in checkout Server Actions.
 - **Fix:** Emit typed Inngest events and return immediately to the customer.
 
-### 10. `server-only` in Unit Tests
-- **Trap:** Running `npx tsx src/test/unit/...` and receiving `Error: This module cannot be imported from a Client Component`.
-- **Fix:** Always pass `NODE_OPTIONS='--conditions=react-server'` when executing standalone tests importing server modules.
+### 10. `server-only` in Vitest & Unit Tests
+- **Trap:** Running `pnpm vitest run src/test/unit/...` on modules importing `server-only` and receiving `Error: This module cannot be imported from a Client Component`.
+- **Fix:** Configure Vitest with `resolve.conditions: ['react-server']` in `vitest.config.ts`, or pass `NODE_OPTIONS='--conditions=react-server'` when executing tests importing server modules.
 
 ### 11. Hand-Editing Applied Migrations
 - **Trap:** Modifying an existing SQL file in `drizzle/` that has already run against the database.
@@ -123,3 +141,15 @@ Each acceptance criterion from the product specification is mapped to an automat
 ### 16. Local-Only Assets in Git
 - **Trap:** Committing `.agents/` or `skills-lock.json` to version control.
 - **Fix:** Verify these paths are kept strictly in `.gitignore`.
+
+### 17. Better Auth Signed Cookies in Tests
+- **Trap:** Manually inserting rows into `schema.session` and setting `cookie: better-auth.session_token=<token>` causes `auth.api.getSession()` to return null because Better Auth signs cookie tokens using `BETTER_AUTH_SECRET`.
+- **Fix:** In integration tests, call `auth.api.signInEmail({ body: { email, password }, asResponse: true })` and pass the returned `Set-Cookie` header into subsequent request headers.
+
+### 18. Sentry Next.js Config Import in v11+
+- **Trap:** Importing `withSentryConfig` from `@sentry/nextjs` causes type errors or build failures in `@sentry/nextjs` v11+.
+- **Fix:** Import `withSentryConfig` from `@sentry/nextjs/config`.
+
+### 19. Sentry Customer Privacy Firewall Scrubbing
+- **Trap:** Emitting Sentry errors that accidentally include customer or courier phone numbers in user profiles, tags, or extra context.
+- **Fix:** Route all Sentry captures through `scrubPhoneNumbers()` (`src/lib/sentry-privacy.ts`) or `withActionErrorHandling()`, which strips `phone`, `phoneNumber`, `contactPhone`, and `mobile` while preserving user roles and non-PII operational context.

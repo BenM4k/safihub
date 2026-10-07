@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Menu, X, ArrowRight, Phone, Sparkles } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
+  const tNav = useTranslations("nav");
+  const tCommon = useTranslations("common");
 
   const toggle = () => setIsOpen((prev) => !prev);
   const close = () => setIsOpen(false);
@@ -19,7 +21,7 @@ export function MobileNav() {
         variant="ghost"
         size="icon"
         onClick={toggle}
-        aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+        aria-label={isOpen ? tNav("closeMenu") : tNav("openMenu")}
         aria-expanded={isOpen}
         className="touch text-heading"
       >
@@ -34,7 +36,7 @@ export function MobileNav() {
               onClick={close}
               className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
             >
-              Services de Pressing
+              {tNav("services")}
               <ArrowRight className="size-4 text-muted-foreground" />
             </Link>
             <Link
@@ -42,7 +44,7 @@ export function MobileNav() {
               onClick={close}
               className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
             >
-              Comment ça marche
+              {tNav("howItWorks")}
               <ArrowRight className="size-4 text-muted-foreground" />
             </Link>
             <Link
@@ -50,7 +52,7 @@ export function MobileNav() {
               onClick={close}
               className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
             >
-              Tarifs & Catalogue
+              {tNav("pricing")}
               <ArrowRight className="size-4 text-muted-foreground" />
             </Link>
             <Link
@@ -58,7 +60,7 @@ export function MobileNav() {
               onClick={close}
               className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
             >
-              Zones à Bukavu
+              {tNav("zones")}
               <ArrowRight className="size-4 text-muted-foreground" />
             </Link>
             <Link
@@ -66,25 +68,25 @@ export function MobileNav() {
               onClick={close}
               className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
             >
-              Questions fréquentes
+              {tNav("faq")}
               <ArrowRight className="size-4 text-muted-foreground" />
             </Link>
           </nav>
 
           <div className="flex flex-col gap-3 pt-6 border-t border-border mt-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <Phone className="size-4 text-primary" />
-              <span>Assistance Bukavu : +243 999 000 123</span>
+              <span>{tCommon("supportBukavu")}</span>
             </div>
             <Button asChild variant="primary" size="lg" className="w-full">
               <Link href="/#catalogue" onClick={close}>
                 <Sparkles className="size-4 mr-1" />
-                Commander maintenant
+                {tCommon("orderNow")}
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm" className="w-full">
               <Link href="/login" onClick={close}>
-                Espace Partenaire Pressing
+                {tCommon("partnerPortal")}
               </Link>
             </Button>
           </div>
@@ -93,3 +95,4 @@ export function MobileNav() {
     </div>
   );
 }
+
