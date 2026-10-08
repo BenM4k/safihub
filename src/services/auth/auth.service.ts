@@ -118,6 +118,16 @@ export async function registerCustomer(
       return err("Failed to record required legal consent.");
     }
 
+    const photosConsent = await recordConsent({
+      userId,
+      document: "photos",
+      version: "1.0",
+    });
+    if (!photosConsent.ok) {
+      console.error("Failed to record photos consent for user", userId, photosConsent.error);
+      return err("Failed to record required legal consent.");
+    }
+
     return ok({
       user: authResult.user as unknown as Record<string, unknown>,
       token: authResult.token,

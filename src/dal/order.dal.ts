@@ -854,3 +854,153 @@ export async function saveReceptionCountTransaction(params: {
   });
 }
 
+export async function getCustomerOrders(
+  customerId: string
+): Promise<OrderListItemRecord[]> {
+  const rows = await db
+    .select({
+      id: schema.orders.id,
+      code: schema.orders.code,
+      trackingToken: schema.orders.trackingToken,
+      customerId: schema.orders.customerId,
+      customerName: schema.user.name,
+      customerPhone: schema.orders.contactPhone,
+      houseId: schema.orders.houseId,
+      houseName: schema.houses.name,
+      neighborhoodId: schema.orders.neighborhoodId,
+      neighborhoodName: schema.neighborhoods.name,
+      status: schema.orders.status,
+      source: schema.orders.source,
+      totalDue: schema.orders.totalDue,
+      currency: schema.orders.currency,
+      itemsTotal: schema.orders.itemsTotal,
+      deliveryFee: schema.orders.deliveryFee,
+      commissionAmount: schema.orders.commissionAmount,
+      pickupSlotStart: schema.orders.pickupSlotStart,
+      pickupSlotEnd: schema.orders.pickupSlotEnd,
+      createdAt: schema.orders.createdAt,
+      acceptanceDeadlineAt: schema.orders.acceptanceDeadlineAt,
+    })
+    .from(schema.orders)
+    .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+    .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
+    .innerJoin(
+      schema.neighborhoods,
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+    )
+    .where(eq(schema.orders.customerId, customerId))
+    .orderBy(desc(schema.orders.createdAt));
+
+  return rows;
+}
+
+export async function getOrderByTrackingToken(
+  trackingToken: string
+): Promise<OrderDetailRecord | null> {
+  const [row] = await db
+    .select({
+      id: schema.orders.id,
+      code: schema.orders.code,
+      trackingToken: schema.orders.trackingToken,
+      customerId: schema.orders.customerId,
+      customerName: schema.user.name,
+      customerPhone: schema.orders.contactPhone,
+      houseId: schema.orders.houseId,
+      houseName: schema.houses.name,
+      neighborhoodId: schema.orders.neighborhoodId,
+      neighborhoodName: schema.neighborhoods.name,
+      landmark: schema.orders.landmark,
+      status: schema.orders.status,
+      source: schema.orders.source,
+      totalDue: schema.orders.totalDue,
+      currency: schema.orders.currency,
+      itemsTotal: schema.orders.itemsTotal,
+      deliveryFee: schema.orders.deliveryFee,
+      commissionAmount: schema.orders.commissionAmount,
+      commissionBps: schema.orders.commissionBps,
+      paymentCurrency: schema.orders.paymentCurrency,
+      exchangeRateUsed: schema.orders.exchangeRateUsed,
+      deliveryConfirmationCode: schema.orders.deliveryConfirmationCode,
+      notes: schema.orders.notes,
+      pickupSlotStart: schema.orders.pickupSlotStart,
+      pickupSlotEnd: schema.orders.pickupSlotEnd,
+      deliverySlotStart: schema.orders.deliverySlotStart,
+      deliverySlotEnd: schema.orders.deliverySlotEnd,
+      acceptanceDeadlineAt: schema.orders.acceptanceDeadlineAt,
+      createdAt: schema.orders.createdAt,
+      updatedAt: schema.orders.updatedAt,
+    })
+    .from(schema.orders)
+    .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+    .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
+    .innerJoin(
+      schema.neighborhoods,
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+    )
+    .where(eq(schema.orders.trackingToken, trackingToken))
+    .limit(1);
+
+  return row ?? null;
+}
+
+export async function updateOrderDeliverySlot(params: {
+  orderId: string;
+  deliverySlotStart: Date;
+  deliverySlotEnd: Date;
+  newStatus?: OrderStatus;
+  event: Omit<typeof schema.orderEvents.$inferInsert, "orderId">;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx
+      .update(schema.orders)
+      .set({
+        deliverySlotStart: params.deliverySlotStart,
+        deliverySlotEnd: params.deliverySlotEnd,
+        ...(params.newStatus ? { status: params.newStatus } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.orders.id, params.orderId));
+
+    await tx.insert(schema.orderEvents).values({
+      ...params.event,
+      orderId: params.orderId,
+    });
+  });
+}
+
+export async function createDisputeTransaction(params: {
+  orderId: string;
+  openedBy: string;
+  type: "loss" | "damage" | "payment" | "other";
+  description: string;
+  event: Omit<typeof schema.orderEvents.$inferInsert, "orderId">;
+}): Promise<{ disputeId: string }> {
+  return await db.transaction(async (tx) => {
+    const disputeId = crypto.randomUUID();
+
+    await tx.insert(schema.disputes).values({
+      id: disputeId,
+      orderId: params.orderId,
+      openedBy: params.openedBy,
+      type: params.type,
+      description: params.description.trim(),
+      status: "open",
+    });
+
+    await tx
+      .update(schema.orders)
+      .set({
+        status: "disputed",
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.orders.id, params.orderId));
+
+    await tx.insert(schema.orderEvents).values({
+      ...params.event,
+      orderId: params.orderId,
+    });
+
+    return { disputeId };
+  });
+}
+

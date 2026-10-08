@@ -10,10 +10,20 @@ export const metadata: Metadata = {
     "Recherchez et comparez les meilleures maisons de pressing à Bukavu par quartier, tarifs et délais de livraison.",
 };
 
-export default async function CustomerHousesPage() {
+interface CustomerHousesPageProps {
+  searchParams: Promise<{ neighborhoodId?: string; query?: string }>;
+}
+
+export default async function CustomerHousesPage({
+  searchParams,
+}: CustomerHousesPageProps) {
+  const params = await searchParams;
   const [user, pageData] = await Promise.all([
     getCurrentUser(),
-    getCustomerHousesData(),
+    getCustomerHousesData({
+      neighborhoodId: params.neighborhoodId,
+      query: params.query,
+    }),
   ]);
 
   return (

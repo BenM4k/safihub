@@ -2,11 +2,18 @@ import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { HeroStatusCard } from "./hero-status-card";
-
+import { NeighborhoodChecker } from "./neighborhood-checker";
 import { getRoleCta } from "@/lib/role-cta";
 import type { AuthenticatedUser } from "@/services/auth/guards";
+import type { NeighborhoodRecord } from "@/dal";
 
-export function HeroSection({ user }: { user?: AuthenticatedUser | null } = {}) {
+export function HeroSection({
+  user,
+  neighborhoods = [],
+}: {
+  user?: AuthenticatedUser | null;
+  neighborhoods?: NeighborhoodRecord[];
+} = {}) {
   const t = useTranslations("hero");
 
   const cta = getRoleCta(user);
@@ -51,7 +58,7 @@ export function HeroSection({ user }: { user?: AuthenticatedUser | null } = {}) 
             </p>
 
             {/* Primary Action Button (blue pill with arrow) */}
-            <div className="pt-1">
+            <div className="pt-1 flex flex-wrap items-center gap-3">
               <Link
                 href={cta.href}
                 className="bg-primary hover:bg-primary-hover text-white text-base font-semibold px-7 py-3.5 rounded-xl inline-flex items-center gap-2 shadow-sm transition-all group"
@@ -60,6 +67,11 @@ export function HeroSection({ user }: { user?: AuthenticatedUser | null } = {}) 
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
+
+            {/* Bukavu Neighborhood Coverage Checker (AC 17, AC 19) */}
+            {neighborhoods && neighborhoods.length > 0 && (
+              <NeighborhoodChecker neighborhoods={neighborhoods} />
+            )}
           </div>
 
           {/* Right Column: Hero Visual Mockup */}

@@ -32,6 +32,7 @@ export interface CustomerHouseSummary {
   reviewCount: number;
   imageUrl: string;
   coords: { lat: number; lng: number };
+  estimatedDeliveryFee?: number | null;
 }
 
 export interface CustomerHouseCatalogueItem {

@@ -103,7 +103,7 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
 
       {/* Card Content Body */}
       <div className="p-4 flex flex-col flex-1">
-        {/* Large Bold Price */}
+        {/* Large Bold Price & Estimated Delivery Fee */}
         <div className="flex items-baseline justify-between gap-2 mb-1.5">
           <div className="text-xl font-black text-slate-900 tracking-tight">
             {house.minimumOrderAmount > 0 ? (
@@ -118,6 +118,11 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
               </span>
             )}
           </div>
+          {house.estimatedDeliveryFee !== undefined && house.estimatedDeliveryFee !== null && (
+            <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md shrink-0">
+              {house.estimatedDeliveryFee.toLocaleString("fr-FR")} CDF livraison
+            </span>
+          )}
         </div>
 
         {/* Specs row: turnaround, capacity, rating */}
