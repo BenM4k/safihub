@@ -65,7 +65,7 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
             {tNav("businesses")}
           </Link>
           <Link
-            href="/house"
+            href="/houses"
             className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
           >
             {tNav("houses")}

@@ -48,6 +48,14 @@ export function MobileNav({ user }: { user?: AuthenticatedUser | null } = {}) {
         <div className="fixed inset-0 top-20 z-50 bg-background/95 backdrop-blur-md animate-fade-in flex flex-col justify-between p-6 overflow-y-auto">
           <nav className="flex flex-col gap-5 text-lg font-bold tracking-tight">
             <Link
+              href="/houses"
+              onClick={close}
+              className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
+            >
+              {tNav("houses")}
+              <ArrowRight className="size-4 text-muted-foreground" />
+            </Link>
+            <Link
               href="/#services"
               onClick={close}
               className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"

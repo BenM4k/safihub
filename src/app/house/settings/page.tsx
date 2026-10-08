@@ -1,12 +1,11 @@
 import { guardHouseRoute } from "@/services/auth";
-import { getHouses } from "@/dal";
-import { getHouseDashboardData } from "@/services/house";
-import { AcceptanceQueue } from "@/components/house/dashboard/acceptance-queue";
-import { WorkloadMetrics } from "@/components/house/dashboard/workload-metrics";
-import { QuickShortcuts } from "@/components/house/dashboard/quick-shortcuts";
+import { getHouses, getMasterItems, getMasterFabrics } from "@/dal";
+import { getHouseSettings } from "@/services/house";
+import { GeneralSettingsForm } from "@/components/house/settings/general-settings-form";
+import { ExclusionsManager } from "@/components/house/settings/exclusions-manager";
 import { getTranslations } from "next-intl/server";
 
-export default async function HouseDashboardPage() {
+export default async function HouseSettingsPage() {
   const authCtx = await guardHouseRoute();
   let houseId = authCtx.houseId || authCtx.primaryHouseId;
 
@@ -25,22 +24,26 @@ export default async function HouseDashboardPage() {
     );
   }
 
-  const t = await getTranslations("house.dashboard");
-  const dashboardRes = await getHouseDashboardData(houseId);
+  const t = await getTranslations("house.settings");
 
-  if (!dashboardRes.ok) {
+  const [settingsRes, masterItems, masterFabrics] = await Promise.all([
+    getHouseSettings(houseId),
+    getMasterItems(),
+    getMasterFabrics(),
+  ]);
+
+  if (!settingsRes.ok) {
     return (
       <div className="p-6 bg-rose-50 text-rose-700 rounded-2xl border border-rose-200 text-sm">
-        {dashboardRes.error}
+        {settingsRes.error}
       </div>
     );
   }
 
-  const metrics = dashboardRes.value;
+  const { house, exclusions } = settingsRes.value;
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      {/* Title */}
+    <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
           {t("title")}
@@ -50,14 +53,16 @@ export default async function HouseDashboardPage() {
         </p>
       </div>
 
-      {/* Orders waiting for acceptance with remaining time */}
-      <AcceptanceQueue orders={metrics.waitingAcceptanceOrders} />
+      {/* General Settings */}
+      <GeneralSettingsForm house={house} />
 
-      {/* Today's workload metrics & capacity */}
-      <WorkloadMetrics metrics={metrics} />
-
-      {/* Quick shortcuts */}
-      <QuickShortcuts />
+      {/* Exclusions Manager */}
+      <ExclusionsManager
+        exclusions={exclusions}
+        masterItems={masterItems}
+        masterFabrics={masterFabrics}
+        houseId={houseId}
+      />
     </div>
   );
 }

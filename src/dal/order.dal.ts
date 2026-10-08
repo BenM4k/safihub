@@ -502,3 +502,268 @@ export async function getOrderValidationData(scope?: {
     courierShifts,
   };
 }
+
+export interface HouseOrderListItemRecord {
+  id: string;
+  code: string;
+  trackingToken: string;
+  customerFirstName: string;
+  neighborhoodId: string;
+  neighborhoodName?: string;
+  status: OrderStatus;
+  source: OrderSource;
+  totalDue: number;
+  itemsTotal: number;
+  adjustedItemsTotal: number | null;
+  currency: "CDF" | "USD";
+  pickupSlotStart: Date;
+  pickupSlotEnd: Date;
+  deliverySlotStart: Date | null;
+  deliverySlotEnd: Date | null;
+  estimatedDeliveryAt: Date | null;
+  acceptanceDeadlineAt: Date | null;
+  receptionDeadlineAt: Date | null;
+  createdAt: Date;
+}
+
+export interface HouseOrderDetailRecord extends HouseOrderListItemRecord {
+  notes: string | null;
+  updatedAt: Date | null;
+}
+
+/**
+ * AC 15: Restricted house order listing projection.
+ * Strictly NEVER includes customer phone number or street address / landmark.
+ * Scoped strictly to the authenticated houseId.
+ */
+export async function getHouseOrdersRestricted(
+  houseId: string,
+  filters?: {
+    status?: OrderStatus;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }
+): Promise<HouseOrderListItemRecord[]> {
+  const conditions = [eq(schema.orders.houseId, houseId)];
+
+  if (filters?.status) {
+    conditions.push(eq(schema.orders.status, filters.status));
+  }
+
+  if (filters?.search && filters.search.trim()) {
+    const q = `%${filters.search.trim()}%`;
+    conditions.push(
+      or(
+        ilike(schema.orders.code, q),
+        ilike(schema.neighborhoods.name, q)
+      )!
+    );
+  }
+
+  const rows = await db
+    .select({
+      id: schema.orders.id,
+      code: schema.orders.code,
+      trackingToken: schema.orders.trackingToken,
+      customerRawName: schema.user.name,
+      neighborhoodId: schema.orders.neighborhoodId,
+      neighborhoodName: schema.neighborhoods.name,
+      status: schema.orders.status,
+      source: schema.orders.source,
+      totalDue: schema.orders.totalDue,
+      itemsTotal: schema.orders.itemsTotal,
+      adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+      currency: schema.orders.currency,
+      pickupSlotStart: schema.orders.pickupSlotStart,
+      pickupSlotEnd: schema.orders.pickupSlotEnd,
+      deliverySlotStart: schema.orders.deliverySlotStart,
+      deliverySlotEnd: schema.orders.deliverySlotEnd,
+      estimatedDeliveryAt: schema.orders.estimatedDeliveryAt,
+      acceptanceDeadlineAt: schema.orders.acceptanceDeadlineAt,
+      receptionDeadlineAt: schema.orders.receptionDeadlineAt,
+      createdAt: schema.orders.createdAt,
+    })
+    .from(schema.orders)
+    .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+    .innerJoin(
+      schema.neighborhoods,
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+    )
+    .where(and(...conditions))
+    .orderBy(desc(schema.orders.createdAt))
+    .limit(filters?.limit ?? 50)
+    .offset(filters?.offset ?? 0);
+
+  return rows.map((r) => ({
+    ...r,
+    customerFirstName: r.customerRawName.trim().split(" ")[0] || "Client",
+  }));
+}
+
+/**
+ * AC 15: Restricted house order detail projection.
+ * Strictly verifies ownership by houseId, omits phone & street address.
+ */
+export async function getHouseOrderDetailRestricted(
+  houseId: string,
+  orderId: string
+): Promise<HouseOrderDetailRecord | null> {
+  const [row] = await db
+    .select({
+      id: schema.orders.id,
+      code: schema.orders.code,
+      trackingToken: schema.orders.trackingToken,
+      customerRawName: schema.user.name,
+      neighborhoodId: schema.orders.neighborhoodId,
+      neighborhoodName: schema.neighborhoods.name,
+      status: schema.orders.status,
+      source: schema.orders.source,
+      totalDue: schema.orders.totalDue,
+      itemsTotal: schema.orders.itemsTotal,
+      adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+      currency: schema.orders.currency,
+      pickupSlotStart: schema.orders.pickupSlotStart,
+      pickupSlotEnd: schema.orders.pickupSlotEnd,
+      deliverySlotStart: schema.orders.deliverySlotStart,
+      deliverySlotEnd: schema.orders.deliverySlotEnd,
+      estimatedDeliveryAt: schema.orders.estimatedDeliveryAt,
+      acceptanceDeadlineAt: schema.orders.acceptanceDeadlineAt,
+      receptionDeadlineAt: schema.orders.receptionDeadlineAt,
+      notes: schema.orders.notes,
+      createdAt: schema.orders.createdAt,
+      updatedAt: schema.orders.updatedAt,
+    })
+    .from(schema.orders)
+    .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+    .innerJoin(
+      schema.neighborhoods,
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+    )
+    .where(and(eq(schema.orders.id, orderId), eq(schema.orders.houseId, houseId)))
+    .limit(1);
+
+  if (!row) return null;
+
+  return {
+    ...row,
+    customerFirstName: row.customerRawName.trim().split(" ")[0] || "Client",
+  };
+}
+
+export interface HouseDashboardMetrics {
+  waitingAcceptanceCount: number;
+  waitingAcceptanceOrders: HouseOrderListItemRecord[];
+  washingCount: number;
+  readyCount: number;
+  completedTodayCount: number;
+  todayOrdersCount: number;
+  dailyCapacity: number | null;
+  isPaused: boolean;
+}
+
+/**
+ * Computes workload metrics for the house dashboard (Task 4.1).
+ */
+export async function getHouseDashboardMetrics(
+  houseId: string
+): Promise<HouseDashboardMetrics> {
+  const [houseRow] = await db
+    .select({
+      dailyCapacity: schema.houses.dailyCapacity,
+      isPaused: schema.houses.isPaused,
+    })
+    .from(schema.houses)
+    .where(eq(schema.houses.id, houseId))
+    .limit(1);
+
+  // Today boundary in UTC
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+
+  const activeOrders = await getHouseOrdersRestricted(houseId, { limit: 100 });
+
+  const waitingAcceptanceOrders = activeOrders.filter((o) => o.status === "created");
+  const washingCount = activeOrders.filter(
+    (o) => o.status === "received" || o.status === "price_adjusted" || o.status === "washing"
+  ).length;
+  const readyCount = activeOrders.filter((o) => o.status === "ready").length;
+  const completedTodayCount = activeOrders.filter(
+    (o) => o.status === "delivered" && new Date(o.createdAt) >= startOfDay
+  ).length;
+  const todayOrdersCount = activeOrders.filter(
+    (o) => new Date(o.createdAt) >= startOfDay
+  ).length;
+
+  return {
+    waitingAcceptanceCount: waitingAcceptanceOrders.length,
+    waitingAcceptanceOrders,
+    washingCount,
+    readyCount,
+    completedTodayCount,
+    todayOrdersCount,
+    dailyCapacity: houseRow?.dailyCapacity ?? null,
+    isPaused: houseRow?.isPaused ?? false,
+  };
+}
+
+/**
+ * Atomic transaction to save reception counts and status transition (Task 4.3).
+ */
+export async function saveReceptionCountTransaction(params: {
+  orderId: string;
+  houseId: string;
+  items: Array<{
+    id: string;
+    receivedQuantity: number;
+    status: "accepted" | "returned";
+  }>;
+  newStatus: OrderStatus;
+  adjustedItemsTotal: number;
+  commissionAmount: number;
+  totalDue: number;
+  event: Omit<typeof schema.orderEvents.$inferInsert, "orderId">;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    // 1. Update order items receivedQuantity and status
+    for (const item of params.items) {
+      await tx
+        .update(schema.orderItems)
+        .set({
+          receivedQuantity: item.receivedQuantity,
+          status: item.status,
+        })
+        .where(
+          and(
+            eq(schema.orderItems.id, item.id),
+            eq(schema.orderItems.orderId, params.orderId)
+          )
+        );
+    }
+
+    // 2. Update order totals, status, and reception timestamp
+    await tx
+      .update(schema.orders)
+      .set({
+        status: params.newStatus,
+        adjustedItemsTotal: params.adjustedItemsTotal,
+        commissionAmount: params.commissionAmount,
+        totalDue: params.totalDue,
+        receptionConfirmedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.orders.id, params.orderId),
+          eq(schema.orders.houseId, params.houseId)
+        )
+      );
+
+    // 3. Insert audit event
+    await tx.insert(schema.orderEvents).values({
+      ...params.event,
+      orderId: params.orderId,
+    });
+  });
+}
+
