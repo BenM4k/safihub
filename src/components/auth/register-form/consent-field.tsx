@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import type { UseFormRegisterReturn } from "react-hook-form";
 
 interface ConsentFieldProps {
   error?: string;
-  defaultChecked?: boolean;
+  registration: UseFormRegisterReturn;
 }
 
-export function ConsentField({ error, defaultChecked = false }: ConsentFieldProps) {
+export function ConsentField({ error, registration }: ConsentFieldProps) {
   const t = useTranslations("auth");
 
   return (
@@ -16,11 +17,10 @@ export function ConsentField({ error, defaultChecked = false }: ConsentFieldProp
       <div className="flex items-start gap-2.5">
         <input
           id="register-consent"
-          name="consent"
           type="checkbox"
-          defaultChecked={defaultChecked}
           className="mt-1 size-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer accent-sky-600"
           aria-describedby={error ? "consent-error" : undefined}
+          {...registration}
         />
         <label
           htmlFor="register-consent"
@@ -47,7 +47,10 @@ export function ConsentField({ error, defaultChecked = false }: ConsentFieldProp
       </div>
 
       {error && (
-        <p id="consent-error" className="text-xs font-medium text-red-500 pl-6.5">
+        <p
+          id="consent-error"
+          className="text-xs font-medium text-red-500 pl-6.5"
+        >
           {error}
         </p>
       )}

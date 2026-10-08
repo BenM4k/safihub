@@ -3,7 +3,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { z } from "zod";
 import { auth } from "@/services/auth/auth";
 import {
   adminCreateGuestUser,
@@ -16,101 +15,16 @@ import {
   resetPasswordWithToken,
 } from "@/services/auth/auth.service";
 
-type AuthTranslator = (key: string) => string;
-
-// --- Validation Schemas ---
-
-function createLoginSchema(t: AuthTranslator) {
-  return z.object({
-    email: z.string().trim().email(t("validation.invalidEmail")),
-    password: z.string().min(1, t("validation.passwordRequired")),
-  });
-}
-
-function createRegisterSchema(t: AuthTranslator) {
-  return z
-    .object({
-      firstName: z.string().trim().min(1, t("validation.firstNameRequired")),
-      lastName: z.string().trim().min(1, t("validation.lastNameRequired")),
-      email: z.string().trim().email(t("validation.invalidEmail")),
-      phone: z.string().trim().min(6, t("validation.phoneRequired")),
-      password: z
-        .string()
-        .min(8, t("validation.passwordMinLength"))
-        .regex(/[A-Z]/, t("validation.passwordUppercase"))
-        .regex(/[a-z]/, t("validation.passwordLowercase"))
-        .regex(/[0-9]/, t("validation.passwordNumber"))
-        .regex(/[^A-Za-z0-9]/, t("validation.passwordSpecial")),
-      confirmPassword: z.string().min(1, t("validation.confirmPasswordRequired")),
-      consent: z
-        .union([z.boolean(), z.string()])
-        .transform((val) => val === true || val === "on" || val === "true")
-        .refine((val) => val === true, t("validation.consentRequired")),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: t("validation.passwordsMismatch"),
-      path: ["confirmPassword"],
-    });
-}
-
-function createForgotPasswordSchema(t: AuthTranslator) {
-  return z.object({
-    email: z.string().trim().email(t("validation.invalidEmail")),
-  });
-}
-
-function createResetPasswordSchema(t: AuthTranslator) {
-  return z
-    .object({
-      token: z.string().min(1, t("validation.tokenRequired")),
-      password: z
-        .string()
-        .min(8, t("validation.passwordMinLength"))
-        .regex(/[A-Z]/, t("validation.passwordUppercase"))
-        .regex(/[a-z]/, t("validation.passwordLowercase"))
-        .regex(/[0-9]/, t("validation.passwordNumber"))
-        .regex(/[^A-Za-z0-9]/, t("validation.passwordSpecial")),
-      confirmPassword: z.string().min(1, t("validation.confirmPasswordRequired")),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: t("validation.passwordsMismatch"),
-      path: ["confirmPassword"],
-    });
-}
-
-function createAdminCreateGuestSchema(t: AuthTranslator) {
-  return z.object({
-    name: z.string().trim().optional(),
-    phone: z.string().trim().min(6, t("validation.phoneRequired")),
-  });
-}
-
-function createAdminMergeGuestSchema(t: AuthTranslator) {
-  return z.object({
-    guestUserId: z.string().min(1, t("validation.guestUserIdRequired")),
-    targetUserId: z.string().min(1, t("validation.targetUserIdRequired")),
-  });
-}
-
-function createAdminResetPasswordSchema(t: AuthTranslator) {
-  return z.object({
-    targetUserId: z.string().min(1, t("validation.targetUserIdRequired")),
-    newPassword: z.string().min(8, t("validation.passwordMinLength")),
-  });
-}
-
-// --- Action State Interfaces ---
-
-export interface AuthActionState<T = unknown> {
-  success: boolean;
-  errors?: Record<string, string>;
-  message?: string;
-  data?: T;
-}
-
-export const initialAuthState: AuthActionState = {
-  success: false,
-};
+import {
+  getLoginSchema,
+  getRegisterSchema,
+  getForgotPasswordSchema,
+  getResetPasswordSchema,
+  getAdminCreateGuestSchema,
+  getAdminMergeGuestSchema,
+  getAdminResetPasswordSchema,
+  type AuthActionState,
+} from "@/lib/validations/auth.schema";
 
 // --- Actions ---
 
@@ -119,7 +33,7 @@ export async function loginAction(
   formData: FormData
 ): Promise<AuthActionState> {
   const t = await getTranslations("auth");
-  const schema = createLoginSchema((k) => t(k as Parameters<typeof t>[0]));
+  const schema = getLoginSchema((k) => t(k as Parameters<typeof t>[0]));
   const parsed = schema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -162,7 +76,9 @@ export async function registerAction(
   formData: FormData
 ): Promise<AuthActionState> {
   const t = await getTranslations("auth");
-  const schema = createRegisterSchema((k) => t(k as Parameters<typeof t>[0]));
+  const schema = getRegisterSchema((k) => t(k as Parameters<typeof t>[0]));
+  const consentRaw = formData.get("consent");
+  const consent = consentRaw === "on" || consentRaw === "true";
   const parsed = schema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
@@ -170,7 +86,7 @@ export async function registerAction(
     phone: formData.get("phone"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
-    consent: formData.get("consent"),
+    consent,
   });
 
   if (!parsed.success) {
@@ -212,7 +128,7 @@ export async function forgotPasswordAction(
   formData: FormData
 ): Promise<AuthActionState> {
   const t = await getTranslations("auth");
-  const schema = createForgotPasswordSchema((k) => t(k as Parameters<typeof t>[0]));
+  const schema = getForgotPasswordSchema((k) => t(k as Parameters<typeof t>[0]));
   const parsed = schema.safeParse({
     email: formData.get("email"),
   });
@@ -249,7 +165,7 @@ export async function resetPasswordAction(
   formData: FormData
 ): Promise<AuthActionState> {
   const t = await getTranslations("auth");
-  const schema = createResetPasswordSchema((k) => t(k as Parameters<typeof t>[0]));
+  const schema = getResetPasswordSchema((k) => t(k as Parameters<typeof t>[0]));
   const parsed = schema.safeParse({
     token: formData.get("token"),
     password: formData.get("password"),
@@ -294,7 +210,7 @@ export async function adminCreateGuestAction(
     return { success: false, errors: { form: t("adminRequired") } };
   }
 
-  const schema = createAdminCreateGuestSchema((k) => t(k as Parameters<typeof t>[0]));
+  const schema = getAdminCreateGuestSchema((k) => t(k as Parameters<typeof t>[0]));
   const parsed = schema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
@@ -329,7 +245,7 @@ export async function adminMergeGuestAction(
     return { success: false, errors: { form: t("adminRequired") } };
   }
 
-  const schema = createAdminMergeGuestSchema((k) => t(k as Parameters<typeof t>[0]));
+  const schema = getAdminMergeGuestSchema((k) => t(k as Parameters<typeof t>[0]));
   const parsed = schema.safeParse({
     guestUserId: formData.get("guestUserId"),
     targetUserId: formData.get("targetUserId"),
@@ -364,7 +280,7 @@ export async function adminResetPasswordAction(
     return { success: false, errors: { form: t("adminRequired") } };
   }
 
-  const schema = createAdminResetPasswordSchema((k) => t(k as Parameters<typeof t>[0]));
+  const schema = getAdminResetPasswordSchema((k) => t(k as Parameters<typeof t>[0]));
   const parsed = schema.safeParse({
     targetUserId: formData.get("targetUserId"),
     newPassword: formData.get("newPassword"),

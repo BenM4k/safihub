@@ -1,8 +1,22 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MapPin } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { getRoleCta } from "@/lib/role-cta";
+import type { AuthenticatedUser } from "@/services/auth/guards";
 
-export function TrustBanner() {
+export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) {
+  const tHero = useTranslations("hero");
+  const cta = getRoleCta(user);
+  const ctaLabel =
+    cta.roleKey === "admin"
+      ? tHero("ctaAdmin")
+      : cta.roleKey === "courier"
+        ? tHero("ctaCourier")
+        : cta.roleKey === "house"
+          ? tHero("ctaHouse")
+          : tHero("ctaOrder");
+
   const partners = [
     { name: "Hôtel du Lac Kivu", role: "Hôtellerie" },
     { name: "Clinique de Muhumba", role: "Médical" },
@@ -122,10 +136,10 @@ export function TrustBanner() {
 
             <div className="pt-2">
               <Link
-                href="#catalogue"
+                href={cta.href}
                 className="bg-primary hover:bg-primary-hover text-white text-base font-semibold px-7 py-3.5 rounded-xl inline-flex items-center gap-2 shadow-sm transition-all group"
               >
-                <span>Commander</span>
+                <span>{ctaLabel}</span>
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>

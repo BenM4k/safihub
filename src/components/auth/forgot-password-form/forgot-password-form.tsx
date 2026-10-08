@@ -1,44 +1,69 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ForgotPasswordHeader } from "./forgot-password-header";
-import { forgotPasswordAction, initialAuthState } from "@/actions/auth.actions";
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  const t = useTranslations("auth");
-
-  return (
-    <Button
-      type="submit"
-      variant="primary"
-      size="pill"
-      disabled={pending}
-      className="w-full text-base font-semibold shadow-xs transition-transform"
-    >
-      {pending ? t("sendingResetLink") : t("sendResetLink")}
-    </Button>
-  );
-}
+import { forgotPasswordAction } from "@/actions/auth.actions";
+import {
+  getForgotPasswordSchema,
+  initialAuthState,
+  type ForgotPasswordFormValues,
+} from "@/lib/validations/auth.schema";
 
 export function ForgotPasswordForm() {
-  const [state, formAction] = useActionState(
-    forgotPasswordAction,
-    initialAuthState
-  );
   const t = useTranslations("auth");
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const schema = getForgotPasswordSchema(
+    (k) => t(k as Parameters<typeof t>[0])
+  );
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      email: "",
+    },
+    mode: "onSubmit",
+  });
+
+  const onSubmit = (data: ForgotPasswordFormValues) => {
+    setServerError(null);
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("email", data.email);
+
+      const res = await forgotPasswordAction(initialAuthState, formData);
+      if (res.success) {
+        setIsSuccess(true);
+      } else if (res.errors) {
+        if (res.errors.form) {
+          setServerError(res.errors.form);
+        }
+        if (res.errors.email) {
+          setError("email", { message: res.errors.email });
+        }
+      }
+    });
+  };
 
   return (
     <div className="w-full max-w-sm sm:max-w-md mx-auto">
       <ForgotPasswordHeader />
 
-      {state.success ? (
+      {isSuccess ? (
         <div className="space-y-4">
           <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800">
             <h3 className="text-sm font-semibold">{t("resetLinkSentTitle")}</h3>
@@ -57,13 +82,13 @@ export function ForgotPasswordForm() {
           </div>
         </div>
       ) : (
-        <form action={formAction} noValidate className="space-y-4">
-          {state.errors?.form && (
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+          {serverError && (
             <div
               role="alert"
               className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-medium"
             >
-              {state.errors.form}
+              {serverError}
             </div>
           )}
 
@@ -73,22 +98,30 @@ export function ForgotPasswordForm() {
             </Label>
             <Input
               id="reset-email"
-              name="email"
               type="email"
               autoComplete="email"
               placeholder={t("emailPlaceholder")}
-              hasError={Boolean(state.errors?.email)}
-              aria-describedby={state.errors?.email ? "email-error" : undefined}
+              hasError={Boolean(errors.email)}
+              aria-describedby={errors.email ? "email-error" : undefined}
+              {...register("email")}
             />
-            {state.errors?.email && (
+            {errors.email?.message && (
               <p id="email-error" className="text-xs font-medium text-red-500 mt-1">
-                {state.errors.email}
+                {errors.email.message}
               </p>
             )}
           </div>
 
           <div className="pt-2">
-            <SubmitButton />
+            <Button
+              type="submit"
+              variant="primary"
+              size="pill"
+              disabled={isPending}
+              className="w-full text-base font-semibold shadow-xs transition-transform"
+            >
+              {isPending ? t("sendingResetLink") : t("sendResetLink")}
+            </Button>
           </div>
 
           <div className="mt-6 text-center text-sm text-slate-600">

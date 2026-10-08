@@ -81,6 +81,7 @@ export const disputeStatusEnum = pgEnum("dispute_status", ["open", "resolved"]);
 export type OrderStatus = (typeof orderStatusEnum.enumValues)[number];
 export type OrderSource = (typeof orderSourceEnum.enumValues)[number];
 export type ApprovalMethod = (typeof approvalMethodEnum.enumValues)[number];
+export type OrderItemStatus = (typeof orderItemStatusEnum.enumValues)[number];
 
 export const orders = pgTable(
   "orders",

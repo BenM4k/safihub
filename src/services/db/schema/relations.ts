@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { account, session, user } from "./auth";
+import { account, customerAddresses, session, user } from "./auth";
 import { fabrics, items, services } from "./catalog";
 import { courierZones, neighborhoods, zones } from "./coverage";
 import {
@@ -18,7 +18,22 @@ import { disputes, orderEvents, orderItems, orders } from "./order";
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  addresses: many(customerAddresses),
 }));
+
+export const customerAddressesRelations = relations(
+  customerAddresses,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [customerAddresses.userId],
+      references: [user.id],
+    }),
+    neighborhood: one(neighborhoods, {
+      fields: [customerAddresses.neighborhoodId],
+      references: [neighborhoods.id],
+    }),
+  })
+);
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
@@ -47,6 +62,7 @@ export const neighborhoodsRelations = relations(
     }),
     houses: many(houses),
     coverage: many(houseCoverage),
+    addresses: many(customerAddresses),
   })
 );
 

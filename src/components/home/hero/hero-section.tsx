@@ -3,8 +3,21 @@ import { ArrowRight, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { HeroStatusCard } from "./hero-status-card";
 
-export function HeroSection() {
+import { getRoleCta } from "@/lib/role-cta";
+import type { AuthenticatedUser } from "@/services/auth/guards";
+
+export function HeroSection({ user }: { user?: AuthenticatedUser | null } = {}) {
   const t = useTranslations("hero");
+
+  const cta = getRoleCta(user);
+  const ctaLabel =
+    cta.roleKey === "admin"
+      ? t("ctaAdmin")
+      : cta.roleKey === "courier"
+        ? t("ctaCourier")
+        : cta.roleKey === "house"
+          ? t("ctaHouse")
+          : t("ctaOrder");
 
   return (
     <section className="min-h-[calc(100dvh-4.5rem)] flex items-center py-12 md:py-16 bg-white overflow-hidden">
@@ -40,10 +53,10 @@ export function HeroSection() {
             {/* Primary Action Button (blue pill with arrow) */}
             <div className="pt-1">
               <Link
-                href="#catalogue"
+                href={cta.href}
                 className="bg-primary hover:bg-primary-hover text-white text-base font-semibold px-7 py-3.5 rounded-xl inline-flex items-center gap-2 shadow-sm transition-all group"
               >
-                <span>{t("ctaOrder")}</span>
+                <span>{ctaLabel}</span>
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
