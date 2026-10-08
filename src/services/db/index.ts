@@ -1,6 +1,6 @@
 import "server-only";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { Pool } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
 import * as schema from "./schema";
 
 /**
@@ -26,12 +26,12 @@ export function getDatabaseUrl(): string {
 }
 
 const connectionString = getDatabaseUrl();
-const client = neon(connectionString);
+const pool = new Pool({ connectionString });
 
 /**
  * SafiHub Drizzle ORM client with full modular relational schema.
  */
-export const db = drizzle(client, { schema });
+export const db = drizzle(pool, { schema });
 
 export type Database = typeof db;
 export { schema };

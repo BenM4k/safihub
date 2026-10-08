@@ -165,3 +165,12 @@ Each acceptance criterion from the product specification is mapped to an automat
 ### 22. Empty Form Submissions & Client-Side Validation (`react-hook-form` + Zod)
 - **Trap:** Forms using `<form action={formAction} noValidate>` with uncontrolled inputs bypass HTML5 validation without client-side checks. Submitting empty fields dispatches premature server action requests over mobile networks and can surface Next.js dev overlay crashes (`segment-explorer-node.js` module factory unavailable in `ErroredHtml`), resulting in forms that appear to submit with no visible error feedback.
 - **Fix:** Use `react-hook-form` with `@hookform/resolvers/zod` and centralized Zod schemas (`src/lib/validations/`). Empty or invalid inputs are caught client-side before any network dispatch, displaying immediate localized inline errors (`next-intl`).
+
+### 23. Admin Dispatch Zone Compatibility & AC 20
+- **Trap:** Assigning a pickup or delivery mission in `/admin/dispatch` to a courier whose covered zones do not include both the customer's neighborhood zone and the laundry house's neighborhood zone.
+- **Fix:** Both the dispatch service (`assignMissionToCourier`) and query (`getEligibleCouriersForZones`) enforce dual-zone coverage per AC 20. Only couriers covering both zones are presented in the dispatch assignment dropdown; attempting to force-assign an ineligible courier triggers an immediate rejection Result.
+
+### 24. Neon HTTP Driver vs. Multi-Query Transactions
+- **Trap:** The default `@neondatabase/serverless` HTTP connection (`neon()`) does not support interactive transactions (`db.transaction()`), causing multi-statement writes to execute non-atomically or fail.
+- **Fix:** SafiHub instantiates Drizzle using `Pool` from `@neondatabase/serverless` and `drizzle-orm/neon-serverless`, which supports full interactive transactions across multi-statement flows (e.g. `insertOrderWithDetails`, staff account creation with credentials and house member records).
+

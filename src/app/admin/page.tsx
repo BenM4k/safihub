@@ -1,26 +1,45 @@
 import { getTranslations } from "next-intl/server";
-import { ShieldCheck } from "lucide-react";
-
+import { getAdminMetricsSummary } from "@/services/admin";
+import { MetricsGrid } from "@/components/admin/dashboard/metrics-grid";
+import { QuickActions } from "@/components/admin/dashboard/quick-actions";
 
 export default async function AdminPage() {
-  const t = await getTranslations("portal");
+  const t = await getTranslations("admin.dashboard");
+  const metricsResult = await getAdminMetricsSummary();
+
+  const metrics = metricsResult.ok
+    ? metricsResult.value
+    : {
+        totalOrders: 0,
+        ordersByStatus: {},
+        ordersPendingAcceptance: 0,
+        activeDisputes: 0,
+        pendingCoverageRequests: 0,
+        activeHousesCount: 0,
+        activeCouriersCount: 0,
+        totalCashCollectedCDF: 0,
+        unassignedMissionsCount: 0,
+      };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 bg-white rounded-2xl border border-slate-200/90 shadow-xs">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 mb-2">
-            <ShieldCheck className="size-3.5" />
-            <span>Admin Clearance</span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            {t("adminTitle")}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {t("adminSubtitle")}
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-black text-heading tracking-tight">
+          {t("title")}
+        </h1>
+        <p className="text-xs text-muted-foreground mt-1">
+          {t("subtitle")}
+        </p>
       </div>
+
+      {!metricsResult.ok && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-destructive">
+          Erreur lors du chargement des indicateurs : {metricsResult.error}
+        </div>
+      )}
+
+      <MetricsGrid metrics={metrics} />
+      <QuickActions />
     </div>
   );
 }
