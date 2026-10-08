@@ -52,7 +52,7 @@ SafiHub follows modern Next.js 16.4 and React 19 architecture:
 - **Push `"use client"` to Leaves:** Wrap only the interactive leaf elements (e.g. cart quantity stepper, offline mission sync toggle, camera capture modal) with `"use client"`. Never convert an entire page into a Client Component.
 - **Server Data Fetching:** Never fetch data in a Client Component if it can be fetched on the server and passed down as props.
 - **Async Route Params:** In Next.js 16, route parameters and query strings are promises. Always `await params` and `await searchParams` before accessing properties.
-- **React 19 Actions:** Use `useActionState` and `useFormStatus` for form submissions instead of manual loading and error states.
+- **Form Architecture & Validation (`react-hook-form` + `Zod`):** Interactive forms use `react-hook-form` with `@hookform/resolvers/zod` and centralized Zod schemas (`src/lib/validations/`) for instant client-side validation. Empty or invalid submissions are blocked before dispatching network requests, displaying localized inline errors (`next-intl`). Valid data dispatches to Server Actions wrapped in React 19 transitions (`useTransition`).
 - **Suspense Boundaries:** Wrap dynamic request-time reads tightly in `<Suspense>` so the surrounding page shell prerenders as a static shell.
 
 ---
@@ -61,6 +61,7 @@ SafiHub follows modern Next.js 16.4 and React 19 architecture:
 
 - **Screen Dimensions:** Optimized for small viewports starting at **360px width** (typical low-end Android smartphones running Chrome or Samsung Internet).
 - **Touch Targets:** All interactive controls (buttons, quantity toggles, slot selectors) must maintain a minimum touch target size of **44px $\times$ 44px**.
+- **Input Typography (16px Mobile Minimum):** All text inputs, email, password, phone, number, and textarea fields must maintain a minimum font size of **16px (`1rem` / `text-base`)** on mobile viewports (< 640px) to prevent iOS Safari and mobile browsers from triggering unwanted automatic viewport zooming on focus.
 - **Performance Budget:** Customer ordering pages (neighborhood selection, house listing, cart, checkout) must transfer **under 200 KB** total payload and render interactively in under 5 seconds over a throttled 3G profile.
 - **Pull-to-Refresh over Polling:** To conserve expensive mobile data for users, inboxes and order lists use pull-to-refresh or explicit refresh buttons rather than aggressive background polling intervals.
 

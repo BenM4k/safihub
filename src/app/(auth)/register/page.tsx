@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { RegisterForm } from "@/components/auth/register-form/register-form";
+import { redirectIfAuthenticated } from "@/services/auth";
 
 export const metadata: Metadata = {
   title: "Créer un compte | SafiHub",
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
     "Créez votre compte SafiHub pour commander votre pressing à domicile à Bukavu.",
 };
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  await redirectIfAuthenticated();
   return <RegisterForm />;
 }

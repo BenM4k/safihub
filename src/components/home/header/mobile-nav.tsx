@@ -5,11 +5,27 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Menu, X, ArrowRight, Phone, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { logoutAction } from "@/actions/auth.actions";
+import { getRoleCta } from "@/lib/role-cta";
+import type { AuthenticatedUser } from "@/services/auth/guards";
 
-export function MobileNav() {
+export function MobileNav({ user }: { user?: AuthenticatedUser | null } = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const tNav = useTranslations("nav");
   const tCommon = useTranslations("common");
+
+  const cta = getRoleCta(user);
+  const ctaHref = cta.roleKey === "guest" || cta.roleKey === "customer" ? "/#catalogue" : cta.href;
+  const ctaLabel =
+    cta.roleKey === "admin"
+      ? tNav("adminPortal")
+      : cta.roleKey === "courier"
+        ? tNav("courierPortal")
+        : cta.roleKey === "house"
+          ? tNav("housePortal")
+          : tCommon("orderNow");
+
+  const isAuthenticated = Boolean(user && !user.isGuest);
 
   const toggle = () => setIsOpen((prev) => !prev);
   const close = () => setIsOpen(false);
@@ -79,16 +95,29 @@ export function MobileNav() {
               <span>{tCommon("supportBukavu")}</span>
             </div>
             <Button asChild variant="primary" size="lg" className="w-full">
-              <Link href="/#catalogue" onClick={close}>
+              <Link href={ctaHref} onClick={close}>
                 <Sparkles className="size-4 mr-1" />
-                {tCommon("orderNow")}
+                {ctaLabel}
               </Link>
             </Button>
-            <Button asChild variant="outline" size="sm" className="w-full">
-              <Link href="/login" onClick={close}>
-                {tCommon("partnerPortal")}
-              </Link>
-            </Button>
+            {isAuthenticated ? (
+              <form action={logoutAction} className="w-full">
+                <Button
+                  type="submit"
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  {tNav("logout")}
+                </Button>
+              </form>
+            ) : (
+              <Button asChild variant="outline" size="sm" className="w-full">
+                <Link href="/login" onClick={close}>
+                  {tCommon("partnerPortal")}
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       )}

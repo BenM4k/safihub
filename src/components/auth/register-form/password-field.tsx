@@ -2,18 +2,32 @@
 
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useTranslations } from "next-intl";
+import {
+  useWatch,
+  type Control,
+  type UseFormRegisterReturn,
+} from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordCriteria } from "./password-criteria";
+import type { RegisterFormValues } from "@/lib/validations/auth.schema";
 
 interface PasswordFieldProps {
   error?: string;
-  value: string;
-  onChange: (val: string) => void;
+  control: Control<RegisterFormValues>;
+  registration: UseFormRegisterReturn;
 }
 
-export function PasswordField({ error, value, onChange }: PasswordFieldProps) {
+export function PasswordField({
+  error,
+  control,
+  registration,
+}: PasswordFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const t = useTranslations("auth");
+
+  const value = useWatch({ control, name: "password" }) || "";
 
   const checks = {
     hasLower: /[a-z]/.test(value),
@@ -26,21 +40,19 @@ export function PasswordField({ error, value, onChange }: PasswordFieldProps) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor="password" className="text-xs sm:text-sm font-semibold">
-        Create your password <span className="text-red-500">*</span>
+        {t("passwordLabel")} <span className="text-red-500">*</span>
       </Label>
 
       <div className="relative">
         <Input
           id="password"
-          name="password"
           type={showPassword ? "text" : "password"}
-          placeholder="Type your password"
+          placeholder={t("passwordPlaceholder")}
           autoComplete="new-password"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
           hasError={Boolean(error)}
           className="pr-10"
           aria-describedby={error ? "password-error" : undefined}
+          {...registration}
         />
         <button
           type="button"

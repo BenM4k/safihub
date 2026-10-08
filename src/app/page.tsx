@@ -7,6 +7,7 @@ import { ProductsCatalogue } from "@/components/home/products-catalogue/products
 import { Testimonials } from "@/components/home/testimonials/testimonials";
 import { FaqSection } from "@/components/home/faq/faq-section";
 import { Footer } from "@/components/home/footer/footer";
+import { getCurrentUser } from "@/services/auth";
 
 /**
  * SafiHub Master Homepage
@@ -15,14 +16,16 @@ import { Footer } from "@/components/home/footer/footer";
  * - Solid palette with brand royal indigo #2824D5, slate #101828 (zero gradients)
  * - Calibrated typography and mobile-first responsive layout
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await getCurrentUser();
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary-soft selection:text-primary">
-      <Navbar />
+      <Navbar user={user} />
       <main className="flex-1">
-        <HeroSection />
-        <TrustBanner />
-        <ServicesTabs />
+        <HeroSection user={user} />
+        <TrustBanner user={user} />
+        <ServicesTabs user={user} />
         <HowItWorks />
         <ProductsCatalogue />
         <Testimonials />

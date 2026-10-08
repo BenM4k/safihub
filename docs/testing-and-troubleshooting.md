@@ -161,3 +161,7 @@ Each acceptance criterion from the product specification is mapped to an automat
 ### 21. React Server Conditions vs. Client Navigation in Vitest
 - **Trap:** Running `NODE_OPTIONS='--conditions=react-server'` on test files that import `next/navigation` fails with `_react.default.createContext is not a function` because the React Server build intentionally omits client context APIs.
 - **Fix:** Only pass `--conditions=react-server` when testing pure Server Components or isolated modules that import `server-only`. For tests importing navigation or client-compatible hooks, run Vitest normally without `--conditions=react-server`.
+
+### 22. Empty Form Submissions & Client-Side Validation (`react-hook-form` + Zod)
+- **Trap:** Forms using `<form action={formAction} noValidate>` with uncontrolled inputs bypass HTML5 validation without client-side checks. Submitting empty fields dispatches premature server action requests over mobile networks and can surface Next.js dev overlay crashes (`segment-explorer-node.js` module factory unavailable in `ErroredHtml`), resulting in forms that appear to submit with no visible error feedback.
+- **Fix:** Use `react-hook-form` with `@hookform/resolvers/zod` and centralized Zod schemas (`src/lib/validations/`). Empty or invalid inputs are caught client-side before any network dispatch, displaying immediate localized inline errors (`next-intl`).

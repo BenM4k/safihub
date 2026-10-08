@@ -1,44 +1,48 @@
 "use client";
 
-import { useActionState, useState, Suspense } from "react";
+import { useState, useTransition, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ResetPasswordHeader } from "./reset-password-header";
-import { resetPasswordAction, initialAuthState } from "@/actions/auth.actions";
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  const t = useTranslations("auth");
-
-  return (
-    <Button
-      type="submit"
-      variant="primary"
-      size="pill"
-      disabled={pending}
-      className="w-full text-base font-semibold shadow-xs transition-transform"
-    >
-      {pending ? t("resetting") : t("resetSubmit")}
-    </Button>
-  );
-}
+import { resetPasswordAction } from "@/actions/auth.actions";
+import {
+  getResetPasswordSchema,
+  initialAuthState,
+  type ResetPasswordFormValues,
+} from "@/lib/validations/auth.schema";
 
 function ResetPasswordFormContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
-  const [state, formAction] = useActionState(
-    resetPasswordAction,
-    initialAuthState
-  );
   const t = useTranslations("auth");
 
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const schema = getResetPasswordSchema(
+    (k) => t(k as Parameters<typeof t>[0])
+  );
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      token,
+      password: "",
+      confirmPassword: "",
+    },
+    mode: "onSubmit",
+  });
 
   if (!token) {
     return (
@@ -58,16 +62,39 @@ function ResetPasswordFormContent() {
     );
   }
 
-  return (
-    <form action={formAction} noValidate className="space-y-4">
-      <input type="hidden" name="token" value={token} />
+  const onSubmit = (data: ResetPasswordFormValues) => {
+    setServerError(null);
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("token", data.token);
+      formData.append("password", data.password);
+      formData.append("confirmPassword", data.confirmPassword);
 
-      {state.errors?.form && (
+      const res = await resetPasswordAction(initialAuthState, formData);
+      if (!res.success && res.errors) {
+        if (res.errors.form) {
+          setServerError(res.errors.form);
+        }
+        if (res.errors.password) {
+          setError("password", { message: res.errors.password });
+        }
+        if (res.errors.confirmPassword) {
+          setError("confirmPassword", { message: res.errors.confirmPassword });
+        }
+      }
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      <input type="hidden" {...register("token")} value={token} />
+
+      {serverError && (
         <div
           role="alert"
           className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-medium"
         >
-          {state.errors.form}
+          {serverError}
         </div>
       )}
 
@@ -78,18 +105,16 @@ function ResetPasswordFormContent() {
         </Label>
         <Input
           id="new-password"
-          name="password"
           type="password"
           autoComplete="new-password"
           placeholder={t("passwordPlaceholder")}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          hasError={Boolean(state.errors?.password)}
-          aria-describedby={state.errors?.password ? "pass-error" : undefined}
+          hasError={Boolean(errors.password)}
+          aria-describedby={errors.password ? "pass-error" : undefined}
+          {...register("password")}
         />
-        {state.errors?.password && (
+        {errors.password?.message && (
           <p id="pass-error" className="text-xs font-medium text-red-500 mt-1">
-            {state.errors.password}
+            {errors.password.message}
           </p>
         )}
       </div>
@@ -101,24 +126,30 @@ function ResetPasswordFormContent() {
         </Label>
         <Input
           id="confirm-new-password"
-          name="confirmPassword"
           type="password"
           autoComplete="new-password"
           placeholder={t("confirmPasswordPlaceholder")}
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          hasError={Boolean(state.errors?.confirmPassword)}
-          aria-describedby={state.errors?.confirmPassword ? "confirm-error" : undefined}
+          hasError={Boolean(errors.confirmPassword)}
+          aria-describedby={errors.confirmPassword ? "confirm-error" : undefined}
+          {...register("confirmPassword")}
         />
-        {state.errors?.confirmPassword && (
+        {errors.confirmPassword?.message && (
           <p id="confirm-error" className="text-xs font-medium text-red-500 mt-1">
-            {state.errors.confirmPassword}
+            {errors.confirmPassword.message}
           </p>
         )}
       </div>
 
       <div className="pt-2">
-        <SubmitButton />
+        <Button
+          type="submit"
+          variant="primary"
+          size="pill"
+          disabled={isPending}
+          className="w-full text-base font-semibold shadow-xs transition-transform"
+        >
+          {isPending ? t("resetting") : t("resetSubmit")}
+        </Button>
       </div>
 
       <div className="mt-6 text-center text-sm text-slate-600">

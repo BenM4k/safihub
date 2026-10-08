@@ -213,3 +213,75 @@ export async function guardHouseRoute(
 
   return result.value;
 }
+
+/**
+ * Retrieves the currently authenticated user if a valid session exists.
+ * Returns null if unauthenticated, blocked, or banned.
+ */
+export async function getCurrentUser(
+  options?: { headers?: Headers }
+): Promise<AuthenticatedUser | null> {
+  try {
+    const reqHeaders = options?.headers ?? (await headers());
+    const session = await auth.api.getSession({ headers: reqHeaders });
+
+    if (!session?.user) {
+      return null;
+    }
+
+    const rawUser = session.user as Record<string, unknown>;
+    const userRole = (rawUser.role as UserRole) || "customer";
+    const userStatus = (rawUser.status as string) || "active";
+    const isBanned = Boolean(rawUser.banned);
+
+    if (userStatus === "blocked" || isBanned) {
+      return null;
+    }
+
+    return {
+      id: session.user.id,
+      email: session.user.email,
+      name: session.user.name,
+      role: userRole,
+      status: userStatus,
+      isGuest: Boolean(rawUser.isGuest),
+      contactPhone: (rawUser.contactPhone as string) || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Route guard only for login and registration pages (/login, /register).
+ * Excluded from password reset pages so authenticated users can access
+ * valid reset-password links.
+ * If the user is already authenticated (and not a guest), redirects them
+ * to their respective role dashboard or the home page.
+ */
+export async function redirectIfAuthenticated(options?: {
+  headers?: Headers;
+  redirectTo?: string;
+}): Promise<void> {
+  const user = await getCurrentUser(options);
+  if (!user || user.isGuest) {
+    return;
+  }
+
+  if (options?.redirectTo) {
+    redirect(options.redirectTo);
+  }
+
+  switch (user.role) {
+    case "admin":
+      redirect("/admin");
+    case "courier":
+      redirect("/courier");
+    case "house":
+      redirect("/house");
+    case "customer":
+    default:
+      redirect("/");
+  }
+}
+

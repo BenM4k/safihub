@@ -1,15 +1,22 @@
 "use client";
 
-import { useActionState, Suspense } from "react";
+import { useState, useTransition, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoginHeader } from "./login-header";
 import { LoginSubmitButton } from "./login-submit-button";
 import { LoginSwitch } from "./login-switch";
-import { loginAction, initialAuthState } from "@/actions/auth.actions";
+import { loginAction } from "@/actions/auth.actions";
+import {
+  getLoginSchema,
+  initialAuthState,
+  type LoginFormValues,
+} from "@/lib/validations/auth.schema";
 
 function LoginSuccessBanner() {
   const searchParams = useSearchParams();
@@ -29,8 +36,47 @@ function LoginSuccessBanner() {
 }
 
 export function LoginForm() {
-  const [state, formAction] = useActionState(loginAction, initialAuthState);
   const t = useTranslations("auth");
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const schema = getLoginSchema((k) => t(k as Parameters<typeof t>[0]));
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    mode: "onSubmit",
+  });
+
+  const onSubmit = (data: LoginFormValues) => {
+    setServerError(null);
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+
+      const res = await loginAction(initialAuthState, formData);
+      if (!res.success && res.errors) {
+        if (res.errors.form) {
+          setServerError(res.errors.form);
+        }
+        if (res.errors.email) {
+          setError("email", { message: res.errors.email });
+        }
+        if (res.errors.password) {
+          setError("password", { message: res.errors.password });
+        }
+      }
+    });
+  };
 
   return (
     <div className="w-full max-w-sm sm:max-w-md mx-auto">
@@ -40,16 +86,16 @@ export function LoginForm() {
         <LoginSuccessBanner />
       </Suspense>
 
-      {state.errors?.form && (
+      {serverError && (
         <div
           role="alert"
           className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-medium"
         >
-          {state.errors.form}
+          {serverError}
         </div>
       )}
 
-      <form action={formAction} noValidate className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
         {/* Email field */}
         <div className="space-y-1.5">
           <Label htmlFor="login-email" className="text-xs sm:text-sm font-semibold">
@@ -57,16 +103,16 @@ export function LoginForm() {
           </Label>
           <Input
             id="login-email"
-            name="email"
             type="email"
             autoComplete="email"
             placeholder={t("emailPlaceholder")}
-            hasError={Boolean(state.errors?.email)}
-            aria-describedby={state.errors?.email ? "email-error" : undefined}
+            hasError={Boolean(errors.email)}
+            aria-describedby={errors.email ? "email-error" : undefined}
+            {...register("email")}
           />
-          {state.errors?.email && (
+          {errors.email?.message && (
             <p id="email-error" className="text-xs font-medium text-red-500 mt-1">
-              {state.errors.email}
+              {errors.email.message}
             </p>
           )}
         </div>
@@ -86,23 +132,23 @@ export function LoginForm() {
           </div>
           <Input
             id="login-password"
-            name="password"
             type="password"
             autoComplete="current-password"
             placeholder={t("passwordPlaceholder")}
-            hasError={Boolean(state.errors?.password)}
-            aria-describedby={state.errors?.password ? "password-error" : undefined}
+            hasError={Boolean(errors.password)}
+            aria-describedby={errors.password ? "password-error" : undefined}
+            {...register("password")}
           />
-          {state.errors?.password && (
+          {errors.password?.message && (
             <p id="password-error" className="text-xs font-medium text-red-500 mt-1">
-              {state.errors.password}
+              {errors.password.message}
             </p>
           )}
         </div>
 
         {/* Primary CTA */}
         <div className="pt-2">
-          <LoginSubmitButton />
+          <LoginSubmitButton isPending={isPending} />
         </div>
       </form>
 

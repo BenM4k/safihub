@@ -6,10 +6,15 @@ import { Button } from "@/components/ui/button";
 
 interface RegisterSubmitButtonProps {
   isDisabled?: boolean;
+  isPending?: boolean;
 }
 
-export function RegisterSubmitButton({ isDisabled }: RegisterSubmitButtonProps) {
-  const { pending } = useFormStatus();
+export function RegisterSubmitButton({
+  isDisabled,
+  isPending,
+}: RegisterSubmitButtonProps) {
+  const formStatus = useFormStatus();
+  const pending = isPending ?? formStatus.pending;
   const t = useTranslations("auth");
 
   return (

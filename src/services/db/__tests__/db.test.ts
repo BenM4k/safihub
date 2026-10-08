@@ -68,6 +68,7 @@ describe("Database Architecture & Schema", () => {
     expect(schema.userRelations).toBeDefined();
     expect(schema.zonesRelations).toBeDefined();
     expect(schema.neighborhoodsRelations).toBeDefined();
+    expect(schema.customerAddressesRelations).toBeDefined();
   });
 });
 

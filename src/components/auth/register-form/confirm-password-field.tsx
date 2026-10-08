@@ -2,21 +2,22 @@
 
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useTranslations } from "next-intl";
+import type { UseFormRegisterReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface ConfirmPasswordFieldProps {
   error?: string;
-  value: string;
-  onChange: (val: string) => void;
+  registration: UseFormRegisterReturn;
 }
 
 export function ConfirmPasswordField({
   error,
-  value,
-  onChange,
+  registration,
 }: ConfirmPasswordFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const t = useTranslations("auth");
 
   return (
     <div className="space-y-1.5">
@@ -24,21 +25,19 @@ export function ConfirmPasswordField({
         htmlFor="confirmPassword"
         className="text-xs sm:text-sm font-semibold"
       >
-        Retype your password <span className="text-red-500">*</span>
+        {t("confirmPasswordLabel")} <span className="text-red-500">*</span>
       </Label>
 
       <div className="relative">
         <Input
           id="confirmPassword"
-          name="confirmPassword"
           type={showPassword ? "text" : "password"}
-          placeholder="Retype your password"
+          placeholder={t("confirmPasswordPlaceholder")}
           autoComplete="new-password"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
           hasError={Boolean(error)}
           className="pr-10"
           aria-describedby={error ? "confirm-error" : undefined}
+          {...registration}
         />
         <button
           type="button"

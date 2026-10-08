@@ -10,7 +10,7 @@ Rules
 - product-spec.md is the source of truth. Never change anything marked Decided.
   If the spec is ambiguous or contradicts itself, ask instead of guessing.
 - Stack: Next.js (App Router, TypeScript), Drizzle ORM, PostgreSQL on Neon,
-  better-auth, Zod, Zustand, next-intl, Vitest. Do not add other dependencies without asking.
+  better-auth, Zod, react-hook-form, Zustand, next-intl, Vitest. Do not add other dependencies without asking.
 - All business rules live in server-side domain code (Server Actions or route
   handlers calling shared functions). The UI never computes prices, fees or
   availability. The client sends identifiers and quantities only.

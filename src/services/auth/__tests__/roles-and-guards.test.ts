@@ -6,7 +6,13 @@ import {
   loginCustomer,
   registerCustomer,
 } from "../auth.service";
-import { requireRole, requireHouseAccess } from "../guards";
+import {
+  requireRole,
+  requireHouseAccess,
+  getCurrentUser,
+  redirectIfAuthenticated,
+} from "../guards";
+import { getRoleCta } from "@/lib/role-cta";
 import { auth } from "../auth";
 import { addHouseMember, db, schema } from "@/dal";
 
@@ -262,4 +268,134 @@ describe("Roles, Permissions & Area Guards", () => {
       expect(restoredLogin.ok).toBe(true);
     });
   });
+
+  describe("Session Guards & Role CTA Resolution", () => {
+    it("getCurrentUser returns null when unauthenticated and user details when authenticated", async () => {
+      // 1. Unauthenticated with empty headers returns null
+      const unauth = await getCurrentUser({ headers: new Headers() });
+      expect(unauth).toBeNull();
+
+      // 2. Authenticated user returns user info
+      const email = `session-check-${uniqueId()}@safihub.cd`;
+      const password = "Password123!";
+      await registerCustomer({
+        name: "Session User",
+        email,
+        password,
+        phone: "+243991234567",
+        consent: true,
+      });
+
+      const headers = await loginAndGetHeaders(email, password);
+      const user = await getCurrentUser({ headers });
+      expect(user).not.toBeNull();
+      expect(user?.email).toBe(email);
+      expect(user?.role).toBe("customer");
+    });
+
+    it("getRoleCta resolves correct URLs and roles for guest, customer, admin, courier, and house", () => {
+      expect(getRoleCta(null)).toEqual({
+        href: "#catalogue",
+        isExternalOrAnchor: true,
+        roleKey: "guest",
+      });
+
+      expect(
+        getRoleCta({
+          id: "1",
+          email: "a@a.com",
+          name: "Guest",
+          role: "customer",
+          status: "active",
+          isGuest: true,
+        })
+      ).toEqual({
+        href: "#catalogue",
+        isExternalOrAnchor: true,
+        roleKey: "guest",
+      });
+
+      expect(
+        getRoleCta({
+          id: "1",
+          email: "c@c.com",
+          name: "Customer",
+          role: "customer",
+          status: "active",
+          isGuest: false,
+        })
+      ).toEqual({
+        href: "#catalogue",
+        isExternalOrAnchor: true,
+        roleKey: "customer",
+      });
+
+      expect(
+        getRoleCta({
+          id: "2",
+          email: "adm@adm.com",
+          name: "Admin",
+          role: "admin",
+          status: "active",
+          isGuest: false,
+        })
+      ).toEqual({
+        href: "/admin",
+        isExternalOrAnchor: false,
+        roleKey: "admin",
+      });
+
+      expect(
+        getRoleCta({
+          id: "3",
+          email: "cou@cou.com",
+          name: "Courier",
+          role: "courier",
+          status: "active",
+          isGuest: false,
+        })
+      ).toEqual({
+        href: "/courier",
+        isExternalOrAnchor: false,
+        roleKey: "courier",
+      });
+
+      expect(
+        getRoleCta({
+          id: "4",
+          email: "hse@hse.com",
+          name: "House",
+          role: "house",
+          status: "active",
+          isGuest: false,
+        })
+      ).toEqual({
+        href: "/house",
+        isExternalOrAnchor: false,
+        roleKey: "house",
+      });
+    });
+
+    it("redirectIfAuthenticated does nothing for guest/unauthenticated and redirects authenticated users", async () => {
+      // 1. Unauthenticated -> does not throw redirect
+      await expect(
+        redirectIfAuthenticated({ headers: new Headers() })
+      ).resolves.toBeUndefined();
+
+      // 2. Authenticated customer -> triggers redirect
+      const email = `redirect-check-${uniqueId()}@safihub.cd`;
+      const password = "Password123!";
+      await registerCustomer({
+        name: "Redirect User",
+        email,
+        password,
+        phone: "+243997654321",
+        consent: true,
+      });
+
+      const headers = await loginAndGetHeaders(email, password);
+      await expect(redirectIfAuthenticated({ headers })).rejects.toThrow();
+    });
+  });
 });
+

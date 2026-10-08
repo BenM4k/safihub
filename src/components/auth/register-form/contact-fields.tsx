@@ -1,40 +1,38 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+import type { UseFormRegister, FieldErrors } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { RegisterFormValues } from "@/lib/validations/auth.schema";
 
 interface ContactFieldsProps {
-  emailDefault?: string;
-  phoneDefault?: string;
-  errors?: {
-    email?: string;
-    phone?: string;
-  };
+  register: UseFormRegister<RegisterFormValues>;
+  errors: FieldErrors<RegisterFormValues>;
 }
 
-export function ContactFields({
-  emailDefault = "",
-  phoneDefault = "",
-  errors,
-}: ContactFieldsProps) {
+export function ContactFields({ register, errors }: ContactFieldsProps) {
+  const t = useTranslations("auth");
+
   return (
     <div className="space-y-3.5">
       {/* Email */}
       <div className="space-y-1.5">
         <Label htmlFor="register-email" className="text-xs sm:text-sm font-semibold">
-          Email <span className="text-red-500">*</span>
+          {t("emailLabel")} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="register-email"
-          name="email"
           type="email"
-          placeholder="Enter your email"
+          placeholder={t("emailPlaceholder")}
           autoComplete="email"
-          defaultValue={emailDefault}
-          hasError={Boolean(errors?.email)}
-          aria-describedby={errors?.email ? "email-error" : undefined}
+          hasError={Boolean(errors.email)}
+          aria-describedby={errors.email ? "email-error" : undefined}
+          {...register("email")}
         />
-        {errors?.email && (
+        {errors.email?.message && (
           <p id="email-error" className="text-xs font-medium text-red-500">
-            {errors.email}
+            {errors.email.message}
           </p>
         )}
       </div>
@@ -42,21 +40,20 @@ export function ContactFields({
       {/* Phone number */}
       <div className="space-y-1.5">
         <Label htmlFor="phone" className="text-xs sm:text-sm font-semibold">
-          Phone number <span className="text-red-500">*</span>
+          {t("phoneLabel")} <span className="text-red-500">*</span>
         </Label>
         <Input
           id="phone"
-          name="phone"
           type="tel"
-          placeholder="Enter your phone number (ex: +243 999 000 123)"
+          placeholder={t("phonePlaceholder")}
           autoComplete="tel"
-          defaultValue={phoneDefault}
-          hasError={Boolean(errors?.phone)}
-          aria-describedby={errors?.phone ? "phone-error" : undefined}
+          hasError={Boolean(errors.phone)}
+          aria-describedby={errors.phone ? "phone-error" : undefined}
+          {...register("phone")}
         />
-        {errors?.phone && (
+        {errors.phone?.message && (
           <p id="phone-error" className="text-xs font-medium text-red-500">
-            {errors.phone}
+            {errors.phone.message}
           </p>
         )}
       </div>
