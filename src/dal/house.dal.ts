@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { db, schema } from "./db";
 
 export interface HouseMembershipInfo {
@@ -337,8 +337,16 @@ export async function createHouseClosure(data: {
   });
 }
 
-export async function deleteHouseClosure(id: string): Promise<void> {
-  await db.delete(schema.houseClosures).where(eq(schema.houseClosures.id, id));
+export async function deleteHouseClosure(id: string, houseId?: string): Promise<boolean> {
+  const conditions = [eq(schema.houseClosures.id, id)];
+  if (houseId) {
+    conditions.push(eq(schema.houseClosures.houseId, houseId));
+  }
+  const result = await db
+    .delete(schema.houseClosures)
+    .where(and(...conditions))
+    .returning({ id: schema.houseClosures.id });
+  return result.length > 0;
 }
 
 export async function getHouseExclusions(houseId: string): Promise<HouseExclusionRecord[]> {
@@ -374,8 +382,16 @@ export async function createHouseExclusion(data: {
   });
 }
 
-export async function deleteHouseExclusion(id: string): Promise<void> {
-  await db.delete(schema.houseExclusions).where(eq(schema.houseExclusions.id, id));
+export async function deleteHouseExclusion(id: string, houseId?: string): Promise<boolean> {
+  const conditions = [eq(schema.houseExclusions.id, id)];
+  if (houseId) {
+    conditions.push(eq(schema.houseExclusions.houseId, houseId));
+  }
+  const result = await db
+    .delete(schema.houseExclusions)
+    .where(and(...conditions))
+    .returning({ id: schema.houseExclusions.id });
+  return result.length > 0;
 }
 
 export async function getHouseCoverage(houseId: string): Promise<HouseCoverageRecord[]> {
@@ -417,3 +433,313 @@ export async function upsertHouseCoverage(data: {
       },
     });
 }
+
+export interface HouseCatalogueItemRecord {
+  id: string | null; // houseItems.id
+  houseId: string;
+  serviceId: string;
+  serviceNameFr: string;
+  serviceNameSw: string;
+  serviceSlug: string;
+  itemId: string;
+  itemNameFr: string;
+  itemNameSw: string;
+  itemCategory: string | null;
+  fabricId: string;
+  fabricNameFr: string;
+  fabricNameSw: string;
+  price: number;
+  currency: "CDF" | "USD";
+  isActive: boolean;
+  hasCustomPrice: boolean;
+}
+
+/**
+ * Returns master catalogue cross-joined with current house pricing (Task 4.4).
+ */
+export async function getHouseCatalogueItems(
+  houseId: string
+): Promise<HouseCatalogueItemRecord[]> {
+  const [activeServices, activeItems, activeFabrics, housePricing] =
+    await Promise.all([
+      db
+        .select()
+        .from(schema.services)
+        .where(eq(schema.services.isActive, true))
+        .orderBy(asc(schema.services.sortOrder)),
+      db
+        .select()
+        .from(schema.items)
+        .where(eq(schema.items.isActive, true))
+        .orderBy(asc(schema.items.sortOrder)),
+      db
+        .select()
+        .from(schema.fabrics)
+        .where(eq(schema.fabrics.isActive, true))
+        .orderBy(asc(schema.fabrics.sortOrder)),
+      db
+        .select()
+        .from(schema.houseItems)
+        .where(eq(schema.houseItems.houseId, houseId)),
+    ]);
+
+  const pricingMap = new Map<string, typeof housePricing[number]>();
+  for (const hp of housePricing) {
+    const key = `${hp.serviceId}_${hp.itemId}_${hp.fabricId}`;
+    pricingMap.set(key, hp);
+  }
+
+  const result: HouseCatalogueItemRecord[] = [];
+
+  for (const s of activeServices) {
+    for (const it of activeItems) {
+      for (const f of activeFabrics) {
+        const key = `${s.id}_${it.id}_${f.id}`;
+        const existing = pricingMap.get(key);
+
+        result.push({
+          id: existing ? existing.id : null,
+          houseId,
+          serviceId: s.id,
+          serviceNameFr: s.nameFr,
+          serviceNameSw: s.nameSw,
+          serviceSlug: s.slug,
+          itemId: it.id,
+          itemNameFr: it.nameFr,
+          itemNameSw: it.nameSw,
+          itemCategory: it.category,
+          fabricId: f.id,
+          fabricNameFr: f.nameFr,
+          fabricNameSw: f.nameSw,
+          price: existing ? existing.price : 0,
+          currency: existing ? existing.currency : "CDF",
+          isActive: existing ? existing.isActive : false,
+          hasCustomPrice: Boolean(existing),
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Sets house price & availability for a master item combination.
+ * Invariant: Frozen prices on existing orders are never affected.
+ */
+export async function upsertHouseItemPrice(params: {
+  houseId: string;
+  serviceId: string;
+  itemId: string;
+  fabricId: string;
+  price: number;
+  isActive: boolean;
+  currency?: "CDF" | "USD";
+}): Promise<void> {
+  await db
+    .insert(schema.houseItems)
+    .values({
+      houseId: params.houseId,
+      serviceId: params.serviceId,
+      itemId: params.itemId,
+      fabricId: params.fabricId,
+      price: params.price,
+      currency: params.currency ?? "CDF",
+      isActive: params.isActive,
+    })
+    .onConflictDoUpdate({
+      target: [
+        schema.houseItems.houseId,
+        schema.houseItems.serviceId,
+        schema.houseItems.itemId,
+        schema.houseItems.fabricId,
+      ],
+      set: {
+        price: params.price,
+        isActive: params.isActive,
+        currency: params.currency ?? "CDF",
+        updatedAt: new Date(),
+      },
+    });
+}
+
+/**
+ * Creates a catalogue addition request from a house (Task 4.4).
+ */
+export async function createHouseItemRequest(params: {
+  houseId: string;
+  requestedBy: string;
+  kind: "item" | "fabric";
+  name: string;
+  note?: string | null;
+}): Promise<void> {
+  await db.insert(schema.itemRequests).values({
+    houseId: params.houseId,
+    requestedBy: params.requestedBy,
+    kind: params.kind,
+    name: params.name.trim(),
+    note: params.note?.trim() ?? null,
+    status: "pending",
+  });
+}
+
+/**
+ * Lists catalogue addition requests submitted by a house.
+ */
+export async function getHouseItemRequests(
+  houseId: string
+): Promise<
+  Array<{
+    id: string;
+    kind: "item" | "fabric";
+    name: string;
+    note: string | null;
+    status: "pending" | "approved" | "rejected";
+    adminNote: string | null;
+    createdAt: Date;
+  }>
+> {
+  return db
+    .select({
+      id: schema.itemRequests.id,
+      kind: schema.itemRequests.kind,
+      name: schema.itemRequests.name,
+      note: schema.itemRequests.note,
+      status: schema.itemRequests.status,
+      adminNote: schema.itemRequests.adminNote,
+      createdAt: schema.itemRequests.createdAt,
+    })
+    .from(schema.itemRequests)
+    .where(eq(schema.itemRequests.houseId, houseId))
+    .orderBy(desc(schema.itemRequests.createdAt));
+}
+
+export interface HouseCoverageWithLimitsItem {
+  neighborhoodId: string;
+  neighborhoodName: string;
+  zoneId: string;
+  zoneName: string;
+  neighborhoodStatus: "served" | "paused" | "not_served";
+  distanceLevel: number | null;
+  isAllowedByDistance: boolean;
+  isCovered: boolean;
+}
+
+export interface HouseCoverageWithLimitsData {
+  houseId: string;
+  houseName: string;
+  houseNeighborhoodId: string;
+  houseZoneId: string | null;
+  effectiveMaxDistanceLevel: number;
+  items: HouseCoverageWithLimitsItem[];
+}
+
+/**
+ * Computes coverage options for a house taking the distance limit into account (Task 4.5).
+ * Done when: A house cannot select a neighborhood beyond its distance limit.
+ */
+export async function getHouseCoverageWithLimits(
+  houseId: string
+): Promise<HouseCoverageWithLimitsData | null> {
+  const [house] = await db
+    .select({
+      id: schema.houses.id,
+      name: schema.houses.name,
+      neighborhoodId: schema.houses.neighborhoodId,
+      maxDistanceLevel: schema.houses.maxDistanceLevel,
+    })
+    .from(schema.houses)
+    .where(eq(schema.houses.id, houseId))
+    .limit(1);
+
+  if (!house) return null;
+
+  const [houseNeighborhood] = await db
+    .select({
+      id: schema.neighborhoods.id,
+      zoneId: schema.neighborhoods.zoneId,
+    })
+    .from(schema.neighborhoods)
+    .where(eq(schema.neighborhoods.id, house.neighborhoodId))
+    .limit(1);
+
+  const [settings] = await db.select().from(schema.settings).limit(1);
+  const globalMaxDistance = settings?.maxCoverageDistanceLevel ?? 2;
+  const effectiveMaxDistance = house.maxDistanceLevel ?? globalMaxDistance;
+
+  const [allNeighborhoods, allZoneFees, existingCoverage] = await Promise.all([
+    db
+      .select({
+        id: schema.neighborhoods.id,
+        name: schema.neighborhoods.name,
+        zoneId: schema.neighborhoods.zoneId,
+        zoneName: schema.zones.name,
+        status: schema.neighborhoods.status,
+      })
+      .from(schema.neighborhoods)
+      .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
+      .orderBy(asc(schema.zones.name), asc(schema.neighborhoods.name)),
+    db
+      .select({
+        customerZoneId: schema.zoneFees.customerZoneId,
+        houseZoneId: schema.zoneFees.houseZoneId,
+        distanceLevel: schema.zoneFees.distanceLevel,
+      })
+      .from(schema.zoneFees),
+    db
+      .select({
+        neighborhoodId: schema.houseCoverage.neighborhoodId,
+        isActive: schema.houseCoverage.isActive,
+      })
+      .from(schema.houseCoverage)
+      .where(eq(schema.houseCoverage.houseId, houseId)),
+  ]);
+
+  const coverageMap = new Map<string, boolean>();
+  for (const c of existingCoverage) {
+    coverageMap.set(c.neighborhoodId, c.isActive);
+  }
+
+  const houseZoneId = houseNeighborhood?.zoneId ?? null;
+
+  const distanceMap = new Map<string, number>();
+  if (houseZoneId) {
+    for (const zf of allZoneFees) {
+      if (zf.houseZoneId === houseZoneId) {
+        distanceMap.set(zf.customerZoneId, zf.distanceLevel);
+      }
+    }
+  }
+
+  const items: HouseCoverageWithLimitsItem[] = allNeighborhoods.map((n) => {
+    // If in the same zone, distance level is 0 or whatever is in zoneFees
+    let distLevel = distanceMap.get(n.zoneId) ?? null;
+    if (distLevel === null && houseZoneId === n.zoneId) {
+      distLevel = 0;
+    }
+
+    const isAllowed =
+      distLevel !== null && distLevel <= effectiveMaxDistance;
+
+    return {
+      neighborhoodId: n.id,
+      neighborhoodName: n.name,
+      zoneId: n.zoneId,
+      zoneName: n.zoneName,
+      neighborhoodStatus: n.status,
+      distanceLevel: distLevel,
+      isAllowedByDistance: isAllowed,
+      isCovered: Boolean(coverageMap.get(n.id)),
+    };
+  });
+
+  return {
+    houseId: house.id,
+    houseName: house.name,
+    houseNeighborhoodId: house.neighborhoodId,
+    houseZoneId,
+    effectiveMaxDistanceLevel: effectiveMaxDistance,
+    items,
+  };
+}
+

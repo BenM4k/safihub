@@ -1,12 +1,10 @@
 import { guardHouseRoute } from "@/services/auth";
 import { getHouses } from "@/dal";
-import { getHouseDashboardData } from "@/services/house";
-import { AcceptanceQueue } from "@/components/house/dashboard/acceptance-queue";
-import { WorkloadMetrics } from "@/components/house/dashboard/workload-metrics";
-import { QuickShortcuts } from "@/components/house/dashboard/quick-shortcuts";
+import { getHouseCoverageData } from "@/services/house";
+import { CoverageManager } from "@/components/house/coverage/coverage-manager";
 import { getTranslations } from "next-intl/server";
 
-export default async function HouseDashboardPage() {
+export default async function HouseCoveragePage() {
   const authCtx = await guardHouseRoute();
   let houseId = authCtx.houseId || authCtx.primaryHouseId;
 
@@ -25,22 +23,19 @@ export default async function HouseDashboardPage() {
     );
   }
 
-  const t = await getTranslations("house.dashboard");
-  const dashboardRes = await getHouseDashboardData(houseId);
+  const t = await getTranslations("house.coverage");
+  const coverageRes = await getHouseCoverageData(houseId);
 
-  if (!dashboardRes.ok) {
+  if (!coverageRes.ok) {
     return (
       <div className="p-6 bg-rose-50 text-rose-700 rounded-2xl border border-rose-200 text-sm">
-        {dashboardRes.error}
+        {coverageRes.error}
       </div>
     );
   }
 
-  const metrics = dashboardRes.value;
-
   return (
-    <div className="space-y-6 sm:space-y-8">
-      {/* Title */}
+    <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
           {t("title")}
@@ -50,14 +45,7 @@ export default async function HouseDashboardPage() {
         </p>
       </div>
 
-      {/* Orders waiting for acceptance with remaining time */}
-      <AcceptanceQueue orders={metrics.waitingAcceptanceOrders} />
-
-      {/* Today's workload metrics & capacity */}
-      <WorkloadMetrics metrics={metrics} />
-
-      {/* Quick shortcuts */}
-      <QuickShortcuts />
+      <CoverageManager coverageData={coverageRes.value} />
     </div>
   );
 }

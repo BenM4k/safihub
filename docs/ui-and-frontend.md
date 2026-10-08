@@ -113,3 +113,43 @@ SafiHub serves a multilingual user base in Bukavu and internationally, supportin
 - **Data-Level Caching (`"use cache"`):** Reusable DAL fetchers in `src/lib/cached-data.ts` are declared with `"use cache"` and register semantic cache tags via `cacheTag(tag)`.
 - **Canonical Tags (`src/lib/cache-tags.ts`):** `catalog:items`, `coverage:zones`, `house:<houseId>`, `order:<orderId>`, `admin:dispatch`.
 - **Targeted Invalidation:** Server actions call `revalidateTag(tag, "max")` after mutations, avoiding broad `revalidatePath` calls.
+
+---
+
+## 8. House Portal Interface (`/house`)
+
+The partner laundry facility portal enables house managers and staff to manage daily operations directly from a mobile device (360px+) or desktop.
+
+### 1. Routes & Pages
+- **`/house` (Dashboard - Task 4.1):** Orders waiting for acceptance with live countdown timer (`AcceptanceTimer`), today's workload (orders waiting, in processing/washing, ready for delivery, delivered today), and daily capacity progress meter. Data strictly scoped to authenticated house.
+- **`/house/orders` (Order Management - Task 4.2):** Filter tabs (`all`, `created`, `washing`, `ready`, `delivered`), listing orders under the restricted customer projection (AC 15).
+- **`/house/orders/[id]` (Order Detail - Tasks 4.2 & 4.3):**
+  - Customer Privacy Firewall (AC 15): first name and neighborhood only. Strictly NO customer phone number and NO street address.
+  - Accept or reject with mandatory reason. Rejection keeps customer's cart.
+  - Three-point reception count (AC 10): count received items against customer declaration, discrepancy reporting, flagging non-accepted items as `returned` (deducted from cleaning fee).
+  - One-tap "Mark as Ready" button transitioning order from `washing` to `ready`.
+- **`/house/catalogue` (Catalogue & Prices - Task 4.4):** View services $\times$ items $\times$ fabrics matrix, set prices (CDF) and availability (`isActive`). Submit new item/fabric requests to platform admin. Invariant: price changes affect new orders only (frozen pricing invariant).
+- **`/house/hours` (Hours & Closures - Task 4.5):** Weekly schedule editor (weekdays 1–7 with opensAt/closesAt, closed days) and temporary closures manager (holidays, maintenance).
+- **`/house/coverage` (Coverage - Task 4.5):** Neighborhood coverage selector with distance level enforcement. Invariant: neighborhoods with distance level > house maximum limit cannot be selected and are strictly disabled.
+- **`/house/settings` (Settings - Task 4.5):** Daily capacity (`dailyCapacity`), temporary emergency pause (`isPaused`, `pausedUntil`), minimum order amount (`minimumOrderAmount`), contact phone, address note, and exclusions manager (`house_exclusions`).
+
+---
+
+## 9. Customer Laundry House Discovery & Service Selection (`/houses` & `/houses/[houseId]`)
+
+SafiHub separates customer house browsing from partner operations:
+
+### 1. Customer Search & Proposal (`/houses`)
+Faithful reproduction of `public/ref/house-search.png`:
+- **Top Search & Filter Bar:** Search input by neighborhood/commune, filter pills (Services, Max Price / Min Order, Turnaround, Open Now toggle), "All filters" sheet, "List / Map" view toggle, and "Save search" / neighborhood opening alert dialog.
+- **Split-View Architecture:**
+  - **Left Panel (Cards Grid):** Proposes multiple verified laundry houses matching filters with storefront photos, live opening badges, minimum order in CDF, specs row (turnaround hours, daily capacity, rating $\ge 4.8\bigstar$), and direct link to service selection.
+  - **Right Panel (Interactive Bukavu Map):** Topo/Satellite styled map showing Lake Kivu shoreline, Bukavu communes (Ibanda, Kadutu, Bagira), "Draw" filter area button, zoom controls, and interactive price-pin markers at real neighborhood coordinates. Clicking a marker highlights the corresponding card and opens a floating preview card.
+- **Mobile First:** On viewports $< 1024$px, a floating bottom pill button toggles between Card List and Map view seamlessly.
+
+### 2. Service & Item Selection (`/houses/[houseId]`)
+- **House Profile Header:** Banner, neighborhood, rating, today's opening hours, turnaround guarantee, minimum order amount, and back link to `/houses`.
+- **Exclusions Warning Banner:** Displays any items or fabrics excluded by the house (`house_exclusions`) with reasons.
+- **Service Tabs:** "All Services", "Lavage & Pliage", "Repassage uniquement", "Nettoyage à sec", "Express (24h)".
+- **Item Grid:** Grouped by garment category with item name, fabric pill, unit prices in CDF & USD, and quantity steppers (`[-] count [+]`). Non-accepted items are disabled with an exclusion badge.
+- **Single-House Cart Drawer:** Sticky floating bottom bar tracking cart count, subtotal, and live progress toward the house's minimum order threshold with "Order Now" action.
