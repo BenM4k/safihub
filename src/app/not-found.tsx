@@ -1,11 +1,17 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft, Sparkles, MapPin, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Navbar } from "@/components/home/header/navbar";
 import { Footer } from "@/components/home/footer/footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export default function NotFound() {
+  const t = useTranslations("notFound");
+  const tNav = useTranslations("nav");
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary-soft selection:text-primary">
       <Navbar variant="solid" />
@@ -17,7 +23,7 @@ export default function NotFound() {
             variant="outline"
             className="mb-6 px-3.5 py-1 text-xs font-semibold text-primary border-primary/25 bg-primary/5"
           >
-            Erreur 404 • Destination introuvable
+            {t("badge")}
           </Badge>
 
           {/* Big graphical 404 display */}
@@ -34,13 +40,11 @@ export default function NotFound() {
 
           {/* Text message */}
           <h1 className="font-display font-black text-2xl sm:text-4xl tracking-tight text-heading mb-4">
-            Oups ! Cette page s&apos;est égarée
+            {t("title")}
           </h1>
 
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-lg mb-8">
-            L&apos;adresse demandée n&apos;existe pas ou a été déplacée. À
-            Bukavu, même lorsque les rues manquent de plaques officielles, nos
-            coursiers retrouvent toujours leur cap !
+            {t("description")}
           </p>
 
           {/* Action buttons */}
@@ -53,7 +57,7 @@ export default function NotFound() {
             >
               <Link href="/">
                 <ArrowLeft className="size-4 mr-2" />
-                Retour à l&apos;accueil
+                {t("backHome")}
               </Link>
             </Button>
             <Button
@@ -64,35 +68,36 @@ export default function NotFound() {
             >
               <Link href="/#catalogue">
                 <Search className="size-4 mr-2" />
-                Consulter les tarifs
+                {tNav("pricing")}
               </Link>
             </Button>
           </div>
+
 
           {/* Helpful quick guide card */}
           <div className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-200/80 text-left">
             <div className="flex items-center gap-2 mb-3 font-bold text-heading text-xs sm:text-sm">
               <MapPin className="size-4 text-primary" />
-              <span>Raccourcis utiles à Bukavu</span>
+              <span>{t("usefulShortcuts")}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs text-slate-600 font-medium">
               <Link
                 href="/#services"
                 className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-primary hover:text-primary transition-colors text-center"
               >
-                Prestations de pressing
+                {t("servicesShortcut")}
               </Link>
               <Link
                 href="/#zones"
                 className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-primary hover:text-primary transition-colors text-center"
               >
-                Communes desservies
+                {t("zonesShortcut")}
               </Link>
               <Link
                 href="/terms"
                 className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-primary hover:text-primary transition-colors text-center"
               >
-                Conditions & Garanties
+                {t("termsShortcut")}
               </Link>
             </div>
           </div>

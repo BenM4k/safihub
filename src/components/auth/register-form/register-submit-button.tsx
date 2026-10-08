@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 interface RegisterSubmitButtonProps {
@@ -9,6 +10,7 @@ interface RegisterSubmitButtonProps {
 
 export function RegisterSubmitButton({ isDisabled }: RegisterSubmitButtonProps) {
   const { pending } = useFormStatus();
+  const t = useTranslations("auth");
 
   return (
     <Button
@@ -18,7 +20,7 @@ export function RegisterSubmitButton({ isDisabled }: RegisterSubmitButtonProps) 
       disabled={pending || isDisabled}
       className="w-full text-base font-semibold shadow-xs disabled:bg-slate-200 disabled:text-slate-400 disabled:opacity-100"
     >
-      {pending ? "Creating account..." : "Continue"}
+      {pending ? t("registering") : t("signUp")}
     </Button>
   );
 }

@@ -92,14 +92,18 @@ SafiHub adopts a role-specific progressive enhancement strategy:
 
 ## 6. Localization & Internationalization (`next-intl`)
 
-SafiHub serves a bilingual user base in Bukavu, supporting **French (`fr`)** and **Swahili (`sw`)**:
+SafiHub serves a multilingual user base in Bukavu and internationally, supporting **French (`fr`)**, **English (`en`)**, and **Swahili (`sw`)**:
 
-- **Cookie-Based Language Switching:** The active locale is stored in a cookie (`NEXT_LOCALE`), keeping route URLs clean (e.g. `/houses` instead of `/fr/houses`).
-- **Catalogue Bi-Lingual Storage:** The master catalogue stores names directly in both languages (`items.nameFr`, `items.nameSw`, `fabrics.nameFr`, `fabrics.nameSw`).
-- **Message Catalogues:** Application copy is organized in `messages/fr.json` and `messages/sw.json`.
+- **Mandatory Invariant:** Every new page, feature, dialog, modal, form validation, and error message MUST handle translations across all 3 languages. Never hardcode raw user-facing copy or error strings in code.
+- **Cookie-Based Language Switching:** The active locale is stored in a cookie (`NEXT_LOCALE`), keeping route URLs clean (e.g. `/houses` instead of `/fr/houses`). The switcher is rendered as a floating circular widget at the bottom-right of the screen.
+- **Catalogue Multilingual Storage:** The master catalogue stores names in French and Swahili (`items.nameFr`, `items.nameSw`, `fabrics.nameFr`, `fabrics.nameSw`).
+- **Message Catalogues:** Application copy and error messages are synchronized across `messages/fr.json`, `messages/en.json`, and `messages/sw.json` with strict key parity.
+- **Compile-Time Type Safety:** Augmentation via `src/types/global.d.ts` (`IntlMessages`) ensures typed keys and catches missing translation keys at build time.
 - **Usage:**
-  - Client Components: `useTranslations("checkout")`
-  - Server Components: `const t = await getTranslations("checkout")`
+  - Client Components: `useTranslations("namespace")`
+  - Server Components / Actions: `const t = await getTranslations("namespace")`
+  - Error Boundaries & Error Messages: Dedicated `errors` namespace for technical disruptions, input validations, network errors, and auth failures.
+
 
 ---
 

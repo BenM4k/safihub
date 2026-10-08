@@ -2,6 +2,31 @@
 
 > On-demand laundry & dry-cleaning marketplace in **Bukavu, DRC**.
 
+You are building SafiHub, the laundry marketplace described in product-spec.md.
+The product name is "SafiHub" everywhere: page titles, web manifest, emails, notifications.
+
+Rules
+
+- product-spec.md is the source of truth. Never change anything marked Decided.
+  If the spec is ambiguous or contradicts itself, ask instead of guessing.
+- Stack: Next.js (App Router, TypeScript), Drizzle ORM, PostgreSQL on Neon,
+  better-auth, Zod, Zustand, next-intl, Vitest. Do not add other dependencies without asking.
+- All business rules live in server-side domain code (Server Actions or route
+  handlers calling shared functions). The UI never computes prices, fees or
+  availability. The client sends identifiers and quantities only.
+- Check role and ownership on every server action and query. House queries use a
+  restricted projection that never includes the customer's phone or street address.
+- Money: integers only, with the currency stored on the order. Base currency is CDF.
+  Freeze prices, commission, delivery fee and exchange rate on the order.
+- Time: server clock only. Store UTC, display in Africa/Lubumbashi.
+- Every order status change goes through the transition function and writes an
+  order_events row. Invalid transitions are rejected.
+- Mobile first: low-end Android on 3G. Keep pages light and avoid heavy libraries.
+- Web app first: no service worker outside the courier area until a role needs it. PWA layers are added by role (courier offline before the pilot, house push at or after the pilot start). Build courier screens on a local data layer (Zustand with IndexedDB, fed by JSON from the server) so offline can be added without a rewrite.
+- All user-facing text goes through next-intl, in French and Swahili.
+- Every task adds or updates tests. Before finishing, run lint, type check and Vitest tests.
+- Make small commits, one per task. Do not refactor unrelated code.
+
 ---
 
 ## 1. Domain Overview
@@ -31,6 +56,7 @@ These domain rules govern all business logic in SafiHub and must never be violat
 6. **Append-Only Cash Ledger & Courier Ceilings:** Cash on delivery is recorded in `cash_ledger`. Couriers holding unremitted cash above their `cashCeiling` are locked from accepting new delivery missions until settled with admin.
 7. **Direct Client Storage (Cloudflare R2):** Condition and delivery photos upload directly from client devices via short-lived presigned URLs (zero server streaming). Photos are compressed on-device (< 1280px, WebP < 300KB).
 8. **Courier Offline First:** Courier mission execution (counts, photos, cash) must function offline (Zustand + IndexedDB) and replay safely on reconnection.
+9. **Mandatory Multilingual Coverage (FR/EN/SW):** Every user-facing UI element, route, feature, modal, toast, and error message must be localized across French (`fr`), English (`en`), and Swahili (`sw`) using `next-intl`. Key parity across `messages/{fr,en,sw}.json` is strictly maintained and type-checked via `IntlMessages`. The locale is persisted in a cookie (`NEXT_LOCALE`) toggled via a bottom-right floating circular widget.
 
 ---
 
@@ -71,4 +97,4 @@ For exhaustive schemas, state transitions, algorithms, and workflows, consult [`
 | **Cash Ledger & Settlements** | [`docs/cash-ledger-and-settlements.md`](./docs/cash-ledger-and-settlements.md) | Cash on delivery, append-only `cash_ledger`, courier ceiling lockouts, daily reconciliation, settlements. |
 | **File Storage & Photos**     | [`docs/file-storage-and-photos.md`](./docs/file-storage-and-photos.md)         | Cloudflare R2 presigned URLs, client compression (< 300KB), 90-day retention, offline queue.              |
 | **UI & Frontend**             | [`docs/ui-and-frontend.md`](./docs/ui-and-frontend.md)                         | Mobile-first 360px design, shadcn/ui mandate, Server vs Client leaves, courier PWA, bilingual next-intl.  |
-| **Testing & Troubleshooting** | [`docs/testing-and-troubleshooting.md`](./docs/testing-and-troubleshooting.md) | Test runner commands (`NODE_OPTIONS='--conditions=react-server'`), quality gates, 16 gotchas & traps.     |
+| **Testing & Troubleshooting** | [`docs/testing-and-troubleshooting.md`](./docs/testing-and-troubleshooting.md) | Vitest test runner commands, quality gates, 16 gotchas & traps.     |

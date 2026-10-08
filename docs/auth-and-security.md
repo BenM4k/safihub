@@ -28,7 +28,7 @@ SafiHub uses **better-auth** for session management, role enforcement, and crede
 
 ## 2. Roles & Authorization Guards
 
-SafiHub defines four distinct system roles:
+SafiHub defines four distinct system roles configured with the Better Auth admin plugin (`src/services/auth/permissions.ts`):
 
 | Role | Permitted Areas | Key Capabilities |
 | :--- | :--- | :--- |
@@ -37,27 +37,37 @@ SafiHub defines four distinct system roles:
 | `courier` | `/courier/*` | View assigned missions, record pickup counts and condition notes, upload photos, collect cash, sync offline. |
 | `admin` | `/admin/*` | Full operational control: dispatch missions, manual order entry, on-behalf actions, cash reconciliation, settlements, manage catalogues and zones. |
 
-### Server-Side Route Guarding
-Protected route layouts (`src/app/house/layout.tsx`, `src/app/courier/layout.tsx`, `src/app/admin/layout.tsx`) inspect the session server-side:
-```ts
-const session = await auth.api.getSession({ headers: await headers() });
-if (!session?.user) {
-  redirect("/login");
-}
-if (session.user.role !== "admin") {
-  redirect("/");
-}
-```
-Unauthenticated or unauthorized access triggers an immediate server-side `redirect()` to avoid UI flashes of protected layout shells.
+### Account Status (Active vs. Blocked)
+- User accounts have an account status (`active` or `blocked`).
+- Blocked accounts have `banned: true` and `banReason` set in the database via `adminBlockUser` / `auth.dal.ts:blockUserAccount`.
+- Blocked users are strictly prevented from signing in (`loginCustomer` rejects with `"ACCOUNT_BLOCKED"`), and existing sessions are invalidated immediately via session creation hooks in `src/services/auth/auth.ts`.
 
-### Action-Level Auth Verification
-Every server action checks session authenticity and role permissions first:
-```ts
-const session = await auth.api.getSession({ headers: await headers() });
-if (!session?.user) {
-  return err("Unauthorized");
-}
-```
+### Authorization Helpers (`src/services/auth/guards.ts`)
+- `requireRole(allowedRoles, customHeaders?)`: Asserts user has one of the allowed roles, returns `Result<Session['user']>`.
+- `requireHouseAccess(houseId, customHeaders?)`: Asserts user is either an `admin` or a verified member of the specified house (`house_staff` table).
+- `guardAdminRoute()`: Used in `/admin` server layouts to ensure only active admins access the console, redirecting unauthorized users.
+- `guardCourierRoute()`: Used in `/courier` server layouts to ensure only couriers and admins access the courier PWA.
+- `guardHouseRoute()`: Used in `/house` server layouts to ensure only verified laundry house staff and admins access the house portal.
+
+### Action-Level Auth & Sentry Instrumentation (`src/lib/action-error-handler.ts`, `src/lib/sentry-privacy.ts`)
+Every server action checks session authenticity and role permissions first. Server actions are wrapped with `withActionErrorHandling()` or `withFormActionErrorHandling()`:
+- Automatically captures unexpected errors in **Sentry**.
+- Enriches Sentry scope with `user_role` and `user_id`.
+- Sanitizes all telemetry via `scrubPhoneNumbers()` registered in `beforeSend` and `beforeSendSpan` across all Sentry runtimes (client, server, edge, and action handler):
+  - User objects (`phone`, `phoneNumber`, `contactPhone`, `mobile`).
+  - Tags and extra metadata.
+  - Distributed tracing spans (`span.data` and attributes).
+  - Breadcrumbs (`data` and `message`).
+  - Request payloads, query strings, and headers.
+  - Contexts and exception values.
+- Returns type-safe `Result<T>` (`{ ok: false, error: ... }`) to avoid uncaught exceptions across network boundaries.
+
+### Production Security Safeguards
+- **Mandatory `BETTER_AUTH_SECRET`:** Better Auth will immediately throw an explicit startup error if `BETTER_AUTH_SECRET` is unset in production.
+- **Production Seed Guard:** `src/services/db/seed.ts` terminates with code 1 if run against a production database unless `ALLOW_PRODUCTION_SEED=true` is explicitly set.
+- **Email In-Memory Storage Guard:** The in-memory email store (`src/services/email/index.ts`) is strictly disabled in production to prevent memory leaks and credential exposure.
+- **Account Table Integrity:** The `account` table enforces a composite unique constraint on `(provider_id, account_id)` preventing duplicate provider bindings.
+- **Debug Route Guard:** Debug Sentry endpoints (`triggerTestSentryErrorAction`) require authenticated `admin` role in production.
 
 ---
 
