@@ -51,6 +51,8 @@ export function AdminNavTabs() {
           const isActive =
             item.href === "/admin"
               ? pathname === "/admin"
+              : item.href === "/admin/orders"
+              ? pathname === "/admin/orders" || (pathname.startsWith("/admin/orders/") && pathname !== "/admin/orders/new")
               : pathname.startsWith(item.href);
           const Icon = item.icon;
 

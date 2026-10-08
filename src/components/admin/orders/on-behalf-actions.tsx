@@ -25,18 +25,23 @@ export function OnBehalfActions({ order }: OnBehalfActionsProps) {
     setError(null);
     setLoading(true);
 
-    const fd = new FormData();
-    fd.append("orderId", order.id);
-    fd.append("targetStatus", "accepted");
-    fd.append("onBehalfOfHouseId", order.houseId);
-    fd.append("note", note || "Accepté par téléphone par l'administrateur");
+    try {
+      const fd = new FormData();
+      fd.append("orderId", order.id);
+      fd.append("targetStatus", "accepted");
+      fd.append("onBehalfOfHouseId", order.houseId);
+      fd.append("note", note || "Accepté par téléphone par l'administrateur");
 
-    const res = await performOnBehalfAction(fd);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      setActionType(null);
+      const res = await performOnBehalfAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        setActionType(null);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -49,18 +54,23 @@ export function OnBehalfActions({ order }: OnBehalfActionsProps) {
     setError(null);
     setLoading(true);
 
-    const fd = new FormData();
-    fd.append("orderId", order.id);
-    fd.append("targetStatus", "rejected");
-    fd.append("onBehalfOfHouseId", order.houseId);
-    fd.append("reason", rejectReason);
+    try {
+      const fd = new FormData();
+      fd.append("orderId", order.id);
+      fd.append("targetStatus", "rejected");
+      fd.append("onBehalfOfHouseId", order.houseId);
+      fd.append("reason", rejectReason);
 
-    const res = await performOnBehalfAction(fd);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      setActionType(null);
+      const res = await performOnBehalfAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        setActionType(null);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setLoading(false);
     }
   }
 

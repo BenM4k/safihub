@@ -1,9 +1,11 @@
+import { getTranslations } from "next-intl/server";
 import { getAdminSettingsData } from "@/services/admin";
 import { PlatformSettingsForm } from "@/components/admin/settings/platform-settings-form";
 import { ExchangeRateForm } from "@/components/admin/settings/exchange-rate-form";
 import { ExchangeRatesHistory } from "@/components/admin/settings/exchange-rates-history";
 
 export default async function AdminSettingsPage() {
+  const t = await getTranslations("admin.settings");
   const res = await getAdminSettingsData();
 
   if (!res.ok) {
@@ -21,10 +23,10 @@ export default async function AdminSettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#EAECF0] pb-5">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#101828]">
-            Paramètres de la plateforme
+            {t("title")}
           </h1>
           <p className="text-sm text-[#667085] mt-1">
-            Configuration du moteur SafiHub, délais opérationnels, plafonds et taux de change journalier
+            {t("subtitle")}
           </p>
         </div>
       </div>

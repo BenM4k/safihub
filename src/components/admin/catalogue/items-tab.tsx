@@ -17,16 +17,37 @@ export function ItemsTab({ items }: ItemsTabProps) {
   const t = useTranslations("admin.catalogue");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   async function handleCreate(formData: FormData) {
     setError(null);
     setLoading(true);
-    const res = await createMasterItemAction(formData);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      (document.getElementById("item-form-el") as HTMLFormElement)?.reset();
+    try {
+      const res = await createMasterItemAction(formData);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        (document.getElementById("item-form-el") as HTMLFormElement)?.reset();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleToggle(itemId: string, nextActive: boolean) {
+    setTogglingId(itemId);
+    setError(null);
+    try {
+      const res = await toggleMasterItemActiveAction(itemId, nextActive);
+      if (!res.ok) {
+        setError(res.error);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setTogglingId(null);
     }
   }
 
@@ -89,10 +110,11 @@ export function ItemsTab({ items }: ItemsTabProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => toggleMasterItemActiveAction(item.id, !item.isActive)}
+                      disabled={togglingId === item.id}
+                      onClick={() => handleToggle(item.id, !item.isActive)}
                       className="h-7 text-xs"
                     >
-                      {item.isActive ? "Désactiver" : "Activer"}
+                      {togglingId === item.id ? "..." : item.isActive ? "Désactiver" : "Activer"}
                     </Button>
                   </td>
                 </tr>

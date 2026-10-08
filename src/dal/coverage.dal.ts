@@ -1,5 +1,5 @@
 import "server-only";
-import { asc, desc, eq, sql } from "drizzle-orm";
+import { asc, desc, eq, inArray, or } from "drizzle-orm";
 import { db, schema } from "./db";
 
 export interface ZoneRecord {
@@ -49,6 +49,7 @@ export interface CoverageDemandSummary {
   lastRequestedAt: Date;
   pendingNotificationCount: number;
   samplePhones: string[];
+  pendingRequestIds: string[];
 }
 
 export async function getZones(): Promise<ZoneRecord[]> {
@@ -234,6 +235,7 @@ export async function getCoverageDemandRanked(): Promise<CoverageDemandSummary[]
         lastRequestedAt: req.createdAt,
         pendingNotificationCount: 0,
         samplePhones: [],
+        pendingRequestIds: [],
       });
     }
 
@@ -244,6 +246,7 @@ export async function getCoverageDemandRanked(): Promise<CoverageDemandSummary[]
     }
     if (!req.notifiedAt) {
       item.pendingNotificationCount += 1;
+      item.pendingRequestIds.push(req.id);
       if (item.samplePhones.length < 5 && !item.samplePhones.includes(req.phone)) {
         item.samplePhones.push(req.phone);
       }
@@ -264,6 +267,9 @@ export async function markCoverageRequestsNotified(
     .update(schema.coverageRequests)
     .set({ notifiedAt: new Date() })
     .where(
-      sql`${schema.coverageRequests.id} in ${phonesOrIds} or ${schema.coverageRequests.phone} in ${phonesOrIds}`
+      or(
+        inArray(schema.coverageRequests.id, phonesOrIds),
+        inArray(schema.coverageRequests.phone, phonesOrIds)
+      )
     );
 }

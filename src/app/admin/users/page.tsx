@@ -1,13 +1,17 @@
 import { getTranslations } from "next-intl/server";
-import { listAdminUsers } from "@/services/admin";
+import { listAdminHouses, listAdminUsers } from "@/services/admin";
 import { UsersTable } from "@/components/admin/users/users-table";
 import { CreateStaffForm } from "@/components/admin/users/create-staff-form";
 import { MergeGuestForm } from "@/components/admin/users/merge-guest-form";
 
 export default async function AdminUsersPage() {
   const t = await getTranslations("admin.users");
-  const res = await listAdminUsers({ limit: 100 });
-  const users = res.ok ? res.value : [];
+  const [usersRes, housesRes] = await Promise.all([
+    listAdminUsers({ limit: 100 }),
+    listAdminHouses(),
+  ]);
+  const users = usersRes.ok ? usersRes.value : [];
+  const houses = housesRes.ok ? housesRes.value : [];
 
   return (
     <div className="space-y-6">
@@ -19,7 +23,7 @@ export default async function AdminUsersPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <CreateStaffForm />
+        <CreateStaffForm houses={houses} />
         <MergeGuestForm />
       </div>
 

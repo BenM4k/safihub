@@ -13,6 +13,7 @@ import {
   getOrderEvents,
   getOrderItems,
   getOrders,
+  getOrderValidationData,
   getSettings,
   getUserByContactPhone,
   getZoneFees,
@@ -30,7 +31,6 @@ import {
   type OrderValidationContext,
 } from "@/services/order";
 import type { ApprovalMethod, OrderSource, OrderStatus } from "@/services/db/schema";
-import { db, schema } from "@/dal/db";
 
 export async function listAdminOrders(filters?: {
   status?: OrderStatus;
@@ -138,7 +138,11 @@ export async function addAdminOrderTimelineNote(params: {
 /**
  * Builds the canonical order validation context directly from the DAL.
  */
-export async function buildOrderValidationContext(): Promise<OrderValidationContext> {
+export async function buildOrderValidationContext(scope?: {
+  houseId?: string;
+  customerId?: string;
+  idempotencyKey?: string;
+}): Promise<OrderValidationContext> {
   const [
     dbHouses,
     dbNeighborhoods,
@@ -148,6 +152,7 @@ export async function buildOrderValidationContext(): Promise<OrderValidationCont
     dbFabrics,
     dbSettings,
     dbExchangeRate,
+    validationData,
   ] = await Promise.all([
     getHouses(),
     getNeighborhoods(),
@@ -157,33 +162,8 @@ export async function buildOrderValidationContext(): Promise<OrderValidationCont
     getMasterFabrics(),
     getSettings(),
     getLatestExchangeRate("USD", "CDF"),
+    getOrderValidationData(scope),
   ]);
-
-  const existingOrdersRows = await db
-    .select({
-      id: schema.orders.id,
-      code: schema.orders.code,
-      idempotencyKey: schema.orders.idempotencyKey,
-      customerId: schema.orders.customerId,
-    })
-    .from(schema.orders);
-
-  const houseItemsRows = await db
-    .select({
-      id: schema.houseItems.id,
-      houseId: schema.houseItems.houseId,
-      serviceId: schema.houseItems.serviceId,
-      itemId: schema.houseItems.itemId,
-      fabricId: schema.houseItems.fabricId,
-      price: schema.houseItems.price,
-      isActive: schema.houseItems.isActive,
-    })
-    .from(schema.houseItems);
-
-  const houseHoursRows = await db.select().from(schema.houseHours);
-  const houseClosuresRows = await db.select().from(schema.houseClosures);
-  const houseCoverageRows = await db.select().from(schema.houseCoverage);
-  const courierShiftsRows = await db.select().from(schema.courierShifts);
 
   const housesMap = new Map();
   for (const h of dbHouses) {
@@ -212,33 +192,18 @@ export async function buildOrderValidationContext(): Promise<OrderValidationCont
   const fabricsMap = new Map(dbFabrics.map((f) => [f.id, { id: f.id, isActive: f.isActive }]));
 
   return {
-    existingOrders: existingOrdersRows,
+    existingOrders: validationData.existingOrders,
     houses: housesMap,
     neighborhoods: neighborhoodsMap,
-    houseCoverage: houseCoverageRows,
+    houseCoverage: validationData.houseCoverage,
     zoneFees: dbZoneFees,
     masterServices: servicesMap,
     masterItems: itemsMap,
     masterFabrics: fabricsMap,
-    houseItems: houseItemsRows,
-    houseHours: houseHoursRows.map((hh) => ({
-      houseId: hh.houseId,
-      weekday: hh.weekday,
-      opensAt: hh.opensAt,
-      closesAt: hh.closesAt,
-    })),
-    houseClosures: houseClosuresRows.map((hc) => ({
-      houseId: hc.houseId,
-      startsOn: hc.startsOn,
-      endsOn: hc.endsOn,
-      reason: hc.reason,
-    })),
-    courierShifts: courierShiftsRows.map((cs) => ({
-      courierId: cs.courierId,
-      weekday: cs.weekday,
-      startsAt: cs.startsAt,
-      endsAt: cs.endsAt,
-    })),
+    houseItems: validationData.houseItems,
+    houseHours: validationData.houseHours,
+    houseClosures: validationData.houseClosures,
+    courierShifts: validationData.courierShifts,
     settings: {
       maxItemsPerOrder: dbSettings.maxItemsPerOrder,
       defaultCommissionBps: dbSettings.defaultCommissionBps,
@@ -285,8 +250,12 @@ export async function createManualAdminOrder(params: {
     }
 
     // 2. Validate using shared canonical validation function
-    const context = await buildOrderValidationContext();
     const idempotencyKey = `manual_${crypto.randomUUID()}`;
+    const context = await buildOrderValidationContext({
+      houseId: params.houseId,
+      customerId: customer.id,
+      idempotencyKey,
+    });
 
     const validation = validateOrderCheckout(
       {

@@ -40,7 +40,7 @@ const approveRequestSchema = z.object({
   nameFr: z.string().min(1, "Nom en français requis"),
   nameSw: z.string().min(1, "Nom en swahili requis"),
   category: z.string().optional().nullable(),
-  adminNote: z.string().optional(),
+  adminNote: z.string().nullish(),
 });
 
 const rejectRequestSchema = z.object({
@@ -154,6 +154,7 @@ export async function approveItemRequestAction(formData: FormData): Promise<Resu
 
   const res = await approveAdminItemRequest({
     ...parsed.data,
+    adminNote: parsed.data.adminNote ?? undefined,
     adminId: auth.value.user.id,
   });
 

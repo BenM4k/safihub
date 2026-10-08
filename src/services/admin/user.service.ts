@@ -1,8 +1,8 @@
 import "server-only";
+import { hashPassword } from "better-auth/crypto";
 import { err, ok, type Result } from "@/lib/result";
 import {
-  addHouseMember,
-  createStaffUser,
+  createStaffAccountTransaction,
   mergeGuestUser,
   searchUsers,
   setUserPasswordCredential,
@@ -68,10 +68,10 @@ export async function resetAdminUserPassword(params: {
       return err("Password must contain at least 8 characters");
     }
 
-    // Hash or store credential password
+    const hashedPassword = await hashPassword(params.newPassword);
     await setUserPasswordCredential({
       userId: params.userId,
-      hashedPassword: params.newPassword,
+      hashedPassword,
     });
 
     return ok(undefined);
@@ -94,27 +94,21 @@ export async function createAdminStaffAccount(params: {
     }
 
     const userId = `usr_${params.role}_${crypto.randomUUID().slice(0, 8)}`;
-    await createStaffUser({
-      id: userId,
-      name: params.name.trim(),
-      email: params.email.trim().toLowerCase(),
-      role: params.role,
-      contactPhone: params.phone?.trim() ?? null,
+    const hashedPassword = params.password?.trim()
+      ? await hashPassword(params.password.trim())
+      : undefined;
+
+    await createStaffAccountTransaction({
+      user: {
+        id: userId,
+        name: params.name.trim(),
+        email: params.email.trim().toLowerCase(),
+        role: params.role,
+        contactPhone: params.phone?.trim() ?? null,
+      },
+      hashedPassword,
+      houseId: params.role === "house" ? params.houseId : null,
     });
-
-    if (params.password?.trim()) {
-      await setUserPasswordCredential({
-        userId,
-        hashedPassword: params.password.trim(),
-      });
-    }
-
-    if (params.role === "house" && params.houseId) {
-      await addHouseMember({
-        houseId: params.houseId,
-        userId,
-      });
-    }
 
     return ok({ userId });
   } catch (error) {

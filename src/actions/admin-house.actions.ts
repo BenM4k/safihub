@@ -27,8 +27,24 @@ const createHouseSchema = z.object({
   cutoffMinutes: z.coerce.number().min(0).default(120),
   turnaroundHours: z.coerce.number().min(1).default(48),
   dailyCapacity: z.coerce.number().optional().nullable(),
-  maxDistanceLevel: z.coerce.number().optional().nullable(),
+  maxDistanceLevel: z.coerce.number().min(1).max(3).optional().nullable(),
   isOwnerHouse: z.boolean().optional().default(false),
+});
+
+const updateHouseSchema = z.object({
+  houseId: z.string().uuid("ID de pressing invalide"),
+  name: z.string().min(1, "Nom du pressing requis"),
+  neighborhoodId: z.string().uuid("Quartier invalide"),
+  contactPhone: z.string().optional().nullable(),
+  addressNote: z.string().optional().nullable(),
+  commissionBps: z.coerce.number().min(0).max(10000).optional().nullable(),
+  minimumOrderAmount: z.coerce.number().min(0).default(0),
+  cutoffMinutes: z.coerce.number().min(0).default(120),
+  turnaroundHours: z.coerce.number().min(1).default(48),
+  dailyCapacity: z.coerce.number().optional().nullable(),
+  maxDistanceLevel: z.coerce.number().min(1).max(3).optional().nullable(),
+  isActive: z.boolean().default(true),
+  isPaused: z.boolean().default(false),
 });
 
 export async function createHouseAction(formData: FormData): Promise<Result<unknown>> {
@@ -72,23 +88,31 @@ export async function updateHouseProfileAction(
   const rawCap = formData.get("dailyCapacity");
   const rawDist = formData.get("maxDistanceLevel");
 
-  const res = await updateAdminHouseProfile(houseId, {
-    name: String(formData.get("name")),
-    neighborhoodId: String(formData.get("neighborhoodId")),
-    contactPhone: formData.get("contactPhone") ? String(formData.get("contactPhone")) : null,
-    addressNote: formData.get("addressNote") ? String(formData.get("addressNote")) : null,
+  const parsed = updateHouseSchema.safeParse({
+    houseId,
+    name: formData.get("name"),
+    neighborhoodId: formData.get("neighborhoodId"),
+    contactPhone: formData.get("contactPhone") || null,
+    addressNote: formData.get("addressNote") || null,
     commissionBps: rawComm && rawComm !== "" ? Number(rawComm) : null,
-    minimumOrderAmount: Number(formData.get("minimumOrderAmount") || 0),
-    cutoffMinutes: Number(formData.get("cutoffMinutes") || 120),
-    turnaroundHours: Number(formData.get("turnaroundHours") || 48),
+    minimumOrderAmount: formData.get("minimumOrderAmount") || 0,
+    cutoffMinutes: formData.get("cutoffMinutes") || 120,
+    turnaroundHours: formData.get("turnaroundHours") || 48,
     dailyCapacity: rawCap && rawCap !== "" ? Number(rawCap) : null,
     maxDistanceLevel: rawDist && rawDist !== "" ? Number(rawDist) : null,
     isActive: formData.get("isActive") === "true",
     isPaused: formData.get("isPaused") === "true",
   });
 
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
+  const { houseId: validatedHouseId, ...updateData } = parsed.data;
+  const res = await updateAdminHouseProfile(validatedHouseId, updateData);
+
   if (res.ok) {
-    revalidatePath(`/admin/houses/${houseId}`);
+    revalidatePath(`/admin/houses/${validatedHouseId}`);
     revalidatePath("/admin/houses");
   }
   return res;

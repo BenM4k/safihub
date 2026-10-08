@@ -429,7 +429,13 @@
       "dailyExchangeRate": "Today's Rate (1 USD = ? CDF)",
       "effectiveDate": "Effective Date",
       "saveRate": "Save Rate",
-      "saveConfig": "Save Configuration"
+      "saveConfig": "Save Configuration",
+      "rateHistoryTitle": "Exchange Rate History",
+      "effectiveDateCol": "Effective Date",
+      "pairCol": "Pair",
+      "rateAppliedCol": "Applied Rate",
+      "recordedAtCol": "Recorded At",
+      "noRatesHistory": "No exchange rates recorded in history."
     }
   }
 }

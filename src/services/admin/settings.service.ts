@@ -42,6 +42,20 @@ export async function updateAdminPlatformSettings(
     if (params.receptionWindowMinutes !== undefined && params.receptionWindowMinutes < 15) {
       return err("Reception window must be at least 15 minutes");
     }
+    if (
+      params.maxCoverageDistanceLevel !== undefined &&
+      (!Number.isInteger(params.maxCoverageDistanceLevel) ||
+        params.maxCoverageDistanceLevel < 1 ||
+        params.maxCoverageDistanceLevel > 3)
+    ) {
+      return err("Max coverage distance level must be an integer between 1 and 3");
+    }
+    if (
+      params.maxItemsPerOrder !== undefined &&
+      (!Number.isInteger(params.maxItemsPerOrder) || params.maxItemsPerOrder < 1)
+    ) {
+      return err("Max items per order must be a positive integer");
+    }
 
     const updated = await updateSettings(params);
     return ok(updated);
@@ -58,18 +72,22 @@ export async function recordAdminDailyExchangeRate(params: {
   adminId: string;
 }): Promise<Result<ExchangeRateRecord>> {
   try {
-    const numRate = parseFloat(params.rate);
-    if (isNaN(numRate) || numRate <= 0) {
+    const numRate = Number(params.rate);
+    if (!Number.isFinite(numRate) || numRate <= 0) {
       return err("Exchange rate must be a positive number");
     }
-    if (!params.effectiveDate) {
+    if (!params.effectiveDate || !/^\d{4}-\d{2}-\d{2}$/.test(params.effectiveDate)) {
       return err("Effective date is required (YYYY-MM-DD)");
+    }
+    const parsedDate = new Date(params.effectiveDate);
+    if (isNaN(parsedDate.getTime())) {
+      return err("Effective date is not a valid date");
     }
 
     const created = await createExchangeRate({
       baseCurrency: params.baseCurrency ?? "USD",
       quoteCurrency: params.quoteCurrency ?? "CDF",
-      rate: params.rate,
+      rate: String(numRate),
       effectiveDate: params.effectiveDate,
       setBy: params.adminId,
     });

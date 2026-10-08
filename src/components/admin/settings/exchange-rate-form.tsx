@@ -23,18 +23,22 @@ export function ExchangeRateForm() {
     setError(null);
     setSuccess(false);
 
-    const fd = new FormData();
-    fd.append("rate", rate);
-    fd.append("effectiveDate", effectiveDate);
+    try {
+      const fd = new FormData();
+      fd.append("rate", rate);
+      fd.append("effectiveDate", effectiveDate);
 
-    const res = await recordDailyExchangeRateAction(fd);
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      const res = await recordDailyExchangeRateAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setLoading(false);
     }
   }
 

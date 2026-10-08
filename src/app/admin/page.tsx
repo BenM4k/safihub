@@ -32,6 +32,12 @@ export default async function AdminPage() {
         </p>
       </div>
 
+      {!metricsResult.ok && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-destructive">
+          Erreur lors du chargement des indicateurs : {metricsResult.error}
+        </div>
+      )}
+
       <MetricsGrid metrics={metrics} />
       <QuickActions />
     </div>

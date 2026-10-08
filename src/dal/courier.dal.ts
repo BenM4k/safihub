@@ -1,5 +1,6 @@
 import "server-only";
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
 
 export interface CourierRecord {
@@ -260,12 +261,13 @@ export async function getEligibleCouriersForZones(
   return eligible;
 }
 
-export async function getMissions(filters?: {
-  status?: string;
-  type?: "pickup" | "delivery";
-  limit?: number;
-}): Promise<MissionRecord[]> {
-  const query = db
+export async function getMissionById(missionId: string): Promise<MissionRecord | null> {
+  const customerNeighborhoods = alias(schema.neighborhoods, "cust_neigh_single");
+  const houseNeighborhoods = alias(schema.neighborhoods, "house_neigh_single");
+  const customerZones = alias(schema.zones, "cust_zone_single");
+  const houseZones = alias(schema.zones, "house_zone_single");
+
+  const [row] = await db
     .select({
       id: schema.missions.id,
       orderId: schema.missions.orderId,
@@ -280,87 +282,100 @@ export async function getMissions(filters?: {
       createdAt: schema.missions.createdAt,
       landmark: schema.orders.landmark,
       customerPhone: schema.orders.contactPhone,
-      houseId: schema.orders.houseId,
-      customerNeighborhoodId: schema.orders.neighborhoodId,
+      customerZoneId: customerZones.id,
+      customerZoneName: customerZones.name,
+      houseZoneId: houseZones.id,
+      houseZoneName: houseZones.name,
+      houseName: schema.houses.name,
+      housePhone: schema.houses.contactPhone,
     })
     .from(schema.missions)
     .innerJoin(schema.orders, eq(schema.missions.orderId, schema.orders.id))
     .leftJoin(schema.user, eq(schema.missions.courierId, schema.user.id))
+    .leftJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
+    .leftJoin(customerNeighborhoods, eq(schema.orders.neighborhoodId, customerNeighborhoods.id))
+    .leftJoin(customerZones, eq(customerNeighborhoods.zoneId, customerZones.id))
+    .leftJoin(houseNeighborhoods, eq(schema.houses.neighborhoodId, houseNeighborhoods.id))
+    .leftJoin(houseZones, eq(houseNeighborhoods.zoneId, houseZones.id))
+    .where(eq(schema.missions.id, missionId))
+    .limit(1);
+
+  return (row as MissionRecord) ?? null;
+}
+
+export async function getMissions(filters?: {
+  status?: (typeof schema.missionStatusEnum.enumValues)[number];
+  type?: "pickup" | "delivery";
+  limit?: number;
+}): Promise<MissionRecord[]> {
+  const customerNeighborhoods = alias(schema.neighborhoods, "cust_neigh_list");
+  const houseNeighborhoods = alias(schema.neighborhoods, "house_neigh_list");
+  const customerZones = alias(schema.zones, "cust_zone_list");
+  const houseZones = alias(schema.zones, "house_zone_list");
+
+  const conditions = [];
+  if (filters?.status) {
+    conditions.push(eq(schema.missions.status, filters.status));
+  }
+  if (filters?.type) {
+    conditions.push(eq(schema.missions.type, filters.type));
+  }
+
+  const rows = await db
+    .select({
+      id: schema.missions.id,
+      orderId: schema.missions.orderId,
+      orderCode: schema.orders.code,
+      type: schema.missions.type,
+      courierId: schema.missions.courierId,
+      courierName: schema.user.name,
+      status: schema.missions.status,
+      slotStart: schema.missions.slotStart,
+      slotEnd: schema.missions.slotEnd,
+      cashCollected: schema.missions.cashCollected,
+      createdAt: schema.missions.createdAt,
+      landmark: schema.orders.landmark,
+      customerPhone: schema.orders.contactPhone,
+      customerZoneId: customerZones.id,
+      customerZoneName: customerZones.name,
+      houseZoneId: houseZones.id,
+      houseZoneName: houseZones.name,
+      houseName: schema.houses.name,
+      housePhone: schema.houses.contactPhone,
+    })
+    .from(schema.missions)
+    .innerJoin(schema.orders, eq(schema.missions.orderId, schema.orders.id))
+    .leftJoin(schema.user, eq(schema.missions.courierId, schema.user.id))
+    .leftJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
+    .leftJoin(customerNeighborhoods, eq(schema.orders.neighborhoodId, customerNeighborhoods.id))
+    .leftJoin(customerZones, eq(customerNeighborhoods.zoneId, customerZones.id))
+    .leftJoin(houseNeighborhoods, eq(schema.houses.neighborhoodId, houseNeighborhoods.id))
+    .leftJoin(houseZones, eq(houseNeighborhoods.zoneId, houseZones.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(schema.missions.createdAt))
     .limit(filters?.limit ?? 100);
 
-  const rows = await query;
-
-  // Enrich with zone details and house info
-  const enriched: MissionRecord[] = [];
-  for (const r of rows) {
-    const [custNeigh] = await db
-      .select({ zoneId: schema.neighborhoods.zoneId, zoneName: schema.zones.name })
-      .from(schema.neighborhoods)
-      .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
-      .where(eq(schema.neighborhoods.id, r.customerNeighborhoodId))
-      .limit(1);
-
-    const [house] = await db
-      .select({
-        name: schema.houses.name,
-        contactPhone: schema.houses.contactPhone,
-        neighborhoodId: schema.houses.neighborhoodId,
-      })
-      .from(schema.houses)
-      .where(eq(schema.houses.id, r.houseId))
-      .limit(1);
-
-    let houseZone: { zoneId: string; zoneName: string } | undefined;
-    if (house) {
-      const [hz] = await db
-        .select({ zoneId: schema.neighborhoods.zoneId, zoneName: schema.zones.name })
-        .from(schema.neighborhoods)
-        .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
-        .where(eq(schema.neighborhoods.id, house.neighborhoodId))
-        .limit(1);
-      houseZone = hz;
-    }
-
-    if (filters?.status && r.status !== filters.status) continue;
-    if (filters?.type && r.type !== filters.type) continue;
-
-    enriched.push({
-      id: r.id,
-      orderId: r.orderId,
-      orderCode: r.orderCode,
-      type: r.type,
-      courierId: r.courierId,
-      courierName: r.courierName,
-      status: r.status,
-      slotStart: r.slotStart,
-      slotEnd: r.slotEnd,
-      cashCollected: r.cashCollected,
-      createdAt: r.createdAt,
-      landmark: r.landmark,
-      customerPhone: r.customerPhone,
-      customerZoneId: custNeigh?.zoneId,
-      customerZoneName: custNeigh?.zoneName,
-      houseZoneId: houseZone?.zoneId,
-      houseZoneName: houseZone?.zoneName,
-      houseName: house?.name,
-      housePhone: house?.contactPhone,
-    });
-  }
-
-  return enriched;
+  return rows as MissionRecord[];
 }
 
 export async function assignMission(
   missionId: string,
   courierId: string
-): Promise<void> {
-  await db
+): Promise<boolean> {
+  const result = await db
     .update(schema.missions)
     .set({
       courierId,
       status: "assigned",
       updatedAt: new Date(),
     })
-    .where(eq(schema.missions.id, missionId));
+    .where(
+      and(
+        eq(schema.missions.id, missionId),
+        eq(schema.missions.status, "unassigned")
+      )
+    )
+    .returning({ id: schema.missions.id });
+
+  return result.length > 0;
 }

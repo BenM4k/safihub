@@ -104,3 +104,48 @@ export async function updateUserRoleAndStatus(
     })
     .where(eq(schema.user.id, id));
 }
+
+export async function createStaffAccountTransaction(params: {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: "courier" | "house" | "admin";
+    contactPhone?: string | null;
+  };
+  hashedPassword?: string;
+  houseId?: string | null;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.insert(schema.user).values({
+      id: params.user.id,
+      name: params.user.name.trim(),
+      email: params.user.email.trim().toLowerCase(),
+      role: params.user.role,
+      contactPhone: params.user.contactPhone?.trim() ?? null,
+      isGuest: false,
+      status: "active",
+      banned: false,
+    });
+
+    if (params.hashedPassword) {
+      await tx.insert(schema.account).values({
+        id: crypto.randomUUID(),
+        userId: params.user.id,
+        accountId: params.user.id,
+        providerId: "credential",
+        password: params.hashedPassword,
+      });
+    }
+
+    if (params.user.role === "house" && params.houseId) {
+      await tx
+        .insert(schema.houseMembers)
+        .values({
+          houseId: params.houseId,
+          userId: params.user.id,
+        })
+        .onConflictDoNothing();
+    }
+  });
+}

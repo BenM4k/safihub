@@ -145,7 +145,7 @@ export async function approveAdminItemRequest(params: {
       createdFabricId = createdFabric.id;
     }
 
-    await resolveItemRequest({
+    const updated = await resolveItemRequest({
       requestId: params.requestId,
       status: "approved",
       adminNote: params.adminNote,
@@ -153,6 +153,10 @@ export async function approveAdminItemRequest(params: {
       createdItemId,
       createdFabricId,
     });
+
+    if (!updated) {
+      return err("Item request is not pending or does not exist");
+    }
 
     return ok({ createdId: (createdItemId || createdFabricId)! });
   } catch (error) {
@@ -170,12 +174,16 @@ export async function rejectAdminItemRequest(params: {
       return err("A rejection note/reason is required");
     }
 
-    await resolveItemRequest({
+    const updated = await resolveItemRequest({
       requestId: params.requestId,
       status: "rejected",
       adminNote: params.adminNote.trim(),
       resolvedBy: params.adminId,
     });
+
+    if (!updated) {
+      return err("Item request is not pending or does not exist");
+    }
 
     return ok(undefined);
   } catch (error) {

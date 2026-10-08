@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { MessageCircle, CheckCircle2 } from "lucide-react";
 import { notifyCoverageRequestsAction } from "@/actions/admin-coverage.actions";
@@ -13,9 +14,17 @@ interface CoverageDemandTableProps {
 
 export function CoverageDemandTable({ demand }: CoverageDemandTableProps) {
   const t = useTranslations("admin.coverage");
+  const [notifyingKey, setNotifyingKey] = useState<string | null>(null);
 
-  async function handleMarkNotified(phones: string[]) {
-    await notifyCoverageRequestsAction(phones);
+  async function handleMarkNotified(key: string, ids: string[]) {
+    setNotifyingKey(key);
+    try {
+      await notifyCoverageRequestsAction(ids);
+    } catch (err) {
+      console.error("Failed to mark requests as notified", err);
+    } finally {
+      setNotifyingKey(null);
+    }
   }
 
   return (
@@ -84,14 +93,24 @@ export function CoverageDemandTable({ demand }: CoverageDemandTableProps) {
                           <span>WhatsApp</span>
                         </a>
                       )}
-                      {d.pendingNotificationCount > 0 && d.samplePhones.length > 0 && (
+                      {d.pendingNotificationCount > 0 && ((d.pendingRequestIds && d.pendingRequestIds.length > 0) || d.samplePhones.length > 0) && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleMarkNotified(d.samplePhones)}
+                          disabled={notifyingKey === (d.neighborhoodId || d.neighborhoodName)}
+                          onClick={() =>
+                            handleMarkNotified(
+                              d.neighborhoodId || d.neighborhoodName,
+                              d.pendingRequestIds && d.pendingRequestIds.length > 0
+                                ? d.pendingRequestIds
+                                : d.samplePhones
+                            )
+                          }
                           className="h-7 text-[11px]"
                         >
-                          Marquer notifié
+                          {notifyingKey === (d.neighborhoodId || d.neighborhoodName)
+                            ? "..."
+                            : "Marquer notifié"}
                         </Button>
                       )}
                     </div>

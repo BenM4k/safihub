@@ -17,16 +17,37 @@ export function FabricsTab({ fabrics }: FabricsTabProps) {
   const t = useTranslations("admin.catalogue");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   async function handleCreate(formData: FormData) {
     setError(null);
     setLoading(true);
-    const res = await createMasterFabricAction(formData);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      (document.getElementById("fabric-form-el") as HTMLFormElement)?.reset();
+    try {
+      const res = await createMasterFabricAction(formData);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        (document.getElementById("fabric-form-el") as HTMLFormElement)?.reset();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleToggle(fabricId: string, nextActive: boolean) {
+    setTogglingId(fabricId);
+    setError(null);
+    try {
+      const res = await toggleMasterFabricActiveAction(fabricId, nextActive);
+      if (!res.ok) {
+        setError(res.error);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setTogglingId(null);
     }
   }
 
@@ -83,10 +104,11 @@ export function FabricsTab({ fabrics }: FabricsTabProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => toggleMasterFabricActiveAction(fabric.id, !fabric.isActive)}
+                      disabled={togglingId === fabric.id}
+                      onClick={() => handleToggle(fabric.id, !fabric.isActive)}
                       className="h-7 text-xs"
                     >
-                      {fabric.isActive ? "Désactiver" : "Activer"}
+                      {togglingId === fabric.id ? "..." : fabric.isActive ? "Désactiver" : "Activer"}
                     </Button>
                   </td>
                 </tr>

@@ -19,6 +19,12 @@ export default async function AdminCataloguePage() {
         <p className="text-xs text-muted-foreground mt-1">{t("subtitle")}</p>
       </div>
 
+      {!catalogRes.ok && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-destructive">
+          Erreur lors du chargement du catalogue : {catalogRes.error}
+        </div>
+      )}
+
       <CatalogueTabsContainer
         services={data.services}
         items={data.items}

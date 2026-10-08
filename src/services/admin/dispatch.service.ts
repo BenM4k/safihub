@@ -5,6 +5,7 @@ import {
   assignMission,
   getCouriers,
   getEligibleCouriersForZones,
+  getMissionById,
   getMissions,
   getOrders,
   type CourierRecord,
@@ -60,18 +61,30 @@ export async function getAdminDispatchData(): Promise<
 
 export async function assignMissionToCourier(params: {
   missionId: string;
-  orderId: string;
+  orderId?: string;
   courierId: string;
   adminId: string;
   customerZoneId?: string;
   houseZoneId?: string;
 }): Promise<Result<void>> {
   try {
+    const mission = await getMissionById(params.missionId);
+    if (!mission) {
+      return err("Mission not found");
+    }
+
+    if (mission.status !== "unassigned") {
+      return err("Mission is already assigned or closed");
+    }
+
+    const customerZoneId = mission.customerZoneId ?? params.customerZoneId;
+    const houseZoneId = mission.houseZoneId ?? params.houseZoneId;
+
     // AC 20 check: verify that courier covers both zones
-    if (params.customerZoneId && params.houseZoneId) {
+    if (customerZoneId && houseZoneId) {
       const eligible = await getEligibleCouriersForZones(
-        params.customerZoneId,
-        params.houseZoneId
+        customerZoneId,
+        houseZoneId
       );
       const isEligible = eligible.some((c) => c.userId === params.courierId);
       if (!isEligible) {
@@ -81,10 +94,14 @@ export async function assignMissionToCourier(params: {
       }
     }
 
-    await assignMission(params.missionId, params.courierId);
+    const assigned = await assignMission(params.missionId, params.courierId);
+    if (!assigned) {
+      return err("Failed to assign mission: mission is no longer unassigned");
+    }
 
+    const orderId = params.orderId ?? mission.orderId;
     await addOrderEvent({
-      orderId: params.orderId,
+      orderId,
       type: "assignment",
       actorId: params.adminId,
       actorRole: "admin",

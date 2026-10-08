@@ -138,15 +138,19 @@ export async function createExchangeRate(data: {
 }
 
 export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics> {
-  const allOrders = await db
+  const statusCounts = await db
     .select({
       status: schema.orders.status,
+      count: sql<number>`count(*)::int`,
     })
-    .from(schema.orders);
+    .from(schema.orders)
+    .groupBy(schema.orders.status);
 
   const ordersByStatus: Record<string, number> = {};
-  for (const o of allOrders) {
-    ordersByStatus[o.status] = (ordersByStatus[o.status] || 0) + 1;
+  let totalOrders = 0;
+  for (const row of statusCounts) {
+    ordersByStatus[row.status] = Number(row.count);
+    totalOrders += Number(row.count);
   }
 
   const [activeHouses] = await db
@@ -175,19 +179,19 @@ export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics>
     .where(eq(schema.disputes.status, "open"));
 
   const [cashCollected] = await db
-    .select({ total: sql<number>`coalesce(sum(${schema.cashLedger.amount}), 0)::int` })
+    .select({ total: sql<string>`coalesce(sum(${schema.cashLedger.amount}), 0)::bigint` })
     .from(schema.cashLedger)
     .where(eq(schema.cashLedger.entryType, "cash_collected"));
 
   return {
-    totalOrders: allOrders.length,
+    totalOrders,
     ordersByStatus,
     ordersPendingAcceptance: ordersByStatus["created"] || 0,
     activeDisputes: disputesCount?.count ?? 0,
     pendingCoverageRequests: pendingCoverage?.count ?? 0,
     activeHousesCount: activeHouses?.count ?? 0,
     activeCouriersCount: activeCouriers?.count ?? 0,
-    totalCashCollectedCDF: cashCollected?.total ?? 0,
+    totalCashCollectedCDF: Number(cashCollected?.total ?? 0),
     unassignedMissionsCount: unassignedMissions?.count ?? 0,
   };
 }

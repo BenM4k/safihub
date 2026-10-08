@@ -33,24 +33,28 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
     setError(null);
     setSuccess(false);
 
-    const fd = new FormData();
-    fd.append("defaultCommissionBps", String(commissionBps));
-    fd.append("acceptanceDelayMinutes", String(acceptanceDelay));
-    fd.append("receptionWindowMinutes", String(receptionWindow));
-    fd.append("slotLengthMinutes", String(slotLength));
-    fd.append("maxCoverageDistanceLevel", String(maxDistance));
-    fd.append("defaultCashCeiling", String(cashCeiling));
-    fd.append("defaultCourierPayPerLeg", String(courierPay));
-    fd.append("firstOrderScreening", String(firstOrderScreening));
+    try {
+      const fd = new FormData();
+      fd.append("defaultCommissionBps", String(commissionBps));
+      fd.append("acceptanceDelayMinutes", String(acceptanceDelay));
+      fd.append("receptionWindowMinutes", String(receptionWindow));
+      fd.append("slotLengthMinutes", String(slotLength));
+      fd.append("maxCoverageDistanceLevel", String(maxDistance));
+      fd.append("defaultCashCeiling", String(cashCeiling));
+      fd.append("defaultCourierPayPerLeg", String(courierPay));
+      fd.append("firstOrderScreening", String(firstOrderScreening));
 
-    const res = await updatePlatformSettingsAction(fd);
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      const res = await updatePlatformSettingsAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setLoading(false);
     }
   }
 

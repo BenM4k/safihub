@@ -135,8 +135,8 @@ export async function updateGlobalDistanceLimitAction(formData: FormData): Promi
   if (!auth.ok) return err(auth.error);
 
   const limit = Number(formData.get("maxCoverageDistanceLevel"));
-  if (isNaN(limit) || limit < 1) {
-    return err("La limite de distance globale doit être >= 1");
+  if (isNaN(limit) || limit < 1 || limit > 3) {
+    return err("La limite de distance globale doit être comprise entre 1 et 3");
   }
 
   const res = await updateAdminGlobalDistanceLimit(limit);
@@ -151,9 +151,17 @@ export async function updateHouseDistanceOverrideAction(formData: FormData): Pro
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const houseId = String(formData.get("houseId"));
+  const houseIdParsed = z.string().uuid("ID de pressing invalide").safeParse(formData.get("houseId"));
+  if (!houseIdParsed.success) {
+    return err(houseIdParsed.error.issues[0]?.message ?? "ID de pressing invalide");
+  }
+  const houseId = houseIdParsed.data;
+
   const rawOverride = formData.get("maxDistanceLevel");
   const maxDistanceLevel = rawOverride && rawOverride !== "" ? Number(rawOverride) : null;
+  if (maxDistanceLevel !== null && (isNaN(maxDistanceLevel) || maxDistanceLevel < 1 || maxDistanceLevel > 3)) {
+    return err("La dérogation de distance doit être comprise entre 1 et 3 ou vide");
+  }
 
   const res = await updateAdminHouseDistanceOverride({ houseId, maxDistanceLevel });
   if (res.ok) {
@@ -163,11 +171,15 @@ export async function updateHouseDistanceOverrideAction(formData: FormData): Pro
   return res;
 }
 
-export async function notifyCoverageRequestsAction(phones: string[]): Promise<Result<unknown>> {
+export async function notifyCoverageRequestsAction(phonesOrIds: string[]): Promise<Result<unknown>> {
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const res = await notifyAdminCoverageRequests(phones);
+  if (!Array.isArray(phonesOrIds) || phonesOrIds.length === 0) {
+    return err("Aucune demande sélectionnée pour notification");
+  }
+
+  const res = await notifyAdminCoverageRequests(phonesOrIds);
   if (res.ok) {
     revalidatePath("/admin/coverage");
   }

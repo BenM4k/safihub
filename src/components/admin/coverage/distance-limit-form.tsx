@@ -21,12 +21,17 @@ export function DistanceLimitForm({ currentLimit }: DistanceLimitFormProps) {
     setError(null);
     setSuccess(null);
     setLoading(true);
-    const res = await updateGlobalDistanceLimitAction(formData);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      setSuccess("Limite globale mise à jour avec succès (AC 21)");
+    try {
+      const res = await updateGlobalDistanceLimitAction(formData);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        setSuccess("Limite globale mise à jour avec succès (AC 21)");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -57,7 +62,7 @@ export function DistanceLimitForm({ currentLimit }: DistanceLimitFormProps) {
             name="maxCoverageDistanceLevel"
             type="number"
             min="1"
-            max="5"
+            max="3"
             defaultValue={currentLimit}
             required
             className="h-9 text-xs"

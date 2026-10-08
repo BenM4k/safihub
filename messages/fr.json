@@ -429,7 +429,13 @@
       "dailyExchangeRate": "Taux du jour (1 USD = ? CDF)",
       "effectiveDate": "Date d'application",
       "saveRate": "Enregistrer le taux",
-      "saveConfig": "Enregistrer la configuration"
+      "saveConfig": "Enregistrer la configuration",
+      "rateHistoryTitle": "Historique des taux de change",
+      "effectiveDateCol": "Date d'effet",
+      "pairCol": "Paire",
+      "rateAppliedCol": "Taux appliqué",
+      "recordedAtCol": "Enregistré le",
+      "noRatesHistory": "Aucun taux enregistré dans l'historique."
     }
   }
 }

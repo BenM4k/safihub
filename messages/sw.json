@@ -429,7 +429,13 @@
       "dailyExchangeRate": "Kiwango cha Leo (1 USD = ? CDF)",
       "effectiveDate": "Tarehe ya Kuanza",
       "saveRate": "Hifadhi Kiwango",
-      "saveConfig": "Hifadhi Mipangilio"
+      "saveConfig": "Hifadhi Mipangilio",
+      "rateHistoryTitle": "Historia ya Viwango vya Fedha",
+      "effectiveDateCol": "Tarehe ya Kuanza",
+      "pairCol": "Jozi",
+      "rateAppliedCol": "Kiwango Kilichotumika",
+      "recordedAtCol": "Ilirekodiwa Mnamo",
+      "noRatesHistory": "Hakuna viwango vilivyorekodiwa katika historia."
     }
   }
 }

@@ -1,13 +1,41 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   setAdminNeighborhoodStatus,
   setAdminZoneFeePair,
+  updateAdminGlobalDistanceLimit,
 } from "../coverage.service";
 import {
   updateAdminPlatformSettings,
   recordAdminDailyExchangeRate,
 } from "../settings.service";
 import { assignMissionToCourier } from "../dispatch.service";
+
+vi.mock("@/dal", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/dal")>();
+  return {
+    ...actual,
+    getMissionById: vi.fn(async (id: string) => {
+      if (id === "m-dummy") {
+        return {
+          id: "m-dummy",
+          orderId: "ord-dummy",
+          type: "pickup",
+          courierId: null,
+          status: "unassigned",
+          slotStart: new Date(),
+          slotEnd: new Date(),
+          customerZoneId: "zone-customer-nonexistent",
+          houseZoneId: "zone-house-nonexistent",
+          createdAt: new Date(),
+        };
+      }
+      return null;
+    }),
+    getEligibleCouriersForZones: vi.fn(async () => []),
+    assignMission: vi.fn(async () => true),
+    addOrderEvent: vi.fn(async () => {}),
+  };
+});
 
 describe("Admin Back-Office Services Unit Tests", () => {
   describe("Coverage & Zones Validation (AC 19 & AC 21)", () => {
@@ -22,6 +50,14 @@ describe("Admin Back-Office Services Unit Tests", () => {
       if (!res.ok) {
         expect(res.error).toContain("mandatory when setting status to paused (AC 19)");
       }
+    });
+
+    it("rejects invalid global distance limits outside 1..3", async () => {
+      const resHigh = await updateAdminGlobalDistanceLimit(4);
+      expect(resHigh.ok).toBe(false);
+
+      const resLow = await updateAdminGlobalDistanceLimit(0);
+      expect(resLow.ok).toBe(false);
     });
 
     it("rejects invalid distance levels outside 1..3 for zone pairs (AC 21)", async () => {

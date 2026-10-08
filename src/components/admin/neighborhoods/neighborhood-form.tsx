@@ -16,16 +16,23 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
   const t = useTranslations("admin.neighborhoods");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("served");
 
   async function handleSubmit(formData: FormData) {
     setError(null);
     setLoading(true);
-    const res = await createNeighborhoodAction(formData);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      (document.getElementById("neigh-form-el") as HTMLFormElement)?.reset();
+    try {
+      const res = await createNeighborhoodAction(formData);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        (document.getElementById("neigh-form-el") as HTMLFormElement)?.reset();
+        setStatus("served");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -76,6 +83,8 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
           <select
             id="neighStatus"
             name="status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
             className="h-9 w-full rounded-md border border-input bg-white px-3 text-xs text-heading"
           >
             <option value="served">{t("served")}</option>
@@ -83,6 +92,21 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
             <option value="not_served">{t("notServed")}</option>
           </select>
         </div>
+
+        {status === "paused" && (
+          <div className="space-y-1 sm:col-span-4">
+            <Label htmlFor="neighPauseReason" className="text-xs">
+              {t("pauseReason")} (obligatoire si suspendu - AC 19)
+            </Label>
+            <Input
+              id="neighPauseReason"
+              name="pauseReason"
+              required
+              placeholder="ex: Travaux de voirie, route impraticable..."
+              className="h-9 text-xs"
+            />
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end">

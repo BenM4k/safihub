@@ -306,40 +306,199 @@ export async function insertOrderWithDetails(params: {
   event: Omit<typeof schema.orderEvents.$inferInsert, "orderId">;
   missions?: Array<Omit<typeof schema.missions.$inferInsert, "orderId">>;
 }): Promise<{ orderId: string; code: string; trackingToken: string }> {
-  const [createdOrder] = await db.insert(schema.orders).values(params.order).returning({
-    id: schema.orders.id,
-    code: schema.orders.code,
-    trackingToken: schema.orders.trackingToken,
+  return await db.transaction(async (tx) => {
+    const [createdOrder] = await tx
+      .insert(schema.orders)
+      .values(params.order)
+      .returning({
+        id: schema.orders.id,
+        code: schema.orders.code,
+        trackingToken: schema.orders.trackingToken,
+      });
+
+    const orderId = createdOrder!.id;
+
+    if (params.items.length > 0) {
+      await tx.insert(schema.orderItems).values(
+        params.items.map((it) => ({
+          ...it,
+          orderId,
+        }))
+      );
+    }
+
+    await tx.insert(schema.orderEvents).values({
+      ...params.event,
+      orderId,
+    });
+
+    if (params.missions && params.missions.length > 0) {
+      await tx.insert(schema.missions).values(
+        params.missions.map((m) => ({
+          ...m,
+          orderId,
+        }))
+      );
+    }
+
+    return {
+      orderId,
+      code: createdOrder!.code,
+      trackingToken: createdOrder!.trackingToken,
+    };
   });
+}
 
-  const orderId = createdOrder!.id;
+export interface OrderValidationData {
+  existingOrders: Array<{
+    id: string;
+    code: string;
+    idempotencyKey: string;
+    customerId: string;
+  }>;
+  houseItems: Array<{
+    id: string;
+    houseId: string;
+    serviceId: string;
+    itemId: string;
+    fabricId: string;
+    price: number;
+    isActive: boolean;
+  }>;
+  houseHours: Array<{
+    houseId: string;
+    weekday: number;
+    opensAt: string;
+    closesAt: string;
+  }>;
+  houseClosures: Array<{
+    houseId: string;
+    startsOn: string;
+    endsOn: string;
+    reason: string | null;
+  }>;
+  houseCoverage: Array<{
+    houseId: string;
+    neighborhoodId: string;
+    isActive: boolean;
+    pausedUntil: Date | string | null;
+  }>;
+  courierShifts: Array<{
+    courierId: string;
+    weekday: number;
+    startsAt: string;
+    endsAt: string;
+  }>;
+}
 
-  if (params.items.length > 0) {
-    await db.insert(schema.orderItems).values(
-      params.items.map((it) => ({
-        ...it,
-        orderId,
-      }))
+export async function getOrderValidationData(scope?: {
+  houseId?: string;
+  customerId?: string;
+  idempotencyKey?: string;
+}): Promise<OrderValidationData> {
+  const orderConditions = [];
+  if (scope?.customerId && scope?.idempotencyKey) {
+    orderConditions.push(
+      or(
+        eq(schema.orders.customerId, scope.customerId),
+        eq(schema.orders.idempotencyKey, scope.idempotencyKey)
+      )
     );
+  } else if (scope?.customerId) {
+    orderConditions.push(eq(schema.orders.customerId, scope.customerId));
+  } else if (scope?.idempotencyKey) {
+    orderConditions.push(eq(schema.orders.idempotencyKey, scope.idempotencyKey));
   }
 
-  await db.insert(schema.orderEvents).values({
-    ...params.event,
-    orderId,
-  });
+  const existingOrdersQuery = db
+    .select({
+      id: schema.orders.id,
+      code: schema.orders.code,
+      idempotencyKey: schema.orders.idempotencyKey,
+      customerId: schema.orders.customerId,
+    })
+    .from(schema.orders);
 
-  if (params.missions && params.missions.length > 0) {
-    await db.insert(schema.missions).values(
-      params.missions.map((m) => ({
-        ...m,
-        orderId,
-      }))
-    );
-  }
+  const houseItemsQuery = db
+    .select({
+      id: schema.houseItems.id,
+      houseId: schema.houseItems.houseId,
+      serviceId: schema.houseItems.serviceId,
+      itemId: schema.houseItems.itemId,
+      fabricId: schema.houseItems.fabricId,
+      price: schema.houseItems.price,
+      isActive: schema.houseItems.isActive,
+    })
+    .from(schema.houseItems);
+
+  const houseHoursQuery = db
+    .select({
+      houseId: schema.houseHours.houseId,
+      weekday: schema.houseHours.weekday,
+      opensAt: schema.houseHours.opensAt,
+      closesAt: schema.houseHours.closesAt,
+    })
+    .from(schema.houseHours);
+
+  const houseClosuresQuery = db
+    .select({
+      houseId: schema.houseClosures.houseId,
+      startsOn: schema.houseClosures.startsOn,
+      endsOn: schema.houseClosures.endsOn,
+      reason: schema.houseClosures.reason,
+    })
+    .from(schema.houseClosures);
+
+  const houseCoverageQuery = db
+    .select({
+      houseId: schema.houseCoverage.houseId,
+      neighborhoodId: schema.houseCoverage.neighborhoodId,
+      isActive: schema.houseCoverage.isActive,
+      pausedUntil: schema.houseCoverage.pausedUntil,
+    })
+    .from(schema.houseCoverage);
+
+  const courierShiftsQuery = db
+    .select({
+      courierId: schema.courierShifts.courierId,
+      weekday: schema.courierShifts.weekday,
+      startsAt: schema.courierShifts.startsAt,
+      endsAt: schema.courierShifts.endsAt,
+    })
+    .from(schema.courierShifts);
+
+  const [
+    existingOrders,
+    houseItems,
+    houseHours,
+    houseClosures,
+    houseCoverage,
+    courierShifts,
+  ] = await Promise.all([
+    orderConditions.length > 0
+      ? existingOrdersQuery.where(and(...orderConditions))
+      : existingOrdersQuery.limit(200),
+    scope?.houseId
+      ? houseItemsQuery.where(eq(schema.houseItems.houseId, scope.houseId))
+      : houseItemsQuery,
+    scope?.houseId
+      ? houseHoursQuery.where(eq(schema.houseHours.houseId, scope.houseId))
+      : houseHoursQuery,
+    scope?.houseId
+      ? houseClosuresQuery.where(eq(schema.houseClosures.houseId, scope.houseId))
+      : houseClosuresQuery,
+    scope?.houseId
+      ? houseCoverageQuery.where(eq(schema.houseCoverage.houseId, scope.houseId))
+      : houseCoverageQuery,
+    courierShiftsQuery,
+  ]);
 
   return {
-    orderId,
-    code: createdOrder!.code,
-    trackingToken: createdOrder!.trackingToken,
+    existingOrders,
+    houseItems,
+    houseHours,
+    houseClosures,
+    houseCoverage,
+    courierShifts,
   };
 }

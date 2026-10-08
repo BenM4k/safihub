@@ -20,10 +20,15 @@ export function FeePairForm({ zones }: FeePairFormProps) {
   async function handleSubmit(formData: FormData) {
     setError(null);
     setLoading(true);
-    const res = await setZoneFeePairAction(formData);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
+    try {
+      const res = await setZoneFeePairAction(formData);
+      if (!res.ok) {
+        setError(res.error);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -99,7 +104,7 @@ export function FeePairForm({ zones }: FeePairFormProps) {
             name="distanceLevel"
             type="number"
             min="1"
-            max="5"
+            max="3"
             required
             defaultValue="1"
             className="h-9 text-xs"

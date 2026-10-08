@@ -1,5 +1,5 @@
 import "server-only";
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { db, schema } from "./db";
 
 export interface MasterServiceRecord {
@@ -198,8 +198,8 @@ export async function resolveItemRequest(params: {
   resolvedBy: string;
   createdItemId?: string | null;
   createdFabricId?: string | null;
-}): Promise<void> {
-  await db
+}): Promise<boolean> {
+  const result = await db
     .update(schema.itemRequests)
     .set({
       status: params.status,
@@ -209,5 +209,13 @@ export async function resolveItemRequest(params: {
       createdItemId: params.createdItemId ?? null,
       createdFabricId: params.createdFabricId ?? null,
     })
-    .where(eq(schema.itemRequests.id, params.requestId));
+    .where(
+      and(
+        eq(schema.itemRequests.id, params.requestId),
+        eq(schema.itemRequests.status, "pending")
+      )
+    )
+    .returning({ id: schema.itemRequests.id });
+
+  return result.length > 0;
 }

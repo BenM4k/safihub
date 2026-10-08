@@ -169,3 +169,8 @@ Each acceptance criterion from the product specification is mapped to an automat
 ### 23. Admin Dispatch Zone Compatibility & AC 20
 - **Trap:** Assigning a pickup or delivery mission in `/admin/dispatch` to a courier whose covered zones do not include both the customer's neighborhood zone and the laundry house's neighborhood zone.
 - **Fix:** Both the dispatch service (`assignMissionToCourier`) and query (`getEligibleCouriersForZones`) enforce dual-zone coverage per AC 20. Only couriers covering both zones are presented in the dispatch assignment dropdown; attempting to force-assign an ineligible courier triggers an immediate rejection Result.
+
+### 24. Neon HTTP Driver vs. Multi-Query Transactions
+- **Trap:** The default `@neondatabase/serverless` HTTP connection (`neon()`) does not support interactive transactions (`db.transaction()`), causing multi-statement writes to execute non-atomically or fail.
+- **Fix:** SafiHub instantiates Drizzle using `Pool` from `@neondatabase/serverless` and `drizzle-orm/neon-serverless`, which supports full interactive transactions across multi-statement flows (e.g. `insertOrderWithDetails`, staff account creation with credentials and house member records).
+

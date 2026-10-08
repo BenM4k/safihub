@@ -1,4 +1,5 @@
 import "server-only";
+import { hashPassword } from "better-auth/crypto";
 import { err, ok, type Result } from "@/lib/result";
 import {
   createStaffUser,
@@ -138,9 +139,10 @@ export async function createAdminCourier(params: {
     });
 
     if (params.password?.trim()) {
+      const hashedPassword = await hashPassword(params.password.trim());
       await setUserPasswordCredential({
         userId: courierId,
-        hashedPassword: params.password.trim(),
+        hashedPassword,
       });
     }
 

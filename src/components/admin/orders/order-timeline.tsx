@@ -23,17 +23,21 @@ export function OrderTimeline({ orderId, events }: OrderTimelineProps) {
     setLoading(true);
     setError(null);
 
-    const fd = new FormData();
-    fd.append("orderId", orderId);
-    fd.append("note", note.trim());
+    try {
+      const fd = new FormData();
+      fd.append("orderId", orderId);
+      fd.append("note", note.trim());
 
-    const res = await addOrderTimelineNoteAction(fd);
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      setNote("");
+      const res = await addOrderTimelineNoteAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        setNote("");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setLoading(false);
     }
   }
 

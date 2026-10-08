@@ -136,8 +136,8 @@ export async function updateAdminGlobalDistanceLimit(
   maxDistanceLevel: number
 ): Promise<Result<number>> {
   try {
-    if (!Number.isInteger(maxDistanceLevel) || maxDistanceLevel < 1) {
-      return err("Global max distance level must be at least 1");
+    if (!Number.isInteger(maxDistanceLevel) || maxDistanceLevel < 1 || maxDistanceLevel > 3) {
+      return err("Global max distance level must be between 1 and 3");
     }
     const updated = await updateSettings({ maxCoverageDistanceLevel: maxDistanceLevel });
     return ok(updated.maxCoverageDistanceLevel);
@@ -153,9 +153,11 @@ export async function updateAdminHouseDistanceOverride(params: {
   try {
     if (
       params.maxDistanceLevel !== null &&
-      (!Number.isInteger(params.maxDistanceLevel) || params.maxDistanceLevel < 1)
+      (!Number.isInteger(params.maxDistanceLevel) ||
+        params.maxDistanceLevel < 1 ||
+        params.maxDistanceLevel > 3)
     ) {
-      return err("House max distance level override must be null or at least 1");
+      return err("House max distance level override must be null or between 1 and 3");
     }
     await updateHouse(params.houseId, { maxDistanceLevel: params.maxDistanceLevel });
     return ok(undefined);

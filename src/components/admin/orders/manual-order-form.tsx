@@ -84,30 +84,56 @@ export function ManualOrderForm({
     setError(null);
     setLoading(true);
 
-    const now = new Date();
-    const defaultStart = new Date(now.getTime() + 2 * 3600 * 1000).toISOString();
-    const defaultEnd = new Date(now.getTime() + 4 * 3600 * 1000).toISOString();
+    try {
+      const now = new Date();
+      const defaultStart = new Date(now.getTime() + 2 * 3600 * 1000).toISOString();
+      const defaultEnd = new Date(now.getTime() + 4 * 3600 * 1000).toISOString();
 
-    const res = await createManualOrderAction({
-      customerPhone: phone,
-      customerName: name || undefined,
-      houseId,
-      customerNeighborhoodId: neighborhoodId,
-      landmark,
-      pickupSlotStart: slotStart || defaultStart,
-      pickupSlotEnd: slotEnd || defaultEnd,
-      source,
-      items: lines,
-    });
+      let isoStart = defaultStart;
+      let isoEnd = defaultEnd;
 
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      setCreatedOrder({
-        code: res.value.code,
-        trackingToken: res.value.trackingToken,
+      if (slotStart) {
+        const startDate = new Date(slotStart);
+        if (isNaN(startDate.getTime())) {
+          setError("Date de début de créneau invalide");
+          return;
+        }
+        isoStart = startDate.toISOString();
+      }
+
+      if (slotEnd) {
+        const endDate = new Date(slotEnd);
+        if (isNaN(endDate.getTime())) {
+          setError("Date de fin de créneau invalide");
+          return;
+        }
+        isoEnd = endDate.toISOString();
+      }
+
+      const res = await createManualOrderAction({
+        customerPhone: phone,
+        customerName: name || undefined,
+        houseId,
+        customerNeighborhoodId: neighborhoodId,
+        landmark,
+        pickupSlotStart: isoStart,
+        pickupSlotEnd: isoEnd,
+        source,
+        items: lines,
       });
+
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        setCreatedOrder({
+          code: res.value.code,
+          trackingToken: res.value.trackingToken,
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue lors de la création");
+    } finally {
+      setLoading(false);
     }
   }
 
