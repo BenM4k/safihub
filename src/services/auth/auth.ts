@@ -2,10 +2,26 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
+import { nextCookies } from "better-auth/next-js";
 import { db, schema } from "@/dal";
 import { sendPasswordResetEmail } from "@/services/email";
 
 import { ac, roles } from "./permissions";
+
+function getAuthSecret(): string {
+  if (process.env.NODE_ENV === "production") {
+    if (!process.env.BETTER_AUTH_SECRET) {
+      throw new Error(
+        "BETTER_AUTH_SECRET environment variable is missing in production. Application startup aborted."
+      );
+    }
+    return process.env.BETTER_AUTH_SECRET;
+  }
+  return (
+    process.env.BETTER_AUTH_SECRET ||
+    "default_dev_secret_must_be_overridden_in_production_32chars"
+  );
+}
 
 /**
  * SafiHub Better Auth server instance.
@@ -18,7 +34,7 @@ import { ac, roles } from "./permissions";
  * `phoneNumber` from "better-auth/plugins/phone-number" and adding it to the plugins array.
  */
 export const auth = betterAuth({
-  secret: process.env.BETTER_AUTH_SECRET || "default_dev_secret_must_be_overridden_in_production_32chars",
+  secret: getAuthSecret(),
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -88,14 +104,7 @@ export const auth = betterAuth({
       roles,
       bannedUserMessage: "Account is blocked. Please contact support.",
     }),
-    /*
-     * To enable phoneNumber authentication in a subsequent phase:
-     * phoneNumber({
-     *   sendOTP: async ({ phoneNumber, code }, ctx) => {
-     *     await sendSMSOTP({ to: phoneNumber, code });
-     *   },
-     * }),
-     */
+    nextCookies(),
   ],
 });
 

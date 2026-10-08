@@ -78,26 +78,26 @@ export default function NotFound() {
           <div className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-200/80 text-left">
             <div className="flex items-center gap-2 mb-3 font-bold text-heading text-xs sm:text-sm">
               <MapPin className="size-4 text-primary" />
-              <span>Raccourcis utiles à Bukavu</span>
+              <span>{t("usefulShortcuts")}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs text-slate-600 font-medium">
               <Link
                 href="/#services"
                 className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-primary hover:text-primary transition-colors text-center"
               >
-                Prestations de pressing
+                {t("servicesShortcut")}
               </Link>
               <Link
                 href="/#zones"
                 className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-primary hover:text-primary transition-colors text-center"
               >
-                Communes desservies
+                {t("zonesShortcut")}
               </Link>
               <Link
                 href="/terms"
                 className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-primary hover:text-primary transition-colors text-center"
               >
-                Conditions & Garanties
+                {t("termsShortcut")}
               </Link>
             </div>
           </div>

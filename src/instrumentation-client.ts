@@ -7,6 +7,9 @@ Sentry.init({
   beforeSend(event) {
     return scrubPhoneNumbers(event);
   },
+  beforeSendSpan(span) {
+    return scrubPhoneNumbers(span);
+  },
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

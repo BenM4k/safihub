@@ -9,6 +9,9 @@
     "partnerPortal": "Mlango wa Wenye Dobi",
     "supportBukavu": "Usaidizi Bukavu : +243 999 000 123",
     "selectLanguage": "Chagua lugha",
+    "languageHeader": "Lugha",
+    "changeLanguage": "Badilisha lugha",
+    "currentLanguage": "Lugha ya sasa: {locale}. Bofya ili kubadilisha.",
     "languages": {
       "fr": "Français",
       "en": "English",
@@ -108,7 +111,11 @@
     "badge": "Kosa 404 • Ukurasa Haupatikani",
     "title": "Lo! Ukurasa huu umepotea",
     "description": "Anwani uliyoomba haipo au imehamishwa. Mjini Bukavu, hata kama mitaa haina vibao rasmi, watumwa wetu wanajua njia daima!",
-    "backHome": "Rudi Ukurasa wa Kwanza"
+    "backHome": "Rudi Ukurasa wa Kwanza",
+    "usefulShortcuts": "Njia za mkato muhimu huko Bukavu",
+    "servicesShortcut": "Huduma za kufulia",
+    "zonesShortcut": "Mitaa inayohudumiwa",
+    "termsShortcut": "Vigezo na Dhamana"
   },
   "errors": {
     "generic": "Hitilafu isiyotarajiwa imetokea.",
@@ -168,7 +175,33 @@
     "newPasswordLabel": "Nenosiri Jipya",
     "resetSubmit": "Sasisha Nenosiri",
     "resetting": "Inasasisha...",
-    "invalidToken": "Kiungo cha kuweka upya si sahihi au kimeisha muda."
+    "invalidToken": "Kiungo cha kuweka upya si sahihi au kimeisha muda.",
+    "resetLinkSent": "Kiungo cha kuweka upya nenosiri kimetumwa kwa barua pepe yako.",
+    "adminRequired": "Hauruhusiwi: Haki za msimamizi zinahitajika.",
+    "passwordUpdated": "Nenosiri la mtumiaji limesasishwa kwa mafanikio.",
+    "registerProgress": "Maendeleo ya usajili",
+    "validation": {
+      "invalidEmail": "Tafadhali ingiza barua pepe halali",
+      "passwordRequired": "Nenosiri linahitajika",
+      "firstNameRequired": "Jina la kwanza linahitajika",
+      "lastNameRequired": "Jina la ukoo linahitajika",
+      "phoneRequired": "Nambari ya simu inahitajika",
+      "passwordMinLength": "Nenosiri lazima liwe na angalau herufi 8",
+      "passwordUppercase": "Nenosiri lazima liwe na herufi kubwa",
+      "passwordLowercase": "Nenosiri lazima liwe na herufi ndogo",
+      "passwordNumber": "Nenosiri lazima liwe na nambari",
+      "passwordSpecial": "Nenosiri lazima liwe na herufi maalum",
+      "confirmPasswordRequired": "Kuthibitisha nenosiri kunahitajika",
+      "consentRequired": "Lazima ukubali vigezo na sera ya faragha",
+      "passwordsMismatch": "Manenosiri hayalingani",
+      "tokenRequired": "Msimbo wa kuweka upya haupo au si sahihi",
+      "guestUserIdRequired": "Kitambulisho cha mgeni kinahitajika",
+      "targetUserIdRequired": "Kitambulisho cha mtumiaji lengwa kinahitajika",
+      "invalidInput": "Taarifa si sahihi",
+      "adminRequired": "Hauruhusiwi: Haki za msimamizi zinahitajika.",
+      "accountBlocked": "Akaunti imezuiwa. Tafadhali wasiliana na huduma kwa wateja.",
+      "invalidCredentials": "Barua pepe au nenosiri si sahihi."
+    }
   },
   "portal": {
     "adminTitle": "Dashibodi ya Operesheni za SafiHub",

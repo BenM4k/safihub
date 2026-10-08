@@ -150,6 +150,14 @@ Each acceptance criterion from the product specification is mapped to an automat
 - **Trap:** Importing `withSentryConfig` from `@sentry/nextjs` causes type errors or build failures in `@sentry/nextjs` v11+.
 - **Fix:** Import `withSentryConfig` from `@sentry/nextjs/config`.
 
-### 19. Sentry Customer Privacy Firewall Scrubbing
-- **Trap:** Emitting Sentry errors that accidentally include customer or courier phone numbers in user profiles, tags, or extra context.
-- **Fix:** Route all Sentry captures through `scrubPhoneNumbers()` (`src/lib/sentry-privacy.ts`) or `withActionErrorHandling()`, which strips `phone`, `phoneNumber`, `contactPhone`, and `mobile` while preserving user roles and non-PII operational context.
+### 19. Sentry Customer Privacy Firewall & Distributed Tracing Scrubbing
+- **Trap:** Emitting Sentry errors or distributed tracing spans that accidentally include customer or courier phone numbers in user profiles, tags, extra context, breadcrumbs, or span data.
+- **Fix:** Register `scrubPhoneNumbers()` in both `beforeSend` and `beforeSendSpan` across all four Sentry configurations (`sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`, `src/services/error/sentry-error-handler.ts`). This scrubs `phone`, `phoneNumber`, `contactPhone`, and `mobile` from users, tags, extra, span attributes, breadcrumbs, request bodies, query strings, and exception values while preserving diagnostic context.
+
+### 20. Production Auth Secret Requirement
+- **Trap:** Running in production without `BETTER_AUTH_SECRET` allows session forgery risks.
+- **Fix:** SafiHub requires `BETTER_AUTH_SECRET` in production and immediately halts initialization if unset. Always configure `BETTER_AUTH_SECRET` in production environment variables.
+
+### 21. React Server Conditions vs. Client Navigation in Vitest
+- **Trap:** Running `NODE_OPTIONS='--conditions=react-server'` on test files that import `next/navigation` fails with `_react.default.createContext is not a function` because the React Server build intentionally omits client context APIs.
+- **Fix:** Only pass `--conditions=react-server` when testing pure Server Components or isolated modules that import `server-only`. For tests importing navigation or client-compatible hooks, run Vitest normally without `--conditions=react-server`.

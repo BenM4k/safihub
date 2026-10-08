@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { auth } from "@/services/auth/auth";
 import {
@@ -15,72 +16,88 @@ import {
   resetPasswordWithToken,
 } from "@/services/auth/auth.service";
 
+type AuthTranslator = (key: string) => string;
+
 // --- Validation Schemas ---
 
-const loginSchema = z.object({
-  email: z.string().trim().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
-});
-
-const registerSchema = z
-  .object({
-    firstName: z.string().trim().min(1, "First name is required"),
-    lastName: z.string().trim().min(1, "Last name is required"),
-    email: z.string().trim().email("Please enter a valid email address"),
-    phone: z.string().trim().min(6, "Phone number is required"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters long")
-      .regex(/[A-Z]/, "Password must contain an uppercase letter")
-      .regex(/[a-z]/, "Password must contain a lowercase letter")
-      .regex(/[0-9]/, "Password must contain a number")
-      .regex(/[^A-Za-z0-9]/, "Password must contain a special character"),
-    confirmPassword: z.string().min(1, "Confirm password is required"),
-    consent: z
-      .union([z.boolean(), z.string()])
-      .transform((val) => val === true || val === "on" || val === "true")
-      .refine((val) => val === true, "You must accept the terms and privacy policy"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
+function createLoginSchema(t: AuthTranslator) {
+  return z.object({
+    email: z.string().trim().email(t("validation.invalidEmail")),
+    password: z.string().min(1, t("validation.passwordRequired")),
   });
+}
 
-const forgotPasswordSchema = z.object({
-  email: z.string().trim().email("Please enter a valid email address"),
-});
+function createRegisterSchema(t: AuthTranslator) {
+  return z
+    .object({
+      firstName: z.string().trim().min(1, t("validation.firstNameRequired")),
+      lastName: z.string().trim().min(1, t("validation.lastNameRequired")),
+      email: z.string().trim().email(t("validation.invalidEmail")),
+      phone: z.string().trim().min(6, t("validation.phoneRequired")),
+      password: z
+        .string()
+        .min(8, t("validation.passwordMinLength"))
+        .regex(/[A-Z]/, t("validation.passwordUppercase"))
+        .regex(/[a-z]/, t("validation.passwordLowercase"))
+        .regex(/[0-9]/, t("validation.passwordNumber"))
+        .regex(/[^A-Za-z0-9]/, t("validation.passwordSpecial")),
+      confirmPassword: z.string().min(1, t("validation.confirmPasswordRequired")),
+      consent: z
+        .union([z.boolean(), z.string()])
+        .transform((val) => val === true || val === "on" || val === "true")
+        .refine((val) => val === true, t("validation.consentRequired")),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("validation.passwordsMismatch"),
+      path: ["confirmPassword"],
+    });
+}
 
-const resetPasswordSchema = z
-  .object({
-    token: z.string().min(1, "Reset token is missing or invalid"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters long")
-      .regex(/[A-Z]/, "Password must contain an uppercase letter")
-      .regex(/[a-z]/, "Password must contain a lowercase letter")
-      .regex(/[0-9]/, "Password must contain a number")
-      .regex(/[^A-Za-z0-9]/, "Password must contain a special character"),
-    confirmPassword: z.string().min(1, "Confirm password is required"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
+function createForgotPasswordSchema(t: AuthTranslator) {
+  return z.object({
+    email: z.string().trim().email(t("validation.invalidEmail")),
   });
+}
 
-const adminCreateGuestSchema = z.object({
-  name: z.string().trim().optional(),
-  phone: z.string().trim().min(6, "Valid phone number is required"),
-});
+function createResetPasswordSchema(t: AuthTranslator) {
+  return z
+    .object({
+      token: z.string().min(1, t("validation.tokenRequired")),
+      password: z
+        .string()
+        .min(8, t("validation.passwordMinLength"))
+        .regex(/[A-Z]/, t("validation.passwordUppercase"))
+        .regex(/[a-z]/, t("validation.passwordLowercase"))
+        .regex(/[0-9]/, t("validation.passwordNumber"))
+        .regex(/[^A-Za-z0-9]/, t("validation.passwordSpecial")),
+      confirmPassword: z.string().min(1, t("validation.confirmPasswordRequired")),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("validation.passwordsMismatch"),
+      path: ["confirmPassword"],
+    });
+}
 
-const adminMergeGuestSchema = z.object({
-  guestUserId: z.string().min(1, "Guest user ID is required"),
-  targetUserId: z.string().min(1, "Target user ID is required"),
-});
+function createAdminCreateGuestSchema(t: AuthTranslator) {
+  return z.object({
+    name: z.string().trim().optional(),
+    phone: z.string().trim().min(6, t("validation.phoneRequired")),
+  });
+}
 
-const adminResetPasswordSchema = z.object({
-  targetUserId: z.string().min(1, "Target user ID is required"),
-  newPassword: z.string().min(8, "New password must be at least 8 characters"),
-});
+function createAdminMergeGuestSchema(t: AuthTranslator) {
+  return z.object({
+    guestUserId: z.string().min(1, t("validation.guestUserIdRequired")),
+    targetUserId: z.string().min(1, t("validation.targetUserIdRequired")),
+  });
+}
+
+function createAdminResetPasswordSchema(t: AuthTranslator) {
+  return z.object({
+    targetUserId: z.string().min(1, t("validation.targetUserIdRequired")),
+    newPassword: z.string().min(8, t("validation.passwordMinLength")),
+  });
+}
 
 // --- Action State Interfaces ---
 
@@ -101,7 +118,9 @@ export async function loginAction(
   _prevState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
-  const parsed = loginSchema.safeParse({
+  const t = await getTranslations("auth");
+  const schema = createLoginSchema((k) => t(k as Parameters<typeof t>[0]));
+  const parsed = schema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
@@ -123,9 +142,15 @@ export async function loginAction(
   });
 
   if (!res.ok) {
+    let errorMsg = res.error;
+    if (res.error === "Account is blocked. Please contact support.") {
+      errorMsg = t("validation.accountBlocked");
+    } else if (res.error === "Invalid email or password.") {
+      errorMsg = t("validation.invalidCredentials");
+    }
     return {
       success: false,
-      errors: { form: res.error },
+      errors: { form: errorMsg },
     };
   }
 
@@ -136,7 +161,9 @@ export async function registerAction(
   _prevState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
-  const parsed = registerSchema.safeParse({
+  const t = await getTranslations("auth");
+  const schema = createRegisterSchema((k) => t(k as Parameters<typeof t>[0]));
+  const parsed = schema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     email: formData.get("email"),
@@ -184,14 +211,16 @@ export async function forgotPasswordAction(
   _prevState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
-  const parsed = forgotPasswordSchema.safeParse({
+  const t = await getTranslations("auth");
+  const schema = createForgotPasswordSchema((k) => t(k as Parameters<typeof t>[0]));
+  const parsed = schema.safeParse({
     email: formData.get("email"),
   });
 
   if (!parsed.success) {
     return {
       success: false,
-      errors: { email: parsed.error.issues[0]?.message || "Invalid email" },
+      errors: { email: parsed.error.issues[0]?.message || t("validation.invalidEmail") },
     };
   }
 
@@ -211,7 +240,7 @@ export async function forgotPasswordAction(
 
   return {
     success: true,
-    message: "A password reset link has been sent to your email address.",
+    message: t("resetLinkSent"),
   };
 }
 
@@ -219,7 +248,9 @@ export async function resetPasswordAction(
   _prevState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
-  const parsed = resetPasswordSchema.safeParse({
+  const t = await getTranslations("auth");
+  const schema = createResetPasswordSchema((k) => t(k as Parameters<typeof t>[0]));
+  const parsed = schema.safeParse({
     token: formData.get("token"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
@@ -255,20 +286,22 @@ export async function adminCreateGuestAction(
   _prevState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
+  const t = await getTranslations("auth");
   const reqHeaders = await headers();
   const session = await auth.api.getSession({ headers: reqHeaders });
 
   if (!session?.user || session.user.role !== "admin") {
-    return { success: false, errors: { form: "Unauthorized: Admin privileges required." } };
+    return { success: false, errors: { form: t("adminRequired") } };
   }
 
-  const parsed = adminCreateGuestSchema.safeParse({
+  const schema = createAdminCreateGuestSchema((k) => t(k as Parameters<typeof t>[0]));
+  const parsed = schema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
   });
 
   if (!parsed.success) {
-    return { success: false, errors: { form: parsed.error.issues[0]?.message || "Invalid input" } };
+    return { success: false, errors: { form: parsed.error.issues[0]?.message || t("validation.invalidInput") } };
   }
 
   const res = await adminCreateGuestUser({
@@ -288,20 +321,22 @@ export async function adminMergeGuestAction(
   _prevState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
+  const t = await getTranslations("auth");
   const reqHeaders = await headers();
   const session = await auth.api.getSession({ headers: reqHeaders });
 
   if (!session?.user || session.user.role !== "admin") {
-    return { success: false, errors: { form: "Unauthorized: Admin privileges required." } };
+    return { success: false, errors: { form: t("adminRequired") } };
   }
 
-  const parsed = adminMergeGuestSchema.safeParse({
+  const schema = createAdminMergeGuestSchema((k) => t(k as Parameters<typeof t>[0]));
+  const parsed = schema.safeParse({
     guestUserId: formData.get("guestUserId"),
     targetUserId: formData.get("targetUserId"),
   });
 
   if (!parsed.success) {
-    return { success: false, errors: { form: parsed.error.issues[0]?.message || "Invalid input" } };
+    return { success: false, errors: { form: parsed.error.issues[0]?.message || t("validation.invalidInput") } };
   }
 
   const res = await adminMergeGuestUser({
@@ -321,20 +356,22 @@ export async function adminResetPasswordAction(
   _prevState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
+  const t = await getTranslations("auth");
   const reqHeaders = await headers();
   const session = await auth.api.getSession({ headers: reqHeaders });
 
   if (!session?.user || session.user.role !== "admin") {
-    return { success: false, errors: { form: "Unauthorized: Admin privileges required." } };
+    return { success: false, errors: { form: t("adminRequired") } };
   }
 
-  const parsed = adminResetPasswordSchema.safeParse({
+  const schema = createAdminResetPasswordSchema((k) => t(k as Parameters<typeof t>[0]));
+  const parsed = schema.safeParse({
     targetUserId: formData.get("targetUserId"),
     newPassword: formData.get("newPassword"),
   });
 
   if (!parsed.success) {
-    return { success: false, errors: { form: parsed.error.issues[0]?.message || "Invalid input" } };
+    return { success: false, errors: { form: parsed.error.issues[0]?.message || t("validation.invalidInput") } };
   }
 
   const res = await adminResetUserPassword({
@@ -348,5 +385,5 @@ export async function adminResetPasswordAction(
     return { success: false, errors: { form: res.error } };
   }
 
-  return { success: true, message: "User password updated successfully." };
+  return { success: true, message: t("passwordUpdated") };
 }

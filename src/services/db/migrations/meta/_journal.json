@@ -8,6 +8,13 @@
       "when": 1791403088363,
       "tag": "0000_high_victor_mancha",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791442282540,
+      "tag": "0001_skinny_red_skull",
+      "breakpoints": true
     }
   ]
 }

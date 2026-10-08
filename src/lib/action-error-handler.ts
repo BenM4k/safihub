@@ -1,6 +1,7 @@
 import "server-only";
 import * as Sentry from "@sentry/nextjs";
 import { headers } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/services/auth/auth";
 import { err, type Result } from "@/lib/result";
 
@@ -28,7 +29,7 @@ export async function withActionErrorHandling<T>(
 ): Promise<Result<T>> {
   return Sentry.withServerActionInstrumentation(
     actionName,
-    { recordResponse: true },
+    { recordResponse: false },
     async () => {
       let userContext: SafeActionContext["user"] = null;
 
@@ -67,10 +68,13 @@ export async function withActionErrorHandling<T>(
           },
         });
 
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Une erreur inattendue est survenue lors de l'opération.";
+        let errorMessage = "Une erreur inattendue est survenue.";
+        try {
+          const t = await getTranslations("errors");
+          errorMessage = t("generic");
+        } catch {
+          // Fallback if translations cannot be loaded
+        }
 
         return err(errorMessage);
       }
@@ -79,11 +83,10 @@ export async function withActionErrorHandling<T>(
 }
 
 /**
- * Shared error-handling helper for Form Actions returning state objects.
+ * Form action error-handling helper matching React 19 `useActionState` contract.
+ * Wraps form actions that return `{ success: boolean, errors?: Record<string, string>, message?: string }`.
  */
-export async function withFormActionErrorHandling<
-  TState extends { success: boolean; errors?: Record<string, string>; message?: string }
->(
+export async function withFormActionErrorHandling<TState extends { success: boolean; errors?: Record<string, string>; message?: string }>(
   actionName: string,
   fn: (ctx: SafeActionContext) => Promise<TState>,
   fallbackState: TState,
@@ -91,7 +94,7 @@ export async function withFormActionErrorHandling<
 ): Promise<TState> {
   return Sentry.withServerActionInstrumentation(
     actionName,
-    { recordResponse: true },
+    { recordResponse: false },
     async () => {
       let userContext: SafeActionContext["user"] = null;
 
@@ -120,10 +123,13 @@ export async function withFormActionErrorHandling<
           },
         });
 
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Une erreur inattendue est survenue.";
+        let message = "Une erreur inattendue est survenue.";
+        try {
+          const t = await getTranslations("errors");
+          message = t("generic");
+        } catch {
+          // Fallback if translations cannot be loaded
+        }
 
         return {
           ...fallbackState,

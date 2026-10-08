@@ -17,11 +17,16 @@ const ERROR_TRANSLATIONS = { fr, en, sw };
 
 function getInitialLocale(): "fr" | "en" | "sw" {
   if (typeof document === "undefined") return "fr";
-  const match = document.cookie.match(/NEXT_LOCALE=([^;]+)/);
-  const savedLocale = match?.[1];
-  return savedLocale === "en" || savedLocale === "sw" || savedLocale === "fr"
-    ? savedLocale
-    : "fr";
+  const match = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
+  if (!match?.[1]) return "fr";
+  try {
+    const savedLocale = decodeURIComponent(match[1]);
+    return savedLocale === "en" || savedLocale === "sw" || savedLocale === "fr"
+      ? savedLocale
+      : "fr";
+  } catch {
+    return "fr";
+  }
 }
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {

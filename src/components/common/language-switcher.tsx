@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Globe, Check, Loader2 } from "lucide-react";
 import { SUPPORTED_LOCALES, LOCALE_LABELS, type AppLocale } from "@/i18n/config";
 import { setLocaleAction } from "@/actions/locale";
@@ -17,6 +17,7 @@ const LOCALE_DETAILS: Record<
 };
 
 export function LanguageSwitcher() {
+  const t = useTranslations("common");
   const currentLocale = useLocale() as AppLocale;
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -73,12 +74,12 @@ export function LanguageSwitcher() {
       {isOpen && (
         <div
           role="dialog"
-          aria-label="Sélection de la langue"
+          aria-label={t("selectLanguage")}
           className="absolute bottom-16 right-0 mb-2 w-64 rounded-2xl bg-white/95 backdrop-blur-lg border border-slate-200/90 shadow-2xl p-2.5 transition-all animate-in fade-in zoom-in-95"
         >
           <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
             <span className="text-xs font-bold tracking-tight text-heading">
-              Langue • Language
+              {t("languageHeader")}
             </span>
             <span className="text-[10px] font-semibold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">
               {currentLocale}
@@ -140,7 +141,7 @@ export function LanguageSwitcher() {
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={isPending}
-        aria-label={`Langue actuelle : ${LOCALE_LABELS[currentLocale]}. Cliquer pour changer.`}
+        aria-label={t("currentLanguage", { locale: LOCALE_LABELS[currentLocale] })}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         className="size-13 sm:size-14 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-lg hover:shadow-xl hover:border-primary/40 transition-all flex flex-col items-center justify-center gap-0.5 group active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"

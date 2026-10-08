@@ -98,17 +98,25 @@ export async function registerCustomer(
     const userId = authResult.user.id;
 
     // Record required legal consents (Terms of Service & Privacy Policy)
-    await recordConsent({
+    const termsConsent = await recordConsent({
       userId,
       document: "terms",
       version: "1.0",
     });
+    if (!termsConsent.ok) {
+      console.error("Failed to record terms consent for user", userId, termsConsent.error);
+      return err("Failed to record required legal consent.");
+    }
 
-    await recordConsent({
+    const privacyConsent = await recordConsent({
       userId,
       document: "privacy",
       version: "1.0",
     });
+    if (!privacyConsent.ok) {
+      console.error("Failed to record privacy consent for user", userId, privacyConsent.error);
+      return err("Failed to record required legal consent.");
+    }
 
     return ok({
       user: authResult.user as unknown as Record<string, unknown>,
@@ -128,12 +136,6 @@ export async function loginCustomer(
   input: LoginUserInput
 ): Promise<Result<{ user: Record<string, unknown>; token?: string | null }>> {
   const normalizedEmail = input.email.toLowerCase().trim();
-
-  // Check if account is blocked before attempting sign-in
-  const existingUser = await getUserByEmail(normalizedEmail);
-  if (existingUser && (existingUser.status === "blocked" || existingUser.banned)) {
-    return err("Account is blocked. Please contact support.");
-  }
 
   try {
     const authResult = await auth.api.signInEmail({

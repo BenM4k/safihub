@@ -9,6 +9,9 @@
     "partnerPortal": "Laundry Partner Portal",
     "supportBukavu": "Bukavu Support: +243 999 000 123",
     "selectLanguage": "Select language",
+    "languageHeader": "Language",
+    "changeLanguage": "Change language",
+    "currentLanguage": "Current language: {locale}. Click to change.",
     "languages": {
       "fr": "Français",
       "en": "English",
@@ -108,7 +111,11 @@
     "badge": "Error 404 • Destination Not Found",
     "title": "Oops! This page went missing",
     "description": "The requested address does not exist or has been moved. In Bukavu, even when streets lack official signs, our couriers always find the right way!",
-    "backHome": "Back to Home"
+    "backHome": "Back to Home",
+    "usefulShortcuts": "Useful shortcuts in Bukavu",
+    "servicesShortcut": "Laundry services",
+    "zonesShortcut": "Covered neighborhoods",
+    "termsShortcut": "Terms & Guarantees"
   },
   "errors": {
     "generic": "An unexpected error occurred.",
@@ -168,7 +175,33 @@
     "newPasswordLabel": "New Password",
     "resetSubmit": "Update Password",
     "resetting": "Updating...",
-    "invalidToken": "The password reset token is invalid or has expired."
+    "invalidToken": "The password reset token is invalid or has expired.",
+    "resetLinkSent": "A password reset link has been sent to your email address.",
+    "adminRequired": "Unauthorized: Admin privileges required.",
+    "passwordUpdated": "User password updated successfully.",
+    "registerProgress": "Registration progress",
+    "validation": {
+      "invalidEmail": "Please enter a valid email address",
+      "passwordRequired": "Password is required",
+      "firstNameRequired": "First name is required",
+      "lastNameRequired": "Last name is required",
+      "phoneRequired": "Phone number is required",
+      "passwordMinLength": "Password must be at least 8 characters long",
+      "passwordUppercase": "Password must contain an uppercase letter",
+      "passwordLowercase": "Password must contain a lowercase letter",
+      "passwordNumber": "Password must contain a number",
+      "passwordSpecial": "Password must contain a special character",
+      "confirmPasswordRequired": "Confirm password is required",
+      "consentRequired": "You must accept the terms and privacy policy",
+      "passwordsMismatch": "Passwords do not match",
+      "tokenRequired": "Reset token is missing or invalid",
+      "guestUserIdRequired": "Guest user ID is required",
+      "targetUserIdRequired": "Target user ID is required",
+      "invalidInput": "Invalid input",
+      "adminRequired": "Unauthorized: Admin privileges required.",
+      "accountBlocked": "Account is blocked. Please contact support.",
+      "invalidCredentials": "Invalid email or password."
+    }
   },
   "portal": {
     "adminTitle": "SafiHub Operations Console",

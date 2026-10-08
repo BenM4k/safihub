@@ -7,4 +7,7 @@ Sentry.init({
   beforeSend(event) {
     return scrubPhoneNumbers(event);
   },
+  beforeSendSpan(span) {
+    return scrubPhoneNumbers(span);
+  },
 });

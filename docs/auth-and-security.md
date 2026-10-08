@@ -49,12 +49,25 @@ SafiHub defines four distinct system roles configured with the Better Auth admin
 - `guardCourierRoute()`: Used in `/courier` server layouts to ensure only couriers and admins access the courier PWA.
 - `guardHouseRoute()`: Used in `/house` server layouts to ensure only verified laundry house staff and admins access the house portal.
 
-### Action-Level Auth & Sentry Instrumentation (`src/lib/action-error-handler.ts`)
+### Action-Level Auth & Sentry Instrumentation (`src/lib/action-error-handler.ts`, `src/lib/sentry-privacy.ts`)
 Every server action checks session authenticity and role permissions first. Server actions are wrapped with `withActionErrorHandling()` or `withFormActionErrorHandling()`:
 - Automatically captures unexpected errors in **Sentry**.
 - Enriches Sentry scope with `user_role` and `user_id`.
-- Sanitizes all telemetry via `scrubPhoneNumbers()` to ensure customer phone numbers NEVER leak into Sentry logs or tags.
+- Sanitizes all telemetry via `scrubPhoneNumbers()` registered in `beforeSend` and `beforeSendSpan` across all Sentry runtimes (client, server, edge, and action handler):
+  - User objects (`phone`, `phoneNumber`, `contactPhone`, `mobile`).
+  - Tags and extra metadata.
+  - Distributed tracing spans (`span.data` and attributes).
+  - Breadcrumbs (`data` and `message`).
+  - Request payloads, query strings, and headers.
+  - Contexts and exception values.
 - Returns type-safe `Result<T>` (`{ ok: false, error: ... }`) to avoid uncaught exceptions across network boundaries.
+
+### Production Security Safeguards
+- **Mandatory `BETTER_AUTH_SECRET`:** Better Auth will immediately throw an explicit startup error if `BETTER_AUTH_SECRET` is unset in production.
+- **Production Seed Guard:** `src/services/db/seed.ts` terminates with code 1 if run against a production database unless `ALLOW_PRODUCTION_SEED=true` is explicitly set.
+- **Email In-Memory Storage Guard:** The in-memory email store (`src/services/email/index.ts`) is strictly disabled in production to prevent memory leaks and credential exposure.
+- **Account Table Integrity:** The `account` table enforces a composite unique constraint on `(provider_id, account_id)` preventing duplicate provider bindings.
+- **Debug Route Guard:** Debug Sentry endpoints (`triggerTestSentryErrorAction`) require authenticated `admin` role in production.
 
 ---
 

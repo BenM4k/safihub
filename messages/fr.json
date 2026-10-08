@@ -9,6 +9,9 @@
     "partnerPortal": "Espace Partenaire Pressing",
     "supportBukavu": "Assistance Bukavu : +243 999 000 123",
     "selectLanguage": "Choisir la langue",
+    "languageHeader": "Langue • Language",
+    "changeLanguage": "Changer de langue",
+    "currentLanguage": "Langue actuelle : {locale}. Cliquer pour changer.",
     "languages": {
       "fr": "Français",
       "en": "English",
@@ -108,7 +111,11 @@
     "badge": "Erreur 404 • Destination introuvable",
     "title": "Oups ! Cette page s'est égarée",
     "description": "L'adresse demandée n'existe pas ou a été déplacée. À Bukavu, même lorsque les rues manquent de plaques officielles, nos coursiers retrouvent toujours leur cap !",
-    "backHome": "Retour à l'accueil"
+    "backHome": "Retour à l'accueil",
+    "usefulShortcuts": "Raccourcis utiles à Bukavu",
+    "servicesShortcut": "Prestations de pressing",
+    "zonesShortcut": "Communes desservies",
+    "termsShortcut": "Conditions & Garanties"
   },
   "errors": {
     "generic": "Une erreur inattendue est survenue.",
@@ -168,7 +175,33 @@
     "newPasswordLabel": "Nouveau mot de passe",
     "resetSubmit": "Mettre à jour le mot de passe",
     "resetting": "Mise à jour...",
-    "invalidToken": "Le jeton de réinitialisation est invalide ou a expiré."
+    "invalidToken": "Le jeton de réinitialisation est invalide ou a expiré.",
+    "resetLinkSent": "Un lien de réinitialisation de mot de passe a été envoyé à votre adresse email.",
+    "adminRequired": "Non autorisé : Privilèges administrateur requis.",
+    "passwordUpdated": "Le mot de passe de l'utilisateur a été mis à jour avec succès.",
+    "registerProgress": "Progression de l'inscription",
+    "validation": {
+      "invalidEmail": "Veuillez entrer une adresse email valide",
+      "passwordRequired": "Le mot de passe est obligatoire",
+      "firstNameRequired": "Le prénom est obligatoire",
+      "lastNameRequired": "Le nom est obligatoire",
+      "phoneRequired": "Le numéro de téléphone est obligatoire",
+      "passwordMinLength": "Le mot de passe doit contenir au moins 8 caractères",
+      "passwordUppercase": "Le mot de passe doit contenir au moins une lettre majuscule",
+      "passwordLowercase": "Le mot de passe doit contenir au moins une lettre minuscule",
+      "passwordNumber": "Le mot de passe doit contenir au moins un chiffre",
+      "passwordSpecial": "Le mot de passe doit contenir au moins un caractère spécial",
+      "confirmPasswordRequired": "La confirmation du mot de passe est obligatoire",
+      "consentRequired": "Vous devez accepter les conditions d'utilisation et la politique de confidentialité",
+      "passwordsMismatch": "Les mots de passe ne correspondent pas",
+      "tokenRequired": "Le jeton de réinitialisation est manquant ou invalide",
+      "guestUserIdRequired": "L'identifiant de l'invité est obligatoire",
+      "targetUserIdRequired": "L'identifiant de l'utilisateur cible est obligatoire",
+      "invalidInput": "Données saisies invalides",
+      "adminRequired": "Non autorisé : Privilèges administrateur requis.",
+      "accountBlocked": "Le compte est bloqué. Veuillez contacter le support.",
+      "invalidCredentials": "Email ou mot de passe incorrect."
+    }
   },
   "portal": {
     "adminTitle": "Console d'Opérations SafiHub",

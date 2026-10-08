@@ -14,6 +14,15 @@ import {
 } from "./seed-data";
 
 async function main() {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.ALLOW_PRODUCTION_SEED !== "true"
+  ) {
+    throw new Error(
+      "Seeding is disabled in production environment. Set ALLOW_PRODUCTION_SEED=true to override."
+    );
+  }
+
   const databaseUrl =
     process.env.DATABASE_URL_DEV || process.env.DATABASE_URL;
 

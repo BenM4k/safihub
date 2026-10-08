@@ -4,9 +4,7 @@ import { DEFAULT_LOCALE, isValidLocale, type AppLocale } from "./config";
 
 export default getRequestConfig(async () => {
   const cookieStore = await cookies();
-  const rawLocale =
-    cookieStore.get("NEXT_LOCALE")?.value ||
-    cookieStore.get("locale")?.value;
+  const rawLocale = cookieStore.get("NEXT_LOCALE")?.value;
 
   const locale: AppLocale = isValidLocale(rawLocale) ? rawLocale : DEFAULT_LOCALE;
 

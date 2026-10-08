@@ -21,7 +21,7 @@ export function RegisterHeader() {
       <div
         className="flex items-center gap-2 mt-4 mb-2"
         role="progressbar"
-        aria-label="Progress"
+        aria-label={t("registerProgress")}
         aria-valuenow={1}
         aria-valuemin={1}
         aria-valuemax={5}

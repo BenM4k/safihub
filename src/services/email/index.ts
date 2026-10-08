@@ -48,7 +48,9 @@ export async function sendEmail({
     sentAt: new Date(),
   };
 
-  sentEmailsStore.push(record);
+  if (process.env.NODE_ENV !== "production") {
+    sentEmailsStore.push(record);
+  }
 
   const resendApiKey = process.env.RESEND_API_KEY;
   const fromEmail =

@@ -25,12 +25,7 @@ export function getDatabaseUrl(): string {
   return url;
 }
 
-const connectionString =
-  process.env.DATABASE_URL_DEV ||
-  process.env.DATABASE_URL_POOLED ||
-  process.env.DATABASE_URL ||
-  "postgresql://placeholder:placeholder@localhost/placeholder";
-
+const connectionString = getDatabaseUrl();
 const client = neon(connectionString);
 
 /**
