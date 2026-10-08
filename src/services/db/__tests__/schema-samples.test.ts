@@ -203,7 +203,7 @@ describe("Database Schema Samples & Relational Graph Verification", () => {
         commissionAmount: 1400,
         totalDue: 9500,
         paymentCurrency: "CDF",
-        exchangeRateUsed: "2800.000000",
+        exchangeRateUsed: null,
       };
       expect(sampleOrder.code).toBe("SF-1042");
       expect(sampleOrder.idempotencyKey).toBe("idem_uuid_456");

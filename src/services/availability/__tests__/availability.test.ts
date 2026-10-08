@@ -65,7 +65,7 @@ describe("Service Hours & Availability in Bukavu Timezone", () => {
         houseClosures: closures,
         cutoffMinutes: 120,
         dailyCapacity: 10,
-        currentOrdersCountOnDate: 2,
+        bookedOrdersByDate: { "2026-10-12": 2 },
         courierShifts,
       });
 
@@ -144,7 +144,7 @@ describe("Service Hours & Availability in Bukavu Timezone", () => {
         houseClosures: closures,
         cutoffMinutes: 120,
         dailyCapacity: 5,
-        currentOrdersCountOnDate: 5, // Full!
+        bookedOrdersByDate: { "2026-10-12": 5 }, // Full!
         courierShifts,
       });
 
@@ -169,6 +169,48 @@ describe("Service Hours & Availability in Bukavu Timezone", () => {
 
       expect(result.valid).toBe(false);
       expect(result.code).toBe("NO_COURIER_ON_SHIFT");
+    });
+
+    it("refuses slot with end date before or equal to start date", () => {
+      const invalidSlot: TimeSlot = {
+        start: fromBukavuDateTime("2026-10-12", "12:00"),
+        end: fromBukavuDateTime("2026-10-12", "10:00"),
+      };
+
+      const result = evaluateSlotValidity({
+        slot: invalidSlot,
+        houseHours,
+        houseClosures: closures,
+        cutoffMinutes: 120,
+        dailyCapacity: 10,
+        courierShifts,
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.code).toBe("INVALID_DATES");
+    });
+
+    it("refuses slot starting before currentTime plus leadTimeMinutes", () => {
+      const now = fromBukavuDateTime("2026-10-12", "09:45");
+      const tooSoonSlot: TimeSlot = {
+        start: fromBukavuDateTime("2026-10-12", "10:00"),
+        end: fromBukavuDateTime("2026-10-12", "12:00"),
+      };
+
+      // 30 min lead time means earliest start is 10:15
+      const result = evaluateSlotValidity({
+        slot: tooSoonSlot,
+        houseHours,
+        houseClosures: closures,
+        cutoffMinutes: 120,
+        dailyCapacity: 10,
+        courierShifts,
+        currentTime: now,
+        leadTimeMinutes: 30,
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.code).toBe("INVALID_DATES");
     });
   });
 

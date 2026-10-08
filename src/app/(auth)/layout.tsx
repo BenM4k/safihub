@@ -1,13 +1,10 @@
 import { AuthLogo } from "@/components/auth/auth-logo";
 import { AuthSidebar } from "@/components/auth/auth-sidebar";
-import { redirectIfAuthenticated } from "@/services/auth";
-
-export default async function AuthLayout({
+export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await redirectIfAuthenticated();
 
   return (
     <div className="min-h-screen w-full bg-white grid grid-cols-1 lg:grid-cols-2">

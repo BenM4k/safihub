@@ -149,8 +149,10 @@ export function evaluateSlotValidity(params: {
   houseClosures: HouseClosure[];
   cutoffMinutes: number;
   dailyCapacity?: number | null;
-  currentOrdersCountOnDate?: number;
+  bookedOrdersByDate?: Record<string, number>;
   courierShifts: CourierShiftSegment[];
+  currentTime?: Date;
+  leadTimeMinutes?: number;
 }): SlotEvaluationResult {
   const {
     slot,
@@ -158,16 +160,33 @@ export function evaluateSlotValidity(params: {
     houseClosures,
     cutoffMinutes,
     dailyCapacity,
-    currentOrdersCountOnDate = 0,
+    bookedOrdersByDate = {},
     courierShifts,
+    currentTime,
+    leadTimeMinutes = 0,
   } = params;
 
-  if (slot.end.getTime() <= slot.start.getTime()) {
+  if (
+    Number.isNaN(slot.start.getTime()) ||
+    Number.isNaN(slot.end.getTime()) ||
+    slot.end.getTime() <= slot.start.getTime()
+  ) {
     return {
       valid: false,
       code: "INVALID_DATES",
       reason: "Slot end must be after slot start",
     };
+  }
+
+  if (currentTime) {
+    const minStartMs = currentTime.getTime() + (leadTimeMinutes ?? 0) * 60 * 1000;
+    if (slot.start.getTime() < minStartMs) {
+      return {
+        valid: false,
+        code: "INVALID_DATES",
+        reason: "Pickup slot cannot start in the past or before configured lead time",
+      };
+    }
   }
 
   const startLocal = toBukavuDateTime(slot.start);
@@ -197,7 +216,8 @@ export function evaluateSlotValidity(params: {
     };
   }
 
-  if (isDailyCapacityReached(dailyCapacity, currentOrdersCountOnDate)) {
+  const ordersCountOnDate = bookedOrdersByDate[startLocal.dateString] ?? 0;
+  if (isDailyCapacityReached(dailyCapacity, ordersCountOnDate)) {
     return {
       valid: false,
       code: "DAILY_CAPACITY_REACHED",

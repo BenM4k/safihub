@@ -63,7 +63,7 @@ export interface PlatformSettingsConfig {
   defaultCommissionBps: number;
   maxCoverageDistanceLevel: number;
   acceptanceDelayMinutes: number;
-  cutoffMinutesDefault?: number;
+  leadTimeMinutes?: number;
 }
 
 export interface ExistingOrderSnapshot {
@@ -86,8 +86,8 @@ export interface OrderValidationContext {
   houseHours: HouseHourSegment[];
   houseClosures: HouseClosure[];
   courierShifts: CourierShiftSegment[];
-  bookedOrdersCountOnDate?: number;
   bookedOrdersByDate?: Record<string, number>;
+  currentTime?: Date;
   settings: PlatformSettingsConfig;
   activeExchangeRate?: { rate: number; isCdfPerUsd?: boolean };
 }
@@ -186,7 +186,16 @@ export function validateOrderCheckout(
     return err({ code: "EMPTY_CART", message: "Cart cannot be empty" });
   }
 
-  const totalQuantity = input.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  for (const item of input.items) {
+    if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+      return err({
+        code: "QUANTITY_LIMIT_EXCEEDED",
+        message: "Line item quantity must be a positive integer",
+      });
+    }
+  }
+
+  const totalQuantity = input.items.reduce((sum, item) => sum + item.quantity, 0);
   if (totalQuantity <= 0) {
     return err({ code: "QUANTITY_LIMIT_EXCEEDED", message: "Total quantity must be greater than 0" });
   }
@@ -228,26 +237,30 @@ export function validateOrderCheckout(
   }
 
   // 5. Validate Slot Availability & Opening Hours (AC 1, AC 5)
+  const currentTime = context.currentTime ?? new Date();
   const slotEval = evaluateSlotValidity({
     slot: input.pickupSlot,
     houseHours: context.houseHours.filter((h) => (h.houseId ? h.houseId === house.id : true)),
     houseClosures: context.houseClosures.filter((c) => (c.houseId ? c.houseId === house.id : true)),
     cutoffMinutes: house.cutoffMinutes,
     dailyCapacity: house.dailyCapacity,
-    currentOrdersCountOnDate: context.bookedOrdersCountOnDate ?? 0,
+    bookedOrdersByDate: context.bookedOrdersByDate ?? {},
     courierShifts: context.courierShifts,
+    currentTime,
+    leadTimeMinutes: context.settings.leadTimeMinutes,
   });
 
   if (!slotEval.valid) {
     // AC 1: Refuse and propose next available slot
     const nextSlot = findNextAvailableSlot({
-      referenceTime: input.pickupSlot.start,
+      referenceTime: currentTime,
       houseHours: context.houseHours.filter((h) => (h.houseId ? h.houseId === house.id : true)),
       houseClosures: context.houseClosures.filter((c) => (c.houseId ? c.houseId === house.id : true)),
       cutoffMinutes: house.cutoffMinutes,
       dailyCapacity: house.dailyCapacity,
       bookedOrdersByDate: context.bookedOrdersByDate ?? {},
       courierShifts: context.courierShifts,
+      leadTimeMinutes: context.settings.leadTimeMinutes,
     });
 
     const isCapacity = slotEval.code === "DAILY_CAPACITY_REACHED";

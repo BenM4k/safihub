@@ -137,6 +137,10 @@ describe("Pricing & Unit Economics Pure Functions", () => {
     it("throws on negative amount or non-positive exchange rate", () => {
       expect(() => convertCdfToUsd(-10, 2800)).toThrow();
       expect(() => convertCdfToUsd(1000, 0)).toThrow();
+      expect(() => convertCdfToUsd(NaN, 2800)).toThrow();
+      expect(() => convertCdfToUsd(1000, NaN)).toThrow();
+      expect(() => convertCdfToUsd(Infinity, 2800)).toThrow();
+      expect(() => convertCdfToUsd(1000, Infinity)).toThrow();
     });
   });
 });

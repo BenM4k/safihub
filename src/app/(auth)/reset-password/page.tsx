@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form/reset-password-form";
-import { redirectIfAuthenticated } from "@/services/auth";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("auth");
@@ -11,7 +10,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function ResetPasswordPage() {
-  await redirectIfAuthenticated();
+export default function ResetPasswordPage() {
   return <ResetPasswordForm />;
 }

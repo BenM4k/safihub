@@ -96,8 +96,10 @@ export function findNextAvailableSlot(options: FindNextSlotOptions): TimeSlot | 
           houseClosures,
           cutoffMinutes,
           dailyCapacity,
-          currentOrdersCountOnDate: bookedCount,
+          bookedOrdersByDate,
           courierShifts,
+          currentTime: referenceTime,
+          leadTimeMinutes,
         });
 
         if (evalResult.valid) {

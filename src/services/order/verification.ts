@@ -137,8 +137,9 @@ export function recordReceptionCount(params: {
 
     // Check if house excludes this item/fabric
     const isExcluded = houseExclusions.some((ex) => {
+      if (!ex.itemId && !ex.fabricId) return false;
       const itemMatches = ex.itemId ? ex.itemId === item.itemId : true;
-      const fabricMatches = ex.fabricId && item.fabricId ? ex.fabricId === item.fabricId : true;
+      const fabricMatches = ex.fabricId ? ex.fabricId === item.fabricId : true;
       return itemMatches && fabricMatches;
     });
 
@@ -192,12 +193,13 @@ export function recordReceptionCount(params: {
  */
 export function approvePriceAdjustment(params: {
   orderId: string;
+  currentStatus?: OrderStatus;
   approvalMethod: ApprovalMethod;
   actorId: string;
   actorRole: "customer" | "courier" | "admin";
   note?: string;
 }) {
-  return transitionOrder(params.orderId, "price_adjusted", {
+  return transitionOrder(params.orderId, params.currentStatus ?? "price_adjusted", {
     targetStatus: "washing",
     actorId: params.actorId,
     actorRole: params.actorRole,
@@ -211,11 +213,12 @@ export function approvePriceAdjustment(params: {
  */
 export function declinePriceAdjustment(params: {
   orderId: string;
+  currentStatus?: OrderStatus;
   actorId: string;
   actorRole: "customer" | "admin";
   reason?: string;
 }) {
-  return transitionOrder(params.orderId, "price_adjusted", {
+  return transitionOrder(params.orderId, params.currentStatus ?? "price_adjusted", {
     targetStatus: "price_declined",
     actorId: params.actorId,
     actorRole: params.actorRole,

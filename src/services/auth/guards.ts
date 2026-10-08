@@ -253,7 +253,9 @@ export async function getCurrentUser(
 }
 
 /**
- * Route guard for authentication pages (/login, /register, etc.).
+ * Route guard only for login and registration pages (/login, /register).
+ * Excluded from password reset pages so authenticated users can access
+ * valid reset-password links.
  * If the user is already authenticated (and not a guest), redirects them
  * to their respective role dashboard or the home page.
  */

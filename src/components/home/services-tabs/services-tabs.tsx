@@ -22,7 +22,7 @@ export function ServicesTabs({ user }: { user?: AuthenticatedUser | null } = {})
         ? tHero("ctaCourier")
         : cta.roleKey === "house"
           ? tHero("ctaHouse")
-          : "Commander maintenant";
+          : tHero("ctaOrder");
 
   return (
     <section

@@ -97,7 +97,8 @@ describe("Order Checkout Validation Engine", () => {
     courierShifts: [
       { courierId: "cour_1", weekday: 1, startsAt: "07:30", endsAt: "18:30" },
     ],
-    bookedOrdersCountOnDate: 0,
+    bookedOrdersByDate: {},
+    currentTime: fromBukavuDateTime("2026-10-12", "05:00"),
     settings: {
       maxItemsPerOrder: 50,
       defaultCommissionBps: 2000,
@@ -211,13 +212,33 @@ describe("Order Checkout Validation Engine", () => {
   it("AC 5: refuses when house daily capacity is reached", () => {
     const ctxFullCapacity: OrderValidationContext = {
       ...defaultContext,
-      bookedOrdersCountOnDate: 10, // Max capacity is 10!
+      bookedOrdersByDate: { "2026-10-12": 10 }, // Max capacity is 10!
     };
 
     const res = validateOrderCheckout(baseInput, ctxFullCapacity);
     expect(res.ok).toBe(false);
     if (!res.ok) {
       expect(res.error.code).toBe("CAPACITY_REACHED");
+    }
+  });
+
+  it("refuses non-integer or non-positive line item quantities", () => {
+    const fractionalItems = [
+      { serviceId: "srv_wash", itemId: "itm_shirt", fabricId: "fab_std", quantity: 1.5, expectedUnitPrice: 3500 },
+    ];
+    const resFractional = validateOrderCheckout({ ...baseInput, items: fractionalItems }, defaultContext);
+    expect(resFractional.ok).toBe(false);
+    if (!resFractional.ok) {
+      expect(resFractional.error.code).toBe("QUANTITY_LIMIT_EXCEEDED");
+    }
+
+    const negativeItems = [
+      { serviceId: "srv_wash", itemId: "itm_shirt", fabricId: "fab_std", quantity: -1, expectedUnitPrice: 3500 },
+    ];
+    const resNegative = validateOrderCheckout({ ...baseInput, items: negativeItems }, defaultContext);
+    expect(resNegative.ok).toBe(false);
+    if (!resNegative.ok) {
+      expect(resNegative.error.code).toBe("QUANTITY_LIMIT_EXCEEDED");
     }
   });
 

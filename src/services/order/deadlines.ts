@@ -19,7 +19,9 @@ export interface OrderAcceptanceState {
   id: string;
   status: OrderStatus;
   acceptanceDeadlineAt: Date | null;
+  acceptanceReminderAt?: Date | null;
   acceptanceReminderSentAt: Date | null;
+  acceptanceEscalationAt?: Date | null;
   acceptanceEscalatedAt: Date | null;
 }
 
@@ -167,12 +169,20 @@ export function evaluateAcceptanceJob(order: OrderAcceptanceState, now: Date): A
   }
 
   // 75% escalation reached and not recorded?
-  if (order.acceptanceEscalatedAt && now.getTime() >= order.acceptanceEscalatedAt.getTime()) {
+  if (
+    !order.acceptanceEscalatedAt &&
+    order.acceptanceEscalationAt &&
+    now.getTime() >= order.acceptanceEscalationAt.getTime()
+  ) {
     return { type: "alert_admin", escalationTimestamp: now };
   }
 
   // 50% reminder reached and not recorded?
-  if (order.acceptanceReminderSentAt && now.getTime() >= order.acceptanceReminderSentAt.getTime()) {
+  if (
+    !order.acceptanceReminderSentAt &&
+    order.acceptanceReminderAt &&
+    now.getTime() >= order.acceptanceReminderAt.getTime()
+  ) {
     return { type: "remind_house", reminderTimestamp: now };
   }
 

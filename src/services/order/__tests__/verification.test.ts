@@ -128,12 +128,39 @@ describe("Three-Point Verification & Item Receiving Engine", () => {
       expect(res.acceptedItems.length).toBe(1);
       expect(res.acceptedItems[0]?.itemId).toBe("itm_shirt");
     });
+
+    it("does not match a fabric-only exclusion rule against an item without fabricId", () => {
+      const items: ReceptionItemVerificationInput[] = [
+        {
+          orderItemId: "oi_item_no_fabric",
+          itemId: "itm_shirt",
+          unitPrice: 3500,
+          declaredQuantity: 1,
+          receivedQuantity: 1,
+          // no fabricId defined
+        },
+      ];
+
+      const houseExclusions = [{ fabricId: "fab_silk" }];
+
+      const res = recordReceptionCount({
+        items,
+        houseExclusions,
+        commissionBps,
+        deliveryFee,
+      });
+
+      expect(res.returnedItems.length).toBe(0);
+      expect(res.acceptedItems.length).toBe(1);
+      expect(res.acceptedItems[0]?.itemId).toBe("itm_shirt");
+    });
   });
 
   describe("Price Adjustment Customer Approvals & Declines", () => {
     it("AC 8: approves price adjustment via app and transitions order to washing", () => {
       const res = approvePriceAdjustment({
         orderId,
+        currentStatus: "price_adjusted",
         approvalMethod: "app",
         actorId: "cust_123",
         actorRole: "customer",

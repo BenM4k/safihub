@@ -68,8 +68,10 @@ describe("Opening-Hours Aware Timers & Deadlines", () => {
         id: "ord_1",
         status: "created",
         acceptanceDeadlineAt: deadlineAt,
-        acceptanceReminderSentAt: reminderAt,
-        acceptanceEscalatedAt: escalationAt,
+        acceptanceReminderAt: reminderAt,
+        acceptanceReminderSentAt: null,
+        acceptanceEscalationAt: escalationAt,
+        acceptanceEscalatedAt: null,
       };
 
       // Before reminder time: does nothing
@@ -80,13 +82,27 @@ describe("Opening-Hours Aware Timers & Deadlines", () => {
       const reminderNow = fromBukavuDateTime("2026-10-12", "17:55");
       expect(evaluateAcceptanceJob(orderState, reminderNow).type).toBe("remind_house");
 
+      // When reminder marker is recorded: returns none
+      const remindedState: OrderAcceptanceState = {
+        ...orderState,
+        acceptanceReminderSentAt: reminderNow,
+      };
+      expect(evaluateAcceptanceJob(remindedState, reminderNow).type).toBe("none");
+
       // At escalation time: alerts admin
       const escalationNow = fromBukavuDateTime("2026-10-13", "08:05");
-      expect(evaluateAcceptanceJob(orderState, escalationNow).type).toBe("alert_admin");
+      expect(evaluateAcceptanceJob(remindedState, escalationNow).type).toBe("alert_admin");
+
+      // When escalation marker is recorded: returns none
+      const escalatedState: OrderAcceptanceState = {
+        ...remindedState,
+        acceptanceEscalatedAt: escalationNow,
+      };
+      expect(evaluateAcceptanceJob(escalatedState, escalationNow).type).toBe("none");
 
       // At deadline time: expires order
       const deadlineNow = fromBukavuDateTime("2026-10-13", "08:16");
-      const expireAction = evaluateAcceptanceJob(orderState, deadlineNow);
+      const expireAction = evaluateAcceptanceJob(escalatedState, deadlineNow);
       expect(expireAction.type).toBe("expire_order");
       if (expireAction.type === "expire_order") {
         expect(expireAction.newStatus).toBe("expired");

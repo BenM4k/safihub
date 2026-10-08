@@ -123,7 +123,12 @@ export function convertCdfToUsd(
   exchangeRate: number,
   options: UsdConversionOptions = { rateIsCdfPerUsd: true }
 ): UsdConversionResult {
-  if (amountCdf < 0 || exchangeRate <= 0) {
+  if (
+    !Number.isFinite(amountCdf) ||
+    !Number.isFinite(exchangeRate) ||
+    amountCdf < 0 ||
+    exchangeRate <= 0
+  ) {
     throw new Error("Amount must be non-negative and exchange rate must be positive");
   }
 
