@@ -1,4 +1,9 @@
 export { db, getDatabaseUrl, type Database, schema } from "./db";
 export * from "./auth.dal";
 export * from "./house.dal";
-
+export * from "./coverage.dal";
+export * from "./catalog.dal";
+export * from "./courier.dal";
+export * from "./user.dal";
+export * from "./order.dal";
+export * from "./ops.dal";

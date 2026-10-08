@@ -1,0 +1,193 @@
+import "server-only";
+import { desc, eq, sql } from "drizzle-orm";
+import { db, schema } from "./db";
+
+export interface SettingsRecord {
+  id: number;
+  defaultCommissionBps: number;
+  acceptanceDelayMinutes: number;
+  acceptanceReminderPercent: number;
+  acceptanceEscalationPercent: number;
+  receptionWindowMinutes: number;
+  slotLengthMinutes: number;
+  maxCoverageDistanceLevel: number;
+  defaultCashCeiling: number | null;
+  defaultCourierPayPerLeg: number | null;
+  firstOrderScreening: boolean;
+  maxOpenOrdersPerCustomer: number;
+  maxItemsPerOrder: number;
+  maxFreeTextLines: number;
+  failedPickupBlockThreshold: number;
+  photoRetentionDays: number;
+  timezone: string;
+  updatedAt: Date | null;
+}
+
+export interface ExchangeRateRecord {
+  id: string;
+  baseCurrency: "CDF" | "USD";
+  quoteCurrency: "CDF" | "USD";
+  rate: string;
+  effectiveDate: string;
+  setBy: string | null;
+  createdAt: Date;
+}
+
+export interface AdminDashboardMetrics {
+  totalOrders: number;
+  ordersByStatus: Record<string, number>;
+  ordersPendingAcceptance: number;
+  activeDisputes: number;
+  pendingCoverageRequests: number;
+  activeHousesCount: number;
+  activeCouriersCount: number;
+  totalCashCollectedCDF: number;
+  unassignedMissionsCount: number;
+}
+
+export async function getSettings(): Promise<SettingsRecord> {
+  const [row] = await db
+    .select()
+    .from(schema.settings)
+    .where(eq(schema.settings.id, 1))
+    .limit(1);
+
+  if (!row) {
+    // Insert defaults if missing
+    const [inserted] = await db
+      .insert(schema.settings)
+      .values({ id: 1 })
+      .returning();
+    return inserted!;
+  }
+
+  return row;
+}
+
+export async function updateSettings(
+  data: Partial<Omit<SettingsRecord, "id" | "updatedAt">>
+): Promise<SettingsRecord> {
+  const [updated] = await db
+    .update(schema.settings)
+    .set({
+      ...data,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.settings.id, 1))
+    .returning();
+
+  return updated!;
+}
+
+export async function getExchangeRates(limit = 20): Promise<ExchangeRateRecord[]> {
+  const rows = await db
+    .select()
+    .from(schema.exchangeRates)
+    .orderBy(desc(schema.exchangeRates.effectiveDate), desc(schema.exchangeRates.createdAt))
+    .limit(limit);
+
+  return rows as ExchangeRateRecord[];
+}
+
+export async function getLatestExchangeRate(
+  baseCurrency: "CDF" | "USD" = "USD",
+  quoteCurrency: "CDF" | "USD" = "CDF"
+): Promise<ExchangeRateRecord | null> {
+  const [row] = await db
+    .select()
+    .from(schema.exchangeRates)
+    .where(
+      sql`${schema.exchangeRates.baseCurrency} = ${baseCurrency} and ${schema.exchangeRates.quoteCurrency} = ${quoteCurrency}`
+    )
+    .orderBy(desc(schema.exchangeRates.effectiveDate), desc(schema.exchangeRates.createdAt))
+    .limit(1);
+
+  return (row as ExchangeRateRecord) ?? null;
+}
+
+export async function createExchangeRate(data: {
+  baseCurrency: "CDF" | "USD";
+  quoteCurrency: "CDF" | "USD";
+  rate: string;
+  effectiveDate: string;
+  setBy?: string | null;
+}): Promise<ExchangeRateRecord> {
+  const [created] = await db
+    .insert(schema.exchangeRates)
+    .values({
+      baseCurrency: data.baseCurrency,
+      quoteCurrency: data.quoteCurrency,
+      rate: data.rate,
+      effectiveDate: data.effectiveDate,
+      setBy: data.setBy ?? null,
+    })
+    .onConflictDoUpdate({
+      target: [
+        schema.exchangeRates.baseCurrency,
+        schema.exchangeRates.quoteCurrency,
+        schema.exchangeRates.effectiveDate,
+      ],
+      set: {
+        rate: data.rate,
+        setBy: data.setBy ?? null,
+      },
+    })
+    .returning();
+
+  return created as ExchangeRateRecord;
+}
+
+export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics> {
+  const allOrders = await db
+    .select({
+      status: schema.orders.status,
+    })
+    .from(schema.orders);
+
+  const ordersByStatus: Record<string, number> = {};
+  for (const o of allOrders) {
+    ordersByStatus[o.status] = (ordersByStatus[o.status] || 0) + 1;
+  }
+
+  const [activeHouses] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.houses)
+    .where(eq(schema.houses.isActive, true));
+
+  const [activeCouriers] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.courierProfiles)
+    .where(eq(schema.courierProfiles.isActive, true));
+
+  const [pendingCoverage] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.coverageRequests)
+    .where(sql`${schema.coverageRequests.notifiedAt} is null`);
+
+  const [unassignedMissions] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.missions)
+    .where(eq(schema.missions.status, "unassigned"));
+
+  const [disputesCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.disputes)
+    .where(eq(schema.disputes.status, "open"));
+
+  const [cashCollected] = await db
+    .select({ total: sql<number>`coalesce(sum(${schema.cashLedger.amount}), 0)::int` })
+    .from(schema.cashLedger)
+    .where(eq(schema.cashLedger.entryType, "cash_collected"));
+
+  return {
+    totalOrders: allOrders.length,
+    ordersByStatus,
+    ordersPendingAcceptance: ordersByStatus["created"] || 0,
+    activeDisputes: disputesCount?.count ?? 0,
+    pendingCoverageRequests: pendingCoverage?.count ?? 0,
+    activeHousesCount: activeHouses?.count ?? 0,
+    activeCouriersCount: activeCouriers?.count ?? 0,
+    totalCashCollectedCDF: cashCollected?.total ?? 0,
+    unassignedMissionsCount: unassignedMissions?.count ?? 0,
+  };
+}
