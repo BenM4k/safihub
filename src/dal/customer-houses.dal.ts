@@ -28,7 +28,7 @@ export interface CustomerHouseSummary {
     nameSw: string;
   }>;
   coveredNeighborhoodIds: string[];
-  rating: number;
+  rating: number | null;
   reviewCount: number;
   imageUrl: string;
   coords: { lat: number; lng: number };
@@ -69,7 +69,7 @@ export interface CustomerHouseDetailData {
     cutoffMinutes: number;
     isOpenNow: boolean;
     todayHoursText: string;
-    rating: number;
+    rating: number | null;
     reviewCount: number;
     imageUrl: string;
   };
@@ -269,8 +269,8 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       minItemPriceCdf,
       availableServices: services,
       coveredNeighborhoodIds: coverageByHouse.get(h.id) || [h.neighborhoodId],
-      rating: 4.8 + ((index % 3) * 0.1),
-      reviewCount: 120 + ((index + 1) * 64),
+      rating: null,
+      reviewCount: 0,
       imageUrl,
       coords,
     };
@@ -450,8 +450,8 @@ export async function getCustomerHouseDetail(
       cutoffMinutes: house.cutoffMinutes,
       isOpenNow,
       todayHoursText,
-      rating: 4.9,
-      reviewCount: 312,
+      rating: null,
+      reviewCount: 0,
       imageUrl,
     },
     services: Array.from(serviceMap.values()),

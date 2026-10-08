@@ -201,10 +201,12 @@ export function BukavuInteractiveMap({
                 <p className="text-[11px] text-slate-500 truncate">
                   {activeHouse.neighborhoodName}
                 </p>
-                <div className="flex items-center gap-1 text-[11px] font-bold text-amber-600">
-                  <Star className="size-3 fill-amber-500 text-amber-500" />
-                  <span>{activeHouse.rating.toFixed(1)}</span>
-                </div>
+                {activeHouse.rating !== null && (
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-amber-600">
+                    <Star className="size-3 fill-amber-500 text-amber-500" />
+                    <span>{activeHouse.rating.toFixed(1)}</span>
+                  </div>
+                )}
               </div>
             </div>
             <button

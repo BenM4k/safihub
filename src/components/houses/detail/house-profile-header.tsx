@@ -53,12 +53,16 @@ export function HouseProfileHeader({ house }: HouseProfileHeaderProps) {
                   <MapPin className="size-3.5 text-slate-400" />
                   {house.neighborhoodName}, {house.zoneName}
                 </span>
-                <span>•</span>
-                <span className="inline-flex items-center gap-1 font-bold text-amber-600">
-                  <Star className="size-3.5 fill-amber-500 text-amber-500" />
-                  {house.rating.toFixed(1)}
-                  <span className="font-normal text-slate-400">({house.reviewCount} avis)</span>
-                </span>
+                {house.rating !== null && (
+                  <>
+                    <span>•</span>
+                    <span className="inline-flex items-center gap-1 font-bold text-amber-600">
+                      <Star className="size-3.5 fill-amber-500 text-amber-500" />
+                      {house.rating.toFixed(1)}
+                      <span className="font-normal text-slate-400">({house.reviewCount} avis)</span>
+                    </span>
+                  </>
+                )}
                 <span>•</span>
                 <span className="inline-flex items-center gap-1 text-slate-700">
                   <Clock className="size-3.5 text-slate-400" />

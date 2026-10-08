@@ -337,8 +337,16 @@ export async function createHouseClosure(data: {
   });
 }
 
-export async function deleteHouseClosure(id: string): Promise<void> {
-  await db.delete(schema.houseClosures).where(eq(schema.houseClosures.id, id));
+export async function deleteHouseClosure(id: string, houseId?: string): Promise<boolean> {
+  const conditions = [eq(schema.houseClosures.id, id)];
+  if (houseId) {
+    conditions.push(eq(schema.houseClosures.houseId, houseId));
+  }
+  const result = await db
+    .delete(schema.houseClosures)
+    .where(and(...conditions))
+    .returning({ id: schema.houseClosures.id });
+  return result.length > 0;
 }
 
 export async function getHouseExclusions(houseId: string): Promise<HouseExclusionRecord[]> {
@@ -374,8 +382,16 @@ export async function createHouseExclusion(data: {
   });
 }
 
-export async function deleteHouseExclusion(id: string): Promise<void> {
-  await db.delete(schema.houseExclusions).where(eq(schema.houseExclusions.id, id));
+export async function deleteHouseExclusion(id: string, houseId?: string): Promise<boolean> {
+  const conditions = [eq(schema.houseExclusions.id, id)];
+  if (houseId) {
+    conditions.push(eq(schema.houseExclusions.houseId, houseId));
+  }
+  const result = await db
+    .delete(schema.houseExclusions)
+    .where(and(...conditions))
+    .returning({ id: schema.houseExclusions.id });
+  return result.length > 0;
 }
 
 export async function getHouseCoverage(houseId: string): Promise<HouseCoverageRecord[]> {
@@ -648,7 +664,7 @@ export async function getHouseCoverageWithLimits(
     .limit(1);
 
   const [settings] = await db.select().from(schema.settings).limit(1);
-  const globalMaxDistance = settings?.maxCoverageDistanceLevel ?? 3;
+  const globalMaxDistance = settings?.maxCoverageDistanceLevel ?? 2;
   const effectiveMaxDistance = house.maxDistanceLevel ?? globalMaxDistance;
 
   const [allNeighborhoods, allZoneFees, existingCoverage] = await Promise.all([

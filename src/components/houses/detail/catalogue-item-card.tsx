@@ -16,7 +16,13 @@ export function CatalogueItemCard({
   onUpdateQuantity,
 }: CatalogueItemCardProps) {
   const t = useTranslations("customerHouses");
-  const priceUsdApprox = (item.priceCdf / 2800).toFixed(2);
+  const isUsd = item.currency === "USD";
+  const formattedPrice = isUsd
+    ? `$${item.priceCdf}`
+    : `${item.priceCdf.toLocaleString("fr-FR")} CDF`;
+  const priceUsdApprox = isUsd
+    ? null
+    : (item.priceCdf / 2800).toFixed(2);
 
   return (
     <div
@@ -47,11 +53,13 @@ export function CatalogueItemCard({
         {/* Price display */}
         <div className="flex items-baseline gap-1.5 mb-3">
           <span className="text-base font-black text-slate-900 tabular-nums">
-            {item.priceCdf.toLocaleString("fr-FR")} CDF
+            {formattedPrice}
           </span>
-          <span className="text-xs text-slate-400">
-            (≈ ${priceUsdApprox})
-          </span>
+          {priceUsdApprox && (
+            <span className="text-xs text-slate-400">
+              (≈ ${priceUsdApprox})
+            </span>
+          )}
         </div>
       </div>
 

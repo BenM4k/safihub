@@ -59,7 +59,9 @@ export function HouseCatalogueView({ data }: HouseCatalogueViewProps) {
       count += qty;
       const found = data.items.find((it) => it.houseItemId === houseItemId);
       if (found) {
-        total += found.priceCdf * qty;
+        const itemPriceCdf =
+          found.currency === "USD" ? Math.round(found.priceCdf * 2800) : found.priceCdf;
+        total += itemPriceCdf * qty;
       }
     }
 

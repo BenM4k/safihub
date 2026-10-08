@@ -1,6 +1,7 @@
 import "server-only";
-import { and, asc, desc, eq, ilike, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, or } from "drizzle-orm";
 import { db, schema } from "./db";
+import { toBukavuDateTime, fromBukavuDateTime } from "@/services/availability/bukavu-time";
 import type { ApprovalMethod, OrderSource, OrderStatus } from "@/services/db/schema";
 import type { orderEventTypeEnum } from "@/services/db/schema";
 
@@ -298,6 +299,60 @@ export async function updateOrderStatus(
       updatedAt: new Date(),
     })
     .where(eq(schema.orders.id, orderId));
+}
+
+export async function transitionOrderStatusAtomic(params: {
+  orderId: string;
+  expectedStatus?: OrderStatus;
+  newStatus: OrderStatus;
+  event: {
+    type?: OrderEventType;
+    fromStatus?: OrderStatus | null;
+    toStatus?: OrderStatus | null;
+    actorId?: string | null;
+    actorRole?: string | null;
+    onBehalfOfHouseId?: string | null;
+    approvalMethod?: ApprovalMethod | null;
+    recordedBy?: string | null;
+    note?: string | null;
+    payload?: Record<string, unknown> | null;
+  };
+}): Promise<boolean> {
+  return await db.transaction(async (tx) => {
+    const conditions = [eq(schema.orders.id, params.orderId)];
+    if (params.expectedStatus) {
+      conditions.push(eq(schema.orders.status, params.expectedStatus));
+    }
+
+    const updated = await tx
+      .update(schema.orders)
+      .set({
+        status: params.newStatus,
+        updatedAt: new Date(),
+      })
+      .where(and(...conditions))
+      .returning({ id: schema.orders.id });
+
+    if (updated.length === 0) {
+      return false;
+    }
+
+    await tx.insert(schema.orderEvents).values({
+      orderId: params.orderId,
+      type: params.event.type ?? "status_change",
+      fromStatus: params.event.fromStatus ?? null,
+      toStatus: params.event.toStatus ?? null,
+      actorId: params.event.actorId ?? null,
+      actorRole: params.event.actorRole ?? null,
+      onBehalfOfHouseId: params.event.onBehalfOfHouseId ?? null,
+      approvalMethod: params.event.approvalMethod ?? null,
+      recordedBy: params.event.recordedBy ?? null,
+      note: params.event.note ?? null,
+      payload: params.event.payload ?? null,
+    });
+
+    return true;
+  });
 }
 
 export async function insertOrderWithDetails(params: {
@@ -677,26 +732,58 @@ export async function getHouseDashboardMetrics(
     .where(eq(schema.houses.id, houseId))
     .limit(1);
 
-  // Today boundary in UTC
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+  const bukavuNow = toBukavuDateTime(new Date());
+  const startOfDay = fromBukavuDateTime(bukavuNow.dateString, "00:00");
 
-  const activeOrders = await getHouseOrdersRestricted(houseId, { limit: 100 });
+  const [
+    waitingAcceptanceOrders,
+    statusCounts,
+    [completedTodayRow],
+    [todayOrdersRow],
+  ] = await Promise.all([
+    getHouseOrdersRestricted(houseId, { status: "created", limit: 50 }),
+    db
+      .select({
+        status: schema.orders.status,
+        count: count(),
+      })
+      .from(schema.orders)
+      .where(eq(schema.orders.houseId, houseId))
+      .groupBy(schema.orders.status),
+    db
+      .select({ count: count() })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          eq(schema.orders.status, "delivered"),
+          gte(schema.orders.updatedAt, startOfDay)
+        )
+      ),
+    db
+      .select({ count: count() })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          gte(schema.orders.createdAt, startOfDay)
+        )
+      ),
+  ]);
 
-  const waitingAcceptanceOrders = activeOrders.filter((o) => o.status === "created");
-  const washingCount = activeOrders.filter(
-    (o) => o.status === "received" || o.status === "price_adjusted" || o.status === "washing"
-  ).length;
-  const readyCount = activeOrders.filter((o) => o.status === "ready").length;
-  const completedTodayCount = activeOrders.filter(
-    (o) => o.status === "delivered" && new Date(o.createdAt) >= startOfDay
-  ).length;
-  const todayOrdersCount = activeOrders.filter(
-    (o) => new Date(o.createdAt) >= startOfDay
-  ).length;
+  const countsByStatus = new Map(statusCounts.map((r) => [r.status, r.count]));
+
+  const waitingAcceptanceCount = countsByStatus.get("created") ?? 0;
+  const washingCount =
+    (countsByStatus.get("received") ?? 0) +
+    (countsByStatus.get("price_adjusted") ?? 0) +
+    (countsByStatus.get("washing") ?? 0);
+  const readyCount = countsByStatus.get("ready") ?? 0;
+  const completedTodayCount = completedTodayRow?.count ?? 0;
+  const todayOrdersCount = todayOrdersRow?.count ?? 0;
 
   return {
-    waitingAcceptanceCount: waitingAcceptanceOrders.length,
+    waitingAcceptanceCount,
     waitingAcceptanceOrders,
     washingCount,
     readyCount,

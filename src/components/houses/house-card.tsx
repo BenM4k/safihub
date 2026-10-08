@@ -130,12 +130,16 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
           <span className="text-slate-600">
             {house.dailyCapacity ? t("dailyCapacityAvailable") : t("unlimitedCapacity")}
           </span>
-          <span>•</span>
-          <span className="inline-flex items-center gap-1 font-bold text-amber-600">
-            <Star className="size-3 fill-amber-500 text-amber-500" />
-            {house.rating.toFixed(1)}
-            <span className="font-normal text-slate-400">({house.reviewCount})</span>
-          </span>
+          {house.rating !== null && (
+            <>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1 font-bold text-amber-600">
+                <Star className="size-3 fill-amber-500 text-amber-500" />
+                {house.rating.toFixed(1)}
+                <span className="font-normal text-slate-400">({house.reviewCount})</span>
+              </span>
+            </>
+          )}
         </div>
 
         {/* House Name */}

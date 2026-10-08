@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireHouseAccess } from "@/services/auth";
+import { getHouses } from "@/dal";
 import { err, ok, type Result } from "@/lib/result";
 import {
   acceptIncomingOrder,
@@ -24,7 +25,14 @@ async function getAuthenticatedHouseContext(providedHouseId?: string) {
   const authRes = await requireHouseAccess({ houseId: providedHouseId });
   if (!authRes.ok) return authRes;
 
-  const houseId = providedHouseId || authRes.value.houseId || authRes.value.primaryHouseId;
+  let houseId = providedHouseId || authRes.value.houseId || authRes.value.primaryHouseId;
+  if (!houseId && authRes.value.user.role === "admin") {
+    const allHouses = await getHouses();
+    if (allHouses.length > 0) {
+      houseId = allHouses[0].id;
+    }
+  }
+
   if (!houseId) {
     return err("No laundry house is selected or assigned to this account.");
   }

@@ -84,7 +84,7 @@ export async function getCustomerHousesData(
       filtered.sort((a, b) => a.minItemPriceCdf - b.minItemPriceCdf);
       break;
     case "rating":
-      filtered.sort((a, b) => b.rating - a.rating);
+      filtered.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
       break;
     case "recommended":
     default:
@@ -92,7 +92,7 @@ export async function getCustomerHousesData(
       filtered.sort((a, b) => {
         if (a.isOpenNow && !b.isOpenNow) return -1;
         if (!a.isOpenNow && b.isOpenNow) return 1;
-        return b.rating - a.rating;
+        return (b.rating ?? 0) - (a.rating ?? 0);
       });
       break;
   }

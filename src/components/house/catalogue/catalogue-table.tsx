@@ -161,7 +161,7 @@ export function CatalogueTable({
                           className="w-24 h-8 px-2 text-right font-mono font-bold text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
                         />
                         <span className="text-[11px] text-slate-500 font-semibold">
-                          CDF
+                          {it.currency}
                         </span>
                       </div>
                     </td>

@@ -49,8 +49,12 @@ export function ClosuresManager({
   }
 
   function handleDelete(closureId: string) {
+    setErrorMsg(null);
     startTransition(async () => {
-      await deleteHouseClosureAction({ closureId, houseId });
+      const res = await deleteHouseClosureAction({ closureId, houseId });
+      if (!res.ok) {
+        setErrorMsg(res.error);
+      }
     });
   }
 

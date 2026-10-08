@@ -8,6 +8,8 @@ import {
   requestCatalogueItem,
   updateHouseHoursSchedule,
   addHouseClosureEntry,
+  deleteHouseClosureEntry,
+  deleteHouseExclusionRule,
   updateNeighborhoodCoverage,
   updateHouseGeneralSettings,
 } from "../house.service";
@@ -208,11 +210,19 @@ vi.mock("@/dal", async (importOriginal) => {
 
     updateOrderStatus: vi.fn(async () => {}),
     addOrderEvent: vi.fn(async () => {}),
+    transitionOrderStatusAtomic: vi.fn(async () => true),
     saveReceptionCountTransaction: vi.fn(async () => {}),
     upsertHouseItemPrice: vi.fn(async () => {}),
     createHouseItemRequest: vi.fn(async () => {}),
     setHouseHours: vi.fn(async () => {}),
     createHouseClosure: vi.fn(async () => {}),
+    deleteHouseClosure: vi.fn(async (closureId: string, houseId: string) => {
+      return houseId === "house-1" && closureId === "closure-1";
+    }),
+    createHouseExclusion: vi.fn(async () => {}),
+    deleteHouseExclusion: vi.fn(async (exclusionId: string, houseId: string) => {
+      return houseId === "house-1" && exclusionId === "excl-1";
+    }),
     upsertHouseCoverage: vi.fn(async () => {}),
     updateHouse: vi.fn(async () => {}),
   };
@@ -305,6 +315,22 @@ describe("Phase 4: House Portal Domain Services Unit Tests", () => {
         // Adjusted items total should only include the 2 cotton shirts (2 * 2500 = 5000 CDF)
         // Leather jacket is 0 CDF in cleaning total
         expect(res.value.adjustedItemsTotal).toBe(5000);
+      }
+    });
+
+    it("rejects reception submissions with missing or extra order items", async () => {
+      // Incomplete item counts (omits oi-leather)
+      const incompleteRes = await submitHouseReception({
+        houseId: "house-1",
+        orderId: "ord-received",
+        actorId: "staff-1",
+        actorRole: "house",
+        itemCounts: [{ orderItemId: "oi-1", receivedQuantity: 2 }],
+      });
+
+      expect(incompleteRes.ok).toBe(false);
+      if (!incompleteRes.ok) {
+        expect(incompleteRes.error).toContain("match the order items exactly");
       }
     });
 
@@ -410,6 +436,32 @@ describe("Phase 4: House Portal Domain Services Unit Tests", () => {
       expect(resNegative.ok).toBe(false);
       if (!resNegative.ok) {
         expect(resNegative.error).toContain("positive integer");
+      }
+    });
+
+    it("scopes closure deletion to houseId and prevents cross-house deletion", async () => {
+      // Own closure
+      const okRes = await deleteHouseClosureEntry("house-1", "closure-1");
+      expect(okRes.ok).toBe(true);
+
+      // Foreign house trying to delete house-1's closure
+      const failRes = await deleteHouseClosureEntry("house-2", "closure-1");
+      expect(failRes.ok).toBe(false);
+      if (!failRes.ok) {
+        expect(failRes.error).toContain("Closure not found or does not belong to this house");
+      }
+    });
+
+    it("scopes exclusion deletion to houseId and prevents cross-house deletion", async () => {
+      // Own exclusion
+      const okRes = await deleteHouseExclusionRule("house-1", "excl-1");
+      expect(okRes.ok).toBe(true);
+
+      // Foreign house trying to delete house-1's exclusion
+      const failRes = await deleteHouseExclusionRule("house-2", "excl-1");
+      expect(failRes.ok).toBe(false);
+      if (!failRes.ok) {
+        expect(failRes.error).toContain("Exclusion rule not found or does not belong to this house");
       }
     });
   });

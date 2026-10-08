@@ -53,8 +53,12 @@ export function ExclusionsManager({
   }
 
   function handleDelete(exclusionId: string) {
+    setErrorMsg(null);
     startTransition(async () => {
-      await deleteHouseExclusionAction({ exclusionId, houseId });
+      const res = await deleteHouseExclusionAction({ exclusionId, houseId });
+      if (!res.ok) {
+        setErrorMsg(res.error);
+      }
     });
   }
 

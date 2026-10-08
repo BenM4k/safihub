@@ -7,6 +7,18 @@ import { updateHouseGeneralSettingsAction } from "@/actions/house.actions";
 import { Button } from "@/components/ui/button";
 import type { HouseRecord } from "@/dal";
 
+function formatLocalDatetime(dateInput: Date | string | null | undefined): string {
+  if (!dateInput) return "";
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return "";
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export function GeneralSettingsForm({
   house,
 }: {
@@ -23,7 +35,7 @@ export function GeneralSettingsForm({
   );
   const [isPaused, setIsPaused] = useState<boolean>(house.isPaused);
   const [pausedUntil, setPausedUntil] = useState<string>(
-    house.pausedUntil ? new Date(house.pausedUntil).toISOString().slice(0, 16) : ""
+    formatLocalDatetime(house.pausedUntil)
   );
   const [addressNote, setAddressNote] = useState<string>(house.addressNote ?? "");
   const [contactPhone, setContactPhone] = useState<string>(house.contactPhone ?? "");
@@ -44,7 +56,7 @@ export function GeneralSettingsForm({
         dailyCapacity: parsedCap,
         minimumOrderAmount,
         isPaused,
-        pausedUntil: isPaused && pausedUntil ? pausedUntil : null,
+        pausedUntil: isPaused && pausedUntil ? new Date(pausedUntil).toISOString() : null,
         addressNote: addressNote.trim() || null,
         contactPhone: contactPhone.trim() || null,
       });

@@ -1,7 +1,6 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
 import {
-  addOrderEvent,
   createHouseClosure,
   createHouseExclusion,
   createHouseItemRequest,
@@ -21,8 +20,8 @@ import {
   getOrderItems,
   saveReceptionCountTransaction,
   setHouseHours,
+  transitionOrderStatusAtomic,
   updateHouse,
-  updateOrderStatus,
   upsertHouseCoverage,
   upsertHouseItemPrice,
   type HouseCatalogueItemRecord,
@@ -121,8 +120,16 @@ export async function acceptIncomingOrder(params: {
       return err(transitionRes.error);
     }
 
-    await updateOrderStatus(params.orderId, "accepted");
-    await addOrderEvent(transitionRes.value.event);
+    const updated = await transitionOrderStatusAtomic({
+      orderId: params.orderId,
+      expectedStatus: detail.status,
+      newStatus: "accepted",
+      event: transitionRes.value.event,
+    });
+
+    if (!updated) {
+      return err("Order status has changed or could not be updated");
+    }
 
     return ok(undefined);
   } catch (error) {
@@ -163,8 +170,16 @@ export async function rejectIncomingOrder(params: {
       return err(transitionRes.error);
     }
 
-    await updateOrderStatus(params.orderId, "rejected");
-    await addOrderEvent(transitionRes.value.event);
+    const updated = await transitionOrderStatusAtomic({
+      orderId: params.orderId,
+      expectedStatus: detail.status,
+      newStatus: "rejected",
+      event: transitionRes.value.event,
+    });
+
+    if (!updated) {
+      return err("Order status has changed or could not be updated");
+    }
 
     return ok(undefined);
   } catch (error) {
@@ -210,18 +225,28 @@ export async function submitHouseReception(params: {
       getHouseById(params.houseId),
     ]);
 
+    const existingItemIds = new Set(existingItems.map((it) => it.id));
+    const submittedItemIds = new Set(params.itemCounts.map((c) => c.orderItemId));
+
+    if (
+      submittedItemIds.size !== existingItemIds.size ||
+      [...submittedItemIds].some((id) => !existingItemIds.has(id))
+    ) {
+      return err("Submitted item counts must match the order items exactly");
+    }
+
     const countsMap = new Map(params.itemCounts.map((c) => [c.orderItemId, c]));
 
     const verificationInput: ReceptionItemVerificationInput[] = existingItems.map((item) => {
-      const count = countsMap.get(item.id);
+      const count = countsMap.get(item.id)!;
       return {
         orderItemId: item.id,
         itemId: item.itemId ?? "",
         fabricId: item.fabricId ?? undefined,
         unitPrice: item.unitPrice,
         declaredQuantity: item.declaredQuantity,
-        receivedQuantity: count ? count.receivedQuantity : item.declaredQuantity,
-        isExplicitlyRejectedByHouse: count?.isExplicitlyRejectedByHouse ?? false,
+        receivedQuantity: count.receivedQuantity,
+        isExplicitlyRejectedByHouse: count.isExplicitlyRejectedByHouse ?? false,
       };
     });
 
@@ -316,8 +341,16 @@ export async function markOrderReady(params: {
       return err(transitionRes.error);
     }
 
-    await updateOrderStatus(params.orderId, "ready");
-    await addOrderEvent(transitionRes.value.event);
+    const updated = await transitionOrderStatusAtomic({
+      orderId: params.orderId,
+      expectedStatus: detail.status,
+      newStatus: "ready",
+      event: transitionRes.value.event,
+    });
+
+    if (!updated) {
+      return err("Order status has changed or could not be updated");
+    }
 
     return ok(undefined);
   } catch (error) {
@@ -454,7 +487,10 @@ export async function deleteHouseClosureEntry(
   closureId: string
 ): Promise<Result<void>> {
   try {
-    await deleteHouseClosure(closureId);
+    const deleted = await deleteHouseClosure(closureId, houseId);
+    if (!deleted) {
+      return err("Closure not found or does not belong to this house");
+    }
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to delete closure");
@@ -586,7 +622,10 @@ export async function deleteHouseExclusionRule(
   exclusionId: string
 ): Promise<Result<void>> {
   try {
-    await deleteHouseExclusion(exclusionId);
+    const deleted = await deleteHouseExclusion(exclusionId, houseId);
+    if (!deleted) {
+      return err("Exclusion rule not found or does not belong to this house");
+    }
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to delete exclusion");

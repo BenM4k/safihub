@@ -93,14 +93,14 @@ export function HousesSplitView({ initialData }: HousesSplitViewProps) {
         result.sort((a, b) => a.minItemPriceCdf - b.minItemPriceCdf);
         break;
       case "rating":
-        result.sort((a, b) => b.rating - a.rating);
+        result.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
         break;
       case "recommended":
       default:
         result.sort((a, b) => {
           if (a.isOpenNow && !b.isOpenNow) return -1;
           if (!a.isOpenNow && b.isOpenNow) return 1;
-          return b.rating - a.rating;
+          return (b.rating ?? 0) - (a.rating ?? 0);
         });
         break;
     }

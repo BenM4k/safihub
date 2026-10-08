@@ -5,7 +5,7 @@ import { getHouses } from "@/dal";
 import { listHouseOrders } from "@/services/house";
 import { OrdersFilterTabs } from "@/components/house/orders/orders-filter-tabs";
 import { OrdersListTable } from "@/components/house/orders/orders-list-table";
-import type { OrderStatus } from "@/services/db/schema";
+import { orderStatusEnum, type OrderStatus } from "@/services/db/schema";
 
 export default async function HouseOrdersPage({
   searchParams,
@@ -33,13 +33,16 @@ export default async function HouseOrdersPage({
 
   const t = await getTranslations("house.orders");
 
+  const validStatus =
+    status && (orderStatusEnum.enumValues as readonly string[]).includes(status)
+      ? (status as OrderStatus)
+      : undefined;
+
   const ordersRes = await listHouseOrders(houseId, {
-    status: status as OrderStatus | undefined,
+    status: validStatus,
     search,
     limit: 50,
   });
-
-  const orders = ordersRes.ok ? ordersRes.value : [];
 
   return (
     <div className="space-y-6">
@@ -58,7 +61,13 @@ export default async function HouseOrdersPage({
         </Suspense>
       </div>
 
-      <OrdersListTable orders={orders} />
+      {!ordersRes.ok ? (
+        <div className="p-6 bg-rose-50 text-rose-700 rounded-2xl border border-rose-200 text-sm">
+          {ordersRes.error}
+        </div>
+      ) : (
+        <OrdersListTable orders={ordersRes.value} />
+      )}
     </div>
   );
 }
