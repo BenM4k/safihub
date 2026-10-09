@@ -4,10 +4,13 @@ import { ArrowLeft } from "lucide-react";
 import { guardHouseRoute } from "@/services/auth";
 import { getHouses } from "@/dal";
 import { getHouseOrderDetail } from "@/services/house";
+import { getOrderPhotosWithSignedUrlsService } from "@/services/storage";
+import { getTranslations } from "next-intl/server";
 import { OrderDetailHeader } from "@/components/house/orders/order-detail-header";
 import { OrderDetailItems } from "@/components/house/orders/order-detail-items";
 import { ReceptionCountForm } from "@/components/house/orders/reception-count-form";
 import { MarkReadyButton } from "@/components/house/orders/mark-ready-button";
+import { OrderPhotosGallery } from "@/components/photos/order-photos-gallery";
 
 export default async function HouseOrderDetailPage({
   params,
@@ -37,6 +40,13 @@ export default async function HouseOrderDetailPage({
 
   const { order, items } = detailRes.value;
 
+  const tPhotos = await getTranslations("photos");
+  const photosRes = await getOrderPhotosWithSignedUrlsService({
+    user: { id: authCtx.user.id, role: authCtx.user.role },
+    orderId: id,
+  });
+  const photos = photosRes.ok ? photosRes.value : [];
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
@@ -64,6 +74,12 @@ export default async function HouseOrderDetailPage({
 
       {/* Order Items Table */}
       <OrderDetailItems items={items} />
+
+      {/* Garment Condition & Proof Photos Gallery */}
+      <div className="pt-2">
+        <h3 className="text-sm font-bold text-slate-900 mb-3">{tPhotos("orderPhotosTitle")}</h3>
+        <OrderPhotosGallery photos={photos} />
+      </div>
     </div>
   );
 }

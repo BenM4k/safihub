@@ -1,0 +1,17 @@
+{
+  "name": "SafiHub Courier",
+  "short_name": "SafiHub Coursier",
+  "start_url": "/courier",
+  "scope": "/courier",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "description": "Application Coursier SafiHub Bukavu",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

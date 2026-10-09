@@ -2,12 +2,14 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getPublicTrackingOrder } from "@/services/order";
+import { getOrderPhotosWithSignedUrlsService } from "@/services/storage";
 import { OrderHeader } from "@/components/orders/detail/order-header";
 import { OrderItemsCard } from "@/components/orders/detail/order-items-card";
 import { OrderStatusTimeline } from "@/components/orders/detail/order-status-timeline";
 import { PriceAdjustmentCard } from "@/components/orders/detail/price-adjustment-card";
 import { DeliverySlotConfirmationCard } from "@/components/orders/detail/delivery-slot-confirmation-card";
 import { DeliveryCodeBadge } from "@/components/track/delivery-code-badge";
+import { OrderPhotosGallery } from "@/components/photos/order-photos-gallery";
 
 interface TrackOrderPageProps {
   params: Promise<{ token: string }>;
@@ -27,6 +29,12 @@ export default async function TrackOrderPage({ params }: TrackOrderPageProps) {
   }
 
   const { order, items, events } = res.value;
+
+  const photosRes = await getOrderPhotosWithSignedUrlsService({
+    orderId: order.id,
+    guestToken: token,
+  });
+  const photos = photosRes.ok ? photosRes.value : [];
 
   return (
     <div className="min-h-screen bg-slate-50/50 py-10">
@@ -65,7 +73,7 @@ export default async function TrackOrderPage({ params }: TrackOrderPageProps) {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 space-y-6">
             <OrderItemsCard
               items={items}
               currency={order.currency}
@@ -73,6 +81,8 @@ export default async function TrackOrderPage({ params }: TrackOrderPageProps) {
               deliveryFee={order.deliveryFee}
               totalDue={order.totalDue}
             />
+
+            <OrderPhotosGallery photos={photos} />
           </div>
 
           <div className="md:col-span-1">

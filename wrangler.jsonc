@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "safihub",
+  "compatibility_date": "2026-02-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "vinext/server/app-router-entry",
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "safihub"
+    }
+  ]
+}
