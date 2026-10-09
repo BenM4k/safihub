@@ -44,7 +44,7 @@ describe("Roles, Permissions & Area Guards", () => {
         name: "Customer John",
         email,
         password,
-        phone: "+243991112233",
+        phone: `+24399${Math.floor(1000000 + Math.random() * 9000000)}`,
         consent: true,
       });
       expect(reg.ok).toBe(true);
@@ -222,7 +222,7 @@ describe("Roles, Permissions & Area Guards", () => {
         name: "Blocked Customer",
         email,
         password,
-        phone: "+243995556677",
+        phone: `+24399${Math.floor(1000000 + Math.random() * 9000000)}`,
         consent: true,
       });
       expect(reg.ok).toBe(true);

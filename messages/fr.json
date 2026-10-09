@@ -211,7 +211,9 @@
       "invalidInput": "Données saisies invalides",
       "adminRequired": "Non autorisé : Privilèges administrateur requis.",
       "accountBlocked": "Le compte est bloqué. Veuillez contacter le support.",
-      "invalidCredentials": "Email ou mot de passe incorrect."
+      "invalidCredentials": "Email ou mot de passe incorrect.",
+      "rateLimited": "Trop de tentatives. Veuillez réessayer plus tard.",
+      "phoneBlocked": "Ce numéro de téléphone est bloqué et ne peut pas être réenregistré."
     }
   },
   "portal": {
@@ -410,6 +412,14 @@
       "onBehalfTitle": "Action au nom du pressing",
       "onBehalfAccept": "Accepter pour le pressing",
       "onBehalfReject": "Refuser pour le pressing",
+      "screeningTitle": "Vérification de la première commande",
+      "screeningDescription": "Contactez le client (téléphone/WhatsApp), puis enregistrez votre décision.",
+      "screeningNote": "Note de vérification",
+      "screeningConfirm": "Confirmer la commande",
+      "screeningReject": "Rejeter la commande",
+      "screeningRejectReason": "Motif du rejet",
+      "screeningReasonRequired": "Un motif de rejet est obligatoire",
+      "screeningError": "Une erreur inattendue est survenue",
       "acceptNote": "Note d'acceptation",
       "rejectReason": "Motif du refus",
       "eventTimeline": "Chronologie des événements",
@@ -1146,6 +1156,32 @@
     "photoAlt": "Photo du vêtement",
     "deliveryProofAlt": "Preuve de livraison",
     "disputePhotoAlt": "Photo du litige"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Vos alertes, mises à jour et messages importants",
+    "unread": "Non lues",
+    "all": "Toutes",
+    "markAsRead": "Marquer comme lu",
+    "markAllAsRead": "Tout marquer comme lu",
+    "viewOrder": "Voir la commande",
+    "allRead": "Toutes les notifications sont lues",
+    "emptyTitle": "Aucune notification",
+    "emptyDescription": "Vous recevrez ici les alertes concernant vos commandes et missions.",
+    "viewAll": "Voir toutes les notifications",
+    "backToDashboard": "Retour",
+    "channels": {
+      "in_app": "Application",
+      "push": "Notification push",
+      "sms": "SMS",
+      "whatsapp_link": "WhatsApp"
+    },
+    "pushPermissionTitle": "Activer les notifications push",
+    "pushPermissionDesc": "Recevez instantanément les nouvelles commandes même lorsque votre écran est éteint.",
+    "enablePush": "Activer le push",
+    "pushEnabled": "Notifications push activées",
+    "pushUnsupported": "Notifications push non supportées sur ce navigateur",
+    "pushBlocked": "Notifications push bloquées dans les paramètres de votre navigateur"
   }
 }
 

@@ -61,6 +61,8 @@ export async function loginAction(
       errorMsg = t("validation.accountBlocked");
     } else if (res.error === "Invalid email or password.") {
       errorMsg = t("validation.invalidCredentials");
+    } else if (res.error === "Trop de tentatives de connexion. Veuillez réessayer plus tard.") {
+      errorMsg = t("validation.rateLimited");
     }
     return {
       success: false,
@@ -111,9 +113,15 @@ export async function registerAction(
   });
 
   if (!res.ok) {
+    let errorMsg = res.error;
+    if (res.error === "Trop de tentatives d'inscription. Veuillez réessayer plus tard.") {
+      errorMsg = t("validation.rateLimited");
+    } else if (res.error === "Ce numéro de téléphone ou cette adresse email est bloqué. Impossible de créer un compte.") {
+      errorMsg = t("validation.phoneBlocked");
+    }
     return {
       success: false,
-      errors: { form: res.error },
+      errors: { form: errorMsg },
     };
   }
 

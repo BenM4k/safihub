@@ -2,6 +2,7 @@ import "server-only";
 import { and, asc, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
+import { DEFAULT_RETRY_FEE_CDF, RETRY_FEE_FAILED_PICKUP_COUNT } from "@/lib/fees";
 
 export interface CourierRecord {
   userId: string;
@@ -963,6 +964,73 @@ export async function failPickupMissionAtomic(params: {
       note: params.reason,
     });
 
+    // Check failed pickup threshold (Task 10.1: blocking after 2 failed pickups)
+    const [settingsRow] = await tx
+      .select({ threshold: schema.settings.failedPickupBlockThreshold })
+      .from(schema.settings)
+      .where(eq(schema.settings.id, 1))
+      .limit(1);
+
+    const blockThreshold = settingsRow?.threshold ?? 2;
+    const newOrderFailedCount = (order.failedPickupCount ?? 0) + 1;
+
+    const [customerFailedTotal] = await tx
+      .select({
+        total: sql<number>`coalesce(sum(${schema.orders.failedPickupCount}), 0)::int`,
+      })
+      .from(schema.orders)
+      .where(and(eq(schema.orders.customerId, order.customerId), sql`${schema.orders.id} != ${order.id}`));
+
+    const totalFailedPickups = (customerFailedTotal?.total ?? 0) + newOrderFailedCount;
+
+    // Retry fee: charged once, only when the failed-pickup count reaches exactly 2.
+    if (totalFailedPickups === RETRY_FEE_FAILED_PICKUP_COUNT) {
+      const [feeRow] = await tx
+        .update(schema.orders)
+        .set({
+          deliveryFee: sql`${schema.orders.deliveryFee} + ${DEFAULT_RETRY_FEE_CDF}`,
+          totalDue: sql`${schema.orders.totalDue} + ${DEFAULT_RETRY_FEE_CDF}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.orders.id, order.id))
+        .returning({ totalDue: schema.orders.totalDue });
+
+      const newTotalDue = feeRow?.totalDue ?? order.totalDue + DEFAULT_RETRY_FEE_CDF;
+      await tx.insert(schema.orderEvents).values({
+        orderId: order.id,
+        type: "note",
+        actorId: params.courierId,
+        actorRole: "system",
+        note: `Frais de relance / nouvelle tentative appliqués : +${DEFAULT_RETRY_FEE_CDF} CDF (Total dû : ${newTotalDue} CDF)`,
+        payload: {
+          retryFee: DEFAULT_RETRY_FEE_CDF,
+          previousTotalDue: newTotalDue - DEFAULT_RETRY_FEE_CDF,
+          newTotalDue,
+          failedPickupCount: totalFailedPickups,
+        },
+      });
+    }
+
+    if (totalFailedPickups >= blockThreshold) {
+      await tx
+        .update(schema.user)
+        .set({
+          status: "blocked",
+          banned: true,
+          banReason: `Blocage automatique après ${totalFailedPickups} ramassages échoués (no-show). Approbation administrateur requise.`,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.user.id, order.customerId));
+
+      await tx.insert(schema.orderEvents).values({
+        orderId: order.id,
+        type: "note",
+        actorId: params.courierId,
+        actorRole: "system",
+        note: `Compte client bloqué automatiquement suite à ${totalFailedPickups} tentatives de ramassage échouées.`,
+      });
+    }
+
     return { ok: true };
   });
 }
@@ -1066,11 +1134,16 @@ export async function startDeliveryMissionAtomic(
       })
       .where(eq(schema.missions.id, missionId));
 
-    if (order.status === "delivery_assigned") {
+    const deliveryCode =
+      order.deliveryConfirmationCode ||
+      Math.floor(1000 + Math.random() * 9000).toString();
+
+    if (order.status === "delivery_assigned" || !order.deliveryConfirmationCode) {
       await tx
         .update(schema.orders)
         .set({
           status: "delivery_in_progress",
+          deliveryConfirmationCode: deliveryCode,
           updatedAt: new Date(),
         })
         .where(eq(schema.orders.id, order.id));
@@ -1078,7 +1151,7 @@ export async function startDeliveryMissionAtomic(
       await tx.insert(schema.orderEvents).values({
         orderId: order.id,
         type: "status_change",
-        fromStatus: "delivery_assigned",
+        fromStatus: order.status,
         toStatus: "delivery_in_progress",
         actorId: courierId,
         actorRole: "courier",
@@ -1100,7 +1173,14 @@ export async function completeDeliveryMissionAtomic(params: {
   confirmationCode: string;
   cashCollected: number;
   cashCurrency?: "CDF" | "USD";
-}): Promise<{ ok: boolean; error?: string; discrepancyFlagged?: boolean }> {
+}): Promise<{
+  ok: boolean;
+  orderId?: string;
+  error?: string;
+  discrepancyFlagged?: boolean;
+  orderCreatedAt?: Date;
+  deliveredAt?: Date;
+}> {
   return await db.transaction(async (tx) => {
     const [mission] = await tx
       .select()
@@ -1110,7 +1190,7 @@ export async function completeDeliveryMissionAtomic(params: {
       .limit(1);
 
     if (!mission) return { ok: false, error: "Mission introuvable" };
-    if (mission.status === "completed") return { ok: true };
+    if (mission.status === "completed") return { ok: true, orderId: mission.orderId };
     if (mission.type !== "delivery") {
       return { ok: false, error: "Type de mission invalide (livraison attendue)" };
     }
@@ -1126,11 +1206,11 @@ export async function completeDeliveryMissionAtomic(params: {
 
     if (!order) return { ok: false, error: "Commande introuvable" };
 
-    // Verify delivery confirmation code
-    const enteredCode = params.confirmationCode.trim().toUpperCase();
+    // Verify delivery confirmation code (Task 10.3)
+    const enteredCode = (params.confirmationCode || "").trim().toUpperCase();
     const expectedCode = (order.deliveryConfirmationCode || "").trim().toUpperCase();
 
-    if (expectedCode && enteredCode !== expectedCode) {
+    if (!expectedCode || !enteredCode || enteredCode !== expectedCode) {
       return {
         ok: false,
         error: "Code de confirmation de livraison invalide. Demandez le code au client.",
@@ -1146,11 +1226,12 @@ export async function completeDeliveryMissionAtomic(params: {
     const discrepancyFlagged = collectedInCDF !== expectedInCDF;
 
     // Update mission
+    const deliveredAt = new Date();
     await tx
       .update(schema.missions)
       .set({
         status: "completed",
-        completedAt: new Date(),
+        completedAt: deliveredAt,
         cashCollected: params.cashCollected,
         cashCurrency: currency,
         updatedAt: new Date(),
@@ -1278,7 +1359,13 @@ export async function completeDeliveryMissionAtomic(params: {
       },
     });
 
-    return { ok: true, discrepancyFlagged };
+    return {
+      ok: true,
+      orderId: order.id,
+      discrepancyFlagged,
+      orderCreatedAt: order.createdAt,
+      deliveredAt,
+    };
   });
 }
 

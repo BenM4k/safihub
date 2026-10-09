@@ -182,4 +182,16 @@ Each acceptance criterion from the product specification is mapped to an automat
 - **Trap:** Querying `schema.orders.guestToken` in DAL or service layers.
 - **Fix:** The order schema column for the public guest tracking URL token is named `trackingToken` (`schema.orders.trackingToken`), indexed via `orders_tracking_token_unique`.
 
+### 27. Blocked Phone Check Excludes Merged Guest User Accounts
+- **Trap:** `isPhoneOrEmailBlocked` checking `banned: true` without filtering out `status: 'merged'`, which inadvertently treats legitimate customers who converted from phone-order guest accounts as blocked abusive users.
+- **Fix:** Explicitly include `ne(schema.user.status, "merged")` in the query filter so only genuinely blocked/banned accounts (`status: "blocked"` or administrative bans) prevent checkout and registration.
+
+
+### 28. Rate Limiting Must Use Shared Storage (Upstash)
+- **Trap:** A process-local `Map` rate limiter resets on every cold start and is per-instance on Vercel, so login/register/checkout limits are trivially bypassed.
+- **Fix:** `src/services/abuse/rate-limiter.ts` uses `@upstash/ratelimit` (sliding window) backed by `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`. The in-memory store is used only when `NODE_ENV === "test"`. If Upstash is unconfigured or erroring, it fails open and logs an error, so set the env vars in every deployed environment. All `rateLimit*` helpers are async and must be awaited.
+
+### 29. Retry Fee Is Charged Once, Inside the Failed-Pickup Transaction
+- **Trap:** Calling `applyRetryFeeToOrder` (non-transactional, uses the global `db`) from inside `failPickupMissionAtomic`, or charging on every failure past the threshold.
+- **Fix:** The DAL transaction increments `deliveryFee`/`totalDue` and writes a `note` audit event only when the customer failed-pickup count equals `RETRY_FEE_FAILED_PICKUP_COUNT` (2, from `src/lib/fees.ts`).
 

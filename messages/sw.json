@@ -211,7 +211,9 @@
       "invalidInput": "Taarifa si sahihi",
       "adminRequired": "Hauruhusiwi: Haki za msimamizi zinahitajika.",
       "accountBlocked": "Akaunti imezuiwa. Tafadhali wasiliana na huduma kwa wateja.",
-      "invalidCredentials": "Barua pepe au nenosiri si sahihi."
+      "invalidCredentials": "Barua pepe au nenosiri si sahihi.",
+      "rateLimited": "Majaribio mengi mno. Tafadhali jaribu tena baadaye.",
+      "phoneBlocked": "Nambari hii ya simu imezuiwa na haiwezi kusajiliwa tena."
     }
   },
   "portal": {
@@ -410,6 +412,14 @@
       "onBehalfTitle": "Hatua kwa Niaba ya Dobi",
       "onBehalfAccept": "Kubali kwa Niaba ya Dobi",
       "onBehalfReject": "Kataa kwa Niaba ya Dobi",
+      "screeningTitle": "Uhakiki wa agizo la kwanza",
+      "screeningDescription": "Wasiliana na mteja (simu/WhatsApp), kisha rekodi uamuzi wako.",
+      "screeningNote": "Ujumbe wa uhakiki",
+      "screeningConfirm": "Thibitisha agizo",
+      "screeningReject": "Kataa agizo",
+      "screeningRejectReason": "Sababu ya kukataa",
+      "screeningReasonRequired": "Sababu ya kukataa inahitajika",
+      "screeningError": "Hitilafu isiyotarajiwa imetokea",
       "acceptNote": "Ujumbe wa Kukubali",
       "rejectReason": "Sababu ya Kukataa",
       "eventTimeline": "Mfululizo wa Matukio",
@@ -1146,6 +1156,32 @@
     "photoAlt": "Picha ya vazi",
     "deliveryProofAlt": "Uthibitisho wa uwasilishaji",
     "disputePhotoAlt": "Picha ya mgogoro"
+  },
+  "notifications": {
+    "title": "Arifa",
+    "subtitle": "Tahadhari zako, masasisho na jumbe muhimu",
+    "unread": "Hazijasomwa",
+    "all": "Zote",
+    "markAsRead": "Weka kama imesomwa",
+    "markAllAsRead": "Weka zote kama zimesomwa",
+    "viewOrder": "Tazama agizo",
+    "allRead": "Arifa zote zimesomwa",
+    "emptyTitle": "Hakuna arifa",
+    "emptyDescription": "Utapokea hapa tahadhari kuhusu maagizo na majukumu yako.",
+    "viewAll": "Tazama arifa zote",
+    "backToDashboard": "Rudi",
+    "channels": {
+      "in_app": "Programu",
+      "push": "Arifa ya programu",
+      "sms": "SMS",
+      "whatsapp_link": "WhatsApp"
+    },
+    "pushPermissionTitle": "Wezesha arifa za programu",
+    "pushPermissionDesc": "Pokea maagizo mapya mara moja hata wakati skrini imezimwa.",
+    "enablePush": "Wezesha arifa",
+    "pushEnabled": "Arifa za programu zimewezeshwa",
+    "pushUnsupported": "Arifa za programu haziauniwi kwenye kivinjari hiki",
+    "pushBlocked": "Arifa za programu zimezuiwa kwenye mipangilio ya kivinjari"
   }
 }
 

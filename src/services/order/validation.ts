@@ -64,6 +64,10 @@ export interface PlatformSettingsConfig {
   maxCoverageDistanceLevel: number;
   acceptanceDelayMinutes: number;
   leadTimeMinutes?: number;
+  firstOrderScreening?: boolean;
+  maxOpenOrdersPerCustomer?: number;
+  dailyOrderCapPerPhone?: number;
+  failedPickupBlockThreshold?: number;
 }
 
 export interface ExistingOrderSnapshot {
@@ -91,6 +95,10 @@ export interface OrderValidationContext {
   currentTime?: Date;
   settings: PlatformSettingsConfig;
   activeExchangeRate?: { rate: number; isCdfPerUsd?: boolean };
+  customerOpenOrdersCount?: number;
+  customerCompletedOrdersCount?: number;
+  dailyOrdersForPhoneCount?: number;
+  isCustomerBlocked?: boolean;
 }
 
 export interface ValidatedLineItem {
@@ -140,7 +148,10 @@ export interface ValidationFailure {
     | "PRICE_CHANGED"
     | "MINIMUM_ORDER_NOT_MET"
     | "QUANTITY_LIMIT_EXCEEDED"
-    | "EMPTY_CART";
+    | "EMPTY_CART"
+    | "ACCOUNT_BLOCKED"
+    | "OPEN_ORDER_CAP_EXCEEDED"
+    | "DAILY_PHONE_CAP_EXCEEDED";
   message: string;
   details?: Record<string, unknown>;
   nextAvailableSlot?: TimeSlot | null;
@@ -179,6 +190,46 @@ export function validateOrderCheckout(
       currency: "CDF",
       paymentCurrency: input.paymentCurrency ?? "CDF",
       source: input.source ?? "app",
+    });
+  }
+
+  // 1b. Check if account or phone is blocked (Task 10.1)
+  if (context.isCustomerBlocked) {
+    return err({
+      code: "ACCOUNT_BLOCKED",
+      message: "Votre compte ou numéro de téléphone est bloqué. Veuillez contacter le support.",
+    });
+  }
+
+  // 1c. Check open orders cap (Task 10.1: open-order cap, default 2)
+  const maxOpenOrders = context.settings.maxOpenOrdersPerCustomer ?? 2;
+  if (
+    context.customerOpenOrdersCount !== undefined &&
+    context.customerOpenOrdersCount >= maxOpenOrders
+  ) {
+    return err({
+      code: "OPEN_ORDER_CAP_EXCEEDED",
+      message: `Limite maximale de commandes en cours (${maxOpenOrders}) atteinte. Veuillez attendre la livraison de vos commandes actuelles.`,
+      details: {
+        maxOpenOrders,
+        currentOpenOrders: context.customerOpenOrdersCount,
+      },
+    });
+  }
+
+  // 1d. Check daily cap per phone (Task 10.1: daily cap per phone, default 3)
+  const dailyCap = context.settings.dailyOrderCapPerPhone ?? 3;
+  if (
+    context.dailyOrdersForPhoneCount !== undefined &&
+    context.dailyOrdersForPhoneCount >= dailyCap
+  ) {
+    return err({
+      code: "DAILY_PHONE_CAP_EXCEEDED",
+      message: `Limite quotidienne de commandes atteinte pour ce numéro de téléphone (${input.contactPhone}).`,
+      details: {
+        dailyCap,
+        currentDailyOrders: context.dailyOrdersForPhoneCount,
+      },
     });
   }
 

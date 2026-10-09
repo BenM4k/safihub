@@ -15,6 +15,7 @@ import {
   type OrderListItemRecord,
 } from "@/dal";
 import { err, ok, type Result } from "@/lib/result";
+import type { OrderStatus } from "@/services/db/schema";
 import {
   buildOrderValidationContext,
   computeAcceptanceDeadlines,
@@ -24,7 +25,7 @@ import {
   type CheckoutInput,
   type ValidationFailure,
 } from "@/services/order";
-
+import { trackOrderCancelled, trackOrderPlaced } from "@/services/analytics";
 export interface CartEstimateResult {
   items: Array<{
     houseItemId: string;
@@ -135,6 +136,7 @@ export async function placeCustomerOrder(
     houseId: input.houseId,
     customerId: input.customerId,
     idempotencyKey: input.idempotencyKey,
+    contactPhone: input.contactPhone,
   });
   const validationRes = validateOrderCheckout(input, context);
 
@@ -164,16 +166,22 @@ export async function placeCustomerOrder(
   const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
   const orderCode = `ORD-${dateStr}-${randomSuffix}`;
   const trackingToken = crypto.randomUUID();
-  const deliveryCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-  const deadlines = computeAcceptanceDeadlines(
-    now,
-    context.settings.acceptanceDelayMinutes,
-    context.houseHours.filter((h) => h.houseId === input.houseId),
-    context.houseClosures.filter((c) => c.houseId === input.houseId)
-  );
+  // Task 10.2: Optional first-order screening (AC 16)
+  // When screening is active, a customer with no completed orders starts as awaiting_confirmation.
+  const isFirstOrder = (context.customerCompletedOrdersCount ?? 0) === 0;
+  const requiresScreening = Boolean(context.settings.firstOrderScreening && isFirstOrder);
+  const initialStatus: OrderStatus = requiresScreening ? "awaiting_confirmation" : "created";
 
-  const initialStatus = "created";
+  // Acceptance timer starts only when status is created (spec 14 & 18)
+  const deadlines = requiresScreening
+    ? { deadlineAt: null, reminderAt: null, escalationAt: null }
+    : computeAcceptanceDeadlines(
+        now,
+        context.settings.acceptanceDelayMinutes,
+        context.houseHours.filter((h) => h.houseId === input.houseId),
+        context.houseClosures.filter((c) => c.houseId === input.houseId)
+      );
 
   const created = await insertOrderWithDetails({
     order: {
@@ -196,7 +204,7 @@ export async function placeCustomerOrder(
       commissionBps: payload.commissionBps,
       commissionAmount: payload.commissionAmount,
       totalDue: payload.totalDue,
-      deliveryConfirmationCode: deliveryCode,
+      deliveryConfirmationCode: null, // Generated at delivery start (Task 10.3)
       pickupSlotStart: payload.pickupSlotStart,
       pickupSlotEnd: payload.pickupSlotEnd,
       deliverySlotStart: null,
@@ -221,6 +229,16 @@ export async function placeCustomerOrder(
       note: "Commande passée par le client",
     },
   });
+
+  // Track order_placed event (Task 10.4)
+  trackOrderPlaced({
+    userId: input.customerId,
+    orderId: created.orderId,
+    houseId: input.houseId,
+    source: input.source ?? "app",
+    amount: payload.totalDue,
+    currency: "CDF",
+  }).catch(() => {});
 
   return ok(created);
 }
@@ -253,6 +271,14 @@ export async function cancelCustomerOrder(
   if (updated === false) {
     return err("Conflit de concurrence: la commande a déjà changé de statut.");
   }
+
+  // Track order_cancelled event (Task 10.4)
+  trackOrderCancelled({
+    orderId,
+    userId: customerId,
+    stage: order.status,
+    reason,
+  }).catch(() => {});
 
   return ok(undefined);
 }

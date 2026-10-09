@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Building2, Store } from "lucide-react";
+import { NotificationsInboxWidget } from "@/components/notifications/notifications-inbox-widget";
 
 export async function HouseHeader({
   houseName,
@@ -50,6 +51,7 @@ export async function HouseHeader({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <NotificationsInboxWidget />
           <Link
             href="/houses"
             className="hidden sm:inline-flex text-xs font-semibold text-primary hover:text-primary-hover px-2.5 py-1.5 rounded-md hover:bg-primary-soft/30 transition"

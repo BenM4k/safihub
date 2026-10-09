@@ -279,7 +279,7 @@ describe("Better Auth & Customer Authentication", () => {
 
     it("allows the admin to merge a guest user into a registered account", async () => {
       const adminUserId = "usr_admin_001";
-      const sharedPhone = "+243991112233";
+      const sharedPhone = `+24399${Math.floor(1000000 + Math.random() * 9000000)}`;
 
       // 1. Admin creates guest user from a phone call
       const guestRes = await adminCreateGuestUser({

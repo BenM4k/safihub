@@ -1,7 +1,8 @@
 import "server-only";
-import { and, asc, count, desc, eq, gte, ilike, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { toBukavuDateTime, fromBukavuDateTime } from "@/services/availability/bukavu-time";
+import { ok, err, type Result } from "@/lib/result";
 import type { ApprovalMethod, OrderSource, OrderStatus } from "@/services/db/schema";
 import type { orderEventTypeEnum } from "@/services/db/schema";
 
@@ -301,6 +302,66 @@ export async function updateOrderStatus(
     .where(eq(schema.orders.id, orderId));
 }
 
+/**
+ * Compare-and-set status update: only writes when the order is still in
+ * `expectedStatus`. Returns true when a row was updated.
+ */
+export async function updateOrderStatusIfCurrent(
+  orderId: string,
+  expectedStatus: OrderStatus,
+  newStatus: OrderStatus
+): Promise<boolean> {
+  const rows = await db
+    .update(schema.orders)
+    .set({
+      status: newStatus,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(schema.orders.id, orderId), eq(schema.orders.status, expectedStatus)))
+    .returning({ id: schema.orders.id });
+  return rows.length > 0;
+}
+
+export async function updateOrderStatusWithDeadline(
+  orderId: string,
+  expectedStatus: OrderStatus,
+  newStatus: OrderStatus,
+  deadlineAt: Date | null
+): Promise<boolean> {
+  const rows = await db
+    .update(schema.orders)
+    .set({
+      status: newStatus,
+      acceptanceDeadlineAt: deadlineAt,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(schema.orders.id, orderId), eq(schema.orders.status, expectedStatus)))
+    .returning({ id: schema.orders.id });
+  return rows.length > 0;
+}
+
+export async function updateOrderFinancials(params: {
+  orderId: string;
+  deliveryFee: number;
+  totalDue: number;
+}): Promise<Result<void>> {
+  try {
+    await db
+      .update(schema.orders)
+      .set({
+        deliveryFee: params.deliveryFee,
+        totalDue: params.totalDue,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.orders.id, params.orderId));
+    return ok(undefined);
+  } catch (error) {
+    return err(
+      error instanceof Error ? error.message : "Erreur mise à jour financière de la commande"
+    );
+  }
+}
+
 export async function transitionOrderStatusAtomic(params: {
   orderId: string;
   expectedStatus?: OrderStatus;
@@ -445,12 +506,17 @@ export interface OrderValidationData {
     startsAt: string;
     endsAt: string;
   }>;
+  customerOpenOrdersCount?: number;
+  customerCompletedOrdersCount?: number;
+  dailyOrdersForPhoneCount?: number;
+  isCustomerBlocked?: boolean;
 }
 
 export async function getOrderValidationData(scope?: {
   houseId?: string;
   customerId?: string;
   idempotencyKey?: string;
+  contactPhone?: string;
 }): Promise<OrderValidationData> {
   const orderConditions = [];
   if (scope?.customerId && scope?.idempotencyKey) {
@@ -524,6 +590,87 @@ export async function getOrderValidationData(scope?: {
     })
     .from(schema.courierShifts);
 
+  // Queries for open orders, completed orders, daily phone cap and block status
+  const openStatuses = [
+    "awaiting_confirmation",
+    "created",
+    "accepted",
+    "pickup_assigned",
+    "pickup_in_progress",
+    "picked_up",
+    "received",
+    "price_adjusted",
+    "washing",
+    "ready",
+    "delivery_slot_confirmed",
+    "delivery_assigned",
+    "delivery_in_progress",
+    "disputed",
+  ] as const;
+
+  const openOrdersPromise = scope?.customerId
+    ? db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(schema.orders)
+        .where(
+          and(
+            eq(schema.orders.customerId, scope.customerId),
+            inArray(schema.orders.status, openStatuses as unknown as OrderStatus[])
+          )
+        )
+    : Promise.resolve([{ count: 0 }]);
+
+  const completedOrdersPromise = scope?.customerId
+    ? db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(schema.orders)
+        .where(
+          and(
+            eq(schema.orders.customerId, scope.customerId),
+            eq(schema.orders.status, "delivered")
+          )
+        )
+    : Promise.resolve([{ count: 0 }]);
+
+  // Today start in UTC/Bukavu
+  const now = new Date();
+  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+
+  const dailyOrdersPromise = scope?.contactPhone
+    ? db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(schema.orders)
+        .where(
+          and(
+            eq(schema.orders.contactPhone, scope.contactPhone),
+            gte(schema.orders.createdAt, todayStart),
+            sql`${schema.orders.status} != 'cancelled'`
+          )
+        )
+    : Promise.resolve([{ count: 0 }]);
+
+  const customerUserPromise = scope?.customerId
+    ? db
+        .select({ status: schema.user.status, banned: schema.user.banned })
+        .from(schema.user)
+        .where(eq(schema.user.id, scope.customerId))
+        .limit(1)
+    : Promise.resolve([]);
+
+  const phoneUserPromise = scope?.contactPhone
+    ? db
+        .select({ status: schema.user.status, banned: schema.user.banned })
+        .from(schema.user)
+        .where(
+          and(
+            eq(schema.user.contactPhone, scope.contactPhone),
+            ne(schema.user.status, "merged"),
+            or(eq(schema.user.status, "blocked"), eq(schema.user.banned, true))
+          )
+        )
+        .limit(1)
+    : Promise.resolve([]);
+
   const [
     existingOrders,
     houseItems,
@@ -531,6 +678,11 @@ export async function getOrderValidationData(scope?: {
     houseClosures,
     houseCoverage,
     courierShifts,
+    openOrdersResult,
+    completedOrdersResult,
+    dailyOrdersResult,
+    customerUserResult,
+    phoneUserResult,
   ] = await Promise.all([
     orderConditions.length > 0
       ? existingOrdersQuery.where(and(...orderConditions))
@@ -548,7 +700,18 @@ export async function getOrderValidationData(scope?: {
       ? houseCoverageQuery.where(eq(schema.houseCoverage.houseId, scope.houseId))
       : houseCoverageQuery,
     courierShiftsQuery,
+    openOrdersPromise,
+    completedOrdersPromise,
+    dailyOrdersPromise,
+    customerUserPromise,
+    phoneUserPromise,
   ]);
+
+  const customerUser = customerUserResult[0];
+  const isCustomerBlocked = Boolean(
+    (customerUser && (customerUser.status === "blocked" || customerUser.banned)) ||
+    phoneUserResult.length > 0
+  );
 
   return {
     existingOrders,
@@ -557,6 +720,10 @@ export async function getOrderValidationData(scope?: {
     houseClosures,
     houseCoverage,
     courierShifts,
+    customerOpenOrdersCount: openOrdersResult[0]?.count ?? 0,
+    customerCompletedOrdersCount: completedOrdersResult[0]?.count ?? 0,
+    dailyOrdersForPhoneCount: dailyOrdersResult[0]?.count ?? 0,
+    isCustomerBlocked,
   };
 }
 

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Bike, Wifi, WifiOff, RefreshCw, AlertCircle } from "lucide-react";
 import { useCourierStore } from "@/lib/stores/courier-store";
 import { Button } from "@/components/ui/button";
+import { NotificationsInboxWidget } from "@/components/notifications/notifications-inbox-widget";
 
 interface CourierHeaderProps {
   courierName: string;
@@ -41,8 +42,9 @@ export function CourierHeader({ courierName }: CourierHeaderProps) {
           </div>
         </div>
 
-        {/* Network & Sync Badge */}
+        {/* Network, Notifications & Sync Badge */}
         <div className="flex items-center gap-2">
+          <NotificationsInboxWidget buttonClassName="text-slate-300 hover:text-white hover:bg-slate-800" />
           {isOnline ? (
             <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <Wifi className="size-3" />

@@ -5,6 +5,7 @@ import {
   createGuestUser,
   getUserByEmail,
   getUserById,
+  isPhoneOrEmailBlocked,
   mergeGuestUser,
   recordConsent,
   setUserPasswordCredential,
@@ -12,6 +13,7 @@ import {
   updateUserRole,
   type GuestMergeResult,
 } from "@/dal";
+import { rateLimitLogin, rateLimitRegistration } from "@/services/abuse";
 import { err, ok, type Result } from "@/lib/result";
 import type { UserRole } from "./permissions";
 
@@ -75,6 +77,21 @@ export async function registerCustomer(
   const normalizedEmail = input.email.toLowerCase().trim();
   const normalizedPhone = input.phone.trim();
   const normalizedName = input.name.trim();
+
+  // Task 10.1: Rate limiting on registration
+  const rateLimit = await rateLimitRegistration(normalizedEmail);
+  if (!rateLimit.allowed) {
+    return err("Trop de tentatives d'inscription. Veuillez réessayer plus tard.");
+  }
+
+  // Task 10.1: Check if this phone number or email is blocked (blocked phone/email cannot re-register)
+  const isBlocked = await isPhoneOrEmailBlocked({
+    phone: normalizedPhone,
+    email: normalizedEmail,
+  });
+  if (isBlocked) {
+    return err("Ce numéro de téléphone ou cette adresse email est bloqué. Impossible de créer un compte.");
+  }
 
   // Check if a registered user with this email already exists
   const existingUser = await getUserByEmail(normalizedEmail);
@@ -149,6 +166,12 @@ export async function loginCustomer(
   input: LoginUserInput
 ): Promise<Result<{ user: Record<string, unknown>; token?: string | null }>> {
   const normalizedEmail = input.email.toLowerCase().trim();
+
+  // Task 10.1: Rate limiting on login
+  const rateLimit = await rateLimitLogin(normalizedEmail);
+  if (!rateLimit.allowed) {
+    return err("Trop de tentatives de connexion. Veuillez réessayer plus tard.");
+  }
 
   try {
     const authResult = await auth.api.signInEmail({

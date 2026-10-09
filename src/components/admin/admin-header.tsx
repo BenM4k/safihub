@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
+import { NotificationsInboxWidget } from "@/components/notifications/notifications-inbox-widget";
 export async function AdminHeader() {
   return (
     <header className="w-full bg-white border-b border-border shadow-xs sticky top-0 z-30">
@@ -21,6 +22,7 @@ export async function AdminHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          <NotificationsInboxWidget />
           <Link
             href="/"
             className="text-xs font-semibold text-muted-foreground hover:text-heading px-3 py-1.5 rounded-md hover:bg-slate-50 transition"

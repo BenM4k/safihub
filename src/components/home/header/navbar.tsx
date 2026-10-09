@@ -5,6 +5,7 @@ import { MobileNav } from "./mobile-nav";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/actions/auth.actions";
 import { getRoleCta } from "@/lib/role-cta";
+import { NotificationsInboxWidget } from "@/components/notifications/notifications-inbox-widget";
 import type { AuthenticatedUser } from "@/services/auth/guards";
 
 interface NavbarProps {
@@ -76,6 +77,7 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
         <div className="hidden sm:flex items-center gap-6">
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
+              <NotificationsInboxWidget />
               <Link
                 href="/orders"
                 className="text-sm font-semibold text-heading hover:text-primary transition-colors"
