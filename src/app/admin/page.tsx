@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { getAdminMetricsSummary } from "@/services/admin";
 import { MetricsGrid } from "@/components/admin/dashboard/metrics-grid";
+import { SuccessCriteriaGrid } from "@/components/admin/dashboard/success-criteria-grid";
 import { QuickActions } from "@/components/admin/dashboard/quick-actions";
 
 export default async function AdminPage() {
@@ -19,6 +20,13 @@ export default async function AdminPage() {
         activeCouriersCount: 0,
         totalCashCollectedCDF: 0,
         unassignedMissionsCount: 0,
+        ordersPerWeek: 0,
+        acceptanceRatePercent: 100,
+        marginPerOrderCDF: 0,
+        cashDiscrepanciesCount: 0,
+        cashDiscrepancyPercent: 0,
+        disputeRatePercent: 0,
+        adminMinutesPerOrder: 6.5,
       };
 
   return (
@@ -38,6 +46,7 @@ export default async function AdminPage() {
         </div>
       )}
 
+      <SuccessCriteriaGrid metrics={metrics} />
       <MetricsGrid metrics={metrics} />
       <QuickActions />
     </div>

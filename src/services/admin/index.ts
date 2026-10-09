@@ -6,3 +6,5 @@ export * from "./user.service";
 export * from "./order.service";
 export * from "./dispatch.service";
 export * from "./settings.service";
+export * from "./cash.service";
+export * from "./settlements.service";

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
 
@@ -999,6 +999,16 @@ export async function startDeliveryMissionAtomic(
       .where(eq(schema.courierProfiles.userId, courierId))
       .limit(1);
 
+    const reversedSubquery = tx
+      .select({ id: schema.cashLedger.reversalOfId })
+      .from(schema.cashLedger)
+      .where(
+        and(
+          eq(schema.cashLedger.entryType, "reversal"),
+          sql`${schema.cashLedger.reversalOfId} is not null`
+        )
+      );
+
     const ledgerEntries = await tx
       .select({
         entryType: schema.cashLedger.entryType,
@@ -1008,7 +1018,13 @@ export async function startDeliveryMissionAtomic(
       })
       .from(schema.cashLedger)
       .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
-      .where(eq(schema.cashLedger.courierId, courierId));
+      .where(
+        and(
+          eq(schema.cashLedger.courierId, courierId),
+          sql`${schema.cashLedger.entryType} <> 'reversal'`,
+          notInArray(schema.cashLedger.id, reversedSubquery)
+        )
+      );
 
     let cashCollected = 0;
     let cashRemitted = 0;
@@ -1016,8 +1032,11 @@ export async function startDeliveryMissionAtomic(
       const rate = Number(entry.exchangeRateUsed) || 2800;
       const amountCDF =
         entry.currency === "USD" ? Math.round(entry.amount * rate) : entry.amount;
-      if (entry.entryType === "cash_collected") cashCollected += amountCDF;
-      else if (entry.entryType === "cash_remitted") cashRemitted += amountCDF;
+      if (entry.entryType === "cash_collected" || entry.entryType === "float_issued") {
+        cashCollected += amountCDF;
+      } else if (entry.entryType === "cash_remitted" || entry.entryType === "float_returned") {
+        cashRemitted += amountCDF;
+      }
     }
 
     const cashHeld = Math.max(0, cashCollected - cashRemitted);
@@ -1155,7 +1174,14 @@ export async function completeDeliveryMissionAtomic(params: {
       .set({ deleteAfter })
       .where(eq(schema.orderPhotos.orderId, order.id));
 
-    // Post to cash_ledger (AC 12)
+    // Post to cash_ledger (AC 12 & Task 8.1)
+    const finalItemsTotal = order.adjustedItemsTotal ?? order.itemsTotal;
+    const owedToHouse = Math.max(0, finalItemsTotal - order.commissionAmount);
+    const courierPayEarned = Math.max(0, mission.courierPay ?? 0);
+    const deliveryFeeNet = Math.max(0, order.deliveryFee - courierPayEarned);
+    const owedToOwner = Math.max(0, order.commissionAmount + deliveryFeeNet);
+
+    // 1. cash_collected
     if (params.cashCollected > 0) {
       await tx.insert(schema.cashLedger).values({
         entryType: "cash_collected",
@@ -1168,6 +1194,67 @@ export async function completeDeliveryMissionAtomic(params: {
         note: discrepancyFlagged
           ? `Encaissé : ${params.cashCollected} ${currency} (Écart détecté vs dû : ${order.totalDue} ${currency})`
           : `Paiement à la livraison complet : ${params.cashCollected} ${currency}`,
+        createdBy: params.courierId,
+      });
+    }
+
+    // 2. owed_to_house
+    if (owedToHouse > 0) {
+      await tx.insert(schema.cashLedger).values({
+        entryType: "owed_to_house",
+        orderId: order.id,
+        missionId: params.missionId,
+        courierId: params.courierId,
+        houseId: order.houseId,
+        currency,
+        amount: owedToHouse,
+        note: `Part pressing : ${owedToHouse} ${currency} (${finalItemsTotal} - ${order.commissionAmount})`,
+        createdBy: params.courierId,
+      });
+    }
+
+    // 3. owed_to_owner
+    if (owedToOwner > 0) {
+      await tx.insert(schema.cashLedger).values({
+        entryType: "owed_to_owner",
+        orderId: order.id,
+        missionId: params.missionId,
+        courierId: params.courierId,
+        houseId: order.houseId,
+        currency,
+        amount: owedToOwner,
+        note: `Part propriétaire (commission + marge livraison) : ${owedToOwner} ${currency}`,
+        createdBy: params.courierId,
+      });
+    }
+
+    // 4. courier_pay
+    if (courierPayEarned > 0) {
+      await tx.insert(schema.cashLedger).values({
+        entryType: "courier_pay",
+        orderId: order.id,
+        missionId: params.missionId,
+        courierId: params.courierId,
+        houseId: order.houseId,
+        currency,
+        amount: courierPayEarned,
+        note: `Rémunération livraison coursier : ${courierPayEarned} ${currency}`,
+        createdBy: params.courierId,
+      });
+    }
+
+    // Discrepancy entry if flagged
+    if (discrepancyFlagged) {
+      const diff = Math.abs(collectedInCDF - expectedInCDF);
+      await tx.insert(schema.cashLedger).values({
+        entryType: "discrepancy",
+        orderId: order.id,
+        missionId: params.missionId,
+        courierId: params.courierId,
+        houseId: order.houseId,
+        currency,
+        amount: diff,
+        note: `Écart de caisse à la livraison : ${params.cashCollected} perçu vs ${order.totalDue} attendu (${diff} CDF d'écart)`,
         createdBy: params.courierId,
       });
     }
@@ -1275,6 +1362,16 @@ export async function getCourierCashOverview(
     .where(eq(schema.courierProfiles.userId, courierId))
     .limit(1);
 
+  const reversedSubquery = db
+    .select({ id: schema.cashLedger.reversalOfId })
+    .from(schema.cashLedger)
+    .where(
+      and(
+        eq(schema.cashLedger.entryType, "reversal"),
+        sql`${schema.cashLedger.reversalOfId} is not null`
+      )
+    );
+
   const ledgerRows = await db
     .select({
       entryType: schema.cashLedger.entryType,
@@ -1284,7 +1381,13 @@ export async function getCourierCashOverview(
     })
     .from(schema.cashLedger)
     .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
-    .where(eq(schema.cashLedger.courierId, courierId));
+    .where(
+      and(
+        eq(schema.cashLedger.courierId, courierId),
+        sql`${schema.cashLedger.entryType} <> 'reversal'`,
+        notInArray(schema.cashLedger.id, reversedSubquery)
+      )
+    );
 
   let cashCollected = 0;
   let cashRemitted = 0;
@@ -1292,8 +1395,11 @@ export async function getCourierCashOverview(
     const rate = Number(row.exchangeRateUsed) || 2800;
     const amountCDF =
       row.currency === "USD" ? Math.round(row.amount * rate) : row.amount;
-    if (row.entryType === "cash_collected") cashCollected += amountCDF;
-    else if (row.entryType === "cash_remitted") cashRemitted += amountCDF;
+    if (row.entryType === "cash_collected" || row.entryType === "float_issued") {
+      cashCollected += amountCDF;
+    } else if (row.entryType === "cash_remitted" || row.entryType === "float_returned") {
+      cashRemitted += amountCDF;
+    }
   }
 
   const cashHeld = Math.max(0, cashCollected - cashRemitted);
