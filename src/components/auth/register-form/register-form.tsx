@@ -42,6 +42,7 @@ export function RegisterForm() {
       password: "",
       confirmPassword: "",
       consent: false,
+      photoConsent: true,
     },
     mode: "onSubmit",
   });
@@ -57,6 +58,7 @@ export function RegisterForm() {
       formData.append("password", data.password);
       formData.append("confirmPassword", data.confirmPassword);
       formData.append("consent", data.consent ? "true" : "false");
+      formData.append("photoConsent", data.photoConsent ? "true" : "false");
 
       const res = await registerAction(initialAuthState, formData);
       if (!res.success && res.errors) {
@@ -121,9 +123,10 @@ export function RegisterForm() {
           error={errors.confirmPassword?.message}
         />
 
-        {/* Mandatory legal consent */}
+        {/* Mandatory legal consent and photo consent */}
         <ConsentField
           registration={register("consent")}
+          photoRegistration={register("photoConsent")}
           error={errors.consent?.message}
         />
 

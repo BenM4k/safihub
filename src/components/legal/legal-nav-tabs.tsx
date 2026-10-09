@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ShieldCheck, FileText, Lock } from "lucide-react";
+import { ShieldCheck, FileText, Lock, Camera } from "lucide-react";
 
 interface LegalNavTabsProps {
-  activeTab: "terms" | "privacy" | "security";
+  activeTab: "terms" | "privacy" | "security" | "consent";
 }
 
 export function LegalNavTabs({ activeTab }: LegalNavTabsProps) {
@@ -24,6 +24,12 @@ export function LegalNavTabs({ activeTab }: LegalNavTabsProps) {
       label: "Sécurité & Données",
       href: "/security",
       icon: ShieldCheck,
+    },
+    {
+      id: "consent",
+      label: "Consentement Photos",
+      href: "/consent",
+      icon: Camera,
     },
   ] as const;
 

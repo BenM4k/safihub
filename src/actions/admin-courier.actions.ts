@@ -16,7 +16,7 @@ const createCourierSchema = z.object({
   email: z.string().email("Email invalide"),
   phone: z.string().min(1, "Téléphone requis"),
   password: z.string().optional(),
-  cashCeiling: z.coerce.number().optional().default(100000),
+  cashCeiling: z.coerce.number().optional().default(140000),
   securityDeposit: z.coerce.number().optional().default(0),
   changeFloat: z.coerce.number().optional().default(0),
 });
@@ -30,7 +30,7 @@ export async function createCourierAction(formData: FormData): Promise<Result<un
     email: formData.get("email"),
     phone: formData.get("phone"),
     password: formData.get("password"),
-    cashCeiling: formData.get("cashCeiling") || 100000,
+    cashCeiling: formData.get("cashCeiling") || 140000,
     securityDeposit: formData.get("securityDeposit") || 0,
     changeFloat: formData.get("changeFloat") || 0,
   });

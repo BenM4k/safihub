@@ -6,7 +6,7 @@ interface LegalPageHeaderProps {
   title: string;
   description: string;
   lastUpdated?: string;
-  activeTab: "terms" | "privacy" | "security";
+  activeTab: "terms" | "privacy" | "security" | "consent";
 }
 
 export function LegalPageHeader({

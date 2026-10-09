@@ -173,6 +173,8 @@
     "termsLink": "Terms of Service",
     "and": "and the",
     "privacyLink": "Privacy Policy",
+    "photoConsentLabel": "I authorize condition photos of garments (clothing only, no faces) per the",
+    "photoConsentLink": "photo policy",
     "registering": "Creating account...",
     "forgotPasswordTitle": "Forgot Password?",
     "forgotPasswordSubtitle": "Enter your email address to receive a secure password reset link.",
@@ -465,7 +467,16 @@
       "pairCol": "Pair",
       "rateAppliedCol": "Applied Rate",
       "recordedAtCol": "Recorded At",
-      "noRatesHistory": "No exchange rates recorded in history."
+      "noRatesHistory": "No exchange rates recorded in history.",
+      "exportTitle": "Data Export (Audit & Monitoring)",
+      "exportDesc": "Export raw data for your local backups, accounting, or pilot reviews.",
+      "exportOrdersName": "Orders & Traceability",
+      "exportOrdersDesc": "All orders with statuses, CDF/USD amounts, slots, and laundry facilities.",
+      "exportLedgerName": "General Cash Ledger",
+      "exportLedgerDesc": "Append-only accounting entries: collections, commissions, and settlements.",
+      "exportCustomersName": "Registered Customers",
+      "exportCustomersDesc": "Customer list with contact information, status, and registration date.",
+      "exportError": "Failed to download export file."
     },
     "cash": {
       "title": "Cash Controls & Daily Reconciliation",
@@ -522,7 +533,8 @@
       "notePlaceholder": "E.g. Initial float of 10,000 CDF in small bills",
       "deficit": "Deficit observed",
       "surplus": "Surplus",
-      "reconcileNotePlaceholder": "E.g. Handed over in person..."
+      "reconcileNotePlaceholder": "E.g. Handed over in person...",
+      "actions": "Actions"
     },
     "settlements": {
       "title": "Settlements & Payouts",
@@ -911,7 +923,12 @@
     "estimatedDelivery": "Estimated Delivery",
     "total": "Total Due",
     "priceChangedNotice": "Notice: Item prices were updated by the laundry facility.",
-    "proceedToCheckout": "Proceed to Checkout"
+    "proceedToCheckout": "Proceed to Checkout",
+    "metaDescription": "View and manage items in your laundry cart",
+    "decreaseQuantity": "Decrease quantity",
+    "increaseQuantity": "Increase quantity",
+    "itemFallback": "Item",
+    "usdEstimate": "~ USD (1$ = 2,800 CDF)"
   },
   "checkout": {
     "title": "Complete Your Order",
@@ -1182,6 +1199,46 @@
     "pushEnabled": "Push notifications enabled",
     "pushUnsupported": "Push notifications not supported on this browser",
     "pushBlocked": "Push notifications blocked in browser settings"
+  },
+  "consentPage": {
+    "metaTitle": "Photo Consent & Garment Protection — SafiHub Bukavu",
+    "metaDescription": "Laundry photo capture policy at SafiHub Bukavu: no faces, Cloudflare R2 encryption, 90-day purge, and customer rights.",
+    "headerBadge": "Consent & Property Protection",
+    "headerTitle": "Photo & Garment Consent",
+    "headerDescription": "The transparent photo protocol to guarantee the integrity of your clothes in Bukavu without compromising your privacy.",
+    "heroTitle": "Core Commitment: Your Clothes, Nothing Else",
+    "heroDescription": "At SafiHub, we document the condition of items entrusted to us with photos exclusively to prevent inventory disputes or pre-existing damage claims. No photos capture people, faces, IDs, or home interiors.",
+    "pillTextiles": "Textiles & defects only",
+    "pillExif": "EXIF & GPS stripped locally",
+    "pillPurge": "Scheduled 90-day purge",
+    "rulesTitle": "1. Photo Protocol & Strict Boundaries",
+    "rulesSubtitle": "During customer doorstep collection and partner laundry reception, condition photos may be taken in accordance with SafiHub specifications.",
+    "authorizedTitle": "Authorized & Required Cases",
+    "authorized1": "Tears, snags, or missing buttons noted before cleaning.",
+    "authorized2": "Major pre-existing stains or discoloration on delicate fabric.",
+    "authorized3": "Special or high-value items subject to custom pricing.",
+    "authorized4": "Photographic proof of sealed package handed over at delivery.",
+    "prohibitedTitle": "Strict Prohibitions & Controls",
+    "prohibited1": "Faces of customer, household members, or courier.",
+    "prohibited2": "Identity cards, financial documents, or bank cards.",
+    "prohibited3": "Interior of living spaces or personal belongings unrelated to laundry.",
+    "prohibited4": "Any non-compliant photo is immediately rejected and deleted.",
+    "thresholdNoticeStrong": "Immediate doorstep disclosure:",
+    "thresholdNoticeText": "The courier always informs the customer before photographing any defect during joint counting. The customer can inspect the photo on the courier's screen in real time.",
+    "lifecycleTitle": "2. Encryption, Cloudflare R2 Storage & 90-Day Retention",
+    "lifecycleSubtitle": "SafiHub infrastructure applies a highly secure storage model with limited retention, guaranteeing strict photo confidentiality.",
+    "cardCompressionTitle": "Local Compression & Sanitization",
+    "cardCompressionDesc": "Every image is resized to max 1280px and compressed to WebP (< 300 KB) directly in the courier's browser. All GPS tags and EXIF data are purged prior to upload.",
+    "cardSignedUrlsTitle": "Ephemeral Presigned URLs",
+    "cardSignedUrlsDesc": "Photos are stored in a private Cloudflare R2 bucket. No direct public access is allowed. Viewing requires cryptographic signatures with limited validity (60 minutes).",
+    "cardPurgeTitle": "Automatic 90-Day Purge",
+    "cardPurgeDesc": "In accordance with our data minimization policy, all photos linked to an order are permanently deleted 90 days after delivery, unless a dispute is actively under investigation.",
+    "rightsTitle": "3. Customer Rights, Consent Withdrawal & Contact",
+    "rightsSubtitle": "You retain full control over your personal data and permissions.",
+    "cardAccountTitle": "Management from Customer Portal",
+    "cardAccountDesc": "You can inspect your timestamped consents anytime in 'My Account' on SafiHub. You also have the right to request early deletion of photos linked to your completed orders.",
+    "cardSupportTitle": "Support & Officer in Bukavu",
+    "cardSupportDesc": "For any complaint or question regarding photography and confidentiality, contact our local operations team on SafiHub official WhatsApp or by email at"
   }
 }
 

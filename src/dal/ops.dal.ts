@@ -207,3 +207,68 @@ export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics>
     adminMinutesPerOrder: criteria.adminMinutesPerOrder,
   };
 }
+
+export async function getAdminOrdersExportData() {
+  return await db
+    .select({
+      id: schema.orders.id,
+      code: schema.orders.code,
+      status: schema.orders.status,
+      source: schema.orders.source,
+      totalDue: schema.orders.totalDue,
+      currency: schema.orders.currency,
+      itemsTotal: schema.orders.itemsTotal,
+      deliveryFee: schema.orders.deliveryFee,
+      commissionAmount: schema.orders.commissionAmount,
+      customerName: schema.user.name,
+      customerPhone: schema.orders.contactPhone,
+      houseName: schema.houses.name,
+      neighborhoodName: schema.neighborhoods.name,
+      pickupSlotStart: schema.orders.pickupSlotStart,
+      pickupSlotEnd: schema.orders.pickupSlotEnd,
+      deliverySlotStart: schema.orders.deliverySlotStart,
+      deliverySlotEnd: schema.orders.deliverySlotEnd,
+      createdAt: schema.orders.createdAt,
+    })
+    .from(schema.orders)
+    .leftJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+    .leftJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
+    .leftJoin(
+      schema.neighborhoods,
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+    )
+    .orderBy(desc(schema.orders.createdAt));
+}
+
+export async function getAdminLedgerExportData() {
+  return await db
+    .select({
+      id: schema.cashLedger.id,
+      entryType: schema.cashLedger.entryType,
+      amount: schema.cashLedger.amount,
+      currency: schema.cashLedger.currency,
+      orderId: schema.cashLedger.orderId,
+      courierId: schema.cashLedger.courierId,
+      houseId: schema.cashLedger.houseId,
+      note: schema.cashLedger.note,
+      createdAt: schema.cashLedger.createdAt,
+    })
+    .from(schema.cashLedger)
+    .orderBy(desc(schema.cashLedger.createdAt));
+}
+
+export async function getAdminCustomersExportData() {
+  return await db
+    .select({
+      id: schema.user.id,
+      name: schema.user.name,
+      email: schema.user.email,
+      contactPhone: schema.user.contactPhone,
+      status: schema.user.status,
+      isGuest: schema.user.isGuest,
+      createdAt: schema.user.createdAt,
+    })
+    .from(schema.user)
+    .where(eq(schema.user.role, "customer"))
+    .orderBy(desc(schema.user.createdAt));
+}
