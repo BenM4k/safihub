@@ -10,6 +10,7 @@ import {
   Clock,
   MapPin,
   Sliders,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/house", labelKey: "dashboard", icon: LayoutDashboard },
   { href: "/house/orders", labelKey: "orders", icon: Package },
   { href: "/house/catalogue", labelKey: "catalogue", icon: Layers },
+  { href: "/house/settlements", labelKey: "settlements", icon: Receipt },
   { href: "/house/hours", labelKey: "hours", icon: Clock },
   { href: "/house/coverage", labelKey: "coverage", icon: MapPin },
   { href: "/house/settings", labelKey: "settings", icon: Sliders },

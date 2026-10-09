@@ -1,6 +1,7 @@
 import "server-only";
 import { desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "./db";
+import { getSuccessCriteriaDashboard } from "./cash-ledger.dal";
 
 export interface SettingsRecord {
   id: number;
@@ -43,6 +44,13 @@ export interface AdminDashboardMetrics {
   activeCouriersCount: number;
   totalCashCollectedCDF: number;
   unassignedMissionsCount: number;
+  ordersPerWeek: number;
+  acceptanceRatePercent: number;
+  marginPerOrderCDF: number;
+  cashDiscrepanciesCount: number;
+  cashDiscrepancyPercent: number;
+  disputeRatePercent: number;
+  adminMinutesPerOrder: number | null;
 }
 
 export async function getSettings(): Promise<SettingsRecord> {
@@ -178,10 +186,7 @@ export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics>
     .from(schema.disputes)
     .where(eq(schema.disputes.status, "open"));
 
-  const [cashCollected] = await db
-    .select({ total: sql<string>`coalesce(sum(${schema.cashLedger.amount}), 0)::bigint` })
-    .from(schema.cashLedger)
-    .where(eq(schema.cashLedger.entryType, "cash_collected"));
+  const criteria = await getSuccessCriteriaDashboard();
 
   return {
     totalOrders,
@@ -191,7 +196,14 @@ export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics>
     pendingCoverageRequests: pendingCoverage?.count ?? 0,
     activeHousesCount: activeHouses?.count ?? 0,
     activeCouriersCount: activeCouriers?.count ?? 0,
-    totalCashCollectedCDF: Number(cashCollected?.total ?? 0),
+    totalCashCollectedCDF: criteria.totalCollectedCashCDF,
     unassignedMissionsCount: unassignedMissions?.count ?? 0,
+    ordersPerWeek: criteria.ordersPerWeek,
+    acceptanceRatePercent: criteria.acceptanceRatePercent,
+    marginPerOrderCDF: criteria.marginPerOrderCDF,
+    cashDiscrepanciesCount: criteria.cashDiscrepanciesCount,
+    cashDiscrepancyPercent: criteria.cashDiscrepancyPercent,
+    disputeRatePercent: criteria.disputeRatePercent,
+    adminMinutesPerOrder: criteria.adminMinutesPerOrder,
   };
 }

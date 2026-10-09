@@ -16,6 +16,8 @@ import {
   CircleDollarSign,
   Globe2,
   Sliders,
+  Wallet,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +34,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/orders/new", labelKey: "manualOrder", icon: PlusCircle },
   { href: "/admin/houses", labelKey: "houses", icon: Building2 },
   { href: "/admin/couriers", labelKey: "couriers", icon: Bike },
+  { href: "/admin/cash", labelKey: "cash", icon: Wallet },
+  { href: "/admin/settlements", labelKey: "settlements", icon: Receipt },
   { href: "/admin/users", labelKey: "users", icon: Users },
   { href: "/admin/catalogue", labelKey: "catalogue", icon: Layers },
   { href: "/admin/neighborhoods", labelKey: "neighborhoods", icon: MapPin },
