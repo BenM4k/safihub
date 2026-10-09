@@ -273,3 +273,35 @@ export async function markCoverageRequestsNotified(
       )
     );
 }
+
+export async function createCoverageRequest(data: {
+  phone: string;
+  neighborhoodId?: string | null;
+  neighborhoodText?: string | null;
+  userId?: string | null;
+}): Promise<CoverageRequestRecord> {
+  const [created] = await db
+    .insert(schema.coverageRequests)
+    .values({
+      phone: data.phone.trim(),
+      neighborhoodId: data.neighborhoodId || null,
+      neighborhoodText: data.neighborhoodText?.trim() || null,
+      userId: data.userId || null,
+    })
+    .returning();
+
+  let neighborhoodName: string | null = null;
+  if (created?.neighborhoodId) {
+    const [n] = await db
+      .select({ name: schema.neighborhoods.name })
+      .from(schema.neighborhoods)
+      .where(eq(schema.neighborhoods.id, created.neighborhoodId))
+      .limit(1);
+    neighborhoodName = n?.name ?? null;
+  }
+
+  return {
+    ...created!,
+    neighborhoodName,
+  };
+}

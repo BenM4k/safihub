@@ -55,6 +55,26 @@ export function MobileNav({ user }: { user?: AuthenticatedUser | null } = {}) {
               {tNav("houses")}
               <ArrowRight className="size-4 text-muted-foreground" />
             </Link>
+            {isAuthenticated && (
+              <>
+                <Link
+                  href="/orders"
+                  onClick={close}
+                  className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between text-primary"
+                >
+                  {tNav("myOrders")}
+                  <ArrowRight className="size-4 text-muted-foreground" />
+                </Link>
+                <Link
+                  href="/account"
+                  onClick={close}
+                  className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
+                >
+                  {tNav("myAccount")}
+                  <ArrowRight className="size-4 text-muted-foreground" />
+                </Link>
+              </>
+            )}
             <Link
               href="/#services"
               onClick={close}

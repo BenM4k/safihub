@@ -203,7 +203,7 @@ export const ORDER_TRANSITION_TABLE: OrderTransitionRule[] = [
   },
   {
     id: "T22",
-    fromStatus: ACTIVE_ORDER_STATUSES,
+    fromStatus: [...ACTIVE_ORDER_STATUSES, "delivered"],
     toStatus: "disputed",
     allowedRoles: ["customer", "house", "admin"],
     description: "Formal dispute opened due to loss, damage, or discrepancy",

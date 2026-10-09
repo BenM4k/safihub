@@ -75,14 +75,28 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
         {/* Right actions: Log In / Sign Out + CTA button */}
         <div className="hidden sm:flex items-center gap-6">
           {isAuthenticated ? (
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="text-sm font-semibold text-heading hover:text-primary transition-colors cursor-pointer"
+            <div className="flex items-center gap-4">
+              <Link
+                href="/orders"
+                className="text-sm font-semibold text-heading hover:text-primary transition-colors"
               >
-                {tNav("logout")}
-              </button>
-            </form>
+                {tNav("myOrders")}
+              </Link>
+              <Link
+                href="/account"
+                className="text-sm font-semibold text-heading hover:text-primary transition-colors"
+              >
+                {tNav("myAccount")}
+              </Link>
+              <form action={logoutAction}>
+                <button
+                  type="submit"
+                  className="text-sm font-semibold text-heading hover:text-rose-600 transition-colors cursor-pointer"
+                >
+                  {tNav("logout")}
+                </button>
+              </form>
+            </div>
           ) : (
             <Link
               href="/login"

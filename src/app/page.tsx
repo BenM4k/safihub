@@ -8,6 +8,7 @@ import { Testimonials } from "@/components/home/testimonials/testimonials";
 import { FaqSection } from "@/components/home/faq/faq-section";
 import { Footer } from "@/components/home/footer/footer";
 import { getCurrentUser } from "@/services/auth";
+import { getNeighborhoods } from "@/dal";
 
 /**
  * SafiHub Master Homepage
@@ -17,13 +18,16 @@ import { getCurrentUser } from "@/services/auth";
  * - Calibrated typography and mobile-first responsive layout
  */
 export default async function HomePage() {
-  const user = await getCurrentUser();
+  const [user, neighborhoods] = await Promise.all([
+    getCurrentUser(),
+    getNeighborhoods(),
+  ]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary-soft selection:text-primary">
       <Navbar user={user} />
       <main className="flex-1">
-        <HeroSection user={user} />
+        <HeroSection user={user} neighborhoods={neighborhoods} />
         <TrustBanner user={user} />
         <ServicesTabs user={user} />
         <HowItWorks />

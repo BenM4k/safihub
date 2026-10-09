@@ -92,3 +92,18 @@ export function minutesToTime(minutes: number): string {
   const m = normalized % 60;
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 }
+
+/**
+ * Formats a date in Bukavu local timezone (Africa/Lubumbashi).
+ */
+export function formatBukavuDateTime(dateOrStr: Date | string): string {
+  const d = typeof dateOrStr === "string" ? new Date(dateOrStr) : dateOrStr;
+  return d.toLocaleString("fr-FR", {
+    timeZone: BUKAVU_TIMEZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}

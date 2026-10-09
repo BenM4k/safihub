@@ -79,6 +79,8 @@ export async function registerAction(
   const schema = getRegisterSchema((k) => t(k as Parameters<typeof t>[0]));
   const consentRaw = formData.get("consent");
   const consent = consentRaw === "on" || consentRaw === "true";
+  const photoConsentRaw = formData.get("photoConsent");
+  const photoConsent = photoConsentRaw === "on" || photoConsentRaw === "true";
   const parsed = schema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
@@ -105,6 +107,7 @@ export async function registerAction(
     password: parsed.data.password,
     phone: parsed.data.phone,
     consent: parsed.data.consent,
+    photoConsent,
   });
 
   if (!res.ok) {

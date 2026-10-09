@@ -4,6 +4,7 @@ import {
   getCustomerHousesList,
   getNeighborhoods,
   getZones,
+  getZoneFees,
   type CustomerHouseDetailData,
   type CustomerHouseSummary,
   type NeighborhoodRecord,
@@ -31,20 +32,37 @@ export interface CustomerHousesPageData {
 export async function getCustomerHousesData(
   filter: CustomerHouseSearchFilter = {}
 ): Promise<CustomerHousesPageData> {
-  const [allHouses, neighborhoods, zones] = await Promise.all([
+  const [allHouses, neighborhoods, zones, zoneFees] = await Promise.all([
     getCustomerHousesList(),
     getNeighborhoods(),
     getZones(),
+    getZoneFees(),
   ]);
 
   let filtered = [...allHouses];
 
   if (filter.neighborhoodId) {
-    filtered = filtered.filter(
-      (h) =>
-        h.neighborhoodId === filter.neighborhoodId ||
-        h.coveredNeighborhoodIds.includes(filter.neighborhoodId!)
+    const targetNeighborhood = neighborhoods.find(
+      (n) => n.id === filter.neighborhoodId
     );
+    // Strict AC 18: A house that does not cover the neighborhood is never listed
+    filtered = filtered.filter((h) =>
+      h.coveredNeighborhoodIds.includes(filter.neighborhoodId!)
+    );
+
+    if (targetNeighborhood) {
+      filtered = filtered.map((h) => {
+        const fee = zoneFees.find(
+          (zf) =>
+            zf.customerZoneId === targetNeighborhood.zoneId &&
+            zf.houseZoneId === h.zoneId
+        );
+        return {
+          ...h,
+          estimatedDeliveryFee: fee ? fee.deliveryFee : null,
+        };
+      });
+    }
   }
 
   if (filter.query) {

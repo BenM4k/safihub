@@ -69,6 +69,7 @@ export interface PlatformSettingsConfig {
 export interface ExistingOrderSnapshot {
   id: string;
   code: string;
+  trackingToken?: string;
   idempotencyKey: string;
   customerId: string;
 }
