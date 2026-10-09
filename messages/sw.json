@@ -847,6 +847,131 @@
     "submit": "Tuma Malalamiko",
     "submitting": "Inatuma malalamiko...",
     "disputeOpenedSuccess": "Malalamiko yamefunguliwa kikamilifu. Timu yetu itawasiliana nawe hivi punde."
+  },
+  "courier": {
+    "nav": {
+      "missions": "Majukumu",
+      "cash": "Fedha",
+      "history": "Historia"
+    },
+    "header": {
+      "title": "Programu ya Dereva",
+      "subtitle": "Bukavu",
+      "online": "Mtandaoni",
+      "offline": "Nje ya mtandao",
+      "syncing": "Inasawazisha...",
+      "synced": "Imesasishwa",
+      "queuedCount": "{count} zinasubiri"
+    },
+    "sync": {
+      "offlineBannerTitle": "Hali ya nje ya mtandao inatumika",
+      "offlineBannerDesc": "Vitendo vyako vinahifadhiwa kwenye kifaa na vitasawazishwa mtandao ukirudi.",
+      "syncing": "Inasawazisha vitendo vyako vilivyohifadhiwa...",
+      "conflictsTitle": "Mgongano wa Usawazishaji Umegunduliwa",
+      "conflictsDesc": "Baadhi ya vitendo havikuweza kutekelezwa kwenye seva:",
+      "viewConflicts": "Tatua Migongano",
+      "dismiss": "Puuza",
+      "allSynced": "Vitendo vyote vimesawazishwa kikamilifu.",
+      "retry": "Jaribu tena",
+      "discard": "Futa kitendo"
+    },
+    "missions": {
+      "todayTitle": "Majukumu ya Leo",
+      "todaySubtitle": "Ukusanyaji na uwasilishaji uliopangwa",
+      "noMissions": "Hakuna jukumu ulilopangiwa kwa sasa",
+      "noMissionsSub": "Subiri upangaji wa majukumu mapya kutoka kwa wasimamizi.",
+      "tabAll": "Yote ({count})",
+      "tabPickups": "Kukusanya ({count})",
+      "tabDeliveries": "Kuwasilisha ({count})",
+      "pickup": "Ukusanyaji",
+      "delivery": "Uwasilishaji",
+      "slot": "Muda",
+      "client": "Mteja",
+      "house": "Dobi",
+      "landmark": "Kielelezo",
+      "phone": "Simu",
+      "call": "Piga simu",
+      "totalDue": "Jumla ya kupokea",
+      "courierPay": "Malipo ya dereva",
+      "status": {
+        "assigned": "Imepewa",
+        "accepted": "Imekubaliwa",
+        "in_progress": "Inaendelea",
+        "completed": "Imekamilika",
+        "failed": "Imeshindikana"
+      },
+      "actions": {
+        "accept": "Kubali jukumu",
+        "startPickup": "Anza ukusanyaji",
+        "startDelivery": "Anza uwasilishaji",
+        "continue": "Endelea na jukumu",
+        "details": "Tazama maelezo"
+      }
+    },
+    "pickup": {
+      "title": "Kukusanya nguo kwa mteja",
+      "instructions": "Hesabu kila nguo pamoja na mteja na ripoti nguo yenye thamani kubwa au iliyochanika.",
+      "itemsTitle": "Orodha ya nguo zilizotangazwa",
+      "declared": "Iliyoandikwa: {count}",
+      "counted": "Iliyohesabiwa",
+      "conditionNote": "Maoni ya hali (madoa, kuraruka...)",
+      "conditionNotePlaceholder": "mfano: Doa kwenye kola, kifungo kimekosekana",
+      "flagValuable": "Nguo ya thamani au iliyoharibika",
+      "photoRequired": "Picha inahitajika kwa nguo zilizotiwa alama (AC 9)",
+      "photoAttached": "Picha imewekwa",
+      "addPhoto": "Piga / Pakia Picha",
+      "photoUploadSuccess": "Picha imehifadhiwa kikamilifu",
+      "discrepancyNotice": "Tofauti imegunduliwa: jumla ya nguo zilizopimwa ({counted}) inatofautiana na agizo ({declared}). Marekebisho ya bei yataundwa (AC 8).",
+      "onSiteApproval": "Mteja amekubali marekebisho ya idadi papo hapo",
+      "completeBtn": "Thibitisha ukusanyaji",
+      "completing": "Inathibitisha...",
+      "failBtn": "Ripoti kushindwa",
+      "failModalTitle": "Kushindwa kukusanya",
+      "failModalDesc": "Eleza sababu ya kutoweza kukusanya nguo hizi.",
+      "failReasonPlaceholder": "mfano: Mteja hapatikani baada ya simu 3",
+      "confirmFail": "Thibitisha kushindwa",
+      "cancel": "Ghairi"
+    },
+    "delivery": {
+      "title": "Uwasilishaji wa nguo safi",
+      "instructions": "Thibitisha nambari ya siri ya mteja na pokea pesa taslimu.",
+      "totalDue": "Jumla ya fedha inayopaswa kulipwa",
+      "codeTitle": "Nambari ya uthibitisho ya mteja",
+      "codePlaceholder": "mfano: 1234",
+      "codeHelp": "Mteja anapata nambari hii kwenye kiungo chake cha ufuatiliaji.",
+      "cashTitle": "Pesa taslimu zilizopokelewa",
+      "currency": "Sarafu",
+      "cashMismatch": "Onyo: fedha zilizopokelewa zinatofautiana na kiasi halisi ({amount} CDF). Tofauti itaandikwa kwenye leja (AC 12).",
+      "completeBtn": "Thibitisha uwasilishaji na malipo",
+      "completing": "Inathibitisha...",
+      "failBtn": "Ripoti kushindwa kuwasilisha",
+      "failModalTitle": "Kushindwa kuwasilisha",
+      "failReasonPlaceholder": "mfano: Mteja hayupo au hapatikani",
+      "confirmFail": "Thibitisha kushindwa",
+      "cancel": "Ghairi"
+    },
+    "cash": {
+      "title": "Fedha na Makusanyo",
+      "subtitle": "Fuatilia fedha mkononi na kiwango cha juu",
+      "held": "Fedha mkononi",
+      "ceiling": "Kiwango cha juu kinaruhusiwa",
+      "ceilingWarning": "Kiwango cha juu cha fedha kimevukwa! Lazima uwasilishe fedha ofisini kabla ya kuchukua uwasilishaji mpya (AC 13).",
+      "deposit": "Amana ya usalama iliyoshikiliwa",
+      "float": "Fedha ya chenji",
+      "breakdownTitle": "Mchanganuo wa fedha zilizokusanywa",
+      "owedToHouses": "Inayodaiwa na madobi ya ushirikiano",
+      "owedToOwner": "Inayodaiwa na SafiHub (kamisheni na uwasilishaji)",
+      "recentTransactions": "Miamala ya hivi karibuni ya fedha",
+      "noTransactions": "Hakuna miamala iliyorekodiwa"
+    },
+    "history": {
+      "title": "Historia ya Majukumu",
+      "subtitle": "Kazi zilizokamilika na mapato yako",
+      "totalEarnings": "Jumla ya mapato uliyopata",
+      "completedMissions": "Majukumu yaliyofaulu",
+      "failedMissions": "Majukumu yaliyoshindikana",
+      "empty": "Hakuna historia ya majukumu bado"
+    }
   }
 }
 

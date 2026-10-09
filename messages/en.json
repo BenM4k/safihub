@@ -847,6 +847,131 @@
     "submit": "Submit Dispute",
     "submitting": "Submitting dispute...",
     "disputeOpenedSuccess": "Dispute opened successfully. Our operations team will contact you shortly."
+  },
+  "courier": {
+    "nav": {
+      "missions": "Missions",
+      "cash": "Cash",
+      "history": "History"
+    },
+    "header": {
+      "title": "Courier App",
+      "subtitle": "Bukavu",
+      "online": "Online",
+      "offline": "Offline",
+      "syncing": "Syncing...",
+      "synced": "Up to date",
+      "queuedCount": "{count} pending"
+    },
+    "sync": {
+      "offlineBannerTitle": "Offline Mode Active",
+      "offlineBannerDesc": "Your actions are queued locally and will sync automatically once network connectivity is restored.",
+      "syncing": "Syncing your queued actions...",
+      "conflictsTitle": "Sync Conflict(s) Detected",
+      "conflictsDesc": "Some offline actions could not be applied:",
+      "viewConflicts": "Resolve Conflicts",
+      "dismiss": "Dismiss",
+      "allSynced": "All offline actions have been synced.",
+      "retry": "Retry",
+      "discard": "Discard Action"
+    },
+    "missions": {
+      "todayTitle": "Today's Missions",
+      "todaySubtitle": "Scheduled pickups and deliveries",
+      "noMissions": "No missions assigned at the moment",
+      "noMissionsSub": "Wait for new missions to be assigned by dispatch.",
+      "tabAll": "All ({count})",
+      "tabPickups": "Pickups ({count})",
+      "tabDeliveries": "Deliveries ({count})",
+      "pickup": "Pickup",
+      "delivery": "Delivery",
+      "slot": "Slot",
+      "client": "Customer",
+      "house": "Laundry House",
+      "landmark": "Landmark",
+      "phone": "Phone",
+      "call": "Call",
+      "totalDue": "Total to collect",
+      "courierPay": "Courier Pay",
+      "status": {
+        "assigned": "Assigned",
+        "accepted": "Accepted",
+        "in_progress": "In Progress",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "actions": {
+        "accept": "Accept Mission",
+        "startPickup": "Start Pickup",
+        "startDelivery": "Start Delivery",
+        "continue": "Continue Mission",
+        "details": "View Details"
+      }
+    },
+    "pickup": {
+      "title": "Customer Pickup",
+      "instructions": "Count each item with the customer and flag any damaged or high-value items.",
+      "itemsTitle": "Declared Garments Inventory",
+      "declared": "Declared: {count}",
+      "counted": "Counted",
+      "conditionNote": "Condition notes (stains, tears...)",
+      "conditionNotePlaceholder": "e.g. Collar stain, missing button",
+      "flagValuable": "Valuable or damaged item",
+      "photoRequired": "Photo required for flagged items (AC 9)",
+      "photoAttached": "Photo attached",
+      "addPhoto": "Take / Upload Photo",
+      "photoUploadSuccess": "Photo recorded successfully",
+      "discrepancyNotice": "Discrepancy detected: counted items ({counted}) differ from declared order ({declared}). A price adjustment will be generated (AC 8).",
+      "onSiteApproval": "Customer approved count discrepancy on-site",
+      "completeBtn": "Complete Pickup",
+      "completing": "Completing...",
+      "failBtn": "Report Failure",
+      "failModalTitle": "Pickup Failure",
+      "failModalDesc": "Specify the reason why this pickup could not be completed.",
+      "failReasonPlaceholder": "e.g. Customer unreachable after 3 calls",
+      "confirmFail": "Confirm Failure",
+      "cancel": "Cancel"
+    },
+    "delivery": {
+      "title": "Clean Laundry Delivery",
+      "instructions": "Verify delivery confirmation code with customer and collect cash due.",
+      "totalDue": "Total Amount to Collect",
+      "codeTitle": "Customer Confirmation Code",
+      "codePlaceholder": "e.g. 1234",
+      "codeHelp": "The customer receives this code on their live tracking link.",
+      "cashTitle": "Cash Collected",
+      "currency": "Currency",
+      "cashMismatch": "Warning: collected cash differs from total due ({amount} CDF). A discrepancy will be flagged in the ledger (AC 12).",
+      "completeBtn": "Complete Delivery & Cash",
+      "completing": "Completing...",
+      "failBtn": "Report Delivery Failure",
+      "failModalTitle": "Delivery Failure",
+      "failReasonPlaceholder": "e.g. Customer absent or unreachable",
+      "confirmFail": "Confirm Failure",
+      "cancel": "Cancel"
+    },
+    "cash": {
+      "title": "Cash & Collections",
+      "subtitle": "Track cash in hand and ceiling limits",
+      "held": "Cash in Hand",
+      "ceiling": "Authorized Ceiling",
+      "ceilingWarning": "Cash ceiling exceeded! You must remit cash to headquarters before accepting new deliveries (AC 13).",
+      "deposit": "Security Deposit Held",
+      "float": "Change Float",
+      "breakdownTitle": "Collected Amounts Breakdown",
+      "owedToHouses": "Owed to Partner Houses",
+      "owedToOwner": "Owed to SafiHub (commission & delivery)",
+      "recentTransactions": "Recent Cash Transactions",
+      "noTransactions": "No recorded transactions"
+    },
+    "history": {
+      "title": "Mission History",
+      "subtitle": "Completed runs and earnings",
+      "totalEarnings": "Total Earnings Generated",
+      "completedMissions": "Completed Missions",
+      "failedMissions": "Failed Missions",
+      "empty": "No mission history available"
+    }
   }
 }
 

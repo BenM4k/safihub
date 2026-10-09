@@ -847,6 +847,131 @@
     "submit": "Déclarer le litige",
     "submitting": "Enregistrement du litige...",
     "disputeOpenedSuccess": "Le litige a bien été enregistré. Notre équipe d'assistance vous contactera sous peu."
+  },
+  "courier": {
+    "nav": {
+      "missions": "Missions",
+      "cash": "Trésorerie",
+      "history": "Historique"
+    },
+    "header": {
+      "title": "Application Coursier",
+      "subtitle": "Bukavu",
+      "online": "En ligne",
+      "offline": "Hors-ligne",
+      "syncing": "Synchronisation...",
+      "synced": "À jour",
+      "queuedCount": "{count} en attente"
+    },
+    "sync": {
+      "offlineBannerTitle": "Mode hors-ligne actif",
+      "offlineBannerDesc": "Vos actions sont enregistrées localement et seront synchronisées automatiquement dès le retour du réseau.",
+      "syncing": "Synchronisation de vos actions en cours...",
+      "conflictsTitle": "Conflit(s) de synchronisation détecté(s)",
+      "conflictsDesc": "Certaines actions hors-ligne n'ont pas pu être appliquées :",
+      "viewConflicts": "Résoudre les conflits",
+      "dismiss": "Ignorer",
+      "allSynced": "Toutes les actions hors-ligne ont été synchronisées.",
+      "retry": "Réessayer",
+      "discard": "Ignorer l'action"
+    },
+    "missions": {
+      "todayTitle": "Missions du jour",
+      "todaySubtitle": "Collectes et livraisons planifiées",
+      "noMissions": "Aucune mission assignée pour le moment",
+      "noMissionsSub": "Attendez qu'une nouvelle mission vous soit assignée par le dispatching.",
+      "tabAll": "Toutes ({count})",
+      "tabPickups": "Collectes ({count})",
+      "tabDeliveries": "Livraisons ({count})",
+      "pickup": "Collecte",
+      "delivery": "Livraison",
+      "slot": "Créneau",
+      "client": "Client",
+      "house": "Pressing",
+      "landmark": "Repère",
+      "phone": "Téléphone",
+      "call": "Appeler",
+      "totalDue": "Total à percevoir",
+      "courierPay": "Rémunération coursier",
+      "status": {
+        "assigned": "Assignée",
+        "accepted": "Acceptée",
+        "in_progress": "En cours",
+        "completed": "Terminée",
+        "failed": "Échouée"
+      },
+      "actions": {
+        "accept": "Accepter la mission",
+        "startPickup": "Démarrer la collecte",
+        "startDelivery": "Démarrer la livraison",
+        "continue": "Poursuivre la mission",
+        "details": "Voir détails"
+      }
+    },
+    "pickup": {
+      "title": "Collecte chez le client",
+      "instructions": "Comptez chaque article avec le client et signalez tout dommage ou article de valeur.",
+      "itemsTitle": "Inventaire des articles déclarés",
+      "declared": "Déclaré : {count}",
+      "counted": "Compté",
+      "conditionNote": "Remarques sur l'état (taches, déchirures...)",
+      "conditionNotePlaceholder": "ex: Tache sur col, bouton manquant",
+      "flagValuable": "Article de valeur ou endommagé",
+      "photoRequired": "Photo requise pour les articles signalés (AC 9)",
+      "photoAttached": "Photo ajoutée",
+      "addPhoto": "Prendre / Ajouter une photo",
+      "photoUploadSuccess": "Photo enregistrée avec succès",
+      "discrepancyNotice": "Écart constaté : le total compté ({counted}) diffère du total déclaré ({declared}). Un ajustement de prix sera généré (AC 8).",
+      "onSiteApproval": "Le client a approuvé l'écart de comptage sur place",
+      "completeBtn": "Valider la collecte",
+      "completing": "Validation en cours...",
+      "failBtn": "Signaler un échec",
+      "failModalTitle": "Échec de la collecte",
+      "failModalDesc": "Indiquez la raison pour laquelle la collecte n'a pas pu être effectuée.",
+      "failReasonPlaceholder": "ex: Client absent après 3 appels téléphoniques",
+      "confirmFail": "Confirmer l'échec",
+      "cancel": "Annuler"
+    },
+    "delivery": {
+      "title": "Livraison du linge propre",
+      "instructions": "Vérifiez le code de livraison auprès du client et encaissez le montant dû.",
+      "totalDue": "Montant total à percevoir",
+      "codeTitle": "Code de confirmation client",
+      "codePlaceholder": "ex: 1234",
+      "codeHelp": "Le client trouve ce code sur son lien de suivi de commande.",
+      "cashTitle": "Montant perçu en espèces",
+      "currency": "Devise",
+      "cashMismatch": "Attention : le montant perçu diffère du montant dû ({amount} CDF). Un écart sera consigné dans le registre (AC 12).",
+      "completeBtn": "Valider la livraison et l'encaissement",
+      "completing": "Validation en cours...",
+      "failBtn": "Signaler un échec de livraison",
+      "failModalTitle": "Échec de livraison",
+      "failReasonPlaceholder": "ex: Client introuvable ou absent",
+      "confirmFail": "Confirmer l'échec",
+      "cancel": "Annuler"
+    },
+    "cash": {
+      "title": "Trésorerie & Encaissements",
+      "subtitle": "Suivi des espèces perçues et plafonds",
+      "held": "Espèces en main",
+      "ceiling": "Plafond autorisé",
+      "ceilingWarning": "Plafond de trésorerie dépassé ! Vous devez effectuer un versement auprès du bureau avant de prendre de nouvelles livraisons (AC 13).",
+      "deposit": "Caution de sécurité retenue",
+      "float": "Fond de caisse (monnaie)",
+      "breakdownTitle": "Répartition des montants perçus",
+      "owedToHouses": "Dû aux pressings partenaires",
+      "owedToOwner": "Dû à SafiHub (commission & livraison)",
+      "recentTransactions": "Derniers mouvements de caisse",
+      "noTransactions": "Aucune transaction enregistrée"
+    },
+    "history": {
+      "title": "Historique des missions",
+      "subtitle": "Vos courses et vos gains cumulés",
+      "totalEarnings": "Gains totaux générés",
+      "completedMissions": "Missions réussies",
+      "failedMissions": "Échecs enregistrés",
+      "empty": "Aucune mission dans l'historique"
+    }
   }
 }
 

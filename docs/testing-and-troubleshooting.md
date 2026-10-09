@@ -174,3 +174,8 @@ Each acceptance criterion from the product specification is mapped to an automat
 - **Trap:** The default `@neondatabase/serverless` HTTP connection (`neon()`) does not support interactive transactions (`db.transaction()`), causing multi-statement writes to execute non-atomically or fail.
 - **Fix:** SafiHub instantiates Drizzle using `Pool` from `@neondatabase/serverless` and `drizzle-orm/neon-serverless`, which supports full interactive transactions across multi-statement flows (e.g. `insertOrderWithDetails`, staff account creation with credentials and house member records).
 
+### 25. Courier Offline Queue Synchronization & Empty Fallback String Trap
+- **Trap:** Falling back to a non-empty default message (e.g. `(action.payload.reason as string) || "Pickup failed"`) during offline queue synchronization silently masks empty string payloads, preventing server validation from rejecting invalid actions (violating AC 14).
+- **Fix:** Use nullish coalescing `?? ""` (`(action.payload.reason as string) ?? ""`) so that missing or empty reason strings correctly propagate to domain validation, returning clear rejection errors for conflict resolution.
+
+

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
 
@@ -379,3 +379,1015 @@ export async function assignMission(
 
   return result.length > 0;
 }
+
+export interface CourierAssignedMissionSummary {
+  id: string;
+  orderId: string;
+  orderCode: string;
+  type: "pickup" | "delivery";
+  status: "unassigned" | "assigned" | "accepted" | "in_progress" | "completed" | "failed";
+  slotStart: Date;
+  slotEnd: Date;
+  customerNeighborhood: string;
+  customerLandmark: string;
+  customerFirstName: string;
+  customerPhone: string;
+  houseName: string;
+  houseNeighborhood: string;
+  housePhone: string | null;
+  courierPay: number | null;
+  cashCollected: number | null;
+  totalDue: number;
+}
+
+export interface CourierMissionDetailItem {
+  id: string;
+  itemId?: string | null;
+  itemName?: string | null;
+  fabricName?: string | null;
+  serviceName?: string | null;
+  customLabel?: string | null;
+  declaredQuantity: number;
+  pickupQuantity: number | null;
+  receivedQuantity: number | null;
+  unitPrice: number;
+  conditionNote?: string | null;
+  isFlagged: boolean;
+  status: "accepted" | "returned";
+}
+
+export interface CourierMissionDetailPhoto {
+  id: string;
+  storageKey: string;
+  type: string;
+  orderItemId?: string | null;
+  createdAt: Date;
+}
+
+export interface CourierMissionDetail {
+  mission: CourierAssignedMissionSummary;
+  orderStatus: string;
+  deliveryConfirmationCode?: string | null;
+  paymentCurrency: string;
+  exchangeRateUsed?: string | null;
+  items: CourierMissionDetailItem[];
+  photos: CourierMissionDetailPhoto[];
+  failedPickupCount: number;
+  failedDeliveryCount: number;
+}
+
+export interface CourierCashOverview {
+  courierId: string;
+  cashHeld: number;
+  cashCollected: number;
+  cashRemitted: number;
+  cashCeiling: number | null;
+  securityDeposit: number;
+  changeFloat: number;
+  isCeilingExceeded: boolean;
+  owedToHouses: number;
+  owedToOwner: number;
+  recentLedgerEntries: Array<{
+    id: string;
+    entryType: string;
+    amount: number;
+    currency: string;
+    orderId?: string | null;
+    note?: string | null;
+    createdAt: Date;
+  }>;
+}
+
+export interface CourierHistoryRecord {
+  id: string;
+  orderId: string;
+  orderCode: string;
+  type: "pickup" | "delivery";
+  status: string;
+  slotStart: Date;
+  completedAt?: Date | null;
+  courierPay: number | null;
+  customerNeighborhood: string;
+  failureReason?: string | null;
+}
+
+export interface CourierHistoryData {
+  missions: CourierHistoryRecord[];
+  totalEarningsCDF: number;
+  completedCount: number;
+  failedCount: number;
+}
+
+/**
+ * Task 6.1: Courier sees only assigned missions with restricted projection.
+ */
+export async function getCourierAssignedMissions(
+  courierId: string
+): Promise<CourierAssignedMissionSummary[]> {
+  const customerNeighborhoods = alias(schema.neighborhoods, "c_neigh");
+  const houseNeighborhoods = alias(schema.neighborhoods, "h_neigh");
+
+  const rows = await db
+    .select({
+      id: schema.missions.id,
+      orderId: schema.missions.orderId,
+      orderCode: schema.orders.code,
+      type: schema.missions.type,
+      status: schema.missions.status,
+      slotStart: schema.missions.slotStart,
+      slotEnd: schema.missions.slotEnd,
+      courierPay: schema.missions.courierPay,
+      cashCollected: schema.missions.cashCollected,
+      totalDue: schema.orders.totalDue,
+      customerName: schema.user.name,
+      customerPhone: schema.orders.contactPhone,
+      customerLandmark: schema.orders.landmark,
+      customerNeighborhood: customerNeighborhoods.name,
+      houseName: schema.houses.name,
+      housePhone: schema.houses.contactPhone,
+      houseNeighborhood: houseNeighborhoods.name,
+    })
+    .from(schema.missions)
+    .innerJoin(schema.orders, eq(schema.missions.orderId, schema.orders.id))
+    .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+    .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
+    .leftJoin(customerNeighborhoods, eq(schema.orders.neighborhoodId, customerNeighborhoods.id))
+    .leftJoin(houseNeighborhoods, eq(schema.houses.neighborhoodId, houseNeighborhoods.id))
+    .where(eq(schema.missions.courierId, courierId))
+    .orderBy(asc(schema.missions.slotStart));
+
+  return rows.map((r) => ({
+    id: r.id,
+    orderId: r.orderId,
+    orderCode: r.orderCode,
+    type: r.type,
+    status: r.status,
+    slotStart: r.slotStart,
+    slotEnd: r.slotEnd,
+    courierPay: r.courierPay,
+    cashCollected: r.cashCollected,
+    totalDue: r.totalDue,
+    customerFirstName: (r.customerName || "Client").trim().split(" ")[0] || "Client",
+    customerPhone: r.customerPhone,
+    customerLandmark: r.customerLandmark,
+    customerNeighborhood: r.customerNeighborhood || "Bukavu",
+    houseName: r.houseName,
+    housePhone: r.housePhone,
+    houseNeighborhood: r.houseNeighborhood || "Bukavu",
+  }));
+}
+
+/**
+ * Task 6.1 & 6.2: Retrieve mission detail with restricted projection.
+ */
+export async function getCourierMissionDetail(
+  courierId: string,
+  missionId: string
+): Promise<CourierMissionDetail | null> {
+  const customerNeighborhoods = alias(schema.neighborhoods, "c_neigh_det");
+  const houseNeighborhoods = alias(schema.neighborhoods, "h_neigh_det");
+
+  const [row] = await db
+    .select({
+      id: schema.missions.id,
+      orderId: schema.missions.orderId,
+      orderCode: schema.orders.code,
+      orderStatus: schema.orders.status,
+      deliveryConfirmationCode: schema.orders.deliveryConfirmationCode,
+      paymentCurrency: schema.orders.paymentCurrency,
+      exchangeRateUsed: schema.orders.exchangeRateUsed,
+      type: schema.missions.type,
+      status: schema.missions.status,
+      slotStart: schema.missions.slotStart,
+      slotEnd: schema.missions.slotEnd,
+      courierPay: schema.missions.courierPay,
+      cashCollected: schema.missions.cashCollected,
+      totalDue: schema.orders.totalDue,
+      failedPickupCount: schema.orders.failedPickupCount,
+      failedDeliveryCount: schema.orders.failedDeliveryCount,
+      customerName: schema.user.name,
+      customerPhone: schema.orders.contactPhone,
+      customerLandmark: schema.orders.landmark,
+      customerNeighborhood: customerNeighborhoods.name,
+      houseName: schema.houses.name,
+      housePhone: schema.houses.contactPhone,
+      houseNeighborhood: houseNeighborhoods.name,
+    })
+    .from(schema.missions)
+    .innerJoin(schema.orders, eq(schema.missions.orderId, schema.orders.id))
+    .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+    .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
+    .leftJoin(customerNeighborhoods, eq(schema.orders.neighborhoodId, customerNeighborhoods.id))
+    .leftJoin(houseNeighborhoods, eq(schema.houses.neighborhoodId, houseNeighborhoods.id))
+    .where(and(eq(schema.missions.id, missionId), eq(schema.missions.courierId, courierId)))
+    .limit(1);
+
+  if (!row) return null;
+
+  // Items query with catalog names
+  const itemsRows = await db
+    .select({
+      id: schema.orderItems.id,
+      itemId: schema.orderItems.itemId,
+      itemName: schema.items.nameFr,
+      fabricName: schema.fabrics.nameFr,
+      serviceName: schema.services.nameFr,
+      customLabel: schema.orderItems.customLabel,
+      declaredQuantity: schema.orderItems.declaredQuantity,
+      pickupQuantity: schema.orderItems.pickupQuantity,
+      receivedQuantity: schema.orderItems.receivedQuantity,
+      unitPrice: schema.orderItems.unitPrice,
+      conditionNote: schema.orderItems.conditionNote,
+      isFlagged: schema.orderItems.isFlagged,
+      status: schema.orderItems.status,
+    })
+    .from(schema.orderItems)
+    .leftJoin(schema.items, eq(schema.orderItems.itemId, schema.items.id))
+    .leftJoin(schema.fabrics, eq(schema.orderItems.fabricId, schema.fabrics.id))
+    .leftJoin(schema.services, eq(schema.orderItems.serviceId, schema.services.id))
+    .where(eq(schema.orderItems.orderId, row.orderId));
+
+  // Photos query
+  const photoRows = await db
+    .select({
+      id: schema.orderPhotos.id,
+      storageKey: schema.orderPhotos.storageKey,
+      type: schema.orderPhotos.type,
+      orderItemId: schema.orderPhotos.orderItemId,
+      createdAt: schema.orderPhotos.createdAt,
+    })
+    .from(schema.orderPhotos)
+    .where(eq(schema.orderPhotos.orderId, row.orderId));
+
+  return {
+    mission: {
+      id: row.id,
+      orderId: row.orderId,
+      orderCode: row.orderCode,
+      type: row.type,
+      status: row.status,
+      slotStart: row.slotStart,
+      slotEnd: row.slotEnd,
+      courierPay: row.courierPay,
+      cashCollected: row.cashCollected,
+      totalDue: row.totalDue,
+      customerFirstName: (row.customerName || "Client").trim().split(" ")[0] || "Client",
+      customerPhone: row.customerPhone,
+      customerLandmark: row.customerLandmark,
+      customerNeighborhood: row.customerNeighborhood || "Bukavu",
+      houseName: row.houseName,
+      housePhone: row.housePhone,
+      houseNeighborhood: row.houseNeighborhood || "Bukavu",
+    },
+    orderStatus: row.orderStatus,
+    deliveryConfirmationCode: row.deliveryConfirmationCode,
+    paymentCurrency: row.paymentCurrency,
+    exchangeRateUsed: row.exchangeRateUsed,
+    items: itemsRows.map((it) => ({
+      id: it.id,
+      itemId: it.itemId,
+      itemName: it.itemName,
+      fabricName: it.fabricName,
+      serviceName: it.serviceName,
+      customLabel: it.customLabel,
+      declaredQuantity: it.declaredQuantity,
+      pickupQuantity: it.pickupQuantity,
+      receivedQuantity: it.receivedQuantity,
+      unitPrice: it.unitPrice,
+      conditionNote: it.conditionNote,
+      isFlagged: it.isFlagged,
+      status: it.status,
+    })),
+    photos: photoRows.map((p) => ({
+      id: p.id,
+      storageKey: p.storageKey,
+      type: p.type,
+      orderItemId: p.orderItemId,
+      createdAt: p.createdAt,
+    })),
+    failedPickupCount: row.failedPickupCount,
+    failedDeliveryCount: row.failedDeliveryCount,
+  };
+}
+
+/**
+ * Task 6.1: Accept assigned mission (assigned -> accepted).
+ */
+export async function acceptMissionAtomic(
+  missionId: string,
+  courierId: string
+): Promise<boolean> {
+  const [updated] = await db
+    .update(schema.missions)
+    .set({
+      status: "accepted",
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(schema.missions.id, missionId),
+        eq(schema.missions.courierId, courierId),
+        eq(schema.missions.status, "assigned")
+      )
+    )
+    .returning({ id: schema.missions.id });
+
+  return Boolean(updated);
+}
+
+/**
+ * Task 6.2: Start pickup mission (accepted -> in_progress, order: pickup_assigned -> pickup_in_progress).
+ */
+export async function startPickupMissionAtomic(
+  missionId: string,
+  courierId: string
+): Promise<{ ok: boolean; error?: string }> {
+  return await db.transaction(async (tx) => {
+    const [mission] = await tx
+      .select()
+      .from(schema.missions)
+      .where(and(eq(schema.missions.id, missionId), eq(schema.missions.courierId, courierId)))
+      .limit(1);
+
+    if (!mission) return { ok: false, error: "Mission introuvable" };
+    if (mission.status === "in_progress") return { ok: true }; // Idempotent
+    if (mission.status !== "accepted") {
+      return { ok: false, error: `Statut de mission invalide (${mission.status})` };
+    }
+
+    const [order] = await tx
+      .select()
+      .from(schema.orders)
+      .where(eq(schema.orders.id, mission.orderId))
+      .limit(1);
+
+    if (!order) return { ok: false, error: "Commande introuvable" };
+
+    await tx
+      .update(schema.missions)
+      .set({
+        status: "in_progress",
+        startedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.missions.id, missionId));
+
+    if (order.status === "pickup_assigned") {
+      await tx
+        .update(schema.orders)
+        .set({
+          status: "pickup_in_progress",
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.orders.id, order.id));
+
+      await tx.insert(schema.orderEvents).values({
+        orderId: order.id,
+        type: "status_change",
+        fromStatus: "pickup_assigned",
+        toStatus: "pickup_in_progress",
+        actorId: courierId,
+        actorRole: "courier",
+        note: "Coursier en route pour la collecte",
+      });
+    }
+
+    return { ok: true };
+  });
+}
+
+/**
+ * Task 6.2: Complete pickup mission with item count, condition notes, flags, and optional on-site approval.
+ * AC 8: Count discrepancy triggers price adjustment.
+ * AC 9: Flagged valuable or damaged items require photo.
+ */
+export async function completePickupMissionAtomic(params: {
+  missionId: string;
+  courierId: string;
+  items: Array<{
+    orderItemId: string;
+    pickupQuantity: number;
+    conditionNote?: string | null;
+    isFlagged?: boolean;
+  }>;
+  onSiteApproved?: boolean;
+  note?: string | null;
+}): Promise<{ ok: boolean; error?: string; hasCountDiscrepancy?: boolean }> {
+  return await db.transaction(async (tx) => {
+    const [mission] = await tx
+      .select()
+      .from(schema.missions)
+      .where(and(eq(schema.missions.id, params.missionId), eq(schema.missions.courierId, params.courierId)))
+      .limit(1);
+
+    if (!mission) return { ok: false, error: "Mission introuvable" };
+    if (mission.status === "completed") return { ok: true }; // Idempotent
+
+    const [order] = await tx
+      .select()
+      .from(schema.orders)
+      .where(eq(schema.orders.id, mission.orderId))
+      .limit(1);
+
+    if (!order) return { ok: false, error: "Commande introuvable" };
+
+    // Fetch existing order items to check quantities and AC 9 photo requirements
+    const existingItems = await tx
+      .select()
+      .from(schema.orderItems)
+      .where(eq(schema.orderItems.orderId, order.id));
+
+    const existingPhotos = await tx
+      .select()
+      .from(schema.orderPhotos)
+      .where(eq(schema.orderPhotos.orderId, order.id));
+
+    const photosByItem = new Set(
+      existingPhotos.filter((p) => p.orderItemId).map((p) => p.orderItemId as string)
+    );
+
+    let hasCountDiscrepancy = false;
+
+    for (const it of params.items) {
+      const match = existingItems.find((e) => e.id === it.orderItemId);
+      if (!match) continue;
+
+      if (it.isFlagged) {
+        // AC 9 check: must have at least one photo attached
+        const hasPhoto = photosByItem.has(it.orderItemId) || existingPhotos.length > 0;
+        if (!hasPhoto) {
+          return {
+            ok: false,
+            error: "Au moins une photo est requise pour chaque article signalé précieux ou endommagé (AC 9)",
+          };
+        }
+      }
+
+      if (it.pickupQuantity !== match.declaredQuantity) {
+        hasCountDiscrepancy = true;
+      }
+
+      await tx
+        .update(schema.orderItems)
+        .set({
+          pickupQuantity: it.pickupQuantity,
+          conditionNote: it.conditionNote ?? match.conditionNote,
+          isFlagged: it.isFlagged ?? match.isFlagged,
+        })
+        .where(eq(schema.orderItems.id, it.orderItemId));
+    }
+
+    // Complete mission
+    await tx
+      .update(schema.missions)
+      .set({
+        status: "completed",
+        completedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.missions.id, params.missionId));
+
+    // Update order status: pickup_in_progress -> picked_up
+    await tx
+      .update(schema.orders)
+      .set({
+        status: "picked_up",
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.orders.id, order.id));
+
+    await tx.insert(schema.orderEvents).values({
+      orderId: order.id,
+      type: "status_change",
+      fromStatus: order.status,
+      toStatus: "picked_up",
+      actorId: params.courierId,
+      actorRole: "courier",
+      note: params.note || (hasCountDiscrepancy ? "Collecte terminée avec écart de comptage" : "Collecte terminée avec succès"),
+      payload: {
+        hasCountDiscrepancy,
+        onSiteApproved: Boolean(params.onSiteApproved),
+      },
+    });
+
+    if (hasCountDiscrepancy && params.onSiteApproved) {
+      await tx.insert(schema.orderEvents).values({
+        orderId: order.id,
+        type: "approval",
+        actorId: params.courierId,
+        actorRole: "courier",
+        approvalMethod: "on_the_spot",
+        note: "Accord sur place enregistré par le coursier avec le client (AC 8)",
+      });
+    }
+
+    return { ok: true, hasCountDiscrepancy };
+  });
+}
+
+/**
+ * Task 6.2: Fail pickup mission with reason and increment failed attempt counter.
+ */
+export async function failPickupMissionAtomic(params: {
+  missionId: string;
+  courierId: string;
+  reason: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  return await db.transaction(async (tx) => {
+    const [mission] = await tx
+      .select()
+      .from(schema.missions)
+      .where(and(eq(schema.missions.id, params.missionId), eq(schema.missions.courierId, params.courierId)))
+      .limit(1);
+
+    if (!mission) return { ok: false, error: "Mission introuvable" };
+    if (mission.status === "failed") return { ok: true };
+
+    const [order] = await tx
+      .select()
+      .from(schema.orders)
+      .where(eq(schema.orders.id, mission.orderId))
+      .limit(1);
+
+    if (!order) return { ok: false, error: "Commande introuvable" };
+
+    await tx
+      .update(schema.missions)
+      .set({
+        status: "failed",
+        failureReason: params.reason,
+        completedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.missions.id, params.missionId));
+
+    await tx
+      .update(schema.orders)
+      .set({
+        status: "pickup_failed",
+        failedPickupCount: sql`${schema.orders.failedPickupCount} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.orders.id, order.id));
+
+    await tx.insert(schema.orderEvents).values({
+      orderId: order.id,
+      type: "status_change",
+      fromStatus: order.status,
+      toStatus: "pickup_failed",
+      actorId: params.courierId,
+      actorRole: "courier",
+      note: params.reason,
+    });
+
+    return { ok: true };
+  });
+}
+
+/**
+ * Task 6.3: Start delivery mission.
+ * AC 13: Enforces courier cash ceiling lockout.
+ */
+export async function startDeliveryMissionAtomic(
+  missionId: string,
+  courierId: string
+): Promise<{ ok: boolean; error?: string }> {
+  return await db.transaction(async (tx) => {
+    const [mission] = await tx
+      .select()
+      .from(schema.missions)
+      .where(and(eq(schema.missions.id, missionId), eq(schema.missions.courierId, courierId)))
+      .limit(1);
+
+    if (!mission) return { ok: false, error: "Mission introuvable" };
+    if (mission.status === "in_progress") return { ok: true };
+
+    // AC 13: Check courier held cash vs cash ceiling
+    const [profile] = await tx
+      .select()
+      .from(schema.courierProfiles)
+      .where(eq(schema.courierProfiles.userId, courierId))
+      .limit(1);
+
+    const [cashCollectedRow] = await tx
+      .select({ total: sql<string>`coalesce(sum(${schema.cashLedger.amount}), 0)` })
+      .from(schema.cashLedger)
+      .where(
+        and(
+          eq(schema.cashLedger.courierId, courierId),
+          eq(schema.cashLedger.entryType, "cash_collected")
+        )
+      );
+
+    const [cashRemittedRow] = await tx
+      .select({ total: sql<string>`coalesce(sum(${schema.cashLedger.amount}), 0)` })
+      .from(schema.cashLedger)
+      .where(
+        and(
+          eq(schema.cashLedger.courierId, courierId),
+          eq(schema.cashLedger.entryType, "cash_remitted")
+        )
+      );
+
+    const cashHeld = Math.max(
+      0,
+      Number(cashCollectedRow?.total || 0) - Number(cashRemittedRow?.total || 0)
+    );
+
+    const ceiling = profile?.cashCeiling ?? null;
+    if (ceiling !== null && cashHeld >= ceiling) {
+      return {
+        ok: false,
+        error: `Plafond de trésorerie dépassé (${cashHeld.toLocaleString()} / ${ceiling.toLocaleString()} CDF). Versement requis avant de démarrer une nouvelle livraison (AC 13).`,
+      };
+    }
+
+    const [order] = await tx
+      .select()
+      .from(schema.orders)
+      .where(eq(schema.orders.id, mission.orderId))
+      .limit(1);
+
+    if (!order) return { ok: false, error: "Commande introuvable" };
+
+    await tx
+      .update(schema.missions)
+      .set({
+        status: "in_progress",
+        startedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.missions.id, missionId));
+
+    if (order.status === "delivery_assigned") {
+      await tx
+        .update(schema.orders)
+        .set({
+          status: "delivery_in_progress",
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.orders.id, order.id));
+
+      await tx.insert(schema.orderEvents).values({
+        orderId: order.id,
+        type: "status_change",
+        fromStatus: "delivery_assigned",
+        toStatus: "delivery_in_progress",
+        actorId: courierId,
+        actorRole: "courier",
+        note: "Coursier en route pour la livraison",
+      });
+    }
+
+    return { ok: true };
+  });
+}
+
+/**
+ * Task 6.3: Complete delivery mission, check confirmation code, record cash collected, post ledger entry.
+ * AC 12: Delivery completed, cash collected recorded in cash_ledger, discrepancy flagged if mismatch.
+ */
+export async function completeDeliveryMissionAtomic(params: {
+  missionId: string;
+  courierId: string;
+  confirmationCode: string;
+  cashCollected: number;
+  cashCurrency?: "CDF" | "USD";
+}): Promise<{ ok: boolean; error?: string; discrepancyFlagged?: boolean }> {
+  return await db.transaction(async (tx) => {
+    const [mission] = await tx
+      .select()
+      .from(schema.missions)
+      .where(and(eq(schema.missions.id, params.missionId), eq(schema.missions.courierId, params.courierId)))
+      .limit(1);
+
+    if (!mission) return { ok: false, error: "Mission introuvable" };
+    if (mission.status === "completed") return { ok: true };
+
+    const [order] = await tx
+      .select()
+      .from(schema.orders)
+      .where(eq(schema.orders.id, mission.orderId))
+      .limit(1);
+
+    if (!order) return { ok: false, error: "Commande introuvable" };
+
+    // Verify delivery confirmation code
+    const enteredCode = params.confirmationCode.trim().toUpperCase();
+    const expectedCode = (order.deliveryConfirmationCode || "").trim().toUpperCase();
+
+    if (expectedCode && enteredCode !== expectedCode) {
+      return {
+        ok: false,
+        error: "Code de confirmation de livraison invalide. Demandez le code au client.",
+      };
+    }
+
+    const currency = params.cashCurrency || "CDF";
+    const discrepancyFlagged = params.cashCollected !== order.totalDue;
+
+    // Update mission
+    await tx
+      .update(schema.missions)
+      .set({
+        status: "completed",
+        completedAt: new Date(),
+        cashCollected: params.cashCollected,
+        cashCurrency: currency,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.missions.id, params.missionId));
+
+    // Update order status: delivery_in_progress -> delivered
+    await tx
+      .update(schema.orders)
+      .set({
+        status: "delivered",
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.orders.id, order.id));
+
+    // Post to cash_ledger (AC 12)
+    if (params.cashCollected > 0) {
+      await tx.insert(schema.cashLedger).values({
+        entryType: "cash_collected",
+        orderId: order.id,
+        missionId: params.missionId,
+        courierId: params.courierId,
+        houseId: order.houseId,
+        currency,
+        amount: params.cashCollected,
+        note: discrepancyFlagged
+          ? `Encaissé : ${params.cashCollected} ${currency} (Écart détecté vs dû : ${order.totalDue} ${currency})`
+          : `Paiement à la livraison complet : ${params.cashCollected} ${currency}`,
+        createdBy: params.courierId,
+      });
+    }
+
+    // Write audit event
+    await tx.insert(schema.orderEvents).values({
+      orderId: order.id,
+      type: "status_change",
+      fromStatus: order.status,
+      toStatus: "delivered",
+      actorId: params.courierId,
+      actorRole: "courier",
+      note: `Livraison effectuée. Montant encaissé : ${params.cashCollected} ${currency}${discrepancyFlagged ? " [Écart signalé]" : ""}`,
+      payload: {
+        cashCollected: params.cashCollected,
+        currency,
+        totalDue: order.totalDue,
+        discrepancyFlagged,
+      },
+    });
+
+    return { ok: true, discrepancyFlagged };
+  });
+}
+
+/**
+ * Task 6.3: Fail delivery mission with reason and increment counter.
+ */
+export async function failDeliveryMissionAtomic(params: {
+  missionId: string;
+  courierId: string;
+  reason: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  return await db.transaction(async (tx) => {
+    const [mission] = await tx
+      .select()
+      .from(schema.missions)
+      .where(and(eq(schema.missions.id, params.missionId), eq(schema.missions.courierId, params.courierId)))
+      .limit(1);
+
+    if (!mission) return { ok: false, error: "Mission introuvable" };
+    if (mission.status === "failed") return { ok: true };
+
+    const [order] = await tx
+      .select()
+      .from(schema.orders)
+      .where(eq(schema.orders.id, mission.orderId))
+      .limit(1);
+
+    if (!order) return { ok: false, error: "Commande introuvable" };
+
+    await tx
+      .update(schema.missions)
+      .set({
+        status: "failed",
+        failureReason: params.reason,
+        completedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.missions.id, params.missionId));
+
+    await tx
+      .update(schema.orders)
+      .set({
+        status: "delivery_failed",
+        failedDeliveryCount: sql`${schema.orders.failedDeliveryCount} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.orders.id, order.id));
+
+    await tx.insert(schema.orderEvents).values({
+      orderId: order.id,
+      type: "status_change",
+      fromStatus: order.status,
+      toStatus: "delivery_failed",
+      actorId: params.courierId,
+      actorRole: "courier",
+      note: params.reason,
+    });
+
+    return { ok: true };
+  });
+}
+
+/**
+ * Task 6.4: Retrieve courier cash held, ceiling, settlements, and breakdown of amounts owed to parties.
+ */
+export async function getCourierCashOverview(
+  courierId: string
+): Promise<CourierCashOverview> {
+  const [profile] = await db
+    .select()
+    .from(schema.courierProfiles)
+    .where(eq(schema.courierProfiles.userId, courierId))
+    .limit(1);
+
+  const [cashCollectedRow] = await db
+    .select({ total: sql<string>`coalesce(sum(${schema.cashLedger.amount}), 0)` })
+    .from(schema.cashLedger)
+    .where(
+      and(
+        eq(schema.cashLedger.courierId, courierId),
+        eq(schema.cashLedger.entryType, "cash_collected")
+      )
+    );
+
+  const [cashRemittedRow] = await db
+    .select({ total: sql<string>`coalesce(sum(${schema.cashLedger.amount}), 0)` })
+    .from(schema.cashLedger)
+    .where(
+      and(
+        eq(schema.cashLedger.courierId, courierId),
+        eq(schema.cashLedger.entryType, "cash_remitted")
+      )
+    );
+
+  const cashCollected = Number(cashCollectedRow?.total || 0);
+  const cashRemitted = Number(cashRemittedRow?.total || 0);
+  const cashHeld = Math.max(0, cashCollected - cashRemitted);
+  const cashCeiling = profile?.cashCeiling ?? null;
+
+  // Breakdown of amounts owed to parties for delivered orders where this courier collected cash
+  const ordersDelivered = await db
+    .select({
+      itemsTotal: schema.orders.itemsTotal,
+      adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+      commissionAmount: schema.orders.commissionAmount,
+      deliveryFee: schema.orders.deliveryFee,
+      totalDue: schema.orders.totalDue,
+    })
+    .from(schema.missions)
+    .innerJoin(schema.orders, eq(schema.missions.orderId, schema.orders.id))
+    .where(
+      and(
+        eq(schema.missions.courierId, courierId),
+        eq(schema.missions.type, "delivery"),
+        eq(schema.missions.status, "completed")
+      )
+    );
+
+  let owedToHouses = 0;
+  let owedToOwner = 0;
+
+  for (const o of ordersDelivered) {
+    const finalItemsTotal = o.adjustedItemsTotal ?? o.itemsTotal;
+    owedToHouses += Math.max(0, finalItemsTotal - o.commissionAmount);
+    owedToOwner += o.commissionAmount + o.deliveryFee;
+  }
+
+  const recentLedger = await db
+    .select({
+      id: schema.cashLedger.id,
+      entryType: schema.cashLedger.entryType,
+      amount: schema.cashLedger.amount,
+      currency: schema.cashLedger.currency,
+      orderId: schema.cashLedger.orderId,
+      note: schema.cashLedger.note,
+      createdAt: schema.cashLedger.createdAt,
+    })
+    .from(schema.cashLedger)
+    .where(eq(schema.cashLedger.courierId, courierId))
+    .orderBy(desc(schema.cashLedger.createdAt))
+    .limit(20);
+
+  return {
+    courierId,
+    cashHeld,
+    cashCollected,
+    cashRemitted,
+    cashCeiling,
+    securityDeposit: profile?.securityDeposit ?? 0,
+    changeFloat: profile?.changeFloat ?? 0,
+    isCeilingExceeded: cashCeiling !== null && cashHeld >= cashCeiling,
+    owedToHouses,
+    owedToOwner,
+    recentLedgerEntries: recentLedger,
+  };
+}
+
+/**
+ * Task 6.4: Retrieve courier past missions and earnings.
+ */
+export async function getCourierHistory(
+  courierId: string
+): Promise<CourierHistoryData> {
+  const customerNeighborhoods = alias(schema.neighborhoods, "c_neigh_hist");
+
+  const rows = await db
+    .select({
+      id: schema.missions.id,
+      orderId: schema.missions.orderId,
+      orderCode: schema.orders.code,
+      type: schema.missions.type,
+      status: schema.missions.status,
+      slotStart: schema.missions.slotStart,
+      completedAt: schema.missions.completedAt,
+      courierPay: schema.missions.courierPay,
+      customerNeighborhood: customerNeighborhoods.name,
+      failureReason: schema.missions.failureReason,
+    })
+    .from(schema.missions)
+    .innerJoin(schema.orders, eq(schema.missions.orderId, schema.orders.id))
+    .leftJoin(customerNeighborhoods, eq(schema.orders.neighborhoodId, customerNeighborhoods.id))
+    .where(
+      and(
+        eq(schema.missions.courierId, courierId),
+        inArray(schema.missions.status, ["completed", "failed"])
+      )
+    )
+    .orderBy(desc(schema.missions.completedAt), desc(schema.missions.slotStart));
+
+  let totalEarningsCDF = 0;
+  let completedCount = 0;
+  let failedCount = 0;
+
+  for (const r of rows) {
+    if (r.status === "completed") {
+      completedCount++;
+      totalEarningsCDF += r.courierPay || 0;
+    } else if (r.status === "failed") {
+      failedCount++;
+    }
+  }
+
+  return {
+    missions: rows.map((r) => ({
+      id: r.id,
+      orderId: r.orderId,
+      orderCode: r.orderCode,
+      type: r.type,
+      status: r.status,
+      slotStart: r.slotStart,
+      completedAt: r.completedAt,
+      courierPay: r.courierPay,
+      customerNeighborhood: r.customerNeighborhood || "Bukavu",
+      failureReason: r.failureReason,
+    })),
+    totalEarningsCDF,
+    completedCount,
+    failedCount,
+  };
+}
+
+/**
+ * Add photo record to order_photos (e.g. pickup condition, delivery proof).
+ */
+export async function addOrderPhotoRecord(params: {
+  orderId: string;
+  storageKey: string;
+  type: "pickup_condition" | "delivery_proof" | "dispute";
+  takenBy: string;
+  orderItemId?: string | null;
+  missionId?: string | null;
+  sizeBytes?: number;
+}): Promise<string> {
+  const [created] = await db
+    .insert(schema.orderPhotos)
+    .values({
+      orderId: params.orderId,
+      orderItemId: params.orderItemId ?? null,
+      missionId: params.missionId ?? null,
+      type: params.type,
+      storageKey: params.storageKey,
+      sizeBytes: params.sizeBytes ?? null,
+      takenBy: params.takenBy,
+    })
+    .returning({ id: schema.orderPhotos.id });
+
+  return created!.id;
+}
+
