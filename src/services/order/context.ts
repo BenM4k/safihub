@@ -19,6 +19,7 @@ export async function buildOrderValidationContext(scope?: {
   houseId?: string;
   customerId?: string;
   idempotencyKey?: string;
+  contactPhone?: string;
 }): Promise<OrderValidationContext> {
   const [
     dbHouses,
@@ -86,9 +87,17 @@ export async function buildOrderValidationContext(scope?: {
       defaultCommissionBps: dbSettings.defaultCommissionBps,
       maxCoverageDistanceLevel: dbSettings.maxCoverageDistanceLevel,
       acceptanceDelayMinutes: dbSettings.acceptanceDelayMinutes,
+      firstOrderScreening: dbSettings.firstOrderScreening,
+      maxOpenOrdersPerCustomer: dbSettings.maxOpenOrdersPerCustomer,
+      dailyOrderCapPerPhone: 3,
+      failedPickupBlockThreshold: dbSettings.failedPickupBlockThreshold,
     },
     activeExchangeRate: dbExchangeRate
       ? { rate: parseFloat(dbExchangeRate.rate), isCdfPerUsd: true }
       : { rate: 2850, isCdfPerUsd: true },
+    customerOpenOrdersCount: validationData.customerOpenOrdersCount,
+    customerCompletedOrdersCount: validationData.customerCompletedOrdersCount,
+    dailyOrdersForPhoneCount: validationData.dailyOrdersForPhoneCount,
+    isCustomerBlocked: validationData.isCustomerBlocked,
   };
 }

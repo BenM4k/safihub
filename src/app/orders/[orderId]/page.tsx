@@ -4,6 +4,7 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 import { getCurrentUser } from "@/services/auth";
 import { getCustomerOrderDetail, ACTIVE_ORDER_STATUSES } from "@/services/order";
 import { getOrderPhotosWithSignedUrlsService } from "@/services/storage";
+import { DeliveryCodeBadge } from "@/components/track/delivery-code-badge";
 import { OrderHeader } from "@/components/orders/detail/order-header";
 import { OrderItemsCard } from "@/components/orders/detail/order-items-card";
 import { OrderStatusTimeline } from "@/components/orders/detail/order-status-timeline";
@@ -63,6 +64,8 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             </Link>
           )}
         </div>
+
+        <DeliveryCodeBadge code={order.deliveryConfirmationCode} />
 
         <OrderHeader order={order} />
 

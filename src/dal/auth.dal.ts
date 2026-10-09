@@ -1,5 +1,5 @@
 import "server-only";
-import { eq } from "drizzle-orm";
+import { and, eq, ne, or } from "drizzle-orm";
 import { db, schema } from "./db";
 import { ok, err, type Result } from "@/lib/result";
 
@@ -371,5 +371,38 @@ export async function updateUserRole({
       error instanceof Error ? error.message : "Erreur de mise à jour du rôle."
     );
   }
+}
+
+/**
+ * Checks whether a given contact phone number or email address is associated
+ * with a blocked or banned account.
+ */
+export async function isPhoneOrEmailBlocked(params: {
+  phone?: string;
+  email?: string;
+}): Promise<boolean> {
+  const conditions = [];
+  if (params.phone?.trim()) {
+    conditions.push(eq(schema.user.contactPhone, params.phone.trim()));
+  }
+  if (params.email?.trim()) {
+    conditions.push(eq(schema.user.email, params.email.toLowerCase().trim()));
+  }
+
+  if (conditions.length === 0) return false;
+
+  const users = await db
+    .select({ status: schema.user.status, banned: schema.user.banned })
+    .from(schema.user)
+    .where(
+      and(
+        or(...conditions),
+        ne(schema.user.status, "merged"),
+        or(eq(schema.user.status, "blocked"), eq(schema.user.banned, true))
+      )
+    )
+    .limit(1);
+
+  return users.length > 0;
 }
 

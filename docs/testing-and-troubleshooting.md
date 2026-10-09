@@ -182,4 +182,8 @@ Each acceptance criterion from the product specification is mapped to an automat
 - **Trap:** Querying `schema.orders.guestToken` in DAL or service layers.
 - **Fix:** The order schema column for the public guest tracking URL token is named `trackingToken` (`schema.orders.trackingToken`), indexed via `orders_tracking_token_unique`.
 
+### 27. Blocked Phone Check Excludes Merged Guest User Accounts
+- **Trap:** `isPhoneOrEmailBlocked` checking `banned: true` without filtering out `status: 'merged'`, which inadvertently treats legitimate customers who converted from phone-order guest accounts as blocked abusive users.
+- **Fix:** Explicitly include `ne(schema.user.status, "merged")` in the query filter so only genuinely blocked/banned accounts (`status: "blocked"` or administrative bans) prevent checkout and registration.
+
 

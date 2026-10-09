@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/services/auth";
-import { createGuestUser } from "@/dal/auth.dal";
+import { createGuestUser, isPhoneOrEmailBlocked } from "@/dal/auth.dal";
+import { rateLimitCheckout } from "@/services/abuse";
 import type { TimeSlot } from "@/services/availability";
 import {
   approveCustomerPriceAdjustment,
@@ -45,7 +46,28 @@ export async function checkoutOrderAction(
   const user = await getCurrentUser();
   let customerId = user?.id;
 
+  // Task 10.1: Rate limiting on checkout
+  const rateLimitKey = customerId || input.contactPhone;
+  const rateLimit = rateLimitCheckout(rateLimitKey);
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      error: "Trop de tentatives de commande. Veuillez patienter un instant avant de réessayer.",
+      failureCode: "RATE_LIMITED",
+    };
+  }
+
   if (!customerId) {
+    // Task 10.1: Blocked phone cannot order or create guest
+    const isBlocked = await isPhoneOrEmailBlocked({ phone: input.contactPhone });
+    if (isBlocked) {
+      return {
+        success: false,
+        error: "Ce numéro de téléphone est bloqué. Veuillez contacter le support.",
+        failureCode: "ACCOUNT_BLOCKED",
+      };
+    }
+
     // Guest checkout
     const guestRes = await createGuestUser({
       name: input.customerName || "Client Invité",

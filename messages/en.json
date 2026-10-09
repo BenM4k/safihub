@@ -211,7 +211,9 @@
       "invalidInput": "Invalid input",
       "adminRequired": "Unauthorized: Admin privileges required.",
       "accountBlocked": "Account is blocked. Please contact support.",
-      "invalidCredentials": "Invalid email or password."
+      "invalidCredentials": "Invalid email or password.",
+      "rateLimited": "Too many attempts. Please try again later.",
+      "phoneBlocked": "This phone number is blocked and cannot re-register."
     }
   },
   "portal": {
@@ -1146,6 +1148,31 @@
     "photoAlt": "Garment photo",
     "deliveryProofAlt": "Proof of delivery",
     "disputePhotoAlt": "Dispute photo"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Your alerts, updates, and important messages",
+    "unread": "Unread",
+    "all": "All",
+    "markAsRead": "Mark as read",
+    "markAllAsRead": "Mark all as read",
+    "allRead": "All notifications are read",
+    "emptyTitle": "No notifications",
+    "emptyDescription": "You will receive alerts here about your orders and missions.",
+    "viewAll": "View all notifications",
+    "backToDashboard": "Back",
+    "channels": {
+      "in_app": "App",
+      "push": "Push notification",
+      "sms": "SMS",
+      "whatsapp_link": "WhatsApp"
+    },
+    "pushPermissionTitle": "Enable push notifications",
+    "pushPermissionDesc": "Receive instant order alerts even when your screen is locked.",
+    "enablePush": "Enable push",
+    "pushEnabled": "Push notifications enabled",
+    "pushUnsupported": "Push notifications not supported on this browser",
+    "pushBlocked": "Push notifications blocked in browser settings"
   }
 }
 

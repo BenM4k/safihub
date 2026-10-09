@@ -5,6 +5,8 @@ import { requireRole } from "@/services/auth";
 import { err, type Result } from "@/lib/result";
 import {
   addAdminOrderTimelineNote,
+  adminConfirmFirstOrder,
+  adminRejectFirstOrder,
   createManualAdminOrder,
   executeAdminOnBehalfAction,
 } from "@/services/admin";
@@ -97,6 +99,50 @@ export async function addOrderTimelineNoteAction(formData: FormData): Promise<Re
 
   if (res.ok) {
     revalidatePath(`/admin/orders/${orderId}`);
+  }
+
+  return res;
+}
+
+export async function confirmFirstOrderAction(
+  orderId: string,
+  note?: string
+): Promise<Result<void>> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err(auth.error);
+
+  const res = await adminConfirmFirstOrder({
+    orderId,
+    adminId: auth.value.user.id,
+    note,
+  });
+
+  if (res.ok) {
+    revalidatePath(`/admin/orders/${orderId}`);
+    revalidatePath("/admin/orders");
+    revalidatePath("/admin/dispatch");
+  }
+
+  return res;
+}
+
+export async function rejectFirstOrderAction(
+  orderId: string,
+  reason: string
+): Promise<Result<void>> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err(auth.error);
+
+  const res = await adminRejectFirstOrder({
+    orderId,
+    adminId: auth.value.user.id,
+    reason,
+  });
+
+  if (res.ok) {
+    revalidatePath(`/admin/orders/${orderId}`);
+    revalidatePath("/admin/orders");
+    revalidatePath("/admin/dispatch");
   }
 
   return res;

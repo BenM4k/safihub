@@ -3,19 +3,24 @@ import { err, ok, type Result } from "@/lib/result";
 import {
   addOrderEvent,
   createGuestUser,
+  getHouseClosures,
+  getHouseHours,
   getOrderById,
   getOrderEvents,
   getOrderItems,
   getOrders,
+  getSettings,
   getUserByContactPhone,
   insertOrderWithDetails,
   updateOrderStatus,
+  updateOrderStatusWithDeadline,
   type OrderDetailRecord,
   type OrderEventRecord,
   type OrderItemRecord,
   type OrderListItemRecord,
 } from "@/dal";
 import {
+  computeAcceptanceDeadlines,
   transitionOrder,
   validateOrderCheckout,
   type CartLineItemInput,
@@ -122,6 +127,92 @@ export async function addAdminOrderTimelineNote(params: {
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to add note to order");
+  }
+}
+
+/**
+ * Task 10.2: Admin screens and confirms first customer order (awaiting_confirmation -> created).
+ * Starts the house acceptance timer from now (AC 16).
+ */
+export async function adminConfirmFirstOrder(params: {
+  orderId: string;
+  adminId: string;
+  note?: string;
+}): Promise<Result<void>> {
+  try {
+    const order = await getOrderById(params.orderId);
+    if (!order) return err("Commande introuvable.");
+
+    if (order.status !== "awaiting_confirmation") {
+      return err("La commande n'est pas en attente de confirmation initiale.");
+    }
+
+    const transitionResult = transitionOrder(order.id, order.status, {
+      targetStatus: "created",
+      actorId: params.adminId,
+      actorRole: "admin",
+      note: params.note ?? "Commande confirmée par l'administrateur après vérification (téléphone/WhatsApp)",
+    });
+
+    if (!transitionResult.ok) {
+      return err(transitionResult.error);
+    }
+
+    // Compute acceptance deadline starting from now
+    const now = new Date();
+    const settings = await getSettings();
+    const houseHours = await getHouseHours(order.houseId);
+    const houseClosures = await getHouseClosures(order.houseId);
+
+    const deadlines = computeAcceptanceDeadlines(
+      now,
+      settings.acceptanceDelayMinutes,
+      houseHours,
+      houseClosures
+    );
+
+    await updateOrderStatusWithDeadline(order.id, "created", deadlines.deadlineAt);
+    await addOrderEvent(transitionResult.value.event);
+
+    return ok(undefined);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Erreur confirmation commande");
+  }
+}
+
+/**
+ * Task 10.2: Admin rejects first customer order during screening (awaiting_confirmation -> cancelled).
+ */
+export async function adminRejectFirstOrder(params: {
+  orderId: string;
+  adminId: string;
+  reason: string;
+}): Promise<Result<void>> {
+  try {
+    const order = await getOrderById(params.orderId);
+    if (!order) return err("Commande introuvable.");
+
+    if (order.status !== "awaiting_confirmation") {
+      return err("La commande n'est pas en attente de confirmation initiale.");
+    }
+
+    const transitionResult = transitionOrder(order.id, order.status, {
+      targetStatus: "cancelled",
+      actorId: params.adminId,
+      actorRole: "admin",
+      reason: params.reason,
+    });
+
+    if (!transitionResult.ok) {
+      return err(transitionResult.error);
+    }
+
+    await updateOrderStatus(order.id, "cancelled");
+    await addOrderEvent(transitionResult.value.event);
+
+    return ok(undefined);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Erreur rejet commande");
   }
 }
 

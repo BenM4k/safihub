@@ -18,6 +18,7 @@ import {
   type CourierHistoryData,
   type CourierMissionDetail,
 } from "@/dal";
+import { trackOrderDelivered } from "@/services/analytics";
 
 export interface CompletePickupInput {
   courierId: string;
@@ -244,6 +245,13 @@ export async function completeDeliveryMissionService(
 
     if (!res.ok) {
       return err(res.error || "Failed to complete delivery mission");
+    }
+
+    if (res.orderId) {
+      trackOrderDelivered({
+        orderId: res.orderId,
+        turnaroundMinutes: 1440,
+      }).catch(() => {});
     }
 
     return ok({
