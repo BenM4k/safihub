@@ -121,7 +121,7 @@ export function ReconcileCourierDialog({
                 }`}
               >
                 {t("difference")} : {diff > 0 ? "+" : ""}
-                {diff.toLocaleString()} CDF ({diff < 0 ? "Déficit constaté" : "Surplus"})
+                {diff.toLocaleString()} CDF ({diff < 0 ? t("deficit") : t("surplus")})
               </p>
             )}
           </div>
@@ -145,7 +145,7 @@ export function ReconcileCourierDialog({
             <Input
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Ex. Reçu en mains propres..."
+              placeholder={t("reconcileNotePlaceholder")}
               className="text-xs h-9"
             />
           </div>

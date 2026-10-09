@@ -269,7 +269,9 @@
       "disputeRate": "Dispute rate",
       "disputeRateTarget": "Target: < 5%",
       "adminMinutesPerOrder": "Admin minutes / order",
-      "adminMinutesPerOrderTarget": "Target: ≤ 10 min"
+      "adminMinutesPerOrderTarget": "Target: ≤ 10 min",
+      "notMeasured": "Not measured",
+      "metricsError": "Error loading metrics: {error}"
     },
     "neighborhoods": {
       "title": "Neighborhoods & Delivery Zones",
@@ -502,13 +504,22 @@
       "confirmReversal": "Confirm Reversal",
       "successReconciled": "Daily remittance confirmed successfully",
       "successDepositFloat": "Deposit/float operation completed",
-      "successReversal": "Ledger entry reversed successfully"
+      "successReversal": "Ledger entry reversed successfully",
+      "caution": "Deposit",
+      "fond": "Float",
+      "discrepancyBadge": "Discrepancy",
+      "noActiveCouriers": "No active couriers found",
+      "notePlaceholder": "E.g. Initial float of 10,000 CDF in small bills",
+      "deficit": "Deficit observed",
+      "surplus": "Surplus",
+      "reconcileNotePlaceholder": "E.g. Handed over in person..."
     },
     "settlements": {
       "title": "Settlements & Payouts",
       "subtitle": "Weekly settlement payouts for laundry houses and courier pay",
       "housesTab": "Laundry Houses",
       "couriersTab": "Courier Pay",
+      "courier": "Courier",
       "houseName": "Laundry House",
       "neighborhood": "Neighborhood",
       "totalEarned": "Total Earned",
@@ -727,7 +738,9 @@
       "netOwed": "Net Receivable",
       "settlementRef": "Reference",
       "settlementDate": "Date",
-      "settlementAmount": "Amount"
+      "settlementAmount": "Amount",
+      "noAssignedHouse": "No laundry house assigned to this account.",
+      "defaultPayoutNote": "Weekly transfer"
     }
   },
   "customerHouses": {

@@ -51,7 +51,7 @@ export async function SuccessCriteriaGrid({ metrics }: SuccessCriteriaGridProps)
     {
       id: "disputeRate",
       label: t("disputeRate"),
-      value: `${metrics.disputeRatePercent}% (${metrics.activeDisputes})`,
+      value: `${metrics.disputeRatePercent}%`,
       target: t("disputeRateTarget"),
       met: metrics.disputeRatePercent < 5,
       icon: Percent,
@@ -62,9 +62,14 @@ export async function SuccessCriteriaGrid({ metrics }: SuccessCriteriaGridProps)
     {
       id: "adminMinutesPerOrder",
       label: t("adminMinutesPerOrder"),
-      value: `${metrics.adminMinutesPerOrder} min`,
+      value:
+        metrics.adminMinutesPerOrder !== null
+          ? `${metrics.adminMinutesPerOrder} min`
+          : t("notMeasured"),
       target: t("adminMinutesPerOrderTarget"),
-      met: metrics.adminMinutesPerOrder <= 10,
+      met:
+        metrics.adminMinutesPerOrder !== null &&
+        metrics.adminMinutesPerOrder <= 10,
       icon: Clock,
       color: "text-amber-600 bg-amber-50 border-amber-200",
     },

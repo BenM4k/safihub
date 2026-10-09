@@ -17,15 +17,16 @@ export default async function HouseSettlementsPage() {
     }
   }
 
+  const t = await getTranslations("house.settlements");
+
   if (!houseId) {
     return (
       <div className="p-8 bg-white rounded-2xl border border-slate-200 text-center text-slate-500">
-        Aucun pressing assigné à ce compte.
+        {t("noAssignedHouse")}
       </div>
     );
   }
 
-  const t = await getTranslations("house.settlements");
   const settlementsRes = await getHousePortalSettlements(houseId);
 
   if (!settlementsRes.ok) {

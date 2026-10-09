@@ -194,6 +194,43 @@ export async function reverseLedgerEntry(params: {
       })
       .returning();
 
+    // Keep courierProfiles balances consistent with the reversal
+    if (original.courierId) {
+      if (original.entryType === "deposit_held") {
+        await tx
+          .update(schema.courierProfiles)
+          .set({
+            securityDeposit: sql`greatest(0, ${schema.courierProfiles.securityDeposit} - ${original.amount})`,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.courierProfiles.userId, original.courierId));
+      } else if (original.entryType === "deposit_released") {
+        await tx
+          .update(schema.courierProfiles)
+          .set({
+            securityDeposit: sql`${schema.courierProfiles.securityDeposit} + ${original.amount}`,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.courierProfiles.userId, original.courierId));
+      } else if (original.entryType === "float_issued") {
+        await tx
+          .update(schema.courierProfiles)
+          .set({
+            changeFloat: sql`greatest(0, ${schema.courierProfiles.changeFloat} - ${original.amount})`,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.courierProfiles.userId, original.courierId));
+      } else if (original.entryType === "float_returned") {
+        await tx
+          .update(schema.courierProfiles)
+          .set({
+            changeFloat: sql`${schema.courierProfiles.changeFloat} + ${original.amount}`,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.courierProfiles.userId, original.courierId));
+      }
+    }
+
     return { ok: true, reversalId: reversal.id };
   });
 }
@@ -613,47 +650,118 @@ export async function recordDailyCourierReconciliation(params: {
       courierId,
       businessDate,
       currency,
-      expectedAmount,
       receivedAmount,
       note,
       reconciledBy,
       deductFromDeposit,
     } = params;
 
+    // Calculate expectedAmount on the server from non-reversed cash_collected entries for that businessDate
+    const reversedSubquery = tx
+      .select({ id: schema.cashLedger.reversalOfId })
+      .from(schema.cashLedger)
+      .where(
+        and(
+          eq(schema.cashLedger.entryType, "reversal"),
+          sql`${schema.cashLedger.reversalOfId} is not null`
+        )
+      );
+
+    const dayEntries = await tx
+      .select({
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+        exchangeRateUsed: schema.orders.exchangeRateUsed,
+      })
+      .from(schema.cashLedger)
+      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
+      .where(
+        and(
+          eq(schema.cashLedger.courierId, courierId),
+          eq(schema.cashLedger.entryType, "cash_collected"),
+          sql`to_char(${schema.cashLedger.createdAt} at time zone 'Africa/Lubumbashi', 'YYYY-MM-DD') = ${businessDate}`,
+          notInArray(schema.cashLedger.id, reversedSubquery)
+        )
+      );
+
+    let calculatedExpected = 0;
+    for (const e of dayEntries) {
+      const rate = Number(e.exchangeRateUsed) || 2800;
+      if (currency === "USD") {
+        if (e.currency === "USD") calculatedExpected += e.amount;
+      } else {
+        if (e.currency === "USD") calculatedExpected += Math.round(e.amount * rate);
+        else calculatedExpected += e.amount;
+      }
+    }
+
+    const expectedAmount = calculatedExpected;
     const difference = receivedAmount - expectedAmount;
     const discrepancyLogged = difference !== 0;
     let depositDeducted = false;
 
-    // 1. Upsert cash_reconciliations record
-    const [recon] = await tx
-      .insert(schema.cashReconciliations)
-      .values({
-        courierId,
-        businessDate,
-        currency,
-        expectedAmount,
-        receivedAmount,
-        difference,
-        status: "confirmed",
-        note: note ?? null,
-        reconciledBy: reconciledBy ?? null,
-      })
-      .onConflictDoUpdate({
-        target: [
-          schema.cashReconciliations.courierId,
-          schema.cashReconciliations.businessDate,
-          schema.cashReconciliations.currency,
-        ],
-        set: {
+    // Check existing reconciliation record for idempotency
+    const [existing] = await tx
+      .select()
+      .from(schema.cashReconciliations)
+      .where(
+        and(
+          eq(schema.cashReconciliations.courierId, courierId),
+          eq(schema.cashReconciliations.businessDate, businessDate),
+          eq(schema.cashReconciliations.currency, currency)
+        )
+      )
+      .for("update")
+      .limit(1);
+
+    if (existing && existing.status === "confirmed") {
+      // Idempotent retry: if same received amount, return existing record without re-applying ledger entries
+      if (existing.receivedAmount === receivedAmount) {
+        return {
+          ok: true,
+          reconciliationId: existing.id,
+          discrepancyLogged: existing.difference !== 0,
+          depositDeducted: false,
+        };
+      }
+      return {
+        ok: false,
+        error: "Cette journée a déjà été réconciliée pour ce coursier",
+        discrepancyLogged: false,
+        depositDeducted: false,
+      };
+    }
+
+    let reconId = existing?.id;
+    if (existing) {
+      await tx
+        .update(schema.cashReconciliations)
+        .set({
           expectedAmount,
           receivedAmount,
           difference,
           status: "confirmed",
           note: note ?? null,
           reconciledBy: reconciledBy ?? null,
-        },
-      })
-      .returning();
+        })
+        .where(eq(schema.cashReconciliations.id, existing.id));
+    } else {
+      const [recon] = await tx
+        .insert(schema.cashReconciliations)
+        .values({
+          courierId,
+          businessDate,
+          currency,
+          expectedAmount,
+          receivedAmount,
+          difference,
+          status: "confirmed",
+          note: note ?? null,
+          reconciledBy: reconciledBy ?? null,
+        })
+        .returning();
+      reconId = recon.id;
+    }
 
     // 2. Post cash_remitted to cash_ledger if received > 0
     if (receivedAmount > 0) {
@@ -718,7 +826,7 @@ export async function recordDailyCourierReconciliation(params: {
 
     return {
       ok: true,
-      reconciliationId: recon.id,
+      reconciliationId: reconId,
       discrepancyLogged,
       depositDeducted,
     };
@@ -815,8 +923,10 @@ export async function getHouseSettlementsOverview(): Promise<{
       .select({
         amount: schema.cashLedger.amount,
         currency: schema.cashLedger.currency,
+        exchangeRateUsed: schema.orders.exchangeRateUsed,
       })
       .from(schema.cashLedger)
+      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
       .where(
         and(
           eq(schema.cashLedger.houseId, h.id),
@@ -825,12 +935,16 @@ export async function getHouseSettlementsOverview(): Promise<{
         )
       );
 
-    const totalOwedCDF = owedEntries.reduce((sum, e) => sum + e.amount, 0);
+    const totalOwedCDF = owedEntries.reduce((sum, e) => {
+      const rate = Number(e.exchangeRateUsed) || 2800;
+      return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
+    }, 0);
 
     // Total house_settlement_paid entries
     const settledEntries = await db
       .select({
         amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
         createdAt: schema.cashLedger.createdAt,
       })
       .from(schema.cashLedger)
@@ -843,7 +957,9 @@ export async function getHouseSettlementsOverview(): Promise<{
       )
       .orderBy(desc(schema.cashLedger.createdAt));
 
-    const totalSettledCDF = settledEntries.reduce((sum, e) => sum + e.amount, 0);
+    const totalSettledCDF = settledEntries.reduce((sum, e) => {
+      return sum + (e.currency === "USD" ? Math.round(e.amount * 2800) : e.amount);
+    }, 0);
     const balanceOwedCDF = Math.max(0, totalOwedCDF - totalSettledCDF);
     totalPendingOwed += balanceOwedCDF;
 
@@ -939,9 +1055,33 @@ export async function getHouseSettlementDetail(houseId: string): Promise<{
     )
     .orderBy(desc(schema.cashLedger.createdAt));
 
-  const totalSettledCDF = settlements.reduce((sum, s) => sum + s.amount, 0);
+  const totalSettledCDF = settlements.reduce((sum, s) => {
+    return sum + (s.currency === "USD" ? Math.round(s.amount * 2800) : s.amount);
+  }, 0);
 
-  // Delivered orders
+  // Calculate totalOwedCDF from the same non-reversed owed_to_house ledger entries
+  const owedEntries = await db
+    .select({
+      amount: schema.cashLedger.amount,
+      currency: schema.cashLedger.currency,
+      exchangeRateUsed: schema.orders.exchangeRateUsed,
+    })
+    .from(schema.cashLedger)
+    .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
+    .where(
+      and(
+        eq(schema.cashLedger.houseId, houseId),
+        eq(schema.cashLedger.entryType, "owed_to_house"),
+        notInArray(schema.cashLedger.id, reversedSubquery)
+      )
+    );
+
+  const totalOwedCDF = owedEntries.reduce((sum, e) => {
+    const rate = Number(e.exchangeRateUsed) || 2800;
+    return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
+  }, 0);
+
+  // Delivered orders (for display)
   const ordersList = await db
     .select({
       id: schema.orders.id,
@@ -962,14 +1102,12 @@ export async function getHouseSettlementDetail(houseId: string): Promise<{
 
   let totalRevenueCDF = 0;
   let totalCommissionCDF = 0;
-  let totalOwedCDF = 0;
 
   const orders = ordersList.map((o) => {
     const finalItems = o.adjustedItemsTotal ?? o.itemsTotal;
     const owed = Math.max(0, finalItems - o.commissionAmount);
     totalRevenueCDF += finalItems;
     totalCommissionCDF += o.commissionAmount;
-    totalOwedCDF += owed;
     return {
       id: o.id,
       code: o.code,
@@ -1033,9 +1171,14 @@ export async function settleHouseBalance(params: {
         )
       );
 
-    const [owed] = await tx
-      .select({ total: sql<number>`coalesce(sum(${schema.cashLedger.amount}), 0)::int` })
+    const owedEntries = await tx
+      .select({
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+        exchangeRateUsed: schema.orders.exchangeRateUsed,
+      })
       .from(schema.cashLedger)
+      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
       .where(
         and(
           eq(schema.cashLedger.houseId, params.houseId),
@@ -1044,8 +1187,16 @@ export async function settleHouseBalance(params: {
         )
       );
 
-    const [settled] = await tx
-      .select({ total: sql<number>`coalesce(sum(${schema.cashLedger.amount}), 0)::int` })
+    const totalOwedCDF = owedEntries.reduce((sum, e) => {
+      const rate = Number(e.exchangeRateUsed) || 2800;
+      return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
+    }, 0);
+
+    const settledEntries = await tx
+      .select({
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+      })
       .from(schema.cashLedger)
       .where(
         and(
@@ -1055,7 +1206,11 @@ export async function settleHouseBalance(params: {
         )
       );
 
-    const newBalanceCDF = Math.max(0, (owed?.total ?? 0) - (settled?.total ?? 0));
+    const totalSettledCDF = settledEntries.reduce((sum, e) => {
+      return sum + (e.currency === "USD" ? Math.round(e.amount * 2800) : e.amount);
+    }, 0);
+
+    const newBalanceCDF = Math.max(0, totalOwedCDF - totalSettledCDF);
 
     return {
       ok: true,
@@ -1105,8 +1260,13 @@ export async function getCourierSettlementsOverview(): Promise<{
 
   for (const c of activeCouriers) {
     const earnedEntries = await db
-      .select({ amount: schema.cashLedger.amount })
+      .select({
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+        exchangeRateUsed: schema.orders.exchangeRateUsed,
+      })
       .from(schema.cashLedger)
+      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
       .where(
         and(
           eq(schema.cashLedger.courierId, c.id),
@@ -1118,6 +1278,7 @@ export async function getCourierSettlementsOverview(): Promise<{
     const paidEntries = await db
       .select({
         amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
         createdAt: schema.cashLedger.createdAt,
       })
       .from(schema.cashLedger)
@@ -1130,8 +1291,15 @@ export async function getCourierSettlementsOverview(): Promise<{
       )
       .orderBy(desc(schema.cashLedger.createdAt));
 
-    const totalEarnedCDF = earnedEntries.reduce((sum, e) => sum + e.amount, 0);
-    const totalPaidCDF = paidEntries.reduce((sum, p) => sum + p.amount, 0);
+    const totalEarnedCDF = earnedEntries.reduce((sum, e) => {
+      const rate = Number(e.exchangeRateUsed) || 2800;
+      return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
+    }, 0);
+
+    const totalPaidCDF = paidEntries.reduce((sum, p) => {
+      return sum + (p.currency === "USD" ? Math.round(p.amount * 2800) : p.amount);
+    }, 0);
+
     const balanceOwedCDF = Math.max(0, totalEarnedCDF - totalPaidCDF);
     totalPendingOwed += balanceOwedCDF;
 
@@ -1188,9 +1356,14 @@ export async function settleCourierPay(params: {
         )
       );
 
-    const [earned] = await tx
-      .select({ total: sql<number>`coalesce(sum(${schema.cashLedger.amount}), 0)::int` })
+    const earnedEntries = await tx
+      .select({
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+        exchangeRateUsed: schema.orders.exchangeRateUsed,
+      })
       .from(schema.cashLedger)
+      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
       .where(
         and(
           eq(schema.cashLedger.courierId, params.courierId),
@@ -1199,8 +1372,11 @@ export async function settleCourierPay(params: {
         )
       );
 
-    const [paid] = await tx
-      .select({ total: sql<number>`coalesce(sum(${schema.cashLedger.amount}), 0)::int` })
+    const paidEntries = await tx
+      .select({
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+      })
       .from(schema.cashLedger)
       .where(
         and(
@@ -1210,7 +1386,16 @@ export async function settleCourierPay(params: {
         )
       );
 
-    const newBalanceCDF = Math.max(0, (earned?.total ?? 0) - (paid?.total ?? 0));
+    const totalEarnedCDF = earnedEntries.reduce((sum, e) => {
+      const rate = Number(e.exchangeRateUsed) || 2800;
+      return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
+    }, 0);
+
+    const totalPaidCDF = paidEntries.reduce((sum, p) => {
+      return sum + (p.currency === "USD" ? Math.round(p.amount * 2800) : p.amount);
+    }, 0);
+
+    const newBalanceCDF = Math.max(0, totalEarnedCDF - totalPaidCDF);
 
     return {
       ok: true,
@@ -1236,7 +1421,7 @@ export async function getSuccessCriteriaDashboard(): Promise<{
   cashDiscrepanciesCount: number;
   cashDiscrepancyPercent: number;
   disputeRatePercent: number;
-  adminMinutesPerOrder: number;
+  adminMinutesPerOrder: number | null;
   totalDeliveredOrders: number;
   totalCollectedCashCDF: number;
 }> {
@@ -1288,9 +1473,14 @@ export async function getSuccessCriteriaDashboard(): Promise<{
 
   const deliveredCount = deliveredOrders?.count ?? 0;
 
-  const [ownerShare] = await db
-    .select({ total: sql<number>`coalesce(sum(${schema.cashLedger.amount}), 0)::int` })
+  const ownerEntries = await db
+    .select({
+      amount: schema.cashLedger.amount,
+      currency: schema.cashLedger.currency,
+      exchangeRateUsed: schema.orders.exchangeRateUsed,
+    })
     .from(schema.cashLedger)
+    .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
     .where(
       and(
         eq(schema.cashLedger.entryType, "owed_to_owner"),
@@ -1298,14 +1488,23 @@ export async function getSuccessCriteriaDashboard(): Promise<{
       )
     );
 
-  const totalOwnerMargin = ownerShare?.total ?? 0;
+  const totalOwnerMargin = ownerEntries.reduce((sum, e) => {
+    const rate = Number(e.exchangeRateUsed) || 2800;
+    return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
+  }, 0);
+
   const marginPerOrderCDF =
     deliveredCount > 0 ? Math.round(totalOwnerMargin / deliveredCount) : 0;
 
   // 4. Cash discrepancies: count and % of cash collected
-  const [collectedTotal] = await db
-    .select({ total: sql<number>`coalesce(sum(${schema.cashLedger.amount}), 0)::int` })
+  const collectedEntries = await db
+    .select({
+      amount: schema.cashLedger.amount,
+      currency: schema.cashLedger.currency,
+      exchangeRateUsed: schema.orders.exchangeRateUsed,
+    })
     .from(schema.cashLedger)
+    .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
     .where(
       and(
         eq(schema.cashLedger.entryType, "cash_collected"),
@@ -1313,23 +1512,33 @@ export async function getSuccessCriteriaDashboard(): Promise<{
       )
     );
 
-  const totalCollectedCashCDF = collectedTotal?.total ?? 0;
+  const totalCollectedCashCDF = collectedEntries.reduce((sum, e) => {
+    const rate = Number(e.exchangeRateUsed) || 2800;
+    return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
+  }, 0);
 
-  const [discrepancyStats] = await db
+  const discrepancyEntries = await db
     .select({
-      count: sql<number>`count(*)::int`,
-      totalDiscrepancy: sql<number>`coalesce(sum(${schema.cashLedger.amount}), 0)::int`,
+      amount: schema.cashLedger.amount,
+      currency: schema.cashLedger.currency,
+      exchangeRateUsed: schema.orders.exchangeRateUsed,
     })
     .from(schema.cashLedger)
+    .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
     .where(
       and(
         eq(schema.cashLedger.entryType, "discrepancy"),
+        sql`${schema.cashLedger.missionId} is not null`,
         notInArray(schema.cashLedger.id, reversedSubquery)
       )
     );
 
-  const discrepanciesCount = discrepancyStats?.count ?? 0;
-  const sumDiscrepancyAmount = discrepancyStats?.totalDiscrepancy ?? 0;
+  const discrepanciesCount = discrepancyEntries.length;
+  const sumDiscrepancyAmount = discrepancyEntries.reduce((sum, e) => {
+    const rate = Number(e.exchangeRateUsed) || 2800;
+    return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
+  }, 0);
+
   const cashDiscrepancyPercent =
     totalCollectedCashCDF > 0
       ? Number(((sumDiscrepancyAmount / totalCollectedCashCDF) * 100).toFixed(1))
@@ -1351,8 +1560,8 @@ export async function getSuccessCriteriaDashboard(): Promise<{
       ? Number(((totalDisputesCount / totalOrdersCount) * 100).toFixed(1))
       : 0;
 
-  // 6. Admin minutes per order (measured average or pilot default benchmark = 6.5 min)
-  const adminMinutesPerOrder = 6.5;
+  // 6. Admin minutes per order (unmeasured benchmark; null until observed metric exists)
+  const adminMinutesPerOrder: number | null = null;
 
   return {
     ordersPerWeek,

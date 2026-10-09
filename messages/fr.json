@@ -269,7 +269,9 @@
       "disputeRate": "Taux de litiges",
       "disputeRateTarget": "Cible : < 5%",
       "adminMinutesPerOrder": "Temps admin / commande",
-      "adminMinutesPerOrderTarget": "Cible : ≤ 10 min"
+      "adminMinutesPerOrderTarget": "Cible : ≤ 10 min",
+      "notMeasured": "Non mesuré",
+      "metricsError": "Erreur lors du chargement des indicateurs : {error}"
     },
     "neighborhoods": {
       "title": "Quartiers & Zones de livraison",
@@ -502,13 +504,22 @@
       "confirmReversal": "Confirmer l'annulation",
       "successReconciled": "Versement journalier enregistré avec succès",
       "successDepositFloat": "Opération de caution/fond effectuée",
-      "successReversal": "Contre-passation effectuée avec succès"
+      "successReversal": "Contre-passation effectuée avec succès",
+      "caution": "Caution",
+      "fond": "Fond",
+      "discrepancyBadge": "Écart",
+      "noActiveCouriers": "Aucun coursier actif trouvé",
+      "notePlaceholder": "Ex. Fond initial de 10 000 CDF en petites coupures",
+      "deficit": "Déficit constaté",
+      "surplus": "Surplus",
+      "reconcileNotePlaceholder": "Ex. Reçu en mains propres..."
     },
     "settlements": {
       "title": "Règlements & Payouts",
       "subtitle": "Paiement hebdomadaire des pressings partenaires et des rémunérations des coursiers",
       "housesTab": "Pressings partenaires",
       "couriersTab": "Rémunération coursiers",
+      "courier": "Coursier",
       "houseName": "Pressing",
       "neighborhood": "Quartier",
       "totalEarned": "Total dû cumulé",
@@ -727,7 +738,9 @@
       "netOwed": "Net à percevoir",
       "settlementRef": "Référence",
       "settlementDate": "Date",
-      "settlementAmount": "Montant"
+      "settlementAmount": "Montant",
+      "noAssignedHouse": "Aucun pressing assigné à ce compte.",
+      "defaultPayoutNote": "Virement hebdomadaire"
     }
   },
   "customerHouses": {

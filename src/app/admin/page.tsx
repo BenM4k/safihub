@@ -7,28 +7,6 @@ import { QuickActions } from "@/components/admin/dashboard/quick-actions";
 export default async function AdminPage() {
   const t = await getTranslations("admin.dashboard");
   const metricsResult = await getAdminMetricsSummary();
-
-  const metrics = metricsResult.ok
-    ? metricsResult.value
-    : {
-        totalOrders: 0,
-        ordersByStatus: {},
-        ordersPendingAcceptance: 0,
-        activeDisputes: 0,
-        pendingCoverageRequests: 0,
-        activeHousesCount: 0,
-        activeCouriersCount: 0,
-        totalCashCollectedCDF: 0,
-        unassignedMissionsCount: 0,
-        ordersPerWeek: 0,
-        acceptanceRatePercent: 100,
-        marginPerOrderCDF: 0,
-        cashDiscrepanciesCount: 0,
-        cashDiscrepancyPercent: 0,
-        disputeRatePercent: 0,
-        adminMinutesPerOrder: 6.5,
-      };
-
   return (
     <div className="space-y-6">
       <div>
@@ -40,14 +18,16 @@ export default async function AdminPage() {
         </p>
       </div>
 
-      {!metricsResult.ok && (
+      {!metricsResult.ok ? (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-destructive">
-          Erreur lors du chargement des indicateurs : {metricsResult.error}
+          {t("metricsError", { error: metricsResult.error })}
         </div>
+      ) : (
+        <>
+          <SuccessCriteriaGrid metrics={metricsResult.value} />
+          <MetricsGrid metrics={metricsResult.value} />
+        </>
       )}
-
-      <SuccessCriteriaGrid metrics={metrics} />
-      <MetricsGrid metrics={metrics} />
       <QuickActions />
     </div>
   );

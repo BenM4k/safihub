@@ -1198,6 +1198,8 @@ export async function completeDeliveryMissionAtomic(params: {
       });
     }
 
+    const orderCurrency = order.paymentCurrency || "CDF";
+
     // 2. owed_to_house
     if (owedToHouse > 0) {
       await tx.insert(schema.cashLedger).values({
@@ -1206,9 +1208,9 @@ export async function completeDeliveryMissionAtomic(params: {
         missionId: params.missionId,
         courierId: params.courierId,
         houseId: order.houseId,
-        currency,
+        currency: orderCurrency,
         amount: owedToHouse,
-        note: `Part pressing : ${owedToHouse} ${currency} (${finalItemsTotal} - ${order.commissionAmount})`,
+        note: `Part pressing : ${owedToHouse} ${orderCurrency} (${finalItemsTotal} - ${order.commissionAmount})`,
         createdBy: params.courierId,
       });
     }
@@ -1221,9 +1223,9 @@ export async function completeDeliveryMissionAtomic(params: {
         missionId: params.missionId,
         courierId: params.courierId,
         houseId: order.houseId,
-        currency,
+        currency: orderCurrency,
         amount: owedToOwner,
-        note: `Part propriétaire (commission + marge livraison) : ${owedToOwner} ${currency}`,
+        note: `Part propriétaire (commission + marge livraison) : ${owedToOwner} ${orderCurrency}`,
         createdBy: params.courierId,
       });
     }
@@ -1236,14 +1238,14 @@ export async function completeDeliveryMissionAtomic(params: {
         missionId: params.missionId,
         courierId: params.courierId,
         houseId: order.houseId,
-        currency,
+        currency: orderCurrency,
         amount: courierPayEarned,
-        note: `Rémunération livraison coursier : ${courierPayEarned} ${currency}`,
+        note: `Rémunération livraison coursier : ${courierPayEarned} ${orderCurrency}`,
         createdBy: params.courierId,
       });
     }
 
-    // Discrepancy entry if flagged
+    // Discrepancy entry if flagged (computed in CDF)
     if (discrepancyFlagged) {
       const diff = Math.abs(collectedInCDF - expectedInCDF);
       await tx.insert(schema.cashLedger).values({
@@ -1252,9 +1254,9 @@ export async function completeDeliveryMissionAtomic(params: {
         missionId: params.missionId,
         courierId: params.courierId,
         houseId: order.houseId,
-        currency,
+        currency: "CDF",
         amount: diff,
-        note: `Écart de caisse à la livraison : ${params.cashCollected} perçu vs ${order.totalDue} attendu (${diff} CDF d'écart)`,
+        note: `Écart de caisse à la livraison : ${params.cashCollected} ${currency} perçu vs ${order.totalDue} ${orderCurrency} attendu (${diff} CDF d'écart)`,
         createdBy: params.courierId,
       });
     }

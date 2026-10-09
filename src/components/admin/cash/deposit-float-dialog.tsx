@@ -136,7 +136,7 @@ export function DepositFloatDialog({ isOpen, onClose, courier }: DepositFloatDia
             <Input
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Ex. Fond initial de 10 000 CDF en petites coupures"
+              placeholder={t("notePlaceholder")}
               className="text-xs h-9"
             />
           </div>

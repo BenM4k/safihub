@@ -239,7 +239,7 @@ vi.mock("@/dal", async (importOriginal) => {
       return { ok: true, newFloat: mockCourierFloat };
     }),
 
-    getDailyCourierReconciliationData: vi.fn(async (_dateStr: string) => {
+    getDailyCourierReconciliationData: vi.fn(async () => {
       return {
         couriers: [
           {
@@ -268,13 +268,17 @@ vi.mock("@/dal", async (importOriginal) => {
     }),
 
     recordDailyCourierReconciliation: vi.fn(async (params) => {
-      const diff = params.expectedAmount - params.receivedAmount;
+      const diff = params.receivedAmount - params.expectedAmount;
       const discrepancyLogged = diff !== 0;
       let depositDeducted = false;
 
-      if (discrepancyLogged && params.deductFromDeposit) {
-        mockCourierDeposit = Math.max(0, mockCourierDeposit - Math.abs(diff));
-        depositDeducted = true;
+      if (diff < 0 && params.deductFromDeposit) {
+        const shortfall = Math.abs(diff);
+        const deduction = Math.min(shortfall, mockCourierDeposit);
+        if (deduction > 0) {
+          mockCourierDeposit -= deduction;
+          depositDeducted = true;
+        }
       }
 
       const rec = {
@@ -285,7 +289,7 @@ vi.mock("@/dal", async (importOriginal) => {
         expectedAmount: params.expectedAmount,
         receivedAmount: params.receivedAmount,
         difference: diff,
-        status: discrepancyLogged ? "discrepancy" : "matched",
+        status: "confirmed" as const,
         note: params.note ?? null,
         reconciledBy: params.reconciledBy ?? null,
         createdAt: new Date(),
@@ -478,7 +482,7 @@ vi.mock("@/dal", async (importOriginal) => {
         cashDiscrepanciesCount: 0,
         cashDiscrepancyPercent: 0.0, // pilot target: < 2%
         disputeRatePercent: 2.1, // pilot target: < 5%
-        adminMinutesPerOrder: 6.5, // pilot target: <= 10 min
+        adminMinutesPerOrder: null, // unmeasured benchmark
         totalDeliveredOrders: 42,
         totalCollectedCashCDF: 1092000,
       };
@@ -768,8 +772,8 @@ describe("Phase 8 — Cash Ledger & Settlements Comprehensive Test Suite", () =>
         expect(history.value).toHaveLength(1);
         const log = history.value[0];
         expect(log?.courierId).toBe("courier-1");
-        expect(log?.difference).toBe(4000);
-        expect(log?.status).toBe("discrepancy");
+        expect(log?.difference).toBe(-4000);
+        expect(log?.status).toBe("confirmed");
       }
     });
   });
@@ -962,9 +966,8 @@ describe("Phase 8 — Cash Ledger & Settlements Comprehensive Test Suite", () =>
       expect(metrics.disputeRatePercent).toBeLessThan(5);
       expect(typeof metrics.disputeRatePercent).toBe("number");
 
-      // 6. Admin minutes per order (pilot target: <= 10 minutes)
-      expect(metrics.adminMinutesPerOrder).toBeLessThanOrEqual(10);
-      expect(typeof metrics.adminMinutesPerOrder).toBe("number");
+      // 6. Admin minutes per order (unmeasured benchmark; null until observed metric exists)
+      expect(metrics.adminMinutesPerOrder).toBeNull();
     });
   });
 });

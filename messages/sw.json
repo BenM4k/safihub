@@ -269,7 +269,9 @@
       "disputeRate": "Kiwango cha migogoro",
       "disputeRateTarget": "Lengo: < 5%",
       "adminMinutesPerOrder": "Muda wa msimamizi / agizo",
-      "adminMinutesPerOrderTarget": "Lengo: ≤ 10 min"
+      "adminMinutesPerOrderTarget": "Lengo: ≤ 10 min",
+      "notMeasured": "Haijapimwa",
+      "metricsError": "Hitilafu wakati wa kupakia vipimo: {error}"
     },
     "neighborhoods": {
       "title": "Mitaa & Kanda za Usafirishaji",
@@ -502,13 +504,22 @@
       "confirmReversal": "Thibitisha Ubatilishaji",
       "successReconciled": "Malipo ya dereva yamethibitishwa kikamilifu",
       "successDepositFloat": "Shughuli ya amana/chenji imekamilika",
-      "successReversal": "Rekodi imebatilishwa kikamilifu"
+      "successReversal": "Rekodi imebatilishwa kikamilifu",
+      "caution": "Amana",
+      "fond": "Chenji",
+      "discrepancyBadge": "Tofauti",
+      "noActiveCouriers": "Hakuna madereva wanaofanya kazi waliopatikana",
+      "notePlaceholder": "Mfano: Pesa ya awali ya CDF 10,000 ya noti ndogo",
+      "deficit": "Upungufu umebainika",
+      "surplus": "Ziada",
+      "reconcileNotePlaceholder": "Mfano: Imepokelewa mikononi..."
     },
     "settlements": {
       "title": "Malipo & Payouts",
       "subtitle": "Malipo ya kila wiki kwa madobi washirika na mishahara ya madereva",
       "housesTab": "Madobi Washirika",
       "couriersTab": "Mishahara ya Madereva",
+      "courier": "Dereva",
       "houseName": "Dobi",
       "neighborhood": "Mtaa",
       "totalEarned": "Jumla Iliyopatikana",
@@ -727,7 +738,9 @@
       "netOwed": "Kiasi Halisi cha Kupokea",
       "settlementRef": "Kumbukumbu",
       "settlementDate": "Tarehe",
-      "settlementAmount": "Kiasi"
+      "settlementAmount": "Kiasi",
+      "noAssignedHouse": "Hakuna dobi iliyokabidhiwa kwa akaunti hii.",
+      "defaultPayoutNote": "Uhamisho wa kila wiki"
     }
   },
   "customerHouses": {

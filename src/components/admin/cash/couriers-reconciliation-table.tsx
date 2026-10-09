@@ -59,7 +59,7 @@ export function CouriersReconciliationTable({
             {couriers.length === 0 ? (
               <tr>
                 <td colSpan={8} className="py-8 text-center text-muted-foreground">
-                  Aucun coursier actif trouvé
+                  {t("noActiveCouriers")}
                 </td>
               </tr>
             ) : (
@@ -99,14 +99,14 @@ export function CouriersReconciliationTable({
                       </span>
                     </td>
                     <td className="py-3 px-4 text-2xs text-muted-foreground">
-                      <div>Caution : <span className="font-semibold text-heading">{c.securityDeposit.toLocaleString()}</span></div>
-                      <div>Fond : <span className="font-semibold text-heading">{c.changeFloat.toLocaleString()}</span></div>
+                      <div>{t("caution")} : <span className="font-semibold text-heading">{c.securityDeposit.toLocaleString()}</span></div>
+                      <div>{t("fond")} : <span className="font-semibold text-heading">{c.changeFloat.toLocaleString()}</span></div>
                     </td>
                     <td className="py-3 px-4">
                       {isConfirmed ? (
                         hasDiscrepancy ? (
                           <Badge variant="destructive" className="text-2xs gap-1">
-                            <ShieldAlert className="size-3" /> Écart
+                            <ShieldAlert className="size-3" /> {t("discrepancyBadge")}
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-2xs gap-1">

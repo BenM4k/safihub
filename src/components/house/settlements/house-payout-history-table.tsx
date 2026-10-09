@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getFormatter, getTranslations } from "next-intl/server";
 
 interface PayoutItem {
   id: string;
@@ -14,6 +14,7 @@ interface HousePayoutHistoryTableProps {
 
 export async function HousePayoutHistoryTable({ payouts }: HousePayoutHistoryTableProps) {
   const t = await getTranslations("house.settlements");
+  const format = await getFormatter();
 
   return (
     <div className="bg-white rounded-xl border border-border shadow-xs overflow-hidden">
@@ -41,15 +42,15 @@ export async function HousePayoutHistoryTable({ payouts }: HousePayoutHistoryTab
               payouts.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50/60">
                   <td className="py-2.5 px-4 font-mono text-muted-foreground">
-                    {new Intl.DateTimeFormat("fr-FR", {
+                    {format.dateTime(new Date(p.createdAt), {
                       dateStyle: "medium",
-                    }).format(new Date(p.createdAt))}
+                    })}
                   </td>
                   <td className="py-2.5 px-4 font-bold text-emerald-700">
                     +{p.amount.toLocaleString()} {p.currency}
                   </td>
                   <td className="py-2.5 px-4 text-muted-foreground">
-                    {p.note || "Virement hebdomadaire"}
+                    {p.note || t("defaultPayoutNote")}
                   </td>
                 </tr>
               ))
