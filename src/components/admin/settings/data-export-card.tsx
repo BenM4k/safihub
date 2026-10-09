@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Download, FileSpreadsheet, FileJson, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function DataExportCard() {
+  const t = useTranslations("admin.settings");
   const [downloading, setDownloading] = useState<string | null>(null);
 
   const handleDownload = async (dataset: "orders" | "ledger" | "customers", format: "csv" | "json") => {
@@ -12,7 +14,7 @@ export function DataExportCard() {
       const key = `${dataset}-${format}`;
       setDownloading(key);
       const res = await fetch(`/api/admin/export?dataset=${dataset}&format=${format}`);
-      if (!res.ok) throw new Error("Échec du téléchargement");
+      if (!res.ok) throw new Error("Export download failed");
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -25,7 +27,7 @@ export function DataExportCard() {
       document.body.removeChild(a);
     } catch (err) {
       console.error("Export error:", err);
-      alert("Erreur lors du téléchargement du fichier.");
+      alert(t("exportError"));
     } finally {
       setDownloading(null);
     }
@@ -34,18 +36,18 @@ export function DataExportCard() {
   const datasets = [
     {
       id: "orders" as const,
-      name: "Commandes & Traçabilité",
-      description: "Toutes les commandes avec statuts, montants CDF/USD, créneaux et buanderies.",
+      name: t("exportOrdersName"),
+      description: t("exportOrdersDesc"),
     },
     {
       id: "ledger" as const,
-      name: "Grand Livre de Caisse",
-      description: "Écritures comptables append-only : encaissements, commissions et règlements.",
+      name: t("exportLedgerName"),
+      description: t("exportLedgerDesc"),
     },
     {
       id: "customers" as const,
-      name: "Clients Enregistrés",
-      description: "Liste des clients avec contacts, statut et date d'inscription.",
+      name: t("exportCustomersName"),
+      description: t("exportCustomersDesc"),
     },
   ];
 
@@ -55,11 +57,11 @@ export function DataExportCard() {
         <div className="flex items-center gap-2">
           <Download className="size-5 text-sky-600" />
           <h2 className="text-base font-semibold text-[#101828]">
-            Exportation des Données (Audit & Pilotage)
+            {t("exportTitle")}
           </h2>
         </div>
         <p className="text-xs text-[#667085] mt-1">
-          Exportez les données brutes pour vos sauvegardes locales, comptabilité ou revues du pilote.
+          {t("exportDesc")}
         </p>
       </div>
 

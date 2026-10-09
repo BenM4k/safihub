@@ -73,7 +73,7 @@ export function CartView() {
             <div key={item.houseItemId} className="p-4 flex items-center justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-900 truncate">
-                  {item.itemName || "Item"}
+                  {item.itemName || t("itemFallback")}
                 </p>
                 <p className="text-xs text-slate-500">
                   {item.fabricName || ""} {item.serviceName ? `• ${item.serviceName}` : ""}
@@ -89,7 +89,7 @@ export function CartView() {
                     type="button"
                     onClick={() => cart.updateQuantity(item.houseItemId, -1)}
                     className="size-7 flex items-center justify-center text-slate-600 hover:bg-slate-200"
-                    aria-label="Decrease quantity"
+                    aria-label={t("decreaseQuantity")}
                   >
                     <Minus className="size-3" />
                   </button>
@@ -100,7 +100,7 @@ export function CartView() {
                     type="button"
                     onClick={() => cart.updateQuantity(item.houseItemId, 1)}
                     className="size-7 flex items-center justify-center text-slate-600 hover:bg-slate-200"
-                    aria-label="Increase quantity"
+                    aria-label={t("increaseQuantity")}
                   >
                     <Plus className="size-3" />
                   </button>
@@ -125,7 +125,7 @@ export function CartView() {
           </span>
         </div>
         <div className="flex items-center justify-between text-xs text-slate-400">
-          <span>~ USD (1$ = 2 800 CDF)</span>
+          <span>{t("usdEstimate")}</span>
           <span className="font-mono">${subtotalUsd}</span>
         </div>
         <Button

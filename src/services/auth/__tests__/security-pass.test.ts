@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getSignedUploadUrl, getSignedDownloadUrl } from "@/lib/storage/r2-client";
+import { projectHouseFacingOrder } from "@/dal";
 import { requireRole, requireHouseAccess } from "../guards";
 import { registerCustomer } from "../auth.service";
 import { auth } from "../auth";
@@ -40,15 +41,8 @@ describe("Phase 11.3: Security Pass & Authorization Integrity", () => {
         totalDue: 25000,
       };
 
-      // AC 15 projection transformation function as implemented in DAL
-      const houseProjectedOrder = {
-        id: fullOrderRecord.id,
-        code: fullOrderRecord.code,
-        customerFirstName: fullOrderRecord.customerRawName.trim().split(" ")[0] || "Client",
-        neighborhoodName: fullOrderRecord.neighborhoodName,
-        status: fullOrderRecord.status,
-        totalDue: fullOrderRecord.totalDue,
-      };
+      // AC 15 projection transformation using production DAL projection function
+      const houseProjectedOrder = projectHouseFacingOrder(fullOrderRecord);
 
       // Invariant checks:
       expect((houseProjectedOrder as Record<string, unknown>).customerPhone).toBeUndefined();
@@ -119,18 +113,22 @@ describe("Phase 11.3: Security Pass & Authorization Integrity", () => {
   });
 
   describe("Signed URL Security (Cloudflare R2)", () => {
-    it("generates presigned upload URL with key and expiration parameter", async () => {
+    it("generates presigned upload URL with key, signature, and expiration parameter", async () => {
       const uploadUrl = await getSignedUploadUrl("photos/order-1/pickup.webp", "image/webp", 300);
       expect(uploadUrl).toBeDefined();
       expect(typeof uploadUrl).toBe("string");
       expect(uploadUrl).toContain("photos/order-1/pickup.webp");
+      expect(uploadUrl).toMatch(/X-Amz-Signature|mock_upload_sig/i);
+      expect(uploadUrl).toMatch(/X-Amz-Expires=300|expires=300/i);
     });
 
-    it("generates presigned download URL with signature", async () => {
+    it("generates presigned download URL with key, signature, and expiration parameter", async () => {
       const downloadUrl = await getSignedDownloadUrl("photos/order-1/pickup.webp", 900);
       expect(downloadUrl).toBeDefined();
       expect(typeof downloadUrl).toBe("string");
       expect(downloadUrl).toContain("photos/order-1/pickup.webp");
+      expect(downloadUrl).toMatch(/X-Amz-Signature|mock_download_sig/i);
+      expect(downloadUrl).toMatch(/X-Amz-Expires=900|expires=900/i);
     });
   });
 

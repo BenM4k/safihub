@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
 import { CartView } from "@/components/cart/cart-view";
 
-export const metadata: Metadata = {
-  title: "Cart | SafiHub",
-  description: "View and manage items in your laundry cart",
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("cart");
+  return {
+    title: `${t("title")} | SafiHub`,
+    description: t("metaDescription"),
+  };
 };
 
 export default function CartPage() {

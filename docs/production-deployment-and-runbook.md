@@ -69,7 +69,7 @@ In the event of accidental data corruption or disaster:
    DATABASE_URL="<restored_branch_connection_string>" pnpm db:studio
    ```
 4. **Switch Vercel Connection**:
-   Update `DATABASE_URL_POOLED` in Vercel to point to the newly verified branch endpoint.
+   Update both `DATABASE_URL` and `DATABASE_URL_POOLED` in Vercel to point to the restored branch’s direct and pooled endpoints, respectively, so migrations and the application runtime use the same branch.
 5. **Redeploy / Invalidate Cache**: Trigger a deployment promotion in Vercel.
 
 ---

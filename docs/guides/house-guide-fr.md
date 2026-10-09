@@ -5,14 +5,14 @@
 
 ---
 
-### 1. Horaires & Acceptation des Commandes (45 minutes)
+## 1. Horaires & Acceptation des Commandes (45 minutes)
 - **Horaires d'ouverture :** Votre minuteur d'acceptation ne tourne **que pendant vos heures d'ouverture déclarées**.
 - **Délai :** Vous disposez de **45 minutes** pour accepter une commande entrante via votre portail SafiHub (`/house`).
 - **Alerte :** À 33 minutes (75% du délai), l'administrateur SafiHub reçoit une alerte pour vous contacter si la commande n'est pas encore acceptée.
 
 ---
 
-### 2. Réception du Linge & Double Comptage (1 heure)
+## 2. Réception du Linge & Double Comptage (1 heure)
 1. **Arrivée du coursier :** Le coursier vous remet le sac scellé et vous annonce le numéro de commande.
 2. **Fenêtre de contrôle de 60 minutes :** Vous disposez d'une heure pour ouvrir le sac, compter chaque article et inspecter les tissus.
 3. **Cas de conformité :** Si le nombre d'articles et les tissus correspondent exactement, cliquez sur **« Confirmer la Réception »**. Le statut passe à `washing`.
@@ -23,20 +23,20 @@
 
 ---
 
-### 3. Traitement & Emballage
+## 3. Traitement & Emballage
 - Nettoyez, séchez et repassez les vêtements selon les standards de qualité SafiHub.
 - Emballez le linge propre sous housse ou sachet protecteur scellé.
 - Dès que le lot est prêt, cliquez sur **« Prêt pour Livraison »** (`ready`). Le système planifie la mission de retour.
 
 ---
 
-### 4. Règlements & Paiements (Settlements)
+## 4. Règlements & Paiements (Settlements)
 - **Fréquence :** Les paiements vous sont versés **tous les 15 jours** (le 1er et le 15 du mois).
 - **Montant versé :** Total des prix de vos articles nettoyés **moins** la commission SafiHub (ex. 20%).
 - **Mode de paiement :** Virement Mobile Money (M-Pesa, Airtel Money, Orange Money) ou retrait en espèces au bureau SafiHub.
 
 ---
 
-### 5. Numéro d'Urgence Buanderie
+## 5. Numéro d'Urgence Buanderie
 - **Assistance Opérations SafiHub Bukavu :** `+243 810 000 000` (WhatsApp & Appel)
 - **Email support :** `support@safihub.cd`

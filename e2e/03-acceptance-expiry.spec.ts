@@ -4,7 +4,7 @@ import { computeAcceptanceDeadlines } from "../src/services/order/deadlines";
 import type { OrderStatus } from "../src/services/db/schema";
 
 test.describe("Flow 3: Acceptance Expiry & Alternative House Switching", () => {
-  test("expires order when house fails to accept within opening-hours deadline and preserves order items", async () => {
+  test("expires order when house fails to accept within opening-hours deadline", async () => {
     const orderId = `ord_expiry_${Date.now()}`;
     let orderStatus: OrderStatus = "created";
 
@@ -38,14 +38,5 @@ test.describe("Flow 3: Acceptance Expiry & Alternative House Switching", () => {
       actorRole: "house",
     });
     expect(invalidWash.ok).toBe(false);
-
-    // 4. Cart preservation: Customer or system can re-instantiate cart to select another partner house
-    const originalCartItems = [
-      { houseItemId: "h_item_1", itemId: "shirt", quantity: 3, priceCdf: 3000 },
-      { houseItemId: "h_item_2", itemId: "jeans", quantity: 1, priceCdf: 4000 },
-    ];
-    // Rebuilt cart preserves all quantities and items
-    expect(originalCartItems.length).toBe(2);
-    expect(originalCartItems.reduce((acc, i) => acc + i.quantity, 0)).toBe(4);
   });
 });

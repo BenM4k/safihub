@@ -148,7 +148,7 @@ export async function createAdminCourier(params: {
 
     await upsertCourierProfile({
       userId: courierId,
-      cashCeiling: params.cashCeiling ?? 100000,
+      cashCeiling: params.cashCeiling ?? 140000,
       securityDeposit: params.securityDeposit ?? 0,
       changeFloat: params.changeFloat ?? 0,
       isActive: true,

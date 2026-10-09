@@ -107,6 +107,29 @@ describe("Phase 11.6: Admin Data Export Service", () => {
     }
   });
 
+  it("sanitizes CSV formula injection characters with single quote prefix", async () => {
+    const { getAdminCustomersExportData } = await import("@/dal/ops.dal");
+    vi.mocked(getAdminCustomersExportData).mockResolvedValueOnce([
+      {
+        id: "cust-inject",
+        name: "=cmd|' /C calc'!A0",
+        email: "@evil.cd",
+        contactPhone: "+243810000002",
+        status: "-pending",
+        isGuest: false,
+        createdAt: new Date("2026-10-01T10:00:00Z"),
+      },
+    ]);
+
+    const res = await exportAdminDataset("customers", "csv");
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+
+    expect(res.value.content).toContain("'=cmd|' /C calc'!A0");
+    expect(res.value.content).toContain("'@evil.cd");
+    expect(res.value.content).toContain("'-pending");
+  });
+
   it("rejects unknown dataset identifiers gracefully", async () => {
     // @ts-expect-error Testing invalid runtime input
     const res = await exportAdminDataset("unknown_dataset", "csv");

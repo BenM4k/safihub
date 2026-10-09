@@ -69,7 +69,6 @@ export function ConsentField({
           <input
             id="register-photo-consent"
             type="checkbox"
-            defaultChecked
             className="mt-1 size-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer accent-sky-600"
             {...photoRegistration}
           />

@@ -467,7 +467,16 @@
       "pairCol": "Jozi",
       "rateAppliedCol": "Kiwango Kilichotumika",
       "recordedAtCol": "Ilirekodiwa Mnamo",
-      "noRatesHistory": "Hakuna viwango vilivyorekodiwa katika historia."
+      "noRatesHistory": "Hakuna viwango vilivyorekodiwa katika historia.",
+      "exportTitle": "Uhamishaji wa Data (Ukaguzi & Uendeshaji)",
+      "exportDesc": "Hamisha data ghafi kwa ajili ya nakala rudufu za ndani, uhasibu au ukaguzi wa majaribio.",
+      "exportOrdersName": "Maagizo & Ufuatiliaji",
+      "exportOrdersDesc": "Maagizo yote yenye hali, kiasi cha CDF/USD, nafasi za muda na madobi.",
+      "exportLedgerName": "Leja Kuu ya Fedha Taslimu",
+      "exportLedgerDesc": "Maingizo ya uhasibu yasiyobadilika: makusanyo, kamisheni na malipo.",
+      "exportCustomersName": "Wateja Waliosajiliwa",
+      "exportCustomersDesc": "Orodha ya wateja yenye mawasiliano, hali na tarehe ya usajili.",
+      "exportError": "Hitilafu wakati wa kupakua faili ya data."
     },
     "cash": {
       "title": "Udhibiti wa Fedha Taslimu & Upatanisho wa Kila Siku",
@@ -914,7 +923,12 @@
     "estimatedDelivery": "Usafirishaji unaokadiriwa",
     "total": "Jumla ya Kulipa",
     "priceChangedNotice": "Angalizo: Bei ya baadhi ya nguo imebadilishwa na dobi.",
-    "proceedToCheckout": "Kamilisha Agizo"
+    "proceedToCheckout": "Kamilisha Agizo",
+    "metaDescription": "Tazama na udhibiti nguo zilizo kwenye rukwama yako ya dobi",
+    "decreaseQuantity": "Punguza idadi",
+    "increaseQuantity": "Ongeza idadi",
+    "itemFallback": "Nguo",
+    "usdEstimate": "~ USD (1$ = 2,800 CDF)"
   },
   "checkout": {
     "title": "Kamilisha Agizo Lako",
@@ -1185,6 +1199,46 @@
     "pushEnabled": "Arifa za programu zimewezeshwa",
     "pushUnsupported": "Arifa za programu haziauniwi kwenye kivinjari hiki",
     "pushBlocked": "Arifa za programu zimezuiwa kwenye mipangilio ya kivinjari"
+  },
+  "consentPage": {
+    "metaTitle": "Idhini ya Picha & Ulinzi wa Nguo — SafiHub Bukavu",
+    "metaDescription": "Sera ya upigaji picha za nguo SafiHub Bukavu: hakuna sura, usimbaji fiche wa Cloudflare R2, ufutaji baada ya siku 90 na haki za wateja.",
+    "headerBadge": "Idhini & Ulinzi wa Mali",
+    "headerTitle": "Idhini ya Picha & Nguo",
+    "headerDescription": "Utaratibu wa uwazi wa upigaji picha ili kuhakikisha usalama wa nguo zako mjini Bukavu bila kuingilia faragha yako.",
+    "heroTitle": "Ahadi ya Msingi: Nguo Zako Pekee, Hakuna Kingine",
+    "heroDescription": "Kwenye SafiHub, tunarekodi hali ya nguo kwa picha kwa madhumuni pekee ya kuzuia migogoro ya orodha au madai ya uharibifu wa awali. Hakuna picha inayopiga watu, nyuso, vitambulisho au ndani ya nyumba.",
+    "pillTextiles": "Vitambaa & kasoro pekee",
+    "pillExif": "Data ya EXIF & GPS huondolewa papo hapo",
+    "pillPurge": "Ufutaji uliopangwa wa siku 90",
+    "rulesTitle": "1. Utaratibu wa Upigaji Picha & Mipaka Madhubuti",
+    "rulesSubtitle": "Wakati wa ukusanyaji nyumbani na dereva na upokeaji katika karakana ya dobi mshirika, picha za hali zinaweza kupigwa kulingana na miongozo ya SafiHub.",
+    "authorizedTitle": "Kesi Zinazoruhusiwa & Zinazohitajika",
+    "authorized1": "Kuchanika, mipasuko au vifungo vilivyokosekana kabla ya kufuliwa.",
+    "authorized2": "Madoa makubwa ya awali au kubadilika rangi kwenye kitambaa laini.",
+    "authorized3": "Nguo maalum au za thamani ya juu zinazohitaji bei maalum.",
+    "authorized4": "Uthibitisho wa picha wa kifurushi kilichofungwa wakati wa kuwasilishwa.",
+    "prohibitedTitle": "Makatazo Madhubuti & Udhibiti",
+    "prohibited1": "Nyuso za mteja, wanafamilia au dereva.",
+    "prohibited2": "Vitambulisho, hati za kifedha au kadi za benki.",
+    "prohibited3": "Ndani ya vyumba vya kuishi au vitu binafsi visivyohusiana na nguo.",
+    "prohibited4": "Picha yoyote isiyofuata sheria inakataliwa na kufutwa mara moja.",
+    "thresholdNoticeStrong": "Taarifa ya papo hapo mlangoni:",
+    "thresholdNoticeText": "Dereva humjulisha mteja kila wakati kabla ya kupiga picha ya kasoro yoyote wakati wa kuhesabu pamoja. Mteja anaweza kutazama picha kwenye skrini ya dereva kwa wakati halisi.",
+    "lifecycleTitle": "2. Usimbaji Fiche, Hifadhi ya Cloudflare R2 & Ufutaji wa Siku 90",
+    "lifecycleSubtitle": "Miundombinu ya SafiHub inatumia mfumo salama wa kuhifadhi data kwa muda maalum, kuhakikisha usiri mkubwa wa picha zote.",
+    "cardCompressionTitle": "Ukandamizaji & Usafishaji wa Ndani",
+    "cardCompressionDesc": "Kila picha inapunguzwa ukubwa hadi upeo wa 1280px na kukandamizwa kuwa WebP (< 300 KB) moja kwa moja kwenye kivinjari cha dereva. Data zote za GPS na EXIF zinafutwa kabla ya kupakia.",
+    "cardSignedUrlsTitle": "Viungo Vilivyosainiwa vya Muda Mfupi",
+    "cardSignedUrlsDesc": "Picha zinahifadhiwa kwenye pipa la faragha la Cloudflare R2. Hakuna ufikiaji wa umma unaoruhusiwa moja kwa moja. Kutazama kunahitaji sahihi za kielektroniki zenye muda mfupi wa uhalali (dakika 60).",
+    "cardPurgeTitle": "Ufutaji Kiotomatiki Baada ya Siku 90",
+    "cardPurgeDesc": "Kulingana na sera yetu ya kupunguza ukusanyaji wa data, picha zote zinazohusiana na agizo zinafutwa kabisa siku 90 baada ya uwasilishaji, isipokuwa mgogoro ukiwa unachunguzwa.",
+    "rightsTitle": "3. Haki za Wateja, Kuondoa Idhini & Mawasiliano",
+    "rightsSubtitle": "Unabaki na udhibiti kamili wa data zako binafsi na ruhusa zako.",
+    "cardAccountTitle": "Usimamizi Kupitia Eneo la Mteja",
+    "cardAccountDesc": "Unaweza kuangalia idhini zako zilizorekodiwa wakati wowote kwenye 'Akaunti Yangu' kwenye SafiHub. Pia una haki ya kuomba ufutaji wa mapema wa picha zinazohusiana na maagizo yako yaliyokamilika.",
+    "cardSupportTitle": "Msaada & Mwakilishi Bukavu",
+    "cardSupportDesc": "Kwa malalamiko au maswali yoyote kuhusu picha na usiri, wasiliana na timu yetu ya operesheni kupitia WhatsApp rasmi ya SafiHub au kwa barua pepe kupitia"
   }
 }
 

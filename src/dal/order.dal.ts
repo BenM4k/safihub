@@ -826,6 +826,24 @@ export async function getHouseOrdersRestricted(
 }
 
 /**
+ * AC 15: Projects an order for the house portal, stripping phone and street address.
+ */
+export function projectHouseFacingOrder<T extends { customerRawName: string }>(
+  order: T
+): Omit<T, "customerPhone" | "streetAddress" | "landmark"> & { customerFirstName: string } {
+  const record = order as unknown as Record<string, unknown>;
+  const copy = { ...record };
+  delete copy.customerPhone;
+  delete copy.streetAddress;
+  delete copy.landmark;
+  const rawName = typeof record.customerRawName === "string" ? record.customerRawName : "";
+  return {
+    ...copy,
+    customerFirstName: rawName.trim().split(" ")[0] || "Client",
+  } as Omit<T, "customerPhone" | "streetAddress" | "landmark"> & { customerFirstName: string };
+}
+
+/**
  * AC 15: Restricted house order detail projection.
  * Strictly verifies ownership by houseId, omits phone & street address.
  */

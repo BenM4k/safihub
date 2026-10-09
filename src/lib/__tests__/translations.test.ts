@@ -62,15 +62,13 @@ describe("Translations Key Parity & Completeness", () => {
 
     for (const [key, enVal] of Object.entries(enFlat)) {
       const enVars = (enVal.match(varRegex) || []).sort();
-      if (enVars.length > 0) {
-        const frVal = frFlat[key] || "";
-        const swVal = swFlat[key] || "";
-        const frVars = (frVal.match(varRegex) || []).sort();
-        const swVars = (swVal.match(varRegex) || []).sort();
+      const frVal = frFlat[key] || "";
+      const swVal = swFlat[key] || "";
+      const frVars = (frVal.match(varRegex) || []).sort();
+      const swVars = (swVal.match(varRegex) || []).sort();
 
-        expect(frVars, `Variable mismatch in FR for key "${key}"`).toEqual(enVars);
-        expect(swVars, `Variable mismatch in SW for key "${key}"`).toEqual(enVars);
-      }
+      expect(frVars, `Variable mismatch in FR for key "${key}"`).toEqual(enVars);
+      expect(swVars, `Variable mismatch in SW for key "${key}"`).toEqual(enVars);
     }
   });
 });

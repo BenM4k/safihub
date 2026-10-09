@@ -1,6 +1,6 @@
 # SafiHub — Product & Architecture Spec (Bukavu)
 
-> Version 9.6. Status labels: **Decided**, **Proposed** (my recommendation, not yet confirmed) and **Open**. See the Decision Log for the summary.
+> Version 9.6. Status labels: **Decided** and **Proposed** (all launch decisions resolved; see Section 32). See the Decision Log for the summary.
 
 ## 1. Product Overview
 
@@ -29,7 +29,7 @@ The platform is a **marketplace**: the customer chooses a nearby laundry house, 
 | Short acceptance delay (default 45 minutes, timer during opening hours)                                                                                | Decided  |
 | Three-point count; non-accepted items returned with the delivery                                                                                       | Decided  |
 | File storage and photos in the MVP                                                                                                                     | Decided  |
-| Cash on delivery at launch with cash controls (amounts open)                                                                                           | Decided  |
+| Cash on delivery at launch with cash controls (ceiling 140,000 CDF / $50, deposit $50, float 20,000 CDF)                                               | Decided  |
 | Zones with a zone matrix, master catalogue, guest customers, missions                                                                                  | Decided  |
 | The customer app is built first, before the pilot; manual entry by the admin stays available                                                           | Decided  |
 | Coverage zones: served neighborhoods, house coverage, courier zones, coverage requests                                                                 | Decided  |
@@ -43,7 +43,7 @@ The platform is a **marketplace**: the customer chooses a nearby laundry house, 
 | Admin on-behalf actions and acceptance escalation                                                                                                      | Proposed |
 | Tooling choices and their timing                                                                                                                       | Proposed |
 | Photo retention of 90 days                                                                                                                             | Proposed |
-| Commission, courier pay, delivery fee grid, cash ceiling, deposit, slot length                                                                         | Open     |
+| Commission (20%), courier pay (2,500 CDF/leg), delivery fees (3,000–8,000 CDF), cash ceiling (140,000 CDF), deposit ($50), slot length (2h)           | Decided  |
 
 ---
 

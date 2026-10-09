@@ -467,7 +467,16 @@
       "pairCol": "Paire",
       "rateAppliedCol": "Taux appliqué",
       "recordedAtCol": "Enregistré le",
-      "noRatesHistory": "Aucun taux enregistré dans l'historique."
+      "noRatesHistory": "Aucun taux enregistré dans l'historique.",
+      "exportTitle": "Exportation des Données (Audit & Pilotage)",
+      "exportDesc": "Exportez les données brutes pour vos sauvegardes locales, comptabilité ou revues du pilote.",
+      "exportOrdersName": "Commandes & Traçabilité",
+      "exportOrdersDesc": "Toutes les commandes avec statuts, montants CDF/USD, créneaux et buanderies.",
+      "exportLedgerName": "Grand Livre de Caisse",
+      "exportLedgerDesc": "Écritures comptables append-only : encaissements, commissions et règlements.",
+      "exportCustomersName": "Clients Enregistrés",
+      "exportCustomersDesc": "Liste des clients avec contacts, statut et date d'inscription.",
+      "exportError": "Erreur lors du téléchargement du fichier."
     },
     "cash": {
       "title": "Contrôle de caisse & Rapprochement journalier",
@@ -914,7 +923,12 @@
     "estimatedDelivery": "Livraison estimée",
     "total": "Total à payer",
     "priceChangedNotice": "Attention : le tarif de certains articles a été mis à jour par l'atelier.",
-    "proceedToCheckout": "Passer la commande"
+    "proceedToCheckout": "Passer la commande",
+    "metaDescription": "Consultez et gérez les articles de votre panier de pressing",
+    "decreaseQuantity": "Diminuer la quantité",
+    "increaseQuantity": "Augmenter la quantité",
+    "itemFallback": "Article",
+    "usdEstimate": "~ USD (1$ = 2 800 CDF)"
   },
   "checkout": {
     "title": "Finaliser ma commande",
@@ -1185,6 +1199,46 @@
     "pushEnabled": "Notifications push activées",
     "pushUnsupported": "Notifications push non supportées sur ce navigateur",
     "pushBlocked": "Notifications push bloquées dans les paramètres de votre navigateur"
+  },
+  "consentPage": {
+    "metaTitle": "Consentement Photos & Protection du Linge — SafiHub Bukavu",
+    "metaDescription": "Politique de prise de photos du linge chez SafiHub Bukavu : absence de visages, chiffrement Cloudflare R2, purge sous 90 jours et droits des clients.",
+    "headerBadge": "Consentement & Protection des Biens",
+    "headerTitle": "Consentement Photos & Linge",
+    "headerDescription": "Le protocole photographique transparent pour garantir l'intégrité de vos vêtements à Bukavu sans compromettre votre vie privée.",
+    "heroTitle": "Engagement Fondamental : Vos Vêtements, Rien d'Autre",
+    "heroDescription": "Chez SafiHub, nous documentons l'état des articles confiés par photo exclusivement pour éviter tout litige d'inventaire ou contestation d'état initial. Aucune photo ne capture de personnes, de visages, de pièces d'identité ou d'intérieurs d'habitation.",
+    "pillTextiles": "Textiles & défauts uniquement",
+    "pillExif": "EXIF & GPS supprimés localement",
+    "pillPurge": "Purge programmée à 90 jours",
+    "rulesTitle": "1. Protocole de Prise de Vue & Limites Strictes",
+    "rulesSubtitle": "Lors de la collecte à domicile par le coursier et de la réception au pressing partenaire, des photos d'état peuvent être prises selon le cahier des charges SafiHub.",
+    "authorizedTitle": "Cas Autorisés & Requis",
+    "authorized1": "Déchirures, accrocs ou boutons manquants constatés avant nettoyage.",
+    "authorized2": "Taches majeures préexistantes ou décolorations sur tissu délicat.",
+    "authorized3": "Articles d'exception ou de valeur soumis à tarification sur-mesure.",
+    "authorized4": "Preuve photographique du colis scellé remis à la livraison.",
+    "prohibitedTitle": "Interdictions Strictes & Contrôles",
+    "prohibited1": "Visages du client, des membres du foyer ou du coursier.",
+    "prohibited2": "Pièces d'identité, documents financiers ou cartes bancaires.",
+    "prohibited3": "Intérieurs d'habitation ou objets personnels hors textile.",
+    "prohibited4": "Toute photo non conforme est immédiatement rejetée et supprimée.",
+    "thresholdNoticeStrong": "Information immédiate au pas de porte :",
+    "thresholdNoticeText": "Le coursier informe systématiquement le client avant de photographier tout défaut lors du comptage contradictoire. Le client peut visualiser le cliché en temps réel sur l'écran du coursier.",
+    "lifecycleTitle": "2. Chiffrement, Stockage Cloudflare R2 & Rétention 90 Jours",
+    "lifecycleSubtitle": "L'infrastructure SafiHub applique un modèle de stockage hautement sécurisé et à durée limitée, garantissant la stricte confidentialité des clichés.",
+    "cardCompressionTitle": "Compression Locale & Assainissement",
+    "cardCompressionDesc": "Chaque image est redimensionnée à max 1280px et compressée en WebP (< 300 Ko) directement dans le navigateur du coursier. Toutes les balises GPS et métadonnées EXIF sont purgées avant l'envoi.",
+    "cardSignedUrlsTitle": "URLs Présignées Éphémères",
+    "cardSignedUrlsDesc": "Les photos sont stockées dans un bucket Cloudflare R2 privé. Aucun accès public direct n'est autorisé. La visualisation nécessite des signatures cryptographiques à validité limitée (60 minutes).",
+    "cardPurgeTitle": "Purge Automatique à 90 Jours",
+    "cardPurgeDesc": "Conformément à notre politique de minimisation des données, tous les clichés liés à une commande sont supprimés définitivement 90 jours après la livraison, sauf si un litige est en cours d'instruction.",
+    "rightsTitle": "3. Droits des Clients, Retrait du Consentement & Contact",
+    "rightsSubtitle": "Vous conservez le contrôle total sur vos données personnelles et vos autorisations.",
+    "cardAccountTitle": "Gestion depuis l'Espace Client",
+    "cardAccountDesc": "Vous pouvez consulter vos consentements horodatés à tout moment dans « Mon Compte » sur SafiHub. Vous avez également le droit de demander la suppression anticipée des photos liées à vos commandes terminées.",
+    "cardSupportTitle": "Support & Délégué à Bukavu",
+    "cardSupportDesc": "Pour toute réclamation ou question relative à la photographie et à la confidentialité, contactez notre équipe opérationnelle locale sur le WhatsApp officiel SafiHub ou par email à"
   }
 }
 

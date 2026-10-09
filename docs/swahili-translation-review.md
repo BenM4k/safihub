@@ -162,7 +162,7 @@
 
 ## 6. Native Speaker Verification Sign-Off
 
-- [x] **Completeness**: All 1,055 keys in `messages/sw.json` match `messages/fr.json` and `messages/en.json` (0 missing keys).
+- [x] **Completeness**: All 1,057 keys in `messages/sw.json` match `messages/fr.json` and `messages/en.json` (0 missing keys).
 - [x] **Interpolation Parity**: All `{param}` variables preserved without corruption.
 - [x] **Bukavu Linguistic Appropriateness**: Avoided Tanzanian/Kenyan coastal idioms that confuse eastern DRC speakers (e.g., using "dobi / nyumba ya kufulia" and "fedha mkononi").
 - [x] **Date & Currency Formats**: Integer CDF base notation formatted for Bukavu standards.

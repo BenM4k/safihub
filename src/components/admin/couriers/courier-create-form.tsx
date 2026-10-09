@@ -56,7 +56,7 @@ export function CourierCreateForm() {
 
         <div className="space-y-1">
           <Label htmlFor="crCeil" className="text-xs">{t("cashCeiling")}</Label>
-          <Input id="crCeil" name="cashCeiling" type="number" defaultValue="100000" className="h-9 text-xs" />
+          <Input id="crCeil" name="cashCeiling" type="number" defaultValue="140000" className="h-9 text-xs" />
         </div>
 
         <div className="space-y-1">

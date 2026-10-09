@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import crypto from "node:crypto";
 
 interface BackupSnapshot {
   version: string;
@@ -15,12 +16,7 @@ interface BackupSnapshot {
 
 function computeSnapshotChecksum(data: Record<string, unknown>): string {
   const str = JSON.stringify(data);
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return hash.toString(16);
+  return crypto.createHash("sha256").update(str).digest("hex");
 }
 
 function createDatabaseBackup(tables: BackupSnapshot["tables"]): BackupSnapshot {
@@ -96,7 +92,7 @@ describe("Phase 11.5: Production Backup & Restore Drill (Neon PITR Simulation)",
   it("creates a consistent point-in-time database snapshot with cryptographically valid checksum", () => {
     const backup = createDatabaseBackup(sampleProductionState);
     expect(backup.version).toBe("1.0");
-    expect(backup.checksum).toBeDefined();
+    expect(backup.checksum).toMatch(/^[a-f0-9]{64}$/);
     expect(backup.tables.orders.length).toBe(2);
     expect(backup.tables.cashLedger.length).toBe(3);
   });

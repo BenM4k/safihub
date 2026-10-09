@@ -91,6 +91,7 @@ export async function registerAction(
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
     consent,
+    photoConsent,
   });
 
   if (!parsed.success) {
@@ -109,7 +110,7 @@ export async function registerAction(
     password: parsed.data.password,
     phone: parsed.data.phone,
     consent: parsed.data.consent,
-    photoConsent,
+    photoConsent: parsed.data.photoConsent ?? photoConsent,
   });
 
   if (!res.ok) {
