@@ -8,3 +8,4 @@ export * from "./dispatch.service";
 export * from "./settings.service";
 export * from "./cash.service";
 export * from "./settlements.service";
+export * from "./export.service";

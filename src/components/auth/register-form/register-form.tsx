@@ -121,9 +121,10 @@ export function RegisterForm() {
           error={errors.confirmPassword?.message}
         />
 
-        {/* Mandatory legal consent */}
+        {/* Mandatory legal consent and photo consent */}
         <ConsentField
           registration={register("consent")}
+          photoRegistration={register("photoConsent")}
           error={errors.consent?.message}
         />
 

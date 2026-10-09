@@ -37,6 +37,7 @@ export function getRegisterSchema(t: AuthTranslator) {
       consent: z.boolean().refine((val) => val === true, {
         message: t("validation.consentRequired"),
       }),
+      photoConsent: z.boolean().optional(),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: t("validation.passwordsMismatch"),

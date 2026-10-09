@@ -173,6 +173,8 @@
     "termsLink": "Conditions d'utilisation",
     "and": "et la",
     "privacyLink": "Politique de confidentialité",
+    "photoConsentLabel": "J'autorise la prise de photos d'état du linge (vêtements uniquement, sans visages) selon la",
+    "photoConsentLink": "politique photos",
     "registering": "Création du compte...",
     "forgotPasswordTitle": "Mot de passe oublié ?",
     "forgotPasswordSubtitle": "Entrez votre adresse email pour recevoir un lien de réinitialisation sécurisé.",

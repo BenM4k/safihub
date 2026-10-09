@@ -173,6 +173,8 @@
     "termsLink": "Terms of Service",
     "and": "and the",
     "privacyLink": "Privacy Policy",
+    "photoConsentLabel": "I authorize condition photos of garments (clothing only, no faces) per the",
+    "photoConsentLink": "photo policy",
     "registering": "Creating account...",
     "forgotPasswordTitle": "Forgot Password?",
     "forgotPasswordSubtitle": "Enter your email address to receive a secure password reset link.",

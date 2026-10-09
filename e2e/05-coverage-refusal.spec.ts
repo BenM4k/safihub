@@ -85,17 +85,30 @@ test.describe("Flow 5: Coverage Boundaries & Refusal Handling (AC 17, 18, 19, 21
       },
       {
         existingOrders: [],
-        houses: new Map([[house.id, house]]),
-        neighborhoods: new Map([
+        houses: new Map([
+          [
+            house.id,
+            {
+              ...house,
+              minimumOrderAmount: 10000,
+              commissionBps: 2000,
+              cutoffMinutes: 60,
+              dailyCapacity: 20,
+            },
+          ],
+        ]),
+        neighborhoods: new Map<string, typeof ibandaNeighborhood | typeof distantNeighborhood>([
           [ibandaNeighborhood.id, ibandaNeighborhood],
           [distantNeighborhood.id, distantNeighborhood],
         ]),
-        houseItems: new Map(),
-        masterCatalog: new Map(),
+        houseItems: [],
+        masterItems: new Map(),
         masterFabrics: new Map(),
         masterServices: new Map(),
-        houseExclusions: [],
         houseCoverage: [],
+        houseHours: [],
+        houseClosures: [],
+        courierShifts: [],
         zoneFees: [
           {
             customerZoneId: "zone_outer",
@@ -107,11 +120,7 @@ test.describe("Flow 5: Coverage Boundaries & Refusal Handling (AC 17, 18, 19, 21
         settings: {
           defaultCommissionBps: 2000,
           acceptanceDelayMinutes: 45,
-          receptionConformingHours: 1,
-          slotLengthHours: 2,
-          defaultCashCeiling: 100000,
           maxCoverageDistanceLevel: 2,
-          firstOrderScreeningEnabled: false,
           maxItemsPerOrder: 50,
         },
       }

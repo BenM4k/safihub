@@ -3,6 +3,7 @@ import { getAdminSettingsData } from "@/services/admin";
 import { PlatformSettingsForm } from "@/components/admin/settings/platform-settings-form";
 import { ExchangeRateForm } from "@/components/admin/settings/exchange-rate-form";
 import { ExchangeRatesHistory } from "@/components/admin/settings/exchange-rates-history";
+import { DataExportCard } from "@/components/admin/settings/data-export-card";
 
 export default async function AdminSettingsPage() {
   const t = await getTranslations("admin.settings");
@@ -38,6 +39,8 @@ export default async function AdminSettingsPage() {
           <ExchangeRatesHistory rates={rates} />
         </div>
       </div>
+
+      <DataExportCard />
     </div>
   );
 }

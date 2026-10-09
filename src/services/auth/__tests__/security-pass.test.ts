@@ -136,13 +136,14 @@ describe("Phase 11.3: Security Pass & Authorization Integrity", () => {
 
   describe("Security Headers Verification", () => {
     it("enforces essential security headers in next.config.ts", async () => {
-      const config = await (typeof nextConfig === "function" ? nextConfig("", {}) : nextConfig);
+      const config = nextConfig as { headers?: () => Promise<Array<{ source: string; headers: Array<{ key: string; value: string }> }>> };
       expect(config.headers).toBeDefined();
 
       if (config.headers) {
         const headerRules = await config.headers();
         const globalRule = headerRules.find((r: { source: string }) => r.source === "/:path*");
         expect(globalRule).toBeDefined();
+        if (!globalRule) return;
 
         const headers = globalRule.headers as Array<{ key: string; value: string }>;
         const headerMap = Object.fromEntries(headers.map((h) => [h.key, h.value]));
