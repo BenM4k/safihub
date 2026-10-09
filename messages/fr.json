@@ -60,7 +60,7 @@
   "trust": {
     "turnaroundTitle": "24h à 48h",
     "turnaroundDesc": "Délai moyen garanti",
-    "codTitle": "100% Cash on Delivery",
+    "codTitle": "100% Paiement à la livraison",
     "codDesc": "Payez en CDF ou USD à la livraison",
     "countTitle": "Double comptage",
     "countDesc": "Vérification au seuil avec le coursier",
@@ -522,7 +522,8 @@
       "notePlaceholder": "Ex. Fond initial de 10 000 CDF en petites coupures",
       "deficit": "Déficit constaté",
       "surplus": "Surplus",
-      "reconcileNotePlaceholder": "Ex. Reçu en mains propres..."
+      "reconcileNotePlaceholder": "Ex. Reçu en mains propres...",
+      "actions": "Actions"
     },
     "settlements": {
       "title": "Règlements & Payouts",

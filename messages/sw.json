@@ -60,7 +60,7 @@
   "trust": {
     "turnaroundTitle": "Masaa 24 hadi 48",
     "turnaroundDesc": "Muda wa kawaida uliohakikishwa",
-    "codTitle": "100% Cash on Delivery",
+    "codTitle": "100% Malipo wakati wa kupokea",
     "codDesc": "Lipa kwa CDF au USD unapopokea nguo",
     "countTitle": "Hesabu Mara Mbili",
     "countDesc": "Uhakiki wa vipande mlangoni pamoja na mtumwa",
@@ -522,7 +522,8 @@
       "notePlaceholder": "Mfano: Pesa ya awali ya CDF 10,000 ya noti ndogo",
       "deficit": "Upungufu umebainika",
       "surplus": "Ziada",
-      "reconcileNotePlaceholder": "Mfano: Imepokelewa mikononi..."
+      "reconcileNotePlaceholder": "Mfano: Imepokelewa mikononi...",
+      "actions": "Vitendo"
     },
     "settlements": {
       "title": "Malipo & Payouts",
