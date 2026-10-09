@@ -99,13 +99,10 @@ export function CheckoutForm({
 
   const handleAcceptPriceChange = () => {
     if (priceChangeDetails && typeof priceChangeDetails.newPrice === "number") {
+      const sId = priceChangeDetails.serviceId as string;
       const itId = priceChangeDetails.itemId as string;
-      // Update expected price in cart
-      cart.items.forEach((item) => {
-        if (item.itemId === itId) {
-          item.expectedUnitPrice = priceChangeDetails.newPrice as number;
-        }
-      });
+      const fId = priceChangeDetails.fabricId as string;
+      cart.updateExpectedUnitPrice(sId, itId, fId, priceChangeDetails.newPrice);
     }
     setPriceChangeDetails(null);
     setServerError(null);

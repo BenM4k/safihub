@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, ShieldCheck } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import type { ConsentDocumentType } from "@/dal";
 
 interface ConsentsHistoryProps {
@@ -15,6 +15,7 @@ interface ConsentsHistoryProps {
 
 export function ConsentsHistory({ consents }: ConsentsHistoryProps) {
   const t = useTranslations("account");
+  const locale = useLocale();
 
   const getDocName = (doc: ConsentDocumentType) => {
     switch (doc) {
@@ -61,7 +62,7 @@ export function ConsentsHistory({ consents }: ConsentsHistoryProps) {
 
             <span className="text-[11px] font-medium text-slate-500 self-start sm:self-auto">
               {t("consentAcceptedAt", {
-                date: new Date(c.acceptedAt).toLocaleDateString("fr-FR", {
+                date: new Date(c.acceptedAt).toLocaleDateString(locale, {
                   year: "numeric",
                   month: "short",
                   day: "numeric",

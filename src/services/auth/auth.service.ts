@@ -22,6 +22,7 @@ export interface RegisterUserInput {
   password: string;
   phone: string;
   consent: boolean;
+  photoConsent?: boolean;
 }
 
 export interface LoginUserInput {
@@ -118,14 +119,16 @@ export async function registerCustomer(
       return err("Failed to record required legal consent.");
     }
 
-    const photosConsent = await recordConsent({
-      userId,
-      document: "photos",
-      version: "1.0",
-    });
-    if (!photosConsent.ok) {
-      console.error("Failed to record photos consent for user", userId, photosConsent.error);
-      return err("Failed to record required legal consent.");
+    if (input.photoConsent) {
+      const photosConsent = await recordConsent({
+        userId,
+        document: "photos",
+        version: "1.0",
+      });
+      if (!photosConsent.ok) {
+        console.error("Failed to record photos consent for user", userId, photosConsent.error);
+        return err("Failed to record photo consent.");
+      }
     }
 
     return ok({

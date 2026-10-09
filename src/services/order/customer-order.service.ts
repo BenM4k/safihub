@@ -147,10 +147,15 @@ export async function placeCustomerOrder(
   // Handle Idempotent duplicate check (AC 3)
   if (payload.isDuplicate && payload.existingOrderId) {
     const existing = context.existingOrders.find((o) => o.id === payload.existingOrderId);
+    let trackingToken = existing?.trackingToken;
+    if (!trackingToken) {
+      const dbOrder = await getOrderById(payload.existingOrderId);
+      trackingToken = dbOrder?.trackingToken || "";
+    }
     return ok({
       orderId: payload.existingOrderId,
       code: existing?.code || "EXISTING",
-      trackingToken: "",
+      trackingToken,
     });
   }
 
@@ -238,11 +243,16 @@ export async function cancelCustomerOrder(
 
   if (!transitionRes.ok) return err(transitionRes.error);
 
-  await transitionOrderStatusAtomic({
+  const updated = await transitionOrderStatusAtomic({
     orderId,
+    expectedStatus: order.status,
     newStatus: "cancelled",
     event: transitionRes.value.event,
   });
+
+  if (updated === false) {
+    return err("Conflit de concurrence: la commande a déjà changé de statut.");
+  }
 
   return ok(undefined);
 }
@@ -265,11 +275,16 @@ export async function approveCustomerPriceAdjustment(
 
   if (!transitionRes.ok) return err(transitionRes.error);
 
-  await transitionOrderStatusAtomic({
+  const updated = await transitionOrderStatusAtomic({
     orderId,
+    expectedStatus: order.status,
     newStatus: "washing",
     event: transitionRes.value.event,
   });
+
+  if (updated === false) {
+    return err("Conflit de concurrence: la commande a déjà changé de statut.");
+  }
 
   return ok(undefined);
 }
@@ -293,11 +308,16 @@ export async function declineCustomerPriceAdjustment(
 
   if (!transitionRes.ok) return err(transitionRes.error);
 
-  await transitionOrderStatusAtomic({
+  const updated = await transitionOrderStatusAtomic({
     orderId,
+    expectedStatus: order.status,
     newStatus: "price_declined",
     event: transitionRes.value.event,
   });
+
+  if (updated === false) {
+    return err("Conflit de concurrence: la commande a déjà changé de statut.");
+  }
 
   return ok(undefined);
 }
@@ -305,11 +325,28 @@ export async function declineCustomerPriceAdjustment(
 export async function confirmCustomerDeliverySlot(
   orderId: string,
   actorId: string,
-  slot: { start: Date; end: Date },
+  slot?: { start: Date; end: Date },
   method: "app" | "tracking_link" = "app"
 ): Promise<Result<void, string>> {
   const order = await getOrderById(orderId);
   if (!order) return err("Commande introuvable.");
+
+  const resolvedSlot =
+    order.deliverySlotStart && order.deliverySlotEnd
+      ? { start: order.deliverySlotStart, end: order.deliverySlotEnd }
+      : slot;
+
+  if (!resolvedSlot) {
+    return err("Créneau de livraison manquant.");
+  }
+
+  if (
+    isNaN(resolvedSlot.start.getTime()) ||
+    isNaN(resolvedSlot.end.getTime()) ||
+    resolvedSlot.end.getTime() <= resolvedSlot.start.getTime()
+  ) {
+    return err("Créneau de livraison invalide.");
+  }
 
   const transitionRes = transitionOrder(orderId, order.status, {
     targetStatus: "delivery_slot_confirmed",
@@ -320,13 +357,20 @@ export async function confirmCustomerDeliverySlot(
 
   if (!transitionRes.ok) return err(transitionRes.error);
 
-  await updateOrderDeliverySlot({
-    orderId,
-    deliverySlotStart: slot.start,
-    deliverySlotEnd: slot.end,
-    newStatus: "delivery_slot_confirmed",
-    event: transitionRes.value.event,
-  });
+  try {
+    await updateOrderDeliverySlot({
+      orderId,
+      expectedStatus: order.status,
+      deliverySlotStart: resolvedSlot.start,
+      deliverySlotEnd: resolvedSlot.end,
+      newStatus: "delivery_slot_confirmed",
+      event: transitionRes.value.event,
+    });
+  } catch (error) {
+    return err(
+      error instanceof Error ? error.message : "Erreur lors de la confirmation du créneau de livraison."
+    );
+  }
 
   return ok(undefined);
 }
@@ -353,15 +397,21 @@ export async function openCustomerOrderDispute(
 
   if (!transitionRes.ok) return err(transitionRes.error);
 
-  const res = await createDisputeTransaction({
-    orderId,
-    openedBy: customerId,
-    type: data.type,
-    description: data.description,
-    event: transitionRes.value.event,
-  });
-
-  return ok(res);
+  try {
+    const res = await createDisputeTransaction({
+      orderId,
+      expectedStatus: order.status,
+      openedBy: customerId,
+      type: data.type,
+      description: data.description,
+      event: transitionRes.value.event,
+    });
+    return ok(res);
+  } catch (error) {
+    return err(
+      error instanceof Error ? error.message : "Erreur lors de l'ouverture du litige."
+    );
+  }
 }
 
 export async function getCustomerOrdersList(

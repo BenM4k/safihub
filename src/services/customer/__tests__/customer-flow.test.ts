@@ -368,8 +368,10 @@ vi.mock("@/dal/order.dal", () => ({
       const ord = mockOrdersDb.get(orderId);
       if (ord) {
         ord.status = newStatus;
+        mockEventsDb.push({ id: `ev_${Date.now()}`, ...event });
+        return true;
       }
-      mockEventsDb.push({ id: `ev_${Date.now()}`, ...event });
+      return false;
     }
   ),
   updateOrderDeliverySlot: vi.fn(

@@ -56,6 +56,12 @@ export interface CartStoreState {
       priceCdf: number;
     }>
   ) => boolean;
+  updateExpectedUnitPrice: (
+    serviceId: string,
+    itemId: string,
+    fabricId: string,
+    newPrice: number
+  ) => void;
 }
 
 export const useCartStore = create<CartStoreState>()(
@@ -218,10 +224,28 @@ export const useCartStore = create<CartStoreState>()(
         });
         return true;
       },
+
+      updateExpectedUnitPrice: (serviceId, itemId, fabricId, newPrice) => {
+        set((state) => ({
+          items: state.items.map((it) =>
+            it.serviceId === serviceId &&
+            it.itemId === itemId &&
+            it.fabricId === fabricId
+              ? { ...it, expectedUnitPrice: newPrice }
+              : it
+          ),
+        }));
+      },
     }),
     {
       name: "safihub_cart",
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        houseId: state.houseId,
+        houseName: state.houseName,
+        customerNeighborhoodId: state.customerNeighborhoodId,
+        items: state.items,
+      }),
     }
   )
 );

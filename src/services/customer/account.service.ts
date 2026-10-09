@@ -130,7 +130,10 @@ export async function editCustomerAddress(
   }
 ): Promise<Result<void>> {
   try {
-    await updateCustomerAddress(addressId, userId, data);
+    const updated = await updateCustomerAddress(addressId, userId, data);
+    if (!updated) {
+      return err("Adresse introuvable.");
+    }
     return ok(undefined);
   } catch (error) {
     return err(
@@ -144,7 +147,10 @@ export async function removeCustomerAddress(
   addressId: string
 ): Promise<Result<void>> {
   try {
-    await deleteCustomerAddress(addressId, userId);
+    const deleted = await deleteCustomerAddress(addressId, userId);
+    if (!deleted) {
+      return err("Adresse introuvable.");
+    }
     return ok(undefined);
   } catch (error) {
     return err(
@@ -158,7 +164,10 @@ export async function makeDefaultCustomerAddress(
   addressId: string
 ): Promise<Result<void>> {
   try {
-    await setDefaultCustomerAddress(addressId, userId);
+    const updated = await setDefaultCustomerAddress(addressId, userId);
+    if (!updated) {
+      return err("Adresse introuvable.");
+    }
     return ok(undefined);
   } catch (error) {
     return err(

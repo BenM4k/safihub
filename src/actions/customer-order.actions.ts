@@ -141,17 +141,27 @@ export async function declinePriceAdjustmentAction(
 
 export async function confirmDeliverySlotAction(
   orderId: string,
-  slotStart: string,
-  slotEnd: string,
+  slotStart?: string,
+  slotEnd?: string,
   method: "app" | "tracking_link" = "app"
 ): Promise<{ success: boolean; error?: string }> {
   const user = await getCurrentUser();
   const actorId = user?.id || "guest-customer";
 
+  let slot: { start: Date; end: Date } | undefined;
+  if (slotStart && slotEnd) {
+    const start = new Date(slotStart);
+    const end = new Date(slotEnd);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end.getTime() <= start.getTime()) {
+      return { success: false, error: "Créneau de livraison invalide." };
+    }
+    slot = { start, end };
+  }
+
   const res = await confirmCustomerDeliverySlot(
     orderId,
     actorId,
-    { start: new Date(slotStart), end: new Date(slotEnd) },
+    slot,
     method
   );
 
@@ -173,11 +183,15 @@ export async function openDisputeAction(
     return { success: false, error: "Vous devez être connecté pour ouvrir un litige." };
   }
 
-  const type = (formData.get("type")?.toString() || "other") as
-    | "loss"
-    | "damage"
-    | "payment"
-    | "other";
+  const rawType = formData.get("type")?.toString();
+  let type: "loss" | "damage" | "payment" | "other" = "other";
+  if (rawType !== undefined && rawType !== null && rawType !== "") {
+    if (rawType === "loss" || rawType === "damage" || rawType === "payment" || rawType === "other") {
+      type = rawType;
+    } else {
+      return { success: false, error: "Type de litige invalide." };
+    }
+  }
   const description = formData.get("description")?.toString() || "";
 
   if (!description.trim()) {

@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { getCurrentUser } from "@/services/auth";
-import { getCustomerOrderDetail } from "@/services/order";
+import { getCustomerOrderDetail, ACTIVE_ORDER_STATUSES } from "@/services/order";
 import { OrderHeader } from "@/components/orders/detail/order-header";
 import { OrderItemsCard } from "@/components/orders/detail/order-items-card";
 import { OrderStatusTimeline } from "@/components/orders/detail/order-status-timeline";
@@ -30,9 +30,8 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 
   const { order, items, events } = res.value;
 
-  const canDispute = ["delivered", "ready", "washing", "delivery_in_progress", "price_adjusted", "price_declined"].includes(
-    order.status
-  );
+  const canDispute =
+    (ACTIVE_ORDER_STATUSES as string[]).includes(order.status) || order.status === "delivered";
 
   return (
     <div className="min-h-screen bg-slate-50/50 py-10">

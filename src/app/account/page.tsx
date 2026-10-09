@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Navbar } from "@/components/home/header/navbar";
 import { Footer } from "@/components/home/footer/footer";
 import { getCurrentUser } from "@/services/auth";
@@ -20,9 +21,10 @@ export default async function AccountPage() {
     redirect("/login?callbackUrl=/account");
   }
 
-  const [accountRes, neighborhoods] = await Promise.all([
+  const [accountRes, neighborhoods, t] = await Promise.all([
     getCustomerAccountData(user.id),
     getNeighborhoods(),
+    getTranslations("account"),
   ]);
 
   if (!accountRes.ok) {
@@ -37,10 +39,10 @@ export default async function AccountPage() {
       <main className="flex-1 py-10 px-4 sm:px-6 max-w-4xl mx-auto w-full space-y-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Mon compte
+            {t("title")}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Gérez vos informations personnelles, adresses enregistrées et consentements légaux.
+            {t("subtitle")}
           </p>
         </div>
 

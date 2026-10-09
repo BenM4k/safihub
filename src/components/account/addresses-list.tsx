@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { MapPin, Phone, Trash2, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -23,17 +23,26 @@ export function AddressesList({
 }: AddressesListProps) {
   const t = useTranslations("account");
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   const handleSetDefault = (id: string) => {
+    setError(null);
     startTransition(async () => {
-      await setDefaultAddressAction(id);
+      const res = await setDefaultAddressAction(id);
+      if (!res.success) {
+        setError(res.error || t("addressDefaultError"));
+      }
     });
   };
 
   const handleDelete = (id: string) => {
-    if (!confirm("Voulez-vous vraiment supprimer cette adresse ?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
+    setError(null);
     startTransition(async () => {
-      await deleteAddressAction(id);
+      const res = await deleteAddressAction(id);
+      if (!res.success) {
+        setError(res.error || t("addressDeleteError"));
+      }
     });
   };
 
@@ -48,6 +57,12 @@ export function AddressesList({
           defaultPhone={defaultPhone}
         />
       </div>
+
+      {error && (
+        <div role="alert" className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium">
+          {error}
+        </div>
+      )}
 
       {addresses.length === 0 ? (
         <p className="text-xs text-slate-500 py-6 text-center">

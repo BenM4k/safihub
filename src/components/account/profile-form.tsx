@@ -70,10 +70,11 @@ export function ProfileForm({ user }: ProfileFormProps) {
       )}
 
       <div className="space-y-1">
-        <label className="text-xs font-semibold text-slate-600">
+        <label htmlFor="profile-name" className="text-xs font-semibold text-slate-600">
           {t("nameLabel")}
         </label>
         <input
+          id="profile-name"
           type="text"
           name="name"
           defaultValue={user.name}
@@ -83,10 +84,11 @@ export function ProfileForm({ user }: ProfileFormProps) {
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs font-semibold text-slate-600">
+        <label htmlFor="profile-email" className="text-xs font-semibold text-slate-600">
           {t("emailLabel")}
         </label>
         <input
+          id="profile-email"
           type="email"
           disabled
           value={user.email}
@@ -95,10 +97,11 @@ export function ProfileForm({ user }: ProfileFormProps) {
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs font-semibold text-slate-600">
+        <label htmlFor="profile-phone" className="text-xs font-semibold text-slate-600">
           {t("phoneLabel")}
         </label>
         <input
+          id="profile-phone"
           type="tel"
           name="contactPhone"
           defaultValue={user.contactPhone || ""}

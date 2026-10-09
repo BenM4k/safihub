@@ -24,11 +24,13 @@ export function NeighborhoodChecker({ neighborhoods }: NeighborhoodCheckerProps)
     <div className="w-full max-w-lg mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 shadow-2xs">
       <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-700">
         <MapPin className="size-4 text-primary" />
-        <span>{t("title")}</span>
+        <span id="neighborhood-checker-title">{t("title")}</span>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">
         <select
+          id="neighborhood-checker-select"
+          aria-labelledby="neighborhood-checker-title"
           value={customerNeighborhoodId ?? ""}
           onChange={(e) => handleSelect(e.target.value)}
           className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"

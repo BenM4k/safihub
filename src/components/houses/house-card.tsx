@@ -120,7 +120,7 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
           </div>
           {house.estimatedDeliveryFee !== undefined && house.estimatedDeliveryFee !== null && (
             <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md shrink-0">
-              {house.estimatedDeliveryFee.toLocaleString("fr-FR")} CDF livraison
+              {t("deliveryFee", { amount: `${house.estimatedDeliveryFee.toLocaleString("fr-FR")} CDF` })}
             </span>
           )}
         </div>

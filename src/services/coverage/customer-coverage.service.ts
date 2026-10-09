@@ -35,9 +35,8 @@ export async function submitCoverageRequest(
     });
     return ok(record);
   } catch (error) {
-    return err(
-      error instanceof Error ? error.message : "Erreur lors de l'enregistrement de la demande."
-    );
+    console.error("Erreur lors de l'enregistrement de la demande de couverture:", error);
+    return err("Erreur lors de l'enregistrement de la demande.");
   }
 }
 

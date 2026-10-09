@@ -107,10 +107,11 @@ export function CoverageRequestForm({
 
       {/* Neighborhood Picker */}
       <div className="space-y-1.5">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+        <label htmlFor="coverage-neighborhood-select" className="text-xs font-bold uppercase tracking-wider text-slate-500">
           {t("selectNeighborhood")}
         </label>
         <select
+          id="coverage-neighborhood-select"
           value={isOther ? "__other__" : selectedId}
           onChange={(e) => handleNeighborhoodChange(e.target.value)}
           className="w-full px-3.5 py-3 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
@@ -129,10 +130,11 @@ export function CoverageRequestForm({
       {/* Free Text Neighborhood if other */}
       {isOther && (
         <div className="space-y-1.5 animate-in fade-in-50">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <label htmlFor="coverage-neighborhood-text" className="text-xs font-bold uppercase tracking-wider text-slate-500">
             {t("otherNeighborhood")}
           </label>
           <input
+            id="coverage-neighborhood-text"
             type="text"
             name="neighborhoodText"
             required={isOther}
@@ -144,10 +146,11 @@ export function CoverageRequestForm({
 
       {/* Phone Number */}
       <div className="space-y-1.5">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+        <label htmlFor="coverage-phone" className="text-xs font-bold uppercase tracking-wider text-slate-500">
           {t("phoneLabel")}
         </label>
         <input
+          id="coverage-phone"
           type="tel"
           name="phone"
           defaultValue={defaultPhone}

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/services/auth";
 import {
   addCustomerAddress,
@@ -20,9 +21,10 @@ export async function updateProfileAction(
   _prevState: AccountActionState,
   formData: FormData
 ): Promise<AccountActionState> {
+  const t = await getTranslations("account");
   const user = await getCurrentUser();
   if (!user) {
-    return { success: false, error: "Vous devez être connecté." };
+    return { success: false, error: t("unauthorized") };
   }
 
   const name = formData.get("name")?.toString();
@@ -38,16 +40,17 @@ export async function updateProfileAction(
   }
 
   revalidatePath("/account");
-  return { success: true, message: "Profil mis à jour avec succès." };
+  return { success: true, message: t("profileSuccess") };
 }
 
 export async function createAddressAction(
   _prevState: AccountActionState,
   formData: FormData
 ): Promise<AccountActionState> {
+  const t = await getTranslations("account");
   const user = await getCurrentUser();
   if (!user) {
-    return { success: false, error: "Vous devez être connecté." };
+    return { success: false, error: t("unauthorized") };
   }
 
   const label = formData.get("label")?.toString() || null;
@@ -69,16 +72,17 @@ export async function createAddressAction(
   }
 
   revalidatePath("/account");
-  return { success: true, message: "Adresse enregistrée." };
+  return { success: true, message: t("addressCreated") };
 }
 
 export async function updateAddressAction(
   addressId: string,
   formData: FormData
 ): Promise<AccountActionState> {
+  const t = await getTranslations("account");
   const user = await getCurrentUser();
   if (!user) {
-    return { success: false, error: "Vous devez être connecté." };
+    return { success: false, error: t("unauthorized") };
   }
 
   const label = formData.get("label")?.toString() || null;
@@ -100,15 +104,16 @@ export async function updateAddressAction(
   }
 
   revalidatePath("/account");
-  return { success: true, message: "Adresse modifiée." };
+  return { success: true, message: t("addressUpdated") };
 }
 
 export async function deleteAddressAction(
   addressId: string
 ): Promise<AccountActionState> {
+  const t = await getTranslations("account");
   const user = await getCurrentUser();
   if (!user) {
-    return { success: false, error: "Vous devez être connecté." };
+    return { success: false, error: t("unauthorized") };
   }
 
   const res = await removeCustomerAddress(user.id, addressId);
@@ -117,15 +122,16 @@ export async function deleteAddressAction(
   }
 
   revalidatePath("/account");
-  return { success: true, message: "Adresse supprimée." };
+  return { success: true, message: t("addressDeleted") };
 }
 
 export async function setDefaultAddressAction(
   addressId: string
 ): Promise<AccountActionState> {
+  const t = await getTranslations("account");
   const user = await getCurrentUser();
   if (!user) {
-    return { success: false, error: "Vous devez être connecté." };
+    return { success: false, error: t("unauthorized") };
   }
 
   const res = await makeDefaultCustomerAddress(user.id, addressId);
@@ -134,5 +140,5 @@ export async function setDefaultAddressAction(
   }
 
   revalidatePath("/account");
-  return { success: true, message: "Adresse définie par défaut." };
+  return { success: true, message: t("addressSetDefault") };
 }

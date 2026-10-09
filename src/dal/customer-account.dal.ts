@@ -92,8 +92,18 @@ export async function updateCustomerAddress(
     phone?: string;
     isDefault?: boolean;
   }
-): Promise<void> {
-  await db.transaction(async (tx) => {
+): Promise<boolean> {
+  return await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: schema.customerAddresses.id })
+      .from(schema.customerAddresses)
+      .where(and(eq(schema.customerAddresses.id, id), eq(schema.customerAddresses.userId, userId)))
+      .limit(1);
+
+    if (!existing) {
+      return false;
+    }
+
     if (data.isDefault) {
       await tx
         .update(schema.customerAddresses)
@@ -111,17 +121,31 @@ export async function updateCustomerAddress(
         ...(data.isDefault !== undefined ? { isDefault: data.isDefault } : {}),
       })
       .where(and(eq(schema.customerAddresses.id, id), eq(schema.customerAddresses.userId, userId)));
+
+    return true;
   });
 }
 
-export async function deleteCustomerAddress(id: string, userId: string): Promise<void> {
-  await db
+export async function deleteCustomerAddress(id: string, userId: string): Promise<boolean> {
+  const deleted = await db
     .delete(schema.customerAddresses)
-    .where(and(eq(schema.customerAddresses.id, id), eq(schema.customerAddresses.userId, userId)));
+    .where(and(eq(schema.customerAddresses.id, id), eq(schema.customerAddresses.userId, userId)))
+    .returning({ id: schema.customerAddresses.id });
+  return deleted.length > 0;
 }
 
-export async function setDefaultCustomerAddress(id: string, userId: string): Promise<void> {
-  await db.transaction(async (tx) => {
+export async function setDefaultCustomerAddress(id: string, userId: string): Promise<boolean> {
+  return await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: schema.customerAddresses.id })
+      .from(schema.customerAddresses)
+      .where(and(eq(schema.customerAddresses.id, id), eq(schema.customerAddresses.userId, userId)))
+      .limit(1);
+
+    if (!existing) {
+      return false;
+    }
+
     await tx
       .update(schema.customerAddresses)
       .set({ isDefault: false })
@@ -131,6 +155,8 @@ export async function setDefaultCustomerAddress(id: string, userId: string): Pro
       .update(schema.customerAddresses)
       .set({ isDefault: true })
       .where(and(eq(schema.customerAddresses.id, id), eq(schema.customerAddresses.userId, userId)));
+
+    return true;
   });
 }
 

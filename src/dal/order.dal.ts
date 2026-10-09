@@ -408,6 +408,7 @@ export interface OrderValidationData {
   existingOrders: Array<{
     id: string;
     code: string;
+    trackingToken?: string;
     idempotencyKey: string;
     customerId: string;
   }>;
@@ -469,6 +470,7 @@ export async function getOrderValidationData(scope?: {
     .select({
       id: schema.orders.id,
       code: schema.orders.code,
+      trackingToken: schema.orders.trackingToken,
       idempotencyKey: schema.orders.idempotencyKey,
       customerId: schema.orders.customerId,
     })
@@ -945,13 +947,19 @@ export async function getOrderByTrackingToken(
 
 export async function updateOrderDeliverySlot(params: {
   orderId: string;
+  expectedStatus?: OrderStatus;
   deliverySlotStart: Date;
   deliverySlotEnd: Date;
   newStatus?: OrderStatus;
   event: Omit<typeof schema.orderEvents.$inferInsert, "orderId">;
 }): Promise<void> {
   await db.transaction(async (tx) => {
-    await tx
+    const conditions = [eq(schema.orders.id, params.orderId)];
+    if (params.expectedStatus) {
+      conditions.push(eq(schema.orders.status, params.expectedStatus));
+    }
+
+    const updated = await tx
       .update(schema.orders)
       .set({
         deliverySlotStart: params.deliverySlotStart,
@@ -959,7 +967,12 @@ export async function updateOrderDeliverySlot(params: {
         ...(params.newStatus ? { status: params.newStatus } : {}),
         updatedAt: new Date(),
       })
-      .where(eq(schema.orders.id, params.orderId));
+      .where(and(...conditions))
+      .returning({ id: schema.orders.id });
+
+    if (updated.length === 0) {
+      throw new Error("Conflit de concurrence: la commande a déjà changé de statut.");
+    }
 
     await tx.insert(schema.orderEvents).values({
       ...params.event,
@@ -970,12 +983,31 @@ export async function updateOrderDeliverySlot(params: {
 
 export async function createDisputeTransaction(params: {
   orderId: string;
+  expectedStatus?: OrderStatus;
   openedBy: string;
   type: "loss" | "damage" | "payment" | "other";
   description: string;
   event: Omit<typeof schema.orderEvents.$inferInsert, "orderId">;
 }): Promise<{ disputeId: string }> {
   return await db.transaction(async (tx) => {
+    const conditions = [eq(schema.orders.id, params.orderId)];
+    if (params.expectedStatus) {
+      conditions.push(eq(schema.orders.status, params.expectedStatus));
+    }
+
+    const updated = await tx
+      .update(schema.orders)
+      .set({
+        status: "disputed",
+        updatedAt: new Date(),
+      })
+      .where(and(...conditions))
+      .returning({ id: schema.orders.id });
+
+    if (updated.length === 0) {
+      throw new Error("Conflit de concurrence: la commande a déjà changé de statut.");
+    }
+
     const disputeId = crypto.randomUUID();
 
     await tx.insert(schema.disputes).values({
@@ -986,14 +1018,6 @@ export async function createDisputeTransaction(params: {
       description: params.description.trim(),
       status: "open",
     });
-
-    await tx
-      .update(schema.orders)
-      .set({
-        status: "disputed",
-        updatedAt: new Date(),
-      })
-      .where(eq(schema.orders.id, params.orderId));
 
     await tx.insert(schema.orderEvents).values({
       ...params.event,
