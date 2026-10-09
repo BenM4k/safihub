@@ -190,14 +190,16 @@ export async function trackPriceDeclined(params: {
 
 export async function trackOrderDelivered(params: {
   orderId: string;
-  turnaroundMinutes: number;
+  turnaroundMinutes?: number;
 }): Promise<void> {
   await capturePostHogEvent({
     event: "order_delivered",
     distinctId: `order_${params.orderId}`,
     properties: {
       order_id: params.orderId,
-      turnaround_time: params.turnaroundMinutes,
+      ...(params.turnaroundMinutes !== undefined
+        ? { turnaround_time: params.turnaroundMinutes }
+        : {}),
     },
   });
 }

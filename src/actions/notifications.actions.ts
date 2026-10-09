@@ -24,7 +24,11 @@ export async function getUserNotificationsAction(
     return { ok: false, error: "Unauthorized" };
   }
 
-  const res = await getUserInbox(user.id, limit, offset);
+  const safeLimit =
+    Number.isInteger(limit) && limit >= 1 && limit <= 100 ? limit : 50;
+  const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
+
+  const res = await getUserInbox(user.id, safeLimit, safeOffset);
   if (!res.ok) {
     return { ok: false, error: res.error };
   }

@@ -32,7 +32,7 @@ export function NotificationsView({
   const handleMarkAsRead = (id: string) => {
     startTransition(async () => {
       const res = await markNotificationReadAction(id);
-      if (res.ok) {
+      if (res.ok && res.value) {
         setItems((prev) =>
           prev.map((it) => (it.id === id ? { ...it, readAt: new Date() } : it))
         );
@@ -158,7 +158,7 @@ export function NotificationsView({
                           href={`/orders/${item.orderId}`}
                           className="text-xs font-semibold text-primary hover:underline"
                         >
-                          Voir la commande →
+                          {t("viewOrder")} →
                         </Link>
                       </div>
                     )}

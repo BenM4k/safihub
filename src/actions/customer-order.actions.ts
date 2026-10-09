@@ -48,7 +48,7 @@ export async function checkoutOrderAction(
 
   // Task 10.1: Rate limiting on checkout
   const rateLimitKey = customerId || input.contactPhone;
-  const rateLimit = rateLimitCheckout(rateLimitKey);
+  const rateLimit = await rateLimitCheckout(rateLimitKey);
   if (!rateLimit.allowed) {
     return {
       success: false,

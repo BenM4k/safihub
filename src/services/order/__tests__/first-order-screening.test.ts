@@ -278,7 +278,7 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       vi.spyOn(dal, "getSettings").mockResolvedValue(mockAs({ acceptanceDelayMinutes: 45 }));
       vi.spyOn(dal, "getHouseHours").mockResolvedValue([mockAs({ weekday: 1, opensAt: "08:00", closesAt: "18:00" })]);
       vi.spyOn(dal, "getHouseClosures").mockResolvedValue([]);
-      const updateDeadlineSpy = vi.spyOn(dal, "updateOrderStatusWithDeadline").mockResolvedValue(undefined);
+      const updateDeadlineSpy = vi.spyOn(dal, "updateOrderStatusWithDeadline").mockResolvedValue(true);
       const addEventSpy = vi.spyOn(dal, "addOrderEvent").mockResolvedValue(mockAs({}));
 
       const res = await adminConfirmFirstOrder({
@@ -289,6 +289,7 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       expect(res.ok).toBe(true);
       expect(updateDeadlineSpy).toHaveBeenCalledWith(
         mockOrder.id,
+        "awaiting_confirmation",
         "created",
         expect.any(Date)
       );
@@ -311,7 +312,7 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       };
 
       vi.spyOn(dal, "getOrderById").mockResolvedValue(mockAs(mockOrder));
-      const updateStatusSpy = vi.spyOn(dal, "updateOrderStatus").mockResolvedValue(undefined);
+      const updateStatusSpy = vi.spyOn(dal, "updateOrderStatusIfCurrent").mockResolvedValue(true);
       const addEventSpy = vi.spyOn(dal, "addOrderEvent").mockResolvedValue(mockAs({}));
 
       const res = await adminRejectFirstOrder({
@@ -321,7 +322,7 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       });
 
       expect(res.ok).toBe(true);
-      expect(updateStatusSpy).toHaveBeenCalledWith(mockOrder.id, "cancelled");
+      expect(updateStatusSpy).toHaveBeenCalledWith(mockOrder.id, "awaiting_confirmation", "cancelled");
       expect(addEventSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           orderId: mockOrder.id,
@@ -331,6 +332,24 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
           note: "Numéro de téléphone inaccessible après 3 appels",
         })
       );
+    });
+
+    it("does not record a transition event when the conditional update loses a race", async () => {
+      const dal = await import("@/dal");
+      vi.spyOn(dal, "getOrderById").mockResolvedValue(
+        mockAs({ id: "ord_race", status: "awaiting_confirmation", houseId })
+      );
+      vi.spyOn(dal, "updateOrderStatusIfCurrent").mockResolvedValue(false);
+      const addEventSpy = vi.spyOn(dal, "addOrderEvent").mockResolvedValue(mockAs({}));
+
+      const res = await adminRejectFirstOrder({
+        orderId: "ord_race",
+        adminId: "admin_user_1",
+        reason: "Doublon",
+      });
+
+      expect(res.ok).toBe(false);
+      expect(addEventSpy).not.toHaveBeenCalled();
     });
   });
 });

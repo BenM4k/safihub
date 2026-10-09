@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getAdminOrderDetail } from "@/services/admin";
 import { OrderItemsList } from "@/components/admin/orders/order-items-list";
 import { OnBehalfActions } from "@/components/admin/orders/on-behalf-actions";
+import { FirstOrderScreeningActions } from "@/components/admin/orders/first-order-screening-actions";
 import { OrderTimeline } from "@/components/admin/orders/order-timeline";
 import { Button } from "@/components/ui/button";
 
@@ -125,7 +126,11 @@ export default async function AdminOrderDetailPage({ params }: OrderDetailPagePr
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <OrderItemsList items={items} currency={order.currency} />
-          <OnBehalfActions order={order} />
+          {order.status === "awaiting_confirmation" ? (
+            <FirstOrderScreeningActions orderId={order.id} />
+          ) : (
+            <OnBehalfActions order={order} />
+          )}
         </div>
         <div className="lg:col-span-1">
           <OrderTimeline orderId={order.id} events={events} />

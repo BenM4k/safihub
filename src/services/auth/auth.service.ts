@@ -79,7 +79,7 @@ export async function registerCustomer(
   const normalizedName = input.name.trim();
 
   // Task 10.1: Rate limiting on registration
-  const rateLimit = rateLimitRegistration(normalizedEmail);
+  const rateLimit = await rateLimitRegistration(normalizedEmail);
   if (!rateLimit.allowed) {
     return err("Trop de tentatives d'inscription. Veuillez réessayer plus tard.");
   }
@@ -168,7 +168,7 @@ export async function loginCustomer(
   const normalizedEmail = input.email.toLowerCase().trim();
 
   // Task 10.1: Rate limiting on login
-  const rateLimit = rateLimitLogin(normalizedEmail);
+  const rateLimit = await rateLimitLogin(normalizedEmail);
   if (!rateLimit.allowed) {
     return err("Trop de tentatives de connexion. Veuillez réessayer plus tard.");
   }

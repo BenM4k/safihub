@@ -28,18 +28,13 @@ export async function sendNotification(
   const channel = input.channel ?? "in_app";
   const locale = input.locale ?? "fr";
 
-  let title = input.customTitle;
-  let body = input.customBody;
-
-  if (!body) {
-    const rendered = renderNotificationTemplate(
-      input.templateKey,
-      locale,
-      input.params ?? {}
-    );
-    title = title ?? rendered.title;
-    body = rendered.body;
-  }
+  const rendered = renderNotificationTemplate(
+    input.templateKey,
+    locale,
+    input.params ?? {}
+  );
+  const title = input.customTitle || rendered.title;
+  const body = input.customBody || rendered.body;
 
   try {
     const record = await createNotification({

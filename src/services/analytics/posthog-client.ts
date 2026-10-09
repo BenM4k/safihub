@@ -60,11 +60,13 @@ export function sanitizeAnalyticsProperties(
 
     if (typeof val === "string") {
       // Check for phone or email in values
-      if (PHONE_REGEX.test(val) || EMAIL_REGEX.test(val)) {
+      if (containsPii(val)) {
         continue; // Scrub string containing PII
       }
       sanitized[key] = val;
-    } else if (val !== null && typeof val === "object" && !Array.isArray(val)) {
+    } else if (Array.isArray(val)) {
+      sanitized[key] = sanitizeAnalyticsArray(val);
+    } else if (val !== null && typeof val === "object") {
       sanitized[key] = sanitizeAnalyticsProperties(val as Record<string, unknown>);
     } else {
       sanitized[key] = val;
@@ -72,6 +74,27 @@ export function sanitizeAnalyticsProperties(
   }
 
   return sanitized;
+}
+
+function containsPii(val: string): boolean {
+  return PHONE_REGEX.test(val) || EMAIL_REGEX.test(val);
+}
+
+/** Recursively sanitizes array elements; PII strings are dropped. */
+function sanitizeAnalyticsArray(arr: unknown[]): unknown[] {
+  const out: unknown[] = [];
+  for (const el of arr) {
+    if (typeof el === "string") {
+      if (!containsPii(el)) out.push(el);
+    } else if (Array.isArray(el)) {
+      out.push(sanitizeAnalyticsArray(el));
+    } else if (el !== null && typeof el === "object") {
+      out.push(sanitizeAnalyticsProperties(el as Record<string, unknown>));
+    } else {
+      out.push(el);
+    }
+  }
+  return out;
 }
 
 /**
@@ -99,8 +122,10 @@ export async function capturePostHogEvent(event: AnalyticsEventPayload): Promise
     timestamp: event.timestamp || new Date(),
   };
 
-  // Always record in internal buffer (for testing and audit)
-  capturedEvents.push(sanitizedPayload);
+  // Record in internal buffer only under test (avoids unbounded growth in prod)
+  if (process.env.NODE_ENV === "test") {
+    capturedEvents.push(sanitizedPayload);
+  }
 
   const apiKey = process.env.POSTHOG_API_KEY || process.env.NEXT_PUBLIC_POSTHOG_KEY;
   if (!apiKey || process.env.NODE_ENV === "test") {

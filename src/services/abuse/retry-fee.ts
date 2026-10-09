@@ -3,7 +3,9 @@ import "server-only";
 import { addOrderEvent, getOrderById, updateOrderFinancials } from "@/dal";
 import { err, ok, type Result } from "@/lib/result";
 
-export const DEFAULT_RETRY_FEE_CDF = 2000;
+import { DEFAULT_RETRY_FEE_CDF } from "@/lib/fees";
+
+export { DEFAULT_RETRY_FEE_CDF };
 
 export interface ApplyRetryFeeParams {
   orderId: string;

@@ -13,6 +13,7 @@ import {
   getUserByContactPhone,
   insertOrderWithDetails,
   updateOrderStatus,
+  updateOrderStatusIfCurrent,
   updateOrderStatusWithDeadline,
   type OrderDetailRecord,
   type OrderEventRecord,
@@ -171,7 +172,15 @@ export async function adminConfirmFirstOrder(params: {
       houseClosures
     );
 
-    await updateOrderStatusWithDeadline(order.id, "created", deadlines.deadlineAt);
+    const updated = await updateOrderStatusWithDeadline(
+      order.id,
+      "awaiting_confirmation",
+      "created",
+      deadlines.deadlineAt
+    );
+    if (!updated) {
+      return err("Le statut de la commande a changé entre-temps.");
+    }
     await addOrderEvent(transitionResult.value.event);
 
     return ok(undefined);
@@ -207,7 +216,14 @@ export async function adminRejectFirstOrder(params: {
       return err(transitionResult.error);
     }
 
-    await updateOrderStatus(order.id, "cancelled");
+    const updated = await updateOrderStatusIfCurrent(
+      order.id,
+      "awaiting_confirmation",
+      "cancelled"
+    );
+    if (!updated) {
+      return err("Le statut de la commande a changé entre-temps.");
+    }
     await addOrderEvent(transitionResult.value.event);
 
     return ok(undefined);

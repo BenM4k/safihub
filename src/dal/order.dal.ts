@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, count, desc, eq, gte, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { toBukavuDateTime, fromBukavuDateTime } from "@/services/availability/bukavu-time";
 import { ok, err, type Result } from "@/lib/result";
@@ -302,19 +302,42 @@ export async function updateOrderStatus(
     .where(eq(schema.orders.id, orderId));
 }
 
+/**
+ * Compare-and-set status update: only writes when the order is still in
+ * `expectedStatus`. Returns true when a row was updated.
+ */
+export async function updateOrderStatusIfCurrent(
+  orderId: string,
+  expectedStatus: OrderStatus,
+  newStatus: OrderStatus
+): Promise<boolean> {
+  const rows = await db
+    .update(schema.orders)
+    .set({
+      status: newStatus,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(schema.orders.id, orderId), eq(schema.orders.status, expectedStatus)))
+    .returning({ id: schema.orders.id });
+  return rows.length > 0;
+}
+
 export async function updateOrderStatusWithDeadline(
   orderId: string,
+  expectedStatus: OrderStatus,
   newStatus: OrderStatus,
   deadlineAt: Date | null
-): Promise<void> {
-  await db
+): Promise<boolean> {
+  const rows = await db
     .update(schema.orders)
     .set({
       status: newStatus,
       acceptanceDeadlineAt: deadlineAt,
       updatedAt: new Date(),
     })
-    .where(eq(schema.orders.id, orderId));
+    .where(and(eq(schema.orders.id, orderId), eq(schema.orders.status, expectedStatus)))
+    .returning({ id: schema.orders.id });
+  return rows.length > 0;
 }
 
 export async function updateOrderFinancials(params: {
@@ -641,6 +664,7 @@ export async function getOrderValidationData(scope?: {
         .where(
           and(
             eq(schema.user.contactPhone, scope.contactPhone),
+            ne(schema.user.status, "merged"),
             or(eq(schema.user.status, "blocked"), eq(schema.user.banned, true))
           )
         )

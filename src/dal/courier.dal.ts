@@ -2,6 +2,7 @@ import "server-only";
 import { and, asc, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
+import { DEFAULT_RETRY_FEE_CDF, RETRY_FEE_FAILED_PICKUP_COUNT } from "@/lib/fees";
 
 export interface CourierRecord {
   userId: string;
@@ -982,6 +983,34 @@ export async function failPickupMissionAtomic(params: {
 
     const totalFailedPickups = (customerFailedTotal?.total ?? 0) + newOrderFailedCount;
 
+    // Retry fee: charged once, only when the failed-pickup count reaches exactly 2.
+    if (totalFailedPickups === RETRY_FEE_FAILED_PICKUP_COUNT) {
+      const [feeRow] = await tx
+        .update(schema.orders)
+        .set({
+          deliveryFee: sql`${schema.orders.deliveryFee} + ${DEFAULT_RETRY_FEE_CDF}`,
+          totalDue: sql`${schema.orders.totalDue} + ${DEFAULT_RETRY_FEE_CDF}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.orders.id, order.id))
+        .returning({ totalDue: schema.orders.totalDue });
+
+      const newTotalDue = feeRow?.totalDue ?? order.totalDue + DEFAULT_RETRY_FEE_CDF;
+      await tx.insert(schema.orderEvents).values({
+        orderId: order.id,
+        type: "note",
+        actorId: params.courierId,
+        actorRole: "system",
+        note: `Frais de relance / nouvelle tentative appliqués : +${DEFAULT_RETRY_FEE_CDF} CDF (Total dû : ${newTotalDue} CDF)`,
+        payload: {
+          retryFee: DEFAULT_RETRY_FEE_CDF,
+          previousTotalDue: newTotalDue - DEFAULT_RETRY_FEE_CDF,
+          newTotalDue,
+          failedPickupCount: totalFailedPickups,
+        },
+      });
+    }
+
     if (totalFailedPickups >= blockThreshold) {
       await tx
         .update(schema.user)
@@ -1144,7 +1173,14 @@ export async function completeDeliveryMissionAtomic(params: {
   confirmationCode: string;
   cashCollected: number;
   cashCurrency?: "CDF" | "USD";
-}): Promise<{ ok: boolean; orderId?: string; error?: string; discrepancyFlagged?: boolean }> {
+}): Promise<{
+  ok: boolean;
+  orderId?: string;
+  error?: string;
+  discrepancyFlagged?: boolean;
+  orderCreatedAt?: Date;
+  deliveredAt?: Date;
+}> {
   return await db.transaction(async (tx) => {
     const [mission] = await tx
       .select()
@@ -1190,11 +1226,12 @@ export async function completeDeliveryMissionAtomic(params: {
     const discrepancyFlagged = collectedInCDF !== expectedInCDF;
 
     // Update mission
+    const deliveredAt = new Date();
     await tx
       .update(schema.missions)
       .set({
         status: "completed",
-        completedAt: new Date(),
+        completedAt: deliveredAt,
         cashCollected: params.cashCollected,
         cashCurrency: currency,
         updatedAt: new Date(),
@@ -1322,7 +1359,13 @@ export async function completeDeliveryMissionAtomic(params: {
       },
     });
 
-    return { ok: true, orderId: order.id, discrepancyFlagged };
+    return {
+      ok: true,
+      orderId: order.id,
+      discrepancyFlagged,
+      orderCreatedAt: order.createdAt,
+      deliveredAt,
+    };
   });
 }
 

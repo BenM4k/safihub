@@ -248,9 +248,19 @@ export async function completeDeliveryMissionService(
     }
 
     if (res.orderId) {
+      const turnaroundMinutes =
+        res.orderCreatedAt && res.deliveredAt
+          ? Math.max(
+              0,
+              Math.round(
+                (new Date(res.deliveredAt).getTime() - new Date(res.orderCreatedAt).getTime()) /
+                  60_000
+              )
+            )
+          : undefined;
       trackOrderDelivered({
         orderId: res.orderId,
-        turnaroundMinutes: 1440,
+        ...(turnaroundMinutes !== undefined ? { turnaroundMinutes } : {}),
       }).catch(() => {});
     }
 

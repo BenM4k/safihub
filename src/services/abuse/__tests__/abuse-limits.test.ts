@@ -168,32 +168,32 @@ describe("Phase 10.1: Abuse & Fraud Controls - Limits & Blocking", () => {
   });
 
   describe("Rate Limiting", () => {
-    it("enforces registration rate limiting (max 5 per window)", () => {
+    it("enforces registration rate limiting (max 5 per window)", async () => {
       const id = "test_ip_register";
       for (let i = 0; i < 5; i++) {
-        expect(rateLimitRegistration(id).allowed).toBe(true);
+        expect((await rateLimitRegistration(id)).allowed).toBe(true);
       }
-      const sixth = rateLimitRegistration(id);
+      const sixth = await rateLimitRegistration(id);
       expect(sixth.allowed).toBe(false);
       expect(sixth.remaining).toBe(0);
     });
 
-    it("enforces login rate limiting (max 5 attempts per window)", () => {
+    it("enforces login rate limiting (max 5 attempts per window)", async () => {
       const id = "user@example.com";
       for (let i = 0; i < 5; i++) {
-        expect(rateLimitLogin(id).allowed).toBe(true);
+        expect((await rateLimitLogin(id)).allowed).toBe(true);
       }
-      const sixth = rateLimitLogin(id);
+      const sixth = await rateLimitLogin(id);
       expect(sixth.allowed).toBe(false);
       expect(sixth.remaining).toBe(0);
     });
 
-    it("enforces checkout rate limiting (max 10 requests per minute)", () => {
+    it("enforces checkout rate limiting (max 10 requests per minute)", async () => {
       const id = "cust_heavy_tapper";
       for (let i = 0; i < 10; i++) {
-        expect(rateLimitCheckout(id).allowed).toBe(true);
+        expect((await rateLimitCheckout(id)).allowed).toBe(true);
       }
-      const eleventh = rateLimitCheckout(id);
+      const eleventh = await rateLimitCheckout(id);
       expect(eleventh.allowed).toBe(false);
       expect(eleventh.remaining).toBe(0);
     });

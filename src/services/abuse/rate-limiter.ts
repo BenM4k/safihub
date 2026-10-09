@@ -1,28 +1,17 @@
 import "server-only";
 
-interface RateLimitRecord {
-  timestamps: number[];
-}
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
-// In-memory sliding window store
-const rateLimitStore = new Map<string, RateLimitRecord>();
-
-// Clean up stale entries every 10 minutes
-const PRUNE_INTERVAL_MS = 10 * 60 * 1000;
-let lastPruned = Date.now();
-
-function pruneExpiredEntries(now: number): void {
-  if (now - lastPruned < PRUNE_INTERVAL_MS) return;
-  lastPruned = now;
-
-  const maxRetentionMs = 60 * 60 * 1000; // 1 hour max retention
-  for (const [key, record] of rateLimitStore.entries()) {
-    record.timestamps = record.timestamps.filter((ts) => now - ts < maxRetentionMs);
-    if (record.timestamps.length === 0) {
-      rateLimitStore.delete(key);
-    }
-  }
-}
+/**
+ * Deployment-wide sliding-window rate limiting backed by Upstash Redis, so
+ * limits hold across Vercel instances and cold starts.
+ *
+ * - NODE_ENV === "test": deterministic in-memory store (no network).
+ * - Upstash configured: shared Redis store.
+ * - Not configured / Redis error: fail open (logged) so auth & checkout stay
+ *   available; configure UPSTASH_REDIS_REST_URL/TOKEN in every deployed env.
+ */
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -30,80 +19,141 @@ export interface RateLimitResult {
   resetSeconds: number;
 }
 
-/**
- * Checks and records an attempt for a given rate limit key using sliding window.
- */
-export function recordRateLimitHit(
-  key: string,
-  maxRequests: number,
-  windowSeconds: number
-): RateLimitResult {
-  const now = Date.now();
-  pruneExpiredEntries(now);
+const isTestEnv = (): boolean => process.env.NODE_ENV === "test";
 
-  const windowMs = windowSeconds * 1000;
-  let record = rateLimitStore.get(key);
+// ---------------------------------------------------------------------------
+// Upstash backend
+// ---------------------------------------------------------------------------
 
-  if (!record) {
-    record = { timestamps: [] };
-    rateLimitStore.set(key, record);
+let redisClient: Redis | null | undefined;
+const limiters = new Map<string, Ratelimit>();
+let warnedUnconfigured = false;
+
+function getRedis(): Redis | null {
+  if (redisClient !== undefined) return redisClient;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  redisClient = url && token ? new Redis({ url, token }) : null;
+  return redisClient;
+}
+
+function getLimiter(redis: Redis, maxRequests: number, windowSeconds: number): Ratelimit {
+  const cacheKey = `${maxRequests}:${windowSeconds}`;
+  let limiter = limiters.get(cacheKey);
+  if (!limiter) {
+    limiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(maxRequests, `${windowSeconds} s`),
+      prefix: "safihub:ratelimit",
+    });
+    limiters.set(cacheKey, limiter);
   }
+  return limiter;
+}
 
-  // Filter timestamps within the current sliding window
-  record.timestamps = record.timestamps.filter((ts) => now - ts < windowMs);
+function failOpen(maxRequests: number, windowSeconds: number): RateLimitResult {
+  return { allowed: true, remaining: maxRequests, resetSeconds: windowSeconds };
+}
 
-  if (record.timestamps.length >= maxRequests) {
-    const oldest = record.timestamps[0] ?? now;
-    const resetSeconds = Math.max(1, Math.ceil((oldest + windowMs - now) / 1000));
+// ---------------------------------------------------------------------------
+// In-memory backend (tests only)
+// ---------------------------------------------------------------------------
+
+const memoryStore = new Map<string, number[]>();
+
+function recordInMemory(key: string, maxRequests: number, windowSeconds: number): RateLimitResult {
+  const now = Date.now();
+  const windowMs = windowSeconds * 1000;
+  const timestamps = (memoryStore.get(key) ?? []).filter((ts) => now - ts < windowMs);
+
+  if (timestamps.length >= maxRequests) {
+    memoryStore.set(key, timestamps);
+    const oldest = timestamps[0] ?? now;
     return {
       allowed: false,
       remaining: 0,
-      resetSeconds,
+      resetSeconds: Math.max(1, Math.ceil((oldest + windowMs - now) / 1000)),
     };
   }
 
-  record.timestamps.push(now);
-  const remaining = Math.max(0, maxRequests - record.timestamps.length);
-  const resetSeconds = windowSeconds;
-
+  timestamps.push(now);
+  memoryStore.set(key, timestamps);
   return {
     allowed: true,
-    remaining,
-    resetSeconds,
+    remaining: Math.max(0, maxRequests - timestamps.length),
+    resetSeconds: windowSeconds,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/**
+ * Checks and records an attempt for a given rate limit key using a sliding window.
+ */
+export async function recordRateLimitHit(
+  key: string,
+  maxRequests: number,
+  windowSeconds: number
+): Promise<RateLimitResult> {
+  if (isTestEnv()) return recordInMemory(key, maxRequests, windowSeconds);
+
+  const redis = getRedis();
+  if (!redis) {
+    if (!warnedUnconfigured) {
+      warnedUnconfigured = true;
+      console.error("[rate-limiter] UPSTASH_REDIS_REST_URL/TOKEN not set; rate limiting disabled.");
+    }
+    return failOpen(maxRequests, windowSeconds);
+  }
+
+  try {
+    const res = await getLimiter(redis, maxRequests, windowSeconds).limit(key);
+    return {
+      allowed: res.success,
+      remaining: Math.max(0, res.remaining),
+      resetSeconds: Math.max(1, Math.ceil((res.reset - Date.now()) / 1000)),
+    };
+  } catch (error) {
+    console.error("[rate-limiter] Upstash error; failing open.", error);
+    return failOpen(maxRequests, windowSeconds);
+  }
 }
 
 /**
  * Resets the rate limit for a key (e.g. after successful authentication or test teardown).
  */
-export function resetRateLimit(key: string): void {
-  rateLimitStore.delete(key);
+export async function resetRateLimit(key: string): Promise<void> {
+  memoryStore.delete(key);
+  if (isTestEnv()) return;
+  await Promise.all([...limiters.values()].map((l) => l.resetUsedTokens(key).catch(() => {})));
 }
 
 /**
- * Clears all rate limit records (useful for testing).
+ * Clears all in-memory rate limit records (tests only).
  */
 export function clearRateLimitStore(): void {
-  rateLimitStore.clear();
+  memoryStore.clear();
 }
 
 /**
  * Rate limit registration: max 5 requests per 15 minutes.
  */
-export function rateLimitRegistration(identifier: string): RateLimitResult {
+export function rateLimitRegistration(identifier: string): Promise<RateLimitResult> {
   return recordRateLimitHit(`reg:${identifier}`, 5, 15 * 60);
 }
 
 /**
  * Rate limit login: max 5 attempts per 15 minutes.
  */
-export function rateLimitLogin(identifier: string): RateLimitResult {
+export function rateLimitLogin(identifier: string): Promise<RateLimitResult> {
   return recordRateLimitHit(`login:${identifier}`, 5, 15 * 60);
 }
 
 /**
  * Rate limit checkout: max 10 requests per minute.
  */
-export function rateLimitCheckout(identifier: string): RateLimitResult {
+export function rateLimitCheckout(identifier: string): Promise<RateLimitResult> {
   return recordRateLimitHit(`checkout:${identifier}`, 10, 60);
 }
