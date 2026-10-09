@@ -16,7 +16,8 @@ export function ConflictResolutionDialog({
 }: ConflictResolutionDialogProps) {
   const t = useTranslations("courier.sync");
   const conflicts = useCourierStore((s) => s.conflicts);
-  const dismissConflict = useCourierStore((s) => s.dismissConflict);
+  const discardConflict = useCourierStore((s) => s.discardConflict);
+  const retryConflicts = useCourierStore((s) => s.retryConflicts);
   const clearResolvedConflicts = useCourierStore((s) => s.clearResolvedConflicts);
   const syncQueue = useCourierStore((s) => s.syncQueue);
 
@@ -70,7 +71,7 @@ export function ConflictResolutionDialog({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => dismissConflict(item.actionId)}
+                    onClick={() => discardConflict(item.actionId)}
                     className="h-7 px-2 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-100/60"
                   >
                     <Trash2 className="size-3 mr-1" />
@@ -96,6 +97,7 @@ export function ConflictResolutionDialog({
           <Button
             size="sm"
             onClick={() => {
+              retryConflicts();
               syncQueue();
               onClose();
             }}

@@ -35,6 +35,8 @@ export interface CourierStoreState {
     action: Omit<QueuedCourierAction, "id" | "timestamp">
   ) => QueuedCourierAction;
   dismissConflict: (actionId: string) => void;
+  discardConflict: (actionId: string) => void;
+  retryConflicts: () => void;
   clearResolvedConflicts: () => void;
   syncQueue: () => Promise<{ success: boolean; results?: ActionSyncResult[] }>;
 }
@@ -153,6 +155,51 @@ export const useCourierStore = create<CourierStoreState>()(
               : "has_conflicts",
         })),
 
+      discardConflict: (actionId) =>
+        set((state) => {
+          const conflict = state.conflicts.find((c) => c.actionId !== actionId);
+          let updatedMissions = state.missions;
+          if (conflict) {
+            const { type, missionId } = conflict.action;
+            updatedMissions = state.missions.map((m) => {
+              if (m.id !== missionId) return m;
+              let revertedStatus = m.status;
+              if (type === "accept_mission") revertedStatus = "assigned";
+              else if (type === "start_pickup" || type === "start_delivery") revertedStatus = "accepted";
+              else if (
+                type === "complete_pickup" ||
+                type === "complete_delivery" ||
+                type === "fail_pickup" ||
+                type === "fail_delivery"
+              )
+                revertedStatus = "in_progress";
+              return { ...m, status: revertedStatus };
+            });
+          }
+          const remainingConflicts = state.conflicts.filter((c) => c.actionId !== actionId);
+          return {
+            missions: updatedMissions,
+            conflicts: remainingConflicts,
+            syncStatus:
+              remainingConflicts.length > 0
+                ? "has_conflicts"
+                : state.queue.length > 0
+                ? "idle"
+                : "synced",
+          };
+        }),
+
+      retryConflicts: () => {
+        const { conflicts, queue } = get();
+        if (conflicts.length === 0) return;
+        const actionsToRetry = conflicts.map((c) => c.action);
+        set({
+          queue: [...queue, ...actionsToRetry],
+          conflicts: [],
+          syncStatus: "idle",
+        });
+      },
+
       clearResolvedConflicts: () =>
         set((state) => ({
           conflicts: [],
@@ -160,7 +207,11 @@ export const useCourierStore = create<CourierStoreState>()(
         })),
 
       syncQueue: async () => {
-        const { queue, isOnline } = get();
+        const { queue, isOnline, syncStatus } = get();
+        if (syncStatus === "syncing") {
+          return { success: false };
+        }
+
         if (queue.length === 0) {
           set({ syncStatus: "synced" });
           return { success: true };
@@ -214,16 +265,22 @@ export const useCourierStore = create<CourierStoreState>()(
             }
           }
 
-          set((state) => ({
-            queue: remainingQueue,
-            conflicts: [...state.conflicts, ...newConflicts],
-            syncStatus:
-              newConflicts.length > 0
-                ? "has_conflicts"
-                : remainingQueue.length > 0
-                ? "idle"
-                : "synced",
-          }));
+          const snapshotIds = new Set(queue.map((a) => a.id));
+
+          set((state) => {
+            const actionsAddedDuringSync = state.queue.filter((a) => !snapshotIds.has(a.id));
+            const finalQueue = [...remainingQueue, ...actionsAddedDuringSync];
+            return {
+              queue: finalQueue,
+              conflicts: [...state.conflicts, ...newConflicts],
+              syncStatus:
+                newConflicts.length > 0
+                  ? "has_conflicts"
+                  : finalQueue.length > 0
+                  ? "idle"
+                  : "synced",
+            };
+          });
 
           return { success: newConflicts.length === 0, results };
         } catch {

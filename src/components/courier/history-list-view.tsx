@@ -60,7 +60,7 @@ export function HistoryListView({ data }: HistoryListViewProps) {
             filter === "all" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-600"
           }`}
         >
-          Tous ({data.missions.length})
+          {t("filterAll", { count: data.missions.length })}
         </button>
         <button
           onClick={() => setFilter("completed")}
@@ -68,7 +68,7 @@ export function HistoryListView({ data }: HistoryListViewProps) {
             filter === "completed" ? "bg-white text-emerald-700 shadow-2xs" : "text-slate-600"
           }`}
         >
-          Réussis ({data.completedCount})
+          {t("filterCompleted", { count: data.completedCount })}
         </button>
         <button
           onClick={() => setFilter("failed")}
@@ -76,7 +76,7 @@ export function HistoryListView({ data }: HistoryListViewProps) {
             filter === "failed" ? "bg-white text-rose-700 shadow-2xs" : "text-slate-600"
           }`}
         >
-          Échecs ({data.failedCount})
+          {t("filterFailed", { count: data.failedCount })}
         </button>
       </div>
 
@@ -113,7 +113,7 @@ export function HistoryListView({ data }: HistoryListViewProps) {
                           : "bg-blue-50 text-blue-700 border-blue-200"
                       }`}
                     >
-                      {m.type === "pickup" ? "Collecte" : "Livraison"}
+                      {m.type === "pickup" ? t("pickup") : t("delivery")}
                     </Badge>
                   </div>
 
@@ -128,22 +128,22 @@ export function HistoryListView({ data }: HistoryListViewProps) {
 
                   {m.failureReason && (
                     <p className="text-[11px] text-rose-600 font-medium">
-                      Motif : {m.failureReason}
+                      {t("reasonPrefix")} : {m.failureReason}
                     </p>
                   )}
                 </div>
 
                 <div className="text-right shrink-0">
-                  {isCompleted && m.courierPay ? (
+                  {isCompleted ? (
                     <span className="font-mono font-bold text-emerald-600 text-sm">
-                      +{m.courierPay.toLocaleString()} CDF
+                      +{(m.courierPay ?? 0).toLocaleString()} CDF
                     </span>
                   ) : (
                     <Badge
                       variant="outline"
                       className="bg-rose-50 text-rose-700 border-rose-200 text-[10px]"
                     >
-                      Échec
+                      {t("failedBadge")}
                     </Badge>
                   )}
                 </div>

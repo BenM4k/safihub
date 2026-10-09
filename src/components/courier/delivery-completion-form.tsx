@@ -17,7 +17,9 @@ export function DeliveryCompletionForm({
   detail,
 }: DeliveryCompletionFormProps) {
   const t = useTranslations("courier.delivery");
+  const tActions = useTranslations("courier.missions.actions");
   const {
+    missionStatus,
     isPending,
     showFailureModal,
     setShowFailureModal,
@@ -33,7 +35,7 @@ export function DeliveryCompletionForm({
     handleFailDelivery,
   } = useDeliveryForm(detail);
 
-  const isAcceptedOnly = detail.mission.status === "accepted";
+  const isAcceptedOnly = missionStatus === "accepted";
 
   if (isAcceptedOnly) {
     return (
@@ -54,7 +56,7 @@ export function DeliveryCompletionForm({
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold h-11 text-sm rounded-xl shadow-xs"
           >
             <Play className="size-4 mr-2" />
-            <span>Démarrer la livraison</span>
+            <span>{tActions("startDelivery")}</span>
           </Button>
         </div>
       </div>

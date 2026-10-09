@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Image as ImageIcon, X, ExternalLink, ShieldAlert } from "lucide-react";
 import type { PhotoWithSignedUrl } from "@/services/storage";
@@ -19,6 +19,21 @@ export function OrderPhotosGallery({
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoWithSignedUrl | null>(
     null
   );
+  const lightboxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!selectedPhoto) return;
+    lightboxRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedPhoto(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedPhoto]);
 
   if (photos.length === 0) {
     return (
@@ -132,7 +147,9 @@ export function OrderPhotosGallery({
           onClick={() => setSelectedPhoto(null)}
         >
           <div
-            className="relative max-w-lg w-full bg-slate-900 rounded-2xl overflow-hidden shadow-2xl p-2"
+            ref={lightboxRef}
+            tabIndex={-1}
+            className="relative max-w-lg w-full bg-slate-900 rounded-2xl overflow-hidden shadow-2xl p-2 outline-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-2 text-white text-xs">
@@ -149,6 +166,7 @@ export function OrderPhotosGallery({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1 hover:text-blue-400"
+                  aria-label={t("openInNewTab")}
                 >
                   <ExternalLink className="size-4" />
                 </a>
@@ -157,6 +175,7 @@ export function OrderPhotosGallery({
                   size="sm"
                   onClick={() => setSelectedPhoto(null)}
                   className="size-7 p-0 text-slate-400 hover:text-white"
+                  aria-label={t("close")}
                 >
                   <X className="size-4" />
                 </Button>

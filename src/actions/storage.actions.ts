@@ -16,7 +16,7 @@ const uploadUrlSchema = z.object({
   orderId: z.string().uuid("Identifiant de commande invalide"),
   orderItemId: z.string().uuid().nullable().optional(),
   type: z.enum(["pickup_condition", "delivery_proof", "dispute"]),
-  contentType: z.string().optional(),
+  contentType: z.enum(["image/webp", "image/jpeg"]).optional(),
 });
 
 const recordPhotoSchema = z.object({

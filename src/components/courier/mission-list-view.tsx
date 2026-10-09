@@ -27,9 +27,21 @@ export function MissionListView({ initialMissions }: MissionListViewProps) {
 
   // Sync initial server data into local Zustand/IndexedDB store
   useEffect(() => {
-    if (initialMissions && initialMissions.length > 0) {
-      setMissions(initialMissions);
+    const applyInitial = () => {
+      setMissions(initialMissions ?? []);
+    };
+
+    if (useCourierStore.persist?.hasHydrated?.()) {
+      applyInitial();
     }
+
+    const unsub = useCourierStore.persist?.onFinishHydration?.(() => {
+      applyInitial();
+    });
+
+    return () => {
+      unsub?.();
+    };
   }, [initialMissions, setMissions]);
 
   const displayMissions = missions.length > 0 ? missions : initialMissions;

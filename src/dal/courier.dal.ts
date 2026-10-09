@@ -389,9 +389,9 @@ export interface CourierAssignedMissionSummary {
   slotStart: Date;
   slotEnd: Date;
   customerNeighborhood: string;
-  customerLandmark: string;
+  customerLandmark: string | null;
   customerFirstName: string;
-  customerPhone: string;
+  customerPhone: string | null;
   houseName: string;
   houseNeighborhood: string;
   housePhone: string | null;
@@ -516,25 +516,28 @@ export async function getCourierAssignedMissions(
     .where(eq(schema.missions.courierId, courierId))
     .orderBy(asc(schema.missions.slotStart));
 
-  return rows.map((r) => ({
-    id: r.id,
-    orderId: r.orderId,
-    orderCode: r.orderCode,
-    type: r.type,
-    status: r.status,
-    slotStart: r.slotStart,
-    slotEnd: r.slotEnd,
-    courierPay: r.courierPay,
-    cashCollected: r.cashCollected,
-    totalDue: r.totalDue,
-    customerFirstName: (r.customerName || "Client").trim().split(" ")[0] || "Client",
-    customerPhone: r.customerPhone,
-    customerLandmark: r.customerLandmark,
-    customerNeighborhood: r.customerNeighborhood || "Bukavu",
-    houseName: r.houseName,
-    housePhone: r.housePhone,
-    houseNeighborhood: r.houseNeighborhood || "Bukavu",
-  }));
+  return rows.map((r) => {
+    const isActive = ["assigned", "accepted", "in_progress"].includes(r.status);
+    return {
+      id: r.id,
+      orderId: r.orderId,
+      orderCode: r.orderCode,
+      type: r.type,
+      status: r.status,
+      slotStart: r.slotStart,
+      slotEnd: r.slotEnd,
+      courierPay: r.courierPay,
+      cashCollected: r.cashCollected,
+      totalDue: r.totalDue,
+      customerFirstName: (r.customerName || "Client").trim().split(" ")[0] || "Client",
+      customerPhone: isActive ? r.customerPhone : null,
+      customerLandmark: isActive ? r.customerLandmark : null,
+      customerNeighborhood: r.customerNeighborhood || "Bukavu",
+      houseName: r.houseName,
+      housePhone: r.housePhone,
+      houseNeighborhood: r.houseNeighborhood || "Bukavu",
+    };
+  });
 }
 
 /**
@@ -619,6 +622,8 @@ export async function getCourierMissionDetail(
     .from(schema.orderPhotos)
     .where(eq(schema.orderPhotos.orderId, row.orderId));
 
+  const isActive = ["assigned", "accepted", "in_progress"].includes(row.status);
+
   return {
     mission: {
       id: row.id,
@@ -632,8 +637,8 @@ export async function getCourierMissionDetail(
       cashCollected: row.cashCollected,
       totalDue: row.totalDue,
       customerFirstName: (row.customerName || "Client").trim().split(" ")[0] || "Client",
-      customerPhone: row.customerPhone,
-      customerLandmark: row.customerLandmark,
+      customerPhone: isActive ? row.customerPhone : null,
+      customerLandmark: isActive ? row.customerLandmark : null,
       customerNeighborhood: row.customerNeighborhood || "Bukavu",
       houseName: row.houseName,
       housePhone: row.housePhone,
@@ -778,10 +783,17 @@ export async function completePickupMissionAtomic(params: {
       .select()
       .from(schema.missions)
       .where(and(eq(schema.missions.id, params.missionId), eq(schema.missions.courierId, params.courierId)))
+      .for("update")
       .limit(1);
 
     if (!mission) return { ok: false, error: "Mission introuvable" };
     if (mission.status === "completed") return { ok: true }; // Idempotent
+    if (mission.type !== "pickup") {
+      return { ok: false, error: "Type de mission invalide (collecte attendue)" };
+    }
+    if (mission.status !== "in_progress" && mission.status !== "accepted") {
+      return { ok: false, error: "Statut de mission invalide pour la finalisation" };
+    }
 
     const [order] = await tx
       .select()
@@ -898,10 +910,21 @@ export async function failPickupMissionAtomic(params: {
       .select()
       .from(schema.missions)
       .where(and(eq(schema.missions.id, params.missionId), eq(schema.missions.courierId, params.courierId)))
+      .for("update")
       .limit(1);
 
     if (!mission) return { ok: false, error: "Mission introuvable" };
     if (mission.status === "failed") return { ok: true };
+    if (mission.type !== "pickup") {
+      return { ok: false, error: "Type de mission invalide (collecte attendue)" };
+    }
+    if (
+      mission.status !== "assigned" &&
+      mission.status !== "accepted" &&
+      mission.status !== "in_progress"
+    ) {
+      return { ok: false, error: "Statut de mission invalide pour signaler un échec" };
+    }
 
     const [order] = await tx
       .select()
@@ -957,10 +980,17 @@ export async function startDeliveryMissionAtomic(
       .select()
       .from(schema.missions)
       .where(and(eq(schema.missions.id, missionId), eq(schema.missions.courierId, courierId)))
+      .for("update")
       .limit(1);
 
     if (!mission) return { ok: false, error: "Mission introuvable" };
     if (mission.status === "in_progress") return { ok: true };
+    if (mission.type !== "delivery") {
+      return { ok: false, error: "Type de mission invalide (livraison attendue)" };
+    }
+    if (mission.status !== "assigned" && mission.status !== "accepted") {
+      return { ok: false, error: "Statut de mission invalide pour le démarrage" };
+    }
 
     // AC 13: Check courier held cash vs cash ceiling
     const [profile] = await tx
@@ -969,30 +999,28 @@ export async function startDeliveryMissionAtomic(
       .where(eq(schema.courierProfiles.userId, courierId))
       .limit(1);
 
-    const [cashCollectedRow] = await tx
-      .select({ total: sql<string>`coalesce(sum(${schema.cashLedger.amount}), 0)` })
+    const ledgerEntries = await tx
+      .select({
+        entryType: schema.cashLedger.entryType,
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+        exchangeRateUsed: schema.orders.exchangeRateUsed,
+      })
       .from(schema.cashLedger)
-      .where(
-        and(
-          eq(schema.cashLedger.courierId, courierId),
-          eq(schema.cashLedger.entryType, "cash_collected")
-        )
-      );
+      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
+      .where(eq(schema.cashLedger.courierId, courierId));
 
-    const [cashRemittedRow] = await tx
-      .select({ total: sql<string>`coalesce(sum(${schema.cashLedger.amount}), 0)` })
-      .from(schema.cashLedger)
-      .where(
-        and(
-          eq(schema.cashLedger.courierId, courierId),
-          eq(schema.cashLedger.entryType, "cash_remitted")
-        )
-      );
+    let cashCollected = 0;
+    let cashRemitted = 0;
+    for (const entry of ledgerEntries) {
+      const rate = Number(entry.exchangeRateUsed) || 2800;
+      const amountCDF =
+        entry.currency === "USD" ? Math.round(entry.amount * rate) : entry.amount;
+      if (entry.entryType === "cash_collected") cashCollected += amountCDF;
+      else if (entry.entryType === "cash_remitted") cashRemitted += amountCDF;
+    }
 
-    const cashHeld = Math.max(
-      0,
-      Number(cashCollectedRow?.total || 0) - Number(cashRemittedRow?.total || 0)
-    );
+    const cashHeld = Math.max(0, cashCollected - cashRemitted);
 
     const ceiling = profile?.cashCeiling ?? null;
     if (ceiling !== null && cashHeld >= ceiling) {
@@ -1059,10 +1087,17 @@ export async function completeDeliveryMissionAtomic(params: {
       .select()
       .from(schema.missions)
       .where(and(eq(schema.missions.id, params.missionId), eq(schema.missions.courierId, params.courierId)))
+      .for("update")
       .limit(1);
 
     if (!mission) return { ok: false, error: "Mission introuvable" };
     if (mission.status === "completed") return { ok: true };
+    if (mission.type !== "delivery") {
+      return { ok: false, error: "Type de mission invalide (livraison attendue)" };
+    }
+    if (mission.status !== "in_progress" && mission.status !== "accepted") {
+      return { ok: false, error: "Statut de mission invalide pour la finalisation" };
+    }
 
     const [order] = await tx
       .select()
@@ -1084,7 +1119,12 @@ export async function completeDeliveryMissionAtomic(params: {
     }
 
     const currency = params.cashCurrency || "CDF";
-    const discrepancyFlagged = params.cashCollected !== order.totalDue;
+    const exchangeRate = Number(order.exchangeRateUsed) || 2800;
+    const collectedInCDF =
+      currency === "USD" ? Math.round(params.cashCollected * exchangeRate) : params.cashCollected;
+    const expectedInCDF =
+      order.paymentCurrency === "USD" ? Math.round(order.totalDue * exchangeRate) : order.totalDue;
+    const discrepancyFlagged = collectedInCDF !== expectedInCDF;
 
     // Update mission
     await tx
@@ -1106,6 +1146,14 @@ export async function completeDeliveryMissionAtomic(params: {
         updatedAt: new Date(),
       })
       .where(eq(schema.orders.id, order.id));
+
+    // Set retention deadline (90 days) on order photos upon delivery completion
+    const deleteAfter = new Date();
+    deleteAfter.setDate(deleteAfter.getDate() + 90);
+    await tx
+      .update(schema.orderPhotos)
+      .set({ deleteAfter })
+      .where(eq(schema.orderPhotos.orderId, order.id));
 
     // Post to cash_ledger (AC 12)
     if (params.cashCollected > 0) {
@@ -1158,10 +1206,21 @@ export async function failDeliveryMissionAtomic(params: {
       .select()
       .from(schema.missions)
       .where(and(eq(schema.missions.id, params.missionId), eq(schema.missions.courierId, params.courierId)))
+      .for("update")
       .limit(1);
 
     if (!mission) return { ok: false, error: "Mission introuvable" };
     if (mission.status === "failed") return { ok: true };
+    if (mission.type !== "delivery") {
+      return { ok: false, error: "Type de mission invalide (livraison attendue)" };
+    }
+    if (
+      mission.status !== "assigned" &&
+      mission.status !== "accepted" &&
+      mission.status !== "in_progress"
+    ) {
+      return { ok: false, error: "Statut de mission invalide pour signaler un échec" };
+    }
 
     const [order] = await tx
       .select()
@@ -1216,28 +1275,27 @@ export async function getCourierCashOverview(
     .where(eq(schema.courierProfiles.userId, courierId))
     .limit(1);
 
-  const [cashCollectedRow] = await db
-    .select({ total: sql<string>`coalesce(sum(${schema.cashLedger.amount}), 0)` })
+  const ledgerRows = await db
+    .select({
+      entryType: schema.cashLedger.entryType,
+      amount: schema.cashLedger.amount,
+      currency: schema.cashLedger.currency,
+      exchangeRateUsed: schema.orders.exchangeRateUsed,
+    })
     .from(schema.cashLedger)
-    .where(
-      and(
-        eq(schema.cashLedger.courierId, courierId),
-        eq(schema.cashLedger.entryType, "cash_collected")
-      )
-    );
+    .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
+    .where(eq(schema.cashLedger.courierId, courierId));
 
-  const [cashRemittedRow] = await db
-    .select({ total: sql<string>`coalesce(sum(${schema.cashLedger.amount}), 0)` })
-    .from(schema.cashLedger)
-    .where(
-      and(
-        eq(schema.cashLedger.courierId, courierId),
-        eq(schema.cashLedger.entryType, "cash_remitted")
-      )
-    );
+  let cashCollected = 0;
+  let cashRemitted = 0;
+  for (const row of ledgerRows) {
+    const rate = Number(row.exchangeRateUsed) || 2800;
+    const amountCDF =
+      row.currency === "USD" ? Math.round(row.amount * rate) : row.amount;
+    if (row.entryType === "cash_collected") cashCollected += amountCDF;
+    else if (row.entryType === "cash_remitted") cashRemitted += amountCDF;
+  }
 
-  const cashCollected = Number(cashCollectedRow?.total || 0);
-  const cashRemitted = Number(cashRemittedRow?.total || 0);
   const cashHeld = Math.max(0, cashCollected - cashRemitted);
   const cashCeiling = profile?.cashCeiling ?? null;
 

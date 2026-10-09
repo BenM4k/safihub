@@ -3,8 +3,6 @@ import {
   getWorkerR2Binding,
   getSignedUploadUrl,
   getSignedDownloadUrl,
-  deleteStorageObject,
-  headStorageObject,
 } from "../r2-client";
 
 describe("Cloudflare R2 Storage Client (vinext & Workers native bindings)", () => {
@@ -41,8 +39,8 @@ describe("Cloudflare R2 Storage Client (vinext & Workers native bindings)", () =
 
   it("generates Cloudflare R2 presigned URLs when R2 credentials are configured", async () => {
     process.env.R2_ACCOUNT_ID = "82208d8e184619f1940ea0ab4b6de537";
-    process.env.R2_ACCESS_KEY_ID = "dd631a6d11cfa3d4926290347812bc15";
-    process.env.R2_SECRET_ACCESS_KEY = "f00df49ea959181820945331f79016efa16f851b449cbef3b6d5d9b7ff1ed18d";
+    process.env.R2_ACCESS_KEY_ID = "dummy_r2_access_key_id_value";
+    process.env.R2_SECRET_ACCESS_KEY = "dummy_r2_secret_access_key_value_1234567890";
     process.env.R2_BUCKET_NAME = "safihub";
     process.env.R2_ENDPOINT = "https://82208d8e184619f1940ea0ab4b6de537.r2.cloudflarestorage.com";
 
@@ -63,7 +61,8 @@ describe("Cloudflare R2 Storage Client (vinext & Workers native bindings)", () =
     delete process.env.R2_ACCESS_KEY_ID;
     delete process.env.R2_SECRET_ACCESS_KEY;
 
-    const result = await deleteStorageObject("test/delete.webp");
+    const r2Mod = await import("../r2-client");
+    const result = await r2Mod.deleteStorageObject("test/delete.webp");
     expect(result).toBe(true);
   });
 
@@ -71,7 +70,8 @@ describe("Cloudflare R2 Storage Client (vinext & Workers native bindings)", () =
     delete process.env.R2_ACCESS_KEY_ID;
     delete process.env.R2_SECRET_ACCESS_KEY;
 
-    const meta = await headStorageObject("test/missing.webp");
+    const r2Mod = await import("../r2-client");
+    const meta = await r2Mod.headStorageObject("test/missing.webp");
     expect(meta).toBeNull();
   });
 });

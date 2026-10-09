@@ -10,7 +10,7 @@ import {
   Coins,
 } from "lucide-react";
 import type { CourierCashOverview } from "@/dal";
-import { Badge } from "@/components/ui/badge";
+import { CashLedgerList } from "./cash-ledger-list";
 
 interface CashOverviewCardProps {
   data: CourierCashOverview;
@@ -90,7 +90,7 @@ export function CashOverviewCard({ data }: CashOverviewCardProps) {
           <div className="p-3 bg-purple-50/70 border border-purple-100 rounded-xl space-y-1">
             <div className="flex items-center gap-1.5 text-purple-700 text-xs font-semibold">
               <Building2 className="size-3.5" />
-              <span>Pressings</span>
+              <span>{t("houses")}</span>
             </div>
             <p className="font-mono font-bold text-purple-950 text-base">
               {data.owedToHouses.toLocaleString()} CDF
@@ -120,7 +120,7 @@ export function CashOverviewCard({ data }: CashOverviewCardProps) {
         <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-1">
           <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium">
             <ShieldCheck className="size-3.5 text-emerald-600" />
-            <span>Caution</span>
+            <span>{t("depositLabel")}</span>
           </div>
           <p className="font-mono font-bold text-slate-900 text-sm">
             {data.securityDeposit.toLocaleString()} CDF
@@ -130,7 +130,7 @@ export function CashOverviewCard({ data }: CashOverviewCardProps) {
         <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-1">
           <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium">
             <Receipt className="size-3.5 text-blue-600" />
-            <span>Fond de caisse</span>
+            <span>{t("floatLabel")}</span>
           </div>
           <p className="font-mono font-bold text-slate-900 text-sm">
             {data.changeFloat.toLocaleString()} CDF
@@ -139,49 +139,7 @@ export function CashOverviewCard({ data }: CashOverviewCardProps) {
       </div>
 
       {/* Recent Ledger Entries */}
-      <div className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          {t("recentTransactions")}
-        </h2>
-
-        {data.recentLedgerEntries.length === 0 ? (
-          <p className="text-xs text-slate-400 py-4 text-center">
-            {t("noTransactions")}
-          </p>
-        ) : (
-          <div className="divide-y divide-slate-100 text-xs">
-            {data.recentLedgerEntries.map((tx) => (
-              <div
-                key={tx.id}
-                className="py-2.5 flex items-center justify-between gap-2"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] font-mono">
-                      {tx.entryType.replace("_", " ")}
-                    </Badge>
-                    <span className="text-slate-400 text-[11px]">
-                      {new Date(tx.createdAt).toLocaleDateString([], {
-                        day: "2-digit",
-                        month: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                  {tx.note && (
-                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                      {tx.note}
-                    </p>
-                  )}
-                </div>
-
-                <span className="font-mono font-bold text-slate-900 shrink-0">
-                  {tx.amount.toLocaleString()} {tx.currency}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <CashLedgerList entries={data.recentLedgerEntries} />
     </div>
   );
 }

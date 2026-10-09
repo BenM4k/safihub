@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, isNull, lte, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lte, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import type { OrderStatus } from "@/services/db/schema";
 
@@ -251,7 +251,7 @@ export async function markPhotosDeletedAtomic(
   const res = await db
     .update(schema.orderPhotos)
     .set({ deletedAt })
-    .where(sql`${schema.orderPhotos.id} = ANY(${photoIds})`);
+    .where(inArray(schema.orderPhotos.id, photoIds));
 
   return res.rowCount ?? photoIds.length;
 }

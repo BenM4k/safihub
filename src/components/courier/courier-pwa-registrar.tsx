@@ -5,7 +5,6 @@ import { useCourierStore } from "@/lib/stores/courier-store";
 
 export function CourierPwaRegistrar() {
   const setOnline = useCourierStore((s) => s.setOnline);
-  const syncQueue = useCourierStore((s) => s.syncQueue);
 
   useEffect(() => {
     // 1. Register courier-scoped service worker
@@ -20,7 +19,6 @@ export function CourierPwaRegistrar() {
     // 2. Connectivity listeners
     const handleOnline = () => {
       setOnline(true);
-      syncQueue();
     };
 
     const handleOffline = () => {
@@ -37,7 +35,7 @@ export function CourierPwaRegistrar() {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [setOnline, syncQueue]);
+  }, [setOnline]);
 
   return null;
 }

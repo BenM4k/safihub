@@ -14,12 +14,14 @@ export interface CompressionOptions {
   initialQuality?: number;
 }
 
+export type SupportedPhotoContentType = "image/webp" | "image/jpeg";
+
 export interface CompressionResult {
   blob: Blob;
   width: number;
   height: number;
   sizeBytes: number;
-  mimeType: string;
+  mimeType: SupportedPhotoContentType;
 }
 
 const DEFAULT_OPTIONS: Required<CompressionOptions> = {
@@ -122,7 +124,7 @@ export async function compressImage(
     width,
     height,
     sizeBytes: bestBlob.size,
-    mimeType: bestBlob.type,
+    mimeType: (bestBlob.type === "image/jpeg" ? "image/jpeg" : "image/webp") as SupportedPhotoContentType,
   };
 }
 
@@ -172,7 +174,7 @@ export async function uploadBlobWithRetry(
 
     if (attempt < maxRetries) {
       // Exponential backoff: 1s, 2s, 4s...
-      const delayMs = Math.pow(2, attempt) * 1000;
+      const delayMs = Math.pow(2, attempt - 1) * 1000;
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }

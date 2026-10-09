@@ -9,9 +9,8 @@ import {
   startPickupMissionAction,
   completePickupMissionAction,
   failPickupMissionAction,
-  attachOrderPhotoAction,
 } from "@/actions/courier.actions";
-import { enqueueOfflinePhoto } from "@/lib/offline/offline-photo-store";
+import { uploadPickupConditionPhoto } from "./pickup-photo";
 
 export interface ItemState {
   orderItemId: string;
@@ -32,6 +31,10 @@ export function usePickupChecklist(detail: CourierMissionDetail) {
 
   const isOnline = useCourierStore((s) => s.isOnline);
   const enqueueAction = useCourierStore((s) => s.enqueueAction);
+  const cachedDetail = useCourierStore((s) => s.missionDetails[detail.mission.id]);
+  const [localStatusOverride, setLocalStatusOverride] = useState<string | null>(null);
+  const missionStatus =
+    localStatusOverride || cachedDetail?.mission.status || detail.mission.status;
 
   const [items, setItems] = useState<ItemState[]>(() =>
     detail.items.map((it) => {
@@ -56,7 +59,7 @@ export function usePickupChecklist(detail: CourierMissionDetail) {
     startTransition(async () => {
       if (!isOnline) {
         enqueueAction({ type: "start_pickup", missionId: detail.mission.id, payload: {} });
-        router.refresh();
+        setLocalStatusOverride("in_progress");
         return;
       }
       const res = await startPickupMissionAction(detail.mission.id);
@@ -81,36 +84,27 @@ export function usePickupChecklist(detail: CourierMissionDetail) {
     );
   };
 
-  const handleAttachPhoto = (orderItemId: string) => {
-    const storageKey = `photos/pickup_${detail.mission.orderId}_${orderItemId}_${Date.now()}.webp`;
-    setItems((prev) =>
-      prev.map((it) =>
-        it.orderItemId === orderItemId ? { ...it, hasPhoto: true } : it
-      )
-    );
-
-    if (isOnline) {
-      startTransition(async () => {
-        await attachOrderPhotoAction({
-          orderId: detail.mission.orderId,
-          orderItemId,
-          missionId: detail.mission.id,
-          type: "pickup_condition",
-          storageKey,
-        });
-      });
-    } else {
-      enqueueOfflinePhoto({
-        id: `offline_photo_${Date.now()}`,
+  const handleAttachPhoto = (orderItemId: string, file: File) => {
+    startTransition(async () => {
+      const res = await uploadPickupConditionPhoto({
         orderId: detail.mission.orderId,
         orderItemId,
         missionId: detail.mission.id,
-        type: "pickup_condition",
-        blob: new Blob(["offline-photo"], { type: "image/webp" }),
-        sizeBytes: 1024,
-        timestamp: Date.now(),
-      }).catch((e) => console.warn(e));
-    }
+        file,
+        isOnline,
+      });
+
+      if (!res.ok) {
+        setErrorMessage(res.error);
+        return;
+      }
+
+      setItems((prev) =>
+        prev.map((it) =>
+          it.orderItemId === orderItemId ? { ...it, hasPhoto: true } : it
+        )
+      );
+    });
   };
 
   const handleCompletePickup = () => {
@@ -169,6 +163,7 @@ export function usePickupChecklist(detail: CourierMissionDetail) {
   };
 
   return {
+    missionStatus,
     items,
     isPending,
     showFailureModal,

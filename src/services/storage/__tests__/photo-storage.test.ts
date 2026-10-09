@@ -92,6 +92,12 @@ vi.mock("@/lib/storage/r2-client", () => ({
     async (key: string) => `https://r2.safihub.cd/safihub/${key}?mock_get=1`
   ),
   deleteStorageObject: vi.fn(async () => true),
+  headStorageObject: vi.fn(async (key: string) => ({
+    key,
+    size: 240 * 1024,
+    etag: "mock_etag",
+  })),
+  isStorageConfigured: vi.fn(() => true),
 }));
 
 describe("Phase 7: Cloudflare R2 Photos, Compression & Storage Architecture", () => {
@@ -240,11 +246,18 @@ describe("Phase 7: Cloudflare R2 Photos, Compression & Storage Architecture", ()
     });
 
     it("rejects photo exceeding maximum size limit (500 KB)", async () => {
+      const r2 = await import("@/lib/storage/r2-client");
+      vi.mocked(r2.headStorageObject).mockResolvedValueOnce({
+        key: "orders/ord_100/pickup_condition/00000000-0000-0000-0000-000000000001.webp",
+        size: 600 * 1024,
+        etag: "etag_large",
+      });
+
       const res = await recordUploadedPhotoService({
         user: { id: "courier_1", role: "courier" },
         orderId: "ord_100",
         type: "pickup_condition",
-        storageKey: "orders/ord_100/test.webp",
+        storageKey: "orders/ord_100/pickup_condition/00000000-0000-0000-0000-000000000001.webp",
         sizeBytes: 600 * 1024, // 600 KB > 500 KB limit
       });
 
@@ -259,7 +272,7 @@ describe("Phase 7: Cloudflare R2 Photos, Compression & Storage Architecture", ()
         user: { id: "courier_1", role: "courier" },
         orderId: "ord_100",
         type: "pickup_condition",
-        storageKey: "orders/ord_100/test.webp",
+        storageKey: "orders/ord_100/pickup_condition/00000000-0000-0000-0000-000000000001.webp",
         sizeBytes: 240 * 1024, // 240 KB < 300 KB target
       });
 
@@ -326,13 +339,17 @@ describe("Phase 7: Cloudflare R2 Photos, Compression & Storage Architecture", ()
     });
 
     it("is idempotent: re-running on an empty candidate set succeeds without errors", async () => {
+      const dal = await import("@/dal");
+      vi.mocked(dal.getExpiredPhotosForPruning).mockResolvedValueOnce([]);
+
       const res = await pruneExpiredPhotosService({
         now: new Date("2020-01-01T00:00:00Z"),
       });
 
       expect(res.ok).toBe(true);
       if (res.ok) {
-        expect(res.value.prunedCount).toBe(2);
+        expect(res.value.prunedCount).toBe(0);
+        expect(res.value.skippedCount).toBe(0);
       }
     });
   });

@@ -18,6 +18,8 @@ import {
   getSignedUploadUrl,
   getSignedDownloadUrl,
   deleteStorageObject,
+  headStorageObject,
+  isStorageConfigured,
 } from "@/lib/storage/r2-client";
 import { ok, err, type Result } from "@/lib/result";
 
@@ -274,10 +276,31 @@ export async function recordUploadedPhotoService(params: {
       return err("Accès non autorisé pour enregistrer cette photo");
     }
 
+    // Validate storageKey format: orders/<orderId>/<type>/<uuid>.webp
+    const expectedPrefix = `orders/${params.orderId}/${params.type}/`;
+    if (!params.storageKey.startsWith(expectedPrefix)) {
+      return err("La clé de stockage ne correspond pas à la commande ou au type spécifié");
+    }
+    const fileName = params.storageKey.slice(expectedPrefix.length);
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/i;
+    if (!uuidRegex.test(fileName)) {
+      return err("Format de clé de stockage invalide (UUID .webp attendu)");
+    }
+
+    // Verify object existence and actual size in storage
+    const objMeta = await headStorageObject(params.storageKey);
+    if (!objMeta) {
+      if (isStorageConfigured()) {
+        return err("Fichier introuvable dans le stockage");
+      }
+    }
+
+    const actualSizeBytes = objMeta?.size ?? params.sizeBytes ?? null;
+
     // Limit checks
-    if (params.sizeBytes && params.sizeBytes > PHOTO_LIMITS.MAX_SIZE_BYTES) {
+    if (actualSizeBytes && actualSizeBytes > PHOTO_LIMITS.MAX_SIZE_BYTES) {
       return err(
-        `Taille de photo excessive (${Math.round(params.sizeBytes / 1024)} Ko > 500 Ko)`
+        `Taille de photo excessive (${Math.round(actualSizeBytes / 1024)} Ko > 500 Ko)`
       );
     }
 
@@ -306,7 +329,7 @@ export async function recordUploadedPhotoService(params: {
       disputeId: params.disputeId,
       type: params.type,
       storageKey: params.storageKey,
-      sizeBytes: params.sizeBytes,
+      sizeBytes: actualSizeBytes,
       takenBy: params.user.id,
       deleteAfter,
     });
@@ -354,14 +377,23 @@ export async function pruneExpiredPhotosService(params?: {
       photosToPrune.push(photo);
     }
 
-    // Delete objects from R2
-    await Promise.all(
-      photosToPrune.map((p) => deleteStorageObject(p.storageKey))
+    // Delete objects from R2 and retain each deletion result
+    const deletionResults = await Promise.all(
+      photosToPrune.map(async (p) => {
+        const deleted = await deleteStorageObject(p.storageKey);
+        return { id: p.id, deleted };
+      })
     );
 
-    // Atomically mark records as deleted in DB
-    const idsToMark = photosToPrune.map((p) => p.id);
-    const prunedCount = await markPhotosDeletedAtomic(idsToMark, referenceDate);
+    // Atomically mark records as deleted in DB for photos whose storage deletion succeeded
+    const idsToMark = deletionResults
+      .filter((r) => r.deleted)
+      .map((r) => r.id);
+
+    const prunedCount =
+      idsToMark.length > 0
+        ? await markPhotosDeletedAtomic(idsToMark, referenceDate)
+        : 0;
 
     return ok({ prunedCount, skippedCount });
   } catch (error) {

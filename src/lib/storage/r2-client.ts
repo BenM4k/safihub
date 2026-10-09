@@ -74,6 +74,10 @@ function getR2S3Client(): { client: S3Client | null; bucket: string; isConfigure
   return cachedS3Client;
 }
 
+export function isStorageConfigured(): boolean {
+  return getR2S3Client().isConfigured;
+}
+
 /**
  * Generates a short-lived presigned upload (PUT) URL for Cloudflare R2.
  * Valid for 5 minutes (300 seconds) by default.
@@ -87,6 +91,9 @@ export async function getSignedUploadUrl(
   const { client, bucket, isConfigured } = getR2S3Client();
 
   if (!isConfigured || !client) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Cloudflare R2 storage client is not configured in production");
+    }
     // In local dev/test environments without credentials, generate a deterministic mock URL
     return `https://storage.safihub.cd/${bucket}/${storageKey}?mock_upload_sig=${Date.now()}&expires=${expiresInSeconds}`;
   }
@@ -112,6 +119,9 @@ export async function getSignedDownloadUrl(
   const { client, bucket, isConfigured } = getR2S3Client();
 
   if (!isConfigured || !client) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Cloudflare R2 storage client is not configured in production");
+    }
     return `https://storage.safihub.cd/${bucket}/${storageKey}?mock_download_sig=valid&expires=${expiresInSeconds}`;
   }
 
@@ -144,6 +154,10 @@ export async function deleteStorageObject(storageKey: string): Promise<boolean> 
   // 2. S3-compatible R2 Client fallback
   const { client, bucket, isConfigured } = getR2S3Client();
   if (!isConfigured || !client) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[Cloudflare R2] Credentials not configured in production");
+      return false;
+    }
     return true; // Mock deletion succeeds in test/dev
   }
 

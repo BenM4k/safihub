@@ -16,7 +16,7 @@ import {
   type OfflineSyncResult,
   type QueuedCourierAction,
 } from "@/services/courier";
-import { addOrderPhotoRecord } from "@/dal";
+import { recordUploadedPhotoService } from "@/services/storage";
 
 const missionIdSchema = z.object({
   missionId: z.string().uuid("Identifiant de mission invalide"),
@@ -196,15 +196,75 @@ export async function failDeliveryMissionAction(
   return res;
 }
 
+const queuedActionBase = z.object({
+  id: z.string().min(1),
+  missionId: z.string().uuid("Identifiant de mission invalide"),
+  timestamp: z.number(),
+});
+
+const queuedAcceptMissionSchema = queuedActionBase.extend({
+  type: z.literal("accept_mission"),
+  payload: z.record(z.string(), z.unknown()).default({}),
+});
+
+const queuedStartPickupSchema = queuedActionBase.extend({
+  type: z.literal("start_pickup"),
+  payload: z.record(z.string(), z.unknown()).default({}),
+});
+
+const queuedCompletePickupSchema = queuedActionBase.extend({
+  type: z.literal("complete_pickup"),
+  payload: completePickupSchema.omit({ missionId: true }),
+});
+
+const queuedFailPickupSchema = queuedActionBase.extend({
+  type: z.literal("fail_pickup"),
+  payload: failMissionSchema.omit({ missionId: true }),
+});
+
+const queuedStartDeliverySchema = queuedActionBase.extend({
+  type: z.literal("start_delivery"),
+  payload: z.record(z.string(), z.unknown()).default({}),
+});
+
+const queuedCompleteDeliverySchema = queuedActionBase.extend({
+  type: z.literal("complete_delivery"),
+  payload: completeDeliverySchema.omit({ missionId: true }),
+});
+
+const queuedFailDeliverySchema = queuedActionBase.extend({
+  type: z.literal("fail_delivery"),
+  payload: failMissionSchema.omit({ missionId: true }),
+});
+
+const queuedCourierActionSchema = z.discriminatedUnion("type", [
+  queuedAcceptMissionSchema,
+  queuedStartPickupSchema,
+  queuedCompletePickupSchema,
+  queuedFailPickupSchema,
+  queuedStartDeliverySchema,
+  queuedCompleteDeliverySchema,
+  queuedFailDeliverySchema,
+]);
+
+const syncOfflineActionsSchema = z
+  .array(queuedCourierActionSchema)
+  .max(100, "Trop d'actions à synchroniser simultanément");
+
 export async function syncOfflineCourierActionsAction(
   actions: QueuedCourierAction[]
 ): Promise<Result<OfflineSyncResult>> {
   const auth = await requireRole(["courier", "admin"]);
   if (!auth.ok) return err(auth.error);
 
+  const parsed = syncOfflineActionsSchema.safeParse(actions);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Actions hors ligne invalides");
+  }
+
   const res = await syncOfflineCourierActionsService({
     courierId: auth.value.user.id,
-    actions,
+    actions: parsed.data as QueuedCourierAction[],
   });
 
   if (res.ok) {
@@ -232,21 +292,19 @@ export async function attachOrderPhotoAction(
   const parsed = attachPhotoSchema.safeParse(input);
   if (!parsed.success) return err(parsed.error.issues[0]?.message ?? "Données invalides");
 
-  try {
-    const photoId = await addOrderPhotoRecord({
-      orderId: parsed.data.orderId,
-      storageKey: parsed.data.storageKey,
-      type: parsed.data.type,
-      takenBy: auth.value.user.id,
-      orderItemId: parsed.data.orderItemId,
-      missionId: parsed.data.missionId,
-    });
+  const res = await recordUploadedPhotoService({
+    user: { id: auth.value.user.id, role: auth.value.user.role },
+    orderId: parsed.data.orderId,
+    orderItemId: parsed.data.orderItemId,
+    missionId: parsed.data.missionId,
+    type: parsed.data.type,
+    storageKey: parsed.data.storageKey,
+  });
 
-    if (parsed.data.missionId) {
-      revalidatePath(`/courier/missions/${parsed.data.missionId}`);
-    }
-    return ok({ photoId });
-  } catch (error) {
-    return err(error instanceof Error ? error.message : "Échec de l'enregistrement de la photo");
+  if (!res.ok) return err(res.error);
+
+  if (parsed.data.missionId) {
+    revalidatePath(`/courier/missions/${parsed.data.missionId}`);
   }
+  return ok({ photoId: res.value.photoId });
 }

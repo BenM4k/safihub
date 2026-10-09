@@ -125,7 +125,8 @@ export async function syncOfflinePhotos(): Promise<{
         orderId: item.orderId,
         orderItemId: item.orderItemId,
         type: item.type,
-        contentType: item.blob.type || "image/webp",
+        contentType:
+          item.blob.type === "image/jpeg" ? "image/jpeg" : "image/webp",
       });
 
       if (!urlRes.ok) {

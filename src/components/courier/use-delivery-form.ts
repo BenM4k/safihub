@@ -24,6 +24,10 @@ export function useDeliveryForm(detail: CourierMissionDetail) {
 
   const isOnline = useCourierStore((s) => s.isOnline);
   const enqueueAction = useCourierStore((s) => s.enqueueAction);
+  const cachedDetail = useCourierStore((s) => s.missionDetails[detail.mission.id]);
+  const [localStatusOverride, setLocalStatusOverride] = useState<string | null>(null);
+  const missionStatus =
+    localStatusOverride || cachedDetail?.mission.status || detail.mission.status;
 
   const enteredCashNum = parseInt(cashCollected || "0", 10);
 
@@ -36,7 +40,7 @@ export function useDeliveryForm(detail: CourierMissionDetail) {
           missionId: detail.mission.id,
           payload: {},
         });
-        router.refresh();
+        setLocalStatusOverride("in_progress");
         return;
       }
 
@@ -117,6 +121,7 @@ export function useDeliveryForm(detail: CourierMissionDetail) {
   };
 
   return {
+    missionStatus,
     isPending,
     showFailureModal,
     setShowFailureModal,

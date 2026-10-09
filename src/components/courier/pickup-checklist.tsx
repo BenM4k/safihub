@@ -15,7 +15,9 @@ interface PickupChecklistProps {
 
 export function PickupChecklist({ detail }: PickupChecklistProps) {
   const t = useTranslations("courier.pickup");
+  const tActions = useTranslations("courier.missions.actions");
   const {
+    missionStatus,
     items,
     isPending,
     showFailureModal,
@@ -34,7 +36,7 @@ export function PickupChecklist({ detail }: PickupChecklistProps) {
     handleFailPickup,
   } = usePickupChecklist(detail);
 
-  if (detail.mission.status === "accepted") {
+  if (missionStatus === "accepted") {
     return (
       <div className="space-y-4">
         {errorMessage && (
@@ -51,7 +53,7 @@ export function PickupChecklist({ detail }: PickupChecklistProps) {
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold h-11 text-sm rounded-xl shadow-xs"
           >
             <Play className="size-4 mr-2" />
-            <span>Démarrer la collecte</span>
+            <span>{tActions("startPickup")}</span>
           </Button>
         </div>
       </div>
@@ -84,7 +86,7 @@ export function PickupChecklist({ detail }: PickupChecklistProps) {
               hasPhoto={item.hasPhoto}
               onUpdateQuantity={(delta) => handleUpdateQuantity(item.orderItemId, delta)}
               onToggleFlagged={() => handleToggleFlagged(item.orderItemId)}
-              onAttachPhoto={() => handleAttachPhoto(item.orderItemId)}
+              onAttachPhoto={(file) => handleAttachPhoto(item.orderItemId, file)}
             />
           );
         })}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, MapPin, Phone, Building2 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { guardCourierRoute } from "@/services/auth";
 import { getCourierMissionDetailService } from "@/services/courier";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,11 @@ export default async function CourierMissionDetailPage({
     notFound();
   }
 
+  const [tNav, tMissions] = await Promise.all([
+    getTranslations("courier.nav"),
+    getTranslations("courier.missions"),
+  ]);
+
   const detail = res.value;
   const isPickup = detail.mission.type === "pickup";
 
@@ -32,7 +38,7 @@ export default async function CourierMissionDetailPage({
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 p-1 -ml-1 rounded-lg"
         >
           <ArrowLeft className="size-4" />
-          <span>Missions</span>
+          <span>{tNav("missions")}</span>
         </Link>
 
         <Badge
@@ -43,7 +49,7 @@ export default async function CourierMissionDetailPage({
               : "bg-blue-50 text-blue-700 border-blue-200"
           }
         >
-          {isPickup ? "Collecte" : "Livraison"}
+          {isPickup ? tMissions("pickup") : tMissions("delivery")}
         </Badge>
       </div>
 
@@ -51,7 +57,7 @@ export default async function CourierMissionDetailPage({
       <div className="p-4 bg-white rounded-2xl border border-slate-200 space-y-3 shadow-2xs">
         <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
           <span className="font-mono font-bold text-sm text-slate-900">
-            Commande #{detail.mission.orderCode}
+            {tMissions("orderTitle", { code: detail.mission.orderCode })}
           </span>
           <span className="text-xs font-medium text-slate-500">
             {new Date(detail.mission.slotStart).toLocaleTimeString([], {
@@ -85,7 +91,7 @@ export default async function CourierMissionDetailPage({
                 href={`tel:${detail.mission.customerPhone}`}
                 className="text-blue-600 font-semibold hover:underline"
               >
-                {detail.mission.customerPhone} (Appeler)
+                {detail.mission.customerPhone} ({tMissions("call")})
               </a>
             </div>
           )}
@@ -106,7 +112,7 @@ export default async function CourierMissionDetailPage({
               href={`tel:${detail.mission.housePhone}`}
               className="text-blue-600 hover:underline font-medium"
             >
-              Appeler
+              {tMissions("call")}
             </a>
           )}
         </div>

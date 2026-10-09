@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Camera, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ interface PickupItemRowProps {
   hasPhoto: boolean;
   onUpdateQuantity: (delta: number) => void;
   onToggleFlagged: () => void;
-  onAttachPhoto: () => void;
+  onAttachPhoto: (file: File) => void;
 }
 
 export function PickupItemRow({
@@ -28,6 +29,7 @@ export function PickupItemRow({
   onAttachPhoto,
 }: PickupItemRowProps) {
   const t = useTranslations("courier.pickup");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="p-3.5 bg-white rounded-2xl border border-slate-200 space-y-3 shadow-2xs">
@@ -77,20 +79,36 @@ export function PickupItemRow({
         </label>
 
         {isFlagged && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={onAttachPhoto}
-            className={`h-7 px-2 text-[11px] ${
-              hasPhoto
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                : "bg-rose-50 text-rose-700 border-rose-200"
-            }`}
-          >
-            <Camera className="size-3 mr-1" />
-            <span>{hasPhoto ? t("photoAttached") : t("addPhoto")}</span>
-          </Button>
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  e.target.value = "";
+                  onAttachPhoto(file);
+                }
+              }}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className={`h-7 px-2 text-[11px] ${
+                hasPhoto
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-rose-50 text-rose-700 border-rose-200"
+              }`}
+            >
+              <Camera className="size-3 mr-1" />
+              <span>{hasPhoto ? t("photoAttached") : t("addPhoto")}</span>
+            </Button>
+          </div>
         )}
       </div>
     </div>
