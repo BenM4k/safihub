@@ -972,6 +972,23 @@
       "failedMissions": "Majukumu yaliyoshindikana",
       "empty": "Hakuna historia ya majukumu bado"
     }
+  },
+  "photos": {
+    "takePhoto": "Piga picha",
+    "compressing": "Inashinikiza...",
+    "requestingUrl": "Inaandaa...",
+    "uploading": "Inapakia...",
+    "confirming": "Inathibitisha...",
+    "uploadFailed": "Kushindwa kupakia picha",
+    "unknownError": "Hitilafu imetokea",
+    "noPhotos": "Hakuna picha zilizorekodiwa kwa agizo hili",
+    "privacyNotice": "Kumbusho la faragha: piga picha nguo pekee. Usipige picha nyuso au vitambulisho.",
+    "pickupPhotosTitle": "Hali wakati wa kuchukua",
+    "deliveryPhotosTitle": "Uthibitisho wa uwasilishaji",
+    "disputePhotosTitle": "Picha za mgogoro",
+    "photoAlt": "Picha ya vazi",
+    "deliveryProofAlt": "Uthibitisho wa uwasilishaji",
+    "disputePhotoAlt": "Picha ya mgogoro"
   }
 }
 

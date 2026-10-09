@@ -813,8 +813,8 @@ export async function completePickupMissionAtomic(params: {
       if (!match) continue;
 
       if (it.isFlagged) {
-        // AC 9 check: must have at least one photo attached
-        const hasPhoto = photosByItem.has(it.orderItemId) || existingPhotos.length > 0;
+        // AC 9 check: must have at least one photo attached for this specific item
+        const hasPhoto = photosByItem.has(it.orderItemId);
         if (!hasPhoto) {
           return {
             ok: false,

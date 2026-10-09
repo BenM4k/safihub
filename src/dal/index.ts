@@ -9,3 +9,4 @@ export * from "./order.dal";
 export * from "./ops.dal";
 export * from "./customer-houses.dal";
 export * from "./customer-account.dal";
+export * from "./photo.dal";

@@ -12,6 +12,7 @@ import type {
   ActionSyncResult,
 } from "@/services/courier";
 import { syncOfflineCourierActionsAction } from "@/actions/courier.actions";
+import { syncOfflinePhotos } from "@/lib/offline/offline-photo-store";
 
 export interface ConflictItem {
   actionId: string;
@@ -172,6 +173,10 @@ export const useCourierStore = create<CourierStoreState>()(
         set({ syncStatus: "syncing" });
 
         try {
+          await syncOfflinePhotos().catch((err) => {
+            console.warn("Failed to sync offline photos:", err);
+          });
+
           const res = await syncOfflineCourierActionsAction(queue);
           if (!res.ok) {
             set({ syncStatus: "idle" });

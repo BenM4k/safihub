@@ -972,6 +972,23 @@
       "failedMissions": "Échecs enregistrés",
       "empty": "Aucune mission dans l'historique"
     }
+  },
+  "photos": {
+    "takePhoto": "Prendre une photo",
+    "compressing": "Compression...",
+    "requestingUrl": "Préparation...",
+    "uploading": "Téléversement...",
+    "confirming": "Enregistrement...",
+    "uploadFailed": "Échec du téléversement de la photo",
+    "unknownError": "Une erreur est survenue",
+    "noPhotos": "Aucune photo enregistrée pour cette commande",
+    "privacyNotice": "Rappel de confidentialité : photographiez uniquement les vêtements. Ne photographiez pas de visages ou documents.",
+    "pickupPhotosTitle": "État à la collecte",
+    "deliveryPhotosTitle": "Preuve de livraison",
+    "disputePhotosTitle": "Photos du litige",
+    "photoAlt": "Photo du vêtement",
+    "deliveryProofAlt": "Preuve de livraison",
+    "disputePhotoAlt": "Photo du litige"
   }
 }
 

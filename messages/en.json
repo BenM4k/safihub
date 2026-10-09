@@ -972,6 +972,23 @@
       "failedMissions": "Failed Missions",
       "empty": "No mission history available"
     }
+  },
+  "photos": {
+    "takePhoto": "Take a photo",
+    "compressing": "Compressing...",
+    "requestingUrl": "Preparing...",
+    "uploading": "Uploading...",
+    "confirming": "Confirming...",
+    "uploadFailed": "Photo upload failed",
+    "unknownError": "An error occurred",
+    "noPhotos": "No photos recorded for this order",
+    "privacyNotice": "Privacy reminder: photograph clothing items only. Do not photograph faces or ID documents.",
+    "pickupPhotosTitle": "Pickup Condition",
+    "deliveryPhotosTitle": "Proof of Delivery",
+    "disputePhotosTitle": "Dispute Photos",
+    "photoAlt": "Garment photo",
+    "deliveryProofAlt": "Proof of delivery",
+    "disputePhotoAlt": "Dispute photo"
   }
 }
 

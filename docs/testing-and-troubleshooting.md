@@ -178,4 +178,8 @@ Each acceptance criterion from the product specification is mapped to an automat
 - **Trap:** Falling back to a non-empty default message (e.g. `(action.payload.reason as string) || "Pickup failed"`) during offline queue synchronization silently masks empty string payloads, preventing server validation from rejecting invalid actions (violating AC 14).
 - **Fix:** Use nullish coalescing `?? ""` (`(action.payload.reason as string) ?? ""`) so that missing or empty reason strings correctly propagate to domain validation, returning clear rejection errors for conflict resolution.
 
+### 26. Orders Guest Tracking Token Column Name
+- **Trap:** Querying `schema.orders.guestToken` in DAL or service layers.
+- **Fix:** The order schema column for the public guest tracking URL token is named `trackingToken` (`schema.orders.trackingToken`), indexed via `orders_tracking_token_unique`.
+
 

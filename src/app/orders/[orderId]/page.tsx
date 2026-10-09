@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { getCurrentUser } from "@/services/auth";
 import { getCustomerOrderDetail, ACTIVE_ORDER_STATUSES } from "@/services/order";
+import { getOrderPhotosWithSignedUrlsService } from "@/services/storage";
 import { OrderHeader } from "@/components/orders/detail/order-header";
 import { OrderItemsCard } from "@/components/orders/detail/order-items-card";
 import { OrderStatusTimeline } from "@/components/orders/detail/order-status-timeline";
@@ -10,6 +11,7 @@ import { OrderCancelCard } from "@/components/orders/detail/order-cancel-card";
 import { ExpiredSwitchCard } from "@/components/orders/detail/expired-switch-card";
 import { PriceAdjustmentCard } from "@/components/orders/detail/price-adjustment-card";
 import { DeliverySlotConfirmationCard } from "@/components/orders/detail/delivery-slot-confirmation-card";
+import { OrderPhotosGallery } from "@/components/photos/order-photos-gallery";
 
 interface OrderDetailPageProps {
   params: Promise<{ orderId: string }>;
@@ -29,6 +31,12 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   }
 
   const { order, items, events } = res.value;
+
+  const photosRes = await getOrderPhotosWithSignedUrlsService({
+    user: { id: user.id, role: user.role },
+    orderId,
+  });
+  const photos = photosRes.ok ? photosRes.value : [];
 
   const canDispute =
     (ACTIVE_ORDER_STATUSES as string[]).includes(order.status) || order.status === "delivered";
@@ -76,7 +84,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         <OrderCancelCard orderId={order.id} status={order.status} />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 space-y-6">
             <OrderItemsCard
               items={items}
               currency={order.currency}
@@ -84,6 +92,8 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
               deliveryFee={order.deliveryFee}
               totalDue={order.totalDue}
             />
+
+            <OrderPhotosGallery photos={photos} />
           </div>
 
           <div className="md:col-span-1">

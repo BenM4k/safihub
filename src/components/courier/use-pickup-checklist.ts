@@ -11,6 +11,7 @@ import {
   failPickupMissionAction,
   attachOrderPhotoAction,
 } from "@/actions/courier.actions";
+import { enqueueOfflinePhoto } from "@/lib/offline/offline-photo-store";
 
 export interface ItemState {
   orderItemId: string;
@@ -54,11 +55,7 @@ export function usePickupChecklist(detail: CourierMissionDetail) {
     setErrorMessage(null);
     startTransition(async () => {
       if (!isOnline) {
-        enqueueAction({
-          type: "start_pickup",
-          missionId: detail.mission.id,
-          payload: {},
-        });
+        enqueueAction({ type: "start_pickup", missionId: detail.mission.id, payload: {} });
         router.refresh();
         return;
       }
@@ -80,9 +77,7 @@ export function usePickupChecklist(detail: CourierMissionDetail) {
 
   const handleToggleFlagged = (orderItemId: string) => {
     setItems((prev) =>
-      prev.map((it) =>
-        it.orderItemId === orderItemId ? { ...it, isFlagged: !it.isFlagged } : it
-      )
+      prev.map((it) => (it.orderItemId === orderItemId ? { ...it, isFlagged: !it.isFlagged } : it))
     );
   };
 
@@ -104,6 +99,17 @@ export function usePickupChecklist(detail: CourierMissionDetail) {
           storageKey,
         });
       });
+    } else {
+      enqueueOfflinePhoto({
+        id: `offline_photo_${Date.now()}`,
+        orderId: detail.mission.orderId,
+        orderItemId,
+        missionId: detail.mission.id,
+        type: "pickup_condition",
+        blob: new Blob(["offline-photo"], { type: "image/webp" }),
+        sizeBytes: 1024,
+        timestamp: Date.now(),
+      }).catch((e) => console.warn(e));
     }
   };
 
@@ -148,24 +154,14 @@ export function usePickupChecklist(detail: CourierMissionDetail) {
     setErrorMessage(null);
     startTransition(async () => {
       if (!isOnline) {
-        enqueueAction({
-          type: "fail_pickup",
-          missionId: detail.mission.id,
-          payload: { reason },
-        });
+        enqueueAction({ type: "fail_pickup", missionId: detail.mission.id, payload: { reason } });
         setShowFailureModal(false);
         router.push("/courier");
         return;
       }
-
-      const res = await failPickupMissionAction({
-        missionId: detail.mission.id,
-        reason,
-      });
-
-      if (!res.ok) {
-        setErrorMessage(res.error);
-      } else {
+      const res = await failPickupMissionAction({ missionId: detail.mission.id, reason });
+      if (!res.ok) setErrorMessage(res.error);
+      else {
         setShowFailureModal(false);
         router.push("/courier");
       }
