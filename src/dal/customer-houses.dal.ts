@@ -76,6 +76,7 @@ export interface CustomerHouseDetailData {
     reviewCount: number;
     imageUrl: string;
     isActive?: boolean;
+    isPaused?: boolean;
   };
   services: Array<{
     id: string;
@@ -467,6 +468,7 @@ export async function getCustomerHouseDetail(
       reviewCount: 0,
       imageUrl,
       isActive: house.isActive,
+      isPaused: house.isPaused,
     },
     services: Array.from(serviceMap.values()),
     items,

@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { AdminSidebar } from "./admin-sidebar";
 import { Button } from "@/components/ui/button";
 
 export function AdminMobileNav() {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
   return (
     <div className="md:hidden">
@@ -22,7 +33,12 @@ export function AdminMobileNav() {
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu d'administration"
+          className="fixed inset-0 z-50 flex"
+        >
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-xs animate-fade-in"

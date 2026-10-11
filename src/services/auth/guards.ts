@@ -177,10 +177,14 @@ export async function requireHouseAccess(
   // No specific house ID or slug requested: retrieve all assigned houses
   const memberships = await getUserHouseMemberships(user.id);
   if (memberships.length === 0) {
-    if (options?.redirectIfUnauthorized) {
-      redirect(options?.redirectTo || "/partner");
-    }
-    return err("Forbidden: No laundry house is assigned to this account.");
+    return ok({
+      user,
+      session,
+      primaryHouseId: undefined,
+      houseSlug: undefined,
+      memberships: [],
+      isAdminOverride: false,
+    });
   }
 
   return ok({
@@ -242,7 +246,7 @@ export async function guardHouseRoute(
     if (options?.houseSlug) {
       notFound();
     }
-    redirect("/partner");
+    redirect("/");
   }
 
   return result.value;

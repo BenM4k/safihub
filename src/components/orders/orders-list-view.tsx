@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { ShoppingBag, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { OrderListCard } from "./orders-list-card";
 import type { OrderListItemRecord } from "@/dal";
-import { ACTIVE_ORDER_STATUSES } from "@/services/order";
+import { ACTIVE_ORDER_STATUSES } from "@/services/order/transition-table";
 import type { OrderStatus } from "@/services/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -71,7 +71,7 @@ export function OrdersListView({
           href="/houses"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-hover transition shadow-sm"
         >
-          <span>Découvrir les pressings</span>
+          <span>{t("discoverHouses")}</span>
           <ArrowRight className="size-4" />
         </Link>
       </div>

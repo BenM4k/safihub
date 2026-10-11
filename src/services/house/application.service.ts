@@ -20,35 +20,42 @@ export async function submitPartnerApplication(params: {
   clientIp?: string;
 }): Promise<Result<HouseApplicationRecord>> {
   try {
-    // 1. Rate limiting by IP or email
-    const rateLimitIdentifier = params.clientIp || params.email.toLowerCase();
-    const rateLimitRes = await rateLimitPartnerApplication(rateLimitIdentifier);
-    if (!rateLimitRes.allowed) {
-      return err(
-        "Trop de tentatives d'inscription. Veuillez patienter avant de soumettre à nouveau."
+    // 1. Rate limiting by IP and email
+    if (params.clientIp) {
+      const ipLimit = await rateLimitPartnerApplication(`ip:${params.clientIp}`);
+      if (!ipLimit.allowed) {
+        return err("RATE_LIMITED");
+      }
+    }
+    if (params.email?.trim()) {
+      const emailLimit = await rateLimitPartnerApplication(
+        `email:${params.email.trim().toLowerCase()}`
       );
+      if (!emailLimit.allowed) {
+        return err("RATE_LIMITED");
+      }
     }
 
     // 2. Validate essential fields
     if (!params.houseName?.trim() || params.houseName.trim().length < 2) {
-      return err("Le nom de l'atelier de pressing est requis.");
+      return err("HOUSE_NAME_REQUIRED");
     }
     if (!params.contactName?.trim() || params.contactName.trim().length < 2) {
-      return err("Le nom du responsable ou contact est requis.");
+      return err("CONTACT_NAME_REQUIRED");
     }
     if (!params.phone?.trim() || params.phone.trim().length < 6) {
-      return err("Un numéro de téléphone valide est requis.");
+      return err("PHONE_REQUIRED");
     }
     if (!params.email?.trim() || !params.email.includes("@")) {
-      return err("Une adresse email valide est requise.");
+      return err("EMAIL_REQUIRED");
     }
 
     const hasNeighborhood =
-      (params.neighborhoodId && params.neighborhoodId.trim().length > 0) ||
-      (params.neighborhoodText && params.neighborhoodText.trim().length > 0);
+      Boolean(params.neighborhoodId && params.neighborhoodId.trim().length > 0) ||
+      Boolean(params.neighborhoodText && params.neighborhoodText.trim().length > 0);
 
     if (!hasNeighborhood) {
-      return err("Le quartier ou la localisation de l'atelier est requis.");
+      return err("NEIGHBORHOOD_REQUIRED");
     }
 
     // 3. Persist application
@@ -67,10 +74,7 @@ export async function submitPartnerApplication(params: {
 
     return ok(application);
   } catch (error) {
-    return err(
-      error instanceof Error
-        ? error.message
-        : "Une erreur est survenue lors de l'enregistrement de votre candidature."
-    );
+    console.error("submitPartnerApplication unexpected error:", error);
+    return err("CREATE_FAILED");
   }
 }

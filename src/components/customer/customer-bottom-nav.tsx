@@ -26,11 +26,18 @@ export function CustomerBottomNav() {
   const t = useTranslations("nav");
   const cart = useCartStore();
 
-  // Exclude from partner, courier, and admin workspaces
+  // Exclude landing, auth (login/registration), partner application, and internal role portals
   if (
+    pathname === "/" ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/sign-up") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/partners") ||
+    pathname.startsWith("/partner") ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/courier") ||
-    pathname.startsWith("/partner")
+    pathname.startsWith("/courier")
   ) {
     return null;
   }

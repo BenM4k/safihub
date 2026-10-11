@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { AlertTriangle, CheckCircle2, Clock, Package } from "lucide-react";
 import { guardAdminRoute } from "@/services/auth";
 import { getAdminDisputes } from "@/dal";
@@ -12,8 +12,9 @@ export const metadata: Metadata = {
 
 export default async function AdminDisputesPage() {
   await guardAdminRoute();
-  const [tAdmin, disputes] = await Promise.all([
+  const [tAdmin, locale, disputes] = await Promise.all([
     getTranslations("admin"),
+    getLocale(),
     getAdminDisputes(),
   ]);
 
@@ -27,7 +28,8 @@ export default async function AdminDisputesPage() {
             {tAdmin("nav.disputes")}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            {tAdmin("dashboard.openDisputes")} : {openCount} sur {disputes.length}
+            {tAdmin("dashboard.openDisputes")} :{" "}
+            {tAdmin("disputes.openRatio", { open: openCount, total: disputes.length })}
           </p>
         </div>
       </div>
@@ -38,10 +40,10 @@ export default async function AdminDisputesPage() {
             <CheckCircle2 className="size-6" />
           </div>
           <h2 className="text-sm font-bold text-slate-800">
-            Aucun litige enregistré
+            {tAdmin("disputes.emptyTitle")}
           </h2>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Toutes les commandes sont traitées sans réclamation ouverte.
+            {tAdmin("disputes.emptyDescription")}
           </p>
         </div>
       ) : (
@@ -67,7 +69,11 @@ export default async function AdminDisputesPage() {
                       ) : (
                         <CheckCircle2 className="size-3" />
                       )}
-                      <span>{isOpen ? "Ouvert" : "Résolu"}</span>
+                      <span>
+                        {isOpen
+                          ? tAdmin("disputes.statusOpen")
+                          : tAdmin("disputes.statusResolved")}
+                      </span>
                     </span>
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 capitalize">
                       {dispute.type}
@@ -76,7 +82,7 @@ export default async function AdminDisputesPage() {
                   <div className="flex items-center gap-1.5 text-xs text-slate-400">
                     <Clock className="size-3" />
                     <span>
-                      {new Date(dispute.createdAt).toLocaleDateString("fr-FR", {
+                      {new Date(dispute.createdAt).toLocaleDateString(locale, {
                         timeZone: "Africa/Lubumbashi",
                         day: "2-digit",
                         month: "short",
@@ -92,11 +98,15 @@ export default async function AdminDisputesPage() {
 
                 <div className="flex items-center justify-between pt-1">
                   <Link
-                    href={`/admin/orders`}
+                    href={`/admin/orders/${dispute.orderId}`}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
                   >
                     <Package className="size-3.5" />
-                    <span>Commande #{dispute.orderCode || dispute.orderId.slice(0, 8)}</span>
+                    <span>
+                      {tAdmin("disputes.orderLink", {
+                        code: dispute.orderCode || dispute.orderId.slice(0, 8),
+                      })}
+                    </span>
                   </Link>
                 </div>
               </div>

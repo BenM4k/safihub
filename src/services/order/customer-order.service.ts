@@ -510,7 +510,7 @@ export async function reorderPastOrder(
   if (order.customerId !== customerId) return err("Accès refusé.");
 
   const houseDetail = await getCustomerHouseDetail(order.houseId);
-  if (!houseDetail || houseDetail.house.isActive === false) {
+  if (!houseDetail || houseDetail.house.isPaused) {
     return err("Cet atelier de pressing n'est plus actif sur la plateforme.");
   }
 

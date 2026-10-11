@@ -229,12 +229,17 @@ vi.mock("@/dal/customer-houses.dal", () => ({
       };
     }
     if (houseId === "h_inactive") {
+      return null;
+    }
+    if (houseId === "h_paused") {
       return {
         house: {
-          id: "h_inactive",
-          name: "Pressing Inactif",
-          slug: "pressing-inactif",
-          isActive: false,
+          id: "h_paused",
+          name: "Pressing En Pause",
+          slug: "pressing-en-pause",
+          isActive: true,
+          isPaused: true,
+          minimumOrderAmount: 5000,
         },
         items: [],
       };
@@ -905,6 +910,22 @@ describe("Phase 5 — Customer App End-to-End Workflows", () => {
       mockOrdersDb.set(order.id, order);
 
       const res = await reorderPastOrder("ord_past_inactive", "cust_123");
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toContain("n'est plus actif");
+      }
+    });
+
+    it("rejects reordering if house is paused", async () => {
+      const order: MockOrderRecord = {
+        id: "ord_past_paused",
+        customerId: "cust_123",
+        status: "delivered",
+        houseId: "h_paused",
+      };
+      mockOrdersDb.set(order.id, order);
+
+      const res = await reorderPastOrder("ord_past_paused", "cust_123");
       expect(res.ok).toBe(false);
       if (!res.ok) {
         expect(res.error).toContain("n'est plus actif");

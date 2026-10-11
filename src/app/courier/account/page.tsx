@@ -13,7 +13,10 @@ export const metadata: Metadata = {
 
 export default async function CourierAccountPage() {
   const auth = await guardCourierRoute();
-  const tNav = await getTranslations("nav");
+  const [tNav, tAccount] = await Promise.all([
+    getTranslations("nav"),
+    getTranslations("courier.account"),
+  ]);
 
   const user = auth.user;
 
@@ -26,11 +29,11 @@ export default async function CourierAccountPage() {
           </div>
           <div>
             <h1 className="text-lg font-black text-slate-900 leading-tight">
-              {user.name || "Coursier SafiHub"}
+              {user.name || tAccount("defaultName")}
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Livreur actif · Bukavu
+              {tAccount("activeStatus")}
             </span>
           </div>
         </div>
@@ -48,14 +51,14 @@ export default async function CourierAccountPage() {
           )}
           <div className="flex items-center gap-2">
             <Shield className="size-3.5 text-slate-400" />
-            <span>Rôle : Livreur vérifié</span>
+            <span>{tAccount("roleVerified")}</span>
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs space-y-2">
         <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
-          Raccourcis rapides
+          {tAccount("quickShortcuts")}
         </h2>
         <Link
           href="/courier/cash"
@@ -63,7 +66,7 @@ export default async function CourierAccountPage() {
         >
           <div className="flex items-center gap-2.5">
             <Wallet className="size-4 text-blue-600" />
-            <span>Suivi de la caisse & plafonds cash</span>
+            <span>{tAccount("cashShortcut")}</span>
           </div>
           <ArrowRight className="size-3.5 text-slate-400" />
         </Link>
@@ -73,7 +76,7 @@ export default async function CourierAccountPage() {
         >
           <div className="flex items-center gap-2.5">
             <User className="size-4 text-slate-600" />
-            <span>Modifier mes coordonnées & mot de passe</span>
+            <span>{tAccount("profileShortcut")}</span>
           </div>
           <ArrowRight className="size-3.5 text-slate-400" />
         </Link>

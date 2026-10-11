@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, or } from "drizzle-orm";
 import { db, schema } from "./db";
-import { slugify } from "@/lib/slug";
+import { generateUniqueSlug } from "@/lib/slug";
 
 export interface HouseMembershipInfo {
   houseId: string;
@@ -288,7 +288,17 @@ export async function createHouse(data: {
   isOwnerHouse?: boolean;
   isActive?: boolean;
 }): Promise<HouseRecord> {
-  const finalSlug = (data.slug ?? slugify(data.name)).trim();
+  const isSlugTaken = async (candidate: string) => {
+    const [existing] = await db
+      .select({ id: schema.houses.id })
+      .from(schema.houses)
+      .where(eq(schema.houses.slug, candidate))
+      .limit(1);
+    return Boolean(existing);
+  };
+
+  const rawBase = data.slug?.trim() || data.name.trim();
+  const finalSlug = await generateUniqueSlug(rawBase, isSlugTaken);
 
   const [created] = await db
     .insert(schema.houses)

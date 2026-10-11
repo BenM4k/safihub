@@ -178,6 +178,15 @@ L'équipe SafiHub Bukavu`;
   });
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /**
  * Sends a welcome and invitation email to an approved laundry partner staff member.
  */
@@ -192,6 +201,9 @@ export async function sendPartnerInvitationEmail({
   houseName: string;
   inviteUrl: string;
 }): Promise<{ id: string; success: boolean }> {
+  const safeHouseName = escapeHtml(houseName);
+  const safeContactName = escapeHtml(contactName);
+
   const subject = `SafiHub — Bienvenue parmi nos partenaires (${houseName})`;
 
   const text = `Bonjour ${contactName},
@@ -220,10 +232,10 @@ L'équipe SafiHub Bukavu`;
       <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Pressing & Blanchisserie à Bukavu</p>
     </div>
     
-    <h2 style="font-size: 18px; margin-bottom: 16px; color: #0f172a;">Partenariat approuvé pour ${houseName}</h2>
+    <h2 style="font-size: 18px; margin-bottom: 16px; color: #0f172a;">Partenariat approuvé pour ${safeHouseName}</h2>
     <p style="font-size: 14px; line-height: 1.6; color: #334155;">
-      Bonjour <strong>${contactName}</strong>,<br/><br/>
-      Votre demande pour rejoindre le réseau SafiHub avec <strong>${houseName}</strong> a été validée avec succès.
+      Bonjour <strong>${safeContactName}</strong>,<br/><br/>
+      Votre demande pour rejoindre le réseau SafiHub avec <strong>${safeHouseName}</strong> a été validée avec succès.
     </p>
 
     <div style="text-align: center; margin: 28px 0;">

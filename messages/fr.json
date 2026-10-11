@@ -610,6 +610,15 @@
       "dryCleanMachines": "Nettoyage à sec",
       "submittedOn": "Soumis le {date}",
       "placeGivenRequirement": "Le quartier sélectionné ou une adresse précise doit être fourni."
+    },
+    "disputes": {
+      "title": "Litiges",
+      "openRatio": "{open} sur {total}",
+      "emptyTitle": "Aucun litige enregistré",
+      "emptyDescription": "Toutes les commandes sont traitées sans réclamation ouverte.",
+      "statusOpen": "Ouvert",
+      "statusResolved": "Résolu",
+      "orderLink": "Commande #{code}"
     }
   },
   "house": {
@@ -1057,7 +1066,10 @@
     "pageIndicator": "Page {page} sur {total}",
     "previousPage": "Précédent",
     "nextPage": "Suivant",
-    "disputeOrder": "Signaler un litige / problème"
+    "disputeOrder": "Signaler un litige / problème",
+    "orderAgainError": "Impossible de renouveler cette commande.",
+    "orderAgainGenericError": "Une erreur est survenue lors de la duplication du panier.",
+    "discoverHouses": "Découvrir les pressings"
   },
   "track": {
     "title": "Suivi en direct de votre commande",
@@ -1234,6 +1246,14 @@
       "reasonPrefix": "Motif",
       "failedBadge": "Échec",
       "empty": "Aucune mission dans l'historique"
+    },
+    "account": {
+      "defaultName": "Coursier SafiHub",
+      "activeStatus": "Livreur actif · Bukavu",
+      "roleVerified": "Rôle : Livreur vérifié",
+      "quickShortcuts": "Raccourcis rapides",
+      "cashShortcut": "Suivi de la caisse & plafonds cash",
+      "profileShortcut": "Modifier mes coordonnées & mot de passe"
     }
   },
   "photos": {
@@ -1357,7 +1377,14 @@
     "benefit2Title": "Logistique 100% assurée",
     "benefit2Desc": "Nos coursiers collectent et livrent le linge propre directement à la porte des clients.",
     "benefit3Title": "Paiements rapides et fiables",
-    "benefit3Desc": "Règlements transparents et traçabilité complète de chaque commande et vêtement."
+    "benefit3Desc": "Règlements transparents et traçabilité complète de chaque commande et vêtement.",
+    "rateLimitError": "Trop de tentatives d'inscription. Veuillez patienter avant de soumettre à nouveau.",
+    "houseNameRequired": "Le nom de l'atelier de pressing est requis.",
+    "contactNameRequired": "Le nom du responsable ou contact est requis.",
+    "phoneRequired": "Un numéro de téléphone valide est requis.",
+    "emailRequired": "Une adresse email valide est requise.",
+    "neighborhoodRequired": "Le quartier ou la localisation de l'atelier est requis.",
+    "createFailed": "Une erreur est survenue lors de l'enregistrement de votre candidature."
   }
 }
 

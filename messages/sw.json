@@ -610,6 +610,15 @@
       "dryCleanMachines": "Kusafisha kavu",
       "submittedOn": "Iliwasilishwa mnamo {date}",
       "placeGivenRequirement": "Mtaa uliochaguliwa au anwani maalum lazima itolewe."
+    },
+    "disputes": {
+      "title": "Migogoro",
+      "openRatio": "{open} kati ya {total}",
+      "emptyTitle": "Hakuna mgogoro uliorekodiwa",
+      "emptyDescription": "Maagizo yote yanashughulikiwa bila malalamiko ya wazi.",
+      "statusOpen": "Wazi",
+      "statusResolved": "Imetatuliwa",
+      "orderLink": "Agizo #{code}"
     }
   },
   "house": {
@@ -1057,7 +1066,10 @@
     "pageIndicator": "Ukurasa {page} wa {total}",
     "previousPage": "Iliyopita",
     "nextPage": "Inayofuata",
-    "disputeOrder": "Ripoti Tatizo / Malalamiko"
+    "disputeOrder": "Ripoti Tatizo / Malalamiko",
+    "orderAgainError": "Haikuwezekana kurudia agizo hili.",
+    "orderAgainGenericError": "Hitilafu imetokea wakati wa kurudisha kikapu.",
+    "discoverHouses": "Tazama maduka ya kufulia"
   },
   "track": {
     "title": "Ufuatiliaji wa Agizo Moja kwa Moja",
@@ -1234,6 +1246,14 @@
       "reasonPrefix": "Sababu",
       "failedBadge": "Imeshindikana",
       "empty": "Hakuna historia ya majukumu bado"
+    },
+    "account": {
+      "defaultName": "Dereva wa SafiHub",
+      "activeStatus": "Dereva anayefanya kazi · Bukavu",
+      "roleVerified": "Wadhifa: Dereva aliyethibitishwa",
+      "quickShortcuts": "Njia za mkato",
+      "cashShortcut": "Ufuatiliaji wa fedha taslimu na viwango",
+      "profileShortcut": "Badilisha taarifa zangu na nenosiri"
     }
   },
   "photos": {
@@ -1357,7 +1377,14 @@
     "benefit2Title": "Usafirishaji uliodhibitiwa kikamilifu",
     "benefit2Desc": "Wachukuzi wetu huchukua na kurejesha nguo safi moja kwa moja milangoni mwa wateja.",
     "benefit3Title": "Malipo ya haraka na ya kuaminika",
-    "benefit3Desc": "Malipo ya uwazi na ufuatiliaji kamili wa kila oda na nguo."
+    "benefit3Desc": "Malipo ya uwazi na ufuatiliaji kamili wa kila oda na nguo.",
+    "rateLimitError": "Majaribio mengi mno ya kutuma maombi. Tafadhali subiri kabla ya kutuma tena.",
+    "houseNameRequired": "Jina la duka la kufulia nguo linahitajika.",
+    "contactNameRequired": "Jina la msimamizi au mhusika linahitajika.",
+    "phoneRequired": "Nambari sahihi ya simu inahitajika.",
+    "emailRequired": "Barua pepe sahihi inahitajika.",
+    "neighborhoodRequired": "Mtaa au eneo la duka linahitajika.",
+    "createFailed": "Hitilafu imetokea wakati wa kuhifadhi maombi yako."
   }
 }
 

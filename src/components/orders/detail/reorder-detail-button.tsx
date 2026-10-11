@@ -33,7 +33,7 @@ export function ReorderDetailButton({
     try {
       const res = await reorderPastOrderAction(orderId);
       if (!res.success || !res.data) {
-        setErrorMessage(res.error || "Impossible de renouveler cette commande.");
+        setErrorMessage(res.error || t("orderAgainError"));
         return;
       }
 
@@ -45,7 +45,7 @@ export function ReorderDetailButton({
       setCustomerNeighborhoodId(res.data.neighborhoodId);
       router.push("/cart");
     } catch {
-      setErrorMessage("Une erreur est survenue lors de la duplication du panier.");
+      setErrorMessage(t("orderAgainGenericError"));
     } finally {
       setIsReordering(false);
     }

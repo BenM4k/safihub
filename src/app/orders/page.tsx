@@ -26,7 +26,7 @@ export default async function CustomerOrdersPage({
 
   const [orders, sp] = await Promise.all([
     getCustomerOrdersList(user.id),
-    searchParams ? await searchParams : Promise.resolve({ tab: undefined }),
+    searchParams ?? Promise.resolve({ tab: undefined }),
   ]);
 
   const initialTab = sp?.tab === "past" ? "past" : "active";

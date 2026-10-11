@@ -66,11 +66,13 @@ export default async function PartnerOrderDetailPage({ params }: PageProps) {
 
       {/* Reception item count check if order arrived at house */}
       {order.status === "received" && (
-        <ReceptionCountForm orderId={order.id} items={items} />
+        <ReceptionCountForm orderId={order.id} houseId={houseId} items={items} />
       )}
 
       {/* Mark ready button for washing status */}
-      {order.status === "washing" && <MarkReadyButton orderId={order.id} />}
+      {order.status === "washing" && (
+        <MarkReadyButton orderId={order.id} houseId={houseId} />
+      )}
     </div>
   );
 }

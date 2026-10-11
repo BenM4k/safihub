@@ -85,7 +85,7 @@ describe("Partner Application Pipeline", () => {
       });
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toContain("nom de l'atelier");
+        expect(res.error).toBe("HOUSE_NAME_REQUIRED");
       }
     });
 
@@ -99,7 +99,7 @@ describe("Partner Application Pipeline", () => {
       });
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toContain("responsable");
+        expect(res.error).toBe("CONTACT_NAME_REQUIRED");
       }
     });
 
@@ -113,7 +113,7 @@ describe("Partner Application Pipeline", () => {
       });
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toContain("téléphone");
+        expect(res.error).toBe("PHONE_REQUIRED");
       }
     });
 
@@ -127,7 +127,7 @@ describe("Partner Application Pipeline", () => {
       });
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toContain("email");
+        expect(res.error).toBe("EMAIL_REQUIRED");
       }
     });
 
@@ -140,7 +140,7 @@ describe("Partner Application Pipeline", () => {
       });
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toContain("quartier ou la localisation");
+        expect(res.error).toBe("NEIGHBORHOOD_REQUIRED");
       }
     });
 

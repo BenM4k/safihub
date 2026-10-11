@@ -610,6 +610,15 @@
       "dryCleanMachines": "Dry cleaning",
       "submittedOn": "Submitted on {date}",
       "placeGivenRequirement": "Either a selected neighborhood or a specific address must be provided."
+    },
+    "disputes": {
+      "title": "Disputes",
+      "openRatio": "{open} of {total}",
+      "emptyTitle": "No disputes recorded",
+      "emptyDescription": "All orders are handled without open claims.",
+      "statusOpen": "Open",
+      "statusResolved": "Resolved",
+      "orderLink": "Order #{code}"
     }
   },
   "house": {
@@ -1057,7 +1066,10 @@
     "pageIndicator": "Page {page} of {total}",
     "previousPage": "Previous",
     "nextPage": "Next",
-    "disputeOrder": "Report an Issue / Dispute"
+    "disputeOrder": "Report an Issue / Dispute",
+    "orderAgainError": "Unable to reorder this order.",
+    "orderAgainGenericError": "An error occurred while restoring the cart.",
+    "discoverHouses": "Discover laundry houses"
   },
   "track": {
     "title": "Live Order Tracking",
@@ -1234,6 +1246,14 @@
       "reasonPrefix": "Reason",
       "failedBadge": "Failed",
       "empty": "No mission history available"
+    },
+    "account": {
+      "defaultName": "SafiHub Courier",
+      "activeStatus": "Active courier · Bukavu",
+      "roleVerified": "Role: Verified courier",
+      "quickShortcuts": "Quick shortcuts",
+      "cashShortcut": "Cash tracking & limits",
+      "profileShortcut": "Update profile & password"
     }
   },
   "photos": {
@@ -1357,7 +1377,14 @@
     "benefit2Title": "100% managed logistics",
     "benefit2Desc": "Our couriers pick up and deliver clean laundry directly to customer doors.",
     "benefit3Title": "Fast and reliable payouts",
-    "benefit3Desc": "Transparent settlements and complete traceability for every order and garment."
+    "benefit3Desc": "Transparent settlements and complete traceability for every order and garment.",
+    "rateLimitError": "Too many application attempts. Please wait before submitting again.",
+    "houseNameRequired": "The laundry house name is required.",
+    "contactNameRequired": "The contact person's name is required.",
+    "phoneRequired": "A valid phone number is required.",
+    "emailRequired": "A valid email address is required.",
+    "neighborhoodRequired": "The neighborhood or location of the house is required.",
+    "createFailed": "An error occurred while saving your application."
   }
 }
 

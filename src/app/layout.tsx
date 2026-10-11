@@ -29,7 +29,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={`${jakarta.variable} h-full`}>
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col pb-16 md:pb-0">
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
           <CustomerBottomNav />

@@ -1,5 +1,5 @@
 import "server-only";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import type { ApplicationStatus } from "@/services/db/schema";
 
@@ -217,13 +217,18 @@ export async function approveHouseApplicationTransaction(params: {
 
     // 2. Check if user already exists with that email
     const [existingUser] = await tx
-      .select({ id: schema.user.id })
+      .select({ id: schema.user.id, role: schema.user.role })
       .from(schema.user)
       .where(eq(schema.user.email, params.user.email.toLowerCase()))
       .limit(1);
 
     let userId: string;
     if (existingUser) {
+      if (existingUser.role !== "customer" && existingUser.role !== "house") {
+        throw new Error(
+          `Cannot approve application: existing user has invalid role "${existingUser.role}".`
+        );
+      }
       userId = existingUser.id;
       await tx
         .update(schema.user)
@@ -250,7 +255,7 @@ export async function approveHouseApplicationTransaction(params: {
       .onConflictDoNothing();
 
     // 4. Update application status
-    await tx
+    const [updatedApp] = await tx
       .update(schema.houseApplications)
       .set({
         status: "approved",
@@ -259,7 +264,19 @@ export async function approveHouseApplicationTransaction(params: {
         reviewedAt: new Date(),
         createdHouseId: houseId,
       })
-      .where(eq(schema.houseApplications.id, params.applicationId));
+      .where(
+        and(
+          eq(schema.houseApplications.id, params.applicationId),
+          eq(schema.houseApplications.status, "pending")
+        )
+      )
+      .returning();
+
+    if (!updatedApp) {
+      throw new Error(
+        `Application "${params.applicationId}" not found or not in pending status.`
+      );
+    }
 
     return { houseId, userId, houseSlug: createdHouse!.slug };
   });

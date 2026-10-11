@@ -2,10 +2,38 @@ import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
 
+function getDeepKeys(obj: Record<string, unknown>, prefix = ""): string[] {
+  let keys: string[] = [];
+  for (const [key, value] of Object.entries(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      keys = keys.concat(getDeepKeys(value as Record<string, unknown>, fullKey));
+    } else {
+      keys.push(fullKey);
+    }
+  }
+  return keys.sort();
+}
+
 describe("Navigation By Role & Specifications Alignment", () => {
   const messagesFr = JSON.parse(
     fs.readFileSync(path.resolve(process.cwd(), "messages/fr.json"), "utf-8")
   );
+  const messagesEn = JSON.parse(
+    fs.readFileSync(path.resolve(process.cwd(), "messages/en.json"), "utf-8")
+  );
+  const messagesSw = JSON.parse(
+    fs.readFileSync(path.resolve(process.cwd(), "messages/sw.json"), "utf-8")
+  );
+
+  it("0. Translation catalogues maintain exact deep key parity across FR, EN, and SW", () => {
+    const frKeys = getDeepKeys(messagesFr);
+    const enKeys = getDeepKeys(messagesEn);
+    const swKeys = getDeepKeys(messagesSw);
+
+    expect(enKeys).toEqual(frKeys);
+    expect(swKeys).toEqual(frKeys);
+  });
 
   it("1. Visitor navigation specification includes required menu items", () => {
     // Visiteur : Accueil, Maisons, Connexion, Inscription, « Devenir partenaire »
