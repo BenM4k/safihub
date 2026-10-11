@@ -13,7 +13,9 @@ import {
   estimateCustomerCart,
   openCustomerOrderDispute,
   placeCustomerOrder,
+  reorderPastOrder,
   type CartEstimateResult,
+  type ReorderPastOrderResult,
 } from "@/services/order";
 import type { CartLineItemInput, CheckoutInput } from "@/services/order/validation";
 
@@ -95,7 +97,7 @@ export async function checkoutOrderAction(
   }
 
   revalidatePath("/orders");
-  revalidatePath("/house/orders");
+  revalidatePath("/partner", "layout");
   revalidatePath("/admin/orders");
 
   return {
@@ -122,7 +124,7 @@ export async function cancelOrderAction(
 
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/orders");
-  revalidatePath("/house/orders");
+  revalidatePath("/partner", "layout");
   return { success: true };
 }
 
@@ -233,4 +235,44 @@ export async function openDisputeAction(
   revalidatePath("/orders");
   revalidatePath("/admin/orders");
   return { success: true, disputeId: res.value.disputeId };
+}
+
+export type ReorderActionErrorCode =
+  | "UNAUTHENTICATED"
+  | "ORDER_NOT_FOUND"
+  | "ACCESS_DENIED"
+  | "HOUSE_NOT_ACTIVE"
+  | "ORDER_EMPTY"
+  | "NO_ITEMS_AVAILABLE"
+  | "REORDER_FAILED";
+
+export interface ReorderPastOrderActionResult {
+  success: boolean;
+  data?: ReorderPastOrderResult;
+  error?: string;
+  errorCode?: ReorderActionErrorCode;
+}
+
+export async function reorderPastOrderAction(
+  orderId: string
+): Promise<ReorderPastOrderActionResult> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return {
+      success: false,
+      errorCode: "UNAUTHENTICATED",
+      error: "UNAUTHENTICATED",
+    };
+  }
+
+  const res = await reorderPastOrder(orderId, user.id);
+  if (!res.ok) {
+    return {
+      success: false,
+      errorCode: (res.error as ReorderActionErrorCode) || "REORDER_FAILED",
+      error: res.error,
+    };
+  }
+
+  return { success: true, data: res.value };
 }

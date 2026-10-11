@@ -90,7 +90,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/house"
+                  href="/partners/apply"
                   className="hover:text-white transition-colors"
                 >
                   Pressings Partenaires
@@ -113,7 +113,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/house"
+                  href="/partner"
                   className="hover:text-white transition-colors"
                 >
                   Espace Pressing
@@ -125,6 +125,14 @@ export function Footer() {
                   className="hover:text-white transition-colors"
                 >
                   Espace Coursier
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/partners/apply"
+                  className="hover:text-primary transition-colors font-medium text-primary/90"
+                >
+                  Devenir Partenaire
                 </Link>
               </li>
               <li>

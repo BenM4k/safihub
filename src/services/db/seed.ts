@@ -224,6 +224,7 @@ async function main() {
         .insert(schema.houses)
         .values({
           name: "Pressing du Lac Kivu",
+          slug: "pressing-du-lac-kivu",
           neighborhoodId: laBotteId,
           addressNote: "Av. Maniema, face à l'hôtel Horizon",
           contactPhone: "+243999123456",
@@ -328,6 +329,7 @@ async function main() {
         .insert(schema.houses)
         .values({
           name: "Pressing Étoile de Kadutu",
+          slug: "pressing-etoile-de-kadutu",
           neighborhoodId: kadutuCentreId,
           addressNote: "Av. Mobutu, Rond-point Carrefour",
           contactPhone: "+243999654321",

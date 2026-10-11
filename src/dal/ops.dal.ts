@@ -272,3 +272,38 @@ export async function getAdminCustomersExportData() {
     .where(eq(schema.user.role, "customer"))
     .orderBy(desc(schema.user.createdAt));
 }
+
+export interface AdminDisputeRecord {
+  id: string;
+  orderId: string;
+  orderCode: string | null;
+  openedBy: string;
+  type: string;
+  description: string;
+  status: string;
+  resolution: string | null;
+  compensationAmount: number | null;
+  currency: string;
+  createdAt: Date;
+}
+
+export async function getAdminDisputes(): Promise<AdminDisputeRecord[]> {
+  return await db
+    .select({
+      id: schema.disputes.id,
+      orderId: schema.disputes.orderId,
+      orderCode: schema.orders.code,
+      openedBy: schema.disputes.openedBy,
+      type: schema.disputes.type,
+      description: schema.disputes.description,
+      status: schema.disputes.status,
+      resolution: schema.disputes.resolution,
+      compensationAmount: schema.disputes.compensationAmount,
+      currency: schema.disputes.currency,
+      createdAt: schema.disputes.createdAt,
+    })
+    .from(schema.disputes)
+    .leftJoin(schema.orders, eq(schema.disputes.orderId, schema.orders.id))
+    .orderBy(desc(schema.disputes.createdAt));
+}
+

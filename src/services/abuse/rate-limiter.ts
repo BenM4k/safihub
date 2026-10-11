@@ -157,3 +157,12 @@ export function rateLimitLogin(identifier: string): Promise<RateLimitResult> {
 export function rateLimitCheckout(identifier: string): Promise<RateLimitResult> {
   return recordRateLimitHit(`checkout:${identifier}`, 10, 60);
 }
+
+/**
+ * Rate limit partner application submissions: max 3 requests per 30 minutes.
+ */
+export function rateLimitPartnerApplication(
+  identifier: string
+): Promise<RateLimitResult> {
+  return recordRateLimitHit(`partner_app:${identifier}`, 3, 30 * 60);
+}

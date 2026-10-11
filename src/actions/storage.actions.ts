@@ -99,7 +99,7 @@ export async function recordPhotoUploadAction(
 
   if (res.ok) {
     revalidatePath(`/orders/${parsed.data.orderId}`);
-    revalidatePath(`/house/orders`);
+    revalidatePath("/partner", "layout");
     revalidatePath(`/courier/missions`);
   }
 

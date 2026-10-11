@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { NotificationsInboxWidget } from "@/components/notifications/notifications-inbox-widget";
+import { AdminMobileNav } from "./admin-mobile-nav";
+
 export async function AdminHeader() {
   return (
     <header className="w-full bg-white border-b border-border shadow-xs sticky top-0 z-30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div className="w-full px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
+          <AdminMobileNav />
           <Link
             href="/admin"
             className="flex items-center gap-2.5 font-display font-bold text-lg text-heading tracking-tight"

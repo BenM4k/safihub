@@ -13,9 +13,16 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { user } from "../auth";
+import { user, userRef } from "../auth";
 import { fabrics, items, services } from "../catalog";
-import { createdAt, currencyEnum, id, ts, updatedAt } from "../common";
+import {
+  applicationStatusEnum,
+  createdAt,
+  currencyEnum,
+  id,
+  ts,
+  updatedAt,
+} from "../common";
 import { neighborhoods } from "../coverage";
 
 export const houses = pgTable(
@@ -23,6 +30,8 @@ export const houses = pgTable(
   {
     id: id(),
     name: text("name").notNull(),
+    /** Unique and stable. Used in URLs: /houses/[slug] for customers and /partner/[slug] for staff. */
+    slug: text("slug").notNull(),
     neighborhoodId: uuid("neighborhood_id")
       .notNull()
       .references(() => neighborhoods.id),
@@ -49,6 +58,7 @@ export const houses = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [
+    uniqueIndex("houses_slug_unique").on(t.slug),
     index("houses_neighborhood_idx").on(t.neighborhoodId),
     check(
       "houses_commission_range",
@@ -190,5 +200,40 @@ export const houseExclusions = pgTable(
   ]
 );
 
+/** Public applications from laundries that want to join as partner houses (admin reviews and approves). */
+export const houseApplications = pgTable(
+  "house_applications",
+  {
+    id: id(),
+    houseName: text("house_name").notNull(),
+    contactName: text("contact_name").notNull(),
+    phone: text("phone").notNull(),
+    email: text("email").notNull(),
+    neighborhoodId: uuid("neighborhood_id").references(() => neighborhoods.id),
+    /** Free text when the neighborhood is not in the list. */
+    neighborhoodText: text("neighborhood_text"),
+    addressNote: text("address_note"),
+    servicesNote: text("services_note"),
+    hoursNote: text("hours_note"),
+    message: text("message"),
+    status: applicationStatusEnum("status").notNull().default("pending"),
+    adminNote: text("admin_note"),
+    reviewedBy: userRef("reviewed_by"),
+    reviewedAt: ts("reviewed_at"),
+    /** Set on approval. */
+    createdHouseId: uuid("created_house_id").references(() => houses.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("house_applications_status_idx").on(t.status, t.createdAt),
+    check(
+      "house_applications_place_given",
+      sql`${t.neighborhoodId} is not null or ${t.neighborhoodText} is not null`
+    ),
+  ]
+);
+
 export type House = typeof houses.$inferSelect;
 export type NewHouse = typeof houses.$inferInsert;
+export type HouseApplication = typeof houseApplications.$inferSelect;
+export type NewHouseApplication = typeof houseApplications.$inferInsert;

@@ -46,21 +46,37 @@ export function MobileNav({ user }: { user?: AuthenticatedUser | null } = {}) {
 
       {isOpen && (
         <div className="fixed inset-0 top-20 z-50 bg-background/95 backdrop-blur-md animate-fade-in flex flex-col justify-between p-6 overflow-y-auto">
-          <nav className="flex flex-col gap-5 text-lg font-bold tracking-tight">
+          <nav className="flex flex-col gap-4 text-base font-bold tracking-tight">
+            <Link
+              href="/"
+              onClick={close}
+              className="link-quiet py-2.5 border-b border-border text-heading flex items-center justify-between"
+            >
+              {tNav("home")}
+              <ArrowRight className="size-4 text-muted-foreground" />
+            </Link>
             <Link
               href="/houses"
               onClick={close}
-              className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
+              className="link-quiet py-2.5 border-b border-border text-heading flex items-center justify-between"
             >
               {tNav("houses")}
               <ArrowRight className="size-4 text-muted-foreground" />
             </Link>
-            {isAuthenticated && (
+            {isAuthenticated ? (
               <>
+                <Link
+                  href="/cart"
+                  onClick={close}
+                  className="link-quiet py-2.5 border-b border-border text-heading flex items-center justify-between"
+                >
+                  {tNav("cart")}
+                  <ArrowRight className="size-4 text-muted-foreground" />
+                </Link>
                 <Link
                   href="/orders"
                   onClick={close}
-                  className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between text-primary"
+                  className="link-quiet py-2.5 border-b border-border text-heading flex items-center justify-between text-primary"
                 >
                   {tNav("myOrders")}
                   <ArrowRight className="size-4 text-muted-foreground" />
@@ -68,9 +84,44 @@ export function MobileNav({ user }: { user?: AuthenticatedUser | null } = {}) {
                 <Link
                   href="/account"
                   onClick={close}
-                  className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
+                  className="link-quiet py-2.5 border-b border-border text-heading flex items-center justify-between"
                 >
                   {tNav("myAccount")}
+                  <ArrowRight className="size-4 text-muted-foreground" />
+                </Link>
+                <Link
+                  href="/notifications"
+                  onClick={close}
+                  className="link-quiet py-2.5 border-b border-border text-heading flex items-center justify-between"
+                >
+                  {tNav("notifications")}
+                  <ArrowRight className="size-4 text-muted-foreground" />
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/partners/apply"
+                  onClick={close}
+                  className="link-quiet py-2.5 border-b border-border text-heading flex items-center justify-between text-violet-700"
+                >
+                  {tNav("becomePartner")}
+                  <ArrowRight className="size-4 text-muted-foreground" />
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={close}
+                  className="link-quiet py-2.5 border-b border-border text-heading flex items-center justify-between"
+                >
+                  {tNav("login")}
+                  <ArrowRight className="size-4 text-muted-foreground" />
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={close}
+                  className="link-quiet py-2.5 border-b border-border text-heading flex items-center justify-between text-primary"
+                >
+                  {tNav("register")}
                   <ArrowRight className="size-4 text-muted-foreground" />
                 </Link>
               </>
@@ -78,42 +129,10 @@ export function MobileNav({ user }: { user?: AuthenticatedUser | null } = {}) {
             <Link
               href="/#services"
               onClick={close}
-              className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
+              className="link-quiet py-2 border-b border-border text-xs text-muted-foreground flex items-center justify-between pt-3"
             >
               {tNav("services")}
-              <ArrowRight className="size-4 text-muted-foreground" />
-            </Link>
-            <Link
-              href="/#how-it-works"
-              onClick={close}
-              className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
-            >
-              {tNav("howItWorks")}
-              <ArrowRight className="size-4 text-muted-foreground" />
-            </Link>
-            <Link
-              href="/#catalogue"
-              onClick={close}
-              className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
-            >
-              {tNav("pricing")}
-              <ArrowRight className="size-4 text-muted-foreground" />
-            </Link>
-            <Link
-              href="/#zones"
-              onClick={close}
-              className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
-            >
-              {tNav("zones")}
-              <ArrowRight className="size-4 text-muted-foreground" />
-            </Link>
-            <Link
-              href="/#faq"
-              onClick={close}
-              className="link-quiet py-2 border-b border-border text-heading flex items-center justify-between"
-            >
-              {tNav("faq")}
-              <ArrowRight className="size-4 text-muted-foreground" />
+              <ArrowRight className="size-3 text-muted-foreground" />
             </Link>
           </nav>
 
@@ -122,12 +141,14 @@ export function MobileNav({ user }: { user?: AuthenticatedUser | null } = {}) {
               <Phone className="size-4 text-primary" />
               <span>{tCommon("supportBukavu")}</span>
             </div>
-            <Button asChild variant="primary" size="lg" className="w-full">
-              <Link href={ctaHref} onClick={close}>
-                <Sparkles className="size-4 mr-1" />
-                {ctaLabel}
-              </Link>
-            </Button>
+            {isAuthenticated && cta.roleKey !== "guest" && cta.roleKey !== "customer" && (
+              <Button asChild variant="outline" size="sm" className="w-full mb-1">
+                <Link href={ctaHref} onClick={close}>
+                  <Sparkles className="size-4 mr-1" />
+                  {ctaLabel}
+                </Link>
+              </Button>
+            )}
             {isAuthenticated ? (
               <form action={logoutAction} className="w-full">
                 <Button
@@ -140,9 +161,10 @@ export function MobileNav({ user }: { user?: AuthenticatedUser | null } = {}) {
                 </Button>
               </form>
             ) : (
-              <Button asChild variant="outline" size="sm" className="w-full">
-                <Link href="/login" onClick={close}>
-                  {tCommon("partnerPortal")}
+              <Button asChild variant="contrast" size="lg" className="w-full">
+                <Link href="/register" onClick={close}>
+                  <Sparkles className="size-4 mr-1" />
+                  {tNav("register")}
                 </Link>
               </Button>
             )}

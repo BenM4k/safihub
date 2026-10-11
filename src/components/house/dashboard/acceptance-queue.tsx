@@ -7,8 +7,10 @@ import { OrderActions } from "../orders/order-actions";
 
 export async function AcceptanceQueue({
   orders,
+  houseSlug,
 }: {
   orders: HouseOrderListItemRecord[];
+  houseSlug?: string;
 }) {
   const t = await getTranslations("house.dashboard");
 
@@ -88,7 +90,7 @@ export async function AcceptanceQueue({
                 compact
               />
               <Link
-                href={`/house/orders/${order.id}`}
+                href={houseSlug ? `/partner/${houseSlug}/orders/${order.id}` : `/partner/orders/${order.id}`}
                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition"
               >
                 <span>Détail</span>

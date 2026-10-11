@@ -23,6 +23,7 @@ import {
   confirmCustomerDeliverySlot,
   openCustomerOrderDispute,
   getPublicTrackingOrder,
+  reorderPastOrder,
 } from "@/services/order";
 
 // Mock DAL layers
@@ -201,6 +202,50 @@ vi.mock("@/dal/customer-houses.dal", () => ({
     { customerZoneId: "z_ibanda", houseZoneId: "z_ibanda", deliveryFee: 2000 },
     { customerZoneId: "z_kadutu", houseZoneId: "z_ibanda", deliveryFee: 3500 },
   ]),
+  getCustomerHouseDetail: vi.fn(async (houseId: string) => {
+    if (houseId === "h_ibanda") {
+      return {
+        house: {
+          id: "h_ibanda",
+          name: "Pressing du Lac",
+          slug: "pressing-du-lac",
+          neighborhoodId: "n_ibanda",
+          isActive: true,
+          minimumOrderAmount: 5000,
+        },
+        items: [
+          {
+            houseItemId: "hi_shirt",
+            serviceId: "s_wash",
+            itemId: "item_shirt",
+            fabricId: "fab_cotton",
+            itemNameFr: "Chemise",
+            fabricNameFr: "Coton",
+            serviceNameFr: "Lavage",
+            priceCdf: 3500,
+            isExcluded: false,
+          },
+        ],
+      };
+    }
+    if (houseId === "h_inactive") {
+      return null;
+    }
+    if (houseId === "h_paused") {
+      return {
+        house: {
+          id: "h_paused",
+          name: "Pressing En Pause",
+          slug: "pressing-en-pause",
+          isActive: true,
+          isPaused: true,
+          minimumOrderAmount: 5000,
+        },
+        items: [],
+      };
+    }
+    return null;
+  }),
 }));
 
 vi.mock("@/services/order/context", () => ({
@@ -812,4 +857,88 @@ describe("Phase 5 — Customer App End-to-End Workflows", () => {
       expect(order.status).toBe("disputed");
     });
   });
+
+  describe("5.11 Customer Order History & Reorder (AC 24)", () => {
+    it("successfully reconstructs cart from past order with current prices and detects price changes", async () => {
+      const order: MockOrderRecord = {
+        id: "ord_past_1",
+        customerId: "cust_123",
+        status: "delivered",
+        code: "SAF-9999",
+        trackingToken: "tok-9999",
+        houseId: "h_ibanda",
+        neighborhoodId: "n_ibanda",
+        totalDue: 8000,
+      };
+      mockOrdersDb.set(order.id, order);
+
+      const res = await reorderPastOrder("ord_past_1", "cust_123");
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.value.houseId).toBe("h_ibanda");
+        expect(res.value.houseSlug).toBe("pressing-du-lac");
+        expect(res.value.items).toHaveLength(1);
+        expect(res.value.items[0]!.quantity).toBe(2);
+        expect(res.value.items[0]!.expectedUnitPrice).toBe(3500);
+        expect(res.value.priceChangesCount).toBe(1);
+      }
+    });
+
+    it("rejects reordering if order belongs to a different customer", async () => {
+      const order: MockOrderRecord = {
+        id: "ord_past_other",
+        customerId: "cust_other",
+        status: "delivered",
+        houseId: "h_ibanda",
+      };
+      mockOrdersDb.set(order.id, order);
+
+      const res = await reorderPastOrder("ord_past_other", "cust_123");
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toBe("ACCESS_DENIED");
+      }
+    });
+
+    it("rejects reordering if order does not exist", async () => {
+      const res = await reorderPastOrder("ord_non_existent", "cust_123");
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toBe("ORDER_NOT_FOUND");
+      }
+    });
+
+    it("rejects reordering if house is no longer active", async () => {
+      const order: MockOrderRecord = {
+        id: "ord_past_inactive",
+        customerId: "cust_123",
+        status: "delivered",
+        houseId: "h_inactive",
+      };
+      mockOrdersDb.set(order.id, order);
+
+      const res = await reorderPastOrder("ord_past_inactive", "cust_123");
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toBe("HOUSE_NOT_ACTIVE");
+      }
+    });
+
+    it("rejects reordering if house is paused", async () => {
+      const order: MockOrderRecord = {
+        id: "ord_past_paused",
+        customerId: "cust_123",
+        status: "delivered",
+        houseId: "h_paused",
+      };
+      mockOrdersDb.set(order.id, order);
+
+      const res = await reorderPastOrder("ord_past_paused", "cust_123");
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toBe("HOUSE_NOT_ACTIVE");
+      }
+    });
+  });
 });
+

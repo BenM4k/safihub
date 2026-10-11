@@ -33,7 +33,7 @@ export function getRoleCta(user?: AuthenticatedUser | null): RoleCtaInfo {
       };
     case "house":
       return {
-        href: "/house",
+        href: "/partner",
         isExternalOrAnchor: false,
         roleKey: "house",
       };

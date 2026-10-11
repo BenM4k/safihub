@@ -67,9 +67,10 @@ src/
   app/          # Next.js App Router (thin routes, server components, role layouts)
     (auth)/     # Login, register, forgot-password
     (customer)/ # Landing, houses, cart, checkout, orders, public /track/[token]
-    house/      # Partner portal (role guard): orders, catalogue, hours, coverage, settlements
+    partner/    # Dynamic partner workspace: /partner/[houseSlug] (membership guard)
+    partners/   # Public partner applications: /partners/apply
     courier/    # Courier PWA (role guard): active missions, cash held, offline sync
-    admin/      # Operations console (admin guard): dispatch, manual entry, cash, settlements
+    admin/      # Operations console (admin guard): dispatch, manual entry, applications, cash, settlements
     api/        # auth/[...all], inngest, storage presigned URLs
   components/   # React components (<= 150-200 lines): ui/ (shadcn), customer/, house/, courier/, admin/
   actions/      # Server actions (Zod validation + auth check -> calls services)
@@ -88,7 +89,7 @@ For exhaustive schemas, state transitions, algorithms, and workflows, consult [`
 
 | Topic                         | Document                                                                       | Contents                                                                                                  |
 | :---------------------------- | :----------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- |
-| **Product Specification**     | [`docs/product-spec.md`](./docs/product-spec.md)                               | Complete master product spec (v9.6), Bukavu context, unit economics, actor definitions.                   |
+| **Product Specification**     | [`docs/product-spec.md`](./docs/product-spec.md)                               | Complete master product spec (v9.7), Bukavu context, unit economics, actor definitions.                   |
 | **Architecture & Layering**   | [`docs/architecture-and-layering.md`](./docs/architecture-and-layering.md)     | Three-tier layering, `Result` types, shared validation engine, Inngest jobs, Cache Components.            |
 | **Database & Models**         | [`docs/database-and-models.md`](./docs/database-and-models.md)                 | Drizzle schemas (28 tables), strict DAL isolation, integer currency minor units, migrations.              |
 | **Auth & Security**           | [`docs/auth-and-security.md`](./docs/auth-and-security.md)                     | better-auth setup, 4 roles, customer privacy firewall, guest tokens, delivery verification code.          |

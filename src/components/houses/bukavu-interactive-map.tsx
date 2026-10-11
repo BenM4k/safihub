@@ -223,7 +223,7 @@ export function BukavuInteractiveMap({
               Min. {activeHouse.minimumOrderAmount.toLocaleString("fr-FR")} CDF
             </span>
             <Link
-              href={`/houses/${activeHouse.id}`}
+              href={`/houses/${activeHouse.slug || activeHouse.id}`}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover shadow-2xs transition"
             >
               <span>{t("selectHouse")}</span>

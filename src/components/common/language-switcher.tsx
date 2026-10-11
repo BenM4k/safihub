@@ -68,7 +68,7 @@ export function LanguageSwitcher() {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 print:hidden"
+      className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 print:hidden"
     >
       {/* Floating Popover Menu */}
       {isOpen && (

@@ -1,8 +1,12 @@
-import "server-only";
+import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { auth } from "./auth";
-import { checkUserHouseAccess, getUserHouseMemberships, type HouseMembershipInfo } from "@/dal";
+import {
+  checkUserHouseAccess,
+  getHouseBySlug,
+  getUserHouseMemberships,
+  type HouseMembershipInfo,
+} from "@/dal";
 import { err, ok, type Result } from "@/lib/result";
 import type { UserRole } from "./permissions";
 
@@ -27,6 +31,7 @@ export interface AuthContext {
 
 export interface HouseAuthContext extends AuthContext {
   houseId?: string;
+  houseSlug?: string;
   primaryHouseId?: string;
   memberships?: HouseMembershipInfo[];
   isAdminOverride: boolean;
@@ -40,6 +45,8 @@ export interface RequireRoleOptions {
 
 export interface RequireHouseAccessOptions extends RequireRoleOptions {
   houseId?: string;
+  houseSlug?: string;
+  returnNotFoundOnUnauthorized?: boolean;
 }
 
 /**
@@ -118,47 +125,73 @@ export async function requireHouseAccess(
 
   const { user, session } = roleResult.value;
 
+  // Resolve target house if houseSlug was provided
+  let targetHouseId = options?.houseId;
+  let targetHouseSlug = options?.houseSlug;
+
+  if (targetHouseSlug && !targetHouseId) {
+    const houseRecord = await getHouseBySlug(targetHouseSlug);
+    if (!houseRecord) {
+      if (options?.returnNotFoundOnUnauthorized) {
+        notFound();
+      }
+      return err(`House "${targetHouseSlug}" not found.`);
+    }
+    targetHouseId = houseRecord.id;
+    targetHouseSlug = houseRecord.slug;
+  }
+
   // Admin users possess full operational override across all houses
   if (user.role === "admin") {
     return ok({
       user,
       session,
-      houseId: options?.houseId,
+      houseId: targetHouseId,
+      houseSlug: targetHouseSlug,
       isAdminOverride: true,
     });
   }
 
   // House staff user: must verify active membership
-  if (options?.houseId) {
-    const hasAccess = await checkUserHouseAccess(user.id, options.houseId);
+  if (targetHouseId) {
+    const hasAccess = await checkUserHouseAccess(user.id, targetHouseId);
     if (!hasAccess) {
-      if (options?.redirectIfUnauthorized) {
-        redirect(options?.redirectTo || "/");
+      if (options?.returnNotFoundOnUnauthorized) {
+        notFound();
       }
-      return err(`Forbidden: User does not have access to house "${options.houseId}".`);
+      if (options?.redirectIfUnauthorized) {
+        redirect(options?.redirectTo || "/partner");
+      }
+      return err(`Forbidden: User does not have access to house "${targetHouseId}".`);
     }
 
     return ok({
       user,
       session,
-      houseId: options.houseId,
+      houseId: targetHouseId,
+      houseSlug: targetHouseSlug,
       isAdminOverride: false,
     });
   }
 
-  // No specific house ID requested: retrieve all assigned houses
+  // No specific house ID or slug requested: retrieve all assigned houses
   const memberships = await getUserHouseMemberships(user.id);
   if (memberships.length === 0) {
-    if (options?.redirectIfUnauthorized) {
-      redirect(options?.redirectTo || "/");
-    }
-    return err("Forbidden: No laundry house is assigned to this account.");
+    return ok({
+      user,
+      session,
+      primaryHouseId: undefined,
+      houseSlug: undefined,
+      memberships: [],
+      isAdminOverride: false,
+    });
   }
 
   return ok({
     user,
     session,
     primaryHouseId: memberships[0].houseId,
+    houseSlug: memberships[0].houseSlug,
     memberships,
     isAdminOverride: false,
   });
@@ -197,17 +230,22 @@ export async function guardCourierRoute(options?: { headers?: Headers }): Promis
 }
 
 /**
- * Server-side route guard for the /house partner portal layout.
+ * Server-side route guard for the /partner/[houseSlug] partner portal layout.
+ * Enforces AC 23: non-members trying to access a house route receive a 404.
  */
 export async function guardHouseRoute(
-  options?: { headers?: Headers; houseId?: string }
+  options?: { headers?: Headers; houseId?: string; houseSlug?: string }
 ): Promise<HouseAuthContext> {
   const result = await requireHouseAccess({
     ...options,
-    redirectIfUnauthorized: true,
+    redirectIfUnauthorized: !options?.houseSlug,
+    returnNotFoundOnUnauthorized: Boolean(options?.houseSlug),
   });
 
   if (!result.ok) {
+    if (options?.houseSlug) {
+      notFound();
+    }
     redirect("/");
   }
 
@@ -274,14 +312,14 @@ export async function redirectIfAuthenticated(options?: {
 
   switch (user.role) {
     case "admin":
-      redirect("/admin");
+      redirect("/admin/dispatch");
     case "courier":
       redirect("/courier");
     case "house":
-      redirect("/house");
+      redirect("/partner");
     case "customer":
     default:
-      redirect("/");
+      redirect("/houses");
   }
 }
 

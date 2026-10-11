@@ -1,12 +1,22 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Calendar, Store, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { ArrowRight, Calendar, Store, Clock, RotateCcw } from "lucide-react";
 import type { OrderListItemRecord } from "@/dal";
 import { Badge } from "@/components/ui/badge";
+import { reorderPastOrderAction } from "@/actions/customer-order.actions";
+import { formatReorderErrorMessage } from "@/components/orders/reorder-error";
+import { useCartStore } from "@/lib/stores/cart-store";
+import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG: Record<
   string,
   { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className?: string }
 > = {
+  awaiting_confirmation: { label: "En attente de confirmation", variant: "outline", className: "bg-amber-50 text-amber-700 border-amber-200" },
   created: { label: "En attente d'acceptation", variant: "outline", className: "bg-amber-50 text-amber-700 border-amber-200" },
   accepted: { label: "Acceptée par le pressing", variant: "default" },
   pickup_assigned: { label: "Coursier assigné (collecte)", variant: "secondary" },
@@ -25,67 +35,131 @@ const STATUS_CONFIG: Record<
   disputed: { label: "En litige", variant: "destructive" },
 };
 
-export function OrderListCard({ order }: { order: OrderListItemRecord }) {
+export function OrderListCard({
+  order,
+  isPast,
+}: {
+  order: OrderListItemRecord;
+  isPast?: boolean;
+}) {
+  const router = useRouter();
+  const t = useTranslations("orders");
+  const [isReordering, setIsReordering] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const restoreCartFromOrder = useCartStore((s) => s.restoreCartFromOrder);
+  const setCustomerNeighborhoodId = useCartStore((s) => s.setCustomerNeighborhoodId);
+
   const statusCfg = STATUS_CONFIG[order.status] || {
     label: order.status,
     variant: "outline" as const,
   };
 
+  const handleReorder = async () => {
+    setIsReordering(true);
+    setErrorMessage(null);
+
+    try {
+      const res = await reorderPastOrderAction(order.id);
+      if (!res.success || !res.data) {
+        setErrorMessage(formatReorderErrorMessage(res.errorCode || res.error, t));
+        return;
+      }
+
+      restoreCartFromOrder(
+        res.data.houseId,
+        res.data.houseName,
+        res.data.items
+      );
+      setCustomerNeighborhoodId(res.data.neighborhoodId);
+      router.push("/cart");
+    } catch {
+      setErrorMessage(t("orderAgainGenericError"));
+    } finally {
+      setIsReordering(false);
+    }
+  };
+
   return (
-    <Link
-      href={`/orders/${order.id}`}
-      className="block p-5 bg-white rounded-2xl border border-slate-200 hover:border-primary/50 hover:shadow-xs transition group"
-    >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-black text-slate-900 group-hover:text-primary transition">
-            {order.code}
-          </span>
-          <Badge variant={statusCfg.variant} className={statusCfg.className}>
-            {statusCfg.label}
-          </Badge>
-        </div>
+    <div className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-primary/50 hover:shadow-xs transition">
+      <Link
+        href={`/orders/${order.id}`}
+        className="block group"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-black text-slate-900 group-hover:text-primary transition">
+              {order.code}
+            </span>
+            <Badge variant={statusCfg.variant} className={statusCfg.className}>
+              {statusCfg.label}
+            </Badge>
+          </div>
 
-        <span className="text-xs text-slate-500 flex items-center gap-1">
-          <Calendar className="size-3 text-slate-400" />
-          <span>
-            {new Date(order.createdAt).toLocaleDateString("fr-FR", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </span>
-        </span>
-      </div>
-
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
-        <div className="space-y-1">
-          <p className="text-slate-700 font-bold flex items-center gap-1.5">
-            <Store className="size-3.5 text-slate-400" />
-            <span>{order.houseName || "Pressing"}</span>
-            <span className="font-normal text-slate-400">· {order.neighborhoodName}</span>
-          </p>
-          <p className="text-slate-500 flex items-center gap-1.5">
-            <Clock className="size-3.5 text-slate-400" />
+          <span className="text-xs text-slate-500 flex items-center gap-1">
+            <Calendar className="size-3 text-slate-400" />
             <span>
-              Collecte :{" "}
-              {new Date(order.pickupSlotStart).toLocaleTimeString("fr-FR", {
+              {new Date(order.createdAt).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
                 hour: "2-digit",
                 minute: "2-digit",
               })}
             </span>
-          </p>
+          </span>
         </div>
 
-        <div className="flex items-center justify-between sm:justify-end gap-3">
-          <span className="text-base font-black text-slate-900">
-            {order.totalDue.toLocaleString("fr-FR")} CDF
-          </span>
-          <ArrowRight className="size-4 text-slate-400 group-hover:text-primary group-hover:translate-x-1 transition" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+          <div className="space-y-1">
+            <p className="text-slate-700 font-bold flex items-center gap-1.5">
+              <Store className="size-3.5 text-slate-400" />
+              <span>{order.houseName || "Pressing"}</span>
+              <span className="font-normal text-slate-400">· {order.neighborhoodName}</span>
+            </p>
+            <p className="text-slate-500 flex items-center gap-1.5">
+              <Clock className="size-3.5 text-slate-400" />
+              <span>
+                Collecte :{" "}
+                {new Date(order.pickupSlotStart).toLocaleTimeString("fr-FR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between sm:justify-end gap-3 flex-wrap">
+            <span className="text-base font-black text-slate-900">
+              {order.totalDue.toLocaleString("fr-FR")} CDF
+            </span>
+
+            <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-primary/5 transition">
+              <ArrowRight className="size-4 group-hover:translate-x-0.5 transition" />
+            </div>
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+
+      {isPast && (
+        <div className="flex items-center justify-end pt-3 mt-3 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={handleReorder}
+            disabled={isReordering}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-100 font-semibold text-xs transition border border-violet-200 shadow-2xs disabled:opacity-50 cursor-pointer"
+          >
+            <RotateCcw className={cn("size-3.5", isReordering && "animate-spin")} />
+            <span>{isReordering ? t("orderAgainLoading") : t("orderAgain")}</span>
+          </button>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="mt-2.5 p-2 rounded-lg bg-rose-50 text-rose-700 text-xs font-medium border border-rose-200">
+          {errorMessage}
+        </div>
+      )}
+    </div>
   );
 }

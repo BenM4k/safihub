@@ -13,10 +13,11 @@ const TABS = [
   { key: "filterCompleted", status: "delivered" },
 ];
 
-export function OrdersFilterTabs() {
+export function OrdersFilterTabs({ houseSlug }: { houseSlug?: string }) {
   const t = useTranslations("house.orders");
   const searchParams = useSearchParams();
   const currentStatus = searchParams.get("status");
+  const base = houseSlug ? `/partner/${houseSlug}/orders` : "/partner";
 
   return (
     <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1">
@@ -24,7 +25,7 @@ export function OrdersFilterTabs() {
         const isActive =
           (!currentStatus && !tab.status) || currentStatus === tab.status;
 
-        const href = tab.status ? `/house/orders?status=${tab.status}` : "/house/orders";
+        const href = tab.status ? `${base}?status=${tab.status}` : base;
 
         return (
           <Link

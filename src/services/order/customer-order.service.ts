@@ -1,6 +1,7 @@
 import "server-only";
 import {
   createDisputeTransaction,
+  getCustomerHouseDetail,
   getCustomerOrders,
   getOrderById,
   getOrderEvents,
@@ -478,4 +479,97 @@ export async function getPublicTrackingOrder(
   ]);
 
   return ok({ order, items, events });
+}
+
+export interface ReorderPastOrderResult {
+  houseId: string;
+  houseName: string;
+  houseSlug: string;
+  neighborhoodId: string;
+  items: Array<{
+    houseItemId: string;
+    serviceId: string;
+    itemId: string;
+    fabricId: string;
+    itemName?: string;
+    fabricName?: string;
+    serviceName?: string;
+    quantity: number;
+    expectedUnitPrice: number;
+  }>;
+  priceChangesCount: number;
+  unavailableItemsCount: number;
+}
+
+export type ReorderPastOrderErrorCode =
+  | "ORDER_NOT_FOUND"
+  | "ACCESS_DENIED"
+  | "HOUSE_NOT_ACTIVE"
+  | "ORDER_EMPTY"
+  | "NO_ITEMS_AVAILABLE";
+
+export async function reorderPastOrder(
+  orderId: string,
+  customerId: string
+): Promise<Result<ReorderPastOrderResult, ReorderPastOrderErrorCode>> {
+  const order = await getOrderById(orderId);
+  if (!order) return err("ORDER_NOT_FOUND");
+  if (order.customerId !== customerId) return err("ACCESS_DENIED");
+
+  const houseDetail = await getCustomerHouseDetail(order.houseId);
+  if (!houseDetail || houseDetail.house.isPaused) {
+    return err("HOUSE_NOT_ACTIVE");
+  }
+
+  const pastItems = await getOrderItems(orderId);
+  if (pastItems.length === 0) {
+    return err("ORDER_EMPTY");
+  }
+
+  const validCartItems: ReorderPastOrderResult["items"] = [];
+  let priceChangesCount = 0;
+  let unavailableItemsCount = 0;
+
+  for (const pi of pastItems) {
+    const match = houseDetail.items.find(
+      (hi) =>
+        hi.serviceId === pi.serviceId &&
+        hi.itemId === pi.itemId &&
+        hi.fabricId === pi.fabricId &&
+        !hi.isExcluded
+    );
+
+    if (match) {
+      if (match.priceCdf !== pi.unitPrice) {
+        priceChangesCount++;
+      }
+      validCartItems.push({
+        houseItemId: match.houseItemId,
+        serviceId: match.serviceId,
+        itemId: match.itemId,
+        fabricId: match.fabricId,
+        itemName: match.itemNameFr,
+        fabricName: match.fabricNameFr,
+        serviceName: match.serviceNameFr,
+        quantity: pi.declaredQuantity || 1,
+        expectedUnitPrice: match.priceCdf,
+      });
+    } else {
+      unavailableItemsCount++;
+    }
+  }
+
+  if (validCartItems.length === 0) {
+    return err("NO_ITEMS_AVAILABLE");
+  }
+
+  return ok({
+    houseId: houseDetail.house.id,
+    houseName: houseDetail.house.name,
+    houseSlug: houseDetail.house.slug,
+    neighborhoodId: order.neighborhoodId,
+    items: validCartItems,
+    priceChangesCount,
+    unavailableItemsCount,
+  });
 }

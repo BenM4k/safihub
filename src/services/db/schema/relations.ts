@@ -3,6 +3,7 @@ import { account, customerAddresses, session, user } from "./auth";
 import { fabrics, items, services } from "./catalog";
 import { courierZones, neighborhoods, zones } from "./coverage";
 import {
+  houseApplications,
   houseClosures,
   houseCoverage,
   houseExclusions,
@@ -78,7 +79,26 @@ export const housesRelations = relations(houses, ({ one, many }) => ({
   items: many(houseItems),
   exclusions: many(houseExclusions),
   orders: many(orders),
+  applications: many(houseApplications),
 }));
+
+export const houseApplicationsRelations = relations(
+  houseApplications,
+  ({ one }) => ({
+    neighborhood: one(neighborhoods, {
+      fields: [houseApplications.neighborhoodId],
+      references: [neighborhoods.id],
+    }),
+    createdHouse: one(houses, {
+      fields: [houseApplications.createdHouseId],
+      references: [houses.id],
+    }),
+    reviewer: one(user, {
+      fields: [houseApplications.reviewedBy],
+      references: [user.id],
+    }),
+  })
+);
 
 export const houseMembersRelations = relations(houseMembers, ({ one }) => ({
   house: one(houses, {
