@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { reorderPastOrderAction } from "@/actions/customer-order.actions";
+import { formatReorderErrorMessage } from "@/components/orders/reorder-error";
 import { useCartStore } from "@/lib/stores/cart-store";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +34,7 @@ export function ReorderDetailButton({
     try {
       const res = await reorderPastOrderAction(orderId);
       if (!res.success || !res.data) {
-        setErrorMessage(res.error || t("orderAgainError"));
+        setErrorMessage(formatReorderErrorMessage(res.errorCode || res.error, t));
         return;
       }
 

@@ -1069,6 +1069,12 @@
     "disputeOrder": "Ripoti Tatizo / Malalamiko",
     "orderAgainError": "Haikuwezekana kurudia agizo hili.",
     "orderAgainGenericError": "Hitilafu imetokea wakati wa kurudisha kikapu.",
+    "orderAgainUnauthenticated": "Lazima uwe umeingia ili kurudia agizo.",
+    "orderAgainNotFound": "Agizo halikupatikana.",
+    "orderAgainAccessDenied": "Huna ruhusa ya kufikia agizo hili.",
+    "orderAgainHouseInactive": "Dobi hii haifanyi kazi tena kwenye jukwaa.",
+    "orderAgainOrderEmpty": "Agizo hili halina nguo yoyote.",
+    "orderAgainNoItemsAvailable": "Nguo zote za agizo hili hazipatikani tena katika dobi hii.",
     "discoverHouses": "Tazama maduka ya kufulia"
   },
   "track": {

@@ -21,11 +21,10 @@ export async function submitPartnerApplication(params: {
 }): Promise<Result<HouseApplicationRecord>> {
   try {
     // 1. Rate limiting by IP and email
-    if (params.clientIp) {
-      const ipLimit = await rateLimitPartnerApplication(`ip:${params.clientIp}`);
-      if (!ipLimit.allowed) {
-        return err("RATE_LIMITED");
-      }
+    const ipKey = params.clientIp?.trim() ? `ip:${params.clientIp.trim()}` : "ip:fallback";
+    const ipLimit = await rateLimitPartnerApplication(ipKey);
+    if (!ipLimit.allowed) {
+      return err("RATE_LIMITED");
     }
     if (params.email?.trim()) {
       const emailLimit = await rateLimitPartnerApplication(

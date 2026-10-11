@@ -237,22 +237,41 @@ export async function openDisputeAction(
   return { success: true, disputeId: res.value.disputeId };
 }
 
-export async function reorderPastOrderAction(orderId: string): Promise<{
+export type ReorderActionErrorCode =
+  | "UNAUTHENTICATED"
+  | "ORDER_NOT_FOUND"
+  | "ACCESS_DENIED"
+  | "HOUSE_NOT_ACTIVE"
+  | "ORDER_EMPTY"
+  | "NO_ITEMS_AVAILABLE"
+  | "REORDER_FAILED";
+
+export interface ReorderPastOrderActionResult {
   success: boolean;
   data?: ReorderPastOrderResult;
   error?: string;
-}> {
+  errorCode?: ReorderActionErrorCode;
+}
+
+export async function reorderPastOrderAction(
+  orderId: string
+): Promise<ReorderPastOrderActionResult> {
   const user = await getCurrentUser();
   if (!user) {
     return {
       success: false,
-      error: "Vous devez être connecté pour renouveler une commande.",
+      errorCode: "UNAUTHENTICATED",
+      error: "UNAUTHENTICATED",
     };
   }
 
   const res = await reorderPastOrder(orderId, user.id);
   if (!res.ok) {
-    return { success: false, error: res.error };
+    return {
+      success: false,
+      errorCode: (res.error as ReorderActionErrorCode) || "REORDER_FAILED",
+      error: res.error,
+    };
   }
 
   return { success: true, data: res.value };

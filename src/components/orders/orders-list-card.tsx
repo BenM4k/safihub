@@ -8,6 +8,7 @@ import { ArrowRight, Calendar, Store, Clock, RotateCcw } from "lucide-react";
 import type { OrderListItemRecord } from "@/dal";
 import { Badge } from "@/components/ui/badge";
 import { reorderPastOrderAction } from "@/actions/customer-order.actions";
+import { formatReorderErrorMessage } from "@/components/orders/reorder-error";
 import { useCartStore } from "@/lib/stores/cart-store";
 import { cn } from "@/lib/utils";
 
@@ -61,7 +62,7 @@ export function OrderListCard({
     try {
       const res = await reorderPastOrderAction(order.id);
       if (!res.success || !res.data) {
-        setErrorMessage(res.error || t("orderAgainError"));
+        setErrorMessage(formatReorderErrorMessage(res.errorCode || res.error, t));
         return;
       }
 

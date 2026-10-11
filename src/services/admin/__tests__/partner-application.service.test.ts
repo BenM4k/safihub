@@ -7,6 +7,7 @@ import {
 } from "../partner-application.service";
 import { submitPartnerApplication } from "@/services/house/application.service";
 import type { HouseApplicationRecord } from "@/dal/house-application.dal";
+import { rateLimitPartnerApplication } from "@/services/abuse/rate-limiter";
 
 const mockApplication: HouseApplicationRecord = {
   id: "app-123",
@@ -62,7 +63,7 @@ vi.mock("@/dal/coverage.dal", () => ({
 }));
 
 vi.mock("@/services/abuse/rate-limiter", () => ({
-  rateLimitPartnerApplication: vi.fn(async () => ({ allowed: true })),
+  rateLimitPartnerApplication: vi.fn(async () => ({ allowed: true, remaining: 5, resetSeconds: 60 })),
 }));
 
 vi.mock("@/services/email", () => ({
@@ -158,6 +159,72 @@ describe("Partner Application Pipeline", () => {
         expect(res.value.houseName).toBe("Pressing Étoile du Kivu");
         expect(res.value.contactName).toBe("Amani Mulemangabo");
       }
+    });
+
+    it("enforces rate limiting on fallback IP bucket when clientIp is missing", async () => {
+      vi.mocked(rateLimitPartnerApplication).mockResolvedValueOnce({
+        allowed: false,
+        remaining: 0,
+        resetSeconds: 60,
+      });
+
+      const res = await submitPartnerApplication({
+        houseName: "Pressing Test",
+        contactName: "Amani",
+        phone: "+243999000123",
+        email: "test@example.com",
+        neighborhoodId: "neigh-1",
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toBe("RATE_LIMITED");
+      }
+      expect(rateLimitPartnerApplication).toHaveBeenCalledWith("ip:fallback");
+    });
+
+    it("enforces rate limiting with sanitized clientIp when provided", async () => {
+      vi.mocked(rateLimitPartnerApplication).mockResolvedValueOnce({
+        allowed: false,
+        remaining: 0,
+        resetSeconds: 60,
+      });
+
+      const res = await submitPartnerApplication({
+        houseName: "Pressing Test",
+        contactName: "Amani",
+        phone: "+243999000123",
+        email: "test@example.com",
+        neighborhoodId: "neigh-1",
+        clientIp: " 197.157.210.5 ",
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toBe("RATE_LIMITED");
+      }
+      expect(rateLimitPartnerApplication).toHaveBeenCalledWith("ip:197.157.210.5");
+    });
+
+    it("enforces rate limiting on email", async () => {
+      // First call (IP) allowed, second call (email) disallowed
+      vi.mocked(rateLimitPartnerApplication)
+        .mockResolvedValueOnce({ allowed: true, remaining: 5, resetSeconds: 60 })
+        .mockResolvedValueOnce({ allowed: false, remaining: 0, resetSeconds: 60 });
+
+      const res = await submitPartnerApplication({
+        houseName: "Pressing Test",
+        contactName: "Amani",
+        phone: "+243999000123",
+        email: "spammer@example.com",
+        neighborhoodId: "neigh-1",
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toBe("RATE_LIMITED");
+      }
+      expect(rateLimitPartnerApplication).toHaveBeenCalledWith("email:spammer@example.com");
     });
   });
 

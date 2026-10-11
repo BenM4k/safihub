@@ -1069,6 +1069,12 @@
     "disputeOrder": "Signaler un litige / problème",
     "orderAgainError": "Impossible de renouveler cette commande.",
     "orderAgainGenericError": "Une erreur est survenue lors de la duplication du panier.",
+    "orderAgainUnauthenticated": "Vous devez être connecté pour renouveler une commande.",
+    "orderAgainNotFound": "Commande introuvable.",
+    "orderAgainAccessDenied": "Accès refusé à cette commande.",
+    "orderAgainHouseInactive": "Cet atelier de pressing n'est plus actif sur la plateforme.",
+    "orderAgainOrderEmpty": "Cette commande ne contient aucun article.",
+    "orderAgainNoItemsAvailable": "Tous les articles de cette commande ne sont plus traités ou disponibles dans cet atelier.",
     "discoverHouses": "Découvrir les pressings"
   },
   "track": {

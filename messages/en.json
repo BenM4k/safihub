@@ -1069,6 +1069,12 @@
     "disputeOrder": "Report an Issue / Dispute",
     "orderAgainError": "Unable to reorder this order.",
     "orderAgainGenericError": "An error occurred while restoring the cart.",
+    "orderAgainUnauthenticated": "You must be signed in to reorder a past order.",
+    "orderAgainNotFound": "Order not found.",
+    "orderAgainAccessDenied": "Access denied to this order.",
+    "orderAgainHouseInactive": "This laundry house is no longer active on the platform.",
+    "orderAgainOrderEmpty": "This order does not contain any items.",
+    "orderAgainNoItemsAvailable": "All items from this order are no longer processed or available at this laundry house.",
     "discoverHouses": "Discover laundry houses"
   },
   "track": {

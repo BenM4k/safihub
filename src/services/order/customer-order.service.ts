@@ -501,22 +501,29 @@ export interface ReorderPastOrderResult {
   unavailableItemsCount: number;
 }
 
+export type ReorderPastOrderErrorCode =
+  | "ORDER_NOT_FOUND"
+  | "ACCESS_DENIED"
+  | "HOUSE_NOT_ACTIVE"
+  | "ORDER_EMPTY"
+  | "NO_ITEMS_AVAILABLE";
+
 export async function reorderPastOrder(
   orderId: string,
   customerId: string
-): Promise<Result<ReorderPastOrderResult, string>> {
+): Promise<Result<ReorderPastOrderResult, ReorderPastOrderErrorCode>> {
   const order = await getOrderById(orderId);
-  if (!order) return err("Commande introuvable.");
-  if (order.customerId !== customerId) return err("Accès refusé.");
+  if (!order) return err("ORDER_NOT_FOUND");
+  if (order.customerId !== customerId) return err("ACCESS_DENIED");
 
   const houseDetail = await getCustomerHouseDetail(order.houseId);
   if (!houseDetail || houseDetail.house.isPaused) {
-    return err("Cet atelier de pressing n'est plus actif sur la plateforme.");
+    return err("HOUSE_NOT_ACTIVE");
   }
 
   const pastItems = await getOrderItems(orderId);
   if (pastItems.length === 0) {
-    return err("Cette commande ne contient aucun article.");
+    return err("ORDER_EMPTY");
   }
 
   const validCartItems: ReorderPastOrderResult["items"] = [];
@@ -553,9 +560,7 @@ export async function reorderPastOrder(
   }
 
   if (validCartItems.length === 0) {
-    return err(
-      "Tous les articles de cette commande ne sont plus traités ou disponibles dans cet atelier."
-    );
+    return err("NO_ITEMS_AVAILABLE");
   }
 
   return ok({

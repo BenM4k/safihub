@@ -896,7 +896,15 @@ describe("Phase 5 — Customer App End-to-End Workflows", () => {
       const res = await reorderPastOrder("ord_past_other", "cust_123");
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toContain("Accès refusé");
+        expect(res.error).toBe("ACCESS_DENIED");
+      }
+    });
+
+    it("rejects reordering if order does not exist", async () => {
+      const res = await reorderPastOrder("ord_non_existent", "cust_123");
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toBe("ORDER_NOT_FOUND");
       }
     });
 
@@ -912,7 +920,7 @@ describe("Phase 5 — Customer App End-to-End Workflows", () => {
       const res = await reorderPastOrder("ord_past_inactive", "cust_123");
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toContain("n'est plus actif");
+        expect(res.error).toBe("HOUSE_NOT_ACTIVE");
       }
     });
 
@@ -928,7 +936,7 @@ describe("Phase 5 — Customer App End-to-End Workflows", () => {
       const res = await reorderPastOrder("ord_past_paused", "cust_123");
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toContain("n'est plus actif");
+        expect(res.error).toBe("HOUSE_NOT_ACTIVE");
       }
     });
   });
