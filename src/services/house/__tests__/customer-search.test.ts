@@ -9,6 +9,7 @@ const MOCK_HOUSES: CustomerHouseSummary[] = [
   {
     id: "house-1",
     name: "Pressing du Lac Kivu",
+    slug: "pressing-du-lac-kivu",
     neighborhoodId: "n-ibanda",
     neighborhoodName: "La Botte",
     zoneId: "z-ibanda",
@@ -37,6 +38,7 @@ const MOCK_HOUSES: CustomerHouseSummary[] = [
   {
     id: "house-2",
     name: "Pressing Étoile de Kadutu",
+    slug: "pressing-etoile-de-kadutu",
     neighborhoodId: "n-kadutu",
     neighborhoodName: "Kadutu Centre",
     zoneId: "z-kadutu",
@@ -78,6 +80,7 @@ const MOCK_HOUSE_DETAIL: CustomerHouseDetailData = {
   house: {
     id: "house-1",
     name: "Pressing du Lac Kivu",
+    slug: "pressing-du-lac-kivu",
     neighborhoodId: "n-ibanda",
     neighborhoodName: "La Botte",
     zoneId: "z-ibanda",
@@ -93,6 +96,7 @@ const MOCK_HOUSE_DETAIL: CustomerHouseDetailData = {
     rating: 4.9,
     reviewCount: 312,
     imageUrl: "https://example.com/h1.jpg",
+    isActive: true,
   },
   services: [
     { id: "s-wash", slug: "wash", nameFr: "Lavage & Pliage", nameSw: "Kufua" },

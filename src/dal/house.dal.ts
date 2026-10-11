@@ -1,11 +1,13 @@
 import "server-only";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, or } from "drizzle-orm";
 import { db, schema } from "./db";
+import { slugify } from "@/lib/slug";
 
 export interface HouseMembershipInfo {
   houseId: string;
   userId: string;
   houseName: string;
+  houseSlug: string;
   isActive: boolean;
   isPaused: boolean;
 }
@@ -13,6 +15,7 @@ export interface HouseMembershipInfo {
 export interface HouseRecord {
   id: string;
   name: string;
+  slug: string;
   neighborhoodId: string;
   neighborhoodName?: string | null;
   addressNote: string | null;
@@ -84,6 +87,7 @@ export async function getUserHouseMemberships(
       houseId: schema.houseMembers.houseId,
       userId: schema.houseMembers.userId,
       houseName: schema.houses.name,
+      houseSlug: schema.houses.slug,
       isActive: schema.houses.isActive,
       isPaused: schema.houses.isPaused,
     })
@@ -96,15 +100,19 @@ export async function getUserHouseMemberships(
 
 export async function checkUserHouseAccess(
   userId: string,
-  houseId: string
+  houseIdOrSlug: string
 ): Promise<boolean> {
   const [membership] = await db
     .select({ houseId: schema.houseMembers.houseId })
     .from(schema.houseMembers)
+    .innerJoin(schema.houses, eq(schema.houseMembers.houseId, schema.houses.id))
     .where(
       and(
         eq(schema.houseMembers.userId, userId),
-        eq(schema.houseMembers.houseId, houseId)
+        or(
+          eq(schema.houseMembers.houseId, houseIdOrSlug),
+          eq(schema.houses.slug, houseIdOrSlug)
+        )
       )
     )
     .limit(1);
@@ -167,6 +175,7 @@ export async function getHouses(): Promise<HouseRecord[]> {
     .select({
       id: schema.houses.id,
       name: schema.houses.name,
+      slug: schema.houses.slug,
       neighborhoodId: schema.houses.neighborhoodId,
       neighborhoodName: schema.neighborhoods.name,
       addressNote: schema.houses.addressNote,
@@ -199,6 +208,7 @@ export async function getHouseById(id: string): Promise<HouseRecord | null> {
     .select({
       id: schema.houses.id,
       name: schema.houses.name,
+      slug: schema.houses.slug,
       neighborhoodId: schema.houses.neighborhoodId,
       neighborhoodName: schema.neighborhoods.name,
       addressNote: schema.houses.addressNote,
@@ -227,8 +237,45 @@ export async function getHouseById(id: string): Promise<HouseRecord | null> {
   return row ?? null;
 }
 
+export async function getHouseBySlug(
+  slug: string
+): Promise<HouseRecord | null> {
+  const [row] = await db
+    .select({
+      id: schema.houses.id,
+      name: schema.houses.name,
+      slug: schema.houses.slug,
+      neighborhoodId: schema.houses.neighborhoodId,
+      neighborhoodName: schema.neighborhoods.name,
+      addressNote: schema.houses.addressNote,
+      contactPhone: schema.houses.contactPhone,
+      commissionBps: schema.houses.commissionBps,
+      minimumOrderAmount: schema.houses.minimumOrderAmount,
+      cutoffMinutes: schema.houses.cutoffMinutes,
+      turnaroundHours: schema.houses.turnaroundHours,
+      dailyCapacity: schema.houses.dailyCapacity,
+      maxDistanceLevel: schema.houses.maxDistanceLevel,
+      isOwnerHouse: schema.houses.isOwnerHouse,
+      isActive: schema.houses.isActive,
+      isPaused: schema.houses.isPaused,
+      pausedUntil: schema.houses.pausedUntil,
+      createdAt: schema.houses.createdAt,
+      updatedAt: schema.houses.updatedAt,
+    })
+    .from(schema.houses)
+    .leftJoin(
+      schema.neighborhoods,
+      eq(schema.houses.neighborhoodId, schema.neighborhoods.id)
+    )
+    .where(eq(schema.houses.slug, slug))
+    .limit(1);
+
+  return row ?? null;
+}
+
 export async function createHouse(data: {
   name: string;
+  slug?: string;
   neighborhoodId: string;
   addressNote?: string | null;
   contactPhone?: string | null;
@@ -239,11 +286,15 @@ export async function createHouse(data: {
   dailyCapacity?: number | null;
   maxDistanceLevel?: number | null;
   isOwnerHouse?: boolean;
+  isActive?: boolean;
 }): Promise<HouseRecord> {
+  const finalSlug = (data.slug ?? slugify(data.name)).trim();
+
   const [created] = await db
     .insert(schema.houses)
     .values({
       name: data.name.trim(),
+      slug: finalSlug,
       neighborhoodId: data.neighborhoodId,
       addressNote: data.addressNote ?? null,
       contactPhone: data.contactPhone ?? null,
@@ -254,7 +305,7 @@ export async function createHouse(data: {
       dailyCapacity: data.dailyCapacity ?? null,
       maxDistanceLevel: data.maxDistanceLevel ?? null,
       isOwnerHouse: data.isOwnerHouse ?? false,
-      isActive: true,
+      isActive: data.isActive ?? true,
       isPaused: false,
     })
     .returning();
@@ -266,6 +317,7 @@ export async function updateHouse(
   id: string,
   data: Partial<{
     name: string;
+    slug: string;
     neighborhoodId: string;
     addressNote: string | null;
     contactPhone: string | null;

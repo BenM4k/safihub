@@ -13,7 +13,9 @@ import {
   estimateCustomerCart,
   openCustomerOrderDispute,
   placeCustomerOrder,
+  reorderPastOrder,
   type CartEstimateResult,
+  type ReorderPastOrderResult,
 } from "@/services/order";
 import type { CartLineItemInput, CheckoutInput } from "@/services/order/validation";
 
@@ -95,7 +97,7 @@ export async function checkoutOrderAction(
   }
 
   revalidatePath("/orders");
-  revalidatePath("/house/orders");
+  revalidatePath("/partner", "layout");
   revalidatePath("/admin/orders");
 
   return {
@@ -122,7 +124,7 @@ export async function cancelOrderAction(
 
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/orders");
-  revalidatePath("/house/orders");
+  revalidatePath("/partner", "layout");
   return { success: true };
 }
 
@@ -233,4 +235,25 @@ export async function openDisputeAction(
   revalidatePath("/orders");
   revalidatePath("/admin/orders");
   return { success: true, disputeId: res.value.disputeId };
+}
+
+export async function reorderPastOrderAction(orderId: string): Promise<{
+  success: boolean;
+  data?: ReorderPastOrderResult;
+  error?: string;
+}> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return {
+      success: false,
+      error: "Vous devez être connecté pour renouveler une commande.",
+    };
+  }
+
+  const res = await reorderPastOrder(orderId, user.id);
+  if (!res.ok) {
+    return { success: false, error: res.error };
+  }
+
+  return { success: true, data: res.value };
 }

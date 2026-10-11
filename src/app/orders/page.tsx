@@ -10,13 +10,26 @@ export const metadata = {
   description: "Suivez l'historique et l'avancement de vos commandes de pressing.",
 };
 
-export default async function CustomerOrdersPage() {
+interface CustomerOrdersPageProps {
+  searchParams?: Promise<{
+    tab?: "active" | "past";
+  }>;
+}
+
+export default async function CustomerOrdersPage({
+  searchParams,
+}: CustomerOrdersPageProps) {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login?callbackUrl=/orders");
   }
 
-  const orders = await getCustomerOrdersList(user.id);
+  const [orders, sp] = await Promise.all([
+    getCustomerOrdersList(user.id),
+    searchParams ? await searchParams : Promise.resolve({ tab: undefined }),
+  ]);
+
+  const initialTab = sp?.tab === "past" ? "past" : "active";
 
   return (
     <div className="min-h-screen bg-slate-50/50 py-10">
@@ -47,7 +60,7 @@ export default async function CustomerOrdersPage() {
           </Link>
         </div>
 
-        <OrdersListView orders={orders} />
+        <OrdersListView orders={orders} initialTab={initialTab} />
       </div>
     </div>
   );

@@ -79,6 +79,7 @@ describe("Database Schema Samples & Relational Graph Verification", () => {
       const sampleHouse: typeof schema.houses.$inferInsert = {
         id: houseId,
         name: "Pressing du Lac Kivu",
+        slug: "pressing-du-lac-kivu",
         neighborhoodId: sampleNeighborhood.id!,
         addressNote: "Av. Maniema face à l'hôtel Horizon",
         contactPhone: "+243999123456",
@@ -137,7 +138,20 @@ describe("Database Schema Samples & Relational Graph Verification", () => {
       expect(sampleHouseClosure.startsOn).toBe("2026-10-14");
       expect(sampleHouseCoverage.neighborhoodId).toBe(sampleNeighborhood.id);
 
-      // 7. Item requests, settings, exchange rates
+      // 7. House applications (Partner Onboarding v9.7)
+      const sampleApplication: typeof schema.houseApplications.$inferInsert = {
+        houseName: "Pressing Étoile",
+        contactName: "Justin Baraka",
+        phone: "+243999888777",
+        email: "justin@pressingetoile.cd",
+        neighborhoodId: sampleNeighborhood.id,
+        addressNote: "Av. de la Poste n°12",
+        status: "pending",
+      };
+      expect(sampleApplication.houseName).toBe("Pressing Étoile");
+      expect(sampleApplication.status).toBe("pending");
+
+      // 8. Item requests, settings, exchange rates
       const sampleItemRequest: typeof schema.itemRequests.$inferInsert = {
         houseId: sampleHouse.id!,
         requestedBy: mockHouseStaffId,

@@ -20,27 +20,33 @@ interface NavItem {
   icon: typeof LayoutDashboard;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { href: "/house", labelKey: "dashboard", icon: LayoutDashboard },
-  { href: "/house/orders", labelKey: "orders", icon: Package },
-  { href: "/house/catalogue", labelKey: "catalogue", icon: Layers },
-  { href: "/house/settlements", labelKey: "settlements", icon: Receipt },
-  { href: "/house/hours", labelKey: "hours", icon: Clock },
-  { href: "/house/coverage", labelKey: "coverage", icon: MapPin },
-  { href: "/house/settings", labelKey: "settings", icon: Sliders },
-];
+interface HouseNavTabsProps {
+  houseSlug?: string;
+}
 
-export function HouseNavTabs() {
+export function HouseNavTabs({ houseSlug }: HouseNavTabsProps) {
   const pathname = usePathname();
   const t = useTranslations("house.nav");
+
+  const base = houseSlug ? `/partner/${houseSlug}` : "/partner";
+
+  const navItems: NavItem[] = [
+    { href: base, labelKey: "dashboard", icon: LayoutDashboard },
+    { href: `${base}/orders`, labelKey: "orders", icon: Package },
+    { href: `${base}/catalogue`, labelKey: "catalogue", icon: Layers },
+    { href: `${base}/hours`, labelKey: "hours", icon: Clock },
+    { href: `${base}/coverage`, labelKey: "coverage", icon: MapPin },
+    { href: `${base}/settlements`, labelKey: "settlements", icon: Receipt },
+    { href: `${base}/settings`, labelKey: "settings", icon: Sliders },
+  ];
 
   return (
     <nav className="w-full bg-white border-b border-border shadow-2xs overflow-x-auto scrollbar-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center gap-1 min-w-max py-2">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const isActive =
-            item.href === "/house"
-              ? pathname === "/house"
+            item.href === base
+              ? pathname === base
               : pathname.startsWith(item.href);
           const Icon = item.icon;
 

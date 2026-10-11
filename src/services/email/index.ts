@@ -177,3 +177,78 @@ L'équipe SafiHub Bukavu`;
     text,
   });
 }
+
+/**
+ * Sends a welcome and invitation email to an approved laundry partner staff member.
+ */
+export async function sendPartnerInvitationEmail({
+  email,
+  contactName,
+  houseName,
+  inviteUrl,
+}: {
+  email: string;
+  contactName: string;
+  houseName: string;
+  inviteUrl: string;
+}): Promise<{ id: string; success: boolean }> {
+  const subject = `SafiHub — Bienvenue parmi nos partenaires (${houseName})`;
+
+  const text = `Bonjour ${contactName},
+
+Félicitations ! Votre demande de partenariat pour votre atelier "${houseName}" sur SafiHub a été approuvée par notre équipe.
+
+Votre compte partenaire a été créé. Pour activer votre accès et définir votre mot de passe, veuillez cliquer sur le lien ci-dessous :
+
+${inviteUrl}
+
+Une fois votre mot de passe configuré, vous pourrez configurer vos horaires d'ouverture, vos tarifs et vos zones de couverture directement depuis votre espace partenaire.
+
+Bienvenue sur SafiHub !
+L'équipe SafiHub Bukavu`;
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Bienvenue sur SafiHub</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 24px; margin: 0;">
+  <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; padding: 32px; border-radius: 16px; border: 1px solid #e2e8f0;">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <h1 style="color: #2824d5; margin: 0; font-size: 24px; font-weight: 800;">SafiHub</h1>
+      <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Pressing & Blanchisserie à Bukavu</p>
+    </div>
+    
+    <h2 style="font-size: 18px; margin-bottom: 16px; color: #0f172a;">Partenariat approuvé pour ${houseName}</h2>
+    <p style="font-size: 14px; line-height: 1.6; color: #334155;">
+      Bonjour <strong>${contactName}</strong>,<br/><br/>
+      Votre demande pour rejoindre le réseau SafiHub avec <strong>${houseName}</strong> a été validée avec succès.
+    </p>
+
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${inviteUrl}" style="background-color: #2824d5; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">
+        Définir mon mot de passe partenaire
+      </a>
+    </div>
+
+    <p style="font-size: 12px; color: #64748b; line-height: 1.5;">
+      Si le bouton ne s'affiche pas, ouvrez ce lien dans votre navigateur :<br/>
+      <a href="${inviteUrl}" style="color: #2824d5; word-break: break-all;">${inviteUrl}</a>
+    </p>
+
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+    <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0;">
+      SafiHub — Marketplace de pressing à Bukavu (Ibanda, Kadutu, Bagira)
+    </p>
+  </div>
+</body>
+</html>`;
+
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+    text,
+  });
+}

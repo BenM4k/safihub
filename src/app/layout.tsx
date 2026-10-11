@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
+import { CustomerBottomNav } from "@/components/customer/customer-bottom-nav";
 import "./globals.css";
 
 // One variable font for display + body keeps the payload small on 3G.
@@ -31,6 +32,7 @@ export default async function RootLayout({
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
+          <CustomerBottomNav />
           <LanguageSwitcher />
         </NextIntlClientProvider>
       </body>

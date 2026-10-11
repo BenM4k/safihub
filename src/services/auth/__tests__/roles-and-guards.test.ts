@@ -370,7 +370,7 @@ describe("Roles, Permissions & Area Guards", () => {
           isGuest: false,
         })
       ).toEqual({
-        href: "/house",
+        href: "/partner",
         isExternalOrAnchor: false,
         roleKey: "house",
       });
@@ -395,6 +395,61 @@ describe("Roles, Permissions & Area Guards", () => {
 
       const headers = await loginAndGetHeaders(email, password);
       await expect(redirectIfAuthenticated({ headers })).rejects.toThrow();
+    });
+  });
+
+  describe("Acceptance Criterion 22: Public Sign-Up Role Constraint", () => {
+    it("public sign-up creates customer role and cannot produce house, courier, or admin role", async () => {
+      const email = `public-signup-${uniqueId()}@safihub.cd`;
+      const reg = await registerCustomer({
+        name: "Public Registrant",
+        email,
+        password: "Password123!",
+        phone: "+243990001122",
+        consent: true,
+      });
+
+      expect(reg.ok).toBe(true);
+      if (!reg.ok) return;
+
+      const user = reg.value.user;
+      expect(user.role).toBe("customer");
+    });
+  });
+
+  describe("Acceptance Criterion 23: Partner Workspace Slug & Membership Enforcement", () => {
+    it("rejects a house staff user accessing /partner/[houseSlug] when they are not a member", async () => {
+      const email = `staff-unauth-${uniqueId()}@safihub.cd`;
+      const password = "Password123!";
+      const reg = await registerCustomer({
+        name: "House Non Member",
+        email,
+        password,
+        phone: `+24399${Math.floor(1000000 + Math.random() * 9000000)}`,
+        consent: true,
+      });
+      if (!reg.ok) {
+        console.error("reg failed in test 23:", reg.error);
+      }
+      expect(reg.ok).toBe(true);
+      if (!reg.ok) return;
+
+      await adminSetUserRole({
+        adminUserId: "usr_admin_001",
+        targetUserId: reg.value.user.id as string,
+        role: "house",
+      });
+
+      const headers = await loginAndGetHeaders(email, password);
+
+      const check = await requireHouseAccess({
+        houseSlug: "unassigned-test-slug",
+        headers,
+      });
+      expect(check.ok).toBe(false);
+      if (!check.ok) {
+        expect(check.error).toBeDefined();
+      }
     });
   });
 });

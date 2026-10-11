@@ -2,33 +2,34 @@ import Link from "next/link";
 import { Package, Layers, Clock, Sliders, ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
-export async function QuickShortcuts() {
+export async function QuickShortcuts({ houseSlug }: { houseSlug?: string }) {
   const t = await getTranslations("house.dashboard");
+  const base = houseSlug ? `/partner/${houseSlug}` : "/partner";
 
   const shortcuts = [
     {
-      href: "/house/orders",
+      href: `${base}/orders`,
       title: t("viewOrders"),
       desc: "Voir toutes les commandes de l'atelier",
       icon: Package,
       color: "bg-blue-50 text-blue-700 border-blue-200",
     },
     {
-      href: "/house/catalogue",
+      href: `${base}/catalogue`,
       title: t("manageCatalogue"),
       desc: "Modifier les tarifs et disponibilités",
       icon: Layers,
       color: "bg-violet-50 text-violet-700 border-violet-200",
     },
     {
-      href: "/house/hours",
+      href: `${base}/hours`,
       title: t("configureHours"),
       desc: "Ajuster les heures et fermetures",
       icon: Clock,
       color: "bg-amber-50 text-amber-700 border-amber-200",
     },
     {
-      href: "/house/settings",
+      href: `${base}/settings`,
       title: "Paramètres & Exclusions",
       desc: "Capacité, pause et exclusions",
       icon: Sliders,

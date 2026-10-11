@@ -73,9 +73,9 @@ export async function acceptOrderAction(input: {
   });
 
   if (res.ok) {
-    revalidatePath("/house");
-    revalidatePath("/house/orders");
-    revalidatePath(`/house/orders/${parsed.data.orderId}`);
+    revalidatePath("/partner", "layout");
+    revalidatePath("/orders");
+    revalidatePath("/admin/orders");
   }
 
   return res;
@@ -109,9 +109,9 @@ export async function rejectOrderAction(input: {
   });
 
   if (res.ok) {
-    revalidatePath("/house");
-    revalidatePath("/house/orders");
-    revalidatePath(`/house/orders/${parsed.data.orderId}`);
+    revalidatePath("/partner", "layout");
+    revalidatePath("/orders");
+    revalidatePath("/admin/orders");
   }
 
   return res;
@@ -159,9 +159,9 @@ export async function submitHouseReceptionAction(input: {
   });
 
   if (res.ok) {
-    revalidatePath("/house");
-    revalidatePath("/house/orders");
-    revalidatePath(`/house/orders/${parsed.data.orderId}`);
+    revalidatePath("/partner", "layout");
+    revalidatePath("/orders");
+    revalidatePath("/admin/orders");
     return ok({ hasPriceAdjustment: res.value.hasPriceAdjustment });
   }
 
@@ -193,9 +193,9 @@ export async function markOrderReadyAction(input: {
   });
 
   if (res.ok) {
-    revalidatePath("/house");
-    revalidatePath("/house/orders");
-    revalidatePath(`/house/orders/${parsed.data.orderId}`);
+    revalidatePath("/partner", "layout");
+    revalidatePath("/orders");
+    revalidatePath("/admin/orders");
   }
 
   return res;
@@ -243,7 +243,8 @@ export async function updateHouseCatalogueItemAction(input: {
   });
 
   if (res.ok) {
-    revalidatePath("/house/catalogue");
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
   }
 
   return res;
@@ -279,7 +280,7 @@ export async function requestCatalogueItemAction(input: {
   });
 
   if (res.ok) {
-    revalidatePath("/house/catalogue");
+    revalidatePath("/partner", "layout");
   }
 
   return res;
@@ -314,7 +315,8 @@ export async function updateHouseHoursAction(input: {
 
   const res = await updateHouseHoursSchedule(authCtx.value.houseId, parsed.data.hours);
   if (res.ok) {
-    revalidatePath("/house/hours");
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
   }
   return res;
 }
@@ -348,7 +350,8 @@ export async function addHouseClosureAction(input: {
   });
 
   if (res.ok) {
-    revalidatePath("/house/hours");
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
   }
   return res;
 }
@@ -362,7 +365,8 @@ export async function deleteHouseClosureAction(input: {
 
   const res = await deleteHouseClosureEntry(authCtx.value.houseId, input.closureId);
   if (res.ok) {
-    revalidatePath("/house/hours");
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
   }
   return res;
 }
@@ -393,7 +397,8 @@ export async function updateNeighborhoodCoverageAction(input: {
   });
 
   if (res.ok) {
-    revalidatePath("/house/coverage");
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
   }
   return res;
 }
@@ -436,8 +441,8 @@ export async function updateHouseGeneralSettingsAction(input: {
   });
 
   if (res.ok) {
-    revalidatePath("/house");
-    revalidatePath("/house/settings");
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
   }
   return res;
 }
@@ -471,7 +476,8 @@ export async function addHouseExclusionAction(input: {
   });
 
   if (res.ok) {
-    revalidatePath("/house/settings");
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
   }
   return res;
 }
@@ -485,7 +491,8 @@ export async function deleteHouseExclusionAction(input: {
 
   const res = await deleteHouseExclusionRule(authCtx.value.houseId, input.exclusionId);
   if (res.ok) {
-    revalidatePath("/house/settings");
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
   }
   return res;
 }

@@ -53,68 +53,96 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
 
         {/* Center Pill Segmented Nav */}
         <nav className="hidden md:flex items-center bg-white/95 backdrop-blur-xs border border-slate-200/90 shadow-xs rounded-full px-2 py-1 text-xs sm:text-sm font-semibold text-foreground">
-          <Link
-            href="/#catalogue"
-            className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
-          >
-            {tNav("individuals")}
-          </Link>
-          <Link
-            href="/#services"
-            className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
-          >
-            {tNav("businesses")}
-          </Link>
-          <Link
-            href="/houses"
-            className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
-          >
-            {tNav("houses")}
-          </Link>
-        </nav>
-
-        {/* Right actions: Log In / Sign Out + CTA button */}
-        <div className="hidden sm:flex items-center gap-6">
           {isAuthenticated ? (
-            <div className="flex items-center gap-4">
-              <NotificationsInboxWidget />
+            <>
+              <Link
+                href="/houses"
+                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
+              >
+                {tNav("houses")}
+              </Link>
+              <Link
+                href="/cart"
+                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
+              >
+                {tNav("cart")}
+              </Link>
               <Link
                 href="/orders"
-                className="text-sm font-semibold text-heading hover:text-primary transition-colors"
+                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
               >
-                {tNav("myOrders")}
+                {tNav("orders")}
               </Link>
               <Link
                 href="/account"
-                className="text-sm font-semibold text-heading hover:text-primary transition-colors"
+                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
               >
-                {tNav("myAccount")}
+                {tNav("account")}
               </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/"
+                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
+              >
+                {tNav("home")}
+              </Link>
+              <Link
+                href="/houses"
+                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
+              >
+                {tNav("houses")}
+              </Link>
+              <Link
+                href="/partners/apply"
+                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
+              >
+                {tNav("becomePartner")}
+              </Link>
+            </>
+          )}
+        </nav>
+
+        {/* Right actions */}
+        <div className="hidden sm:flex items-center gap-4">
+          {isAuthenticated ? (
+            <div className="flex items-center gap-3">
+              <NotificationsInboxWidget />
+              {cta.roleKey !== "guest" && cta.roleKey !== "customer" && (
+                <Button asChild variant="outline" size="pill-sm">
+                  <Link href={ctaHref}>{ctaLabel}</Link>
+                </Button>
+              )}
               <form action={logoutAction}>
-                <button
+                <Button
                   type="submit"
-                  className="text-sm font-semibold text-heading hover:text-rose-600 transition-colors cursor-pointer"
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs font-semibold text-heading hover:text-rose-600"
                 >
                   {tNav("logout")}
-                </button>
+                </Button>
               </form>
             </div>
           ) : (
-            <Link
-              href="/login"
-              className="text-sm font-semibold text-heading hover:text-primary transition-colors"
-            >
-              {tNav("login")}
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/login"
+                className="text-sm font-semibold text-heading hover:text-primary transition-colors px-2"
+              >
+                {tNav("login")}
+              </Link>
+              <Button
+                asChild
+                variant="contrast"
+                size="pill-sm"
+                className="shadow-xs"
+              >
+                <Link href="/register">{tNav("register")}</Link>
+              </Button>
+            </div>
           )}
-          <Button
-            asChild
-            variant="contrast"
-            size="pill-sm"
-            className="shadow-xs"
-          >
-            <Link href={ctaHref}>{ctaLabel}</Link>
-          </Button>
         </div>
 
         {/* Mobile menu trigger */}

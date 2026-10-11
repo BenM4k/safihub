@@ -32,6 +32,13 @@ export default async function AdminHouseDetailPage({
             {data.house.name}
           </h1>
         </div>
+
+        <Link
+          href={`/partner/${data.house.slug}`}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-violet-50 text-violet-700 hover:bg-violet-100 font-semibold text-xs transition border border-violet-200 shadow-2xs"
+        >
+          <span>Ouvrir en vue déléguée</span>
+        </Link>
       </div>
 
       <HouseDetailTabs data={data} />

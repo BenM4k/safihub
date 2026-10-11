@@ -1,6 +1,6 @@
 # SafiHub — Product & Architecture Spec (Bukavu)
 
-> Version 9.6. Status labels: **Decided** and **Proposed** (all launch decisions resolved; see Section 32). See the Decision Log for the summary.
+> Version 9.7. Status labels: **Decided**, **Proposed** (my recommendation, not yet confirmed) and **Open**. See the Decision Log for the summary.
 
 ## 1. Product Overview
 
@@ -18,6 +18,9 @@ The platform is a **marketplace**: the customer chooses a nearby laundry house, 
 | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
 | Marketplace: the customer chooses a nearby house; houses set prices per item                                                                           | Decided  |
 | Launch in Bukavu as a mobile-first **web app first**; the PWA layers are kept and added later                                                          | Decided  |
+| Order history for customers (Active and Past, with "Order again")                                                                                      | Decided  |
+| Public sign-up creates customers only; houses apply as partners and the admin approves them                                                            | Proposed |
+| House workspace at `/partner/[houseSlug]` (dynamic, membership-checked); public catalogue at `/houses/[houseSlug]`                                     | Proposed |
 | The app is named **SafiHub**                                                                                                                           | Decided  |
 | PWA layers by role: courier service worker and offline before the pilot, house push at or after the pilot start, none at first for customers and admin | Proposed |
 | Delivery fees paid by the customer                                                                                                                     | Decided  |
@@ -29,7 +32,7 @@ The platform is a **marketplace**: the customer chooses a nearby laundry house, 
 | Short acceptance delay (default 45 minutes, timer during opening hours)                                                                                | Decided  |
 | Three-point count; non-accepted items returned with the delivery                                                                                       | Decided  |
 | File storage and photos in the MVP                                                                                                                     | Decided  |
-| Cash on delivery at launch with cash controls (ceiling 140,000 CDF / $50, deposit $50, float 20,000 CDF)                                               | Decided  |
+| Cash on delivery at launch with cash controls (ceiling 140,000 CDF / 0, deposit 0, float 20,000 CDF)                                               | Decided  |
 | Zones with a zone matrix, master catalogue, guest customers, missions                                                                                  | Decided  |
 | The customer app is built first, before the pilot; manual entry by the admin stays available                                                           | Decided  |
 | Coverage zones: served neighborhoods, house coverage, courier zones, coverage requests                                                                 | Decided  |
@@ -43,7 +46,7 @@ The platform is a **marketplace**: the customer chooses a nearby laundry house, 
 | Admin on-behalf actions and acceptance escalation                                                                                                      | Proposed |
 | Tooling choices and their timing                                                                                                                       | Proposed |
 | Photo retention of 90 days                                                                                                                             | Proposed |
-| Commission (20%), courier pay (2,500 CDF/leg), delivery fees (3,000–8,000 CDF), cash ceiling (140,000 CDF), deposit ($50), slot length (2h)           | Decided  |
+| Commission (20%), courier pay (2,500 CDF/leg), delivery fees (3,000–8,000 CDF), cash ceiling (140,000 CDF), deposit (0), slot length (2h)           | Decided  |
 
 ---
 
@@ -149,7 +152,7 @@ All four roles ship together (decided). The scope is ordered by when each part i
 **Core (needed for the pilot)**
 
 1. **Order engine**: statuses, transition rules, history, server-side validation, guest customers and tracking link
-2. **Admin back-office**: all orders, **manual order entry** (WhatsApp / phone), dispatch, houses, zones, master catalogue, commissions, disputes, settlements, on-behalf actions
+2. **Admin back-office**: all orders, **manual order entry** (WhatsApp / phone), dispatch, houses, partner applications, zones, master catalogue, commissions, disputes, settlements, on-behalf actions
 3. **House interface**: incoming orders, accept / reject, reception count, "ready", prices and availability, hours, new item requests
 4. **Courier interface**: missions, pickup count, step validation, cash collected, offline support
 5. **Customer ordering in the app**: neighborhood, houses, cart, slot, checkout, tracking
@@ -193,6 +196,7 @@ All orders flow through the **same system** regardless of source, so the bot plu
 7. If the count or items differ, the price is adjusted and the **customer approves** before washing starts (on the spot with the courier, or later through the tracking link)
 8. Track the order; when it is ready, confirm or change the proposed delivery slot
 9. Pay cash on delivery
+10. Find the order later in the order history (`/orders`) and order again in one tap
 
 ---
 
@@ -379,6 +383,8 @@ Every query and action is checked on the server. House queries use a **restricte
 - **Assign missions, resolve disputes, reset passwords, change settings**: admin only.
 - **Change a status**: only as allowed in the transition table.
 - **House staff**: several accounts can belong to one house through `house_members`.
+- **Roles**: public sign-up creates customers only. House, courier and admin roles are granted by the admin; a house account is created when the admin approves a partner application.
+- **Partner workspace**: a house user opens only the houses they belong to (404 otherwise). The admin can open any house in admin view, with actions recorded as `on_behalf_of`.
 - **Customer data rights**: a customer can ask for a copy or deletion of their personal data (see section 31).
 
 ---
@@ -430,7 +436,7 @@ Couriers handle cash, so trust is replaced by rules and traceability.
 
 - **Confirmation by the house**: the house's acceptance confirms every order. Because the house does not see phone numbers, it confirms availability and capacity, not the customer's identity.
 - **Optional first-order screening**: a setting, off by default, where a customer with no completed order starts as `awaiting_confirmation` until the admin confirms by phone or WhatsApp. Turn it on if fake orders appear.
-- **Limits**: maximum open orders per customer (for example 2), a daily order cap per phone number, and rate limiting on registration, login and checkout.
+- **Limits**: maximum open orders per customer (for example 2), a daily order cap per phone number, and rate limiting on registration, login, checkout and partner applications.
 - **Email and phone verification**: email verification at registration; a one-time phone code only if abuse appears (it needs the optional `phoneNumber` plugin and SMS, which has a cost).
 - **No-shows**: after 2 failed pickups, the customer needs admin approval to order again, and the retry fee applies.
 - **Blocking**: the admin can block an account; the blocked email and profile phone number cannot register again.
@@ -611,7 +617,7 @@ Choices are **proposed** except file storage. Check pricing, limits and DRC cove
 | Table                | Purpose                                                                                                                                                                                                                                                                                                    |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `users`              | Accounts (email login) with role (customer, courier, house, admin), status (active / blocked) and profile contact phone; guest customers have a placeholder email, a phone number and no login                                                                                                             |
-| `houses`             | Name, neighborhood, default commission %, minimum order, cut-off delay, turnaround time, daily capacity, optional coverage distance limit, open/closed                                                                                                                                                     |
+| `houses`             | Name, unique slug (used in URLs), neighborhood, default commission %, minimum order, cut-off delay, turnaround time, daily capacity, optional coverage distance limit, open/closed                                                                                                                         |
 | `house_members`      | Links a house account to its house                                                                                                                                                                                                                                                                         |
 | `house_hours`        | House, weekday, opening and closing time                                                                                                                                                                                                                                                                   |
 | `house_exclusions`   | House, item, fabric or category the house does not treat (e.g. leather, suede, delicate silk), note                                                                                                                                                                                                        |
@@ -619,6 +625,7 @@ Choices are **proposed** except file storage. Check pricing, limits and DRC cove
 | `services`           | Wash, iron, dry clean, etc.                                                                                                                                                                                                                                                                                |
 | `items`              | Master list of articles (shirt, trousers, bed sheet), names in French and Swahili, category                                                                                                                                                                                                                |
 | `item_requests`      | House, requested item or fabric, status (pending / approved / rejected), admin note                                                                                                                                                                                                                        |
+| `house_applications` | Public applications from laundries: contact details, neighborhood, notes, status (pending / approved / rejected), reviewer, created house                                                                                                                                                                  |
 | `fabrics`            | Master list of fabrics, names in French and Swahili                                                                                                                                                                                                                                                        |
 | `house_items`        | House, service, item, fabric (all from the master lists), price (integer, currency), active                                                                                                                                                                                                                |
 | `neighborhoods`      | Neighborhoods, each assigned to a zone, with a status (served / paused / not served) and a pause reason                                                                                                                                                                                                    |
@@ -670,45 +677,84 @@ Rules: store money as integers in minor units; always store the currency on the 
 
 ## 26. Pages & Routes
 
-Next.js App Router. Routes are in English, grouped by role. A server-side guard checks the role on every area (`/house`, `/courier`, `/admin`). The language (French or Swahili) is stored in a cookie rather than in the URL **(proposed)**.
+Next.js App Router. Routes are in English. The language (French or Swahili) is stored in a cookie rather than in the URL **(proposed)**.
+
+**Route groups and access**
+
+- **Public**: no login needed.
+- **Customer area**: any signed-in customer.
+- **Partner workspace** `/partner/[houseSlug]/...`: a signed-in house user who belongs to that house (through `house_members`). Any other request gets a 404. The admin can open any house in **admin view** (a visible banner); actions taken there are recorded as `on_behalf_of`.
+- **Courier area** `/courier/...`: signed-in couriers only.
+- **Admin area** `/admin/...`: signed-in admins only.
+- **Shared**: `/account` and `/notifications` for every signed-in role.
+- Not signed in on a protected route: redirect to `/login?next=<route>`. Signed in with the wrong role: redirect to that role's home with a short message.
+- After login: customer goes to the `next` page or `/houses`; house to `/partner`; courier to `/courier`; admin to `/admin/dispatch`.
+- **Dynamic house routes**: each house has a unique, stable `slug`. Customers use `/houses/[houseSlug]` and the house's staff use `/partner/[houseSlug]`, so the same routes serve any number of houses.
+
+**Navigation by role (proposed)**
+
+| Role                    | Layout                                       | Main menu                                                                                                                                                                                                                                                                                                                                                                                                                         | Header and secondary                                                                                      |
+| ----------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Visitor (not signed in) | Top bar                                      | Home `/`, Houses `/houses`, Log in `/login`, Sign up `/register`                                                                                                                                                                                                                                                                                                                                                                  | "Become a partner" `/partners/apply`, language switcher, Terms `/terms`, Privacy `/privacy`, Help `/help` |
+| Customer                | Bottom tab bar on mobile, top bar on desktop | Houses `/houses`, Cart `/cart` (item count), Orders `/orders`, Account `/account`                                                                                                                                                                                                                                                                                                                                                 | Neighborhood selector, notifications bell `/notifications`, language switcher, Help `/help`               |
+| House                   | Sidebar on desktop, tab bar on mobile        | Dashboard `/partner/[houseSlug]`, Orders `.../orders`, Catalogue `.../catalogue`, Hours & capacity `.../hours`, Coverage `.../coverage`, Settlements `.../settlements`, Settings `.../settings`                                                                                                                                                                                                                                   | House switcher (if the user belongs to several houses), notifications bell, Account, Log out              |
+| Courier                 | Bottom tab bar on mobile                     | Missions `/courier`, Cash `/courier/cash`, History `/courier/history`, Account `/account`                                                                                                                                                                                                                                                                                                                                         | Notifications bell, sync status indicator, language switcher                                              |
+| Admin                   | Grouped sidebar                              | **Operations**: Dashboard `/admin`, Dispatch `/admin/dispatch`, Orders `/admin/orders` (+ New order), Disputes `/admin/disputes`. **Money**: Cash `/admin/cash`, Settlements `/admin/settlements`. **People**: Houses `/admin/houses`, Applications `/admin/applications`, Couriers `/admin/couriers`, Customers `/admin/customers`, Users `/admin/users`. **Setup**: Neighborhoods, Delivery fees, Coverage, Catalogue, Settings | Notifications bell, Account, Log out                                                                      |
+
+**Onboarding and account types (proposed)**
+
+- Public sign-up (`/register`) creates **customers only**. Nobody chooses a role at sign-up: house, courier and admin roles are granted by the admin.
+- The sign-up page, the landing page and the footer show "You run a laundry? Become a partner", which leads to `/partners/apply`.
+- **House (partner)**: the owner fills in `/partners/apply` (house name, contact person, phone, email, neighborhood, address note, services, rough opening hours). The application is stored as `pending` in `house_applications`. The admin reviews it (call, visit, partner agreement) in `/admin/applications`. On approval the system creates the house with a unique slug, creates the staff account with the house role from the applicant's email, links it in `house_members`, and sends an invitation (password-setting link). The house stays **inactive** until it has prices, hours and coverage and the admin activates it.
+- **Courier**: no public sign-up in the MVP. The admin recruits (reference check, agreement, deposit) and creates the account.
+- **One role per account** at first. A house owner who also wants to order uses a separate customer account (open decision).
 
 **Public & authentication**
 
-| Route              | Page                                                                                      |
-| ------------------ | ----------------------------------------------------------------------------------------- |
-| `/`                | Landing page with neighborhood selection                                                  |
-| `/login`           | Sign in with email and password                                                           |
-| `/register`        | Customer sign-up (email, password, phone number, consent)                                 |
-| `/forgot-password` | Request a password reset link by email; the admin can also reset a password               |
-| `/track/[token]`   | Public order tracking for guest customers (no login), including price adjustment approval |
-| `/coverage`        | Check whether a neighborhood is covered; leave a coverage request                         |
+| Route                         | Page                                                                                      |
+| ----------------------------- | ----------------------------------------------------------------------------------------- |
+| `/`                           | Landing page with neighborhood selection and the "Become a partner" link                  |
+| `/login`                      | Sign in with email and password                                                           |
+| `/register`                   | Customer sign-up (email, password, phone number, consent)                                 |
+| `/forgot-password`            | Request a password reset link by email; the admin can also reset a password               |
+| `/reset-password`             | Choose a new password from the emailed link (also used for house and staff invitations)   |
+| `/partners/apply`             | Public application to join as a partner house                                             |
+| `/track/[token]`              | Public order tracking for guest customers (no login), including price adjustment approval |
+| `/coverage`                   | Check whether a neighborhood is covered; leave a coverage request                         |
+| `/terms`, `/privacy`, `/help` | Terms of service, privacy policy, support contact (WhatsApp)                              |
 
 **Customer**
 
-| Route                       | Page                                                                          |
-| --------------------------- | ----------------------------------------------------------------------------- |
-| `/houses`                   | Nearby houses for the chosen neighborhood (hours, minimum order, open/closed) |
-| `/houses/[houseId]`         | House catalogue by service, item and fabric, with excluded items              |
-| `/cart`                     | Cart (single house) with estimated total                                      |
-| `/checkout`                 | Slot, landmark, phone, server validation, confirmation                        |
-| `/orders`                   | Order history                                                                 |
-| `/orders/[orderId]`         | Tracking, photos, price adjustment approval, cancellation                     |
-| `/orders/[orderId]/dispute` | Open a dispute                                                                |
-| `/account`                  | Profile, saved addresses, language                                            |
-| `/notifications`            | Inbox (also shown inside the house and courier dashboards)                    |
+| Route                       | Page                                                                                                                                                                              |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/houses`                   | Houses covering the chosen neighborhood: paginated and searchable, with filters (open now, minimum order, delivery fee)                                                           |
+| `/houses/[houseSlug]`       | House catalogue by service, item and fabric, with excluded items                                                                                                                  |
+| `/cart`                     | Cart (single house) with estimated total                                                                                                                                          |
+| `/checkout`                 | Slot, landmark, phone, server validation, confirmation                                                                                                                            |
+| `/orders`                   | **Order history**: Active and Past tabs, pagination, status and total per order, and "Order again" (rebuilds the cart from a past order; the server revalidates items and prices) |
+| `/orders/[orderId]`         | Tracking, photos, price adjustment approval, cancellation                                                                                                                         |
+| `/orders/[orderId]/dispute` | Open a dispute                                                                                                                                                                    |
 
-**House**
+**Shared (all signed-in roles)**
 
-| Route                     | Page                                                                      |
-| ------------------------- | ------------------------------------------------------------------------- |
-| `/house`                  | Dashboard: orders waiting for acceptance, today's workload                |
-| `/house/orders`           | Incoming and ongoing orders                                               |
-| `/house/orders/[orderId]` | Accept or reject, view pickup photos, reception count, mark ready         |
-| `/house/catalogue`        | Prices and availability for catalogue items; request a new item           |
-| `/house/hours`            | Opening hours, closures, daily capacity, turnaround time                  |
-| `/house/coverage`         | Neighborhoods the house serves within its distance limit, temporary pause |
-| `/house/settings`         | Minimum order, excluded items, contact                                    |
-| `/house/settlements`      | Amounts owed and paid                                                     |
+| Route            | Page                                                                |
+| ---------------- | ------------------------------------------------------------------- |
+| `/account`       | Profile, language, password, log out; saved addresses for customers |
+| `/notifications` | Inbox                                                               |
+
+**Partner (house)**
+
+| Route                                   | Page                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------- |
+| `/partner`                              | House chooser if the user belongs to several houses; otherwise redirects to the house |
+| `/partner/[houseSlug]`                  | Dashboard: orders waiting for acceptance, today's workload                            |
+| `/partner/[houseSlug]/orders`           | Incoming and ongoing orders                                                           |
+| `/partner/[houseSlug]/orders/[orderId]` | Accept or reject, view pickup photos, reception count, mark ready                     |
+| `/partner/[houseSlug]/catalogue`        | Prices and availability for catalogue items; request a new item                       |
+| `/partner/[houseSlug]/hours`            | Opening hours, closures, daily capacity, turnaround time                              |
+| `/partner/[houseSlug]/coverage`         | Neighborhoods the house serves within its distance limit, temporary pause             |
+| `/partner/[houseSlug]/settings`         | Minimum order, excluded items, contact                                                |
+| `/partner/[houseSlug]/settlements`      | Amounts owed and paid                                                                 |
 
 **Courier**
 
@@ -723,28 +769,30 @@ Courier routes are cached by the courier-area service worker (a PWA layer) so th
 
 **Admin**
 
-| Route                         | Page                                                                                                                                                      |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/admin`                      | Dashboard: orders by status, delays, disputes, cash                                                                                                       |
-| `/admin/dispatch`             | Missions to assign, couriers on shift, orders waiting for acceptance with call and WhatsApp buttons                                                       |
-| `/admin/orders`               | All orders with filters                                                                                                                                   |
-| `/admin/orders/new`           | Manual order entry (WhatsApp / phone), uses the same validation as the app                                                                                |
-| `/admin/orders/[orderId]`     | Order detail, photos, assign couriers to missions, edit status, notes                                                                                     |
-| `/admin/houses`               | List of houses                                                                                                                                            |
-| `/admin/houses/[houseId]`     | House profile, commission, catalogue, hours, exclusions                                                                                                   |
-| `/admin/couriers`             | List of couriers                                                                                                                                          |
-| `/admin/couriers/[courierId]` | Courier detail: shifts, zones, cash, deposit, discrepancies                                                                                               |
-| `/admin/customers`            | Customer list                                                                                                                                             |
-| `/admin/catalogue`            | Master lists of items and fabrics, house item requests                                                                                                    |
-| `/admin/neighborhoods`        | Neighborhoods and their zones                                                                                                                             |
-| `/admin/coverage`             | Neighborhood status (served / paused / not served), distance limit (global and per house), house and courier coverage, coverage requests ranked by demand |
-| `/admin/delivery-fees`        | Fee matrix and distance levels between zones                                                                                                              |
-| `/admin/disputes`             | List of disputes                                                                                                                                          |
-| `/admin/disputes/[disputeId]` | Dispute detail and resolution                                                                                                                             |
-| `/admin/cash`                 | Daily cash reconciliation                                                                                                                                 |
-| `/admin/settlements`          | Payouts to houses and couriers                                                                                                                            |
-| `/admin/users`                | Accounts, roles, password resets                                                                                                                          |
-| `/admin/settings`             | Defaults: commission, acceptance delay, reception window, maximum coverage distance, first-order screening, daily exchange rate                           |
+| Route                                 | Page                                                                                                                                                      |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/admin`                              | Dashboard: orders by status, delays, disputes, cash                                                                                                       |
+| `/admin/dispatch`                     | Missions to assign, couriers on shift, orders waiting for acceptance with call and WhatsApp buttons                                                       |
+| `/admin/orders`                       | All orders with filters                                                                                                                                   |
+| `/admin/orders/new`                   | Manual order entry (WhatsApp / phone), uses the same validation as the app                                                                                |
+| `/admin/orders/[orderId]`             | Order detail, photos, assign couriers to missions, edit status, notes                                                                                     |
+| `/admin/disputes`                     | List of disputes                                                                                                                                          |
+| `/admin/disputes/[disputeId]`         | Dispute detail and resolution                                                                                                                             |
+| `/admin/cash`                         | Daily cash reconciliation                                                                                                                                 |
+| `/admin/settlements`                  | Payouts to houses and couriers                                                                                                                            |
+| `/admin/houses`                       | List of houses, activation                                                                                                                                |
+| `/admin/houses/[houseId]`             | House profile, slug, commission, catalogue, hours, exclusions; open in admin view                                                                         |
+| `/admin/applications`                 | Partner applications to review                                                                                                                            |
+| `/admin/applications/[applicationId]` | Application detail, approve (creates house, account and invitation) or reject                                                                             |
+| `/admin/couriers`                     | List of couriers                                                                                                                                          |
+| `/admin/couriers/[courierId]`         | Courier detail: shifts, zones, cash, deposit, discrepancies                                                                                               |
+| `/admin/customers`                    | Customer list                                                                                                                                             |
+| `/admin/users`                        | Accounts, roles, password resets                                                                                                                          |
+| `/admin/neighborhoods`                | Neighborhoods and their zones                                                                                                                             |
+| `/admin/delivery-fees`                | Fee matrix and distance levels between zones                                                                                                              |
+| `/admin/coverage`                     | Neighborhood status (served / paused / not served), distance limit (global and per house), house and courier coverage, coverage requests ranked by demand |
+| `/admin/catalogue`                    | Master lists of items and fabrics, house item requests                                                                                                    |
+| `/admin/settings`                     | Defaults: commission, acceptance delay, reception window, maximum coverage distance, first-order screening, daily exchange rate                           |
 
 ---
 
@@ -769,6 +817,8 @@ Each criterion becomes an automated or manual test.
 **Offline, privacy and abuse** 14. Given an offline courier, then actions are queued and synced in order without duplicate events, and invalid ones are shown for resolution. 15. Given a house user, when an order is requested, then the response contains no phone number and no street address. 16. Given first-order screening is turned on (off by default), when a customer with no completed order places an order, then it stays `awaiting_confirmation` until the admin confirms it.
 
 **Coverage** 17. Given a neighborhood that is not served, then no houses are listed and the customer can leave a coverage request, which appears in the admin's list. 18. Given a house that does not cover the customer's neighborhood, when a checkout is submitted for it anyway, then the server refuses it with an explanation. 19. Given a paused neighborhood, then new orders are refused with the reason, and orders already in progress continue. 20. Given a mission to assign, then only couriers covering both the customer's zone and the house's zone are offered. 21. Given the admin lowers the distance limit, then house coverage beyond it stops being offered (orders already placed are unaffected) and returns if the limit is raised again.
+
+**Accounts and routes** 22. Given a public sign-up, then the account has the customer role, and no house, courier or admin role can be chosen by the user. 23. Given a house user who is not a member of a house, when opening `/partner/[houseSlug]`, then the server returns a 404. 24. Given a customer with past orders, when opening `/orders`, then active and past orders are listed with pagination, and "Order again" rebuilds a cart that the server revalidates at current prices. 25. Given an approved partner application, then a house with a unique slug and a house account linked through `house_members` are created, and the house is not listed to customers until the admin activates it.
 
 ---
 
@@ -816,23 +866,24 @@ Each criterion becomes an automated or manual test.
 
 ## 30. Risks
 
-| Risk                                                          | Impact        | Likelihood    | Mitigation                                                                                                   |
-| ------------------------------------------------------------- | ------------- | ------------- | ------------------------------------------------------------------------------------------------------------ |
-| Cash loss or theft by couriers                                | High          | Medium        | Cash controls, deposit, daily settlement, mobile money later                                                 |
-| Low demand                                                    | High          | Unknown       | Small initial coverage, early interviews, referrals, coverage requests as a demand signal                    |
-| Courier trips cost more than they earn                        | Medium        | Medium        | Minimum order, zone fees, retry fee, break-even tracking                                                     |
-| Houses lose or damage items                                   | High          | Medium        | Counts, photos, compensation cap, house agreement                                                            |
-| Customers and houses bypass the platform                      | Medium        | Medium        | Hidden contact details, convenience, terms                                                                   |
-| Power cuts and unstable network                               | Medium        | High          | Offline courier mode, light web app, closures, on-behalf actions                                             |
-| Admin overload or single point of failure                     | Medium        | High          | Workload measurement, second admin, dispatcher role, automation                                              |
-| Fake or abusive orders                                        | Medium        | Medium        | Limits, no-show blocking, phone verification, optional first-order screening                                 |
-| Customers or staff without an email address                   | Medium        | Medium        | Orders entered by the admin as guest customers, optional phone sign-in, admin-controlled addresses for staff |
-| Currency and exchange-rate swings                             | Medium        | Medium        | Base currency, frozen rate, admin daily rate                                                                 |
-| Courier safety (evenings, some areas)                         | High          | Low to medium | Daytime slots, shift rules, check-ins, local security advice                                                 |
-| Legal or tax non-compliance                                   | High          | Unknown       | See section 31; consult a local advisor                                                                      |
-| Third-party service outage or payment difficulty from the DRC | Medium        | Medium        | Free tiers, small service set for the pilot, alternatives                                                    |
-| Data breach (phones, photos)                                  | High          | Low           | Access control, signed URLs, retention limits, minimal data                                                  |
-| Rain and traffic delaying pickups                             | Low to medium | High          | Slot buffers, delay policy, customer messages                                                                |
+| Risk                                                          | Impact        | Likelihood    | Mitigation                                                                                                         |
+| ------------------------------------------------------------- | ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Cash loss or theft by couriers                                | High          | Medium        | Cash controls, deposit, daily settlement, mobile money later                                                       |
+| Low demand                                                    | High          | Unknown       | Small initial coverage, early interviews, referrals, coverage requests as a demand signal                          |
+| Courier trips cost more than they earn                        | Medium        | Medium        | Minimum order, zone fees, retry fee, break-even tracking                                                           |
+| Houses lose or damage items                                   | High          | Medium        | Counts, photos, compensation cap, house agreement                                                                  |
+| Customers and houses bypass the platform                      | Medium        | Medium        | Hidden contact details, convenience, terms                                                                         |
+| Power cuts and unstable network                               | Medium        | High          | Offline courier mode, light web app, closures, on-behalf actions                                                   |
+| Admin overload or single point of failure                     | Medium        | High          | Workload measurement, second admin, dispatcher role, automation                                                    |
+| Fake or abusive orders                                        | Medium        | Medium        | Limits, no-show blocking, phone verification, optional first-order screening                                       |
+| Fake partner applications                                     | Low           | Medium        | Admin review with a call, a visit and the partner agreement before activation; the house stays inactive until then |
+| Customers or staff without an email address                   | Medium        | Medium        | Orders entered by the admin as guest customers, optional phone sign-in, admin-controlled addresses for staff       |
+| Currency and exchange-rate swings                             | Medium        | Medium        | Base currency, frozen rate, admin daily rate                                                                       |
+| Courier safety (evenings, some areas)                         | High          | Low to medium | Daytime slots, shift rules, check-ins, local security advice                                                       |
+| Legal or tax non-compliance                                   | High          | Unknown       | See section 31; consult a local advisor                                                                            |
+| Third-party service outage or payment difficulty from the DRC | Medium        | Medium        | Free tiers, small service set for the pilot, alternatives                                                          |
+| Data breach (phones, photos)                                  | High          | Low           | Access control, signed URLs, retention limits, minimal data                                                        |
+| Rain and traffic delaying pickups                             | Low to medium | High          | Slot buffers, delay policy, customer messages                                                                      |
 
 ---
 
@@ -923,3 +974,4 @@ This section lists topics to verify with a local lawyer or accountant. It is not
 | 9.4     | Email + password is the default sign-in; the phone number plugin becomes optional                                                                                                         |
 | 9.5     | Web app first; PWA layers kept and added by role                                                                                                                                          |
 | 9.6     | The app is named SafiHub                                                                                                                                                                  |
+| 9.7     | Route restructure: dynamic partner workspace, navigation by role, onboarding and partner applications, customer order history                                                             |

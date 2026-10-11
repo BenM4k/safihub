@@ -17,6 +17,8 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
   const t = useTranslations("customerHouses");
   const [isFavorited, setIsFavorited] = useState(false);
 
+  const targetSlug = house.slug || house.id;
+
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -25,13 +27,13 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
         await navigator.share({
           title: house.name,
           text: `Pressing ${house.name} à Bukavu`,
-          url: `${window.location.origin}/houses/${house.id}`,
+          url: `${window.location.origin}/houses/${targetSlug}`,
         });
       } catch {
         // Ignored if cancelled
       }
     } else {
-      navigator.clipboard?.writeText(`${window.location.origin}/houses/${house.id}`);
+      navigator.clipboard?.writeText(`${window.location.origin}/houses/${targetSlug}`);
     }
   };
 
@@ -149,7 +151,7 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
 
         {/* House Name */}
         <Link
-          href={`/houses/${house.id}`}
+          href={`/houses/${targetSlug}`}
           className="text-base font-bold text-slate-900 group-hover:text-primary transition line-clamp-1 mb-0.5"
         >
           {house.name}
@@ -175,7 +177,7 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
           </div>
 
           <Link
-            href={`/houses/${house.id}`}
+            href={`/houses/${targetSlug}`}
             className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition shrink-0"
           >
             <span>{t("selectHouse")}</span>

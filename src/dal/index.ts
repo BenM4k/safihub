@@ -12,3 +12,4 @@ export * from "./customer-account.dal";
 export * from "./photo.dal";
 export * from "./cash-ledger.dal";
 export * from "./notifications.dal";
+export * from "./house-application.dal";

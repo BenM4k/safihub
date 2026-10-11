@@ -11,3 +11,11 @@ export const updatedAt = () =>
 
 export const currencyEnum = pgEnum("currency", ["CDF", "USD"]);
 export type Currency = (typeof currencyEnum.enumValues)[number];
+
+export const applicationStatusEnum = pgEnum("application_status", [
+  "pending",
+  "approved",
+  "rejected",
+]);
+export type ApplicationStatus =
+  (typeof applicationStatusEnum.enumValues)[number];

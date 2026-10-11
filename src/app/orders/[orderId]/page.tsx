@@ -12,6 +12,7 @@ import { OrderCancelCard } from "@/components/orders/detail/order-cancel-card";
 import { ExpiredSwitchCard } from "@/components/orders/detail/expired-switch-card";
 import { PriceAdjustmentCard } from "@/components/orders/detail/price-adjustment-card";
 import { DeliverySlotConfirmationCard } from "@/components/orders/detail/delivery-slot-confirmation-card";
+import { ReorderDetailButton } from "@/components/orders/detail/reorder-detail-button";
 import { OrderPhotosGallery } from "@/components/photos/order-photos-gallery";
 
 interface OrderDetailPageProps {
@@ -68,6 +69,11 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         <DeliveryCodeBadge code={order.deliveryConfirmationCode} />
 
         <OrderHeader order={order} />
+
+        <ReorderDetailButton
+          orderId={order.id}
+          isPast={!(ACTIVE_ORDER_STATUSES as string[]).includes(order.status)}
+        />
 
         <ExpiredSwitchCard order={order} items={items} />
         <PriceAdjustmentCard

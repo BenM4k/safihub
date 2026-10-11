@@ -1,11 +1,12 @@
 import "server-only";
-import { asc, eq, inArray } from "drizzle-orm";
+import { asc, eq, inArray, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { toBukavuDateTime } from "@/services/availability/bukavu-time";
 
 export interface CustomerHouseSummary {
   id: string;
   name: string;
+  slug: string;
   neighborhoodId: string;
   neighborhoodName: string;
   zoneId: string;
@@ -58,6 +59,7 @@ export interface CustomerHouseDetailData {
   house: {
     id: string;
     name: string;
+    slug: string;
     neighborhoodId: string;
     neighborhoodName: string;
     zoneId: string;
@@ -73,6 +75,7 @@ export interface CustomerHouseDetailData {
     rating: number | null;
     reviewCount: number;
     imageUrl: string;
+    isActive?: boolean;
   };
   services: Array<{
     id: string;
@@ -130,6 +133,7 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
     .select({
       id: schema.houses.id,
       name: schema.houses.name,
+      slug: schema.houses.slug,
       neighborhoodId: schema.houses.neighborhoodId,
       neighborhoodName: schema.neighborhoods.name,
       zoneId: schema.neighborhoods.zoneId,
@@ -253,6 +257,7 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
     return {
       id: h.id,
       name: h.name,
+      slug: h.slug,
       neighborhoodId: h.neighborhoodId,
       neighborhoodName: h.neighborhoodName,
       zoneId: h.zoneId,
@@ -279,12 +284,13 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
 }
 
 export async function getCustomerHouseDetail(
-  houseId: string
+  idOrSlug: string
 ): Promise<CustomerHouseDetailData | null> {
   const [house] = await db
     .select({
       id: schema.houses.id,
       name: schema.houses.name,
+      slug: schema.houses.slug,
       neighborhoodId: schema.houses.neighborhoodId,
       neighborhoodName: schema.neighborhoods.name,
       zoneId: schema.neighborhoods.zoneId,
@@ -301,7 +307,12 @@ export async function getCustomerHouseDetail(
     .from(schema.houses)
     .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
     .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
-    .where(eq(schema.houses.id, houseId))
+    .where(
+      or(
+        sql`${schema.houses.id}::text = ${idOrSlug}`,
+        eq(schema.houses.slug, idOrSlug)
+      )
+    )
     .limit(1);
 
   if (!house || !house.isActive) return null;
@@ -317,7 +328,7 @@ export async function getCustomerHouseDetail(
         closesAt: schema.houseHours.closesAt,
       })
       .from(schema.houseHours)
-      .where(eq(schema.houseHours.houseId, houseId))
+      .where(eq(schema.houseHours.houseId, house.id))
       .orderBy(asc(schema.houseHours.weekday)),
     db
       .select({
@@ -330,7 +341,7 @@ export async function getCustomerHouseDetail(
       .from(schema.houseExclusions)
       .leftJoin(schema.items, eq(schema.houseExclusions.itemId, schema.items.id))
       .leftJoin(schema.fabrics, eq(schema.houseExclusions.fabricId, schema.fabrics.id))
-      .where(eq(schema.houseExclusions.houseId, houseId)),
+      .where(eq(schema.houseExclusions.houseId, house.id)),
     db
       .select({
         houseItemId: schema.houseItems.id,
@@ -356,7 +367,7 @@ export async function getCustomerHouseDetail(
       .innerJoin(schema.services, eq(schema.houseItems.serviceId, schema.services.id))
       .innerJoin(schema.items, eq(schema.houseItems.itemId, schema.items.id))
       .innerJoin(schema.fabrics, eq(schema.houseItems.fabricId, schema.fabrics.id))
-      .where(eq(schema.houseItems.houseId, houseId))
+      .where(eq(schema.houseItems.houseId, house.id))
       .orderBy(
         asc(schema.services.sortOrder),
         asc(schema.items.sortOrder),
@@ -439,6 +450,7 @@ export async function getCustomerHouseDetail(
     house: {
       id: house.id,
       name: house.name,
+      slug: house.slug,
       neighborhoodId: house.neighborhoodId,
       neighborhoodName: house.neighborhoodName,
       zoneId: house.zoneId,
@@ -454,6 +466,7 @@ export async function getCustomerHouseDetail(
       rating: null,
       reviewCount: 0,
       imageUrl,
+      isActive: house.isActive,
     },
     services: Array.from(serviceMap.values()),
     items,
