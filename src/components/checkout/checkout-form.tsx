@@ -182,15 +182,26 @@ export function CheckoutForm({
 
   if (cart.items.length === 0) {
     return (
-      <div className="p-8 text-center bg-white rounded-3xl border border-slate-200 max-w-lg mx-auto">
-        <ShoppingBag className="size-12 text-slate-400 mx-auto mb-3" />
-        <h3 className="text-lg font-bold text-slate-900 mb-1">Votre panier est vide</h3>
-        <p className="text-xs text-slate-500 mb-4">
-          Sélectionnez un pressing et ajoutez vos articles avant de finaliser la commande.
-        </p>
-        <Button variant="primary" size="sm" onClick={() => router.push("/houses")}>
-          Voir les pressings
-        </Button>
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[calc(100dvh-14rem)] py-12 px-4 text-center">
+        <div className="p-8 sm:p-10 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs max-w-md w-full flex flex-col items-center">
+          <div className="size-16 sm:size-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-2xs">
+            <ShoppingBag className="size-8 sm:size-10" />
+          </div>
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-2">
+            {t("emptyCartTitle")}
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 mb-6 max-w-xs leading-relaxed">
+            {t("emptyCartDesc")}
+          </p>
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() => router.push("/houses")}
+            className="w-full sm:w-auto font-bold px-6 shadow-sm cursor-pointer"
+          >
+            {t("browseHouses")}
+          </Button>
+        </div>
       </div>
     );
   }
@@ -198,7 +209,7 @@ export function CheckoutForm({
   const totalDue = subtotalCdf + deliveryFeeCdf;
 
   return (
-    <form onSubmit={handleSubmitOrder} className="max-w-2xl mx-auto space-y-6">
+    <form onSubmit={handleSubmitOrder} className="max-w-6xl mx-auto w-full space-y-6 flex-1 flex flex-col">
       <PriceChangeModal
         isOpen={Boolean(priceChangeDetails)}
         details={priceChangeDetails || undefined}
@@ -206,12 +217,12 @@ export function CheckoutForm({
         onCancel={() => setPriceChangeDetails(null)}
       />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             {t("title")}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Pressing sélectionné : <span className="font-bold text-slate-800">{cart.houseName}</span>
           </p>
         </div>
@@ -227,84 +238,90 @@ export function CheckoutForm({
         </div>
       )}
 
-      {/* 1. Slot Picker (AC 1) */}
-      <SlotPicker
-        selectedSlot={selectedSlot}
-        onSelectSlot={(slot) => {
-          setSelectedSlot(slot);
-          setNextProposedSlot(null);
-        }}
-        nextProposedSlot={nextProposedSlot}
-        onAcceptProposedSlot={(slot) => {
-          setSelectedSlot(slot);
-          setNextProposedSlot(null);
-        }}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Form steps */}
+        <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+          {/* 1. Slot Picker (AC 1) */}
+          <SlotPicker
+            selectedSlot={selectedSlot}
+            onSelectSlot={(slot) => {
+              setSelectedSlot(slot);
+              setNextProposedSlot(null);
+            }}
+            nextProposedSlot={nextProposedSlot}
+            onAcceptProposedSlot={(slot) => {
+              setSelectedSlot(slot);
+              setNextProposedSlot(null);
+            }}
+          />
 
-      {/* 2. Address Picker */}
-      <AddressPicker
-        savedAddresses={savedAddresses}
-        neighborhoods={neighborhoods}
-        selectedAddressId={selectedAddressId}
-        onSelectSavedAddress={handleSelectSavedAddress}
-        neighborhoodId={neighborhoodId}
-        onChangeNeighborhood={(id) => {
-          setNeighborhoodId(id);
-          setSelectedAddressId(null);
-        }}
-        landmark={landmark}
-        onChangeLandmark={(val) => {
-          setLandmark(val);
-          setSelectedAddressId(null);
-        }}
-        phone={phone}
-        onChangePhone={(val) => {
-          setPhone(val);
-          setSelectedAddressId(null);
-        }}
-        customerName={customerName}
-        onChangeCustomerName={setCustomerName}
-        isGuest={!user}
-      />
-
-      {/* 3. Review & Payment Method */}
-      <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3">
-        <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
-          {t("stepReview")}
-        </h3>
-
-        <div className="space-y-1.5 text-xs">
-          <div className="flex justify-between text-slate-600">
-            <span>Sous-total ({cart.items.reduce((a, b) => a + b.quantity, 0)} articles)</span>
-            <span className="font-semibold text-slate-900">{subtotalCdf.toLocaleString("fr-FR")} CDF</span>
-          </div>
-          <div className="flex justify-between text-slate-600">
-            <span>Frais de livraison</span>
-            <span className="font-semibold text-slate-900">{deliveryFeeCdf.toLocaleString("fr-FR")} CDF</span>
-          </div>
-          <div className="pt-2 border-t border-slate-100 flex justify-between text-sm font-black text-slate-900">
-            <span>Total à payer à la livraison</span>
-            <span className="text-primary text-base">{totalDue.toLocaleString("fr-FR")} CDF</span>
-          </div>
+          {/* 2. Address Picker */}
+          <AddressPicker
+            savedAddresses={savedAddresses}
+            neighborhoods={neighborhoods}
+            selectedAddressId={selectedAddressId}
+            onSelectSavedAddress={handleSelectSavedAddress}
+            neighborhoodId={neighborhoodId}
+            onChangeNeighborhood={(id) => {
+              setNeighborhoodId(id);
+              setSelectedAddressId(null);
+            }}
+            landmark={landmark}
+            onChangeLandmark={(val) => {
+              setLandmark(val);
+              setSelectedAddressId(null);
+            }}
+            phone={phone}
+            onChangePhone={(val) => {
+              setPhone(val);
+              setSelectedAddressId(null);
+            }}
+            customerName={customerName}
+            onChangeCustomerName={setCustomerName}
+            isGuest={!user}
+          />
         </div>
 
-        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2 text-xs text-slate-700">
-          <ShieldCheck className="size-4 text-emerald-600 shrink-0" />
-          <span>{t("cashOnDelivery")}</span>
+        {/* Right Column: Sticky Summary & Confirmation */}
+        <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24 space-y-4">
+          <div className="p-5 sm:p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+            <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
+              {t("stepReview")}
+            </h3>
+
+            <div className="space-y-2 text-xs sm:text-sm">
+              <div className="flex justify-between text-slate-600">
+                <span>Sous-total ({cart.items.reduce((a, b) => a + b.quantity, 0)} articles)</span>
+                <span className="font-semibold text-slate-900">{subtotalCdf.toLocaleString("fr-FR")} CDF</span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Frais de livraison</span>
+                <span className="font-semibold text-slate-900">{deliveryFeeCdf.toLocaleString("fr-FR")} CDF</span>
+              </div>
+              <div className="pt-3 border-t border-slate-100 flex justify-between text-sm sm:text-base font-black text-slate-900">
+                <span>Total à payer à la livraison</span>
+                <span className="text-primary text-base sm:text-lg">{totalDue.toLocaleString("fr-FR")} CDF</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5 text-xs text-slate-700">
+              <ShieldCheck className="size-4 text-emerald-600 shrink-0" />
+              <span>{t("cashOnDelivery")}</span>
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              disabled={isSubmitting}
+              className="w-full font-bold py-4 text-base rounded-2xl shadow-sm gap-2 cursor-pointer"
+            >
+              <span>{isSubmitting ? t("submitting") : t("submitOrder")}</span>
+              <ArrowRight className="size-5" />
+            </Button>
+          </div>
         </div>
       </div>
-
-      {/* Submit Button with double tap protection (AC 3) */}
-      <Button
-        type="submit"
-        variant="primary"
-        size="lg"
-        disabled={isSubmitting}
-        className="w-full font-bold py-4 text-base rounded-2xl shadow-sm gap-2"
-      >
-        <span>{isSubmitting ? t("submitting") : t("submitOrder")}</span>
-        <ArrowRight className="size-5" />
-      </Button>
     </form>
   );
 }

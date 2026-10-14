@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getCurrentUser } from "@/services/auth";
+import { Navbar } from "@/components/home/header/navbar";
+import { Footer } from "@/components/home/footer/footer";
 import { getPublicTrackingOrder } from "@/services/order";
 import { getOrderPhotosWithSignedUrlsService } from "@/services/storage";
 import { OrderHeader } from "@/components/orders/detail/order-header";
@@ -22,6 +25,7 @@ export const metadata = {
 
 export default async function TrackOrderPage({ params }: TrackOrderPageProps) {
   const { token } = await params;
+  const user = await getCurrentUser();
 
   const res = await getPublicTrackingOrder(token);
   if (!res.ok) {
@@ -37,20 +41,22 @@ export default async function TrackOrderPage({ params }: TrackOrderPageProps) {
   const photos = photosRes.ok ? photosRes.value : [];
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-10">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
-          >
-            <ArrowLeft className="size-3.5" />
-            <span>Accueil SafiHub</span>
-          </Link>
-          <span className="text-xs text-slate-400 font-medium">
-            Lien de suivi invité sécurisé
-          </span>
-        </div>
+    <div className="min-h-screen flex flex-col bg-slate-50/50">
+      <Navbar variant="solid" user={user} />
+      <main className="flex-1 flex flex-col py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col space-y-6">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/track"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
+            >
+              <ArrowLeft className="size-3.5" />
+              <span>Autre recherche de suivi</span>
+            </Link>
+            <span className="text-xs text-slate-400 font-medium">
+              Lien de suivi invité sécurisé
+            </span>
+          </div>
 
         <DeliveryCodeBadge code={order.deliveryConfirmationCode} />
 
@@ -90,6 +96,8 @@ export default async function TrackOrderPage({ params }: TrackOrderPageProps) {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </main>
+    <Footer />
+  </div>
+);
 }
