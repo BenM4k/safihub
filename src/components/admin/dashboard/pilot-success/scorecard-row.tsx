@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { HelpCircle } from "lucide-react";
 import { ScorecardStatusBadge, type MetricStatus } from "./scorecard-status-badge";
 
@@ -26,6 +27,7 @@ export function ScorecardRow({
     noData: string;
   };
 }) {
+  const t = useTranslations("admin.dashboard");
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (
@@ -42,7 +44,7 @@ export function ScorecardRow({
               onFocus={() => setShowTooltip(true)}
               onBlur={() => setShowTooltip(false)}
               className="text-slate-400 hover:text-slate-600 cursor-help"
-              aria-label={`Definition of ${data.metric}`}
+              aria-label={t("definitionAriaLabel", { metric: data.metric })}
             >
               <HelpCircle className="w-3.5 h-3.5" />
             </button>

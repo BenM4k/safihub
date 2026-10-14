@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AlertCircle, AlertTriangle, ArrowRightLeft, Clock, MessageSquare, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCDF, formatOrderRef } from "@/lib/dispatch-urgency";
@@ -18,6 +19,7 @@ export function DispatchOrderRow({
   onOpenOutcomeModal,
   onOpenReassignDialog,
 }: DispatchOrderRowProps) {
+  const t = useTranslations("admin.dispatch");
   const phone = order.housePhone || "";
   const cleanPhone = phone.replace(/[^0-9]/g, "");
   const waMsg = encodeURIComponent(
@@ -31,6 +33,15 @@ export function DispatchOrderRow({
       : order.urgency.level === "warning"
       ? "bg-warning-soft text-warning border-warning/20"
       : "bg-secondary text-secondary-foreground border-border";
+
+  const urgencyLabel =
+    order.urgency.isOverdue
+      ? t("urgencyOverdue", { minutes: order.urgency.overdueMinutes ?? 0 })
+      : order.urgency.level === "critical"
+      ? t("urgencyUrgent")
+      : order.urgency.level === "warning"
+      ? t("urgencyWarning")
+      : t("urgencyNormal");
 
   return (
     <div
@@ -52,7 +63,7 @@ export function DispatchOrderRow({
               <Clock className="w-3.5 h-3.5" />
             )}
             <span>{order.urgency.formattedElapsed}</span>
-            <span className="text-[11px] font-normal opacity-90">({order.urgency.label})</span>
+            <span className="text-[11px] font-normal opacity-90">({urgencyLabel})</span>
           </span>
 
           {order.isRecentlyRelanced && (
@@ -93,33 +104,35 @@ export function DispatchOrderRow({
       >
         {cleanPhone ? (
           <>
-            <a
-              href={`tel:${phone}`}
-              onClick={() => onOpenOutcomeModal(order, "call")}
+            <Button
+              asChild
+              size="sm"
+              className="text-xs min-h-[40px] px-3.5 bg-primary hover:bg-primary-hover text-white font-medium shadow-xs"
             >
-              <Button
-                size="sm"
-                className="text-xs min-h-[40px] px-3.5 bg-primary hover:bg-primary-hover text-white font-medium shadow-xs"
+              <a
+                href={`tel:${phone}`}
+                onClick={() => onOpenOutcomeModal(order, "call")}
               >
                 <PhoneCall className="w-3.5 h-3.5 mr-1" />
-                Appeler
-              </Button>
-            </a>
-            <a
-              href={`https://wa.me/${cleanPhone}?text=${waMsg}`}
-              target="_blank"
-              rel="noreferrer"
-              onClick={() => onOpenOutcomeModal(order, "whatsapp")}
+                {t("callAction")}
+              </a>
+            </Button>
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="text-xs min-h-[40px] px-3.5 border-success text-success hover:bg-success-soft font-medium"
             >
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs min-h-[40px] px-3.5 border-success text-success hover:bg-success-soft font-medium"
+              <a
+                href={`https://wa.me/${cleanPhone}?text=${waMsg}`}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => onOpenOutcomeModal(order, "whatsapp")}
               >
                 <MessageSquare className="w-3.5 h-3.5 mr-1 text-success" />
                 WhatsApp
-              </Button>
-            </a>
+              </a>
+            </Button>
           </>
         ) : (
           <span className="text-xs text-warning italic">Téléphone non renseigné</span>

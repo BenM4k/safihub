@@ -192,7 +192,8 @@
     letter-spacing: 0.025em;
   }
 
-  html.reading-focus a {
+  html.reading-focus a,
+  html.easier-to-see a {
     text-decoration: underline !important;
     text-underline-offset: 3px !important;
   }

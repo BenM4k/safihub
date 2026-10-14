@@ -28,17 +28,12 @@ function ProfileItem({
   onToggle,
 }: ProfileItemProps) {
   return (
-    <div
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
       onClick={onToggle}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onToggle();
-        }
-      }}
-      className={`group flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+      className={`group flex w-full items-center justify-between p-3 rounded-2xl border text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
         checked
           ? "bg-primary/5 dark:bg-primary/10 border-primary/30"
           : "bg-slate-50/80 dark:bg-white/[0.03] border-slate-200/60 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10"
@@ -46,6 +41,7 @@ function ProfileItem({
     >
       <div className="flex items-center gap-3 min-w-0 pr-2">
         <div
+          aria-hidden="true"
           className={`size-9 rounded-full flex items-center justify-center shrink-0 transition-colors ${
             checked
               ? "bg-primary text-white"
@@ -64,16 +60,10 @@ function ProfileItem({
         </div>
       </div>
 
-      {/* Accessible iOS-style Switch */}
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggle();
-        }}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+      {/* Visual iOS-style Switch */}
+      <span
+        aria-hidden="true"
+        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
           checked ? "bg-primary" : "bg-slate-300 dark:bg-slate-700"
         }`}
       >
@@ -82,8 +72,8 @@ function ProfileItem({
             checked ? "translate-x-5" : "translate-x-0"
           }`}
         />
-      </button>
-    </div>
+      </span>
+    </button>
   );
 }
 

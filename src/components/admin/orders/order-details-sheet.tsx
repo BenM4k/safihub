@@ -44,6 +44,8 @@ export function OrderDetailsSheet({
   const [events, setEvents] = useState<OrderEventRecord[]>([]);
   const [items, setItems] = useState<OrderItemRecord[]>([]);
   const [loadedOrderId, setLoadedOrderId] = useState<string | null>(null);
+  const [refreshCount, setRefreshCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const orderId = order?.id;
   const isLoadingDetail = Boolean(orderId && loadedOrderId !== orderId);
@@ -54,14 +56,24 @@ export function OrderDetailsSheet({
 
     getAdminOrderDetailAction(orderId)
       .then((res) => {
-        if (!cancelled && res.ok && res.value) {
-          setEvents(res.value.events);
-          setItems(res.value.items);
+        if (!cancelled) {
+          if (res.ok && res.value) {
+            setEvents(res.value.events);
+            setItems(res.value.items);
+            setError(null);
+          } else {
+            setEvents([]);
+            setItems([]);
+            setError(res.ok ? "Détails introuvables" : res.error);
+          }
           setLoadedOrderId(orderId);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
+          setEvents([]);
+          setItems([]);
+          setError(err instanceof Error ? err.message : "Erreur de chargement");
           setLoadedOrderId(orderId);
         }
       });
@@ -69,7 +81,7 @@ export function OrderDetailsSheet({
     return () => {
       cancelled = true;
     };
-  }, [orderId]);
+  }, [orderId, refreshCount]);
 
   if (!order) return null;
 
@@ -215,12 +227,18 @@ export function OrderDetailsSheet({
             </div>
           </div>
 
+          {error && (
+            <div className="p-3 text-xs bg-destructive-light border border-destructive-base/20 text-destructive-base rounded-lg">
+              {error}
+            </div>
+          )}
+
           {/* Audit Timeline Subcomponent */}
           <OrderDetailsTimeline
             orderId={order.id}
             events={events}
             isLoading={isLoadingDetail}
-            onEventAdded={() => loadDetails(order.id)}
+            onEventAdded={() => setRefreshCount((c) => c + 1)}
           />
         </div>
 

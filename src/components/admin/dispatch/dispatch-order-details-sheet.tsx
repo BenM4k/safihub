@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   Check,
   Clock,
@@ -30,9 +31,19 @@ export function DispatchOrderDetailsSheet({
   onOpenOutcomeModal,
   onOpenReassignDialog,
 }: DispatchOrderDetailsSheetProps) {
+  const t = useTranslations("admin.dispatch");
   const [copied, setCopied] = useState(false);
 
   if (!order) return null;
+
+  const urgencyLabel =
+    order.urgency.isOverdue
+      ? t("urgencyOverdue", { minutes: order.urgency.overdueMinutes ?? 0 })
+      : order.urgency.level === "critical"
+      ? t("urgencyUrgent")
+      : order.urgency.level === "warning"
+      ? t("urgencyWarning")
+      : t("urgencyNormal");
 
   const phone = order.housePhone || "";
   const cleanPhone = phone.replace(/[^0-9]/g, "");
@@ -107,7 +118,7 @@ export function DispatchOrderDetailsSheet({
             </div>
             <div className="text-xs flex items-center justify-between text-muted-foreground">
               <span>Statut d&apos;urgence:</span>
-              <span className="font-semibold text-heading">{order.urgency.label}</span>
+              <span className="font-semibold text-heading">{urgencyLabel}</span>
             </div>
             {order.acceptanceDeadlineAt && (
               <div className="text-xs flex items-center justify-between text-destructive">
@@ -198,49 +209,59 @@ export function DispatchOrderDetailsSheet({
         <div className="p-4 border-t border-border bg-surface flex flex-wrap items-center gap-2">
           {cleanPhone && (
             <>
-              <a
-                href={`tel:${phone}`}
-                onClick={() => onOpenOutcomeModal(order, "call")}
-                className="flex-1"
+              <Button
+                asChild
+                size="sm"
+                className="flex-1 text-xs min-h-[40px] bg-primary hover:bg-primary-hover text-primary-foreground font-display"
               >
-                <Button size="sm" className="w-full text-xs min-h-[40px] bg-primary hover:bg-primary-hover text-primary-foreground font-display">
+                <a
+                  href={`tel:${phone}`}
+                  onClick={() => onOpenOutcomeModal(order, "call")}
+                >
                   <PhoneCall className="w-3.5 h-3.5 mr-1.5" />
                   Appeler
-                </Button>
-              </a>
-              <a
-                href={`https://wa.me/${cleanPhone}?text=${waMsg}`}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => onOpenOutcomeModal(order, "whatsapp")}
-                className="flex-1"
+                </a>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="flex-1 text-xs min-h-[40px] border-success/40 text-success hover:bg-success-soft font-display"
               >
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full text-xs min-h-[40px] border-success/40 text-success hover:bg-success-soft font-display"
+                <a
+                  href={`https://wa.me/${cleanPhone}?text=${waMsg}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => onOpenOutcomeModal(order, "whatsapp")}
                 >
                   WhatsApp
-                </Button>
-              </a>
+                </a>
+              </Button>
             </>
           )}
 
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onOpenReassignDialog(order)}
-            className="text-xs min-h-[40px] text-warning border-warning/30 hover:bg-warning-soft font-display"
-          >
-            Réassigner
-          </Button>
+          {order.canReassign && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onOpenReassignDialog(order)}
+              className="text-xs min-h-[40px] text-warning border-warning/30 hover:bg-warning-soft font-display"
+            >
+              Réassigner
+            </Button>
+          )}
 
-          <Link href={`/admin/orders/${order.id}`} className="shrink-0">
-            <Button size="sm" variant="ghost" className="text-xs min-h-[40px] text-muted-foreground hover:text-heading">
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className="shrink-0 text-xs min-h-[40px] text-muted-foreground hover:text-heading"
+          >
+            <Link href={`/admin/orders/${order.id}`}>
               <ExternalLink className="w-4 h-4 mr-1" />
               Page complète
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

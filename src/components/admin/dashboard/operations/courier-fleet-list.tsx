@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { BatteryCharging, Send } from "lucide-react";
 
 export interface DashboardCourierItem {
@@ -7,9 +8,9 @@ export interface DashboardCourierItem {
   zone: string;
   status: "delivering" | "picking_up" | "available" | "offline";
   missionDescription: string;
-  cashHeldCDF: number;
+  cashHeldCDF?: number;
   cashCeilingCDF: number;
-  batteryPercent: number;
+  batteryPercent?: number;
 }
 
 export function CourierFleetList({
@@ -21,6 +22,7 @@ export function CourierFleetList({
   title: string;
   subtitle: string;
 }) {
+  const t = useTranslations("admin.dashboard");
   const activeCount = couriers.filter((c) => c.status !== "offline").length;
 
   return (
@@ -32,7 +34,7 @@ export function CourierFleetList({
             <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
           </div>
           <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
-            {activeCount} active
+            {activeCount} {t("courierActive")}
           </span>
         </div>
 
@@ -56,17 +58,21 @@ export function CourierFleetList({
                   <span className="text-[11px] text-slate-500 block">{courier.zone}</span>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
-                  <BatteryCharging className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{courier.batteryPercent}%</span>
-                </div>
+                {courier.batteryPercent !== undefined && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
+                    <BatteryCharging className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{courier.batteryPercent}%</span>
+                  </div>
+                )}
               </div>
 
               <div className="mt-2 text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-300 shadow-2xs flex items-center justify-between">
                 <span className="truncate pr-2">{courier.missionDescription}</span>
-                <span className="text-[10px] text-slate-500 font-mono shrink-0">
-                  COD: CDF {courier.cashHeldCDF.toLocaleString("en-US")}
-                </span>
+                {courier.cashHeldCDF !== undefined && (
+                  <span className="text-[10px] text-slate-500 font-mono shrink-0">
+                    COD: CDF {courier.cashHeldCDF.toLocaleString("en-US")}
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -79,7 +85,7 @@ export function CourierFleetList({
           className="w-full py-2 bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs hover:shadow-sm"
         >
           <Send className="w-3.5 h-3.5" />
-          <span>Open live dispatch map</span>
+          <span>{t("openLiveDispatchMap")}</span>
         </Link>
       </div>
     </div>

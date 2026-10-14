@@ -68,8 +68,8 @@ export function DispatchDashboard({ initialData }: DispatchDashboardProps) {
             <RefreshCw className={`w-3.5 h-3.5 ${isPending ? "animate-spin text-primary" : "text-ink-400"}`} />
             <span>
               {isPending
-                ? "Actualisation en cours..."
-                : `Actualisation dans ${secondsUntilRefresh}s`}
+                ? t("autoRefreshing")
+                : t("autoRefreshIn", { seconds: secondsUntilRefresh })}
             </span>
           </div>
 

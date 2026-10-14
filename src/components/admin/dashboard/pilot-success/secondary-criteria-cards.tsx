@@ -25,7 +25,7 @@ export async function SecondaryCriteriaCards({ metrics }: SecondaryCriteriaCards
       id: "cashDiscrepancies",
       label: t("cashDiscrepancies"),
       value: `${metrics.cashDiscrepancyPercent}%`,
-      subValue: `(${metrics.cashDiscrepanciesCount} signalés)`,
+      subValue: t("reportedCount", { count: metrics.cashDiscrepanciesCount }),
       target: t("cashDiscrepanciesTarget"),
       met: metrics.cashDiscrepancyPercent < 2,
       icon: ShieldAlert,

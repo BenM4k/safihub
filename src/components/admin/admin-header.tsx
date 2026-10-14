@@ -16,7 +16,7 @@ export async function AdminHeader() {
           {/* System status dot */}
           <div
             className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs text-slate-600"
-            title="System operational in Bukavu timezone (UTC+2)"
+            title={tDash("systemStatusTitle")}
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />

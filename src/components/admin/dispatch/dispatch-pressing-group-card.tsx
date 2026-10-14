@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
@@ -35,7 +34,6 @@ export function DispatchPressingGroupCard({
   onOpenGroupOutcomeModal,
   onOpenReassignDialog,
 }: DispatchPressingGroupCardProps) {
-  const [isBulkRelancing, setIsBulkRelancing] = useState(false);
   const phone = group.housePhone || "";
   const cleanPhone = phone.replace(/[^0-9]/g, "");
   const waMsg = encodeURIComponent(
@@ -116,33 +114,35 @@ export function DispatchPressingGroupCard({
         >
           {cleanPhone && (
             <>
-              <a
-                href={`tel:${phone}`}
-                onClick={() => onOpenGroupOutcomeModal(group, "call")}
+              <Button
+                asChild
+                size="sm"
+                className="text-xs min-h-[40px] px-3.5 bg-primary hover:bg-primary-hover text-white font-medium shadow-xs"
               >
-                <Button
-                  size="sm"
-                  className="text-xs min-h-[40px] px-3.5 bg-primary hover:bg-primary-hover text-white font-medium shadow-xs"
+                <a
+                  href={`tel:${phone}`}
+                  onClick={() => onOpenGroupOutcomeModal(group, "call")}
                 >
                   <PhoneCall className="w-3.5 h-3.5 mr-1" />
                   Appeler
-                </Button>
-              </a>
-              <a
-                href={`https://wa.me/${cleanPhone}?text=${waMsg}`}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => onOpenGroupOutcomeModal(group, "whatsapp")}
+                </a>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="text-xs min-h-[40px] px-3.5 border-success text-success hover:bg-success-soft font-medium"
               >
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs min-h-[40px] px-3.5 border-success text-success hover:bg-success-soft font-medium"
+                <a
+                  href={`https://wa.me/${cleanPhone}?text=${waMsg}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => onOpenGroupOutcomeModal(group, "whatsapp")}
                 >
                   <MessageSquare className="w-3.5 h-3.5 mr-1 text-success" />
                   WhatsApp
-                </Button>
-              </a>
+                </a>
+              </Button>
             </>
           )}
 
@@ -150,12 +150,7 @@ export function DispatchPressingGroupCard({
             <Button
               size="sm"
               variant="outline"
-              disabled={isBulkRelancing}
-              onClick={() => {
-                setIsBulkRelancing(true);
-                onOpenGroupOutcomeModal(group, "call");
-                setIsBulkRelancing(false);
-              }}
+              onClick={() => onOpenGroupOutcomeModal(group, "call")}
               className="text-xs min-h-[40px] px-3 border-border-strong text-foreground hover:bg-muted font-medium"
             >
               <Send className="w-3.5 h-3.5 mr-1 text-ink-400" />

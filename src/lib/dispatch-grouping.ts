@@ -74,7 +74,7 @@ export function enrichOrders(
   now: Date = new Date()
 ): EnrichedDispatchOrder[] {
   return orders.map((order) => {
-    const relances = (relancesMap.get(order.id) || []).sort(
+    const relances = [...(relancesMap.get(order.id) || [])].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     const urgency = getUrgencyInfo(order.createdAt, now);

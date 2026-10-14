@@ -11,7 +11,8 @@ export interface UrgencyInfo {
   formattedElapsed: string;
   isOverdue: boolean;
   isCritical: boolean;
-  label: string;
+  overdueMinutes: number;
+  label?: string;
 }
 
 /**
@@ -72,28 +73,27 @@ export function getUrgencyInfo(
 ): UrgencyInfo {
   const elapsedMinutes = getElapsedMinutes(createdAt, now);
   const formattedElapsed = formatElapsedTime(createdAt, now);
+  const overdueMinutes = Math.max(0, elapsedMinutes - HOUSE_ACCEPTANCE_SLA_MINUTES);
 
   if (elapsedMinutes >= HOUSE_ACCEPTANCE_CRITICAL_MINUTES) {
-    const overdueMinutes = elapsedMinutes - HOUSE_ACCEPTANCE_SLA_MINUTES;
     return {
       level: "critical",
       elapsedMinutes,
       formattedElapsed,
       isOverdue: true,
       isCritical: true,
-      label: `Critique (+${overdueMinutes} min)`,
+      overdueMinutes,
     };
   }
 
   if (elapsedMinutes >= HOUSE_ACCEPTANCE_WARNING_MINUTES) {
-    const overdueMinutes = elapsedMinutes - HOUSE_ACCEPTANCE_SLA_MINUTES;
     return {
       level: "warning",
       elapsedMinutes,
       formattedElapsed,
       isOverdue: true,
       isCritical: false,
-      label: overdueMinutes > 0 ? `Délai dépassé (+${overdueMinutes} min)` : "Délai limite (45 min)",
+      overdueMinutes,
     };
   }
 
@@ -103,7 +103,7 @@ export function getUrgencyInfo(
     formattedElapsed,
     isOverdue: false,
     isCritical: false,
-    label: "Dans les délais",
+    overdueMinutes: 0,
   };
 }
 

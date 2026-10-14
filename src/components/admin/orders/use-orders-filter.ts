@@ -95,7 +95,7 @@ export function useOrdersFilter(initialOrders: OrderListItemRecord[]) {
       // 2. Date Range filter
       if (filters.dateRange !== "all") {
         const orderTime = new Date(o.createdAt).getTime();
-        const diff = now - orderTime;
+        const diff = referenceNow - orderTime;
         if (filters.dateRange === "today" && diff > dayMs) return false;
         if (filters.dateRange === "7d" && diff > 7 * dayMs) return false;
         if (filters.dateRange === "30d" && diff > 30 * dayMs) return false;
@@ -181,7 +181,11 @@ export function useOrdersFilter(initialOrders: OrderListItemRecord[]) {
   }
 
   function handleToggleSelectAll() {
-    if (selectedIds.length === paginatedOrders.length && paginatedOrders.length > 0) {
+    const isAllSelected =
+      paginatedOrders.length > 0 &&
+      paginatedOrders.every((o) => selectedIds.includes(o.id));
+
+    if (isAllSelected) {
       setSelectedIds([]);
     } else {
       setSelectedIds(paginatedOrders.map((o) => o.id));

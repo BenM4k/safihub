@@ -107,21 +107,21 @@ export function DispatchKpiCards({
             {courierStats.available}
           </p>
           <span className="text-xs text-muted-foreground font-medium">
-            / {courierStats.total} total
+            {t("courierTotalCount", { count: courierStats.total })}
           </span>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-success-soft text-success font-medium border border-success/20">
             <span className="w-1.5 h-1.5 rounded-full bg-success" />
-            {courierStats.available} dispo
+            {t("courierDispoCount", { count: courierStats.available })}
           </span>
           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-warning-soft text-warning font-medium border border-warning/20">
             <span className="w-1.5 h-1.5 rounded-full bg-warning" />
-            {courierStats.onMission} en mission
+            {t("courierOnMissionCount", { count: courierStats.onMission })}
           </span>
           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground font-medium border border-border">
             <span className="w-1.5 h-1.5 rounded-full bg-ink-400" />
-            {courierStats.offline} hors ligne
+            {t("courierOfflineCount", { count: courierStats.offline })}
           </span>
         </div>
       </div>

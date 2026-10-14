@@ -26,6 +26,19 @@ export function OrderCancelDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [prevOrderId, setPrevOrderId] = useState<string | undefined>(order?.id);
+  if (order?.id !== prevOrderId) {
+    setPrevOrderId(order?.id);
+    setReason("");
+    setError(null);
+  }
+
+  function handleClose() {
+    setReason("");
+    setError(null);
+    onClose();
+  }
+
   if (!order) return null;
 
   const reference = formatOrderReference(order.code, order.id);
@@ -52,8 +65,8 @@ export function OrderCancelDialog({
       if (!res.ok) {
         setError(res.error || "Échec de l'annulation de la commande");
       } else {
+        handleClose();
         onSuccess();
-        onClose();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inattendue");
@@ -87,7 +100,7 @@ export function OrderCancelDialog({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 rounded-lg text-ink-400 hover:text-heading hover:bg-muted transition-colors cursor-pointer"
             aria-label="Fermer"
           >
@@ -126,7 +139,7 @@ export function OrderCancelDialog({
               type="button"
               variant="outline"
               size="sm"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={loading}
               className="text-xs h-8 font-semibold border-border-strong shadow-xs hover:shadow-sm cursor-pointer"
             >

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Radio, ChevronDown, ChevronUp } from "lucide-react";
 import { ScorecardRow, type ScorecardRowData } from "./scorecard-row";
 
@@ -30,6 +31,7 @@ export function PilotScorecard({
   criteria,
   labels,
 }: PilotScorecardProps) {
+  const t = useTranslations("admin.dashboard");
   const [isExpanded, setIsExpanded] = useState(true);
 
   const metCount = criteria.filter((c) => c.status === "met").length;
@@ -77,14 +79,22 @@ export function PilotScorecard({
               <div className="flex items-center gap-1 mt-1.5" aria-hidden="true">
                 {criteria.map((item) => {
                   let segmentColor = "bg-slate-200";
-                  if (item.status === "met") segmentColor = "bg-emerald-500";
-                  if (item.status === "at-risk") segmentColor = "bg-amber-500";
-                  if (item.status === "failing") segmentColor = "bg-rose-500";
+                  let statusTitle = labels.statusNoData;
+                  if (item.status === "met") {
+                    segmentColor = "bg-emerald-500";
+                    statusTitle = labels.statusMet;
+                  } else if (item.status === "at-risk") {
+                    segmentColor = "bg-amber-500";
+                    statusTitle = labels.statusAtRisk;
+                  } else if (item.status === "failing") {
+                    segmentColor = "bg-rose-500";
+                    statusTitle = labels.statusFailing;
+                  }
                   return (
                     <div
                       key={item.id}
                       className={`h-2 w-6 rounded-xs transition-colors ${segmentColor}`}
-                      title={`${item.metric}: ${item.status}`}
+                      title={`${item.metric}: ${statusTitle}`}
                     />
                   );
                 })}
@@ -96,7 +106,7 @@ export function PilotScorecard({
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               aria-expanded={isExpanded}
-              aria-label={isExpanded ? "Collapse success criteria scorecard" : "Expand success criteria scorecard"}
+              aria-label={isExpanded ? t("collapseScorecard") : t("expandScorecard")}
             >
               {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </button>

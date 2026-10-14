@@ -32,6 +32,13 @@ export function DispatchCallOutcomeModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function handleClose() {
+    setSelectedOutcome(null);
+    setNote("");
+    setError(null);
+    onClose();
+  }
+
   if (!isOpen) return null;
 
   async function handleSubmit(outcomeToSave?: FollowUpOutcome) {
@@ -52,10 +59,8 @@ export function DispatchCallOutcomeModal({
     if (!res.ok) {
       setError(res.error);
     } else {
-      setSelectedOutcome(null);
-      setNote("");
+      handleClose();
       if (onSuccess) onSuccess();
-      onClose();
     }
   }
 
@@ -168,7 +173,7 @@ export function DispatchCallOutcomeModal({
             type="button"
             variant="outline"
             size="sm"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isSubmitting}
             className="text-xs min-h-[40px] px-4 border-border-strong hover:bg-muted text-foreground font-display"
           >

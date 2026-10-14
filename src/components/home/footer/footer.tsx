@@ -27,7 +27,7 @@ export function Footer() {
             <ul className="stack gap-2.5 text-slate-400 font-medium">
               <li>
                 <Link
-                  href="#services"
+                  href="/#services"
                   className="hover:text-white transition-colors"
                 >
                   Vêtements Quotidien
@@ -35,7 +35,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="#services"
+                  href="/#services"
                   className="hover:text-white transition-colors"
                 >
                   Costumes & Cérémonie
@@ -43,7 +43,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="#services"
+                  href="/#services"
                   className="hover:text-white transition-colors"
                 >
                   Linge de lit & Maison
@@ -51,7 +51,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="#services"
+                  href="/#services"
                   className="hover:text-white transition-colors"
                 >
                   Baskets & Sneakers
@@ -66,7 +66,7 @@ export function Footer() {
             <ul className="stack gap-2.5 text-slate-400 font-medium">
               <li>
                 <Link
-                  href="#zones"
+                  href="/#zones"
                   className="hover:text-white transition-colors"
                 >
                   Commune d&apos;Ibanda
@@ -74,7 +74,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="#zones"
+                  href="/#zones"
                   className="hover:text-white transition-colors"
                 >
                   Commune de Kadutu
@@ -82,7 +82,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="#zones"
+                  href="/#zones"
                   className="hover:text-white transition-colors"
                 >
                   Commune de Bagira

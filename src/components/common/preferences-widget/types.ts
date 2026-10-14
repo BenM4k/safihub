@@ -26,8 +26,8 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   easierToSee: false,
   cookieConsent: {
     essential: true,
-    analytics: true,
-    preferences: true,
+    analytics: false,
+    preferences: false,
   },
 };
 

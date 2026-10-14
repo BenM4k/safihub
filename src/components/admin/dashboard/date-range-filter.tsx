@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 export type DateRange = "today" | "7d" | "30d";
 
@@ -11,6 +12,7 @@ export function DateRangeFilter({
   onChange?: (range: DateRange) => void;
   defaultValue?: DateRange;
 }) {
+  const t = useTranslations("admin.dashboard");
   const [selected, setSelected] = useState<DateRange>(defaultValue);
 
   const handleSelect = (range: DateRange) => {
@@ -19,16 +21,16 @@ export function DateRangeFilter({
   };
 
   const options: { id: DateRange; label: string }[] = [
-    { id: "today", label: "Today" },
-    { id: "7d", label: "7 days" },
-    { id: "30d", label: "30 days" },
+    { id: "today", label: t("dateRangeToday") },
+    { id: "7d", label: t("dateRange7d") },
+    { id: "30d", label: t("dateRange30d") },
   ];
 
   return (
     <div
       className="inline-flex rounded-lg border border-slate-300 bg-white p-1 shadow-sm"
       role="group"
-      aria-label="Date range selector"
+      aria-label={t("dateRangeAriaLabel")}
     >
       {options.map((opt) => (
         <button

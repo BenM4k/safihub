@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { getAdminDispatchData } from "@/services/admin";
 import { DispatchDashboard } from "@/components/admin/dispatch/dispatch-dashboard";
 import { Button } from "@/components/ui/button";
 
 export default async function AdminDispatchPage() {
+  const t = await getTranslations("admin.dispatch");
   const res = await getAdminDispatchData();
 
   if (!res.ok) {
@@ -15,17 +17,17 @@ export default async function AdminDispatchPage() {
         </div>
         <div className="space-y-1">
           <h2 className="text-base font-bold text-heading font-display">
-            Erreur lors du chargement des données de dispatch
+            {t("errorLoadingDispatch")}
           </h2>
           <p className="text-xs text-destructive">{res.error}</p>
         </div>
         <div>
-          <Link href="/admin/dispatch">
-            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary-hover text-xs min-h-[40px] px-4 font-display">
+          <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary-hover text-xs min-h-[40px] px-4 font-display">
+            <Link href="/admin/dispatch">
               <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-              Réessayer
-            </Button>
-          </Link>
+              {t("retryDispatch")}
+            </Link>
+          </Button>
         </div>
       </div>
     );

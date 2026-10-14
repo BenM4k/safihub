@@ -1280,6 +1280,28 @@ export async function logPressingRelance(params: {
 }): Promise<void> {
   if (params.orderIds.length === 0) return;
 
+  const orders = await db
+    .select({
+      id: schema.orders.id,
+      houseId: schema.orders.houseId,
+      status: schema.orders.status,
+    })
+    .from(schema.orders)
+    .where(inArray(schema.orders.id, params.orderIds));
+
+  if (orders.length !== params.orderIds.length) {
+    throw new Error("Une ou plusieurs commandes sont introuvables");
+  }
+
+  const invalid = orders.find(
+    (o) => o.houseId !== params.pressingId || o.status !== "created"
+  );
+  if (invalid) {
+    throw new Error(
+      "Toutes les commandes doivent appartenir au pressing indiqué et être en attente d'acceptation (statut 'created')"
+    );
+  }
+
   const channelLabel = params.channel === "call" ? "Appel téléphonique" : "WhatsApp";
   const outcomeLabel = params.outcome ? ` · Résultat: ${params.outcome}` : "";
   const noteText = params.note || `Relance pressing (${channelLabel})${outcomeLabel}`;
@@ -1333,10 +1355,16 @@ export async function reassignOrderPressing(params: {
       return err("Seules les commandes en attente d'acceptation peuvent être réassignées");
     }
 
+    if (params.newHouseId === order.houseId) {
+      return err("La commande est déjà assignée à ce pressing");
+    }
+
     const [newHouse] = await db
       .select({
         id: schema.houses.id,
         name: schema.houses.name,
+        isActive: schema.houses.isActive,
+        isPaused: schema.houses.isPaused,
       })
       .from(schema.houses)
       .where(eq(schema.houses.id, params.newHouseId))
@@ -1346,17 +1374,31 @@ export async function reassignOrderPressing(params: {
       return err("Nouveau pressing partenaire introuvable");
     }
 
+    if (!newHouse.isActive || newHouse.isPaused) {
+      return err("Le pressing partenaire sélectionné n'est pas actif ou est temporairement en pause");
+    }
+
     const newDeadline = new Date(Date.now() + 45 * 60 * 1000);
 
     await db.transaction(async (tx) => {
-      await tx
+      const updated = await tx
         .update(schema.orders)
         .set({
           houseId: params.newHouseId,
           acceptanceDeadlineAt: newDeadline,
           updatedAt: new Date(),
         })
-        .where(eq(schema.orders.id, params.orderId));
+        .where(
+          and(
+            eq(schema.orders.id, params.orderId),
+            eq(schema.orders.status, "created")
+          )
+        )
+        .returning({ id: schema.orders.id });
+
+      if (updated.length === 0) {
+        throw new Error("La commande ne peut plus être réassignée (statut modifié)");
+      }
 
       await tx.insert(schema.orderEvents).values({
         orderId: params.orderId,

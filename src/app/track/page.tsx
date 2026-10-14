@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/services/auth";
 import { getCustomerOrdersList } from "@/services/order";
 import { Navbar } from "@/components/home/header/navbar";
 import { Footer } from "@/components/home/footer/footer";
 import { TrackLookupCard } from "@/components/track/track-lookup-card";
 
-export const metadata: Metadata = {
-  title: "Suivre une commande | SafiHub Bukavu",
-  description:
-    "Suivez l'état de votre commande de pressing en temps réel à Bukavu grâce à votre lien ou jeton de suivi.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("track");
+  return {
+    title: `${t("searchTitle")} | SafiHub Bukavu`,
+    description: t("searchSubtitle"),
+  };
+}
 
 export default async function TrackLookupPage() {
   const user = await getCurrentUser();

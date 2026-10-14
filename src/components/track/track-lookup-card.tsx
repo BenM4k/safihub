@@ -60,20 +60,26 @@ export function TrackLookupCard({ recentOrders = [] }: TrackLookupCardProps) {
 
           <form onSubmit={handleSubmit} className="w-full space-y-3">
             <div className="relative">
+              <label htmlFor="track-token-input" className="sr-only">
+                {t("inputPlaceholder")}
+              </label>
               <input
+                id="track-token-input"
                 type="text"
                 value={tokenInput}
                 onChange={(e) => {
                   setTokenInput(e.target.value);
                   if (error) setError(null);
                 }}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? "track-token-error" : undefined}
                 placeholder={t("inputPlaceholder")}
                 className="w-full px-4 py-3.5 rounded-2xl border border-slate-300 bg-slate-50/50 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
               />
             </div>
 
             {error && (
-              <p className="text-xs text-rose-600 font-medium text-left px-1">
+              <p id="track-token-error" className="text-xs text-rose-600 font-medium text-left px-1">
                 {error}
               </p>
             )}
@@ -118,7 +124,7 @@ export function TrackLookupCard({ recentOrders = [] }: TrackLookupCardProps) {
                       {ord.code} • {ord.houseName}
                     </p>
                     <p className="text-[11px] text-slate-400">
-                      {ord.totalDue.toLocaleString("fr-FR")} CDF
+                      {ord.totalDue.toLocaleString("fr-FR")} {ord.currency}
                     </p>
                   </div>
                   <Button asChild variant="outline" size="sm" className="rounded-lg text-xs font-semibold h-8 shrink-0">

@@ -78,7 +78,6 @@ export function PreferencesWidget() {
       {isOpen && (
         <div
           role="dialog"
-          aria-modal="true"
           aria-label={t("title")}
           className="absolute bottom-16 right-0 mb-2 w-[calc(100vw-2rem)] sm:w-[380px] max-h-[min(82vh,680px)] rounded-3xl bg-white dark:bg-[#101828] border border-slate-200/90 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden transition-all animate-in fade-in zoom-in-95"
         >

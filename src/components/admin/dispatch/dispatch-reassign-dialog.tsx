@@ -33,6 +33,13 @@ export function DispatchReassignDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function handleClose() {
+    setSelectedHouseId("");
+    setReason("");
+    setError(null);
+    onClose();
+  }
+
   if (!isOpen) return null;
 
   const eligibleHouses = availablePressings.filter((h) => h.id !== currentHouseId);
@@ -57,10 +64,8 @@ export function DispatchReassignDialog({
     if (!res.ok) {
       setError(res.error);
     } else {
-      setSelectedHouseId("");
-      setReason("");
+      handleClose();
       if (onSuccess) onSuccess();
-      onClose();
     }
   }
 
@@ -153,7 +158,7 @@ export function DispatchReassignDialog({
             type="button"
             variant="outline"
             size="sm"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isSubmitting}
             className="text-xs min-h-[40px] px-4 border-border-strong hover:bg-muted text-foreground font-display"
           >

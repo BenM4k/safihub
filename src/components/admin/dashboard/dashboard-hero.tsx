@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Plus } from "lucide-react";
-import { DateRangeFilter } from "./date-range-filter";
 
 interface DashboardHeroProps {
   userName?: string;
@@ -23,7 +22,6 @@ export async function DashboardHero({ userName }: DashboardHeroProps) {
       </div>
 
       <div className="flex items-center gap-3 self-start sm:self-auto">
-        <DateRangeFilter defaultValue="7d" />
 
         <Link
           href="/admin/orders/new"

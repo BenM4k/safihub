@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   type UserPreferences,
   type ThemeMode,
@@ -38,12 +38,19 @@ function applyDomClasses(prefs: UserPreferences) {
 
   // 5. Reading Focus
   root.classList.toggle("reading-focus", prefs.readingFocus);
+
+  // 6. Easier to see
+  root.classList.toggle("easier-to-see", prefs.easierToSee);
 }
 
 export function usePreferences() {
   const [preferences, setPreferences] =
     useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [isLoaded, setIsLoaded] = useState(false);
+  const priorEasierToSeeRef = useRef<{
+    textSize: TextSize;
+    highContrast: boolean;
+  } | null>(null);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -133,12 +140,27 @@ export function usePreferences() {
 
   const toggleEasierToSee = useCallback(() => {
     const next = !preferences.easierToSee;
-    savePreferences({
-      ...preferences,
-      easierToSee: next,
-      textSize: next ? "large" : "default",
-      highContrast: next,
-    });
+    if (next) {
+      priorEasierToSeeRef.current = {
+        textSize: preferences.textSize,
+        highContrast: preferences.highContrast,
+      };
+      savePreferences({
+        ...preferences,
+        easierToSee: true,
+        textSize: "large",
+        highContrast: true,
+      });
+    } else {
+      const prior = priorEasierToSeeRef.current;
+      priorEasierToSeeRef.current = null;
+      savePreferences({
+        ...preferences,
+        easierToSee: false,
+        textSize: prior ? prior.textSize : "default",
+        highContrast: prior ? prior.highContrast : false,
+      });
+    }
   }, [preferences, savePreferences]);
 
   const updateCookieConsent = useCallback(
@@ -156,6 +178,7 @@ export function usePreferences() {
   );
 
   const resetAll = useCallback(() => {
+    priorEasierToSeeRef.current = null;
     savePreferences(DEFAULT_PREFERENCES);
   }, [savePreferences]);
 

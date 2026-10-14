@@ -53,14 +53,14 @@ describe("dispatch-urgency utility", () => {
     expect(formatElapsedTime(days1hours3, baseTime)).toBe("1 j 3 h");
   });
 
-  it("classifies urgency levels correctly with non-color labels", () => {
+  it("classifies urgency levels and overdueMinutes correctly", () => {
     // < 45 min -> neutral
     const created30MinAgo = new Date(baseTime.getTime() - 30 * 60 * 1000);
     const u30 = getUrgencyInfo(created30MinAgo, baseTime);
     expect(u30.level).toBe("neutral");
     expect(u30.isOverdue).toBe(false);
     expect(u30.isCritical).toBe(false);
-    expect(u30.label).toBe("Dans les délais");
+    expect(u30.overdueMinutes).toBe(0);
 
     // 45 - 90 min -> warning (amber)
     const created52MinAgo = new Date(baseTime.getTime() - 52 * 60 * 1000);
@@ -68,13 +68,14 @@ describe("dispatch-urgency utility", () => {
     expect(u52.level).toBe("warning");
     expect(u52.isOverdue).toBe(true);
     expect(u52.isCritical).toBe(false);
-    expect(u52.label).toBe("Délai dépassé (+7 min)");
+    expect(u52.overdueMinutes).toBe(7);
 
     // Exactly 45 min
     const created45MinAgo = new Date(baseTime.getTime() - HOUSE_ACCEPTANCE_WARNING_MINUTES * 60 * 1000);
     const u45 = getUrgencyInfo(created45MinAgo, baseTime);
     expect(u45.level).toBe("warning");
     expect(u45.isOverdue).toBe(true);
+    expect(u45.overdueMinutes).toBe(0);
 
     // > 90 min -> critical (red)
     const created100MinAgo = new Date(baseTime.getTime() - 100 * 60 * 1000);
@@ -82,7 +83,7 @@ describe("dispatch-urgency utility", () => {
     expect(u100.level).toBe("critical");
     expect(u100.isOverdue).toBe(true);
     expect(u100.isCritical).toBe(true);
-    expect(u100.label).toBe("Critique (+55 min)");
+    expect(u100.overdueMinutes).toBe(55);
   });
 
   it("formats CDF currency in French style with space thousands separator", () => {

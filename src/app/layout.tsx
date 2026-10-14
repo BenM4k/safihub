@@ -36,7 +36,7 @@ export default async function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("safihub_theme");var p=localStorage.getItem("safihub_preferences");var d=t==="dark"||((!t||t==="system")&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.documentElement.classList.add("dark");if(p){var j=JSON.parse(p);if(j.textSize&&j.textSize!=="default")document.documentElement.classList.add("text-size-"+j.textSize);if(j.highContrast)document.documentElement.classList.add("high-contrast");if(j.calmMotion)document.documentElement.classList.add("reduce-motion");if(j.readingFocus)document.documentElement.classList.add("reading-focus");}}catch(e){}})();`,
+            __html: `(function(){try{var p=localStorage.getItem("safihub_preferences");var j=p?JSON.parse(p):null;var t=(j&&j.theme)||localStorage.getItem("safihub_theme")||"system";var d=t==="dark"||((!t||t==="system")&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.documentElement.classList.add("dark");if(j){if(j.textSize&&j.textSize!=="default")document.documentElement.classList.add("text-size-"+j.textSize);if(j.highContrast)document.documentElement.classList.add("high-contrast");if(j.calmMotion)document.documentElement.classList.add("reduce-motion");if(j.readingFocus)document.documentElement.classList.add("reading-focus");if(j.easierToSee)document.documentElement.classList.add("easier-to-see");}}catch(e){}})();`,
           }}
         />
       </head>

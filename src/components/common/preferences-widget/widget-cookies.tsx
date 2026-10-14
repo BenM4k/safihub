@@ -92,7 +92,7 @@ export function WidgetCookies({
           {/* 2. Analytics Cookies */}
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200/50 dark:border-white/5">
             <div className="flex flex-col min-w-0 pr-2">
-              <span className="text-xs font-semibold text-heading">
+              <span id="cookie-analytics-title" className="text-xs font-semibold text-heading">
                 {t("analyticsCookies")}
               </span>
               <span className="text-[10px] text-muted-foreground leading-tight mt-0.5">
@@ -102,6 +102,8 @@ export function WidgetCookies({
             <button
               type="button"
               role="switch"
+              id="cookie-analytics-switch"
+              aria-labelledby="cookie-analytics-title"
               aria-checked={cookieConsent.analytics}
               onClick={handleToggleAnalytics}
               className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
@@ -121,7 +123,7 @@ export function WidgetCookies({
           {/* 3. Preferences Cookies */}
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200/50 dark:border-white/5">
             <div className="flex flex-col min-w-0 pr-2">
-              <span className="text-xs font-semibold text-heading">
+              <span id="cookie-preferences-title" className="text-xs font-semibold text-heading">
                 {t("preferencesCookies")}
               </span>
               <span className="text-[10px] text-muted-foreground leading-tight mt-0.5">
@@ -131,6 +133,8 @@ export function WidgetCookies({
             <button
               type="button"
               role="switch"
+              id="cookie-preferences-switch"
+              aria-labelledby="cookie-preferences-title"
               aria-checked={cookieConsent.preferences}
               onClick={handleTogglePreferences}
               className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${

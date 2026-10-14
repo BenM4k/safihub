@@ -25,21 +25,30 @@ export function OrderDetailsTimeline({
   const t = useTranslations("admin.orders");
   const [noteText, setNoteText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleAddNote(e: React.FormEvent) {
     e.preventDefault();
     if (!noteText.trim()) return;
     setIsSubmitting(true);
+    setError(null);
 
-    const fd = new FormData();
-    fd.append("orderId", orderId);
-    fd.append("note", noteText.trim());
+    try {
+      const fd = new FormData();
+      fd.append("orderId", orderId);
+      fd.append("note", noteText.trim());
 
-    const res = await addOrderTimelineNoteAction(fd);
-    setIsSubmitting(false);
-    if (res.ok) {
-      setNoteText("");
-      onEventAdded();
+      const res = await addOrderTimelineNoteAction(fd);
+      if (res.ok) {
+        setNoteText("");
+        onEventAdded();
+      } else {
+        setError(res.error || "Échec de l'ajout de la note");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -98,6 +107,11 @@ export function OrderDetailsTimeline({
 
       {/* Note form */}
       <form onSubmit={handleAddNote} className="space-y-2 pt-2">
+        {error && (
+          <div className="p-2 text-xs bg-destructive-light border border-destructive/20 text-destructive rounded-lg">
+            {error}
+          </div>
+        )}
         <Textarea
           value={noteText}
           onChange={(e) => setNoteText(e.target.value)}

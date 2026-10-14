@@ -21,17 +21,17 @@ export default async function AdminOrdersPage() {
         </div>
         <div className="space-y-1">
           <h2 className="text-base font-bold text-heading font-display">
-            Erreur lors du chargement des commandes
+            {t("errorLoadingOrders")}
           </h2>
           <p className="text-xs text-destructive">{ordersRes.error}</p>
         </div>
         <div>
-          <Link href="/admin/orders">
-            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary-hover text-xs min-h-[40px] px-4">
+          <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary-hover text-xs min-h-[40px] px-4">
+            <Link href="/admin/orders">
               <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-              Réessayer
-            </Button>
-          </Link>
+              {t("retryOrders")}
+            </Link>
+          </Button>
         </div>
       </div>
     );
@@ -56,12 +56,12 @@ export default async function AdminOrdersPage() {
         </div>
 
         {/* Single Primary Button: Nouvelle commande */}
-        <Link href="/admin/orders/new" className="self-start sm:self-auto">
-          <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary-hover font-semibold text-xs px-4 py-2 gap-2 shadow-sm hover:shadow-md transition-all cursor-pointer">
+        <Button asChild size="sm" className="self-start sm:self-auto bg-primary text-primary-foreground hover:bg-primary-hover font-semibold text-xs px-4 py-2 gap-2 shadow-sm hover:shadow-md transition-all cursor-pointer">
+          <Link href="/admin/orders/new">
             <PlusCircle className="size-4" />
             <span>{t("newOrderBtn")}</span>
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       {/* 2. Client Table & Workflows */}

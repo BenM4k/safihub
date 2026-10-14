@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/services/auth";
 import { Navbar } from "@/components/home/header/navbar";
 import { Footer } from "@/components/home/footer/footer";
@@ -18,13 +20,17 @@ interface TrackOrderPageProps {
   params: Promise<{ token: string }>;
 }
 
-export const metadata = {
-  title: "Suivi de commande — SafiHub",
-  description: "Suivez l'état de votre commande de pressing en direct sans connexion.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("track");
+  return {
+    title: `${t("title")} — SafiHub`,
+    description: t("searchSubtitle"),
+  };
+}
 
 export default async function TrackOrderPage({ params }: TrackOrderPageProps) {
   const { token } = await params;
+  const t = await getTranslations("track");
   const user = await getCurrentUser();
 
   const res = await getPublicTrackingOrder(token);
@@ -51,10 +57,10 @@ export default async function TrackOrderPage({ params }: TrackOrderPageProps) {
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
             >
               <ArrowLeft className="size-3.5" />
-              <span>Autre recherche de suivi</span>
+              <span>{t("otherLookup")}</span>
             </Link>
             <span className="text-xs text-slate-400 font-medium">
-              Lien de suivi invité sécurisé
+              {t("guestTrackingBadge")}
             </span>
           </div>
 

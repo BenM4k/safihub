@@ -15,7 +15,7 @@ export async function PilotSuccessSection({ metrics }: PilotSuccessSectionProps)
       id: "orders_per_week",
       metric: t("ordersPerWeek"),
       formula: t("ordersPerWeekDesc"),
-      currentDisplay: `${metrics.ordersPerWeek} cmd / sem`,
+      currentDisplay: t("ordersPerWeekUnit", { count: metrics.ordersPerWeek }),
       targetDisplay: t("ordersPerWeekTarget"),
       progressPercent: Math.min(100, Math.round((metrics.ordersPerWeek / 20) * 100)),
       status: metrics.ordersPerWeek >= 20 ? "met" : metrics.ordersPerWeek >= 10 ? "at-risk" : "failing",

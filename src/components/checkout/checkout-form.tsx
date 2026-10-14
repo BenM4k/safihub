@@ -291,15 +291,15 @@ export function CheckoutForm({
 
             <div className="space-y-2 text-xs sm:text-sm">
               <div className="flex justify-between text-slate-600">
-                <span>Sous-total ({cart.items.reduce((a, b) => a + b.quantity, 0)} articles)</span>
+                <span>{t("subtotalWithCount", { count: cart.items.reduce((a, b) => a + b.quantity, 0) })}</span>
                 <span className="font-semibold text-slate-900">{subtotalCdf.toLocaleString("fr-FR")} CDF</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Frais de livraison</span>
+                <span>{t("deliveryFeeLabel")}</span>
                 <span className="font-semibold text-slate-900">{deliveryFeeCdf.toLocaleString("fr-FR")} CDF</span>
               </div>
               <div className="pt-3 border-t border-slate-100 flex justify-between text-sm sm:text-base font-black text-slate-900">
-                <span>Total à payer à la livraison</span>
+                <span>{t("amountDueOnDelivery")}</span>
                 <span className="text-primary text-base sm:text-lg">{totalDue.toLocaleString("fr-FR")} CDF</span>
               </div>
             </div>

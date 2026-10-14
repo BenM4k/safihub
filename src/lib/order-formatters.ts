@@ -376,22 +376,32 @@ export function exportOrdersToCSV(
     "Statut",
   ];
 
+  function sanitizeCsvCell(value: string | number | null | undefined): string {
+    if (value === null || value === undefined) return '""';
+    if (typeof value === "number") return String(value);
+    let str = String(value);
+    if (/^[=+\-@]/.test(str)) {
+      str = `'${str}`;
+    }
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+
   const rows = orders.map((o) => {
     const cust = formatCustomerDisplay(o.customerName, o.customerPhone);
     const statusCfg = getOrderStatusConfig(o.status);
     const dateStr = new Date(o.createdAt).toISOString();
 
     return [
-      `"${formatOrderReference(o.code, o.id).replace(/"/g, '""')}"`,
-      `"${o.id}"`,
-      `"${(cust.displayName || "Client").replace(/"/g, '""')}"`,
-      `"${cust.formattedPhone.replace(/"/g, '""')}"`,
-      `"${(o.houseName || "—").replace(/"/g, '""')}"`,
-      `"${dateStr}"`,
-      `"${o.source}"`,
+      sanitizeCsvCell(formatOrderReference(o.code, o.id)),
+      sanitizeCsvCell(o.id),
+      sanitizeCsvCell(cust.displayName || "Client"),
+      sanitizeCsvCell(cust.formattedPhone),
+      sanitizeCsvCell(o.houseName || "—"),
+      sanitizeCsvCell(dateStr),
+      sanitizeCsvCell(o.source),
       o.totalDue,
-      `"${o.currency}"`,
-      `"${statusCfg.label.replace(/"/g, '""')}"`,
+      sanitizeCsvCell(o.currency),
+      sanitizeCsvCell(statusCfg.label),
     ].join(",");
   });
 
