@@ -22,6 +22,7 @@ import {
   Sliders,
   LogOut,
   ExternalLink,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logoutAction } from "@/actions/auth.actions";
@@ -86,6 +87,7 @@ export function AdminSidebar({
 }) {
   const pathname = usePathname();
   const t = useTranslations("admin.nav");
+  const tAuth = useTranslations("auth");
 
   return (
     <aside
@@ -100,12 +102,13 @@ export function AdminSidebar({
           <div className="size-8 rounded-xl bg-primary text-white flex items-center justify-center font-black text-sm shadow-xs">
             S
           </div>
-          <div>
+          <div className="flex flex-col min-w-0">
             <span className="font-display font-black text-base tracking-tight text-heading block leading-none">
               SafiHub
             </span>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mt-0.5">
-              Admin Ops
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success-light text-[#027A48] border border-[#A6F4C5] mt-1 w-fit">
+              <ShieldCheck className="size-3 shrink-0" />
+              <span>{t("adminClearance")}</span>
             </span>
           </div>
         </div>
@@ -158,7 +161,7 @@ export function AdminSidebar({
           href="/"
           className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
         >
-          <span>Vue Client</span>
+          <span>{t("clientView")}</span>
           <ExternalLink className="size-3.5 text-slate-400" />
         </Link>
         <form action={logoutAction} className="w-full">
@@ -169,7 +172,7 @@ export function AdminSidebar({
             className="w-full justify-start text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3"
           >
             <LogOut className="size-3.5 mr-2" />
-            <span>Déconnexion</span>
+            <span>{tAuth("logout")}</span>
           </Button>
         </form>
       </div>

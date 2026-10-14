@@ -9,7 +9,9 @@ import {
   adminRejectFirstOrder,
   createManualAdminOrder,
   executeAdminOnBehalfAction,
+  getAdminOrderDetail,
 } from "@/services/admin";
+import type { OrderDetailRecord, OrderEventRecord, OrderItemRecord } from "@/dal";
 import type { ApprovalMethod, OrderStatus } from "@/services/db/schema";
 
 export async function createManualOrderAction(params: {
@@ -147,3 +149,17 @@ export async function rejectFirstOrderAction(
 
   return res;
 }
+
+export async function getAdminOrderDetailAction(orderId: string): Promise<
+  Result<{
+    order: OrderDetailRecord;
+    items: OrderItemRecord[];
+    events: OrderEventRecord[];
+  }>
+> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err(auth.error);
+
+  return getAdminOrderDetail(orderId);
+}
+

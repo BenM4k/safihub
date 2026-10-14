@@ -1,34 +1,45 @@
 import { getTranslations } from "next-intl/server";
+import { guardAdminRoute } from "@/services/auth";
 import { getAdminMetricsSummary } from "@/services/admin";
-import { MetricsGrid } from "@/components/admin/dashboard/metrics-grid";
-import { SuccessCriteriaGrid } from "@/components/admin/dashboard/success-criteria-grid";
+import { DashboardHero } from "@/components/admin/dashboard/dashboard-hero";
+import { OperationalAlerts } from "@/components/admin/dashboard/operational-alerts";
+import { PlatformOverview } from "@/components/admin/dashboard/platform-overview";
+import { PilotSuccessSection } from "@/components/admin/dashboard/pilot-success";
+import { DashboardOperationsSection } from "@/components/admin/dashboard/operations";
 import { QuickActions } from "@/components/admin/dashboard/quick-actions";
 
 export default async function AdminPage() {
   const t = await getTranslations("admin.dashboard");
+  const authCtx = await guardAdminRoute();
   const metricsResult = await getAdminMetricsSummary();
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-heading tracking-tight">
-          {t("title")}
-        </h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          {t("subtitle")}
-        </p>
-      </div>
+    <div className="space-y-6 pb-12">
+      {/* 1. Welcome Header with Date Range & New Order */}
+      <DashboardHero userName={authCtx.user?.name} />
 
       {!metricsResult.ok ? (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-destructive">
+        <div className="p-5 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-700 shadow-sm">
           {t("metricsError", { error: metricsResult.error })}
         </div>
       ) : (
         <>
-          <SuccessCriteriaGrid metrics={metricsResult.value} />
-          <MetricsGrid metrics={metricsResult.value} />
+          {/* 2. Urgent Attention Section (Dominant Awaiting Acceptance Card + Stat Chips) */}
+          <OperationalAlerts metrics={metricsResult.value} />
+
+          {/* 3. Activity Overview (4 KPI Cards with Sparklines & Trend) */}
+          <PlatformOverview metrics={metricsResult.value} />
+
+          {/* 4. Pilot Success Centerpiece (Single-Card Collapsible Scorecard) */}
+          <PilotSuccessSection metrics={metricsResult.value} />
+
+          {/* 5. Live Operations (Recent Orders Table + Courier Fleet Status) */}
+          <DashboardOperationsSection />
+
+          {/* 6. Quick Shortcuts (2x3 Equal Grid) */}
+          <QuickActions />
         </>
       )}
-      <QuickActions />
     </div>
   );
 }

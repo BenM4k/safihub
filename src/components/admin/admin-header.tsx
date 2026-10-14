@@ -1,36 +1,38 @@
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { NotificationsInboxWidget } from "@/components/notifications/notifications-inbox-widget";
 import { AdminMobileNav } from "./admin-mobile-nav";
 
 export async function AdminHeader() {
+  const t = await getTranslations("admin.nav");
+  const tDash = await getTranslations("admin.dashboard");
+
   return (
     <header className="w-full bg-white border-b border-border shadow-xs sticky top-0 z-30">
       <div className="w-full px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <AdminMobileNav />
-          <Link
-            href="/admin"
-            className="flex items-center gap-2.5 font-display font-bold text-lg text-heading tracking-tight"
+
+          {/* System status dot */}
+          <div
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs text-slate-600"
+            title={tDash("systemStatusTitle")}
           >
-            <div className="size-8 rounded-lg bg-primary text-white flex items-center justify-center font-black text-sm">
-              S
-            </div>
-            <span>SafiHub Admin</span>
-          </Link>
-          <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <ShieldCheck className="size-3.5" />
-            <span>Admin Clearance</span>
-          </span>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="font-medium">{tDash("systemLive")}</span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <NotificationsInboxWidget />
           <Link
             href="/"
-            className="text-xs font-semibold text-muted-foreground hover:text-heading px-3 py-1.5 rounded-md hover:bg-slate-50 transition"
+            className="text-xs font-semibold text-muted-foreground hover:text-heading px-3 py-1.5 rounded-md hover:bg-slate-100/80 transition"
           >
-            ← Retour au site
+            ← {t("backToSite")}
           </Link>
         </div>
       </div>

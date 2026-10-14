@@ -5,35 +5,85 @@ import {
   assignMission,
   getCouriers,
   getEligibleCouriersForZones,
+  getHouses,
   getMissionById,
   getMissions,
+  getOrderRelanceEvents,
   getOrders,
+  logPressingRelance,
+  reassignOrderPressing,
   type CourierRecord,
   type MissionRecord,
-  type OrderListItemRecord,
 } from "@/dal";
+import {
+  enrichOrders,
+  type EnrichedDispatchOrder,
+  type FollowUpChannel,
+  type FollowUpOutcome,
+  type RelanceEventSummary,
+} from "@/lib/dispatch-grouping";
 
 export interface MissionWithEligibleCouriers extends MissionRecord {
   eligibleCouriers: CourierRecord[];
 }
 
+export interface CourierFleetStats {
+  total: number;
+  available: number;
+  onMission: number;
+  offline: number;
+}
+
+export interface AvailablePressingOption {
+  id: string;
+  name: string;
+  neighborhoodName?: string | null;
+  contactPhone?: string | null;
+}
+
 export interface DispatchDashboardData {
-  ordersAwaitingAcceptance: OrderListItemRecord[];
+  ordersAwaitingAcceptance: EnrichedDispatchOrder[];
   unassignedMissions: MissionWithEligibleCouriers[];
   allCouriers: CourierRecord[];
+  courierStats: CourierFleetStats;
+  availablePressings: AvailablePressingOption[];
 }
 
 export async function getAdminDispatchData(): Promise<
   Result<DispatchDashboardData>
 > {
   try {
-    const [ordersCreated, allMissions, allCouriers] = await Promise.all([
-      getOrders({ status: "created", limit: 50 }),
-      getMissions({ status: "unassigned", limit: 50 }),
+    const [
+      ordersCreated,
+      allMissions,
+      allCouriers,
+      allHouses,
+      assignedMissions,
+      acceptedMissions,
+      inProgressMissions,
+    ] = await Promise.all([
+      getOrders({ status: "created", limit: 100 }),
+      getMissions({ status: "unassigned", limit: 100 }),
       getCouriers(),
+      getHouses(),
+      getMissions({ status: "assigned", limit: 200 }),
+      getMissions({ status: "accepted", limit: 200 }),
+      getMissions({ status: "in_progress", limit: 200 }),
     ]);
 
-    // For each mission, evaluate AC 20 eligible couriers
+    // Retrieve relance events for pending orders
+    const orderIds = ordersCreated.map((o) => o.id);
+    const relanceList = await getOrderRelanceEvents(orderIds);
+    const relancesMap = new Map<string, RelanceEventSummary[]>();
+    for (const r of relanceList) {
+      const existing = relancesMap.get(r.orderId) || [];
+      existing.push(r);
+      relancesMap.set(r.orderId, existing);
+    }
+
+    const enrichedOrders = enrichOrders(ordersCreated, relancesMap, new Date());
+
+    // Evaluate AC 20 eligible couriers for unassigned missions
     const unassignedMissions: MissionWithEligibleCouriers[] = [];
     for (const mission of allMissions) {
       let eligibleCouriers: CourierRecord[] = [];
@@ -49,14 +99,87 @@ export async function getAdminDispatchData(): Promise<
       });
     }
 
+    // Compute fleet courier status breakdown
+    const activeCourierIds = new Set<string>();
+    for (const m of [...assignedMissions, ...acceptedMissions, ...inProgressMissions]) {
+      if (m.courierId) activeCourierIds.add(m.courierId);
+    }
+
+    let offline = 0;
+    let onMission = 0;
+    let available = 0;
+
+    for (const c of allCouriers) {
+      const isOnline = c.isActive && c.status === "active";
+      if (!isOnline) {
+        offline++;
+      } else if (activeCourierIds.has(c.userId)) {
+        onMission++;
+      } else {
+        available++;
+      }
+    }
+
+    const courierStats: CourierFleetStats = {
+      total: allCouriers.length,
+      available,
+      onMission,
+      offline,
+    };
+
+    const availablePressings: AvailablePressingOption[] = allHouses
+      .filter((h) => h.isActive && !h.isPaused)
+      .map((h) => ({
+        id: h.id,
+        name: h.name,
+        neighborhoodName: h.neighborhoodName,
+        contactPhone: h.contactPhone,
+      }));
+
     return ok({
-      ordersAwaitingAcceptance: ordersCreated,
+      ordersAwaitingAcceptance: enrichedOrders,
       unassignedMissions,
       allCouriers,
+      courierStats,
+      availablePressings,
     });
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to load dispatch data");
   }
+}
+
+export async function logPressingFollowUp(params: {
+  orderIds: string[];
+  pressingId: string;
+  channel: FollowUpChannel;
+  outcome?: FollowUpOutcome;
+  note?: string;
+  adminId: string;
+  adminName?: string;
+}): Promise<Result<void>> {
+  try {
+    await logPressingRelance({
+      orderIds: params.orderIds,
+      pressingId: params.pressingId,
+      channel: params.channel,
+      operatorId: params.adminId,
+      operatorName: params.adminName,
+      outcome: params.outcome,
+      note: params.note,
+    });
+    return ok(undefined);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Erreur lors de l'enregistrement de la relance");
+  }
+}
+
+export async function reassignOrderPressingService(params: {
+  orderId: string;
+  newHouseId: string;
+  adminId: string;
+  reason?: string;
+}): Promise<Result<void>> {
+  return reassignOrderPressing(params);
 }
 
 export async function assignMissionToCourier(params: {

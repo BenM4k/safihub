@@ -1,6 +1,8 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, AlertCircle } from "lucide-react";
+import { Navbar } from "@/components/home/header/navbar";
+import { Footer } from "@/components/home/footer/footer";
 import { getCurrentUser } from "@/services/auth";
 import { getCustomerOrderDetail, ACTIVE_ORDER_STATUSES } from "@/services/order";
 import { getOrderPhotosWithSignedUrlsService } from "@/services/storage";
@@ -44,9 +46,11 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
     (ACTIVE_ORDER_STATUSES as string[]).includes(order.status) || order.status === "delivered";
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-10">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-slate-50/50">
+      <Navbar variant="solid" user={user} />
+      <main className="flex-1 flex flex-col py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col space-y-6">
+          <div className="flex items-center justify-between">
           <Link
             href="/orders"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
@@ -110,6 +114,8 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           </div>
         </div>
       </div>
-    </div>
-  );
+    </main>
+    <Footer />
+  </div>
+);
 }

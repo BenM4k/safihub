@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fromBukavuDateTime } from "@/services/availability";
 import { placeCustomerOrder } from "../customer-order.service";
 import { adminConfirmFirstOrder, adminRejectFirstOrder } from "@/services/admin/order.service";
@@ -39,7 +39,13 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
   };
 
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(fromBukavuDateTime("2026-10-12", "06:00"));
     vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("creates order directly as 'created' when first-order screening is OFF (default)", async () => {

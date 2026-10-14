@@ -57,29 +57,31 @@ export function OrdersListView({
 
   if (orders.length === 0) {
     return (
-      <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 max-w-lg mx-auto">
-        <div className="size-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
-          <ShoppingBag className="size-8" />
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[calc(100dvh-18rem)] py-12 px-4 text-center">
+        <div className="p-8 sm:p-12 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs max-w-md w-full flex flex-col items-center">
+          <div className="size-16 sm:size-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-2xs">
+            <ShoppingBag className="size-8 sm:size-10" />
+          </div>
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 mb-2">
+            {t("emptyActive")}
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 mb-6 max-w-xs leading-relaxed">
+            {t("empty")}
+          </p>
+          <Link
+            href="/houses"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-hover transition shadow-sm w-full sm:w-auto"
+          >
+            <span>{t("discoverHouses")}</span>
+            <ArrowRight className="size-4" />
+          </Link>
         </div>
-        <h3 className="text-xl font-bold text-slate-900 mb-2">
-          {t("emptyActive")}
-        </h3>
-        <p className="text-xs sm:text-sm text-slate-500 mb-6">
-          {t("empty")}
-        </p>
-        <Link
-          href="/houses"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-hover transition shadow-sm"
-        >
-          <span>{t("discoverHouses")}</span>
-          <ArrowRight className="size-4" />
-        </Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex-1 flex flex-col">
       {/* Segmented Filter Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
         <button
@@ -111,8 +113,13 @@ export function OrdersListView({
 
       {/* Orders List / Empty State */}
       {displayedList.length === 0 ? (
-        <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 text-sm">
-          {activeTab === "active" ? t("emptyActive") : t("emptyPast")}
+        <div className="p-12 sm:p-16 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col items-center justify-center min-h-[320px]">
+          <div className="size-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
+            <ShoppingBag className="size-7" />
+          </div>
+          <p className="text-sm font-semibold text-slate-700">
+            {activeTab === "active" ? t("emptyActive") : t("emptyPast")}
+          </p>
         </div>
       ) : (
         <div className="space-y-3.5">

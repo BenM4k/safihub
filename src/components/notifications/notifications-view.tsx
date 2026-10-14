@@ -54,7 +54,7 @@ export function NotificationsView({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto py-6 px-4 sm:px-6">
+    <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
@@ -81,11 +81,11 @@ export function NotificationsView({
       </div>
 
       {/* Filter tabs */}
-      <div className="flex items-center gap-2 py-4">
+      <div className="flex items-center gap-2 py-2">
         <button
           type="button"
           onClick={() => setFilter("all")}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
             filter === "all"
               ? "bg-primary text-white"
               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -96,7 +96,7 @@ export function NotificationsView({
         <button
           type="button"
           onClick={() => setFilter("unread")}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
             filter === "unread"
               ? "bg-primary text-white"
               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -106,17 +106,21 @@ export function NotificationsView({
         </button>
       </div>
 
-      {/* List */}
-      <div className="space-y-3">
+      {/* List / Empty State */}
+      <div className="flex-1 flex flex-col space-y-3">
         {filteredItems.length === 0 ? (
-          <div className="py-16 text-center rounded-2xl border border-dashed border-slate-200 bg-white">
-            <Inbox className="size-10 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-sm font-semibold text-slate-800">
-              {t("emptyTitle")}
-            </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-              {t("emptyDescription")}
-            </p>
+          <div className="flex-1 flex flex-col items-center justify-center min-h-[calc(100dvh-22rem)] py-12 px-4 text-center">
+            <div className="p-8 sm:p-12 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs max-w-md w-full flex flex-col items-center">
+              <div className="size-16 sm:size-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-2xs">
+                <Inbox className="size-8 sm:size-10" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 mb-2">
+                {t("emptyTitle")}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 max-w-xs leading-relaxed">
+                {t("emptyDescription")}
+              </p>
+            </div>
           </div>
         ) : (
           filteredItems.map((item) => {

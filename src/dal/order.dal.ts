@@ -5,6 +5,11 @@ import { toBukavuDateTime, fromBukavuDateTime } from "@/services/availability/bu
 import { ok, err, type Result } from "@/lib/result";
 import type { ApprovalMethod, OrderSource, OrderStatus } from "@/services/db/schema";
 import type { orderEventTypeEnum } from "@/services/db/schema";
+import type {
+  FollowUpChannel,
+  FollowUpOutcome,
+  RelanceEventSummary,
+} from "@/lib/dispatch-grouping";
 
 export type OrderEventType = (typeof orderEventTypeEnum.enumValues)[number];
 
@@ -149,9 +154,14 @@ export async function getOrders(filters?: {
       eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
     )
     .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(schema.orders.createdAt))
-    .limit(filters?.limit ?? 50)
-    .offset(filters?.offset ?? 0);
+    .orderBy(desc(schema.orders.createdAt));
+
+  if (filters?.limit !== undefined) {
+    return query.limit(filters.limit).offset(filters?.offset ?? 0);
+  }
+  if (filters?.offset !== undefined) {
+    return query.offset(filters.offset);
+  }
 
   return query;
 }
@@ -1212,4 +1222,210 @@ export async function createDisputeTransaction(params: {
     return { disputeId };
   });
 }
+
+/**
+ * Retrieves pressing relance note events for the given orders.
+ */
+export async function getOrderRelanceEvents(
+  orderIds: string[]
+): Promise<RelanceEventSummary[]> {
+  if (orderIds.length === 0) return [];
+
+  const rows = await db
+    .select({
+      id: schema.orderEvents.id,
+      orderId: schema.orderEvents.orderId,
+      actorId: schema.orderEvents.actorId,
+      actorName: schema.user.name,
+      note: schema.orderEvents.note,
+      payload: schema.orderEvents.payload,
+      createdAt: schema.orderEvents.createdAt,
+    })
+    .from(schema.orderEvents)
+    .leftJoin(schema.user, eq(schema.orderEvents.actorId, schema.user.id))
+    .where(
+      and(
+        inArray(schema.orderEvents.orderId, orderIds),
+        eq(schema.orderEvents.type, "note")
+      )
+    )
+    .orderBy(desc(schema.orderEvents.createdAt));
+
+  const results: RelanceEventSummary[] = [];
+  for (const r of rows) {
+    const payload = r.payload as Record<string, unknown> | null;
+    if (payload?.category === "pressing_relance") {
+      results.push({
+        id: r.id,
+        orderId: r.orderId,
+        channel: (payload.channel as FollowUpChannel) || "call",
+        outcome: (payload.outcome as FollowUpOutcome) || null,
+        operatorId: r.actorId,
+        operatorName: r.actorName || (payload.operatorName as string) || "Opérateur",
+        createdAt: r.createdAt,
+        note: r.note,
+      });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Inserts follow-up relance event notes for orders.
+ */
+export async function logPressingRelance(params: {
+  orderIds: string[];
+  pressingId: string;
+  channel: FollowUpChannel;
+  operatorId: string;
+  operatorName?: string;
+  outcome?: FollowUpOutcome;
+  note?: string;
+}): Promise<void> {
+  if (params.orderIds.length === 0) return;
+
+  const orders = await db
+    .select({
+      id: schema.orders.id,
+      houseId: schema.orders.houseId,
+      status: schema.orders.status,
+    })
+    .from(schema.orders)
+    .where(inArray(schema.orders.id, params.orderIds));
+
+  if (orders.length !== params.orderIds.length) {
+    throw new Error("Une ou plusieurs commandes sont introuvables");
+  }
+
+  const invalid = orders.find(
+    (o) => o.houseId !== params.pressingId || o.status !== "created"
+  );
+  if (invalid) {
+    throw new Error(
+      "Toutes les commandes doivent appartenir au pressing indiqué et être en attente d'acceptation (statut 'created')"
+    );
+  }
+
+  const channelLabel = params.channel === "call" ? "Appel téléphonique" : "WhatsApp";
+  const outcomeLabel = params.outcome ? ` · Résultat: ${params.outcome}` : "";
+  const noteText = params.note || `Relance pressing (${channelLabel})${outcomeLabel}`;
+
+  const values = params.orderIds.map((orderId) => ({
+    orderId,
+    type: "note" as const,
+    actorId: params.operatorId,
+    actorRole: "admin",
+    onBehalfOfHouseId: params.pressingId,
+    recordedBy: params.operatorId,
+    note: noteText,
+    payload: {
+      category: "pressing_relance",
+      channel: params.channel,
+      outcome: params.outcome || "pending",
+      pressingId: params.pressingId,
+      orderIds: params.orderIds,
+      operatorName: params.operatorName,
+    },
+  }));
+
+  await db.insert(schema.orderEvents).values(values);
+}
+
+/**
+ * Reassigns an order awaiting acceptance to another pressing.
+ */
+export async function reassignOrderPressing(params: {
+  orderId: string;
+  newHouseId: string;
+  adminId: string;
+  reason?: string;
+}): Promise<Result<void>> {
+  try {
+    const [order] = await db
+      .select({
+        id: schema.orders.id,
+        houseId: schema.orders.houseId,
+        status: schema.orders.status,
+      })
+      .from(schema.orders)
+      .where(eq(schema.orders.id, params.orderId))
+      .limit(1);
+
+    if (!order) {
+      return err("Commande introuvable");
+    }
+
+    if (order.status !== "created") {
+      return err("Seules les commandes en attente d'acceptation peuvent être réassignées");
+    }
+
+    if (params.newHouseId === order.houseId) {
+      return err("La commande est déjà assignée à ce pressing");
+    }
+
+    const [newHouse] = await db
+      .select({
+        id: schema.houses.id,
+        name: schema.houses.name,
+        isActive: schema.houses.isActive,
+        isPaused: schema.houses.isPaused,
+      })
+      .from(schema.houses)
+      .where(eq(schema.houses.id, params.newHouseId))
+      .limit(1);
+
+    if (!newHouse) {
+      return err("Nouveau pressing partenaire introuvable");
+    }
+
+    if (!newHouse.isActive || newHouse.isPaused) {
+      return err("Le pressing partenaire sélectionné n'est pas actif ou est temporairement en pause");
+    }
+
+    const newDeadline = new Date(Date.now() + 45 * 60 * 1000);
+
+    await db.transaction(async (tx) => {
+      const updated = await tx
+        .update(schema.orders)
+        .set({
+          houseId: params.newHouseId,
+          acceptanceDeadlineAt: newDeadline,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.orders.id, params.orderId),
+            eq(schema.orders.status, "created")
+          )
+        )
+        .returning({ id: schema.orders.id });
+
+      if (updated.length === 0) {
+        throw new Error("La commande ne peut plus être réassignée (statut modifié)");
+      }
+
+      await tx.insert(schema.orderEvents).values({
+        orderId: params.orderId,
+        type: "note",
+        actorId: params.adminId,
+        actorRole: "admin",
+        recordedBy: params.adminId,
+        onBehalfOfHouseId: params.newHouseId,
+        note: `Réassigné au pressing ${newHouse.name} (${params.reason || "Relances infructueuses"})`,
+        payload: {
+          category: "pressing_reassignment",
+          previousHouseId: order.houseId,
+          newHouseId: params.newHouseId,
+          reason: params.reason || null,
+        },
+      });
+    });
+
+    return ok(undefined);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Échec de la réassignation de la commande");
+  }
+}
+
 

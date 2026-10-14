@@ -18,7 +18,7 @@ export default async function NotificationsPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       <Navbar variant="solid" user={user} />
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8">
+      <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <NotificationsView
           initialItems={items}
           initialUnreadCount={unreadCount}

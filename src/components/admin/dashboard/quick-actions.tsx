@@ -1,84 +1,97 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { PlusCircle, Send, MapPin, Building2, Sliders, Layers } from "lucide-react";
+import {
+  Send,
+  MapPin,
+  Building2,
+  Sliders,
+  Layers,
+  Wallet,
+  ChevronRight,
+} from "lucide-react";
 
 export async function QuickActions() {
   const t = await getTranslations("admin.dashboard");
 
   const actions = [
     {
-      label: "Saisie de commande manuelle",
-      desc: "Créer une commande par WhatsApp ou téléphone",
-      href: "/admin/orders/new",
-      icon: PlusCircle,
-      btnVariant: "bg-primary text-white",
-    },
-    {
-      label: "Écran de Dispatch",
-      desc: "Affecter des missions aux coursiers éligibles",
+      id: "dispatch",
+      title: t("dispatchTitle"),
+      desc: t("dispatchDesc"),
       href: "/admin/dispatch",
       icon: Send,
-      btnVariant: "bg-slate-900 text-white",
     },
     {
-      label: "Gestion de la couverture",
-      desc: "Activer ou suspendre des quartiers",
+      id: "coverage",
+      title: t("coverageTitle"),
+      desc: t("coverageDesc"),
       href: "/admin/coverage",
       icon: MapPin,
-      btnVariant: "bg-slate-100 text-heading border border-border",
     },
     {
-      label: "Pressings partenaires",
-      desc: "Configurer commissions et horaires",
+      id: "houses",
+      title: t("housesTitle"),
+      desc: t("housesDesc"),
       href: "/admin/houses",
       icon: Building2,
-      btnVariant: "bg-slate-100 text-heading border border-border",
     },
     {
-      label: "Catalogue maître",
-      desc: "Gérer articles et valider demandes",
+      id: "catalogue",
+      title: t("catalogueTitle"),
+      desc: t("catalogueDesc"),
       href: "/admin/catalogue",
       icon: Layers,
-      btnVariant: "bg-slate-100 text-heading border border-border",
     },
     {
-      label: "Paramètres & Taux du jour",
-      desc: "Ajuster le taux USD/CDF et délais",
+      id: "cash",
+      title: t("cashReconciliationTitle"),
+      desc: t("cashReconciliationDesc"),
+      href: "/admin/cash",
+      icon: Wallet,
+    },
+    {
+      id: "settings",
+      title: t("settingsTitle"),
+      desc: t("settingsDesc"),
       href: "/admin/settings",
       icon: Sliders,
-      btnVariant: "bg-slate-100 text-heading border border-border",
     },
   ];
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-border shadow-xs space-y-4">
-      <h2 className="text-base font-bold text-heading">
+    <section aria-labelledby="shortcuts-heading" className="space-y-3">
+      <h2 id="shortcuts-heading" className="text-lg font-semibold leading-6 text-slate-900">
         {t("quickShortcuts")}
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {actions.map((act, i) => {
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {actions.map((act) => {
           const Icon = act.icon;
           return (
             <Link
-              key={i}
+              key={act.id}
               href={act.href}
-              className="p-4 rounded-lg border border-border hover:border-primary/40 hover:bg-slate-50/60 transition group flex items-start gap-3.5"
+              className="p-5 rounded-xl bg-white border border-slate-300 shadow-sm hover:border-slate-400 hover:shadow-md transition-all group flex items-start gap-4 cursor-pointer"
             >
-              <div className="size-9 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition">
-                <Icon className="size-4.5" />
+              <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors shadow-2xs">
+                <Icon className="w-5 h-5" strokeWidth={1.75} />
               </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-heading group-hover:text-primary transition">
-                  {act.label}
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                    {act.title}
+                  </h3>
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all" />
                 </div>
-                <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">
                   {act.desc}
-                </div>
+                </p>
               </div>
             </Link>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
