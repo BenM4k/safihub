@@ -1,5 +1,5 @@
 import "server-only";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { getSuccessCriteriaDashboard } from "./cash-ledger.dal";
 
@@ -169,7 +169,13 @@ export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics>
   const [activeCouriers] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(schema.courierProfiles)
-    .where(eq(schema.courierProfiles.isActive, true));
+    .innerJoin(schema.user, eq(schema.courierProfiles.userId, schema.user.id))
+    .where(
+      and(
+        eq(schema.courierProfiles.isActive, true),
+        eq(schema.user.status, "active")
+      )
+    );
 
   const [pendingCoverage] = await db
     .select({ count: sql<number>`count(*)::int` })

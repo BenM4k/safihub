@@ -35,4 +35,5 @@ export const STORAGE_KEYS = {
   PREFERENCES: "safihub_preferences",
   THEME: "safihub_theme",
   COOKIE_CONSENT: "safihub_cookie_consent",
+  PRIOR_EASIER_TO_SEE: "safihub_prior_easier_to_see",
 } as const;

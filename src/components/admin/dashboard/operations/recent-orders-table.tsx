@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ShoppingBag, ChevronRight, RefreshCw, CheckCircle2 } from "lucide-react";
 
 export interface DashboardOrderItem {
@@ -26,6 +26,7 @@ export function RecentOrdersTable({
   subtitle: string;
 }) {
   const t = useTranslations("admin.dashboard");
+  const locale = useLocale();
   const [activeTab, setActiveTab] = useState<"all" | "active" | "delivered">("all");
 
   const filtered = orders.filter((o) => {
@@ -112,7 +113,7 @@ export function RecentOrdersTable({
                       )}
                     </td>
                     <td className="py-3 px-3 text-right font-medium text-slate-900">
-                      <div>CDF {order.totalDueCDF.toLocaleString("en-US")}</div>
+                      <div>CDF {order.totalDueCDF.toLocaleString(locale)}</div>
                       <span className="text-[10px] text-slate-400 font-normal">{order.timeAgo}</span>
                     </td>
                   </tr>

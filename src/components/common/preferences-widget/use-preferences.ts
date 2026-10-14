@@ -73,6 +73,10 @@ export function usePreferences() {
       } else {
         applyDomClasses(DEFAULT_PREFERENCES);
       }
+      const storedPrior = localStorage.getItem(STORAGE_KEYS.PRIOR_EASIER_TO_SEE);
+      if (storedPrior) {
+        priorEasierToSeeRef.current = JSON.parse(storedPrior);
+      }
     } catch {
       applyDomClasses(DEFAULT_PREFERENCES);
     }
@@ -141,10 +145,19 @@ export function usePreferences() {
   const toggleEasierToSee = useCallback(() => {
     const next = !preferences.easierToSee;
     if (next) {
-      priorEasierToSeeRef.current = {
+      const prior = {
         textSize: preferences.textSize,
         highContrast: preferences.highContrast,
       };
+      priorEasierToSeeRef.current = prior;
+      try {
+        localStorage.setItem(
+          STORAGE_KEYS.PRIOR_EASIER_TO_SEE,
+          JSON.stringify(prior)
+        );
+      } catch {
+        // localStorage may fail in private mode
+      }
       savePreferences({
         ...preferences,
         easierToSee: true,
@@ -152,8 +165,25 @@ export function usePreferences() {
         highContrast: true,
       });
     } else {
-      const prior = priorEasierToSeeRef.current;
+      let prior = priorEasierToSeeRef.current;
+      if (!prior) {
+        try {
+          const storedPrior = localStorage.getItem(
+            STORAGE_KEYS.PRIOR_EASIER_TO_SEE
+          );
+          if (storedPrior) {
+            prior = JSON.parse(storedPrior);
+          }
+        } catch {
+          // localStorage may fail in private mode
+        }
+      }
       priorEasierToSeeRef.current = null;
+      try {
+        localStorage.removeItem(STORAGE_KEYS.PRIOR_EASIER_TO_SEE);
+      } catch {
+        // localStorage may fail in private mode
+      }
       savePreferences({
         ...preferences,
         easierToSee: false,
@@ -179,6 +209,11 @@ export function usePreferences() {
 
   const resetAll = useCallback(() => {
     priorEasierToSeeRef.current = null;
+    try {
+      localStorage.removeItem(STORAGE_KEYS.PRIOR_EASIER_TO_SEE);
+    } catch {
+      // localStorage may fail in private mode
+    }
     savePreferences(DEFAULT_PREFERENCES);
   }, [savePreferences]);
 

@@ -30,6 +30,8 @@ export function ScorecardRow({
   const t = useTranslations("admin.dashboard");
   const [showTooltip, setShowTooltip] = useState(false);
 
+  const tooltipId = `tooltip-formula-${data.id}`;
+
   return (
     <tr className="hover:bg-slate-50/50 transition-colors">
       {/* Metric Name + Formula Tooltip */}
@@ -45,11 +47,16 @@ export function ScorecardRow({
               onBlur={() => setShowTooltip(false)}
               className="text-slate-400 hover:text-slate-600 cursor-help"
               aria-label={t("definitionAriaLabel", { metric: data.metric })}
+              aria-describedby={tooltipId}
             >
               <HelpCircle className="w-3.5 h-3.5" />
             </button>
             {showTooltip && (
-              <div className="absolute left-6 top-1/2 -translate-y-1/2 z-20 w-64 p-2.5 bg-slate-900 text-white text-xs rounded-lg shadow-lg pointer-events-none leading-relaxed">
+              <div
+                id={tooltipId}
+                role="tooltip"
+                className="absolute left-6 top-1/2 -translate-y-1/2 z-20 w-64 p-2.5 bg-slate-900 text-white text-xs rounded-lg shadow-lg pointer-events-none leading-relaxed"
+              >
                 {data.formula}
               </div>
             )}

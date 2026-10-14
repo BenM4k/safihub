@@ -9,7 +9,7 @@ export default async function AdminOrdersPage() {
   const t = await getTranslations("admin.orders");
 
   const [ordersRes, housesRes] = await Promise.all([
-    listAdminOrders({ limit: 500 }),
+    listAdminOrders(),
     listAdminHouses(),
   ]);
 

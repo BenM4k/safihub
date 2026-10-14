@@ -154,9 +154,14 @@ export async function getOrders(filters?: {
       eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
     )
     .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(schema.orders.createdAt))
-    .limit(filters?.limit ?? 50)
-    .offset(filters?.offset ?? 0);
+    .orderBy(desc(schema.orders.createdAt));
+
+  if (filters?.limit !== undefined) {
+    return query.limit(filters.limit).offset(filters?.offset ?? 0);
+  }
+  if (filters?.offset !== undefined) {
+    return query.offset(filters.offset);
+  }
 
   return query;
 }

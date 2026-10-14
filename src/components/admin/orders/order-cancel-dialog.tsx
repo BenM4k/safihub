@@ -101,7 +101,8 @@ export function OrderCancelDialog({
           <button
             type="button"
             onClick={handleClose}
-            className="p-1.5 rounded-lg text-ink-400 hover:text-heading hover:bg-muted transition-colors cursor-pointer"
+            disabled={loading}
+            className="p-1.5 rounded-lg text-ink-400 hover:text-heading hover:bg-muted transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Fermer"
           >
             <X className="w-4 h-4" />

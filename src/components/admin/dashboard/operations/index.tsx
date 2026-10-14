@@ -45,14 +45,22 @@ export async function DashboardOperationsSection() {
   }));
 
   // Map to dashboard couriers using only fields present in fetched data
-  const couriers: DashboardCourierItem[] = rawCouriers.slice(0, 4).map((c) => ({
-    id: c.userId,
-    name: c.name || `Courier #${c.userId.slice(0, 4)}`,
-    zone: c.coveredZoneCount > 0 ? `${c.coveredZoneCount} zones` : "Bukavu",
-    status: c.isActive ? ("available" as const) : ("offline" as const),
-    missionDescription: c.isActive ? (c.status === "on_shift" ? "On shift" : "Available") : "Offline",
-    cashCeilingCDF: c.cashCeiling || 150000,
-  }));
+  const couriers: DashboardCourierItem[] = rawCouriers.slice(0, 4).map((c) => {
+    const isAvailable = c.isActive && c.status === "active";
+    return {
+      id: c.userId,
+      name: c.name || t("courierFallbackName", { id: c.userId.slice(0, 4) }),
+      zone:
+        c.coveredZoneCount > 0
+          ? t("courierCoveredZones", { count: c.coveredZoneCount })
+          : t("courierDefaultZone"),
+      status: isAvailable ? ("available" as const) : ("offline" as const),
+      missionDescription: isAvailable
+        ? t("courierStatusAvailable")
+        : t("courierStatusOffline"),
+      cashCeilingCDF: c.cashCeiling || 150000,
+    };
+  });
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">

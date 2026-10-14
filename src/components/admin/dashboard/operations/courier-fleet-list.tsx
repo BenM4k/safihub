@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { BatteryCharging, Send } from "lucide-react";
 
 export interface DashboardCourierItem {
@@ -23,7 +23,8 @@ export function CourierFleetList({
   subtitle: string;
 }) {
   const t = useTranslations("admin.dashboard");
-  const activeCount = couriers.filter((c) => c.status !== "offline").length;
+  const locale = useLocale();
+  const activeCount = couriers.filter((c) => c.status === "available").length;
 
   return (
     <div className="bg-white border border-slate-300 rounded-xl p-5 sm:p-6 shadow-sm flex flex-col justify-between">
@@ -70,7 +71,9 @@ export function CourierFleetList({
                 <span className="truncate pr-2">{courier.missionDescription}</span>
                 {courier.cashHeldCDF !== undefined && (
                   <span className="text-[10px] text-slate-500 font-mono shrink-0">
-                    COD: CDF {courier.cashHeldCDF.toLocaleString("en-US")}
+                    {t("courierCodLabel", {
+                      amount: courier.cashHeldCDF.toLocaleString(locale),
+                    })}
                   </span>
                 )}
               </div>

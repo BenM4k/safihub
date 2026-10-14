@@ -44,7 +44,7 @@ export function OrdersDataTable({
   const t = useTranslations("admin.orders");
 
   const isAllSelected = orders.length > 0 && orders.every((o) => selectedIds.includes(o.id));
-  const isPartiallySelected = selectedIds.length > 0 && !isAllSelected;
+  const isPartiallySelected = !isAllSelected && orders.some((o) => selectedIds.includes(o.id));
 
   function renderSortIcon(field: SortField) {
     if (sortField !== field) {
