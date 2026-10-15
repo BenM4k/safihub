@@ -48,35 +48,35 @@ export function HouseSwitcher({
         aria-haspopup="true"
         aria-label={t("selectHouse")}
         className={cn(
-          "flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200/90 bg-slate-50/80 hover:bg-slate-100 hover:border-slate-300 transition text-xs font-semibold text-slate-800 shadow-2xs max-w-[220px] sm:max-w-[280px]",
-          isOpen ? "ring-2 ring-violet-500/30 border-violet-400 bg-white" : ""
+          "flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-secondary hover:border-border-strong transition text-xs font-semibold text-foreground shadow-xs max-w-[220px] sm:max-w-[280px]",
+          isOpen ? "ring-2 ring-primary/20 border-primary bg-white" : ""
         )}
       >
-        <Building2 className="size-3.5 text-violet-600 shrink-0" />
+        <Building2 className="size-3.5 text-primary shrink-0" />
         <span className="truncate">{houseName}</span>
         {isPaused ? (
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 shrink-0">
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-warning-soft text-warning shrink-0">
             {t("paused")}
           </span>
         ) : (
-          <span className="size-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+          <span className="size-2 rounded-full bg-success shrink-0 animate-pulse" />
         )}
         <ChevronDown
           className={cn(
-            "size-3.5 text-slate-400 shrink-0 transition-transform",
-            isOpen ? "rotate-180 text-violet-600" : ""
+            "size-3.5 text-muted-foreground shrink-0 transition-transform",
+            isOpen ? "rotate-180 text-primary" : ""
           )}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 mt-1.5 w-64 rounded-2xl bg-white border border-slate-200 shadow-xl py-2 z-50 animate-in fade-in zoom-in-95">
-          <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+        <div className="absolute left-0 mt-1.5 w-64 rounded-2xl bg-card border border-border shadow-lift py-2 z-50 animate-in fade-in zoom-in-95">
+          <div className="px-3 py-1.5 border-b border-border flex items-center justify-between">
+            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
               {t("selectHouse")}
             </span>
-            <span className="text-[10px] font-semibold text-slate-400">
-              {memberships.length} {memberships.length > 1 ? "ateliers" : "atelier"}
+            <span className="text-[10px] font-semibold text-muted-foreground">
+              {memberships.length} {memberships.length > 1 ? "pressings" : "pressing"}
             </span>
           </div>
 
@@ -89,21 +89,21 @@ export function HouseSwitcher({
                   href={`/partner/${m.houseSlug}`}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "flex items-center justify-between px-3 py-2 text-xs font-medium hover:bg-slate-50 transition",
-                    isCurrent ? "bg-violet-50/70 text-violet-900 font-bold" : "text-slate-700"
+                    "flex items-center justify-between px-3 py-2 text-xs font-medium hover:bg-secondary transition",
+                    isCurrent ? "bg-primary-soft text-primary font-bold" : "text-foreground"
                   )}
                 >
                   <div className="flex items-center gap-2 truncate">
                     <span
                       className={cn(
                         "size-1.5 rounded-full shrink-0",
-                        m.isPaused ? "bg-amber-500" : "bg-emerald-500"
+                        m.isPaused ? "bg-warning" : "bg-success"
                       )}
                     />
                     <span className="truncate">{m.houseName}</span>
                   </div>
                   {isCurrent && (
-                    <Check className="size-3.5 text-violet-600 shrink-0" />
+                    <Check className="size-3.5 text-primary shrink-0" />
                   )}
                 </Link>
               );
@@ -111,11 +111,11 @@ export function HouseSwitcher({
           </div>
 
           {hasMultiple && (
-            <div className="border-t border-slate-100 pt-1.5 px-2">
+            <div className="border-t border-border pt-1.5 px-2">
               <Link
                 href="/partner"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] font-semibold text-violet-700 hover:bg-violet-50 transition"
+                className="flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] font-semibold text-primary hover:bg-primary-soft transition"
               >
                 <span>{t("allHouses")}</span>
                 <ArrowRight className="size-3" />

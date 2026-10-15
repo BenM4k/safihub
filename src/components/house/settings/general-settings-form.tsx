@@ -73,31 +73,31 @@ export function GeneralSettingsForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-5"
+      className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-xs space-y-5"
     >
-      <div className="border-b border-slate-100 pb-3">
-        <h2 className="text-base font-bold text-slate-900">{t("title")}</h2>
-        <p className="text-xs text-slate-500 mt-0.5">{t("subtitle")}</p>
+      <div className="border-b border-border pb-3">
+        <h2 className="text-base font-bold text-heading">{t("title")}</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">{t("subtitle")}</p>
       </div>
 
       {/* Emergency Pause Box */}
       <div
         className={`p-4 rounded-xl border transition ${
           isPaused
-            ? "bg-amber-50 border-amber-300 text-amber-900"
-            : "bg-slate-50 border-slate-200 text-slate-700"
+            ? "bg-warning-soft border-warning/30 text-warning"
+            : "bg-surface border-border text-foreground"
         }`}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             {isPaused ? (
-              <PauseCircle className="size-5 text-amber-600 shrink-0" />
+              <PauseCircle className="size-5 text-warning shrink-0" />
             ) : (
-              <PlayCircle className="size-5 text-emerald-600 shrink-0" />
+              <PlayCircle className="size-5 text-success shrink-0" />
             )}
             <div>
               <span className="font-bold text-xs block">{t("pauseTitle")}</span>
-              <p className="text-[11px] text-slate-500">{t("pauseDesc")}</p>
+              <p className="text-[11px] text-muted-foreground">{t("pauseDesc")}</p>
             </div>
           </div>
 
@@ -106,8 +106,8 @@ export function GeneralSettingsForm({
             onClick={() => setIsPaused(!isPaused)}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
               isPaused
-                ? "bg-amber-600 text-white shadow-xs"
-                : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-100"
+                ? "bg-warning text-primary-foreground shadow-xs"
+                : "bg-card text-foreground border border-border hover:bg-secondary"
             }`}
           >
             {isPaused ? "En pause" : "Actif (cliquer pour pause)"}
@@ -115,15 +115,15 @@ export function GeneralSettingsForm({
         </div>
 
         {isPaused && (
-          <div className="mt-3 pt-3 border-t border-amber-200/60 text-xs">
-            <label className="block text-[11px] font-semibold text-amber-800 mb-1">
+          <div className="mt-3 pt-3 border-t border-warning/20 text-xs">
+            <label className="block text-[11px] font-semibold text-warning mb-1">
               {t("pausedUntilLabel")}
             </label>
             <input
               type="datetime-local"
               value={pausedUntil}
               onChange={(e) => setPausedUntil(e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg bg-white border border-amber-300 text-xs text-amber-900"
+              className="px-2.5 py-1.5 rounded-lg bg-card border border-warning/30 text-xs text-warning"
             />
           </div>
         )}
@@ -132,7 +132,7 @@ export function GeneralSettingsForm({
       {/* Capacity & Minimum Order */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
         <div>
-          <label className="block font-semibold text-slate-700 mb-1">
+          <label className="block font-semibold text-foreground mb-1">
             {t("dailyCapacityLabel")}
           </label>
           <input
@@ -141,12 +141,12 @@ export function GeneralSettingsForm({
             value={dailyCapacity}
             onChange={(e) => setDailyCapacity(e.target.value)}
             placeholder="Illimité"
-            className="w-full h-9 px-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
+            className="w-full h-9 px-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
         </div>
 
         <div>
-          <label className="block font-semibold text-slate-700 mb-1">
+          <label className="block font-semibold text-foreground mb-1">
             {t("minimumOrderLabel")}
           </label>
           <div className="flex items-center gap-1.5">
@@ -156,14 +156,14 @@ export function GeneralSettingsForm({
               step={500}
               value={minimumOrderAmount}
               onChange={(e) => setMinimumOrderAmount(parseInt(e.target.value) || 0)}
-              className="w-full h-9 px-3 rounded-xl border border-slate-300 text-xs font-bold focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
+              className="w-full h-9 px-3 rounded-xl border border-border text-xs font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
-            <span className="text-xs font-bold text-slate-500">CDF</span>
+            <span className="text-xs font-bold text-muted-foreground">CDF</span>
           </div>
         </div>
 
         <div>
-          <label className="block font-semibold text-slate-700 mb-1">
+          <label className="block font-semibold text-foreground mb-1">
             {t("contactPhoneLabel")}
           </label>
           <input
@@ -171,12 +171,12 @@ export function GeneralSettingsForm({
             value={contactPhone}
             onChange={(e) => setContactPhone(e.target.value)}
             placeholder="+243..."
-            className="w-full h-9 px-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
+            className="w-full h-9 px-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
         </div>
 
         <div>
-          <label className="block font-semibold text-slate-700 mb-1">
+          <label className="block font-semibold text-foreground mb-1">
             {t("addressNoteLabel")}
           </label>
           <input
@@ -184,18 +184,18 @@ export function GeneralSettingsForm({
             value={addressNote}
             onChange={(e) => setAddressNote(e.target.value)}
             placeholder="Ex. Derrière la station d'essence..."
-            className="w-full h-9 px-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
+            className="w-full h-9 px-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
         </div>
       </div>
 
-      {errorMsg && <p className="text-xs text-rose-600 font-semibold">{errorMsg}</p>}
-      {successMsg && <p className="text-xs text-emerald-600 font-semibold">{successMsg}</p>}
+      {errorMsg && <p className="text-xs text-destructive font-semibold">{errorMsg}</p>}
+      {successMsg && <p className="text-xs text-success font-semibold">{successMsg}</p>}
 
       <Button
         type="submit"
         disabled={isPending}
-        className="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs shadow-xs"
+        className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs"
       >
         {isPending ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Save className="size-3.5 mr-1.5" />}
         <span>{t("saveSettings")}</span>

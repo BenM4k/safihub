@@ -34,8 +34,8 @@ export function OrdersFilterTabs({ houseSlug }: { houseSlug?: string }) {
             className={cn(
               "px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors",
               isActive
-                ? "bg-violet-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "bg-card text-muted-foreground hover:bg-secondary border border-border"
             )}
           >
             {t(tab.key)}

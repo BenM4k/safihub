@@ -53,7 +53,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs shadow-xs"
+        className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs shadow-xs"
       >
         <PlusCircle className="size-3.5 mr-1.5" />
         <span>{t("requestItem")}</span>
@@ -61,20 +61,20 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
 
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
+          <div className="bg-card rounded-2xl max-w-md w-full p-6 shadow-xl border border-border space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 className="text-base font-bold text-heading">
                   {t("requestItemTitle")}
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {t("requestItemDesc")}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                className="text-muted-foreground hover:text-heading p-1 rounded-lg"
               >
                 <X className="size-4" />
               </button>
@@ -82,7 +82,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
                   {t("kindLabel")}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -91,8 +91,8 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
                     onClick={() => setKind("item")}
                     className={`py-2 px-3 rounded-xl text-xs font-semibold border transition ${
                       kind === "item"
-                        ? "bg-violet-50 text-violet-700 border-violet-300 shadow-2xs"
-                        : "bg-white text-slate-600 border-slate-200"
+                        ? "bg-primary-soft text-primary border-primary/30 shadow-xs"
+                        : "bg-card text-muted-foreground border-border"
                     }`}
                   >
                     {t("kindItem")}
@@ -102,8 +102,8 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
                     onClick={() => setKind("fabric")}
                     className={`py-2 px-3 rounded-xl text-xs font-semibold border transition ${
                       kind === "fabric"
-                        ? "bg-violet-50 text-violet-700 border-violet-300 shadow-2xs"
-                        : "bg-white text-slate-600 border-slate-200"
+                        ? "bg-primary-soft text-primary border-primary/30 shadow-xs"
+                        : "bg-card text-muted-foreground border-border"
                     }`}
                   >
                     {t("kindFabric")}
@@ -112,7 +112,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
                   {t("nameLabel")}
                 </label>
                 <input
@@ -121,12 +121,12 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={t("namePlaceholder")}
-                  className="w-full text-xs rounded-xl border border-slate-300 p-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
+                  className="w-full text-xs rounded-xl border border-border p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
                   {t("noteLabel")}
                 </label>
                 <textarea
@@ -134,15 +134,15 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder={t("notePlaceholder")}
-                  className="w-full text-xs rounded-xl border border-slate-300 p-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
+                  className="w-full text-xs rounded-xl border border-border p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
 
               {errorMsg && (
-                <p className="text-xs text-rose-600 font-medium">{errorMsg}</p>
+                <p className="text-xs text-destructive font-medium">{errorMsg}</p>
               )}
               {successMsg && (
-                <p className="text-xs text-emerald-600 font-medium">{successMsg}</p>
+                <p className="text-xs text-success font-medium">{successMsg}</p>
               )}
 
               <div className="flex items-center justify-end gap-2 pt-2">
@@ -159,7 +159,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
                   type="submit"
                   size="sm"
                   disabled={isPending || !name.trim()}
-                  className="bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs"
+                  className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs"
                 >
                   {isPending ? (
                     <Loader2 className="size-3.5 animate-spin mr-1" />

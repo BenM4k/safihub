@@ -10,17 +10,17 @@ export async function OrderDetailItems({
   const t = await getTranslations("house.orders");
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-      <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-        <h2 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
-          <Package className="size-4 text-violet-600" />
+    <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+      <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between">
+        <h2 className="font-bold text-sm sm:text-base text-heading flex items-center gap-2">
+          <Package className="size-4 text-primary" />
           <span>{t("itemsList")} ({items.length})</span>
         </h2>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+          <thead className="bg-surface text-muted-foreground font-semibold border-b border-border">
             <tr>
               <th className="py-3 px-4">Article</th>
               <th className="py-3 px-4">Matière</th>
@@ -30,21 +30,21 @@ export async function OrderDetailItems({
               <th className="py-3 px-4 text-center">Statut</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {items.map((item) => (
-              <tr key={item.id} className="hover:bg-slate-50/50">
-                <td className="py-3 px-4 font-semibold text-slate-900">
+              <tr key={item.id} className="hover:bg-surface">
+                <td className="py-3 px-4 font-semibold text-heading">
                   {item.itemNameFr ?? item.customLabel ?? "Article"}
                   {item.conditionNote && (
-                    <span className="block text-[11px] text-amber-600 font-normal mt-0.5">
+                    <span className="block text-[11px] text-warning font-normal mt-0.5">
                       Note: {item.conditionNote}
                     </span>
                   )}
                 </td>
-                <td className="py-3 px-4 text-slate-600">
+                <td className="py-3 px-4 text-foreground">
                   {item.fabricNameFr ?? "Standard"}
                 </td>
-                <td className="py-3 px-4 text-center font-bold text-slate-800">
+                <td className="py-3 px-4 text-center font-bold text-heading">
                   {item.declaredQuantity}
                 </td>
                 <td className="py-3 px-4 text-center font-bold">
@@ -52,27 +52,27 @@ export async function OrderDetailItems({
                     <span
                       className={
                         item.receivedQuantity !== item.declaredQuantity
-                          ? "text-amber-600 underline font-extrabold"
-                          : "text-slate-900"
+                          ? "text-warning underline font-extrabold"
+                          : "text-heading"
                       }
                     >
                       {item.receivedQuantity}
                     </span>
                   ) : (
-                    <span className="text-slate-400 font-normal">-</span>
+                    <span className="text-muted-foreground font-normal">-</span>
                   )}
                 </td>
-                <td className="py-3 px-4 text-right font-medium text-slate-700">
+                <td className="py-3 px-4 text-right font-medium text-foreground">
                   {item.unitPrice.toLocaleString()} CDF
                 </td>
                 <td className="py-3 px-4 text-center">
                   {item.status === "returned" ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-destructive-soft text-destructive border border-destructive/20">
                       <AlertCircle className="size-3" />
                       Exclu / Retour
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700">
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-success-soft text-success">
                       Accepté
                     </span>
                   )}

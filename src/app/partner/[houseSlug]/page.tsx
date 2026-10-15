@@ -1,13 +1,18 @@
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
 import { guardHouseRoute } from "@/services/auth";
 import { getHouseDashboardData } from "@/services/house";
-import { AcceptanceQueue } from "@/components/house/dashboard/acceptance-queue";
-import { WorkloadMetrics } from "@/components/house/dashboard/workload-metrics";
-import { QuickShortcuts } from "@/components/house/dashboard/quick-shortcuts";
+import { PartnerDashboardView } from "@/components/house/dashboard/partner-dashboard-view";
 
 interface PageProps {
   params: Promise<{ houseSlug: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { houseSlug } = await params;
+  return {
+    title: `Tableau de bord — SafiHub Partner (${houseSlug})`,
+    description: "Suivez vos commandes, vos délais d'acceptation et votre charge du jour.",
+  };
 }
 
 export default async function PartnerDashboardPage({ params }: PageProps) {
@@ -19,41 +24,21 @@ export default async function PartnerDashboardPage({ params }: PageProps) {
     notFound();
   }
 
-  const t = await getTranslations("house.dashboard");
   const dashboardRes = await getHouseDashboardData(houseId);
 
   if (!dashboardRes.ok) {
     return (
-      <div className="p-6 bg-rose-50 text-rose-700 rounded-2xl border border-rose-200 text-sm">
-        {dashboardRes.error}
+      <div className="p-6 bg-rose-50 text-rose-700 rounded-3xl border border-rose-200 text-sm font-sans">
+        <h2 className="font-bold text-base mb-1">Erreur de chargement</h2>
+        <p>{dashboardRes.error}</p>
       </div>
     );
   }
 
-  const metrics = dashboardRes.value;
-
   return (
-    <div className="space-y-6 sm:space-y-8">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-          {t("title")}
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          {t("subtitle")}
-        </p>
-      </div>
-
-      {/* Orders waiting for acceptance with remaining time */}
-      <AcceptanceQueue
-        orders={metrics.waitingAcceptanceOrders}
-        houseSlug={houseSlug}
-      />
-
-      {/* Today's workload metrics & capacity */}
-      <WorkloadMetrics metrics={metrics} />
-
-      {/* Quick shortcuts */}
-      <QuickShortcuts houseSlug={houseSlug} />
-    </div>
+    <PartnerDashboardView
+      initialMetrics={dashboardRes.value}
+      houseSlug={houseSlug}
+    />
   );
 }

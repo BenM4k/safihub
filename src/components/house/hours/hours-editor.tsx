@@ -96,58 +96,58 @@ export function HoursEditor({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-5">
-      <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+    <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-xs space-y-5">
+      <div className="border-b border-border pb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-bold text-slate-900">{t("weeklySchedule")}</h2>
-          <p className="text-xs text-slate-500 mt-0.5">{t("subtitle")}</p>
+          <h2 className="text-base font-bold text-heading">{t("weeklySchedule")}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{t("subtitle")}</p>
         </div>
       </div>
 
       <form onSubmit={handleSave} className="space-y-4">
-        <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+        <div className="divide-y divide-border border border-border rounded-xl overflow-hidden">
           {WEEKDAYS.map((w) => {
             const data = schedule[w.day];
             return (
               <div
                 key={w.day}
-                className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/50"
+                className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface"
               >
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => toggleDay(w.day)}
                     className={`size-6 rounded-md inline-flex items-center justify-center transition ${
-                      data.isOpen ? "bg-violet-600 text-white" : "bg-slate-200 text-slate-400"
+                      data.isOpen ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
                     }`}
                   >
                     <Check className="size-3.5" />
                   </button>
-                  <span className="font-semibold text-xs sm:text-sm text-slate-800">
+                  <span className="font-semibold text-xs sm:text-sm text-heading">
                     {w.name}
                   </span>
                 </div>
 
                 {data.isOpen ? (
                   <div className="flex items-center gap-2 self-end sm:self-auto text-xs">
-                    <span className="text-slate-400 text-[11px]">{t("opensAt")}</span>
+                    <span className="text-muted-foreground text-[11px]">{t("opensAt")}</span>
                     <input
                       type="time"
                       value={data.opensAt}
                       onChange={(e) => updateTime(w.day, "opensAt", e.target.value)}
-                      className="px-2 py-1 rounded-lg border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
+                      className="px-2 py-1 rounded-lg border border-border font-mono text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
-                    <span className="text-slate-400 text-[11px]">—</span>
-                    <span className="text-slate-400 text-[11px]">{t("closesAt")}</span>
+                    <span className="text-muted-foreground text-[11px]">—</span>
+                    <span className="text-muted-foreground text-[11px]">{t("closesAt")}</span>
                     <input
                       type="time"
                       value={data.closesAt}
                       onChange={(e) => updateTime(w.day, "closesAt", e.target.value)}
-                      className="px-2 py-1 rounded-lg border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
+                      className="px-2 py-1 rounded-lg border border-border font-mono text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                   </div>
                 ) : (
-                  <span className="text-xs text-slate-400 italic self-end sm:self-auto">
+                  <span className="text-xs text-muted-foreground italic self-end sm:self-auto">
                     {t("closed")}
                   </span>
                 )}
@@ -156,13 +156,13 @@ export function HoursEditor({
           })}
         </div>
 
-        {errorMsg && <p className="text-xs text-rose-600 font-semibold">{errorMsg}</p>}
-        {successMsg && <p className="text-xs text-emerald-600 font-semibold">{successMsg}</p>}
+        {errorMsg && <p className="text-xs text-destructive font-semibold">{errorMsg}</p>}
+        {successMsg && <p className="text-xs text-success font-semibold">{successMsg}</p>}
 
         <Button
           type="submit"
           disabled={isPending}
-          className="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs shadow-xs"
+          className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs"
         >
           {isPending ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Save className="size-3.5 mr-1.5" />}
           <span>{t("saveHours")}</span>

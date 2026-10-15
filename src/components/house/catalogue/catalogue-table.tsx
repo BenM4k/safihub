@@ -70,8 +70,8 @@ export function CatalogueTable({
           onClick={() => setSelectedService("all")}
           className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${
             selectedService === "all"
-              ? "bg-violet-600 text-white shadow-xs"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "bg-card text-muted-foreground hover:bg-secondary border border-border"
           }`}
         >
           Tous les services ({items.length})
@@ -83,8 +83,8 @@ export function CatalogueTable({
             onClick={() => setSelectedService(s.id)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${
               selectedService === s.id
-                ? "bg-violet-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "bg-card text-muted-foreground hover:bg-secondary border border-border"
             }`}
           >
             {s.name}
@@ -93,24 +93,24 @@ export function CatalogueTable({
       </div>
 
       {errorMsg && (
-        <div className="p-3 bg-rose-50 text-rose-700 text-xs font-semibold rounded-xl border border-rose-200">
+        <div className="p-3 bg-destructive-soft text-destructive text-xs font-semibold rounded-xl border border-destructive/20">
           {errorMsg}
         </div>
       )}
 
       {/* Pricing Invariant Banner */}
-      <div className="p-3.5 bg-violet-50/70 border border-violet-200 rounded-xl flex items-start gap-2.5 text-xs text-violet-900">
-        <AlertCircle className="size-4 shrink-0 text-violet-600 mt-0.5" />
+      <div className="p-3.5 bg-primary-soft border border-primary/20 rounded-xl flex items-start gap-2.5 text-xs text-heading">
+        <AlertCircle className="size-4 shrink-0 text-primary mt-0.5" />
         <div>
           <strong className="font-bold">Règle de gel des prix :</strong>{" "}
           {t("priceNotice")}
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+            <thead className="bg-surface text-muted-foreground font-semibold border-b border-border">
               <tr>
                 <th className="py-3 px-4">{t("serviceCol")}</th>
                 <th className="py-3 px-4">{t("itemCol")}</th>
@@ -120,7 +120,7 @@ export function CatalogueTable({
                 <th className="py-3 px-4 text-right">{t("actionCol")}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {filteredItems.map((it) => {
                 const key = getRowKey(it);
                 const currentPrice =
@@ -130,19 +130,19 @@ export function CatalogueTable({
                 const isSaved = savedRowKey === key;
 
                 return (
-                  <tr key={key} className="hover:bg-slate-50/50">
-                    <td className="py-3 px-4 font-semibold text-slate-800">
+                  <tr key={key} className="hover:bg-surface">
+                    <td className="py-3 px-4 font-semibold text-heading">
                       {it.serviceNameFr}
                     </td>
-                    <td className="py-3 px-4 font-bold text-slate-900">
+                    <td className="py-3 px-4 font-bold text-heading">
                       {it.itemNameFr}
                       {it.itemCategory && (
-                        <span className="block text-[11px] text-slate-400 font-normal">
+                        <span className="block text-[11px] text-muted-foreground font-normal">
                           {it.itemCategory}
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-slate-600">
+                    <td className="py-3 px-4 text-foreground">
                       {it.fabricNameFr}
                     </td>
                     <td className="py-3 px-4">
@@ -158,9 +158,9 @@ export function CatalogueTable({
                               [key]: Math.max(0, parseInt(e.target.value) || 0),
                             }))
                           }
-                          className="w-24 h-8 px-2 text-right font-mono font-bold text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
+                          className="w-24 h-8 px-2 text-right font-mono font-bold text-xs rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         />
-                        <span className="text-[11px] text-slate-500 font-semibold">
+                        <span className="text-[11px] text-muted-foreground font-semibold">
                           {it.currency}
                         </span>
                       </div>
@@ -176,8 +176,8 @@ export function CatalogueTable({
                         }
                         className={`size-6 rounded-md inline-flex items-center justify-center transition ${
                           currentActive
-                            ? "bg-emerald-600 text-white"
-                            : "bg-slate-200 text-slate-400"
+                            ? "bg-success text-primary-foreground"
+                            : "bg-secondary text-muted-foreground"
                         }`}
                       >
                         <Check className="size-3.5" />
@@ -190,8 +190,8 @@ export function CatalogueTable({
                         disabled={isPending}
                         className={`text-xs font-semibold h-8 ${
                           isSaved
-                            ? "bg-emerald-600 text-white"
-                            : "bg-slate-900 hover:bg-slate-800 text-white"
+                            ? "bg-success text-primary-foreground"
+                            : "bg-primary hover:bg-primary-hover text-primary-foreground"
                         }`}
                       >
                         {isPending ? (
