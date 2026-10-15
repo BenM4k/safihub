@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Calendar, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatFrenchDate } from "@/lib/cash-formatters";
@@ -18,6 +19,7 @@ export function DateNavigator({
   baseUrl = "/admin/cash",
 }: DateNavigatorProps) {
   const router = useRouter();
+  const t = useTranslations("admin.cash");
   const [isPending, startTransition] = useTransition();
 
   // Today in Africa/Lubumbashi
@@ -69,8 +71,8 @@ export function DateNavigator({
           onClick={() => shiftDay(-1)}
           disabled={isPending}
           className="size-10 p-0 min-h-[40px] hover:bg-surface text-ink-700 focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
-          title="Jour précédent"
-          aria-label="Jour précédent"
+          title={t("dateNavPrev")}
+          aria-label={t("dateNavPrev")}
         >
           <ChevronLeft className="size-4.5" />
         </Button>
@@ -88,7 +90,7 @@ export function DateNavigator({
             onChange={handleDateInput}
             disabled={isPending}
             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-            aria-label="Sélectionner une date d'activité"
+            aria-label={t("dateNavSelectAria")}
           />
         </div>
 
@@ -99,8 +101,8 @@ export function DateNavigator({
           onClick={() => shiftDay(1)}
           disabled={isPending || isToday || isFuture}
           className="size-10 p-0 min-h-[40px] hover:bg-surface text-ink-700 disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
-          title="Jour suivant"
-          aria-label="Jour suivant"
+          title={t("dateNavNext")}
+          aria-label={t("dateNavNext")}
         >
           <ChevronRight className="size-4.5" />
         </Button>
@@ -116,15 +118,15 @@ export function DateNavigator({
           disabled={isPending}
           className="h-10 px-3 text-xs font-semibold bg-white hover:bg-surface text-primary border-primary/40 min-h-[40px] focus-visible:ring-2 focus-visible:ring-primary rounded-lg shadow-2xs"
         >
-          Aujourd&apos;hui
+          {t("dateNavToday")}
         </Button>
       )}
 
       {/* Business-day boundary tooltip info */}
       <span
         className="text-ink-400 hover:text-ink-600 transition-colors p-2 cursor-help hidden sm:inline-block"
-        title="Journée comptable : 00h00 - 23h59 (heure de Bukavu / Lubumbashi, UTC+2). Les dates futures sont bloquées."
-        aria-label="Information fuseau et bornes de la journée comptable"
+        title={t("dateNavTzTooltip")}
+        aria-label={t("dateNavTzAria")}
       >
         <Info className="size-4" />
       </span>

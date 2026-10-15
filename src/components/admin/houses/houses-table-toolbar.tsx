@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Search, Filter, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { NeighborhoodRecord } from "@/dal";
@@ -18,6 +19,7 @@ export function HousesTableToolbar({
   neighborhoods,
   totalFilteredCount,
 }: HousesTableToolbarProps) {
+  const t = useTranslations("admin.houses");
   const hasActiveFilters =
     filters.search.trim() !== "" ||
     filters.status !== "all" ||
@@ -31,9 +33,9 @@ export function HousesTableToolbar({
         <Input
           value={filters.search}
           onChange={(e) => onFiltersChange({ search: e.target.value })}
-          placeholder="Rechercher par nom, quartier, téléphone..."
+          placeholder={t("searchPlaceholder")}
           className="pl-9 h-10 text-xs border-2 border-border-strong rounded-xl bg-card focus-visible:ring-2 focus-visible:ring-primary"
-          aria-label="Recherche de pressings"
+          aria-label={t("searchPlaceholder")}
         />
       </div>
 
@@ -50,13 +52,13 @@ export function HousesTableToolbar({
               })
             }
             className="h-10 rounded-xl border-2 border-border-strong bg-card px-3 text-xs font-semibold text-heading hover:bg-surface focus-visible:ring-2 focus-visible:ring-primary"
-            aria-label="Filtrer par statut"
+            aria-label={t("status")}
           >
-            <option value="all">Tous les statuts</option>
-            <option value="active">Actif</option>
-            <option value="paused">En pause</option>
-            <option value="closed_today">Fermé aujourd&apos;hui</option>
-            <option value="suspended">Suspendu</option>
+            <option value="all">{t("allStatuses")}</option>
+            <option value="active">{t("statusActive")}</option>
+            <option value="paused">{t("statusPaused")}</option>
+            <option value="closed_today">{t("statusClosedToday")}</option>
+            <option value="suspended">{t("statusSuspended")}</option>
           </select>
         </div>
 
@@ -65,9 +67,9 @@ export function HousesTableToolbar({
           value={filters.neighborhoodId}
           onChange={(e) => onFiltersChange({ neighborhoodId: e.target.value })}
           className="h-10 rounded-xl border-2 border-border-strong bg-card px-3 text-xs font-semibold text-heading hover:bg-surface focus-visible:ring-2 focus-visible:ring-primary max-w-[180px] truncate"
-          aria-label="Filtrer par quartier"
+          aria-label={t("district")}
         >
-          <option value="">Tous les quartiers</option>
+          <option value="">{t("allNeighborhoods")}</option>
           {neighborhoods.map((n) => (
             <option key={n.id} value={n.id}>
               {n.name}
@@ -83,16 +85,16 @@ export function HousesTableToolbar({
               onFiltersChange({ search: "", status: "all", neighborhoodId: "" })
             }
             className="h-10 px-3 rounded-xl border border-border-strong bg-card hover:bg-surface text-ink-600 hover:text-ink-900 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
-            title="Réinitialiser les filtres"
+            title={t("resetFilters")}
           >
             <RotateCcw className="size-3.5" />
-            <span className="hidden sm:inline">Réinitialiser</span>
+            <span className="hidden sm:inline">{t("resetFilters")}</span>
           </button>
         )}
 
         {/* Count badge */}
         <span className="text-xs font-bold text-ink-700 bg-surface px-3 py-2 rounded-xl border border-border-strong whitespace-nowrap">
-          {totalFilteredCount} {totalFilteredCount <= 1 ? "pressing" : "pressings"}
+          {t("kpiHousesBadge", { count: totalFilteredCount })}
         </span>
       </div>
     </div>

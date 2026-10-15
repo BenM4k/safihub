@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { AlertCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +11,8 @@ interface SettlementsErrorProps {
 }
 
 export default function SettlementsError({ error, reset }: SettlementsErrorProps) {
+  const t = useTranslations("admin.settlements");
+
   useEffect(() => {
     console.error("Settlements page error:", error);
   }, [error]);
@@ -22,10 +25,10 @@ export default function SettlementsError({ error, reset }: SettlementsErrorProps
 
       <div className="space-y-1 max-w-md">
         <h2 className="text-base font-bold text-heading">
-          Erreur de chargement des règlements
+          {t("errorTitle")}
         </h2>
         <p className="text-xs text-muted-foreground">
-          Une anomalie est survenue lors de la récupération des soldes ou de l&apos;historique comptable.
+          {t("errorDescription")}
         </p>
       </div>
 
@@ -34,7 +37,7 @@ export default function SettlementsError({ error, reset }: SettlementsErrorProps
         className="min-h-[40px] px-4 font-semibold text-xs gap-1.5 shadow-xs"
       >
         <RotateCcw className="size-4" />
-        <span>Réessayer</span>
+        <span>{t("retry")}</span>
       </Button>
     </div>
   );

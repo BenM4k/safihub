@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Undo2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/admin/shared/confirm-dialog";
 import { reverseCourierReconciliationAction } from "@/actions/admin-cash.actions";
@@ -20,20 +21,21 @@ export function HistoryRowActions({
   businessDate,
   isCancelled,
 }: HistoryRowActionsProps) {
+  const t = useTranslations("admin.cash");
   const router = useRouter();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   if (isCancelled) {
     return (
       <span className="text-xs text-muted-foreground italic">
-        Annulée
+        {t("filterStatusCancelled")}
       </span>
     );
   }
 
   const handleConfirmReversal = async (reason?: string) => {
     if (!reason?.trim()) {
-      return { ok: false, error: "Un motif d'annulation est requis." };
+      return { ok: false, error: t("reversalReasonLabel") };
     }
 
     const res = await reverseCourierReconciliationAction({
@@ -46,7 +48,7 @@ export function HistoryRowActions({
       return { ok: true };
     }
 
-    return { ok: false, error: res.error || "Échec de l'annulation" };
+    return { ok: false, error: res.error || t("filterStatusCancelled") };
   };
 
   return (
@@ -57,10 +59,10 @@ export function HistoryRowActions({
         size="sm"
         onClick={() => setIsConfirmOpen(true)}
         className="min-h-[40px] h-10 px-3 text-xs text-destructive hover:text-destructive hover:bg-destructive-light/60 gap-1.5 focus-visible:ring-2 focus-visible:ring-destructive rounded-lg"
-        title="Annuler cette écriture de réconciliation"
+        title={t("reversalDialogTitle")}
       >
         <Undo2 className="size-3.5" />
-        <span>Annuler</span>
+        <span>{t("reversalBtn")}</span>
       </Button>
 
       {isConfirmOpen && (
@@ -68,24 +70,22 @@ export function HistoryRowActions({
           isOpen={true}
           onClose={() => setIsConfirmOpen(false)}
           onConfirm={handleConfirmReversal}
-          title="Annuler l'écriture de réconciliation"
+          title={t("reversalDialogTitle")}
           description={
             <div className="space-y-2">
               <p>
-                Vous êtes sur le point d&apos;annuler la réconciliation du coursier{" "}
-                <span className="font-bold text-heading">{courierName}</span> pour la date du{" "}
-                <span className="font-bold text-heading">{businessDate}</span>.
+                {t("reversalDescription", { name: courierName, date: businessDate })}
               </p>
               <p className="p-2.5 bg-destructive-light text-destructive-base rounded-lg border border-destructive-base/20 font-medium">
-                Conséquence comptable : Une contre-passation compensatoire sera inscrite dans le grand livre. L&apos;écriture d&apos;origine restera visible avec la mention Annulée et ne sera jamais supprimée.
+                {t("reversalConsequence")}
               </p>
             </div>
           }
-          confirmLabel="Confirmer l'annulation"
+          confirmLabel={t("confirmReversal")}
           variant="destructive"
           requireReason={true}
-          reasonLabel="Motif obligatoire de l'annulation"
-          reasonPlaceholder="Ex. Erreur de comptage des billets, saisie erronée..."
+          reasonLabel={t("reversalReasonLabel")}
+          reasonPlaceholder={t("reversalReasonPlaceholder")}
         />
       )}
     </>

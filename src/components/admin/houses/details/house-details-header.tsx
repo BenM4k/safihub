@@ -56,7 +56,7 @@ export function HouseDetailsHeader({ house, onClose }: HouseDetailsHeaderProps) 
       <div className="p-4 space-y-1.5">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 className="text-base font-bold text-heading font-display">
+            <h2 id="house-sheet-title" className="text-base font-bold text-heading font-display">
               {house.name}
             </h2>
             <p className="text-xs text-ink-600 font-medium">

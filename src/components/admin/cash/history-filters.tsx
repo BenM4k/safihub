@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Search, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ export function HistoryFilters({
   onExportCsv,
   filteredCount,
 }: HistoryFiltersProps) {
+  const t = useTranslations("admin.cash");
+
   return (
     <div className="p-4 border-b border-border-strong bg-surface/50 flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
       {/* Search and Dropdowns */}
@@ -36,9 +39,9 @@ export function HistoryFilters({
           <Input
             value={filters.search}
             onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
-            placeholder="Rechercher par nom ou tél..."
+            placeholder={t("searchPlaceholder")}
             className="pl-9 h-10 min-h-[40px] text-xs border-border-strong"
-            aria-label="Rechercher par nom de coursier ou numéro"
+            aria-label={t("searchPlaceholder")}
           />
         </div>
 
@@ -52,12 +55,12 @@ export function HistoryFilters({
             })
           }
           className="h-10 min-h-[40px] px-3 text-xs rounded-xl border border-border-strong bg-card font-medium focus:ring-2 focus:ring-primary/20 text-heading"
-          aria-label="Filtrer par statut"
+          aria-label={t("filterStatus")}
         >
-          <option value="all">Tous les statuts</option>
-          <option value="reconciled">Réconcilié (sans écart)</option>
-          <option value="discrepancy">Avec écart</option>
-          <option value="cancelled">Annulé</option>
+          <option value="all">{t("filterStatusAll")}</option>
+          <option value="reconciled">{t("filterStatusReconciled")}</option>
+          <option value="discrepancy">{t("filterStatusDiscrepancy")}</option>
+          <option value="cancelled">{t("filterStatusCancelled")}</option>
         </select>
 
         {/* Courier */}
@@ -68,9 +71,9 @@ export function HistoryFilters({
               onFilterChange({ ...filters, courierId: e.target.value })
             }
             className="h-10 min-h-[40px] px-3 text-xs rounded-xl border border-border-strong bg-card font-medium focus:ring-2 focus:ring-primary/20 max-w-[170px] truncate text-heading"
-            aria-label="Filtrer par coursier"
+            aria-label={t("filterCourier")}
           >
-            <option value="all">Tous les coursiers</option>
+            <option value="all">{t("allCouriers")}</option>
             {courierOptions.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -89,18 +92,18 @@ export function HistoryFilters({
             })
           }
           className="h-10 min-h-[40px] px-3 text-xs rounded-xl border border-border-strong bg-card font-medium focus:ring-2 focus:ring-primary/20 text-heading"
-          aria-label="Filtrer par période"
+          aria-label={t("filterPeriod")}
         >
-          <option value="30_days">30 derniers jours</option>
-          <option value="7_days">7 derniers jours</option>
-          <option value="all">Toutes les dates</option>
+          <option value="30_days">{t("filterPeriod30Days")}</option>
+          <option value="7_days">{t("filterPeriod7Days")}</option>
+          <option value="all">{t("filterPeriodAll")}</option>
         </select>
       </div>
 
       {/* Export Button */}
       <div className="flex items-center gap-2.5 self-start md:self-auto">
         <span className="text-xs text-muted-foreground font-medium">
-          {filteredCount} {filteredCount > 1 ? "écritures" : "écriture"}
+          {t("filterEntriesCount", { count: filteredCount })}
         </span>
         <Button
           type="button"
@@ -108,10 +111,10 @@ export function HistoryFilters({
           size="sm"
           onClick={onExportCsv}
           className="h-10 min-h-[40px] px-3.5 text-xs font-semibold gap-1.5 border-border-strong hover:bg-surface focus-visible:ring-2 focus-visible:ring-primary"
-          title="Exporter l'historique filtré en CSV"
+          title={t("exportCsv")}
         >
           <Download className="size-3.5" />
-          <span>Exporter CSV</span>
+          <span>{t("exportCsv")}</span>
         </Button>
       </div>
     </div>

@@ -65,45 +65,52 @@ export function SettlePayeeDialog({
     setIsSubmitting(true);
     setErrorMsg(null);
 
-    const payload = {
-      amount,
-      currency: "CDF" as const,
-      method,
-      reference: reference.trim() || undefined,
-      period: period.trim() || undefined,
-      note: note.trim() || undefined,
-    };
+    try {
+      const payload = {
+        amount,
+        currency: "CDF" as const,
+        method,
+        reference: reference.trim() || undefined,
+        period: period.trim() || undefined,
+        note: note.trim() || undefined,
+      };
 
-    const res = isHouse
-      ? await settleHouseAction({ ...payload, houseId: target.id })
-      : await settleCourierAction({ ...payload, courierId: target.id });
+      const res = isHouse
+        ? await settleHouseAction({ ...payload, houseId: target.id })
+        : await settleCourierAction({ ...payload, courierId: target.id });
 
-    setIsSubmitting(false);
+      if (!res.ok) {
+        setErrorMsg(res.error || "Échec de l'enregistrement du règlement");
+        setStep(1);
+        return;
+      }
 
-    if (!res.ok) {
-      setErrorMsg(res.error || "Échec de l'enregistrement du règlement");
+      const receipt: SettlementReceiptData = {
+        settlementId: res.value.settlementId,
+        payeeName: target.name,
+        payeeType: target.type,
+        payeeSubtitle: target.subtitle,
+        amount,
+        currency: "CDF",
+        method,
+        reference: reference.trim() || undefined,
+        period: period.trim() || undefined,
+        note: note.trim() || undefined,
+        createdAt: new Date(),
+        newBalanceCDF: res.value.newBalanceCDF,
+      };
+
+      router.refresh();
+      onClose();
+      onSettlementSuccess(receipt);
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "Une erreur inattendue est survenue"
+      );
       setStep(1);
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const receipt: SettlementReceiptData = {
-      settlementId: res.value.settlementId,
-      payeeName: target.name,
-      payeeType: target.type,
-      payeeSubtitle: target.subtitle,
-      amount,
-      currency: "CDF",
-      method,
-      reference: reference.trim() || undefined,
-      period: period.trim() || undefined,
-      note: note.trim() || undefined,
-      createdAt: new Date(),
-      newBalanceCDF: res.value.newBalanceCDF,
-    };
-
-    router.refresh();
-    onClose();
-    onSettlementSuccess(receipt);
   };
 
   return (

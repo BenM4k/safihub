@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { formatMoney } from "@/lib/cash-formatters";
 import {
   SETTLEMENT_OVERDUE_DAYS_THRESHOLD,
@@ -6,6 +6,40 @@ import {
   getWeekBounds,
   formatWeekRange,
 } from "@/components/admin/settlements/period-utils";
+import {
+  settleAdminHouse,
+  settleAdminCourier,
+  reverseAdminSettlement,
+} from "@/services/admin/settlements.service";
+
+vi.mock("@/dal", () => ({
+  settleHouseBalance: vi.fn(async ({ amount }: { amount: number }) => {
+    const currentBalance = 120_000;
+    if (amount > currentBalance) {
+      return {
+        ok: false,
+        error: "Le montant saisi ne peut pas dépasser le solde restant dû",
+        newBalanceCDF: currentBalance,
+      };
+    }
+    return { ok: true, settlementId: "settle-house-1", newBalanceCDF: currentBalance - amount };
+  }),
+  settleCourierPay: vi.fn(async ({ amount }: { amount: number }) => {
+    const currentBalance = 80_000;
+    if (amount > currentBalance) {
+      return {
+        ok: false,
+        error: "Le montant saisi ne peut pas dépasser le solde restant dû",
+        newBalanceCDF: currentBalance,
+      };
+    }
+    return { ok: true, settlementId: "settle-courier-1", newBalanceCDF: currentBalance - amount };
+  }),
+  reverseLedgerEntry: vi.fn(async () => ({ ok: true, reversalId: "rev-1" })),
+  getHouseSettlementsOverview: vi.fn(async () => ({ houses: [] })),
+  getCourierSettlementsOverview: vi.fn(async () => ({ couriers: [] })),
+  getSettlementHistoryLogs: vi.fn(async () => []),
+}));
 
 describe("Settlements & Payouts Domain Logic", () => {
   describe("1. Integer Money & Balance Calculations", () => {
@@ -33,35 +67,94 @@ describe("Settlements & Payouts Domain Logic", () => {
   });
 
   describe("2. Partial Payment Limits", () => {
-    const balanceOwedCDF = 120_000;
-
-    it("allows valid partial payments less than or equal to balance", () => {
+    it("allows valid partial payments less than or equal to balance", async () => {
       const partialPayment = 50_000;
-      const isValid = partialPayment > 0 && partialPayment <= balanceOwedCDF;
-      expect(isValid).toBe(true);
-
-      const remainingBalance = balanceOwedCDF - partialPayment;
-      expect(remainingBalance).toBe(70_000);
+      const res = await settleAdminHouse({
+        houseId: "house-1",
+        amount: partialPayment,
+        adminId: "admin-1",
+      });
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.value.newBalanceCDF).toBe(70_000);
+      }
     });
 
-    it("allows full settlement equal to balance", () => {
+    it("allows full settlement equal to balance", async () => {
       const fullPayment = 120_000;
-      const isValid = fullPayment > 0 && fullPayment <= balanceOwedCDF;
-      expect(isValid).toBe(true);
-
-      const remainingBalance = balanceOwedCDF - fullPayment;
-      expect(remainingBalance).toBe(0);
+      const res = await settleAdminHouse({
+        houseId: "house-1",
+        amount: fullPayment,
+        adminId: "admin-1",
+      });
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.value.newBalanceCDF).toBe(0);
+      }
     });
 
-    it("strictly rejects payouts that exceed the current balance", () => {
-      const overPayment = 130_000;
-      const isValid = overPayment > 0 && overPayment <= balanceOwedCDF;
-      expect(isValid).toBe(false);
+    it("strictly rejects payouts that exceed the current balance", async () => {
+      const houseRes = await settleAdminHouse({
+        houseId: "house-1",
+        amount: 130_000,
+        adminId: "admin-1",
+      });
+      expect(houseRes.ok).toBe(false);
+      if (!houseRes.ok) {
+        expect(houseRes.error).toContain("ne peut pas dépasser le solde");
+      }
+
+      const courierRes = await settleAdminCourier({
+        courierId: "courier-1",
+        amount: 90_000,
+        adminId: "admin-1",
+      });
+      expect(courierRes.ok).toBe(false);
+      if (!courierRes.ok) {
+        expect(courierRes.error).toContain("ne peut pas dépasser le solde");
+      }
     });
 
-    it("strictly rejects payouts of zero or negative amounts", () => {
-      expect(0 > 0).toBe(false);
-      expect(-5000 > 0).toBe(false);
+    it("strictly rejects payouts of zero or negative amounts", async () => {
+      const zeroRes = await settleAdminHouse({
+        houseId: "house-1",
+        amount: 0,
+        adminId: "admin-1",
+      });
+      expect(zeroRes.ok).toBe(false);
+
+      const negRes = await settleAdminCourier({
+        courierId: "courier-1",
+        amount: -5000,
+        adminId: "admin-1",
+      });
+      expect(negRes.ok).toBe(false);
+    });
+
+    it("rejects non-cash payments without reference", async () => {
+      const res = await settleAdminHouse({
+        houseId: "house-1",
+        amount: 50_000,
+        method: "mobile_money",
+        reference: "",
+        adminId: "admin-1",
+      });
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toContain("Une référence ou un numéro de transaction est requis");
+      }
+    });
+
+    it("rejects reversals with reason shorter than 3 characters", async () => {
+      const shortRes = await reverseAdminSettlement({
+        settlementId: "settle-1",
+        reason: "no",
+        adminId: "admin-1",
+      });
+      expect(shortRes.ok).toBe(false);
+      if (!shortRes.ok) {
+        expect(shortRes.error).toContain("au moins 3 caractères");
+      }
     });
   });
 

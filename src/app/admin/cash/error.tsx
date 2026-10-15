@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { AlertCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +11,8 @@ interface AdminCashErrorProps {
 }
 
 export default function AdminCashError({ error, reset }: AdminCashErrorProps) {
+  const t = useTranslations("admin.cash");
+
   useEffect(() => {
     // Log error for telemetry/Sentry if available
     console.error("Admin cash page error:", error);
@@ -26,11 +29,10 @@ export default function AdminCashError({ error, reset }: AdminCashErrorProps) {
 
       <div className="space-y-1.5">
         <h2 className="text-base font-bold text-heading font-display">
-          Erreur de chargement des données de caisse
+          {t("errorTitle")}
         </h2>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          {error.message ||
-            "Une erreur inattendue est survenue lors de la récupération des écritures comptables ou du grand livre de caisse."}
+          {error.message || t("errorFallback")}
         </p>
       </div>
 
@@ -41,7 +43,7 @@ export default function AdminCashError({ error, reset }: AdminCashErrorProps) {
           className="min-h-[40px] px-5 text-xs font-semibold gap-2 bg-primary hover:bg-primary-hover text-white"
         >
           <RotateCcw className="size-4" />
-          <span>Réessayer</span>
+          <span>{t("retry")}</span>
         </Button>
       </div>
     </div>

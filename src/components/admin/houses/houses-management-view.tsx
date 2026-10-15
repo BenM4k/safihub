@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Plus, Store, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/admin/shared/page-header";
@@ -31,6 +32,7 @@ export function HousesManagementView({
   totalBalanceOwedCDF,
 }: HousesManagementViewProps) {
   const router = useRouter();
+  const t = useTranslations("admin.houses");
 
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   const [selectedHouse, setSelectedHouse] = useState<AdminHouseRow | null>(null);
@@ -50,17 +52,17 @@ export function HousesManagementView({
     <div className="space-y-6">
       {/* Page Header with primary action & KPI tags */}
       <PageHeader
-        title="Pressings partenaires"
-        subtitle="Paramètres des partenaires, commissions, horaires d'ouverture et capacités"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <Button
             type="button"
             onClick={() => setCreateDrawerOpen(true)}
             className="min-h-[40px] px-4 text-xs font-bold bg-primary hover:bg-primary-hover text-white shadow-xs inline-flex items-center gap-2 border-2 border-primary"
-            aria-label="Ajouter un pressing"
+            aria-label={t("addHouse")}
           >
             <Plus className="size-4" />
-            <span>Ajouter un pressing</span>
+            <span>{t("addHouse")}</span>
           </Button>
         }
       >
@@ -68,15 +70,15 @@ export function HousesManagementView({
         <div className="flex items-center gap-2 pt-2 flex-wrap text-xs font-semibold">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700">
             <Store className="size-3.5 text-primary" />
-            <span>{totalHousesCount} {totalHousesCount <= 1 ? "pressing" : "pressings"}</span>
+            <span>{t("kpiHousesBadge", { count: totalHousesCount })}</span>
           </span>
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-success-light border-2 border-success-base/30 text-success-base">
             <span className="size-2 rounded-full bg-success-base" />
-            <span>{activeHousesCount} actif(s)</span>
+            <span>{t("kpiActiveBadge", { count: activeHousesCount })}</span>
           </span>
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700">
             <Landmark className="size-3.5 text-emerald-600" />
-            <span>Solde global dû : {formatMoney(totalBalanceOwedCDF, "CDF")}</span>
+            <span>{t("kpiBalanceOwedBadge", { amount: formatMoney(totalBalanceOwedCDF, "CDF") })}</span>
           </span>
         </div>
       </PageHeader>
@@ -105,6 +107,7 @@ export function HousesManagementView({
 
       {/* Slide-over Details / Edit Sheet */}
       <HouseDetailsSheet
+        key={selectedHouse ? `${selectedHouse.id}-${activeTab}` : "none"}
         house={selectedHouse}
         onClose={() => setSelectedHouse(null)}
         defaultCommissionBps={defaultCommissionBps}

@@ -43,24 +43,27 @@ export function CashSummaryCards({ summary }: CashSummaryCardsProps) {
   const couriersSecondary =
     totalCouriers > 0 ? (
       <span>
-        {totalCouriers} {totalCouriers > 1 ? "coursiers actifs" : "coursier actif"}
+        {t("activeCouriersCount", { count: totalCouriers })}
       </span>
     ) : undefined;
 
   const reconciliationProgressSecondary =
     totalCouriers > 0 ? (
       <span>
-        {reconciledCouriers} {reconciledCouriers > 1 ? "réconciliés" : "réconcilié"} · {pendingCouriers} en attente
+        {t("reconciledCountSummary", {
+          reconciled: reconciledCouriers,
+          pending: pendingCouriers,
+        })}
       </span>
     ) : undefined;
 
   const discrepancyStatusSecondary = (
     <span className={`font-semibold ${diffInfo.colorClass}`}>
       {diffInfo.isZero
-        ? "Soldes de caisse équilibrés"
+        ? t("balancedStatus")
         : diffInfo.isShortage
-        ? "Déficit global constaté"
-        : "Surplus global en caisse"}
+        ? t("shortageStatus")
+        : t("surplusStatus")}
     </span>
   );
 
@@ -92,7 +95,7 @@ export function CashSummaryCards({ summary }: CashSummaryCardsProps) {
         value={diffInfo.formattedAmount}
         icon={DiscrepancyIcon}
         formula={t("formulaTooltip")}
-        tooltip="Déficit (rouge/négatif) ou surplus (ambre/positif)"
+        tooltip={t("discrepancyTooltip")}
         secondary={discrepancyStatusSecondary}
         variant={discrepancyVariant}
       />

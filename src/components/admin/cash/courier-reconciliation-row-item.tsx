@@ -104,16 +104,16 @@ export function CourierReconciliationRowItem({
             <span className="text-xs text-muted-foreground font-medium px-2.5 py-1.5 bg-surface rounded-md border border-border">
               {t("noOrdersToday")}
             </span>
-          ) : (
+          ) : !isConfirmed ? (
             <Button
               size="sm"
-              variant={isConfirmed ? "outline" : "default"}
+              variant="default"
               onClick={() => onOpenReconcile(c)}
               className="min-h-[40px] h-10 text-xs font-semibold px-3"
             >
-              {isConfirmed ? "Modifier" : t("reconcileBtn")}
+              {t("reconcileBtn")}
             </Button>
-          )}
+          ) : null}
 
           <CourierActionMenu
             courierName={c.name ?? c.courierId}

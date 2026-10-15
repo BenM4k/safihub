@@ -36,14 +36,6 @@ export async function settleAdminHouse(params: {
       return err("Une référence ou un numéro de transaction est requis pour les règlements électroniques ou bancaires");
     }
 
-    // Verify amount does not exceed current pending balance
-    const overview = await getHouseSettlementsOverview();
-    const house = overview.houses.find((h) => h.houseId === params.houseId);
-    if (!house) return err("Pressing introuvable");
-    if (params.amount > house.balanceOwedCDF) {
-      return err(`Le montant saisi (${params.amount.toLocaleString()} CDF) ne peut pas dépasser le solde restant dû (${house.balanceOwedCDF.toLocaleString()} CDF)`);
-    }
-
     const res = await settleHouseBalance({
       houseId: params.houseId,
       amount: params.amount,
@@ -89,14 +81,6 @@ export async function settleAdminCourier(params: {
       return err("Une référence ou un numéro de transaction est requis pour les paiements électroniques ou bancaires");
     }
 
-    // Verify amount does not exceed current pending balance
-    const overview = await getCourierSettlementsOverview();
-    const courier = overview.couriers.find((c) => c.courierId === params.courierId);
-    if (!courier) return err("Coursier introuvable");
-    if (params.amount > courier.balanceOwedCDF) {
-      return err(`Le montant saisi (${params.amount.toLocaleString()} CDF) ne peut pas dépasser le solde restant dû (${courier.balanceOwedCDF.toLocaleString()} CDF)`);
-    }
-
     const res = await settleCourierPay({
       courierId: params.courierId,
       amount: params.amount,
@@ -108,7 +92,7 @@ export async function settleAdminCourier(params: {
       adminId: params.adminId,
     });
 
-    if (!res.ok) return err("Échec du règlement du coursier");
+    if (!res.ok) return err(res.error || "Échec du règlement du coursier");
     return ok({ settlementId: res.settlementId, newBalanceCDF: res.newBalanceCDF });
   } catch (error) {
     return err(error instanceof Error ? error.message : "Erreur lors du règlement du coursier");

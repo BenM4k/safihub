@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +17,7 @@ export function HistoryPagination({
   totalItems,
   onPageChange,
 }: HistoryPaginationProps) {
+  const t = useTranslations("admin.cash");
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const startIdx = (page - 1) * pageSize + 1;
   const endIdx = Math.min(page * pageSize, totalItems);
@@ -25,7 +27,7 @@ export function HistoryPagination({
   return (
     <div className="p-3 border-t border-border-strong bg-surface/40 flex items-center justify-between text-xs text-muted-foreground">
       <span>
-        Affichage de {startIdx} à {endIdx} sur {totalItems} écritures
+        {t("paginationRange", { start: startIdx, end: endIdx, total: totalItems })}
       </span>
 
       <div className="flex items-center gap-1.5">
@@ -36,7 +38,7 @@ export function HistoryPagination({
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
           className="h-9 min-h-[36px] sm:min-h-[40px] px-2.5 text-xs border-border-strong hover:bg-surface focus-visible:ring-2 focus-visible:ring-primary"
-          aria-label="Page précédente"
+          aria-label={t("paginationPrev")}
         >
           <ChevronLeft className="size-4" />
         </Button>
@@ -50,7 +52,7 @@ export function HistoryPagination({
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
           className="h-9 min-h-[36px] sm:min-h-[40px] px-2.5 text-xs border-border-strong hover:bg-surface focus-visible:ring-2 focus-visible:ring-primary"
-          aria-label="Page suivante"
+          aria-label={t("paginationNext")}
         >
           <ChevronRight className="size-4" />
         </Button>

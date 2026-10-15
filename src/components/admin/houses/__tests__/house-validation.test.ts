@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { isValidDrcPhone, normalizeDrcPhone } from "@/lib/phone-utils";
 import { percentToBps } from "@/lib/commission-conversion";
-import type { HouseOperationalStatus } from "../types";
+import { computeOperationalStatus } from "@/services/admin/house.service";
 
 describe("House Form Validation & Status Transitions", () => {
   describe("Name uniqueness and required validation", () => {
@@ -78,24 +78,6 @@ describe("House Form Validation & Status Transitions", () => {
   });
 
   describe("Status Mapping & Operational State Transitions", () => {
-    function computeOperationalStatus(params: {
-      isActive: boolean;
-      isPaused: boolean;
-      isClosedByException: boolean;
-      isOpenNow: boolean;
-    }): HouseOperationalStatus {
-      if (!params.isActive) {
-        return "suspended";
-      }
-      if (params.isPaused) {
-        return "paused";
-      }
-      if (params.isClosedByException || !params.isOpenNow) {
-        return "closed_today";
-      }
-      return "active";
-    }
-
     it("maps inactive house to suspended regardless of hours", () => {
       expect(
         computeOperationalStatus({

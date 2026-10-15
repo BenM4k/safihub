@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { X, Building2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ export function HouseCreateDrawer({
   defaultCommissionBps,
   onSuccess,
 }: HouseCreateDrawerProps) {
+  const t = useTranslations("admin.houses");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -94,6 +96,15 @@ export function HouseCreateDrawer({
       if (!res.ok) {
         setError(res.error || "Erreur lors de la création du pressing");
       } else {
+        setName("");
+        setNeighborhoodId("");
+        setContactPhone("");
+        setCommissionPercent("");
+        setMinimumOrderAmount("5000");
+        setTurnaroundHours("48");
+        setAddressNote("");
+        setDailyCapacity("");
+        setError(null);
         onSuccess();
         onClose();
       }
@@ -116,16 +127,16 @@ export function HouseCreateDrawer({
             </div>
             <div>
               <h2 id="create-drawer-title" className="text-sm font-bold text-heading">
-                Ajouter un pressing
+                {t("drawerTitle")}
               </h2>
-              <p className="text-[11px] text-ink-600">Nouveau pressing partenaire</p>
+              <p className="text-[11px] text-ink-600">{t("drawerSubtitle")}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="p-1.5 rounded-lg text-ink-500 hover:text-ink-800 hover:bg-surface-hover transition-colors"
-            aria-label="Fermer le panneau"
+            aria-label={t("drawerCloseAria")}
           >
             <X className="size-4" />
           </button>
@@ -289,14 +300,14 @@ export function HouseCreateDrawer({
               disabled={isPending}
               className="min-h-[40px] px-4 text-xs font-semibold border-2 border-border-strong"
             >
-              Annuler
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
               disabled={!isFormValid || isPending}
               className="min-h-[40px] px-4 text-xs font-semibold bg-primary hover:bg-primary-hover text-white shadow-2xs"
             >
-              {isPending ? "Création en cours..." : "Ajouter un pressing"}
+              {isPending ? t("save") : t("addHouse")}
             </Button>
           </div>
         </form>

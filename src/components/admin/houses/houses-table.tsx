@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { EmptyState } from "@/components/admin/shared/empty-state";
 import { HousesTableToolbar } from "./houses-table-toolbar";
@@ -29,6 +30,7 @@ export function HousesTable({
   onViewSettlements,
   onOpenCreateDrawer,
 }: HousesTableProps) {
+  const t = useTranslations("admin.houses");
   const [filters, setFilters] = useState<HouseFiltersState>({
     search: "",
     status: "all",
@@ -141,28 +143,28 @@ export function HousesTable({
           <thead>
             <tr className="border-b-2 border-border-strong bg-surface text-ink-800 font-bold sticky top-0 z-10 select-none">
               <th scope="col" className="py-3 px-4 min-w-[220px]">
-                {renderSortHeader("Pressing", "name")}
+                {renderSortHeader(t("colHouse"), "name")}
               </th>
-              <th scope="col" className="py-3 px-4 min-w-[120px]">Quartier</th>
-              <th scope="col" className="py-3 px-4 min-w-[140px]">Téléphone</th>
+              <th scope="col" className="py-3 px-4 min-w-[120px]">{t("colNeighborhood")}</th>
+              <th scope="col" className="py-3 px-4 min-w-[140px]">{t("colPhone")}</th>
               <th scope="col" className="py-3 px-4 min-w-[110px]">
-                {renderSortHeader("Commission", "commission")}
+                {renderSortHeader(t("colCommission"), "commission")}
               </th>
               <th scope="col" className="py-3 px-4 text-right min-w-[120px]">
-                {renderSortHeader("Montant min.", "minOrder", "right")}
+                {renderSortHeader(t("colMinOrder"), "minOrder", "right")}
               </th>
               <th scope="col" className="py-3 px-4 min-w-[90px]">
-                {renderSortHeader("Délai", "turnaround")}
+                {renderSortHeader(t("colTurnaround"), "turnaround")}
               </th>
-              <th scope="col" className="py-3 px-4 min-w-[140px]">Horaires</th>
+              <th scope="col" className="py-3 px-4 min-w-[140px]">{t("colHours")}</th>
               <th scope="col" className="py-3 px-4 text-center min-w-[90px]">
-                {renderSortHeader("En cours", "orders", "center")}
+                {renderSortHeader(t("colOrders"), "orders", "center")}
               </th>
               <th scope="col" className="py-3 px-4 text-right min-w-[120px]">
-                {renderSortHeader("Solde à régler", "balance", "right")}
+                {renderSortHeader(t("colBalance"), "balance", "right")}
               </th>
-              <th scope="col" className="py-3 px-4 min-w-[120px]">Statut</th>
-              <th scope="col" className="py-3 px-4 text-right min-w-[70px]">Actions</th>
+              <th scope="col" className="py-3 px-4 min-w-[120px]">{t("colStatus")}</th>
+              <th scope="col" className="py-3 px-4 text-right min-w-[70px]">{t("colActions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-strong/80">
@@ -170,11 +172,11 @@ export function HousesTable({
               <tr>
                 <td colSpan={11} className="py-12 px-4 text-center">
                   <EmptyState
-                    title={houses.length === 0 ? "Aucun pressing partenaire" : "Aucun résultat trouvé"}
+                    title={houses.length === 0 ? t("emptyTitle") : t("emptyFilteredTitle")}
                     description={
                       houses.length === 0
-                        ? "Ajoutez votre premier pressing partenaire pour démarrer la gestion."
-                        : "Aucun pressing ne correspond à vos critères de recherche ou de filtre."
+                        ? t("emptyDesc")
+                        : t("emptyFilteredDesc")
                     }
                     action={
                       <button
@@ -186,7 +188,7 @@ export function HousesTable({
                         }
                         className="px-4 py-2 rounded-xl text-xs font-bold border-2 border-border-strong bg-card hover:bg-surface text-heading transition-colors"
                       >
-                        {houses.length === 0 ? "Ajouter un pressing" : "Effacer les filtres"}
+                        {houses.length === 0 ? t("addHouse") : t("clearFilters")}
                       </button>
                     }
                   />

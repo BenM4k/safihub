@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { MoreHorizontal, Edit, Ban, CheckCircle2, ShoppingBag, Landmark } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { PhoneCell } from "@/components/admin/shared/phone-cell";
 import { MoneyCell } from "@/components/admin/shared/money-cell";
 import { HouseStatusPill } from "./house-status-pill";
+import { HouseRowActionsMenu } from "./house-row-actions-menu";
 import { formatCommissionDisplay } from "@/lib/commission-conversion";
 import type { AdminHouseRow } from "./types";
 
@@ -26,8 +27,8 @@ export function HousesTableRow({
   onViewOrders,
   onViewSettlements,
 }: HousesTableRowProps) {
+  const t = useTranslations("admin.houses");
   const [imageError, setImageError] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const commissionText = formatCommissionDisplay(
     house.commissionBps,
@@ -46,7 +47,7 @@ export function HousesTableRow({
           onSelectHouse(house);
         }
       }}
-      aria-label={`Détails du pressing ${house.name}`}
+      aria-label={t("houseRowAria", { name: house.name })}
     >
       {/* 1. Pressing info with visible picture thumbnail */}
       <td className="py-3 px-4">
@@ -121,7 +122,7 @@ export function HousesTableRow({
               }`}
             />
             <span className="text-xs font-bold text-heading">
-              {house.isOpenNow ? "Ouvert" : "Fermé"}
+              {house.isOpenNow ? t("openNow") : t("closedNow")}
             </span>
           </div>
           <span className="text-[11px] text-ink-500">
@@ -151,94 +152,15 @@ export function HousesTableRow({
         <HouseStatusPill status={house.status} />
       </td>
 
-      {/* 11. Actions (menu ⋯) */}
+      {/* 11. Actions */}
       <td className="py-3 px-4 text-right whitespace-nowrap relative">
-        <div className="inline-block text-left" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            className="p-1.5 rounded-lg border border-border hover:border-border-strong hover:bg-surface text-ink-600 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
-            aria-label={`Actions pour ${house.name}`}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-          >
-            <MoreHorizontal className="size-4" />
-          </button>
-
-          {menuOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-30"
-                onClick={() => setMenuOpen(false)}
-              />
-              <div
-                role="menu"
-                className="absolute right-0 mt-1 w-48 rounded-xl bg-card border-2 border-border-strong shadow-lg py-1.5 z-40 text-left animate-in fade-in zoom-in-95 duration-100"
-              >
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onSelectHouse(house);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-heading hover:bg-surface transition-colors"
-                >
-                  <Edit className="size-3.5 text-primary" />
-                  <span>Modifier les paramètres</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onToggleStatus(house);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-heading hover:bg-surface transition-colors"
-                >
-                  {house.isActive ? (
-                    <>
-                      <Ban className="size-3.5 text-destructive-base" />
-                      <span>Suspendre le pressing</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="size-3.5 text-success-base" />
-                      <span>Réactiver le pressing</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onViewOrders(house);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-heading hover:bg-surface transition-colors"
-                >
-                  <ShoppingBag className="size-3.5 text-violet-600" />
-                  <span>Voir les commandes</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onViewSettlements(house);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-heading hover:bg-surface transition-colors"
-                >
-                  <Landmark className="size-3.5 text-emerald-600" />
-                  <span>Voir les règlements</span>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        <HouseRowActionsMenu
+          house={house}
+          onSelectHouse={onSelectHouse}
+          onToggleStatus={onToggleStatus}
+          onViewOrders={onViewOrders}
+          onViewSettlements={onViewSettlements}
+        />
       </td>
     </tr>
   );

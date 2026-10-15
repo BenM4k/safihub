@@ -106,7 +106,7 @@ export function ReconciliationHistoryTable({ logs }: ReconciliationHistoryTableP
             {t("historyTitle")}
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Historique auditable de tous les versements et contre-passations
+            {t("historySubtitle")}
           </p>
         </div>
       </div>
@@ -145,7 +145,7 @@ export function ReconciliationHistoryTable({ logs }: ReconciliationHistoryTableP
                   <EmptyState
                     icon={FileText}
                     title={t("noHistory")}
-                    description="Aucune écriture de réconciliation ne correspond aux filtres appliqués."
+                    description={t("historyEmptyFiltered")}
                   />
                 </td>
               </tr>

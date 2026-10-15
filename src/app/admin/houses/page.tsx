@@ -7,16 +7,11 @@ export default async function AdminHousesPage() {
     listAdminNeighborhoods(),
   ]);
 
-  const housesData = housesRes.ok
-    ? housesRes.value
-    : {
-        houses: [],
-        defaultCommissionBps: 2000,
-        totalHousesCount: 0,
-        activeHousesCount: 0,
-        totalBalanceOwedCDF: 0,
-      };
+  if (!housesRes.ok) {
+    throw new Error(housesRes.error || "Failed to load partner houses");
+  }
 
+  const housesData = housesRes.value;
   const neighborhoods = neighRes.ok ? neighRes.value : [];
 
   return (

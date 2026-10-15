@@ -48,38 +48,38 @@ export function ReconcileConfirmationStep({
 
       <div className="p-4 bg-surface rounded-xl border border-border space-y-2.5">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Coursier :</span>
+          <span className="text-muted-foreground">{t("filterCourier")} :</span>
           <span className="font-bold text-heading">{courierName}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Date d&apos;activité :</span>
+          <span className="text-muted-foreground">{t("accountingDate")} :</span>
           <span className="font-mono font-medium text-heading">{businessDate}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Montant attendu :</span>
+          <span className="text-muted-foreground">{t("totalExpected")} :</span>
           <span className="font-mono font-medium">{formatMoney(expectedAmount)}</span>
         </div>
         <div className="flex justify-between border-t border-border pt-2">
-          <span className="text-heading font-semibold">Montant physique remis :</span>
+          <span className="text-heading font-semibold">{t("receivedInputLabel")} :</span>
           <span className="font-mono font-bold text-heading text-sm">
             {formatMoney(receivedAmount)}
           </span>
         </div>
 
         <div className="flex justify-between items-center border-t border-border pt-2">
-          <span className="text-muted-foreground">Écart constaté :</span>
+          <span className="text-muted-foreground">{t("discrepancyBadge")} :</span>
           <div className="flex items-center gap-1.5 font-mono font-bold">
             {diffInfo.isZero ? (
               <span className="text-success-base flex items-center gap-1">
-                <CheckCircle2 className="size-3.5" /> Aucun écart (0 CDF)
+                <CheckCircle2 className="size-3.5" /> {t("zeroDiscrepancy")} (0 CDF)
               </span>
             ) : diffInfo.isShortage ? (
               <span className="text-destructive-base flex items-center gap-1">
-                <ShieldAlert className="size-3.5" /> {diffInfo.formattedAmount} (Manquant)
+                <ShieldAlert className="size-3.5" /> {diffInfo.formattedAmount} ({t("deficit")})
               </span>
             ) : (
               <span className="text-warning-base flex items-center gap-1">
-                <AlertTriangle className="size-3.5" /> {diffInfo.formattedAmount} (Excédent)
+                <AlertTriangle className="size-3.5" /> {diffInfo.formattedAmount} ({t("surplus")})
               </span>
             )}
           </div>
@@ -87,13 +87,13 @@ export function ReconcileConfirmationStep({
 
         {deductFromDeposit && diff < 0 && (
           <div className="text-xs text-destructive-base bg-destructive-light p-2 rounded border border-destructive-base/20 font-medium">
-            Déduction automatique du déficit sur la caution du coursier autorisée.
+            {t("deductFromDepositConfirmed")}
           </div>
         )}
 
         {note && (
           <div className="border-t border-border pt-2">
-            <span className="text-muted-foreground block text-xs mb-0.5">Note enregistrée :</span>
+            <span className="text-muted-foreground block text-xs mb-0.5">{t("noteLabel")} :</span>
             <p className="font-medium text-heading italic">&ldquo;{note}&rdquo;</p>
           </div>
         )}
@@ -117,7 +117,7 @@ export function ReconcileConfirmationStep({
           disabled={loading}
           className="min-h-[40px] px-4 text-xs font-semibold bg-primary hover:bg-primary-hover text-white"
         >
-          {loading ? "Enregistrement..." : t("confirmFinal")}
+          {loading ? t("saving") : t("confirmFinal")}
         </Button>
       </div>
     </div>

@@ -144,6 +144,25 @@ export async function updateHouseProfileAction(
   return res;
 }
 
+const toggleHouseActiveStatusSchema = z
+  .object({
+    houseId: z.string().uuid("Identifiant du pressing invalide (UUID attendu)"),
+    isActive: z.boolean(),
+    reason: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.isActive) {
+        return Boolean(data.reason && data.reason.trim().length > 0);
+      }
+      return true;
+    },
+    {
+      message: "Un motif obligatoire est requis pour suspendre le pressing",
+      path: ["reason"],
+    }
+  );
+
 export async function toggleHouseActiveStatusAction(params: {
   houseId: string;
   isActive: boolean;
@@ -152,16 +171,21 @@ export async function toggleHouseActiveStatusAction(params: {
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
+  const parsed = toggleHouseActiveStatusSchema.safeParse(params);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message || "Données invalides");
+  }
+
   const res = await toggleAdminHouseActiveStatus({
-    houseId: params.houseId,
-    isActive: params.isActive,
-    reason: params.reason,
+    houseId: parsed.data.houseId,
+    isActive: parsed.data.isActive,
+    reason: parsed.data.reason?.trim(),
     adminId: auth.value.user.id,
   });
 
   if (res.ok) {
     revalidatePath("/admin/houses");
-    revalidatePath(`/admin/houses/${params.houseId}`);
+    revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
   return res;
 }

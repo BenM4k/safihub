@@ -293,6 +293,24 @@ const HOUSE_STOCK_IMAGES: Record<string, string> = {
 const DEFAULT_HOUSE_IMAGE =
   "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=800&q=80";
 
+export function computeOperationalStatus(params: {
+  isActive: boolean;
+  isPaused: boolean;
+  isClosedByException: boolean;
+  isOpenNow: boolean;
+}): HouseOperationalStatus {
+  if (!params.isActive) {
+    return "suspended";
+  }
+  if (params.isPaused) {
+    return "paused";
+  }
+  if (params.isClosedByException || !params.isOpenNow) {
+    return "closed_today";
+  }
+  return "active";
+}
+
 export async function listAdminHousesEnriched(): Promise<
   Result<{
     houses: AdminHouseRow[];
@@ -336,36 +354,31 @@ export async function listAdminHousesEnriched(): Promise<
         (c) => todayDateStr >= c.startsOn && todayDateStr <= c.endsOn
       );
 
-      const todayHrs = houseHours.find((hr) => hr.weekday === bukavuNow.weekday);
+      // Collect all slots for bukavuNow.weekday
+      const todaySlots = houseHours.filter((hr) => hr.weekday === bukavuNow.weekday);
 
-      let isOpenNow = false;
-      let todayHoursText = "Fermé aujourd'hui";
-      let status: HouseOperationalStatus = "active";
+      const currentHm = bukavuNow.timeString;
+      const isSlotOpenNow = todaySlots.some((slot) => {
+        const opensHm = slot.opensAt.slice(0, 5);
+        const closesHm = slot.closesAt.slice(0, 5);
+        return currentHm >= opensHm && currentHm < closesHm;
+      });
 
-      if (!house.isActive) {
-        status = "suspended";
-        isOpenNow = false;
-        todayHoursText = "Suspendu";
-      } else if (house.isPaused) {
-        status = "paused";
-        isOpenNow = false;
-        todayHoursText = "En pause";
-      } else if (isClosedTodayByClosure) {
-        status = "closed_today";
-        isOpenNow = false;
-        todayHoursText = "Fermeture exceptionnelle";
-      } else if (!todayHrs) {
-        status = "closed_today";
-        isOpenNow = false;
-        todayHoursText = "Fermé aujourd'hui";
-      } else {
-        const opensHm = todayHrs.opensAt.slice(0, 5);
-        const closesHm = todayHrs.closesAt.slice(0, 5);
-        const currentHm = bukavuNow.timeString;
-        isOpenNow = currentHm >= opensHm && currentHm < closesHm;
-        todayHoursText = `${opensHm} - ${closesHm}`;
-        status = isOpenNow ? "active" : "closed_today";
-      }
+      const todayHoursText =
+        todaySlots.length > 0
+          ? todaySlots
+              .map((slot) => `${slot.opensAt.slice(0, 5)} - ${slot.closesAt.slice(0, 5)}`)
+              .join(", ")
+          : "—";
+
+      const status = computeOperationalStatus({
+        isActive: house.isActive,
+        isPaused: house.isPaused,
+        isClosedByException: isClosedTodayByClosure,
+        isOpenNow: isSlotOpenNow,
+      });
+
+      const isOpenNow = status === "active";
 
       const activeOrdersCount = activeOrdersCounts[house.id] ?? 0;
       const balanceOwedCDF = settlementsMap.get(house.id) ?? 0;

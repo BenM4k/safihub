@@ -83,11 +83,10 @@ export default async function AdminCashPage({ searchParams }: AdminCashPageProps
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 pb-1">
           <h2 className="text-sm font-bold text-heading font-display">
-            Coursiers · {formattedDateLong}
+            {t("couriersSectionHeading", { date: formattedDateLong })}
           </h2>
           <span className="text-xs text-muted-foreground font-medium">
-            {couriersCount} {couriersCount > 1 ? "coursiers" : "coursier"} · {reconciledCount}{" "}
-            {reconciledCount > 1 ? "réconciliés" : "réconcilié"} · {pendingCount} en attente
+            {t("activeCouriersCount", { count: couriersCount })} · {t("reconciledCountSummary", { reconciled: reconciledCount, pending: pendingCount })}
           </span>
         </div>
 

@@ -124,6 +124,7 @@ export function SettlementsView({
 
       {/* Dialogs */}
       <SettlePayeeDialog
+        key={settleTarget?.id ?? "none"}
         isOpen={Boolean(settleTarget)}
         onClose={() => setSettleTarget(null)}
         target={settleTarget}
