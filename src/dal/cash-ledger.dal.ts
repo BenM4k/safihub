@@ -1,5 +1,6 @@
 import "server-only";
-import { and, desc, eq, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, like, notInArray, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
 
 export interface DeliveryLedgerPostingParams {
@@ -505,6 +506,16 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
     difference: number;
     currency: "CDF" | "USD";
     note: string | null;
+    reconciledByName?: string | null;
+    reconciledAt?: Date | null;
+    orders?: Array<{
+      id: string;
+      code: string;
+      amount: number;
+      currency: "CDF" | "USD";
+      customerPhone: string | null;
+      createdAt: Date;
+    }>;
   }>;
   summary: {
     totalExpectedCDF: number;
@@ -547,6 +558,10 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
         amount: schema.cashLedger.amount,
         currency: schema.cashLedger.currency,
         exchangeRateUsed: schema.orders.exchangeRateUsed,
+        orderId: schema.cashLedger.orderId,
+        orderCode: schema.orders.code,
+        customerPhone: schema.orders.contactPhone,
+        createdAt: schema.cashLedger.createdAt,
       })
       .from(schema.cashLedger)
       .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
@@ -571,13 +586,35 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
       }
     }
 
+    const courierOrders = dayEntries
+      .filter((e) => e.orderId)
+      .map((e) => ({
+        id: e.orderId as string,
+        code: e.orderCode ?? "—",
+        amount: e.amount,
+        currency: (e.currency as "CDF" | "USD") ?? "CDF",
+        customerPhone: e.customerPhone ?? null,
+        createdAt: e.createdAt,
+      }));
+
     // Held cash overall
     const balances = await getCourierCashBalances(c.id);
 
-    // Existing reconciliation record for this date
+    // Existing reconciliation record for this date with operator name
     const [recon] = await db
-      .select()
+      .select({
+        id: schema.cashReconciliations.id,
+        receivedAmount: schema.cashReconciliations.receivedAmount,
+        difference: schema.cashReconciliations.difference,
+        status: schema.cashReconciliations.status,
+        currency: schema.cashReconciliations.currency,
+        note: schema.cashReconciliations.note,
+        reconciledBy: schema.cashReconciliations.reconciledBy,
+        createdAt: schema.cashReconciliations.createdAt,
+        reconciledByName: schema.user.name,
+      })
       .from(schema.cashReconciliations)
+      .leftJoin(schema.user, eq(schema.cashReconciliations.reconciledBy, schema.user.id))
       .where(
         and(
           eq(schema.cashReconciliations.courierId, c.id),
@@ -611,6 +648,9 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
       difference,
       currency: (recon?.currency as "CDF" | "USD") ?? "CDF",
       note: recon?.note ?? null,
+      reconciledByName: recon?.reconciledByName ?? null,
+      reconciledAt: recon?.createdAt ?? null,
+      orders: courierOrders,
     });
   }
 
@@ -770,7 +810,7 @@ export async function recordDailyCourierReconciliation(params: {
         courierId,
         currency,
         amount: receivedAmount,
-        note: `Versement journalier validé (${businessDate}) : ${receivedAmount} ${currency}`,
+        note: `Versement journalier validé (${businessDate}) [RECON: ${reconId}] : ${receivedAmount} ${currency}`,
         createdBy: reconciledBy ?? null,
       });
     }
@@ -782,7 +822,7 @@ export async function recordDailyCourierReconciliation(params: {
         courierId,
         currency,
         amount: Math.abs(difference),
-        note: `Écart journalier (${businessDate}) : ${difference} ${currency} (${
+        note: `Écart journalier (${businessDate}) [RECON: ${reconId}] : ${difference} ${currency} (${
           difference < 0 ? "Déficit constaté" : "Surplus constaté"
         })`,
         createdBy: reconciledBy ?? null,
@@ -808,7 +848,7 @@ export async function recordDailyCourierReconciliation(params: {
           courierId,
           currency,
           amount: deductionAmount,
-          note: `Déduction de caution suite à écart de caisse du ${businessDate} (-${deductionAmount} ${currency})`,
+          note: `Déduction de caution suite à écart de caisse du ${businessDate} [RECON: ${reconId}] (-${deductionAmount} ${currency})`,
           createdBy: reconciledBy ?? null,
         });
 
@@ -836,11 +876,12 @@ export async function recordDailyCourierReconciliation(params: {
 /**
  * Task 8.3: Get past reconciliation and discrepancy logs.
  */
-export async function getReconciliationLogs(limit = 30): Promise<
+export async function getReconciliationLogs(limit = 100): Promise<
   Array<{
     id: string;
     courierId: string;
     courierName: string | null;
+    courierPhone: string | null;
     businessDate: string;
     currency: "CDF" | "USD";
     expectedAmount: number;
@@ -849,14 +890,18 @@ export async function getReconciliationLogs(limit = 30): Promise<
     status: string;
     note: string | null;
     reconciledBy: string | null;
+    reconcilerName: string | null;
     createdAt: Date;
   }>
 > {
+  const reconcilerUser = alias(schema.user, "reconciler_user");
+
   const rows = await db
     .select({
       id: schema.cashReconciliations.id,
       courierId: schema.cashReconciliations.courierId,
       courierName: schema.user.name,
+      courierPhone: schema.user.contactPhone,
       businessDate: schema.cashReconciliations.businessDate,
       currency: schema.cashReconciliations.currency,
       expectedAmount: schema.cashReconciliations.expectedAmount,
@@ -865,10 +910,12 @@ export async function getReconciliationLogs(limit = 30): Promise<
       status: schema.cashReconciliations.status,
       note: schema.cashReconciliations.note,
       reconciledBy: schema.cashReconciliations.reconciledBy,
+      reconcilerName: reconcilerUser.name,
       createdAt: schema.cashReconciliations.createdAt,
     })
     .from(schema.cashReconciliations)
     .innerJoin(schema.user, eq(schema.cashReconciliations.courierId, schema.user.id))
+    .leftJoin(reconcilerUser, eq(schema.cashReconciliations.reconciledBy, reconcilerUser.id))
     .orderBy(desc(schema.cashReconciliations.businessDate), desc(schema.cashReconciliations.createdAt))
     .limit(limit);
 
@@ -879,6 +926,121 @@ export async function getReconciliationLogs(limit = 30): Promise<
 }
 
 /**
+ * Reverses a daily courier reconciliation and its posted ledger entries.
+ * Logs the audit trail and preserves the record with 'Annulée' state.
+ */
+export async function reverseCourierReconciliation(params: {
+  reconciliationId: string;
+  reason: string;
+  reversedBy: string;
+}): Promise<{ ok: boolean; reversalId?: string; error?: string }> {
+  return await db.transaction(async (tx) => {
+    const [recon] = await tx
+      .select()
+      .from(schema.cashReconciliations)
+      .where(eq(schema.cashReconciliations.id, params.reconciliationId))
+      .for("update")
+      .limit(1);
+
+    if (!recon) {
+      return { ok: false, error: "Réconciliation introuvable" };
+    }
+
+    if (recon.note?.includes("[ANNULÉE")) {
+      return { ok: false, error: "Cette réconciliation a déjà été annulée" };
+    }
+
+    // Find linked ledger entries for this specific reconciliation
+    const reconTag = `[RECON: ${recon.id}]`;
+    const linkedEntries = await tx
+      .select()
+      .from(schema.cashLedger)
+      .where(
+        and(
+          eq(schema.cashLedger.courierId, recon.courierId),
+          like(schema.cashLedger.note, `%${reconTag}%`)
+        )
+      );
+
+    if (recon.status === "confirmed" && linkedEntries.length === 0) {
+      return { ok: false, error: "Aucune écriture liée à cette réconciliation à annuler" };
+    }
+
+    let lastReversalId: string | undefined;
+    for (const entry of linkedEntries) {
+      const [alreadyReversed] = await tx
+        .select()
+        .from(schema.cashLedger)
+        .where(
+          and(
+            eq(schema.cashLedger.entryType, "reversal"),
+            eq(schema.cashLedger.reversalOfId, entry.id)
+          )
+        )
+        .limit(1);
+
+      if (!alreadyReversed) {
+        const [reversal] = await tx
+          .insert(schema.cashLedger)
+          .values({
+            entryType: "reversal",
+            courierId: entry.courierId,
+            currency: entry.currency,
+            amount: entry.amount,
+            reversalOfId: entry.id,
+            note: `Annulation ${entry.entryType} (${recon.businessDate}) : ${params.reason}`,
+            createdBy: params.reversedBy,
+          })
+          .returning();
+        lastReversalId = reversal.id;
+
+        if (entry.entryType === "deposit_released") {
+          const courierUserId = entry.courierId ?? recon.courierId;
+          const [profile] = await tx
+            .select()
+            .from(schema.courierProfiles)
+            .where(eq(schema.courierProfiles.userId, courierUserId))
+            .for("update")
+            .limit(1);
+
+          if (profile) {
+            await tx
+              .update(schema.courierProfiles)
+              .set({
+                securityDeposit: (profile.securityDeposit ?? 0) + entry.amount,
+                updatedAt: new Date(),
+              })
+              .where(eq(schema.courierProfiles.userId, courierUserId));
+          }
+        }
+      }
+    }
+
+    // Get operator details
+    const [adminUser] = await tx
+      .select({ name: schema.user.name })
+      .from(schema.user)
+      .where(eq(schema.user.id, params.reversedBy))
+      .limit(1);
+
+    const adminName = adminUser?.name || "Opérateur";
+    const auditNote = `[ANNULÉE par ${adminName} : ${params.reason}] ${recon.note || ""}`.trim();
+
+    await tx
+      .update(schema.cashReconciliations)
+      .set({
+        status: "open",
+        receivedAmount: 0,
+        difference: -recon.expectedAmount,
+        note: auditNote,
+      })
+      .where(eq(schema.cashReconciliations.id, recon.id));
+
+    return { ok: true, reversalId: lastReversalId };
+  });
+}
+
+/**
  * Task 8.4: Get house settlements summary for admin.
  */
 export async function getHouseSettlementsOverview(): Promise<{
@@ -886,13 +1048,27 @@ export async function getHouseSettlementsOverview(): Promise<{
     houseId: string;
     name: string;
     neighborhoodName: string | null;
+    grossTotalCDF: number;
+    commissionTotalCDF: number;
     totalOwedCDF: number;
     totalSettledCDF: number;
     balanceOwedCDF: number;
+    lastSettlementAmount: number | null;
     lastSettlementAt: Date | null;
     deliveredOrdersCount: number;
+    oldestUnpaidDate: Date | null;
+    deliveredOrders: Array<{
+      id: string;
+      code: string;
+      itemsTotal: number;
+      commissionAmount: number;
+      owedToHouse: number;
+      deliveredAt: Date | null;
+    }>;
   }>;
   totalOwedToHousesCDF: number;
+  housesWithBalanceCount: number;
+  oldestUnpaidDays: number | null;
 }> {
   const allHouses = await db
     .select({
@@ -916,9 +1092,48 @@ export async function getHouseSettlementsOverview(): Promise<{
 
   const housesSummary = [];
   let totalPendingOwed = 0;
+  const now = new Date();
+  let maxUnpaidAgeDays: number | null = null;
 
   for (const h of allHouses) {
-    // Total owed_to_house entries
+    // 1. Delivered orders with gross & commission breakdown
+    const ordersList = await db
+      .select({
+        id: schema.orders.id,
+        code: schema.orders.code,
+        itemsTotal: schema.orders.itemsTotal,
+        adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+        commissionAmount: schema.orders.commissionAmount,
+        updatedAt: schema.orders.updatedAt,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, h.id),
+          eq(schema.orders.status, "delivered")
+        )
+      )
+      .orderBy(desc(schema.orders.updatedAt));
+
+    let grossTotalCDF = 0;
+    let commissionTotalCDF = 0;
+
+    const deliveredOrders = ordersList.map((o) => {
+      const finalItems = o.adjustedItemsTotal ?? o.itemsTotal;
+      const owed = Math.max(0, finalItems - o.commissionAmount);
+      grossTotalCDF += finalItems;
+      commissionTotalCDF += o.commissionAmount;
+      return {
+        id: o.id,
+        code: o.code ?? "—",
+        itemsTotal: finalItems,
+        commissionAmount: o.commissionAmount,
+        owedToHouse: owed,
+        deliveredAt: o.updatedAt,
+      };
+    });
+
+    // 2. Total owed_to_house entries from cash_ledger
     const owedEntries = await db
       .select({
         amount: schema.cashLedger.amount,
@@ -940,7 +1155,7 @@ export async function getHouseSettlementsOverview(): Promise<{
       return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
     }, 0);
 
-    // Total house_settlement_paid entries
+    // 3. Total house_settlement_paid entries
     const settledEntries = await db
       .select({
         amount: schema.cashLedger.amount,
@@ -963,31 +1178,62 @@ export async function getHouseSettlementsOverview(): Promise<{
     const balanceOwedCDF = Math.max(0, totalOwedCDF - totalSettledCDF);
     totalPendingOwed += balanceOwedCDF;
 
-    const [ordersCount] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(schema.orders)
-      .where(
-        and(
-          eq(schema.orders.houseId, h.id),
-          eq(schema.orders.status, "delivered")
-        )
-      );
+    const lastSettlementAmount = settledEntries[0]
+      ? (settledEntries[0].currency === "USD" ? Math.round(settledEntries[0].amount * 2800) : settledEntries[0].amount)
+      : null;
+    const lastSettlementAt = settledEntries[0]?.createdAt ?? null;
+
+    // Oldest unpaid order date calculated via FIFO allocation of settled amounts
+    let oldestUnpaidDate: Date | null = null;
+    if (balanceOwedCDF > 0 && deliveredOrders.length > 0) {
+      const chronologicalOrders = [...deliveredOrders].sort((a, b) => {
+        const timeA = a.deliveredAt ? new Date(a.deliveredAt).getTime() : 0;
+        const timeB = b.deliveredAt ? new Date(b.deliveredAt).getTime() : 0;
+        return timeA - timeB;
+      });
+
+      let remainingSettled = totalSettledCDF;
+      for (const order of chronologicalOrders) {
+        if (remainingSettled >= order.owedToHouse) {
+          remainingSettled -= order.owedToHouse;
+        } else {
+          oldestUnpaidDate = order.deliveredAt;
+          break;
+        }
+      }
+
+      if (oldestUnpaidDate) {
+        const days = Math.max(0, Math.floor((now.getTime() - new Date(oldestUnpaidDate).getTime()) / (1000 * 3600 * 24)));
+        if (maxUnpaidAgeDays === null || days > maxUnpaidAgeDays) {
+          maxUnpaidAgeDays = days;
+        }
+      }
+    }
 
     housesSummary.push({
       houseId: h.id,
       name: h.name,
       neighborhoodName: h.neighborhoodName,
+      grossTotalCDF,
+      commissionTotalCDF,
       totalOwedCDF,
       totalSettledCDF,
       balanceOwedCDF,
-      lastSettlementAt: settledEntries[0]?.createdAt ?? null,
-      deliveredOrdersCount: ordersCount?.count ?? 0,
+      lastSettlementAmount,
+      lastSettlementAt,
+      deliveredOrdersCount: ordersList.length,
+      oldestUnpaidDate,
+      deliveredOrders,
     });
   }
+
+  const housesWithBalanceCount = housesSummary.filter((h) => h.balanceOwedCDF > 0).length;
 
   return {
     houses: housesSummary,
     totalOwedToHousesCDF: totalPendingOwed,
+    housesWithBalanceCount,
+    oldestUnpaidDays: maxUnpaidAgeDays,
   };
 }
 
@@ -1142,25 +1388,24 @@ export async function settleHouseBalance(params: {
   amount: number;
   currency?: "CDF" | "USD";
   reference?: string;
+  method?: "mobile_money" | "bank" | "cash";
+  period?: string;
+  note?: string;
   adminId?: string;
 }): Promise<{ ok: boolean; settlementId?: string; newBalanceCDF: number; error?: string }> {
   return await db.transaction(async (tx) => {
-    const currency = params.currency ?? "CDF";
-    const [entry] = await tx
-      .insert(schema.cashLedger)
-      .values({
-        entryType: "house_settlement_paid",
-        houseId: params.houseId,
-        currency,
-        amount: params.amount,
-        note: params.reference
-          ? `Règlement pressing : ${params.reference}`
-          : `Règlement hebdomadaire pressing (${params.amount} ${currency})`,
-        createdBy: params.adminId ?? null,
-      })
-      .returning();
+    // 1. Lock house row to serialize settlements per house
+    const [house] = await tx
+      .select()
+      .from(schema.houses)
+      .where(eq(schema.houses.id, params.houseId))
+      .for("update")
+      .limit(1);
 
-    // Query new balance
+    if (!house) {
+      return { ok: false, error: "Pressing introuvable", newBalanceCDF: 0 };
+    }
+
     const reversedSubquery = tx
       .select({ id: schema.cashLedger.reversalOfId })
       .from(schema.cashLedger)
@@ -1210,12 +1455,46 @@ export async function settleHouseBalance(params: {
       return sum + (e.currency === "USD" ? Math.round(e.amount * 2800) : e.amount);
     }, 0);
 
-    const newBalanceCDF = Math.max(0, totalOwedCDF - totalSettledCDF);
+    const currentBalanceCDF = Math.max(0, totalOwedCDF - totalSettledCDF);
+    const amountInCDF = params.currency === "USD" ? Math.round(params.amount * 2800) : params.amount;
+
+    if (amountInCDF > currentBalanceCDF) {
+      return {
+        ok: false,
+        error: `Le montant saisi (${amountInCDF.toLocaleString()} CDF) ne peut pas dépasser le solde restant dû (${currentBalanceCDF.toLocaleString()} CDF)`,
+        newBalanceCDF: currentBalanceCDF,
+      };
+    }
+
+    const currency = params.currency ?? "CDF";
+    const methodTag = params.method ? `[MÉTHODE: ${params.method}]` : "";
+    const refTag = params.reference ? `[RÉF: ${params.reference}]` : "";
+    const periodTag = params.period ? `[PÉRIODE: ${params.period}]` : "";
+    const customNote = params.note?.trim() ?? "";
+    const combinedParts = [methodTag, refTag, periodTag, customNote].filter(Boolean);
+    const finalNote =
+      combinedParts.length > 0
+        ? combinedParts.join(" ")
+        : params.reference
+          ? `Règlement pressing : ${params.reference}`
+          : `Règlement hebdomadaire pressing (${params.amount} ${currency})`;
+
+    const [entry] = await tx
+      .insert(schema.cashLedger)
+      .values({
+        entryType: "house_settlement_paid",
+        houseId: params.houseId,
+        currency,
+        amount: params.amount,
+        note: finalNote,
+        createdBy: params.adminId ?? null,
+      })
+      .returning();
 
     return {
       ok: true,
       settlementId: entry.id,
-      newBalanceCDF,
+      newBalanceCDF: currentBalanceCDF - amountInCDF,
     };
   });
 }
@@ -1228,12 +1507,25 @@ export async function getCourierSettlementsOverview(): Promise<{
     courierId: string;
     name: string | null;
     phone: string | null;
+    missionsCount: number;
     totalEarnedCDF: number;
     totalPaidCDF: number;
     balanceOwedCDF: number;
+    lastPaymentAmount: number | null;
     lastPaymentAt: Date | null;
+    cashDiscrepancyCDF: number;
+    cashHeldCDF: number;
+    oldestUnpaidDate: Date | null;
+    deliveredOrders: Array<{
+      id: string;
+      code: string;
+      amount: number;
+      createdAt: Date;
+    }>;
   }>;
   totalOwedToCouriersCDF: number;
+  couriersWithBalanceCount: number;
+  oldestUnpaidDays: number | null;
 }> {
   const activeCouriers = await db
     .select({
@@ -1257,13 +1549,19 @@ export async function getCourierSettlementsOverview(): Promise<{
 
   const couriersList = [];
   let totalPendingOwed = 0;
+  const now = new Date();
+  let maxUnpaidAgeDays: number | null = null;
 
   for (const c of activeCouriers) {
     const earnedEntries = await db
       .select({
+        id: schema.cashLedger.id,
         amount: schema.cashLedger.amount,
         currency: schema.cashLedger.currency,
         exchangeRateUsed: schema.orders.exchangeRateUsed,
+        orderId: schema.cashLedger.orderId,
+        orderCode: schema.orders.code,
+        createdAt: schema.cashLedger.createdAt,
       })
       .from(schema.cashLedger)
       .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
@@ -1273,7 +1571,8 @@ export async function getCourierSettlementsOverview(): Promise<{
           eq(schema.cashLedger.entryType, "courier_pay"),
           notInArray(schema.cashLedger.id, reversedSubquery)
         )
-      );
+      )
+      .orderBy(desc(schema.cashLedger.createdAt));
 
     const paidEntries = await db
       .select({
@@ -1303,20 +1602,95 @@ export async function getCourierSettlementsOverview(): Promise<{
     const balanceOwedCDF = Math.max(0, totalEarnedCDF - totalPaidCDF);
     totalPendingOwed += balanceOwedCDF;
 
+    const lastPaymentAmount = paidEntries[0]
+      ? (paidEntries[0].currency === "USD" ? Math.round(paidEntries[0].amount * 2800) : paidEntries[0].amount)
+      : null;
+    const lastPaymentAt = paidEntries[0]?.createdAt ?? null;
+
+    // Held cash and discrepancies from Cash Controls
+    const balances = await getCourierCashBalances(c.id);
+
+    const discrepancyRows = await db
+      .select({
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+        note: schema.cashLedger.note,
+        exchangeRateUsed: schema.orders.exchangeRateUsed,
+      })
+      .from(schema.cashLedger)
+      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
+      .where(
+        and(
+          eq(schema.cashLedger.courierId, c.id),
+          eq(schema.cashLedger.entryType, "discrepancy"),
+          notInArray(schema.cashLedger.id, reversedSubquery)
+        )
+      );
+
+    const cashDiscrepancyCDF = discrepancyRows.reduce((sum, d) => {
+      const rate = Number(d.exchangeRateUsed) || 2800;
+      const amountCDF = d.currency === "USD" ? Math.round(d.amount * rate) : d.amount;
+      const isShortage = d.note ? (d.note.includes("Déficit") || d.note.includes(" : -")) : false;
+      const signedAmountCDF = isShortage ? -amountCDF : amountCDF;
+      return sum + signedAmountCDF;
+    }, 0);
+
+    const deliveredOrders = earnedEntries.map((e) => ({
+      id: e.orderId ?? e.id,
+      code: e.orderCode ?? "—",
+      amount: e.currency === "USD" ? Math.round(e.amount * (Number(e.exchangeRateUsed) || 2800)) : e.amount,
+      createdAt: e.createdAt,
+    }));
+
+    // Oldest unpaid date calculated via FIFO allocation of paid amounts
+    let oldestUnpaidDate: Date | null = null;
+    if (balanceOwedCDF > 0 && earnedEntries.length > 0) {
+      const chronologicalEarned = [...earnedEntries].sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      let remainingPaid = totalPaidCDF;
+      for (const entry of chronologicalEarned) {
+        const rate = Number(entry.exchangeRateUsed) || 2800;
+        const entryAmountCDF = entry.currency === "USD" ? Math.round(entry.amount * rate) : entry.amount;
+        if (remainingPaid >= entryAmountCDF) {
+          remainingPaid -= entryAmountCDF;
+        } else {
+          oldestUnpaidDate = entry.createdAt;
+          break;
+        }
+      }
+      if (oldestUnpaidDate) {
+        const days = Math.max(0, Math.floor((now.getTime() - new Date(oldestUnpaidDate).getTime()) / (1000 * 3600 * 24)));
+        if (maxUnpaidAgeDays === null || days > maxUnpaidAgeDays) {
+          maxUnpaidAgeDays = days;
+        }
+      }
+    }
+
     couriersList.push({
       courierId: c.id,
       name: c.name,
       phone: c.phone,
+      missionsCount: earnedEntries.length,
       totalEarnedCDF,
       totalPaidCDF,
       balanceOwedCDF,
-      lastPaymentAt: paidEntries[0]?.createdAt ?? null,
+      lastPaymentAmount,
+      lastPaymentAt,
+      cashDiscrepancyCDF,
+      cashHeldCDF: balances.cashHeldCDF,
+      oldestUnpaidDate,
+      deliveredOrders,
     });
   }
+
+  const couriersWithBalanceCount = couriersList.filter((c) => c.balanceOwedCDF > 0).length;
 
   return {
     couriers: couriersList,
     totalOwedToCouriersCDF: totalPendingOwed,
+    couriersWithBalanceCount,
+    oldestUnpaidDays: maxUnpaidAgeDays,
   };
 }
 
@@ -1328,23 +1702,23 @@ export async function settleCourierPay(params: {
   amount: number;
   currency?: "CDF" | "USD";
   reference?: string;
+  method?: "mobile_money" | "bank" | "cash";
+  period?: string;
+  note?: string;
   adminId?: string;
-}): Promise<{ ok: boolean; settlementId?: string; newBalanceCDF: number }> {
+}): Promise<{ ok: boolean; settlementId?: string; newBalanceCDF: number; error?: string }> {
   return await db.transaction(async (tx) => {
-    const currency = params.currency ?? "CDF";
-    const [entry] = await tx
-      .insert(schema.cashLedger)
-      .values({
-        entryType: "courier_pay_paid",
-        courierId: params.courierId,
-        currency,
-        amount: params.amount,
-        note: params.reference
-          ? `Règlement rémunération : ${params.reference}`
-          : `Règlement des courses du coursier (${params.amount} ${currency})`,
-        createdBy: params.adminId ?? null,
-      })
-      .returning();
+    // 1. Lock courier profile row to serialize settlements per courier
+    const [profile] = await tx
+      .select()
+      .from(schema.courierProfiles)
+      .where(eq(schema.courierProfiles.userId, params.courierId))
+      .for("update")
+      .limit(1);
+
+    if (!profile) {
+      return { ok: false, error: "Coursier introuvable", newBalanceCDF: 0 };
+    }
 
     const reversedSubquery = tx
       .select({ id: schema.cashLedger.reversalOfId })
@@ -1395,12 +1769,187 @@ export async function settleCourierPay(params: {
       return sum + (p.currency === "USD" ? Math.round(p.amount * 2800) : p.amount);
     }, 0);
 
-    const newBalanceCDF = Math.max(0, totalEarnedCDF - totalPaidCDF);
+    const currentBalanceCDF = Math.max(0, totalEarnedCDF - totalPaidCDF);
+    const amountInCDF = params.currency === "USD" ? Math.round(params.amount * 2800) : params.amount;
+
+    if (amountInCDF > currentBalanceCDF) {
+      return {
+        ok: false,
+        error: `Le montant saisi (${amountInCDF.toLocaleString()} CDF) ne peut pas dépasser le solde restant dû (${currentBalanceCDF.toLocaleString()} CDF)`,
+        newBalanceCDF: currentBalanceCDF,
+      };
+    }
+
+    const currency = params.currency ?? "CDF";
+    const methodTag = params.method ? `[MÉTHODE: ${params.method}]` : "";
+    const refTag = params.reference ? `[RÉF: ${params.reference}]` : "";
+    const periodTag = params.period ? `[PÉRIODE: ${params.period}]` : "";
+    const customNote = params.note?.trim() ?? "";
+    const combinedParts = [methodTag, refTag, periodTag, customNote].filter(Boolean);
+    const finalNote =
+      combinedParts.length > 0
+        ? combinedParts.join(" ")
+        : params.reference
+          ? `Règlement rémunération : ${params.reference}`
+          : `Règlement des courses du coursier (${params.amount} ${currency})`;
+
+    const [entry] = await tx
+      .insert(schema.cashLedger)
+      .values({
+        entryType: "courier_pay_paid",
+        courierId: params.courierId,
+        currency,
+        amount: params.amount,
+        note: finalNote,
+        createdBy: params.adminId ?? null,
+      })
+      .returning();
 
     return {
       ok: true,
       settlementId: entry.id,
-      newBalanceCDF,
+      newBalanceCDF: currentBalanceCDF - amountInCDF,
+    };
+  });
+}
+
+/**
+ * Task 8.4: Get past settlement and payout logs for both houses and couriers.
+ */
+export async function getSettlementHistoryLogs(limit = 100): Promise<
+  Array<{
+    id: string;
+    entryType: "house_settlement_paid" | "courier_pay_paid";
+    payeeType: "house" | "courier";
+    payeeId: string;
+    payeeName: string;
+    payeePhone: string | null;
+    payeeNeighborhood: string | null;
+    amount: number;
+    currency: "CDF" | "USD";
+    method: "mobile_money" | "bank" | "cash";
+    reference: string | null;
+    period: string | null;
+    note: string | null;
+    operatorId: string | null;
+    operatorName: string | null;
+    createdAt: Date;
+    isReversed: boolean;
+    reversalReason: string | null;
+    reversedAt: Date | null;
+    reversedByName: string | null;
+  }>
+> {
+  const operatorUser = alias(schema.user, "operator_user");
+  const reversedUser = alias(schema.user, "reversed_user");
+  const reversalLedger = alias(schema.cashLedger, "reversal_ledger");
+
+  const rows = await db
+    .select({
+      id: schema.cashLedger.id,
+      entryType: schema.cashLedger.entryType,
+      houseId: schema.cashLedger.houseId,
+      houseName: schema.houses.name,
+      courierId: schema.cashLedger.courierId,
+      courierName: schema.user.name,
+      courierPhone: schema.user.contactPhone,
+      neighborhoodName: schema.neighborhoods.name,
+      amount: schema.cashLedger.amount,
+      currency: schema.cashLedger.currency,
+      note: schema.cashLedger.note,
+      createdAt: schema.cashLedger.createdAt,
+      createdBy: schema.cashLedger.createdBy,
+      operatorName: operatorUser.name,
+      reversalId: reversalLedger.id,
+      reversalNote: reversalLedger.note,
+      reversalCreatedAt: reversalLedger.createdAt,
+      reversedByName: reversedUser.name,
+    })
+    .from(schema.cashLedger)
+    .leftJoin(schema.houses, eq(schema.cashLedger.houseId, schema.houses.id))
+    .leftJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
+    .leftJoin(schema.user, eq(schema.cashLedger.courierId, schema.user.id))
+    .leftJoin(operatorUser, eq(schema.cashLedger.createdBy, operatorUser.id))
+    .leftJoin(
+      reversalLedger,
+      and(
+        eq(reversalLedger.entryType, "reversal"),
+        eq(reversalLedger.reversalOfId, schema.cashLedger.id)
+      )
+    )
+    .leftJoin(reversedUser, eq(reversalLedger.createdBy, reversedUser.id))
+    .where(
+      inArray(schema.cashLedger.entryType, ["house_settlement_paid", "courier_pay_paid"])
+    )
+    .orderBy(desc(schema.cashLedger.createdAt))
+    .limit(limit);
+
+  return rows.map((r) => {
+    const isHouse = r.entryType === "house_settlement_paid";
+    const payeeType = isHouse ? "house" : "courier";
+    const payeeId = (isHouse ? r.houseId : r.courierId) ?? "";
+    const payeeName = (isHouse ? r.houseName : r.courierName) ?? "Bénéficiaire";
+
+    const note = r.note ?? "";
+    const methodTagMatch = note.match(/\[MÉTHODE:\s*([^\]]+)\]/i);
+    let method: "mobile_money" | "bank" | "cash" = "cash";
+
+    if (methodTagMatch) {
+      const parsedMethod = methodTagMatch[1].trim().toLowerCase();
+      if (parsedMethod === "mobile_money") {
+        method = "mobile_money";
+      } else if (parsedMethod === "bank") {
+        method = "bank";
+      } else if (parsedMethod === "cash") {
+        method = "cash";
+      }
+    } else {
+      if (
+        note.includes("mobile_money") ||
+        note.includes("M-Pesa") ||
+        note.includes("Airtel") ||
+        note.includes("Orange")
+      ) {
+        method = "mobile_money";
+      } else if (note.includes("bank") || note.includes("Virement") || note.includes("Banque")) {
+        method = "bank";
+      }
+    }
+
+    const refMatch =
+      note.match(/\[RÉF:\s*([^\]]+)\]/i) || note.match(/(?:Réf|Référence)\s*[:#]\s*([^\s,;]+)/i);
+    const reference = refMatch ? refMatch[1].trim() : null;
+
+    const periodMatch = note.match(/\[PÉRIODE:\s*([^\]]+)\]/i);
+    const period = periodMatch ? periodMatch[1].trim() : null;
+
+    const cleanNote = note
+      .replace(/\[MÉTHODE:[^\]]+\]/gi, "")
+      .replace(/\[RÉF:[^\]]+\]/gi, "")
+      .replace(/\[PÉRIODE:[^\]]+\]/gi, "")
+      .trim();
+
+    return {
+      id: r.id,
+      entryType: r.entryType as "house_settlement_paid" | "courier_pay_paid",
+      payeeType,
+      payeeId,
+      payeeName,
+      payeePhone: isHouse ? null : r.courierPhone,
+      payeeNeighborhood: isHouse ? r.neighborhoodName : null,
+      amount: r.amount,
+      currency: r.currency as "CDF" | "USD",
+      method,
+      reference,
+      period,
+      note: cleanNote || null,
+      operatorId: r.createdBy,
+      operatorName: r.operatorName ?? "Opérateur",
+      createdAt: r.createdAt,
+      isReversed: Boolean(r.reversalId),
+      reversalReason: r.reversalNote,
+      reversedAt: r.reversalCreatedAt,
+      reversedByName: r.reversedByName,
     };
   });
 }

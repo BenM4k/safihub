@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/services/auth";
 import { err, type Result } from "@/lib/result";
+import { percentToBps } from "@/lib/commission-conversion";
 import {
   addAdminHouseClosure,
   addAdminHouseExclusion,
@@ -11,6 +12,7 @@ import {
   linkAdminHouseStaffUser,
   removeAdminHouseClosure,
   removeAdminHouseExclusion,
+  toggleAdminHouseActiveStatus,
   toggleAdminHouseCoverage,
   unlinkAdminHouseStaffUser,
   updateAdminHouseHours,
@@ -51,13 +53,25 @@ export async function createHouseAction(formData: FormData): Promise<Result<unkn
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const rawComm = formData.get("commissionBps");
+  let commBps: number | null = null;
+  const rawCommPercent = formData.get("commissionPercent");
+  if (rawCommPercent !== null && rawCommPercent !== undefined) {
+    try {
+      commBps = percentToBps(rawCommPercent.toString());
+    } catch (e) {
+      return err(e instanceof Error ? e.message : "Commission invalide");
+    }
+  } else {
+    const rawComm = formData.get("commissionBps");
+    commBps = rawComm && rawComm !== "" ? Number(rawComm) : null;
+  }
+
   const parsed = createHouseSchema.safeParse({
     name: formData.get("name"),
     neighborhoodId: formData.get("neighborhoodId"),
     contactPhone: formData.get("contactPhone"),
     addressNote: formData.get("addressNote"),
-    commissionBps: rawComm && rawComm !== "" ? Number(rawComm) : null,
+    commissionBps: commBps,
     minimumOrderAmount: formData.get("minimumOrderAmount") || 0,
     cutoffMinutes: formData.get("cutoffMinutes") || 120,
     turnaroundHours: formData.get("turnaroundHours") || 48,
@@ -84,7 +98,19 @@ export async function updateHouseProfileAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const rawComm = formData.get("commissionBps");
+  let commBps: number | null = null;
+  const rawCommPercent = formData.get("commissionPercent");
+  if (rawCommPercent !== null && rawCommPercent !== undefined) {
+    try {
+      commBps = percentToBps(rawCommPercent.toString());
+    } catch (e) {
+      return err(e instanceof Error ? e.message : "Commission invalide");
+    }
+  } else {
+    const rawComm = formData.get("commissionBps");
+    commBps = rawComm && rawComm !== "" ? Number(rawComm) : null;
+  }
+
   const rawCap = formData.get("dailyCapacity");
   const rawDist = formData.get("maxDistanceLevel");
 
@@ -94,7 +120,7 @@ export async function updateHouseProfileAction(
     neighborhoodId: formData.get("neighborhoodId"),
     contactPhone: formData.get("contactPhone") || null,
     addressNote: formData.get("addressNote") || null,
-    commissionBps: rawComm && rawComm !== "" ? Number(rawComm) : null,
+    commissionBps: commBps,
     minimumOrderAmount: formData.get("minimumOrderAmount") || 0,
     cutoffMinutes: formData.get("cutoffMinutes") || 120,
     turnaroundHours: formData.get("turnaroundHours") || 48,
@@ -114,6 +140,52 @@ export async function updateHouseProfileAction(
   if (res.ok) {
     revalidatePath(`/admin/houses/${validatedHouseId}`);
     revalidatePath("/admin/houses");
+  }
+  return res;
+}
+
+const toggleHouseActiveStatusSchema = z
+  .object({
+    houseId: z.string().uuid("Identifiant du pressing invalide (UUID attendu)"),
+    isActive: z.boolean(),
+    reason: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.isActive) {
+        return Boolean(data.reason && data.reason.trim().length > 0);
+      }
+      return true;
+    },
+    {
+      message: "Un motif obligatoire est requis pour suspendre le pressing",
+      path: ["reason"],
+    }
+  );
+
+export async function toggleHouseActiveStatusAction(params: {
+  houseId: string;
+  isActive: boolean;
+  reason?: string;
+}): Promise<Result<unknown>> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err(auth.error);
+
+  const parsed = toggleHouseActiveStatusSchema.safeParse(params);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message || "Données invalides");
+  }
+
+  const res = await toggleAdminHouseActiveStatus({
+    houseId: parsed.data.houseId,
+    isActive: parsed.data.isActive,
+    reason: parsed.data.reason?.trim(),
+    adminId: auth.value.user.id,
+  });
+
+  if (res.ok) {
+    revalidatePath("/admin/houses");
+    revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
   return res;
 }

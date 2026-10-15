@@ -1,62 +1,104 @@
-import { getTranslations } from "next-intl/server";
-import { ArrowDownLeft, ArrowUpRight, Scale } from "lucide-react";
+"use client";
+
+import { useTranslations } from "next-intl";
+import { ArrowDownLeft, ArrowUpRight, Scale, CheckCircle2, ShieldAlert, AlertCircle } from "lucide-react";
+import { KpiCard, type KpiCardVariant } from "@/components/admin/shared/kpi-card";
+import { formatMoney, getDiscrepancyInfo } from "@/lib/cash-formatters";
 
 interface CashSummaryCardsProps {
   summary: {
     totalExpectedCDF: number;
     totalReceivedCDF: number;
     totalDiscrepancyCDF: number;
+    couriersCount?: number;
+    reconciledCount?: number;
+    pendingCount?: number;
   };
 }
 
-export async function CashSummaryCards({ summary }: CashSummaryCardsProps) {
-  const t = await getTranslations("admin.cash");
+export function CashSummaryCards({ summary }: CashSummaryCardsProps) {
+  const t = useTranslations("admin.cash");
 
-  const cards = [
-    {
-      label: t("totalExpected"),
-      value: `${summary.totalExpectedCDF.toLocaleString()} CDF`,
-      icon: ArrowDownLeft,
-      color: "text-blue-600 bg-blue-50 border-blue-200",
-    },
-    {
-      label: t("totalReceived"),
-      value: `${summary.totalReceivedCDF.toLocaleString()} CDF`,
-      icon: ArrowUpRight,
-      color: "text-emerald-600 bg-emerald-50 border-emerald-200",
-    },
-    {
-      label: t("totalDiscrepancy"),
-      value: `${summary.totalDiscrepancyCDF > 0 ? "+" : ""}${summary.totalDiscrepancyCDF.toLocaleString()} CDF`,
-      icon: Scale,
-      color:
-        summary.totalDiscrepancyCDF < 0
-          ? "text-rose-600 bg-rose-50 border-rose-200"
-          : summary.totalDiscrepancyCDF > 0
-          ? "text-amber-600 bg-amber-50 border-amber-200"
-          : "text-slate-600 bg-slate-50 border-slate-200",
-    },
-  ];
+  const diffInfo = getDiscrepancyInfo(summary.totalDiscrepancyCDF, "CDF");
+
+  // Determine variant for Discrepancy card
+  let discrepancyVariant: KpiCardVariant = "default";
+  let DiscrepancyIcon = Scale;
+  if (diffInfo.isZero) {
+    discrepancyVariant = "success";
+    DiscrepancyIcon = CheckCircle2;
+  } else if (diffInfo.isShortage) {
+    discrepancyVariant = "destructive";
+    DiscrepancyIcon = ShieldAlert;
+  } else if (diffInfo.isSurplus) {
+    discrepancyVariant = "warning";
+    DiscrepancyIcon = AlertCircle;
+  }
+
+  // Couriers secondary lines
+  const totalCouriers = summary.couriersCount ?? 0;
+  const reconciledCouriers = summary.reconciledCount ?? 0;
+  const pendingCouriers = summary.pendingCount ?? (totalCouriers - reconciledCouriers);
+
+  const couriersSecondary =
+    totalCouriers > 0 ? (
+      <span>
+        {t("activeCouriersCount", { count: totalCouriers })}
+      </span>
+    ) : undefined;
+
+  const reconciliationProgressSecondary =
+    totalCouriers > 0 ? (
+      <span>
+        {t("reconciledCountSummary", {
+          reconciled: reconciledCouriers,
+          pending: pendingCouriers,
+        })}
+      </span>
+    ) : undefined;
+
+  const discrepancyStatusSecondary = (
+    <span className={`font-semibold ${diffInfo.colorClass}`}>
+      {diffInfo.isZero
+        ? t("balancedStatus")
+        : diffInfo.isShortage
+        ? t("shortageStatus")
+        : t("surplusStatus")}
+    </span>
+  );
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      {cards.map((card, i) => {
-        const Icon = card.icon;
-        return (
-          <div
-            key={i}
-            className="p-4 bg-white rounded-xl border border-border shadow-xs flex items-center justify-between"
-          >
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground">{card.label}</p>
-              <p className="text-xl font-black text-heading mt-1">{card.value}</p>
-            </div>
-            <div className={`size-10 rounded-lg flex items-center justify-center border ${card.color}`}>
-              <Icon className="size-5" />
-            </div>
-          </div>
-        );
-      })}
+      {/* 1. Attendu */}
+      <KpiCard
+        label={t("totalExpected")}
+        value={formatMoney(summary.totalExpectedCDF)}
+        icon={ArrowDownLeft}
+        tooltip={t("expectedTooltip")}
+        secondary={couriersSecondary}
+        variant="default"
+      />
+
+      {/* 2. Reçu */}
+      <KpiCard
+        label={t("totalReceived")}
+        value={formatMoney(summary.totalReceivedCDF)}
+        icon={ArrowUpRight}
+        tooltip={t("receivedTooltip")}
+        secondary={reconciliationProgressSecondary}
+        variant="default"
+      />
+
+      {/* 3. Écart total */}
+      <KpiCard
+        label={t("totalDiscrepancy")}
+        value={diffInfo.formattedAmount}
+        icon={DiscrepancyIcon}
+        formula={t("formulaTooltip")}
+        tooltip={t("discrepancyTooltip")}
+        secondary={discrepancyStatusSecondary}
+        variant={discrepancyVariant}
+      />
     </div>
   );
 }

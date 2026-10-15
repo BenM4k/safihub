@@ -7,16 +7,21 @@ import {
   createHouseExclusion,
   deleteHouseClosure,
   deleteHouseExclusion,
+  getActiveOrdersCountsByHouse,
+  getAllHousesClosures,
+  getAllHousesHours,
   getHouseById,
   getHouseClosures,
   getHouseCoverage,
   getHouseExclusions,
   getHouseHours,
   getHouses,
+  getHouseSettlementsOverview,
   getHouseStaff,
   getMasterFabrics,
   getMasterItems,
   getNeighborhoods,
+  getSettings,
   removeHouseMember,
   setHouseHours,
   updateHouse,
@@ -31,6 +36,8 @@ import {
   type MasterItemRecord,
   type NeighborhoodRecord,
 } from "@/dal";
+import { toBukavuDateTime } from "@/services/availability/bukavu-time";
+import type { AdminHouseRow, HouseOperationalStatus } from "@/components/admin/houses/types";
 
 export interface HouseDetailFull {
   house: HouseRecord;
@@ -269,5 +276,161 @@ export async function unlinkAdminHouseStaffUser(params: {
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to unlink staff member");
+  }
+}
+
+const HOUSE_STOCK_IMAGES: Record<string, string> = {
+  "Pressing du Lac Kivu":
+    "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=800&q=80",
+  "Pressing Étoile de Kadutu":
+    "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=800&q=80",
+  "Kivu Clean Express":
+    "https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=800&q=80",
+  "Blanchisserie Pro Muhumba":
+    "https://images.unsplash.com/photo-1521656693074-0ef32e80a5d5?auto=format&fit=crop&w=800&q=80",
+};
+
+const DEFAULT_HOUSE_IMAGE =
+  "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=800&q=80";
+
+export function computeOperationalStatus(params: {
+  isActive: boolean;
+  isPaused: boolean;
+  isClosedByException: boolean;
+  isOpenNow: boolean;
+}): HouseOperationalStatus {
+  if (!params.isActive) {
+    return "suspended";
+  }
+  if (params.isPaused) {
+    return "paused";
+  }
+  if (params.isClosedByException || !params.isOpenNow) {
+    return "closed_today";
+  }
+  return "active";
+}
+
+export async function listAdminHousesEnriched(): Promise<
+  Result<{
+    houses: AdminHouseRow[];
+    defaultCommissionBps: number;
+    totalHousesCount: number;
+    activeHousesCount: number;
+    totalBalanceOwedCDF: number;
+  }>
+> {
+  try {
+    const [
+      houses,
+      hours,
+      closures,
+      activeOrdersCounts,
+      settlementsOverview,
+      settings,
+    ] = await Promise.all([
+      getHouses(),
+      getAllHousesHours(),
+      getAllHousesClosures(),
+      getActiveOrdersCountsByHouse(),
+      getHouseSettlementsOverview().catch(() => ({ houses: [], totalOwedToHousesCDF: 0 })),
+      getSettings().catch(() => null),
+    ]);
+
+    const defaultCommissionBps = settings?.defaultCommissionBps ?? 2000;
+    const settlementsMap = new Map(
+      settlementsOverview.houses.map((s) => [s.houseId, s.balanceOwedCDF])
+    );
+
+    const now = new Date();
+    const bukavuNow = toBukavuDateTime(now);
+    const todayDateStr = bukavuNow.dateString;
+
+    const enrichedHouses: AdminHouseRow[] = houses.map((house) => {
+      const houseHours = hours.filter((hr) => hr.houseId === house.id);
+      const houseClosures = closures.filter((c) => c.houseId === house.id);
+
+      const isClosedTodayByClosure = houseClosures.some(
+        (c) => todayDateStr >= c.startsOn && todayDateStr <= c.endsOn
+      );
+
+      // Collect all slots for bukavuNow.weekday
+      const todaySlots = houseHours.filter((hr) => hr.weekday === bukavuNow.weekday);
+
+      const currentHm = bukavuNow.timeString;
+      const isSlotOpenNow = todaySlots.some((slot) => {
+        const opensHm = slot.opensAt.slice(0, 5);
+        const closesHm = slot.closesAt.slice(0, 5);
+        return currentHm >= opensHm && currentHm < closesHm;
+      });
+
+      const todayHoursText =
+        todaySlots.length > 0
+          ? todaySlots
+              .map((slot) => `${slot.opensAt.slice(0, 5)} - ${slot.closesAt.slice(0, 5)}`)
+              .join(", ")
+          : "—";
+
+      const status = computeOperationalStatus({
+        isActive: house.isActive,
+        isPaused: house.isPaused,
+        isClosedByException: isClosedTodayByClosure,
+        isOpenNow: isSlotOpenNow,
+      });
+
+      const isOpenNow = status === "active";
+
+      const activeOrdersCount = activeOrdersCounts[house.id] ?? 0;
+      const balanceOwedCDF = settlementsMap.get(house.id) ?? 0;
+      const imageUrl = HOUSE_STOCK_IMAGES[house.name] || DEFAULT_HOUSE_IMAGE;
+
+      return {
+        ...house,
+        imageUrl,
+        isOpenNow,
+        todayHoursText,
+        activeOrdersCount,
+        balanceOwedCDF,
+        status,
+      };
+    });
+
+    const activeHousesCount = enrichedHouses.filter((h) => h.status === "active").length;
+    const totalBalanceOwedCDF = enrichedHouses.reduce((sum, h) => sum + h.balanceOwedCDF, 0);
+
+    return ok({
+      houses: enrichedHouses,
+      defaultCommissionBps,
+      totalHousesCount: enrichedHouses.length,
+      activeHousesCount,
+      totalBalanceOwedCDF,
+    });
+  } catch (error) {
+    return err(
+      error instanceof Error ? error.message : "Failed to load enriched houses"
+    );
+  }
+}
+
+export async function toggleAdminHouseActiveStatus(params: {
+  houseId: string;
+  isActive: boolean;
+  reason?: string;
+  adminId?: string;
+}): Promise<Result<void>> {
+  try {
+    await updateHouse(params.houseId, { isActive: params.isActive });
+    console.info("[Admin House Status Toggle]", {
+      houseId: params.houseId,
+      isActive: params.isActive,
+      reason: params.reason,
+      adminId: params.adminId,
+      timestamp: new Date().toISOString(),
+    });
+    return ok(undefined);
+  } catch (error) {
+    return err(
+      error instanceof Error ? error.message : "Failed to toggle house status"
+    );
   }
 }

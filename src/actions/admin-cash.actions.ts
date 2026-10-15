@@ -10,6 +10,7 @@ import {
   issueAdminCourierFloat,
   returnAdminCourierFloat,
   reverseAdminLedgerEntry,
+  reverseAdminCourierReconciliation,
 } from "@/services/admin";
 
 const confirmReconciliationSchema = z.object({
@@ -123,3 +124,24 @@ export async function reverseLedgerEntryAction(
     reversedBy: user.id,
   });
 }
+
+const reverseReconciliationSchema = z.object({
+  reconciliationId: z.string().min(1, "Identifiant de réconciliation requis"),
+  reason: z.string().min(3, "Un motif d'annulation est requis (au moins 3 caractères)"),
+});
+
+export async function reverseCourierReconciliationAction(
+  data: z.infer<typeof reverseReconciliationSchema>
+): Promise<Result<{ reversalId?: string }>> {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") return err("Non autorisé : droits administrateur requis");
+
+  const parsed = reverseReconciliationSchema.safeParse(data);
+  if (!parsed.success) return err(parsed.error.issues[0]?.message || "Données invalides");
+
+  return await reverseAdminCourierReconciliation({
+    ...parsed.data,
+    reversedBy: user.id,
+  });
+}
+
