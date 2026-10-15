@@ -1,10 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import { formatPhone } from "@/lib/order-formatters";
-import { Phone } from "lucide-react";
+import { Check, Copy, Phone } from "lucide-react";
 
 interface PhoneCellProps {
   phone: string | null | undefined;
   showIcon?: boolean;
   tapToCall?: boolean;
+  showCopy?: boolean;
   className?: string;
 }
 
@@ -12,8 +16,10 @@ export function PhoneCell({
   phone,
   showIcon = false,
   tapToCall = true,
+  showCopy = false,
   className = "",
 }: PhoneCellProps) {
+  const [copied, setCopied] = useState(false);
   const formatted = formatPhone(phone);
 
   if (formatted === "—" || !phone) {
@@ -22,27 +28,49 @@ export function PhoneCell({
 
   const rawTelDigits = phone.replace(/[^\d+]/g, "");
 
-  if (tapToCall) {
-    return (
-      <a
-        href={`tel:${rawTelDigits}`}
-        onClick={(e) => e.stopPropagation()}
-        className={`inline-flex items-center gap-1.5 text-xs text-ink-700 hover:text-primary hover:underline transition-colors font-medium ${className}`}
-        title={`Appeler le ${formatted}`}
-        aria-label={`Appeler le ${formatted}`}
-      >
-        {showIcon && <Phone className="size-3 text-ink-500 shrink-0" aria-hidden="true" />}
-        <span>{formatted}</span>
-      </a>
-    );
-  }
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    navigator.clipboard.writeText(phone);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 text-xs text-ink-700 font-medium ${className}`}
-    >
-      {showIcon && <Phone className="size-3 text-ink-500 shrink-0" aria-hidden="true" />}
-      <span>{formatted}</span>
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      {tapToCall ? (
+        <a
+          href={`tel:${rawTelDigits}`}
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex items-center gap-1.5 text-xs text-ink-700 hover:text-primary hover:underline transition-colors font-medium"
+          title={`Appeler le ${formatted}`}
+          aria-label={`Appeler le ${formatted}`}
+        >
+          {showIcon && <Phone className="size-3 text-ink-500 shrink-0" aria-hidden="true" />}
+          <span>{formatted}</span>
+        </a>
+      ) : (
+        <span className="inline-flex items-center gap-1.5 text-xs text-ink-700 font-medium">
+          {showIcon && <Phone className="size-3 text-ink-500 shrink-0" aria-hidden="true" />}
+          <span>{formatted}</span>
+        </span>
+      )}
+
+      {showCopy && (
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="p-1 rounded-sm text-ink-400 hover:text-heading hover:bg-surface transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary"
+          title={copied ? "Copié !" : "Copier le numéro"}
+          aria-label={copied ? "Numéro copié" : "Copier le numéro"}
+        >
+          {copied ? (
+            <Check className="size-3 text-success-base" aria-hidden="true" />
+          ) : (
+            <Copy className="size-3" aria-hidden="true" />
+          )}
+        </button>
+      )}
     </span>
   );
 }

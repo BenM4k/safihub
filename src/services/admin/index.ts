@@ -9,3 +9,4 @@ export * from "./settings.service";
 export * from "./cash.service";
 export * from "./settlements.service";
 export * from "./export.service";
+export * from "./customer.service";

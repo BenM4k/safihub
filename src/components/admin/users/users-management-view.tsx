@@ -1,0 +1,183 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Shield, ShieldAlert, UserCheck, UserPlus, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/admin/shared/page-header";
+import { UsersDialogsContainer } from "./users-dialogs-container";
+import { useUsersFilter } from "./hooks/use-users-filter";
+import { exportUsersCsv } from "./users-export";
+import { UsersTable } from "./users-table";
+import { UsersTableToolbar } from "./users-table-toolbar";
+import type { UserDetailsTab, UserRow } from "./types";
+
+interface UsersManagementViewProps {
+  initialUsers: UserRow[];
+  houses: Array<{ id: string; name: string }>;
+  currentUserId?: string | null;
+  isAdmin: boolean;
+  activeAdminsCount: number;
+}
+
+export function UsersManagementView({
+  initialUsers,
+  houses,
+  currentUserId,
+  isAdmin,
+  activeAdminsCount,
+}: UsersManagementViewProps) {
+  const router = useRouter();
+  const t = useTranslations("admin.users");
+
+  const {
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    sortState,
+    filters,
+    setFilters,
+    sortedUsers,
+    pagedUsers,
+    handleSortChange,
+    handleResetFilters,
+    staffCount,
+    activeCount,
+    blockedCount,
+  } = useUsersFilter(initialUsers);
+
+  // Sheets & Dialogs State
+  const [createSheetOpen, setCreateSheetOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
+  const [detailsTab, setDetailsTab] = useState<UserDetailsTab>("profile");
+  const [userToBlock, setUserToBlock] = useState<UserRow | null>(null);
+  const [userToUnblock, setUserToUnblock] = useState<UserRow | null>(null);
+  const [userToChangeRole, setUserToChangeRole] = useState<UserRow | null>(null);
+  const [userToResetPassword, setUserToResetPassword] = useState<UserRow | null>(null);
+
+  const handleRefresh = () => {
+    router.refresh();
+  };
+
+  const handleSelectUser = (user: UserRow, tab: UserDetailsTab = "profile") => {
+    setSelectedUser(user);
+    setDetailsTab(tab);
+  };
+
+  const handleToggleBlock = (user: UserRow) => {
+    const isBlocked = user.banned || user.status === "blocked";
+    if (isBlocked) {
+      setUserToUnblock(user);
+    } else {
+      setUserToBlock(user);
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Page Header with primary action & KPI badges */}
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={
+          <Button
+            type="button"
+            disabled={!isAdmin}
+            onClick={() => setCreateSheetOpen(true)}
+            className="min-h-[40px] px-4 text-xs font-bold bg-primary hover:bg-primary-hover text-white shadow-xs inline-flex items-center gap-2 border-2 border-primary rounded-xl"
+            aria-label={t("addMember")}
+          >
+            <UserPlus className="size-4" />
+            <span>{t("addMember")}</span>
+          </Button>
+        }
+      >
+        <div className="flex items-center gap-2 pt-2 flex-wrap text-xs font-semibold">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700 shadow-2xs">
+            <Users className="size-3.5 text-primary" />
+            <span>{t("kpiTotalBadge", { count: initialUsers.length })}</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700 shadow-2xs">
+            <Shield className="size-3.5 text-purple-600" />
+            <span>{t("kpiStaffBadge", { count: staffCount })}</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700 shadow-2xs">
+            <UserCheck className="size-3.5 text-emerald-600" />
+            <span>{t("kpiActiveBadge", { count: activeCount })}</span>
+          </span>
+          {blockedCount > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-red-50 border-2 border-red-200 text-destructive shadow-2xs">
+              <ShieldAlert className="size-3.5" />
+              <span>{t("kpiBlockedBadge", { count: blockedCount })}</span>
+            </span>
+          )}
+        </div>
+      </PageHeader>
+
+      {/* Filter and Search Toolbar */}
+      <UsersTableToolbar
+        filters={filters}
+        onChange={(next) => {
+          setFilters(next);
+          setCurrentPage(1);
+        }}
+        onReset={handleResetFilters}
+        onExport={() => exportUsersCsv(sortedUsers)}
+        totalFiltered={sortedUsers.length}
+      />
+
+      {/* Main Table */}
+      <UsersTable
+        users={pagedUsers}
+        totalItems={sortedUsers.length}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        currentUserId={currentUserId}
+        isAdmin={isAdmin}
+        activeAdminsCount={activeAdminsCount}
+        sortState={sortState}
+        selectedUserId={selectedUser?.id}
+        onSortChange={handleSortChange}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={(sz) => {
+          setPageSize(sz);
+          setCurrentPage(1);
+        }}
+        onResetFilters={handleResetFilters}
+        onSelectUser={(u) => handleSelectUser(u, "profile")}
+        onViewProfile={(u) => handleSelectUser(u, "profile")}
+        onChangeRole={(u) => setUserToChangeRole(u)}
+        onResetPassword={(u) => setUserToResetPassword(u)}
+        onViewActivity={(u) => handleSelectUser(u, "activity")}
+        onToggleBlock={handleToggleBlock}
+      />
+
+      {/* Dialogs and Slide-over Sheets */}
+      <UsersDialogsContainer
+        createSheetOpen={createSheetOpen}
+        onCloseCreateSheet={() => setCreateSheetOpen(false)}
+        selectedUser={selectedUser}
+        detailsTab={detailsTab}
+        onCloseDetails={() => setSelectedUser(null)}
+        userToBlock={userToBlock}
+        onCloseBlock={() => setUserToBlock(null)}
+        userToUnblock={userToUnblock}
+        onCloseUnblock={() => setUserToUnblock(null)}
+        userToChangeRole={userToChangeRole}
+        onCloseChangeRole={() => setUserToChangeRole(null)}
+        userToResetPassword={userToResetPassword}
+        onCloseResetPassword={() => setUserToResetPassword(null)}
+        houses={houses}
+        currentUserId={currentUserId}
+        isAdmin={isAdmin}
+        activeAdminsCount={activeAdminsCount}
+        onRefresh={handleRefresh}
+        onTriggerChangeRole={(u) => setUserToChangeRole(u)}
+        onTriggerResetPassword={(u) => setUserToResetPassword(u)}
+        onTriggerToggleBlock={handleToggleBlock}
+      />
+    </div>
+  );
+}

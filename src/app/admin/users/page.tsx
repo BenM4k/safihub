@@ -1,33 +1,27 @@
-import { getTranslations } from "next-intl/server";
+import { getCurrentUser } from "@/services/auth";
 import { listAdminHouses, listAdminUsers } from "@/services/admin";
-import { UsersTable } from "@/components/admin/users/users-table";
-import { CreateStaffForm } from "@/components/admin/users/create-staff-form";
-import { MergeGuestForm } from "@/components/admin/users/merge-guest-form";
+import { countActiveAdmins } from "@/dal";
+import { UsersManagementView } from "@/components/admin/users/users-management-view";
 
 export default async function AdminUsersPage() {
-  const t = await getTranslations("admin.users");
-  const [usersRes, housesRes] = await Promise.all([
-    listAdminUsers({ limit: 100 }),
+  const [currentUser, usersRes, housesRes, activeAdminsCount] = await Promise.all([
+    getCurrentUser(),
+    listAdminUsers({ limit: 500 }),
     listAdminHouses(),
+    countActiveAdmins(),
   ]);
+
   const users = usersRes.ok ? usersRes.value : [];
   const houses = housesRes.ok ? housesRes.value : [];
+  const isAdmin = currentUser?.role === "admin";
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-heading tracking-tight">
-          {t("title")}
-        </h1>
-        <p className="text-xs text-muted-foreground mt-1">{t("subtitle")}</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <CreateStaffForm houses={houses} />
-        <MergeGuestForm />
-      </div>
-
-      <UsersTable initialUsers={users} />
-    </div>
+    <UsersManagementView
+      initialUsers={users}
+      houses={houses}
+      currentUserId={currentUser?.id}
+      isAdmin={isAdmin}
+      activeAdminsCount={activeAdminsCount}
+    />
   );
 }

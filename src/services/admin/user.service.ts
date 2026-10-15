@@ -2,14 +2,19 @@ import "server-only";
 import { hashPassword } from "better-auth/crypto";
 import { err, ok, type Result } from "@/lib/result";
 import {
+  countActiveAdmins,
   createStaffAccountTransaction,
+  getUserById,
   mergeGuestUser,
   searchUsers,
   setUserPasswordCredential,
   updateUserRoleAndStatus,
+  updateUserRoleWithHouse,
   type GuestMergeResult,
   type UserRecord,
 } from "@/dal";
+import { db, schema } from "@/dal/db";
+import { eq } from "drizzle-orm";
 
 export async function listAdminUsers(params?: {
   query?: string;
@@ -32,7 +37,22 @@ export async function blockAdminUser(params: {
 }): Promise<Result<void>> {
   try {
     if (!params.reason?.trim()) {
-      return err("A reason is mandatory when blocking a user account");
+      return err("Un motif est obligatoire pour bloquer un compte utilisateur");
+    }
+
+    const targetUser = await getUserById(params.userId);
+    if (!targetUser) {
+      return err("Utilisateur introuvable");
+    }
+
+    // Guardrail: Cannot block the last active administrator
+    if (targetUser.role === "admin") {
+      const activeAdminsCount = await countActiveAdmins();
+      if (activeAdminsCount <= 1) {
+        return err(
+          "Impossible de bloquer le dernier administrateur actif de la plateforme."
+        );
+      }
     }
 
     await updateUserRoleAndStatus(params.userId, {
@@ -40,9 +60,50 @@ export async function blockAdminUser(params: {
       status: "blocked",
       banReason: params.reason.trim(),
     });
+
+    // Revoke all active sessions immediately
+    await db.delete(schema.session).where(eq(schema.session.userId, params.userId));
+
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to block user");
+  }
+}
+
+export async function updateAdminUserRole(params: {
+  userId: string;
+  newRole: string;
+  houseId?: string | null;
+}): Promise<Result<void>> {
+  try {
+    const targetUser = await getUserById(params.userId);
+    if (!targetUser) {
+      return err("Utilisateur introuvable");
+    }
+
+    // Guardrail: Cannot demote the last active administrator
+    if (targetUser.role === "admin" && params.newRole !== "admin") {
+      const activeAdminsCount = await countActiveAdmins();
+      if (activeAdminsCount <= 1) {
+        return err(
+          "Impossible de modifier le rôle du dernier administrateur actif de la plateforme."
+        );
+      }
+    }
+
+    if (params.newRole === "house" && !params.houseId?.trim()) {
+      return err("Un pressing doit être sélectionné pour le rôle Pressing");
+    }
+
+    await updateUserRoleWithHouse({
+      userId: params.userId,
+      role: params.newRole,
+      houseId: params.newRole === "house" ? params.houseId : null,
+    });
+
+    return ok(undefined);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to update user role");
   }
 }
 
