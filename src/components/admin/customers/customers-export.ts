@@ -5,7 +5,7 @@ import type { CustomerRow } from "./types";
 function escapeCsvField(value: string | null | undefined): string {
   if (!value) return '""';
   let str = value;
-  if (/^[=+\-@]/.test(str)) {
+  if (/^[=+\-@\t\r]/.test(str)) {
     str = `'${str}`;
   }
   return `"${str.replace(/"/g, '""')}"`;

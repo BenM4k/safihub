@@ -60,7 +60,7 @@ export function CreateStaffRoleFields({
         <div className="p-3 bg-surface border-2 border-border-strong/80 rounded-xl space-y-1 animate-in fade-in duration-100">
           <div className="flex items-center gap-1.5 text-2xs font-bold text-primary">
             <ShieldCheck className="size-3.5" />
-            <span>Description des autorisations</span>
+            <span>{t("permissionsScope")}</span>
           </div>
           <p className="text-xs text-ink-700 leading-relaxed">
             {getRoleDescription(role)}

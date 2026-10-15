@@ -50,7 +50,10 @@ export function UsersManagementView({
 
   // Sheets & Dialogs State
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const selectedUser = selectedUserId
+    ? initialUsers.find((u) => u.id === selectedUserId) ?? null
+    : null;
   const [detailsTab, setDetailsTab] = useState<UserDetailsTab>("profile");
   const [userToBlock, setUserToBlock] = useState<UserRow | null>(null);
   const [userToUnblock, setUserToUnblock] = useState<UserRow | null>(null);
@@ -62,7 +65,7 @@ export function UsersManagementView({
   };
 
   const handleSelectUser = (user: UserRow, tab: UserDetailsTab = "profile") => {
-    setSelectedUser(user);
+    setSelectedUserId(user.id);
     setDetailsTab(tab);
   };
 
@@ -124,7 +127,23 @@ export function UsersManagementView({
           setCurrentPage(1);
         }}
         onReset={handleResetFilters}
-        onExport={() => exportUsersCsv(sortedUsers)}
+        onExport={() =>
+          exportUsersCsv(sortedUsers, {
+            id: t("colUserId"),
+            name: t("colName"),
+            email: t("colEmail"),
+            phone: t("colPhone"),
+            role: t("colRole"),
+            house: t("colHouse"),
+            status: t("colStatus"),
+            lastLogin: t("colLastLogin"),
+            createdAt: t("colCreatedAt"),
+            blocked: t("statusBlocked"),
+            invited: t("statusInvited"),
+            active: t("statusActive"),
+            neverLoggedIn: t("neverLoggedIn"),
+          })
+        }
         totalFiltered={sortedUsers.length}
       />
 
@@ -160,7 +179,7 @@ export function UsersManagementView({
         onCloseCreateSheet={() => setCreateSheetOpen(false)}
         selectedUser={selectedUser}
         detailsTab={detailsTab}
-        onCloseDetails={() => setSelectedUser(null)}
+        onCloseDetails={() => setSelectedUserId(null)}
         userToBlock={userToBlock}
         onCloseBlock={() => setUserToBlock(null)}
         userToUnblock={userToUnblock}

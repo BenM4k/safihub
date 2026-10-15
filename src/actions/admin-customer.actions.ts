@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/services/auth";
 import { err, type Result } from "@/lib/result";
 import type { GuestMergeResult } from "@/dal";
+import { deleteUserSessions } from "@/dal";
 import {
   blockAdminCustomer,
   executeCustomerMerge,
@@ -79,6 +80,7 @@ export async function resetCustomerPasswordAction(
   });
 
   if (res.ok) {
+    await deleteUserSessions(customerId);
     revalidatePath("/admin/customers");
     revalidatePath("/admin/users");
   }

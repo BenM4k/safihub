@@ -94,28 +94,44 @@ export function evaluatePasswordStrength(password: string): PasswordStrengthResu
   };
 }
 
+function getSecureRandomInt(max: number): number {
+  const array = new Uint32Array(1);
+  const maxUint32 = 0xffffffff;
+  const limit = maxUint32 - (maxUint32 % max);
+  let randomVal: number;
+  do {
+    crypto.getRandomValues(array);
+    randomVal = array[0];
+  } while (randomVal >= limit);
+  return randomVal % max;
+}
+
 export function generateSecurePassword(): string {
   const letters = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
   const numbers = "23456789";
   const specials = "!@#$%&*";
 
-  let result = "";
-  // Ensure at least 1 uppercase/lowercase, 1 number, 1 special
-  result += letters.charAt(Math.floor(Math.random() * letters.length));
-  result += letters.charAt(Math.floor(Math.random() * letters.length));
-  result += numbers.charAt(Math.floor(Math.random() * numbers.length));
-  result += specials.charAt(Math.floor(Math.random() * specials.length));
+  const chars: string[] = [];
+  // Ensure at least 2 letters, 1 number, 1 special
+  chars.push(letters.charAt(getSecureRandomInt(letters.length)));
+  chars.push(letters.charAt(getSecureRandomInt(letters.length)));
+  chars.push(numbers.charAt(getSecureRandomInt(numbers.length)));
+  chars.push(specials.charAt(getSecureRandomInt(specials.length)));
 
   const all = letters + numbers + specials;
   for (let i = 0; i < 8; i++) {
-    result += all.charAt(Math.floor(Math.random() * all.length));
+    chars.push(all.charAt(getSecureRandomInt(all.length)));
   }
 
-  // Shuffle string
-  return result
-    .split("")
-    .sort(() => Math.random() - 0.5)
-    .join("");
+  // Fisher-Yates shuffle driven by crypto.getRandomValues
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = getSecureRandomInt(i + 1);
+    const temp = chars[i];
+    chars[i] = chars[j];
+    chars[j] = temp;
+  }
+
+  return chars.join("");
 }
 
 export function isLastAdmin(
@@ -139,15 +155,13 @@ export function isTestStaffAccount(user: {
   contactPhone?: string | null;
 }): boolean {
   const email = (user.email || "").toLowerCase();
-  const name = (user.name || "").toLowerCase();
   const phone = (user.contactPhone || "").replace(/\s+/g, "");
 
   return (
     email.endsWith("@test.invalid") ||
     email.endsWith("@example.com") ||
-    email.includes("test@") ||
-    name.includes("test") ||
-    phone.includes("000000") ||
+    email.startsWith("test@") ||
+    email.startsWith("qa@") ||
     phone === "+243000000000"
   );
 }

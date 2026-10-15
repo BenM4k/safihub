@@ -18,9 +18,11 @@ interface CustomerResetDialogProps {
 
 function generateSecurePassword(): string {
   const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#$";
+  const buffer = new Uint8Array(10);
+  crypto.getRandomValues(buffer);
   let pwd = "";
   for (let i = 0; i < 10; i++) {
-    pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    pwd += chars.charAt(buffer[i] % chars.length);
   }
   return pwd;
 }

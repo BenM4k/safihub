@@ -34,7 +34,7 @@ export default function AdminCustomersError({
           {t("errorTitle")}
         </h2>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          {error.message || t("errorDescription")}
+          {t("errorDescription")}
         </p>
       </div>
 

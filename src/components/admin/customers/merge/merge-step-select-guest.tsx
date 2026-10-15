@@ -37,10 +37,11 @@ export function MergeStepSelectGuest({
           <div className="p-4 text-center text-xs text-ink-400">Aucun compte invité trouvé.</div>
         ) : (
           candidates.map((g) => (
-            <div
+            <button
+              type="button"
               key={g.id}
               onClick={() => onSelect(g)}
-              className={`p-3 text-xs flex items-center justify-between cursor-pointer hover:bg-surface ${
+              className={`w-full text-left p-3 text-xs flex items-center justify-between cursor-pointer hover:bg-surface ${
                 selectedGuest?.id === g.id ? "bg-primary-soft font-bold text-primary" : ""
               }`}
             >
@@ -51,7 +52,7 @@ export function MergeStepSelectGuest({
                 </div>
               </div>
               {selectedGuest?.id === g.id && <Check className="size-4 text-primary" />}
-            </div>
+            </button>
           ))
         )}
       </div>

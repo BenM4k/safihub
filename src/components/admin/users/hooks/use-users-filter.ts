@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { isTestStaffAccount } from "@/lib/user-guardrails";
 import type {
   SortableUserField,
-  UserDetailsTab,
   UserFiltersState,
   UserRow,
   UserSortState,
@@ -118,18 +117,23 @@ export function useUsersFilter(users: UserRow[]) {
     setCurrentPage(1);
   };
 
-  // KPI counts computed over all active users
+  // KPI counts computed over users (respecting hideTestAccounts toggle)
+  const baseUsersForKpis = useMemo(() => {
+    if (!filters.hideTestAccounts) return users;
+    return users.filter((u) => !isTestStaffAccount(u));
+  }, [users, filters.hideTestAccounts]);
+
   const staffCount = useMemo(
-    () => users.filter((u) => u.role !== "customer").length,
-    [users]
+    () => baseUsersForKpis.filter((u) => u.role !== "customer").length,
+    [baseUsersForKpis]
   );
   const activeCount = useMemo(
-    () => users.filter((u) => !u.banned && u.status !== "blocked").length,
-    [users]
+    () => baseUsersForKpis.filter((u) => !u.banned && u.status !== "blocked").length,
+    [baseUsersForKpis]
   );
   const blockedCount = useMemo(
-    () => users.filter((u) => u.banned || u.status === "blocked").length,
-    [users]
+    () => baseUsersForKpis.filter((u) => u.banned || u.status === "blocked").length,
+    [baseUsersForKpis]
   );
 
   return {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { History, Home, ShoppingBag, User, X } from "lucide-react";
 import { getCustomerDetailsAction } from "@/actions/admin-customer.actions";
 import { formatCustomerName } from "@/lib/customer-formatters";
@@ -22,34 +23,69 @@ export function CustomerDetailsSheet({
   onClose,
   initialTab = "profile",
 }: CustomerDetailsSheetProps) {
+  const t = useTranslations("admin.customers.details");
   const [activeTab, setActiveTab] = useState<CustomerDetailsTab>(initialTab);
   const [profile, setProfile] = useState<CustomerDetailedProfile | null>(null);
   const [loading, setLoading] = useState(Boolean(customer));
   const [error, setError] = useState<string | null>(null);
+
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      previousFocusRef.current?.focus();
+    };
+  }, [onClose]);
+
+  const [prevCustomerId, setPrevCustomerId] = useState(customer?.id);
+  if (customer?.id !== prevCustomerId) {
+    setPrevCustomerId(customer?.id);
+    setProfile(null);
+    setLoading(Boolean(customer));
+    setError(null);
+  }
 
   useEffect(() => {
     if (!customer) return;
 
     let isMounted = true;
 
-    getCustomerDetailsAction(customer.id).then((res) => {
-      if (!isMounted) return;
-      setLoading(false);
-      if (res.ok) {
-        setProfile(res.value);
-      } else {
-        setError(res.error || "Impossible de charger les détails du client.");
-      }
-    });
+    getCustomerDetailsAction(customer.id)
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.ok) {
+          setProfile(res.value);
+        } else {
+          setError(res.error || t("fallbackError"));
+        }
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        setError(err instanceof Error ? err.message : t("fallbackError"));
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
 
     return () => {
       isMounted = false;
     };
-  }, [customer]);
+  }, [customer, t]);
 
   if (!customer) return null;
 
   const displayName = formatCustomerName(customer.name, customer.contactPhone);
+  const accountTypeLabel = customer.isGuest ? t("guestAccount") : t("registeredAccount");
 
   return (
     <div
@@ -69,14 +105,15 @@ export function CustomerDetailsSheet({
               {displayName}
             </h2>
             <p className="text-2xs text-ink-500 font-mono mt-0.5">
-              ID: {customer.id} · {customer.isGuest ? "Compte Invité" : "Compte Inscrit"}
+              ID: {customer.id} · {accountTypeLabel}
             </p>
           </div>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             className="p-1.5 text-ink-400 hover:text-heading rounded-lg hover:bg-surface-hover transition-colors"
-            aria-label="Fermer le volet"
+            aria-label={t("closePanel")}
           >
             <X className="size-4" />
           </button>
@@ -94,7 +131,7 @@ export function CustomerDetailsSheet({
             }`}
           >
             <User className="size-3.5" />
-            <span>Profil</span>
+            <span>{t("tabProfile")}</span>
           </button>
 
           <button
@@ -107,7 +144,7 @@ export function CustomerDetailsSheet({
             }`}
           >
             <ShoppingBag className="size-3.5" />
-            <span>Commandes</span>
+            <span>{t("tabOrders")}</span>
             {customer.ordersCount > 0 && (
               <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
                 activeTab === "orders" ? "bg-white text-primary" : "bg-primary-soft text-primary"
@@ -127,7 +164,7 @@ export function CustomerDetailsSheet({
             }`}
           >
             <Home className="size-3.5" />
-            <span>Adresses</span>
+            <span>{t("tabAddresses")}</span>
           </button>
 
           <button
@@ -140,7 +177,7 @@ export function CustomerDetailsSheet({
             }`}
           >
             <History className="size-3.5" />
-            <span>Historique</span>
+            <span>{t("tabHistory")}</span>
           </button>
         </div>
 
@@ -149,7 +186,7 @@ export function CustomerDetailsSheet({
           {loading ? (
             <div className="p-8 text-center text-xs text-ink-500 flex items-center justify-center gap-2">
               <span className="size-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-              <span>Chargement du profil…</span>
+              <span>{t("loading")}</span>
             </div>
           ) : error ? (
             <div className="p-4 bg-destructive-light border border-destructive-base/30 rounded-xl text-xs text-destructive">

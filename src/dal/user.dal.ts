@@ -1,5 +1,6 @@
 import "server-only";
-import { and, asc, count, desc, eq, gte, ilike, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, lte, or, sql, type SQL } from "drizzle-orm";
+import { err, ok, type Result } from "@/lib/result";
 import { db, schema } from "./db";
 
 export interface UserRecord {
@@ -57,7 +58,7 @@ export async function searchUsers(params?: {
     );
   }
 
-  const rows = await db
+  let query = db
     .select({
       id: schema.user.id,
       name: schema.user.name,
@@ -91,10 +92,39 @@ export async function searchUsers(params?: {
     .from(schema.user)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(schema.user.createdAt))
-    .limit(params?.limit ?? 500)
-    .offset(params?.offset ?? 0);
+    .$dynamic();
 
-  return rows;
+  if (params?.limit !== undefined) {
+    query = query.limit(params.limit);
+  }
+  if (params?.offset !== undefined) {
+    query = query.offset(params.offset);
+  }
+
+  return await query;
+}
+
+export async function deleteUserSessions(userId: string): Promise<void> {
+  await db.delete(schema.session).where(eq(schema.session.userId, userId));
+}
+
+export async function blockUserAndRevokeSessions(
+  userId: string,
+  banReason: string
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx
+      .update(schema.user)
+      .set({
+        banned: true,
+        status: "blocked",
+        banReason,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.user.id, userId));
+
+    await tx.delete(schema.session).where(eq(schema.session.userId, userId));
+  });
 }
 
 export async function countActiveAdmins(): Promise<number> {
@@ -109,6 +139,106 @@ export async function countActiveAdmins(): Promise<number> {
       )
     );
   return result[0]?.count ?? 0;
+}
+
+export async function blockAdminUserWithGuard(params: {
+  userId: string;
+  reason: string;
+  isTargetActiveAdmin: boolean;
+}): Promise<Result<void>> {
+  try {
+    return await db.transaction(async (tx) => {
+      if (params.isTargetActiveAdmin) {
+        const activeAdmins = await tx
+          .select({ id: schema.user.id })
+          .from(schema.user)
+          .where(
+            and(
+              eq(schema.user.role, "admin"),
+              or(eq(schema.user.status, "active"), eq(schema.user.status, "invitation_sent")),
+              or(eq(schema.user.banned, false), sql`${schema.user.banned} is null`)
+            )
+          )
+          .for("update");
+
+        if (activeAdmins.length <= 1) {
+          return err(
+            "Impossible de bloquer le dernier administrateur actif de la plateforme."
+          );
+        }
+      }
+
+      await tx
+        .update(schema.user)
+        .set({
+          banned: true,
+          status: "blocked",
+          banReason: params.reason.trim(),
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.user.id, params.userId));
+
+      await tx.delete(schema.session).where(eq(schema.session.userId, params.userId));
+
+      return ok(undefined);
+    });
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to block user");
+  }
+}
+
+export async function updateUserRoleWithHouseAndGuard(params: {
+  userId: string;
+  newRole: string;
+  houseId?: string | null;
+  isTargetActiveAdminDemotion: boolean;
+}): Promise<Result<void>> {
+  try {
+    return await db.transaction(async (tx) => {
+      if (params.isTargetActiveAdminDemotion) {
+        const activeAdmins = await tx
+          .select({ id: schema.user.id })
+          .from(schema.user)
+          .where(
+            and(
+              eq(schema.user.role, "admin"),
+              or(eq(schema.user.status, "active"), eq(schema.user.status, "invitation_sent")),
+              or(eq(schema.user.banned, false), sql`${schema.user.banned} is null`)
+            )
+          )
+          .for("update");
+
+        if (activeAdmins.length <= 1) {
+          return err(
+            "Impossible de modifier le rôle du dernier administrateur actif de la plateforme."
+          );
+        }
+      }
+
+      await tx
+        .update(schema.user)
+        .set({
+          role: params.newRole,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.user.id, params.userId));
+
+      await tx
+        .delete(schema.houseMembers)
+        .where(eq(schema.houseMembers.userId, params.userId));
+
+      if (params.newRole === "house" && params.houseId) {
+        await tx.insert(schema.houseMembers).values({
+          houseId: params.houseId,
+          userId: params.userId,
+        });
+      }
+
+      return ok(undefined);
+    });
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to update user role");
+  }
 }
 
 export async function updateUserRoleWithHouse(params: {
@@ -353,13 +483,17 @@ export async function getAdminCustomers(params?: GetAdminCustomersParams): Promi
 }
 
 export async function getMergedGuestAccounts(targetUserId: string): Promise<UserRecord[]> {
+  const sanitizedTargetId = targetUserId.replace(/[%_\\]/g, "\\$&");
   return db
     .select()
     .from(schema.user)
     .where(
       and(
         eq(schema.user.status, "merged"),
-        ilike(schema.user.banReason, `%${targetUserId}%`)
+        or(
+          ilike(schema.user.banReason, `%Fusionné vers le compte client ${sanitizedTargetId}%`),
+          ilike(schema.user.banReason, `%Merged into registered account ${sanitizedTargetId}%`)
+        )
       )
     );
 }

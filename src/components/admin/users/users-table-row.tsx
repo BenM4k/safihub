@@ -49,13 +49,21 @@ export function UsersTableRow({
   const inactive = isUserInactive(user.lastLoginAt, user.createdAt);
 
   const blockTooltip = isBlocked
-    ? `Bloqué le ${formatDateTime(user.updatedAt)}${user.banReason ? ` : ${user.banReason}` : ""}`
+    ? `${t("blockedOn", { date: formatDateTime(user.updatedAt) })}${user.banReason ? ` : ${user.banReason}` : ""}`
     : undefined;
 
   return (
     <tr
+      tabIndex={0}
+      role="row"
       onClick={() => onSelect(user)}
-      className={`group cursor-pointer transition-colors border-b-2 border-border-strong/70 ${
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && e.target === e.currentTarget) {
+          e.preventDefault();
+          onSelect(user);
+        }
+      }}
+      className={`group cursor-pointer transition-colors border-b-2 border-border-strong/70 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${
         isSelected
           ? "bg-primary-soft/50 hover:bg-primary-soft"
           : "hover:bg-slate-50/80"
@@ -81,12 +89,12 @@ export function UsersTableRow({
               <span>{user.name}</span>
               {isSelf && (
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
-                  Vous
+                  {t("selfBadge")}
                 </span>
               )}
               {user.isGuest && (
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
-                  Invité
+                  {t("guestBadge")}
                 </span>
               )}
             </div>
@@ -166,6 +174,7 @@ export function UsersTableRow({
       <td
         className="px-4 py-3.5 whitespace-nowrap text-right"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         <UsersRowActionsMenu
           user={user}

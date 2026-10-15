@@ -24,23 +24,36 @@ export function UserUnblockDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setError(null);
+    }
+  }
+
   if (!isOpen || !user) return null;
 
   const handleUnblock = async () => {
     setLoading(true);
     setError(null);
 
-    const fd = new FormData();
-    fd.append("userId", user.id);
+    try {
+      const fd = new FormData();
+      fd.append("userId", user.id);
 
-    const res = await unblockUserAction(fd);
-    setLoading(false);
+      const res = await unblockUserAction(fd);
 
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      onSuccess();
-      onClose();
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        onSuccess();
+        onClose();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("unknownError"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,11 +83,10 @@ export function UserUnblockDialog({
         <div className="p-6 space-y-4">
           <div className="space-y-1 text-xs text-ink-700 leading-relaxed">
             <p>
-              Souhaitez-vous débloquer le compte de{" "}
-              <strong className="text-heading font-semibold">{user.name}</strong> ?
+              {t("unblockConfirmQuestion", { name: user.name })}
             </p>
             <p className="text-2xs text-ink-500">
-              L&apos;utilisateur pourra à nouveau se connecter et exécuter ses opérations.
+              {t("unblockNotice")}
             </p>
           </div>
 
@@ -101,7 +113,7 @@ export function UserUnblockDialog({
               disabled={loading}
               className="min-h-[40px] px-4 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl shadow-xs"
             >
-              {loading ? "Déblocage en cours…" : t("unblockUser")}
+              {loading ? t("unblocking") : t("unblockUser")}
             </Button>
           </div>
         </div>

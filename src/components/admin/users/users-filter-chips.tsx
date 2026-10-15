@@ -25,17 +25,17 @@ export function UsersFilterChips({ filters, onChange, onReset }: UsersFilterChip
 
   return (
     <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-      <span className="text-ink-500 font-medium">Filtres actifs :</span>
+      <span className="text-ink-500 font-medium">{t("activeFilters")}</span>
 
       {/* Search chip */}
       {filters.search.trim() && (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface border-2 border-border-strong text-ink-800">
-          <span>Recherche: &quot;{filters.search}&quot;</span>
+          <span>{t("chipSearch", { search: filters.search })}</span>
           <button
             type="button"
             onClick={() => onChange({ ...filters, search: "" })}
             className="text-ink-400 hover:text-ink-800 focus:outline-none"
-            aria-label="Supprimer filtre recherche"
+            aria-label={t("removeSearchFilter")}
           >
             <X className="size-3.5" />
           </button>
@@ -46,13 +46,15 @@ export function UsersFilterChips({ filters, onChange, onReset }: UsersFilterChip
       {filters.type !== "staff" && (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface border-2 border-border-strong text-ink-800">
           <span>
-            Type: {filters.type === "all" ? t("typeAll") : t("typeCustomer")}
+            {t("chipType", {
+              type: filters.type === "all" ? t("typeAll") : t("typeCustomer"),
+            })}
           </span>
           <button
             type="button"
             onClick={() => onChange({ ...filters, type: "staff" })}
             className="text-ink-400 hover:text-ink-800 focus:outline-none"
-            aria-label="Réinitialiser type à employés"
+            aria-label={t("resetTypeFilter")}
           >
             <X className="size-3.5" />
           </button>
@@ -63,22 +65,24 @@ export function UsersFilterChips({ filters, onChange, onReset }: UsersFilterChip
       {filters.role !== "all" && (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface border-2 border-border-strong text-ink-800">
           <span>
-            Rôle:{" "}
-            {filters.role === "admin"
-              ? t("roleAdmin")
-              : filters.role === "courier"
-                ? t("roleCourier")
-                : filters.role === "house"
-                  ? t("roleHouse")
-                  : filters.role === "customer"
-                    ? t("roleCustomer")
-                    : filters.role}
+            {t("chipRole", {
+              role:
+                filters.role === "admin"
+                  ? t("roleAdmin")
+                  : filters.role === "courier"
+                    ? t("roleCourier")
+                    : filters.role === "house"
+                      ? t("roleHouse")
+                      : filters.role === "customer"
+                        ? t("roleCustomer")
+                        : filters.role,
+            })}
           </span>
           <button
             type="button"
             onClick={() => onChange({ ...filters, role: "all" })}
             className="text-ink-400 hover:text-ink-800 focus:outline-none"
-            aria-label="Supprimer filtre rôle"
+            aria-label={t("removeRoleFilter")}
           >
             <X className="size-3.5" />
           </button>
@@ -89,18 +93,20 @@ export function UsersFilterChips({ filters, onChange, onReset }: UsersFilterChip
       {filters.status !== "all" && (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface border-2 border-border-strong text-ink-800">
           <span>
-            Statut:{" "}
-            {filters.status === "active"
-              ? t("statusActive")
-              : filters.status === "blocked"
-                ? t("statusBlocked")
-                : t("statusInvited")}
+            {t("chipStatus", {
+              status:
+                filters.status === "active"
+                  ? t("statusActive")
+                  : filters.status === "blocked"
+                    ? t("statusBlocked")
+                    : t("statusInvited"),
+            })}
           </span>
           <button
             type="button"
             onClick={() => onChange({ ...filters, status: "all" })}
             className="text-ink-400 hover:text-ink-800 focus:outline-none"
-            aria-label="Supprimer filtre statut"
+            aria-label={t("removeStatusFilter")}
           >
             <X className="size-3.5" />
           </button>
@@ -110,12 +116,12 @@ export function UsersFilterChips({ filters, onChange, onReset }: UsersFilterChip
       {/* Show test accounts chip */}
       {!filters.hideTestAccounts && (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 border-2 border-amber-300 text-amber-900">
-          <span>Comptes test inclus</span>
+          <span>{t("chipTestAccountsIncluded")}</span>
           <button
             type="button"
             onClick={() => onChange({ ...filters, hideTestAccounts: true })}
             className="text-amber-600 hover:text-amber-900 focus:outline-none"
-            aria-label="Masquer comptes test"
+            aria-label={t("hideTestAccounts")}
           >
             <X className="size-3.5" />
           </button>

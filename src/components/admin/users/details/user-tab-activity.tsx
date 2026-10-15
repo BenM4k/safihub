@@ -92,10 +92,10 @@ export function UserTabActivity({ user }: UserTabActivityProps) {
           </div>
           <div className="text-2xs text-ink-800 bg-white/80 p-3 rounded-lg border border-destructive-base/30 space-y-1">
             <div className="text-ink-500 font-medium">
-              Appliqué le : {formatDateTime(user.updatedAt)}
+              {t("lastUpdatedDate", { date: formatDateTime(user.updatedAt) })}
             </div>
             <div className="font-semibold text-destructive mt-1 leading-relaxed">
-              {user.banReason || "Aucun motif spécifié."}
+              {user.banReason || t("noReasonSpecified")}
             </div>
           </div>
         </div>

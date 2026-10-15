@@ -26,6 +26,7 @@ interface UserDetailsSheetProps {
   currentUserId?: string | null;
   isAdmin: boolean;
   activeAdminsCount: number;
+  hasOverlay?: boolean;
   onClose: () => void;
   onChangeRole: (user: UserRow) => void;
   onResetPassword: (user: UserRow) => void;
@@ -38,6 +39,7 @@ export function UserDetailsSheet({
   currentUserId,
   isAdmin,
   activeAdminsCount,
+  hasOverlay = false,
   onClose,
   onChangeRole,
   onResetPassword,
@@ -46,23 +48,26 @@ export function UserDetailsSheet({
   const t = useTranslations("admin.users");
   const [tab, setTab] = useState<UserDetailsTab>(initialTab);
 
-  useEffect(() => {
+  const [prevInitialTab, setPrevInitialTab] = useState(initialTab);
+  if (initialTab !== prevInitialTab) {
+    setPrevInitialTab(initialTab);
     setTab(initialTab);
-  }, [initialTab]);
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !hasOverlay) onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, hasOverlay]);
 
   if (!user) return null;
 
   const roleInfo = getRoleBadgeInfo(user.role);
   const isBlocked = user.banned || user.status === "blocked";
   const isTargetLastAdmin = isLastAdmin(user.role, activeAdminsCount);
+  const isSelf = Boolean(currentUserId && currentUserId === user.id);
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-black/50 backdrop-blur-xs">
@@ -87,8 +92,13 @@ export function UserDetailsSheet({
               </div>
             )}
             <div>
-              <h2 id="user-details-title" className="text-sm font-bold text-heading">
-                {user.name}
+              <h2 id="user-details-title" className="text-sm font-bold text-heading flex items-center gap-1.5">
+                <span>{user.name}</span>
+                {isSelf && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
+                    {t("selfBadge")}
+                  </span>
+                )}
               </h2>
               <span
                 className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-2xs font-semibold mt-0.5 ${roleInfo.badgeClass}`}
@@ -103,7 +113,7 @@ export function UserDetailsSheet({
             type="button"
             onClick={onClose}
             className="text-ink-400 hover:text-ink-800 p-1.5 rounded-xl border-2 border-border-strong bg-card hover:bg-surface focus:outline-none transition-colors"
-            aria-label="Fermer le panneau"
+            aria-label={t("closePanel")}
           >
             <X className="size-5" />
           </button>

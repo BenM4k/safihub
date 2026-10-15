@@ -1,6 +1,3 @@
-"use client";
-
-import { useTranslations } from "next-intl";
 import { Check, ShieldCheck, X } from "lucide-react";
 import { getRoleBadgeInfo } from "@/lib/user-formatters";
 import type { UserRow } from "../types";
@@ -16,7 +13,6 @@ interface PermissionRule {
 }
 
 export function UserTabPermissions({ user }: UserTabPermissionsProps) {
-  const t = useTranslations("admin.users");
   const roleInfo = getRoleBadgeInfo(user.role);
 
   const getPermissionsForRole = (role: string | null | undefined): PermissionRule[] => {

@@ -54,20 +54,30 @@ export function UsersTable({
 
   const renderSortableHeader = (label: string, field: SortableUserField) => {
     const isSorted = sortState.field === field;
+    const ariaSort = isSorted
+      ? sortState.direction === "asc"
+        ? "ascending"
+        : "descending"
+      : undefined;
+
     return (
       <th
         scope="col"
-        onClick={() => onSortChange(field)}
-        className="px-4 py-3 text-left text-xs font-bold text-ink-700 select-none cursor-pointer hover:bg-slate-100/70 transition-colors"
+        aria-sort={ariaSort}
+        className="px-4 py-3 text-left text-xs font-bold text-ink-700 select-none"
       >
-        <div className="inline-flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onSortChange(field)}
+          className="inline-flex items-center gap-1.5 hover:text-primary transition-colors focus:outline-none focus-visible:underline cursor-pointer"
+        >
           <span>{label}</span>
           <ArrowUpDown
             className={`size-3 transition-colors ${
               isSorted ? "text-primary" : "text-ink-400"
             }`}
           />
-        </div>
+        </button>
       </th>
     );
   };

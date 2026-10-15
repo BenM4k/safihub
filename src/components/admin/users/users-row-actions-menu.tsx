@@ -74,7 +74,7 @@ export function UsersRowActionsMenu({
           setOpen((prev) => !prev);
         }}
         className="size-8 rounded-lg border-2 border-border-strong bg-white hover:bg-surface text-ink-600 hover:text-heading flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-2xs"
-        aria-label={`Actions pour ${user.name}`}
+        aria-label={t("actionsFor", { name: user.name })}
         aria-haspopup="true"
         aria-expanded={open}
       >
@@ -111,7 +111,7 @@ export function UsersRowActionsMenu({
               isTargetLastAdmin
                 ? t("lastAdminWarning")
                 : !isAdmin
-                  ? "Action réservée aux administrateurs"
+                  ? t("adminOnlyAction")
                   : undefined
             }
             onClick={() => {
@@ -124,7 +124,7 @@ export function UsersRowActionsMenu({
             <span>{t("changeRole")}</span>
             {isSelf && (
               <span className="ml-auto text-[10px] text-amber-700 font-semibold bg-amber-50 px-1 rounded border border-amber-200">
-                Vous
+                {t("selfBadge")}
               </span>
             )}
           </button>
@@ -134,7 +134,7 @@ export function UsersRowActionsMenu({
             type="button"
             role="menuitem"
             disabled={!isAdmin}
-            title={!isAdmin ? "Action réservée aux administrateurs" : undefined}
+            title={!isAdmin ? t("adminOnlyAction") : undefined}
             onClick={() => {
               setOpen(false);
               onResetPassword(user);
@@ -170,7 +170,7 @@ export function UsersRowActionsMenu({
               !isBlocked && isTargetLastAdmin
                 ? t("lastAdminWarning")
                 : !isAdmin
-                  ? "Action réservée aux administrateurs"
+                  ? t("adminOnlyAction")
                   : undefined
             }
             onClick={() => {
@@ -194,7 +194,7 @@ export function UsersRowActionsMenu({
                 <span>{t("blockUser")}</span>
                 {isSelf && (
                   <span className="ml-auto text-[10px] text-destructive bg-red-100 px-1 rounded">
-                    Attention
+                    {t("warningBadge")}
                   </span>
                 )}
               </>

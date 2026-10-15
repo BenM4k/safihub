@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, UserPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,9 @@ export function CreateStaffSheet({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setName("");
       setEmail("");
@@ -51,7 +53,7 @@ export function CreateStaffSheet({
       setPassword("");
       setError(null);
     }
-  }, [isOpen]);
+  }
 
   if (!isOpen) return null;
 
@@ -89,14 +91,18 @@ export function CreateStaffSheet({
     }
     fd.append("password", password);
 
-    const res = await createStaffAccountAction(fd);
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      onSuccess();
-      onClose();
+    try {
+      const res = await createStaffAccountAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        onSuccess();
+        onClose();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -171,7 +177,7 @@ export function CreateStaffSheet({
                 }`}
               />
               {email && !isEmailValid && (
-                <p className="text-2xs text-destructive font-medium">Format d&apos;e-mail invalide</p>
+                <p className="text-2xs text-destructive font-medium">{t("invalidEmailFormat")}</p>
               )}
             </div>
           </div>
@@ -193,7 +199,7 @@ export function CreateStaffSheet({
               }`}
             />
             {phone && phone !== "+243 " && !isPhoneValid && (
-              <p className="text-2xs text-destructive font-medium">Format attendu : +243 99 953 7712</p>
+              <p className="text-2xs text-destructive font-medium">{t("invalidPhoneFormat")}</p>
             )}
           </div>
 
@@ -225,7 +231,7 @@ export function CreateStaffSheet({
             disabled={loading || !isFormValid}
             className="min-h-[40px] px-5 text-xs font-bold bg-primary hover:bg-primary-hover text-white rounded-xl shadow-xs"
           >
-            {loading ? "Création en cours…" : "Créer le compte"}
+            {loading ? t("creatingAccount") : t("createAccountButton")}
           </Button>
         </div>
       </div>

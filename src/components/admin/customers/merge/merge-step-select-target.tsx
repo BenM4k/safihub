@@ -56,10 +56,11 @@ export function MergeStepSelectTarget({
           <div className="p-4 text-center text-xs text-ink-400">Aucun compte inscrit actif trouvé.</div>
         ) : (
           candidates.map((t) => (
-            <div
+            <button
+              type="button"
               key={t.id}
               onClick={() => onSelect(t)}
-              className={`p-3 text-xs flex items-center justify-between cursor-pointer hover:bg-surface ${
+              className={`w-full text-left p-3 text-xs flex items-center justify-between cursor-pointer hover:bg-surface ${
                 selectedTarget?.id === t.id ? "bg-primary-soft font-bold text-primary" : ""
               }`}
             >
@@ -68,7 +69,7 @@ export function MergeStepSelectTarget({
                 <div className="text-2xs text-ink-500">{t.email} · {t.contactPhone || "Sans tél"}</div>
               </div>
               {selectedTarget?.id === t.id && <Check className="size-4 text-primary" />}
-            </div>
+            </button>
           ))
         )}
       </div>

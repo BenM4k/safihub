@@ -50,20 +50,25 @@ export function CustomerBlockDialog({
     setLoading(true);
     setError(null);
 
-    const fd = new FormData();
-    fd.append("userId", customer.id);
-    if (!isBlocked) {
-      fd.append("reason", reason.trim());
-    }
+    try {
+      const fd = new FormData();
+      fd.append("userId", customer.id);
+      if (!isBlocked) {
+        fd.append("reason", reason.trim());
+      }
 
-    const res = isBlocked ? await unblockCustomerAction(fd) : await blockCustomerAction(fd);
-    setLoading(false);
+      const res = isBlocked ? await unblockCustomerAction(fd) : await blockCustomerAction(fd);
 
-    if (!res.ok) {
-      setError(res.error || "Une erreur est survenue.");
-    } else {
-      onSuccess();
-      onClose();
+      if (!res.ok) {
+        setError(res.error || "Une erreur est survenue.");
+      } else {
+        onSuccess();
+        onClose();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue.");
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -55,6 +55,14 @@ export function UsersDialogsContainer({
   onTriggerResetPassword,
   onTriggerToggleBlock,
 }: UsersDialogsContainerProps) {
+  const hasOverlay = Boolean(
+    createSheetOpen ||
+    userToBlock ||
+    userToUnblock ||
+    userToChangeRole ||
+    userToResetPassword,
+  );
+
   return (
     <>
       <CreateStaffSheet
@@ -70,6 +78,7 @@ export function UsersDialogsContainer({
         currentUserId={currentUserId}
         isAdmin={isAdmin}
         activeAdminsCount={activeAdminsCount}
+        hasOverlay={hasOverlay}
         onClose={onCloseDetails}
         onChangeRole={onTriggerChangeRole}
         onResetPassword={onTriggerResetPassword}
@@ -77,6 +86,7 @@ export function UsersDialogsContainer({
       />
 
       <UserBlockDialog
+        key={userToBlock ? `block-${userToBlock.id}` : "block-none"}
         user={userToBlock}
         isOpen={Boolean(userToBlock)}
         currentUserId={currentUserId}
@@ -85,6 +95,7 @@ export function UsersDialogsContainer({
       />
 
       <UserUnblockDialog
+        key={userToUnblock ? `unblock-${userToUnblock.id}` : "unblock-none"}
         user={userToUnblock}
         isOpen={Boolean(userToUnblock)}
         onClose={onCloseUnblock}
@@ -92,6 +103,7 @@ export function UsersDialogsContainer({
       />
 
       <UserRoleDialog
+        key={userToChangeRole ? `role-${userToChangeRole.id}` : "role-none"}
         user={userToChangeRole}
         isOpen={Boolean(userToChangeRole)}
         currentUserId={currentUserId}
@@ -102,6 +114,7 @@ export function UsersDialogsContainer({
       />
 
       <UserResetPasswordDialog
+        key={userToResetPassword ? `reset-${userToResetPassword.id}` : "reset-none"}
         user={userToResetPassword}
         isOpen={Boolean(userToResetPassword)}
         onClose={onCloseResetPassword}

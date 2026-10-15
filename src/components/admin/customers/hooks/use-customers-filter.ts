@@ -37,11 +37,13 @@ export function useCustomersFilter(customers: CustomerRow[]) {
       if (filters.hasOrdered && c.ordersCount === 0) return false;
 
       if (filters.dateFrom) {
-        const from = new Date(filters.dateFrom);
+        const [year, month, day] = filters.dateFrom.split("-").map(Number);
+        const from = new Date(year, month - 1, day, 0, 0, 0, 0);
         if (new Date(c.createdAt) < from) return false;
       }
       if (filters.dateTo) {
-        const to = new Date(new Date(filters.dateTo).setHours(23, 59, 59, 999));
+        const [year, month, day] = filters.dateTo.split("-").map(Number);
+        const to = new Date(year, month - 1, day, 23, 59, 59, 999);
         if (new Date(c.createdAt) > to) return false;
       }
 

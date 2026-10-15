@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, ArrowRight, ShieldCheck, UserCog, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,14 +39,18 @@ export function UserRoleDialog({
   const isSelf = Boolean(currentUserId && user && currentUserId === user.id);
   const isTargetLastAdmin = Boolean(user && isLastAdmin(user.role, activeAdminsCount));
 
-  useEffect(() => {
+  const [prevUser, setPrevUser] = useState(user);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (user !== prevUser || isOpen !== prevIsOpen) {
+    setPrevUser(user);
+    setPrevIsOpen(isOpen);
     if (isOpen && user) {
       setSelectedRole(user.role || "courier");
       setSelectedHouseId(user.houseId || "");
       setSelfConfirmed(false);
       setError(null);
     }
-  }, [isOpen, user]);
+  }
 
   if (!isOpen || !user) return null;
 
@@ -75,11 +79,11 @@ export function UserRoleDialog({
       return;
     }
     if (selectedRole === "house" && !selectedHouseId) {
-      setError("Veuillez sélectionner un pressing à associer.");
+      setError(t("selectHouseRequired"));
       return;
     }
     if (isSelf && selectedRole !== "admin" && !selfConfirmed) {
-      setError("Veuillez confirmer explicitement la modification de votre propre rôle.");
+      setError(t("selfDemotionConfirmRequired"));
       return;
     }
 
@@ -96,14 +100,18 @@ export function UserRoleDialog({
       fd.append("confirmedSelfAction", "true");
     }
 
-    const res = await updateUserRoleAction(fd);
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      onSuccess();
-      onClose();
+    try {
+      const res = await updateUserRoleAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        onSuccess();
+        onClose();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("unknownError"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -135,8 +143,7 @@ export function UserRoleDialog({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <p className="text-xs text-ink-700 leading-relaxed">
-              Modification du rôle pour{" "}
-              <strong className="text-heading font-semibold">{user.name}</strong> ({user.email})
+              {t("roleChangeFor", { name: user.name, email: user.email })}
             </p>
           </div>
 
@@ -144,7 +151,7 @@ export function UserRoleDialog({
           <div className="p-3.5 bg-surface border-2 border-border-strong rounded-xl flex items-center justify-between gap-3 text-xs">
             <div className="space-y-1">
               <span className="text-2xs text-ink-500 font-medium uppercase tracking-wider block">
-                Rôle actuel
+                {t("currentRole")}
               </span>
               <span
                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${currentRoleInfo.badgeClass}`}
@@ -157,7 +164,7 @@ export function UserRoleDialog({
 
             <div className="space-y-1 text-right">
               <span className="text-2xs text-ink-500 font-medium uppercase tracking-wider block">
-                Nouveau rôle
+                {t("newRole")}
               </span>
               <span
                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${newRoleInfo.badgeClass}`}
@@ -170,7 +177,7 @@ export function UserRoleDialog({
           {/* New Role Selector */}
           <div className="space-y-1.5">
             <Label htmlFor="role-select" className="text-xs font-bold text-heading">
-              Attribuer un nouveau rôle <span className="text-destructive">*</span>
+              {t("assignNewRole")} <span className="text-destructive">*</span>
             </Label>
             <select
               id="role-select"
@@ -189,7 +196,7 @@ export function UserRoleDialog({
           <div className="p-3 bg-card border-2 border-border-strong/70 rounded-xl space-y-1">
             <div className="flex items-center gap-1.5 text-2xs font-bold text-primary">
               <ShieldCheck className="size-3.5" />
-              <span>Périmètre des permissions</span>
+              <span>{t("permissionsScope")}</span>
             </div>
             <p className="text-xs text-ink-700 leading-relaxed">
               {getRoleDescription(selectedRole)}
@@ -224,10 +231,10 @@ export function UserRoleDialog({
             <div className="p-3 bg-amber-50 border-2 border-amber-300 rounded-xl space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
                 <AlertTriangle className="size-4 text-amber-600" />
-                <span>Rétrogradation de votre propre compte</span>
+                <span>{t("selfDemotionTitle")}</span>
               </div>
               <p className="text-2xs text-amber-800 leading-relaxed">
-                En changeant votre rôle, vous perdrez immédiatement vos accès d&apos;administrateur.
+                {t("selfDemotionDesc")}
               </p>
               <label className="flex items-center gap-2 pt-1 text-xs font-semibold text-amber-900 cursor-pointer">
                 <input
@@ -236,7 +243,7 @@ export function UserRoleDialog({
                   onChange={(e) => setSelfConfirmed(e.target.checked)}
                   className="rounded border-amber-400 text-amber-700 focus:ring-amber-500"
                 />
-                <span>Je confirme modifier mon propre compte administrateur</span>
+                <span>{t("selfDemotionCheck")}</span>
               </label>
             </div>
           )}
@@ -269,7 +276,7 @@ export function UserRoleDialog({
               }
               className="min-h-[40px] px-4 text-xs font-bold bg-primary hover:bg-primary-hover text-white rounded-xl shadow-xs"
             >
-              {loading ? "Enregistrement…" : t("save")}
+              {loading ? t("saving") : t("save")}
             </Button>
           </div>
         </form>

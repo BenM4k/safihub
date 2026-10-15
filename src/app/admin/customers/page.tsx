@@ -8,8 +8,11 @@ export default async function AdminCustomersPage() {
     listAdminCustomers({ limit: 500 }),
   ]);
 
-  const customers = res.ok ? res.value.customers : [];
-  const totalCount = res.ok ? res.value.totalCount : 0;
+  if (!res.ok) {
+    throw new Error(res.error);
+  }
+
+  const { customers, totalCount } = res.value;
   const isAdmin = currentUser?.role === "admin";
 
   return (

@@ -167,9 +167,11 @@ export async function createGuestUser({
 export async function mergeGuestUser({
   guestUserId,
   targetUserId,
+  auditReason,
 }: {
   guestUserId: string;
   targetUserId: string;
+  auditReason?: string;
 }): Promise<Result<GuestMergeResult>> {
   try {
     if (guestUserId === targetUserId) {
@@ -194,36 +196,39 @@ export async function mergeGuestUser({
       return err(`Target user ${targetUserId} cannot be a guest account.`);
     }
 
-    // 1. Reassign orders from guest customer to registered user
-    const updatedOrders = await db
-      .update(schema.orders)
-      .set({ customerId: targetUserId })
-      .where(eq(schema.orders.customerId, guestUserId))
-      .returning({ id: schema.orders.id });
+    return await db.transaction(async (tx) => {
+      // 1. Reassign orders from guest customer to registered user
+      const updatedOrders = await tx
+        .update(schema.orders)
+        .set({ customerId: targetUserId })
+        .where(eq(schema.orders.customerId, guestUserId))
+        .returning({ id: schema.orders.id });
 
-    // 2. Reassign saved customer addresses
-    const updatedAddresses = await db
-      .update(schema.customerAddresses)
-      .set({ userId: targetUserId })
-      .where(eq(schema.customerAddresses.userId, guestUserId))
-      .returning({ id: schema.customerAddresses.id });
+      // 2. Reassign saved customer addresses
+      const updatedAddresses = await tx
+        .update(schema.customerAddresses)
+        .set({ userId: targetUserId })
+        .where(eq(schema.customerAddresses.userId, guestUserId))
+        .returning({ id: schema.customerAddresses.id });
 
-    // 3. Mark the guest account as merged and blocked from further orders
-    await db
-      .update(schema.user)
-      .set({
-        isGuest: false,
-        status: "merged",
-        banned: true,
-        banReason: `Merged into registered account ${targetUserId}`,
-      })
-      .where(eq(schema.user.id, guestUserId));
+      // 3. Mark the guest account as merged and blocked from further orders
+      await tx
+        .update(schema.user)
+        .set({
+          isGuest: false,
+          status: "merged",
+          banned: true,
+          banReason: auditReason || `Merged into registered account ${targetUserId}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.user.id, guestUserId));
 
-    return ok({
-      guestUserId,
-      targetUserId,
-      ordersMerged: updatedOrders.length,
-      addressesMerged: updatedAddresses.length,
+      return ok({
+        guestUserId,
+        targetUserId,
+        ordersMerged: updatedOrders.length,
+        addressesMerged: updatedAddresses.length,
+      });
     });
   } catch (error) {
     return err(

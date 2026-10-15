@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatPhone } from "@/lib/order-formatters";
 import { Check, Copy, Phone } from "lucide-react";
 
@@ -20,7 +20,14 @@ export function PhoneCell({
   className = "",
 }: PhoneCellProps) {
   const [copied, setCopied] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const formatted = formatPhone(phone);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   if (formatted === "—" || !phone) {
     return <span className="text-muted-foreground">—</span>;
@@ -28,12 +35,18 @@ export function PhoneCell({
 
   const rawTelDigits = phone.replace(/[^\d+]/g, "");
 
-  const handleCopy = (e: React.MouseEvent) => {
+  const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    navigator.clipboard.writeText(phone);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (!navigator?.clipboard?.writeText) return;
+    try {
+      await navigator.clipboard.writeText(phone);
+      setCopied(true);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Ignore clipboard write failures gracefully
+    }
   };
 
   return (

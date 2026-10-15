@@ -41,11 +41,18 @@ export function UserResetPasswordDialog({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setPassword("");
       setShowPassword(false);
       setError(null);
+    }
+  }
+
+  useEffect(() => {
+    if (isOpen) {
       const timer = setTimeout(() => inputRef.current?.focus(), 60);
       return () => clearTimeout(timer);
     }
@@ -75,14 +82,18 @@ export function UserResetPasswordDialog({
     fd.append("userId", user.id);
     fd.append("newPassword", password);
 
-    const res = await resetUserPasswordAction(fd);
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      onSuccess();
-      onClose();
+    try {
+      const res = await resetUserPasswordAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        onSuccess();
+        onClose();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("unknownError"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,8 +125,7 @@ export function UserResetPasswordDialog({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <p className="text-xs text-ink-700 leading-relaxed">
-              Définir un nouveau mot de passe pour{" "}
-              <strong className="text-heading font-semibold">{user.name}</strong> ({user.email}).
+              {t("resetPasswordFor", { name: user.name, email: user.email })}
             </p>
           </div>
 
@@ -142,7 +152,7 @@ export function UserResetPasswordDialog({
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Nouveau mot de passe…"
+                placeholder={t("newPasswordPlaceholder")}
                 required
                 minLength={8}
                 className="min-h-[40px] pr-10 text-xs bg-surface border-2 border-border-strong rounded-xl text-heading font-mono"
@@ -162,7 +172,7 @@ export function UserResetPasswordDialog({
           {password && (
             <div className="space-y-1.5 pt-1">
               <div className="flex items-center justify-between text-2xs font-semibold">
-                <span className="text-ink-500">Robustesse du mot de passe :</span>
+                <span className="text-ink-500">{t("passwordStrengthLabel")}</span>
                 <span
                   className={
                     strength.score === 3
@@ -246,7 +256,7 @@ export function UserResetPasswordDialog({
               disabled={loading || !strength.isValid}
               className="min-h-[40px] px-4 text-xs font-bold bg-primary hover:bg-primary-hover text-white rounded-xl shadow-xs"
             >
-              {loading ? "Mise à jour…" : t("resetPassword")}
+              {loading ? t("updating") : t("resetPassword")}
             </Button>
           </div>
         </form>

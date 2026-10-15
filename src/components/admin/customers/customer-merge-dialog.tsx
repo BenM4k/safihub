@@ -37,6 +37,25 @@ export function CustomerMergeDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  const [prevGuest, setPrevGuest] = useState(preselectedGuest);
+  if (isOpen !== prevIsOpen || preselectedGuest !== prevGuest) {
+    setPrevIsOpen(isOpen);
+    setPrevGuest(preselectedGuest);
+    if (isOpen) {
+      setStep(preselectedGuest ? 2 : 1);
+      setSelectedGuest(preselectedGuest);
+      setSelectedTarget(null);
+      setGuestSearch("");
+      setTargetSearch("");
+      setPreviewData(null);
+      setConfirmedCheck(false);
+      setTypedConfirm("");
+      setError(null);
+      setLoading(false);
+    }
+  }
+
   if (!isOpen) return null;
 
   const guestCandidates = allCustomers.filter((c) => {

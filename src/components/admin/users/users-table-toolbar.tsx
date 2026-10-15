@@ -43,7 +43,7 @@ export function UsersTableToolbar({
               type="button"
               onClick={() => onChange({ ...filters, search: "" })}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-800 focus:outline-none"
-              aria-label="Effacer la recherche"
+              aria-label={t("clearSearch")}
             >
               <X className="size-4" />
             </button>
@@ -100,10 +100,10 @@ export function UsersTableToolbar({
           <Link
             href="/admin/customers"
             className="min-h-[40px] px-3 rounded-xl border-2 border-border-strong bg-surface hover:bg-muted text-xs font-semibold text-ink-800 inline-flex items-center gap-1.5 transition"
-            title="Consulter l'annuaire complet des clients"
+            title={t("customersScreenTitle")}
           >
             <Users className="size-4 text-primary" />
-            <span className="hidden sm:inline">Écran Clients</span>
+            <span className="hidden sm:inline">{t("customersScreenLink")}</span>
           </Link>
 
           {/* Export CSV button */}

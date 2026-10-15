@@ -144,11 +144,14 @@ describe("User Guardrails & Validation Rules", () => {
   });
 
   describe("Test staff account identification", () => {
-    it("flags test staff accounts by domain, name, or phone", () => {
+    it("flags test staff accounts by domain, exact test marker, or phone without broad name matching", () => {
       expect(isTestStaffAccount({ email: "tester@example.com" })).toBe(true);
       expect(isTestStaffAccount({ email: "ops@test.invalid" })).toBe(true);
-      expect(isTestStaffAccount({ name: "QA Test Account" })).toBe(true);
+      expect(isTestStaffAccount({ email: "test@safihub.cd" })).toBe(true);
+      expect(isTestStaffAccount({ email: "qa@safihub.cd" })).toBe(true);
       expect(isTestStaffAccount({ contactPhone: "+243000000000" })).toBe(true);
+      // Real staff names containing 'test' should not be flagged as test accounts
+      expect(isTestStaffAccount({ name: "QA Test Account", email: "staff@safihub.cd" })).toBe(false);
       expect(isTestStaffAccount({ email: "eric@safihub.cd", name: "Eric Munyaga" })).toBe(false);
     });
   });

@@ -1,6 +1,7 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
 import {
+  blockUserAndRevokeSessions,
   getAdminCustomers,
   getCustomerAddresses,
   getCustomerOrders,
@@ -170,11 +171,7 @@ export async function blockAdminCustomer(params: {
     const operatorPart = params.operatorName ? ` par ${params.operatorName}` : "";
     const auditReason = `${params.reason.trim()}${activeWarning} (Enregistré le ${timestamp}${operatorPart})`;
 
-    await updateUserRoleAndStatus(params.customerId, {
-      banned: true,
-      status: "blocked",
-      banReason: auditReason,
-    });
+    await blockUserAndRevokeSessions(params.customerId, auditReason);
 
     return ok(undefined);
   } catch (error) {
@@ -274,16 +271,7 @@ export async function executeCustomerMerge(params: {
       return err(validation.error || "Fusion refusée.");
     }
 
-    const result = await mergeGuestUser({
-      guestUserId: params.guestUserId,
-      targetUserId: params.targetUserId,
-    });
-
-    if (!result.ok) {
-      return result;
-    }
-
-    // Enrich banReason on the merged guest account with audit metadata
+    // Construct audit metadata for banReason
     const timestamp = new Date().toLocaleDateString("fr-FR", {
       day: "2-digit",
       month: "2-digit",
@@ -292,13 +280,13 @@ export async function executeCustomerMerge(params: {
       minute: "2-digit",
     });
     const operator = params.operatorName || params.operatorId || "Opérateur Admin";
-    const auditReason = `Fusionné vers le compte client ${params.targetUserId} (${target!.name}) par ${operator} le ${timestamp}. ${result.value.ordersMerged} commande(s) et ${result.value.addressesMerged} adresse(s) transférées.`;
+    const auditReason = `Fusionné vers le compte client ${params.targetUserId} (${target!.name}) par ${operator} le ${timestamp}.`;
 
-    await updateUserRoleAndStatus(params.guestUserId, {
-      banReason: auditReason,
+    return await mergeGuestUser({
+      guestUserId: params.guestUserId,
+      targetUserId: params.targetUserId,
+      auditReason,
     });
-
-    return result;
   } catch (error) {
     return err(error instanceof Error ? error.message : "Erreur lors de la fusion des comptes");
   }

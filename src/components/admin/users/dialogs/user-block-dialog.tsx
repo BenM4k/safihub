@@ -33,11 +33,18 @@ export function UserBlockDialog({
 
   const isSelf = Boolean(currentUserId && user && currentUserId === user.id);
 
-  useEffect(() => {
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setReason("");
       setSelfConfirmed(false);
       setError(null);
+    }
+  }
+
+  useEffect(() => {
+    if (isOpen) {
       const timer = setTimeout(() => inputRef.current?.focus(), 60);
       return () => clearTimeout(timer);
     }
@@ -52,7 +59,7 @@ export function UserBlockDialog({
       return;
     }
     if (isSelf && !selfConfirmed) {
-      setError("Veuillez cocher la confirmation pour bloquer votre propre compte.");
+      setError(t("selfBlockConfirmRequired"));
       return;
     }
 
@@ -66,14 +73,18 @@ export function UserBlockDialog({
       fd.append("confirmedSelfAction", "true");
     }
 
-    const res = await blockUserAction(fd);
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      onSuccess();
-      onClose();
+    try {
+      const res = await blockUserAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        onSuccess();
+        onClose();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("unknownError"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,12 +116,10 @@ export function UserBlockDialog({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="space-y-1">
             <p className="text-xs text-ink-700 leading-relaxed">
-              Êtes-vous sûr de vouloir bloquer le compte de{" "}
-              <strong className="text-heading font-semibold">{user.name}</strong> ?
+              {t("blockConfirmQuestion", { name: user.name })}
             </p>
             <p className="text-2xs text-ink-500">
-              Toutes les sessions actives associées à ce compte seront immédiatement
-              révoquées.
+              {t("blockSessionsRevokedNotice")}
             </p>
           </div>
 
@@ -119,12 +128,10 @@ export function UserBlockDialog({
             <div className="p-3 bg-amber-50 border-2 border-amber-300 rounded-xl space-y-2">
               <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
                 <AlertTriangle className="size-4 text-amber-600" />
-                <span>Attention : action sur votre propre compte</span>
+                <span>{t("selfBlockAlertTitle")}</span>
               </div>
               <p className="text-2xs text-amber-800 leading-relaxed">
-                Vous êtes actuellement connecté avec ce compte. Si vous le bloquez, vous
-                serez déconnecté sans possibilité de vous reconnecter sans l&apos;intervention
-                d&apos;un autre administrateur.
+                {t("selfBlockAlertDesc")}
               </p>
               <label className="flex items-center gap-2 pt-1 text-xs font-semibold text-amber-900 cursor-pointer">
                 <input
@@ -133,7 +140,7 @@ export function UserBlockDialog({
                   onChange={(e) => setSelfConfirmed(e.target.checked)}
                   className="rounded border-amber-400 text-amber-700 focus:ring-amber-500"
                 />
-                <span>Je confirme vouloir bloquer mon propre compte</span>
+                <span>{t("selfBlockCheck")}</span>
               </label>
             </div>
           )}
@@ -177,7 +184,7 @@ export function UserBlockDialog({
               disabled={loading || !reason.trim() || (isSelf && !selfConfirmed)}
               className="min-h-[40px] px-4 text-xs font-bold bg-destructive hover:bg-destructive/90 text-white rounded-xl shadow-xs"
             >
-              {loading ? "Blocage en cours…" : t("blockUser")}
+              {loading ? t("blocking") : t("blockUser")}
             </Button>
           </div>
         </form>

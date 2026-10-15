@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { GitMerge, UserCheck, Users, UserX } from "lucide-react";
+import { AlertCircle, GitMerge, UserCheck, Users, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/admin/shared/page-header";
 import { CustomerBlockDialog } from "./customer-block-dialog";
@@ -103,6 +103,19 @@ export function CustomersManagementView({
         </div>
       </PageHeader>
 
+      {/* Truncation notice if loaded set is capped */}
+      {totalCustomersCount > initialCustomers.length && (
+        <div className="p-3 bg-amber-50 border-2 border-amber-300 rounded-xl text-xs text-amber-900 flex items-center gap-2">
+          <AlertCircle className="size-4 shrink-0 text-amber-600" />
+          <span>
+            {t("truncationNotice", {
+              loaded: initialCustomers.length,
+              total: totalCustomersCount,
+            })}
+          </span>
+        </div>
+      )}
+
       {/* Toolbar */}
       <CustomersTableToolbar
         filters={filters}
@@ -143,26 +156,30 @@ export function CustomersManagementView({
 
       {/* Slide-over Customer Details Sheet */}
       <CustomerDetailsSheet
-        key={selectedCustomer ? `${selectedCustomer.id}-${activeTab}` : "none"}
+        key={selectedCustomer ? `${selectedCustomer.id}-${activeTab}` : "details-closed"}
         customer={selectedCustomer}
         initialTab={activeTab}
         onClose={() => setSelectedCustomer(null)}
       />
 
       {/* 4-Step Merge Wizard Dialog */}
-      <CustomerMergeDialog
-        isOpen={mergeDialogOpen}
-        preselectedGuest={preselectedGuest}
-        allCustomers={initialCustomers}
-        onClose={() => {
-          setMergeDialogOpen(false);
-          setPreselectedGuest(null);
-        }}
-        onSuccess={handleRefresh}
-      />
+      {mergeDialogOpen && (
+        <CustomerMergeDialog
+          key={`merge-${preselectedGuest?.id || "manual"}`}
+          isOpen={mergeDialogOpen}
+          preselectedGuest={preselectedGuest}
+          allCustomers={initialCustomers}
+          onClose={() => {
+            setMergeDialogOpen(false);
+            setPreselectedGuest(null);
+          }}
+          onSuccess={handleRefresh}
+        />
+      )}
 
       {/* Block Confirmation Dialog */}
       <CustomerBlockDialog
+        key={customerToBlock ? `block-${customerToBlock.id}` : "block-closed"}
         isOpen={Boolean(customerToBlock)}
         customer={customerToBlock}
         onClose={() => setCustomerToBlock(null)}
@@ -171,6 +188,7 @@ export function CustomersManagementView({
 
       {/* Password Reset Dialog */}
       <CustomerResetDialog
+        key={customerToReset ? `reset-${customerToReset.id}` : "reset-closed"}
         isOpen={Boolean(customerToReset)}
         customer={customerToReset}
         onClose={() => setCustomerToReset(null)}

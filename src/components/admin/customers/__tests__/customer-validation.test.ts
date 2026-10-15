@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   formatCustomerEmail,
   formatCustomerName,
@@ -7,6 +7,24 @@ import {
   validateMergeCandidates,
 } from "@/lib/customer-formatters";
 import { formatPhone } from "@/lib/order-formatters";
+import {
+  blockAdminCustomer,
+  unblockAdminCustomer,
+} from "@/services/admin/customer.service";
+import {
+  getUserById,
+  getCustomerOrders,
+  blockUserAndRevokeSessions,
+  updateUserRoleAndStatus,
+} from "@/dal";
+
+vi.mock("@/dal", () => ({
+  getUserById: vi.fn(),
+  getCustomerOrders: vi.fn(),
+  getCustomerAddresses: vi.fn(),
+  blockUserAndRevokeSessions: vi.fn().mockResolvedValue(undefined),
+  updateUserRoleAndStatus: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe("Customer Administration & Merge Validation Rules", () => {
   describe("Merge candidate validation", () => {
@@ -194,25 +212,47 @@ describe("Customer Administration & Merge Validation Rules", () => {
   });
 
   describe("Block & Unblock State Transitions", () => {
-    function computeBlockStatus(current: { banned: boolean; status: string }, action: "block" | "unblock") {
-      if (action === "block") {
-        return { banned: true, status: "blocked" };
-      }
-      return { banned: false, status: "active" };
-    }
+    it("transitions active account to blocked via production blockAdminCustomer", async () => {
+      vi.mocked(getUserById).mockResolvedValueOnce({
+        id: "cust_123",
+        name: "Test Customer",
+        role: "customer",
+        status: "active",
+        banned: false,
+        email: "test@safihub.cd",
+        emailVerified: true,
+        image: null,
+        contactPhone: "+243999537712",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        banReason: null,
+        banExpires: null,
+        isGuest: false,
+      });
+      vi.mocked(getCustomerOrders).mockResolvedValueOnce([]);
 
-    it("transitions active account to blocked", () => {
-      const initial = { banned: false, status: "active" };
-      const next = computeBlockStatus(initial, "block");
-      expect(next.banned).toBe(true);
-      expect(next.status).toBe("blocked");
+      const result = await blockAdminCustomer({
+        customerId: "cust_123",
+        reason: "Fraude signalée",
+        operatorName: "Admin User",
+      });
+
+      expect(result.ok).toBe(true);
+      expect(blockUserAndRevokeSessions).toHaveBeenCalledWith(
+        "cust_123",
+        expect.stringContaining("Fraude signalée")
+      );
     });
 
-    it("transitions blocked account to active", () => {
-      const initial = { banned: true, status: "blocked" };
-      const next = computeBlockStatus(initial, "unblock");
-      expect(next.banned).toBe(false);
-      expect(next.status).toBe("active");
+    it("transitions blocked account to active via production unblockAdminCustomer", async () => {
+      const result = await unblockAdminCustomer("cust_123");
+
+      expect(result.ok).toBe(true);
+      expect(updateUserRoleAndStatus).toHaveBeenCalledWith("cust_123", {
+        banned: false,
+        status: "active",
+        banReason: null,
+      });
     });
   });
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +21,7 @@ export function CustomersTablePagination({
   onPageChange,
   onPageSizeChange,
 }: CustomersTablePaginationProps) {
+  const t = useTranslations("admin.customers");
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
@@ -28,17 +30,20 @@ export function CustomersTablePagination({
     <div className="p-3 border-t-2 border-border-strong bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ink-600">
       <div className="flex items-center gap-3">
         <span className="font-medium">
-          Affichage de <span className="font-bold text-heading">{startItem}</span> à{" "}
-          <span className="font-bold text-heading">{endItem}</span> sur{" "}
-          <span className="font-bold text-heading">{totalItems}</span> clients
+          {t("paginationRange", {
+            start: startItem,
+            end: endItem,
+            total: totalItems,
+          })}
         </span>
 
         <div className="flex items-center gap-1.5 text-2xs">
-          <span>Par page :</span>
+          <span>{t("perPage")}</span>
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
             className="h-8 rounded-md border-2 border-border-strong bg-white px-2 font-bold text-heading"
+            aria-label={t("pageSizeLabel")}
           >
             <option value={10}>10</option>
             <option value={25}>25</option>
@@ -56,7 +61,7 @@ export function CustomersTablePagination({
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1 || isLoading}
           className="h-9 min-h-[36px] px-2.5 text-xs font-semibold border-2 border-border-strong bg-white hover:bg-surface disabled:opacity-40"
-          aria-label="Page précédente"
+          aria-label={t("previousPage")}
         >
           <ChevronLeft className="size-4" />
         </Button>
@@ -72,7 +77,7 @@ export function CustomersTablePagination({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages || isLoading}
           className="h-9 min-h-[36px] px-2.5 text-xs font-semibold border-2 border-border-strong bg-white hover:bg-surface disabled:opacity-40"
-          aria-label="Page suivante"
+          aria-label={t("nextPage")}
         >
           <ChevronRight className="size-4" />
         </Button>
