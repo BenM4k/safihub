@@ -1428,4 +1428,43 @@ export async function reassignOrderPressing(params: {
   }
 }
 
+/**
+ * Returns count of active (in-progress) orders grouped by houseId.
+ */
+export async function getActiveOrdersCountsByHouse(): Promise<Record<string, number>> {
+  const activeStatuses: OrderStatus[] = [
+    "awaiting_confirmation",
+    "created",
+    "accepted",
+    "pickup_assigned",
+    "pickup_in_progress",
+    "picked_up",
+    "received",
+    "price_adjusted",
+    "washing",
+    "ready",
+    "delivery_slot_confirmed",
+    "delivery_assigned",
+    "delivery_in_progress",
+    "disputed",
+  ];
+
+  const rows = await db
+    .select({
+      houseId: schema.orders.houseId,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(schema.orders)
+    .where(inArray(schema.orders.status, activeStatuses))
+    .groupBy(schema.orders.houseId);
+
+  const result: Record<string, number> = {};
+  for (const row of rows) {
+    if (row.houseId) {
+      result[row.houseId] = Number(row.count) || 0;
+    }
+  }
+  return result;
+}
+
 

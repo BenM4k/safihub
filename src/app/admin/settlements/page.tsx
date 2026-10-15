@@ -1,79 +1,89 @@
 import { getTranslations } from "next-intl/server";
-import { getAdminHouseSettlements, getAdminCourierSettlements } from "@/services/admin";
-import { HousesSettlementsTable } from "@/components/admin/settlements/houses-settlements-table";
-import { CouriersSettlementsTable } from "@/components/admin/settlements/couriers-settlements-table";
-import { Building2, Bike } from "lucide-react";
+import {
+  getAdminHouseSettlements,
+  getAdminCourierSettlements,
+  getAdminSettlementHistory,
+} from "@/services/admin";
+import { PageHeader } from "@/components/admin/shared/page-header";
+import { SettlementsView } from "@/components/admin/settlements/settlements-view";
+import { getWeekBounds } from "@/components/admin/settlements/period-utils";
 
-export default async function AdminSettlementsPage() {
+interface AdminSettlementsPageProps {
+  searchParams: Promise<{ period?: string }>;
+}
+
+export default async function AdminSettlementsPage({
+  searchParams,
+}: AdminSettlementsPageProps) {
   const t = await getTranslations("admin.settlements");
+  const params = await searchParams;
 
-  const [housesResult, couriersResult] = await Promise.all([
+  const currentBounds = getWeekBounds();
+  const selectedPeriod =
+    params.period && /^\d{4}-W\d{2}$/.test(params.period)
+      ? params.period
+      : currentBounds.weekString;
+
+  const [housesResult, couriersResult, historyResult] = await Promise.all([
     getAdminHouseSettlements(),
     getAdminCourierSettlements(),
+    getAdminSettlementHistory(100),
   ]);
 
   const housesData = housesResult.ok
     ? housesResult.value
-    : { houses: [], totalOwedToHousesCDF: 0 };
+    : {
+        houses: [],
+        totalOwedToHousesCDF: 0,
+        housesWithBalanceCount: 0,
+        oldestUnpaidDays: 0,
+      };
 
   const couriersData = couriersResult.ok
     ? couriersResult.value
-    : { couriers: [], totalOwedToCouriersCDF: 0 };
+    : {
+        couriers: [],
+        totalOwedToCouriersCDF: 0,
+        couriersWithBalanceCount: 0,
+        oldestUnpaidDays: 0,
+      };
+
+  const historyLogs = historyResult.ok ? historyResult.value : [];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-heading tracking-tight">
-          {t("title")}
-        </h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          {t("subtitle")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="p-4 bg-white rounded-xl border border-border shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground">{t("housesTab")}</p>
-            <p className="text-xl font-black text-heading mt-1">
-              {housesData.totalOwedToHousesCDF.toLocaleString()} CDF
-            </p>
-            <p className="text-2xs text-muted-foreground mt-0.5">{t("balanceOwed")}</p>
-          </div>
-          <div className="size-10 rounded-lg flex items-center justify-center border text-violet-600 bg-violet-50 border-violet-200">
-            <Building2 className="size-5" />
-          </div>
+      {(!housesResult.ok || !couriersResult.ok) && (
+        <div
+          role="alert"
+          className="p-4 bg-destructive-light border border-destructive-base/30 rounded-xl text-xs text-destructive-base font-medium"
+        >
+          {housesResult.ok ? "" : housesResult.error}
+          {!housesResult.ok && !couriersResult.ok ? " · " : ""}
+          {couriersResult.ok ? "" : couriersResult.error}
         </div>
+      )}
 
-        <div className="p-4 bg-white rounded-xl border border-border shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground">{t("couriersTab")}</p>
-            <p className="text-xl font-black text-heading mt-1">
-              {couriersData.totalOwedToCouriersCDF.toLocaleString()} CDF
-            </p>
-            <p className="text-2xs text-muted-foreground mt-0.5">{t("balanceOwed")}</p>
-          </div>
-          <div className="size-10 rounded-lg flex items-center justify-center border text-emerald-600 bg-emerald-50 border-emerald-200">
-            <Bike className="size-5" />
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h2 className="text-sm font-bold text-heading flex items-center gap-2">
-          <Building2 className="size-4 text-violet-600" />
-          {t("housesTab")}
-        </h2>
-        <HousesSettlementsTable houses={housesData.houses} />
-      </div>
-
-      <div className="space-y-3 pt-2">
-        <h2 className="text-sm font-bold text-heading flex items-center gap-2">
-          <Bike className="size-4 text-emerald-600" />
-          {t("couriersTab")}
-        </h2>
-        <CouriersSettlementsTable couriers={couriersData.couriers} />
-      </div>
+      <SettlementsView
+        houses={housesData.houses}
+        couriers={couriersData.couriers}
+        historyLogs={historyLogs}
+        housesSummary={{
+          totalOwedCDF: housesData.totalOwedToHousesCDF,
+          housesWithBalanceCount: housesData.housesWithBalanceCount,
+          oldestUnpaidDays: housesData.oldestUnpaidDays ?? 0,
+        }}
+        couriersSummary={{
+          totalOwedCDF: couriersData.totalOwedToCouriersCDF,
+          couriersWithBalanceCount: couriersData.couriersWithBalanceCount,
+          oldestUnpaidDays: couriersData.oldestUnpaidDays ?? 0,
+        }}
+        periodString={selectedPeriod}
+      />
     </div>
   );
 }

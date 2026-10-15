@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ShieldAlert, Undo2 } from "lucide-react";
-import { ReversalDialog } from "./reversal-dialog";
+import { EmptyState } from "@/components/admin/shared/empty-state";
+import { HistoryFilters, type HistoryFilterState } from "./history-filters";
+import { HistoryTableRow } from "./history-table-row";
+import { HistoryPagination } from "./history-pagination";
+import { exportReconciliationHistoryCsv } from "./history-export";
+import { FileText } from "lucide-react";
 
-interface LogRow {
+export interface ReconciliationLogRow {
   id: string;
   courierId: string;
   courierName: string | null;
+  courierPhone?: string | null;
   businessDate: string;
   currency: "CDF" | "USD";
   expectedAmount: number;
@@ -19,82 +22,153 @@ interface LogRow {
   status: string;
   note: string | null;
   reconciledBy: string | null;
-  createdAt: Date;
+  reconcilerName?: string | null;
+  createdAt: Date | string;
 }
 
 interface ReconciliationHistoryTableProps {
-  logs: LogRow[];
+  logs: ReconciliationLogRow[];
 }
+
+const PAGE_SIZE = 10;
 
 export function ReconciliationHistoryTable({ logs }: ReconciliationHistoryTableProps) {
   const t = useTranslations("admin.cash");
-  const [reversalOpen, setReversalOpen] = useState(false);
+
+  const [page, setPage] = useState(1);
+  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+  const [filters, setFilters] = useState<HistoryFilterState>({
+    search: "",
+    courierId: "all",
+    status: "all",
+    period: "30_days",
+  });
+
+  const courierOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    logs.forEach((l) => {
+      if (l.courierId && !map.has(l.courierId)) {
+        map.set(l.courierId, l.courierName || l.courierId);
+      }
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [logs]);
+
+  const filteredLogs = useMemo(() => {
+    const now = new Date();
+
+    return logs.filter((log) => {
+      const isCancelled = log.note?.includes("[ANNULÉE") || false;
+
+      if (filters.status === "cancelled" && !isCancelled) return false;
+      if (filters.status === "discrepancy" && (isCancelled || log.difference === 0)) return false;
+      if (filters.status === "reconciled" && (isCancelled || log.difference !== 0)) return false;
+
+      if (filters.courierId !== "all" && log.courierId !== filters.courierId) return false;
+
+      if (filters.period !== "all") {
+        const days = filters.period === "7_days" ? 7 : 30;
+        const logDate = new Date(`${log.businessDate}T00:00:00Z`);
+        const diffDays = (now.getTime() - logDate.getTime()) / (1000 * 3600 * 24);
+        if (diffDays > days) return false;
+      }
+
+      if (filters.search.trim()) {
+        const query = filters.search.toLowerCase();
+        const matchesName = (log.courierName || "").toLowerCase().includes(query);
+        const matchesPhone = (log.courierPhone || "").toLowerCase().includes(query);
+        const matchesNote = (log.note || "").toLowerCase().includes(query);
+        if (!matchesName && !matchesPhone && !matchesNote) return false;
+      }
+
+      return true;
+    });
+  }, [logs, filters]);
+
+  const currentPageLogs = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredLogs.slice(start, start + PAGE_SIZE);
+  }, [filteredLogs, page]);
+
+  const handleExportCsv = () => {
+    exportReconciliationHistoryCsv(filteredLogs, filters.period);
+  };
+
+  const toggleNote = (id: string) => {
+    setExpandedNotes((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
-    <div className="bg-white rounded-xl border border-border shadow-xs overflow-hidden">
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <h2 className="text-sm font-bold text-heading">{t("historyTitle")}</h2>
-        <Button size="sm" variant="outline" onClick={() => setReversalOpen(true)} className="h-8 text-xs gap-1.5">
-          <Undo2 className="size-3.5" />
-          {t("reversalBtn")}
-        </Button>
+    <div className="bg-card rounded-xl border border-border-strong shadow-xs overflow-hidden flex flex-col">
+      <div className="p-4 border-b border-border-strong flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-heading font-display">
+            {t("historyTitle")}
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Historique auditable de tous les versements et contre-passations
+          </p>
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <HistoryFilters
+        filters={filters}
+        onFilterChange={(f) => {
+          setFilters(f);
+          setPage(1);
+        }}
+        courierOptions={courierOptions}
+        onExportCsv={handleExportCsv}
+        filteredCount={filteredLogs.length}
+      />
+
+      <div className="overflow-x-auto relative">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="border-b border-border bg-slate-50/80 text-muted-foreground font-semibold">
-              <th className="py-2.5 px-4">{t("dateLabel")}</th>
-              <th className="py-2.5 px-4">{t("courier")}</th>
-              <th className="py-2.5 px-4">{t("expected")}</th>
-              <th className="py-2.5 px-4">{t("received")}</th>
-              <th className="py-2.5 px-4">{t("difference")}</th>
-              <th className="py-2.5 px-4">{t("noteLabel")}</th>
+            <tr className="border-b border-border-strong bg-surface/95 backdrop-blur-xs text-ink-700 font-semibold sticky top-0 z-10">
+              <th scope="col" className="py-3 px-4">{t("accountingDate")}</th>
+              <th scope="col" className="py-3 px-4">{t("courier")}</th>
+              <th scope="col" className="py-3 px-4 text-right">{t("expected")}</th>
+              <th scope="col" className="py-3 px-4 text-right">{t("received")}</th>
+              <th scope="col" className="py-3 px-4 text-right">{t("difference")}</th>
+              <th scope="col" className="py-3 px-4 text-center">{t("status")}</th>
+              <th scope="col" className="py-3 px-4 hidden md:table-cell">{t("reconciledBy")}</th>
+              <th scope="col" className="py-3 px-4 hidden lg:table-cell">{t("dateTime")}</th>
+              <th scope="col" className="py-3 px-4 min-w-[180px] hidden sm:table-cell">{t("noteLabel")}</th>
+              <th scope="col" className="py-3 px-4 text-right">{t("actions")}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
-            {logs.length === 0 ? (
+          <tbody className="divide-y divide-border-strong/80">
+            {currentPageLogs.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-6 text-center text-muted-foreground">
-                  {t("noHistory")}
+                <td colSpan={10} className="py-8">
+                  <EmptyState
+                    icon={FileText}
+                    title={t("noHistory")}
+                    description="Aucune écriture de réconciliation ne correspond aux filtres appliqués."
+                  />
                 </td>
               </tr>
             ) : (
-              logs.map((log) => {
-                const hasDiff = log.difference !== 0;
-
-                return (
-                  <tr key={log.id} className="hover:bg-slate-50/60">
-                    <td className="py-2.5 px-4 font-mono font-medium">{log.businessDate}</td>
-                    <td className="py-2.5 px-4 font-semibold text-heading">
-                      {log.courierName ?? log.courierId}
-                    </td>
-                    <td className="py-2.5 px-4">{log.expectedAmount.toLocaleString()} {log.currency}</td>
-                    <td className="py-2.5 px-4 font-bold">{log.receivedAmount.toLocaleString()} {log.currency}</td>
-                    <td className="py-2.5 px-4 font-semibold">
-                      {hasDiff ? (
-                        <Badge variant="destructive" className="text-2xs gap-1">
-                          <ShieldAlert className="size-3" />
-                          {log.difference > 0 ? "+" : ""}{log.difference.toLocaleString()} {log.currency}
-                        </Badge>
-                      ) : (
-                        <span className="text-slate-400">0 {log.currency}</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-4 text-muted-foreground max-w-xs truncate">
-                      {log.note || "—"}
-                    </td>
-                  </tr>
-                );
-              })
+              currentPageLogs.map((log) => (
+                <HistoryTableRow
+                  key={log.id}
+                  log={log}
+                  isExpanded={!!expandedNotes[log.id]}
+                  onToggleNote={toggleNote}
+                />
+              ))
             )}
           </tbody>
         </table>
       </div>
 
-      {reversalOpen && (
-        <ReversalDialog isOpen={true} onClose={() => setReversalOpen(false)} />
-      )}
+      <HistoryPagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        totalItems={filteredLogs.length}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

@@ -805,3 +805,17 @@ export async function getHouseCoverageWithLimits(
   };
 }
 
+export async function getAllHousesHours(): Promise<HouseHourRecord[]> {
+  return db
+    .select()
+    .from(schema.houseHours)
+    .orderBy(asc(schema.houseHours.weekday), asc(schema.houseHours.opensAt));
+}
+
+export async function getAllHousesClosures(): Promise<HouseClosureRecord[]> {
+  return db
+    .select()
+    .from(schema.houseClosures)
+    .orderBy(asc(schema.houseClosures.startsOn));
+}
+

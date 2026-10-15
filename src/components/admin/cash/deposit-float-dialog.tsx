@@ -12,7 +12,7 @@ import {
   issueCourierFloatAction,
   returnCourierFloatAction,
 } from "@/actions/admin-cash.actions";
-import { Coins, X } from "lucide-react";
+import { Coins, X, AlertCircle } from "lucide-react";
 
 interface DepositFloatDialogProps {
   isOpen: boolean;
@@ -67,50 +67,60 @@ export function DepositFloatDialog({ isOpen, onClose, courier }: DepositFloatDia
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="deposit-float-dialog-title"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+    >
+      <div className="w-full max-w-md bg-card rounded-2xl shadow-2xl border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="p-4 border-b border-border flex items-center justify-between bg-surface">
           <div className="flex items-center gap-2 text-heading font-bold text-sm">
-            <Coins className="size-4.5 text-primary" />
-            <span>{t("depositFloatDialogTitle")}</span>
+            <Coins className="size-4.5 text-primary" aria-hidden="true" />
+            <span id="deposit-float-dialog-title">{t("depositFloatDialogTitle")}</span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/50"
+            className="p-1.5 text-ink-400 hover:text-ink-700 rounded-lg hover:bg-surface-hover transition-colors"
+            aria-label="Fermer"
           >
             <X className="size-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             {t("depositFloatDialogDesc")} ({courier.name ?? courier.courierId})
           </p>
 
           {errorMsg && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700">
-              {errorMsg}
+            <div role="alert" className="p-3 bg-destructive-light border border-destructive-base/30 rounded-xl text-xs text-destructive-base font-medium flex items-start gap-2">
+              <AlertCircle className="size-4 shrink-0 mt-0.5" />
+              <span>{errorMsg}</span>
             </div>
           )}
 
-          <div className="p-3 bg-slate-50 rounded-xl text-xs space-y-1.5 border border-slate-100">
+          <div className="p-3 bg-surface rounded-xl text-xs space-y-1.5 border border-border">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("deposit")} :</span>
-              <span className="font-bold">{courier.securityDeposit.toLocaleString()} CDF</span>
+              <span className="font-bold font-mono text-heading">{courier.securityDeposit.toLocaleString("fr-FR")} CDF</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("float")} :</span>
-              <span className="font-bold">{courier.changeFloat.toLocaleString()} CDF</span>
+              <span className="font-bold font-mono text-heading">{courier.changeFloat.toLocaleString("fr-FR")} CDF</span>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">{t("operationType")}</Label>
+            <Label htmlFor="operation-type-select" className="text-xs font-semibold text-heading">
+              {t("operationType")}
+            </Label>
             <select
+              id="operation-type-select"
               value={operation}
               onChange={(e) => setOperation(e.target.value as "hold_deposit" | "release_deposit" | "issue_float" | "return_float")}
-              className="w-full h-9 px-3 text-xs rounded-xl border border-slate-300 bg-white font-medium focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+              className="w-full h-10 min-h-[40px] px-3 text-xs rounded-xl border border-input bg-card font-medium focus:outline-hidden focus:ring-2 focus:ring-primary/20 text-heading"
             >
               <option value="issue_float">{t("opIssueFloat")}</option>
               <option value="return_float">{t("opReturnFloat")}</option>
@@ -120,33 +130,51 @@ export function DepositFloatDialog({ isOpen, onClose, courier }: DepositFloatDia
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">{t("amountLabel")} (CDF)</Label>
+            <Label htmlFor="deposit-amount-input" className="text-xs font-semibold text-heading">
+              {t("amountLabel")} (CDF)
+            </Label>
             <Input
+              id="deposit-amount-input"
               type="number"
               min={1}
               required
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
-              className="text-sm font-semibold h-10"
+              className="text-sm font-semibold h-10 min-h-[40px] font-mono"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">{t("noteLabel")}</Label>
+            <Label htmlFor="deposit-note-input" className="text-xs font-semibold text-heading">
+              {t("noteLabel")}
+            </Label>
             <Input
+              id="deposit-note-input"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={t("notePlaceholder")}
-              className="text-xs h-9"
+              className="text-xs h-10 min-h-[40px]"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={loading}>
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              disabled={loading}
+              className="min-h-[40px] px-4 text-xs font-semibold"
+            >
               {t("cancelBtn")}
             </Button>
-            <Button type="submit" size="sm" disabled={loading}>
-              {loading ? "..." : t("submitBtn")}
+            <Button
+              type="submit"
+              size="sm"
+              disabled={loading}
+              className="min-h-[40px] px-4 text-xs font-semibold bg-primary hover:bg-primary-hover text-white"
+            >
+              {loading ? "Enregistrement..." : t("submitBtn")}
             </Button>
           </div>
         </form>

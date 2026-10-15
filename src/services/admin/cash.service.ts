@@ -9,6 +9,7 @@ import {
   issueCourierFloat,
   returnCourierFloat,
   reverseLedgerEntry,
+  reverseCourierReconciliation,
 } from "@/dal";
 
 export async function getAdminDailyReconciliation(dateStr: string) {
@@ -189,3 +190,28 @@ export async function reverseAdminLedgerEntry(params: {
     return err(error instanceof Error ? error.message : "Erreur lors de la contre-passation");
   }
 }
+
+export async function reverseAdminCourierReconciliation(params: {
+  reconciliationId: string;
+  reason: string;
+  reversedBy: string;
+}) {
+  try {
+    if (!params.reconciliationId) return err("Identifiant de réconciliation requis");
+    if (!params.reason?.trim()) return err("Un motif de contre-passation est obligatoire");
+
+    const res = await reverseCourierReconciliation({
+      reconciliationId: params.reconciliationId,
+      reason: params.reason.trim(),
+      reversedBy: params.reversedBy,
+    });
+
+    if (!res.ok) return err(res.error || "Échec de l'annulation de la réconciliation");
+    return ok(res);
+  } catch (error) {
+    return err(
+      error instanceof Error ? error.message : "Erreur lors de l'annulation de la réconciliation"
+    );
+  }
+}
+

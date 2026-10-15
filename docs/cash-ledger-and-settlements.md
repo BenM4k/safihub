@@ -83,10 +83,19 @@ For an illustrative order with 20,000 CDF item total (20% commission = 4,000 CDF
 
 ---
 
-## 5. Partner House Weekly Settlements (`/admin/settlements`)
+## 5. Partner Pressing & Courier Settlements (`/admin/settlements`)
 
-- **Cadence:** Weekly (every Monday).
-- **Calculation:** For each partner laundry house:
-  $$\text{Payout} = \sum_{\text{delivered}} (\text{Order Items Total} - \text{Commission Amount})$$
-- **Drop-off Point Exception:** If a courier handed over cash directly to the laundry house at the time of clothing handover, both parties must have acknowledged the transfer in-app. The payout calculation deducts those direct cash transfers.
-- Admin records payout reference (cash voucher or mobile money transfer) and appends a `house_settlement` ledger event.
+- **Cadence & Period:** Weekly (every Monday). The screen features a weekly period selector (`YYYY-Www`) with next settlement date tracking.
+- **Payee Calculations:**
+  - **Pressings:** $\text{Net Owed} = \sum_{\text{delivered}} (\text{Order Items Total} - \text{Commission Amount})$. Gross items total and SafiHub commission are exposed in table details and modals.
+  - **Couriers:** $\text{Balance Owed} = \sum (\text{courier_pay_earned}) - \sum (\text{courier_pay_settled})$. Any cash discrepancy from Cash Controls is flagged via a warning chip and reviewed in the payout modal (never auto-netted without operator confirmation).
+- **Overdue Threshold:** Set to **7 days** (`SETTLEMENT_OVERDUE_DAYS_THRESHOLD = 7`). Rows indicate status pills: *À jour* (0 CDF), *À régler* ($\le 7$ days), or *En retard (+X j)* ($> 7$ days).
+- **Two-Step Safe & Auditable Settlement Flow:**
+  1. **Input & Validation:** Select payee, enter amount (partial allowed, strictly $\le \text{balance}$), payment method (`mobile_money`, `bank`, `cash`), mandatory reference for non-cash, period, and note.
+  2. **Review & Confirmation:** Operator reviews payee, net amount, and resulting remaining balance before confirming. Prevents double-submissions.
+  3. **Official Printable Receipt (PDF):** Upon success, a formal receipt modal is generated with receipt ID, timestamp, breakdown, and browser print-to-PDF support.
+- **Append-Only Reversals:**
+  - Settlements can be reversed with administrator privileges and a mandatory reason ($\ge 3$ characters).
+  - Creates a compensating `reversal` entry in `cash_ledger` (`reversalOfId = original.id`), immediately restoring the payee's unpaid balance while keeping the original entry visible marked with an *Annulée* status pill.
+- **Audit History & CSV Export:**
+  - `/admin/settlements` includes an integrated *Historique des règlements* table with search, type/status/period filters, sticky header, pagination, and French standard semicolon CSV export.
