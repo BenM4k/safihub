@@ -2,11 +2,15 @@ import "server-only";
 import { hashPassword } from "better-auth/crypto";
 import { err, ok, type Result } from "@/lib/result";
 import {
+  blockAdminUserWithGuard,
   createStaffAccountTransaction,
+  deleteUserSessions,
+  getUserById,
   mergeGuestUser,
   searchUsers,
   setUserPasswordCredential,
   updateUserRoleAndStatus,
+  updateUserRoleWithHouseAndGuard,
   type GuestMergeResult,
   type UserRecord,
 } from "@/dal";
@@ -32,17 +36,58 @@ export async function blockAdminUser(params: {
 }): Promise<Result<void>> {
   try {
     if (!params.reason?.trim()) {
-      return err("A reason is mandatory when blocking a user account");
+      return err("Un motif est obligatoire pour bloquer un compte utilisateur");
     }
 
-    await updateUserRoleAndStatus(params.userId, {
-      banned: true,
-      status: "blocked",
-      banReason: params.reason.trim(),
+    const targetUser = await getUserById(params.userId);
+    if (!targetUser) {
+      return err("Utilisateur introuvable");
+    }
+
+    const isTargetActiveAdmin =
+      targetUser.role === "admin" &&
+      !targetUser.banned &&
+      targetUser.status !== "blocked";
+
+    return await blockAdminUserWithGuard({
+      userId: params.userId,
+      reason: params.reason.trim(),
+      isTargetActiveAdmin,
     });
-    return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to block user");
+  }
+}
+
+export async function updateAdminUserRole(params: {
+  userId: string;
+  newRole: string;
+  houseId?: string | null;
+}): Promise<Result<void>> {
+  try {
+    const targetUser = await getUserById(params.userId);
+    if (!targetUser) {
+      return err("Utilisateur introuvable");
+    }
+
+    if (params.newRole === "house" && !params.houseId?.trim()) {
+      return err("Un pressing doit être sélectionné pour le rôle Pressing");
+    }
+
+    const isTargetActiveAdminDemotion =
+      targetUser.role === "admin" &&
+      params.newRole !== "admin" &&
+      !targetUser.banned &&
+      targetUser.status !== "blocked";
+
+    return await updateUserRoleWithHouseAndGuard({
+      userId: params.userId,
+      newRole: params.newRole,
+      houseId: params.newRole === "house" ? params.houseId : null,
+      isTargetActiveAdminDemotion,
+    });
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to update user role");
   }
 }
 
@@ -73,6 +118,9 @@ export async function resetAdminUserPassword(params: {
       userId: params.userId,
       hashedPassword,
     });
+
+    // Revoke all active sessions immediately
+    await deleteUserSessions(params.userId);
 
     return ok(undefined);
   } catch (error) {

@@ -9,12 +9,15 @@ export type StatusPillType =
   | "cancelled"
   | "to_settle"
   | "settled"
-  | "overdue";
+  | "overdue"
+  | "active"
+  | "blocked";
 
 interface StatusPillProps {
   status: StatusPillType;
   customLabel?: string;
   className?: string;
+  title?: string;
 }
 
 const statusConfig: Record<
@@ -80,15 +83,28 @@ const statusConfig: Record<
     classes: "bg-destructive-light text-destructive-base border-destructive-base/40 font-bold",
     dotClass: "bg-destructive-base",
   },
+  active: {
+    label: "Actif",
+    icon: CheckCircle2,
+    classes: "bg-emerald-50 text-emerald-700 border-emerald-300 font-semibold",
+    dotClass: "bg-emerald-600",
+  },
+  blocked: {
+    label: "Bloqué",
+    icon: Ban,
+    classes: "bg-destructive-light text-destructive-base border-destructive-base/40 font-bold",
+    dotClass: "bg-destructive-base",
+  },
 };
 
-export function StatusPill({ status, customLabel, className = "" }: StatusPillProps) {
+export function StatusPill({ status, customLabel, className = "", title }: StatusPillProps) {
   const cfg = statusConfig[status] ?? statusConfig.pending;
   const Icon = cfg.icon;
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border shadow-2xs transition-colors whitespace-nowrap ${cfg.classes} ${className}`}
+      title={title}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border-2 border-border-strong shadow-2xs transition-colors whitespace-nowrap ${cfg.classes} ${className}`}
     >
       <Icon className="size-3.5 shrink-0" aria-hidden="true" />
       <span>{customLabel || cfg.label}</span>
