@@ -22,9 +22,9 @@ export async function HouseHeader({
   const homeHref = houseSlug ? `/partner/${houseSlug}` : "/partner";
 
   return (
-    <header className="w-full bg-white border-b border-border shadow-xs sticky top-0 z-30">
+    <header className="w-full bg-card border-b border-border shadow-xs sticky top-0 z-30">
       {isAdminOverride && (
-        <div className="bg-amber-500 text-white text-xs font-bold px-4 py-1.5 flex items-center justify-center gap-2">
+        <div className="bg-warning text-white text-xs font-bold px-4 py-1.5 flex items-center justify-center gap-2">
           <ShieldAlert className="size-3.5" />
           <span>{t("adminModeWarning")}</span>
         </div>
@@ -35,17 +35,17 @@ export async function HouseHeader({
             href={homeHref}
             className="flex items-center gap-2.5 font-display font-bold text-lg text-heading tracking-tight shrink-0"
           >
-            <div className="size-9 rounded-xl bg-violet-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
+            <div className="size-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-black text-sm shadow-xs">
               <Store className="size-5" />
             </div>
             <span className="hidden xs:inline">SafiHub</span>
-            <span className="text-violet-600 font-semibold text-sm">
+            <span className="text-primary font-semibold text-sm">
               {t("partner")}
             </span>
           </Link>
 
           {houseName && (
-            <div className="pl-2 border-l border-slate-200">
+            <div className="pl-2 border-l border-border">
               <HouseSwitcher
                 houseName={houseName}
                 currentSlug={houseSlug}
@@ -66,7 +66,7 @@ export async function HouseHeader({
           </Link>
           <Link
             href="/"
-            className="text-xs font-semibold text-muted-foreground hover:text-heading px-3 py-1.5 rounded-md hover:bg-slate-100 transition"
+            className="text-xs font-semibold text-muted-foreground hover:text-heading px-3 py-1.5 rounded-md hover:bg-secondary transition"
           >
             {t("back")}
           </Link>

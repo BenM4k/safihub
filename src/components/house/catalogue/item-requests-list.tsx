@@ -18,7 +18,7 @@ export async function ItemRequestsList({
 
   if (requests.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center text-xs text-slate-500 shadow-xs">
+      <div className="bg-card rounded-2xl border border-border p-6 text-center text-xs text-muted-foreground shadow-xs">
         {t("noRequests")}
       </div>
     );
@@ -28,19 +28,19 @@ export async function ItemRequestsList({
     switch (status) {
       case "approved":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-success-soft text-success border border-success/20">
             <CheckCircle2 className="size-3" /> {t("statusApproved")}
           </span>
         );
       case "rejected":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-destructive-soft text-destructive border border-destructive/20">
             <XCircle className="size-3" /> {t("statusRejected")}
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-warning-soft text-warning border border-warning/20">
             <Clock className="size-3" /> {t("statusPending")}
           </span>
         );
@@ -48,24 +48,24 @@ export async function ItemRequestsList({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-      <div className="p-4 border-b border-slate-100">
-        <h3 className="font-bold text-sm text-slate-900">{t("myRequests")}</h3>
+    <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+      <div className="p-4 border-b border-border">
+        <h3 className="font-bold text-sm text-heading">{t("myRequests")}</h3>
       </div>
 
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-border">
         {requests.map((req) => (
           <div key={req.id} className="p-4 flex items-center justify-between gap-3 text-xs">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900">{req.name}</span>
-                <span className="text-[11px] text-slate-400 capitalize">
+                <span className="font-bold text-heading">{req.name}</span>
+                <span className="text-[11px] text-muted-foreground capitalize">
                   ({req.kind === "item" ? t("kindItem") : t("kindFabric")})
                 </span>
               </div>
-              {req.note && <p className="text-slate-500 text-[11px]">{req.note}</p>}
+              {req.note && <p className="text-muted-foreground text-[11px]">{req.note}</p>}
               {req.adminNote && (
-                <p className="text-violet-700 font-medium text-[11px]">
+                <p className="text-primary font-medium text-[11px]">
                   Réponse admin: {req.adminNote}
                 </p>
               )}

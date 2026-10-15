@@ -496,3 +496,32 @@ export async function deleteHouseExclusionAction(input: {
   }
   return res;
 }
+
+const toggleHousePauseSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  isPaused: z.boolean(),
+});
+
+export async function toggleHousePauseAction(input: {
+  isPaused: boolean;
+  houseId?: string;
+}): Promise<Result<void>> {
+  const parsed = toggleHousePauseSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Paramètres invalides");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const { updateHouse } = await import("@/dal");
+  await updateHouse(authCtx.value.houseId, {
+    isPaused: parsed.data.isPaused,
+    pausedUntil: null,
+  });
+
+  revalidatePath("/partner", "layout");
+  revalidatePath("/houses");
+  return ok(undefined);
+}
+

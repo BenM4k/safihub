@@ -41,7 +41,7 @@ export function HouseNavTabs({ houseSlug }: HouseNavTabsProps) {
   ];
 
   return (
-    <nav className="w-full bg-white border-b border-border shadow-2xs overflow-x-auto scrollbar-none">
+    <nav className="w-full bg-card border-b border-border shadow-xs overflow-x-auto scrollbar-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center gap-1 min-w-max py-2">
         {navItems.map((item) => {
           const isActive =
@@ -57,8 +57,8 @@ export function HouseNavTabs({ houseSlug }: HouseNavTabsProps) {
               className={cn(
                 "inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors min-h-[40px]",
                 isActive
-                  ? "bg-violet-600 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-heading hover:bg-secondary"
               )}
             >
               <Icon className="size-4 shrink-0" />

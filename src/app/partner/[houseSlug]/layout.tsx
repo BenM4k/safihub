@@ -1,9 +1,8 @@
 import { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { guardHouseRoute } from "@/services/auth";
-import { getHouseBySlug } from "@/dal";
-import { HouseHeader } from "@/components/house/house-header";
-import { HouseNavTabs } from "@/components/house/house-nav-tabs";
+import { getHouseBySlug, getWaitingAcceptanceCount } from "@/dal";
+import { PartnerShell } from "@/components/house/partner-shell";
 
 interface PartnerWorkspaceLayoutProps {
   children: ReactNode;
@@ -24,19 +23,24 @@ export default async function PartnerWorkspaceLayout({
     notFound();
   }
 
+  const waitingCount = await getWaitingAcceptanceCount(house.id);
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <HouseHeader
-        houseName={house.name}
-        isPaused={house.isPaused}
-        houseSlug={houseSlug}
-        isAdminOverride={authCtx.isAdminOverride}
-        memberships={authCtx.memberships}
-      />
-      <HouseNavTabs houseSlug={houseSlug} />
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {children}
-      </main>
-    </div>
+    <PartnerShell
+      houseSlug={houseSlug}
+      houseName={house.name}
+      isPaused={house.isPaused}
+      isAdminOverride={authCtx.isAdminOverride}
+      memberships={authCtx.memberships}
+      user={{
+        id: authCtx.user.id,
+        name: authCtx.user.name,
+        email: authCtx.user.email,
+        role: authCtx.user.role,
+      }}
+      waitingCount={waitingCount}
+    >
+      {children}
+    </PartnerShell>
   );
 }
