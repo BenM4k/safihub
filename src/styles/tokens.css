@@ -30,9 +30,9 @@
   --color-ink-25: #FCFCFD;
   --color-ink-50: #F8F9FC; /* Light section surface */
   --color-ink-100: #F2F4F7;
-  --color-ink-200: #EAECF0; /* Border default */
-  --color-ink-300: #D0D5DD; /* Strong border */
-  --color-ink-400: #98A2B3;
+  --color-ink-200: #D8DCE2; /* Subtle sub-border */
+  --color-ink-300: #D0D5DD; /* Standard border */
+  --color-ink-400: #98A2B3; /* Strong border */
   --color-ink-500: #667085; /* Muted text */
   --color-ink-600: #475467;
   --color-ink-700: #344054; /* Body copy */
@@ -163,8 +163,8 @@
   --destructive: var(--color-destructive-base);
   --destructive-soft: var(--color-destructive-light);
 
-  --border: var(--color-ink-200);          /* #EAECF0 */
-  --border-strong: var(--color-ink-300);   /* #D0D5DD */
+  --border: var(--color-ink-300);          /* #D0D5DD */
+  --border-strong: var(--color-ink-400);   /* #98A2B3 */
   --input: var(--color-ink-300);
   --ring: var(--color-brand-600);
 }
@@ -199,9 +199,9 @@
   --destructive: #F97066;
   --destructive-soft: rgba(249, 112, 102, 0.15);
 
-  --border: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --input: rgba(255, 255, 255, 0.15);
+  --border: rgba(255, 255, 255, 0.18);
+  --border-strong: rgba(255, 255, 255, 0.28);
+  --input: rgba(255, 255, 255, 0.22);
   --ring: #4B52F2;
 }
 

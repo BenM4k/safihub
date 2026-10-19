@@ -10,36 +10,36 @@ export async function QuickShortcuts({ houseSlug }: { houseSlug?: string }) {
     {
       href: `${base}/orders`,
       title: t("viewOrders"),
-      desc: "Voir toutes les commandes de l'atelier",
+      desc: "Voir toutes les commandes du pressing",
       icon: Package,
-      color: "bg-blue-50 text-blue-700 border-blue-200",
+      color: "bg-primary-soft text-primary border-primary/20",
     },
     {
       href: `${base}/catalogue`,
       title: t("manageCatalogue"),
       desc: "Modifier les tarifs et disponibilités",
       icon: Layers,
-      color: "bg-violet-50 text-violet-700 border-violet-200",
+      color: "bg-secondary text-heading border-border",
     },
     {
       href: `${base}/hours`,
       title: t("configureHours"),
       desc: "Ajuster les heures et fermetures",
       icon: Clock,
-      color: "bg-amber-50 text-amber-700 border-amber-200",
+      color: "bg-warning-soft text-warning border-warning/20",
     },
     {
       href: `${base}/settings`,
       title: "Paramètres & Exclusions",
       desc: "Capacité, pause et exclusions",
       icon: Sliders,
-      color: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      color: "bg-success-soft text-success border-success/20",
     },
   ];
 
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+      <h2 className="text-sm font-bold text-heading uppercase tracking-wider">
         {t("quickActions")}
       </h2>
 
@@ -50,7 +50,7 @@ export async function QuickShortcuts({ houseSlug }: { houseSlug?: string }) {
             <Link
               key={item.href}
               href={item.href}
-              className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-violet-300 hover:shadow-xs transition group flex items-start justify-between gap-3"
+              className="p-4 bg-card rounded-2xl border border-border hover:border-border-strong hover:shadow-xs transition group flex items-start justify-between gap-3"
             >
               <div className="space-y-1">
                 <div
@@ -58,12 +58,12 @@ export async function QuickShortcuts({ houseSlug }: { houseSlug?: string }) {
                 >
                   <Icon className="size-4" />
                 </div>
-                <h3 className="font-bold text-sm text-slate-900 group-hover:text-violet-700 transition">
+                <h3 className="font-bold text-sm text-heading group-hover:text-primary transition">
                   {item.title}
                 </h3>
-                <p className="text-xs text-slate-500 line-clamp-1">{item.desc}</p>
+                <p className="text-xs text-muted-foreground line-clamp-1">{item.desc}</p>
               </div>
-              <ArrowRight className="size-4 text-slate-300 group-hover:text-violet-600 transition shrink-0 mt-1" />
+              <ArrowRight className="size-4 text-muted-foreground group-hover:text-primary transition shrink-0 mt-1" />
             </Link>
           );
         })}

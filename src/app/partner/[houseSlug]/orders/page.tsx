@@ -2,14 +2,24 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { guardHouseRoute } from "@/services/auth";
-import { listHouseOrders } from "@/services/house";
-import { OrdersFilterTabs } from "@/components/house/orders/orders-filter-tabs";
-import { OrdersListTable } from "@/components/house/orders/orders-list-table";
-import { orderStatusEnum, type OrderStatus } from "@/services/db/schema";
+import {
+  listPartnerOrders,
+  getPartnerOrderTabCounts,
+} from "@/services/house/partner-order.service";
+import { PartnerOrdersContainer } from "@/components/house/orders/partner-orders-container";
+import { PartnerOrdersSkeleton } from "@/components/house/orders/partner-orders-skeleton";
+import type { PartnerOrderTab } from "@/dal/partner-order.dal";
 
 interface PageProps {
   params: Promise<{ houseSlug: string }>;
-  searchParams: Promise<{ status?: string; search?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    search?: string;
+    date?: string;
+    sort?: string;
+    page?: string;
+    pageSize?: string;
+  }>;
 }
 
 export default async function PartnerOrdersPage({
@@ -17,7 +27,7 @@ export default async function PartnerOrdersPage({
   searchParams,
 }: PageProps) {
   const { houseSlug } = await params;
-  const { status, search } = await searchParams;
+  const { tab, search, date, sort, page, pageSize } = await searchParams;
 
   const authCtx = await guardHouseRoute({ houseSlug });
   const houseId = authCtx.houseId;
@@ -28,37 +38,67 @@ export default async function PartnerOrdersPage({
 
   const t = await getTranslations("house.orders");
 
-  const validStatus =
-    status && (orderStatusEnum.enumValues as readonly string[]).includes(status)
-      ? (status as OrderStatus)
-      : undefined;
+  const validTab = (["to_accept", "to_collect", "in_treatment", "ready", "delivered", "failed"].includes(tab || "")
+    ? tab
+    : "to_accept") as PartnerOrderTab;
 
-  const ordersRes = await listHouseOrders(houseId, {
-    status: validStatus,
-    search,
-    limit: 50,
-  });
+  const validSort = (["deadline", "promised", "recent"].includes(sort || "")
+    ? sort
+    : "promised") as "deadline" | "promised" | "recent";
 
-  const orders = ordersRes.ok ? ordersRes.value : [];
+  const pageNum = parseInt(page || "1", 10);
+  const currentPage = isNaN(pageNum) || pageNum < 1 ? 1 : pageNum;
+  const pageSizeNum = parseInt(pageSize || "10", 10);
+  const validPageSize = [10, 20, 50].includes(pageSizeNum) ? pageSizeNum : 10;
+  const limit = validPageSize;
+  const offset = (currentPage - 1) * limit;
+
+  const [ordersRes, countsRes] = await Promise.all([
+    listPartnerOrders(houseId, {
+      tab: validTab,
+      search: search || undefined,
+      date: date || undefined,
+      sort: validSort,
+      limit,
+      offset,
+    }),
+    getPartnerOrderTabCounts(houseId),
+  ]);
+
+  const initialOrders = ordersRes.ok ? ordersRes.value : [];
+  const initialCounts = countsRes.ok
+    ? countsRes.value
+    : {
+        to_accept: 0,
+        to_collect: 0,
+        in_treatment: 0,
+        ready: 0,
+        delivered: 0,
+        failed: 0,
+        total: 0,
+      };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-5 font-sans">
+      {/* Page Title */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-heading font-display tracking-tight">
             {t("title")}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             {t("subtitle")}
           </p>
         </div>
-
-        <Suspense fallback={null}>
-          <OrdersFilterTabs houseSlug={houseSlug} />
-        </Suspense>
       </div>
 
-      <OrdersListTable orders={orders} houseSlug={houseSlug} />
+      <Suspense fallback={<PartnerOrdersSkeleton />}>
+        <PartnerOrdersContainer
+          initialOrders={initialOrders}
+          initialCounts={initialCounts}
+          houseSlug={houseSlug}
+        />
+      </Suspense>
     </div>
   );
 }

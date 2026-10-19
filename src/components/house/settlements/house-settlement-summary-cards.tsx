@@ -21,28 +21,28 @@ export async function HouseSettlementSummaryCards({
       label: t("balanceOwed"),
       value: `${balanceOwedCDF.toLocaleString()} CDF`,
       icon: Wallet,
-      color: "text-violet-600 bg-violet-50 border-violet-200",
+      color: "text-primary bg-primary-soft border-primary/20",
       highlight: balanceOwedCDF > 0,
     },
     {
       label: t("totalSettled"),
       value: `${totalSettledCDF.toLocaleString()} CDF`,
       icon: Receipt,
-      color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+      color: "text-success bg-success-soft border-success/20",
       highlight: false,
     },
     {
       label: t("totalRevenue"),
       value: `${totalRevenueCDF.toLocaleString()} CDF`,
       icon: CircleDollarSign,
-      color: "text-blue-600 bg-blue-50 border-blue-200",
+      color: "text-heading bg-secondary border-border",
       highlight: false,
     },
     {
       label: t("commissionDeducted"),
       value: `${totalCommissionCDF.toLocaleString()} CDF`,
       icon: Percent,
-      color: "text-slate-600 bg-slate-50 border-slate-200",
+      color: "text-muted-foreground bg-surface border-border",
       highlight: false,
     },
   ];
@@ -54,7 +54,7 @@ export async function HouseSettlementSummaryCards({
         return (
           <div
             key={i}
-            className="p-4 bg-white rounded-xl border border-border shadow-xs flex flex-col justify-between"
+            className="p-4 bg-card rounded-xl border border-border shadow-xs flex flex-col justify-between"
           >
             <div className="flex items-center justify-between gap-2 mb-2">
               <span className="text-2xs font-semibold text-muted-foreground line-clamp-1">

@@ -17,7 +17,7 @@ export async function HouseSettledOrdersTable({ orders }: HouseSettledOrdersTabl
   const t = await getTranslations("house.settlements");
 
   return (
-    <div className="bg-white rounded-xl border border-border shadow-xs overflow-hidden">
+    <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
       <div className="p-4 border-b border-border">
         <h3 className="text-sm font-bold text-heading">{t("ordersDetailTitle")}</h3>
       </div>
@@ -25,7 +25,7 @@ export async function HouseSettledOrdersTable({ orders }: HouseSettledOrdersTabl
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="border-b border-border bg-slate-50/80 text-muted-foreground font-semibold">
+            <tr className="border-b border-border bg-surface text-muted-foreground font-semibold">
               <th className="py-2.5 px-4">{t("orderCode")}</th>
               <th className="py-2.5 px-4">{t("deliveredAt")}</th>
               <th className="py-2.5 px-4">{t("itemsTotal")}</th>
@@ -42,7 +42,7 @@ export async function HouseSettledOrdersTable({ orders }: HouseSettledOrdersTabl
               </tr>
             ) : (
               orders.map((o) => (
-                <tr key={o.id} className="hover:bg-slate-50/60">
+                <tr key={o.id} className="hover:bg-surface">
                   <td className="py-2.5 px-4 font-mono font-bold text-heading">
                     {o.code}
                   </td>
@@ -58,7 +58,7 @@ export async function HouseSettledOrdersTable({ orders }: HouseSettledOrdersTabl
                   <td className="py-2.5 px-4 text-muted-foreground">
                     -{o.commissionAmount.toLocaleString()} CDF
                   </td>
-                  <td className="py-2.5 px-4 font-bold text-violet-700 text-right">
+                  <td className="py-2.5 px-4 font-bold text-primary text-right">
                     {o.owedToHouse.toLocaleString()} CDF
                   </td>
                 </tr>
