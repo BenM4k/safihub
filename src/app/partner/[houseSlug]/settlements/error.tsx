@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 export default function PartnerSettlementsError({
@@ -11,6 +12,8 @@ export default function PartnerSettlementsError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("house.settlements");
+
   useEffect(() => {
     console.error("Partner settlements error:", error);
   }, [error]);
@@ -23,10 +26,10 @@ export default function PartnerSettlementsError({
 
       <div className="space-y-1">
         <h2 className="text-base font-bold text-heading">
-          Erreur de chargement des revenus
+          {t("errorTitle")}
         </h2>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Impossible de charger vos données financières pour le moment. Veuillez vérifier votre connexion et réessayer.
+          {t("errorDescription")}
         </p>
       </div>
 
@@ -36,7 +39,7 @@ export default function PartnerSettlementsError({
         className="min-h-[44px] px-4 text-xs font-semibold gap-2"
       >
         <RefreshCw className="size-3.5" />
-        <span>Réessayer</span>
+        <span>{t("retryButton")}</span>
       </Button>
     </div>
   );

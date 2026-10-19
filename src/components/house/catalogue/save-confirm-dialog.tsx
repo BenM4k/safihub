@@ -70,7 +70,7 @@ export function SaveConfirmDialog({
         <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 flex items-start gap-2.5 text-xs text-heading">
           <ShieldCheck className="size-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
           <div>
-            <strong className="font-bold text-heading">Règle de gel : </strong>
+            <strong className="font-bold text-heading">{t("freezeNoticeTitle")} : </strong>
             <span className="text-muted-foreground">{t("confirmSaveNotice")}</span>
           </div>
         </div>
@@ -86,14 +86,14 @@ export function SaveConfirmDialog({
         {/* Changes summary (scrollable) */}
         <div className="flex-1 overflow-y-auto space-y-2 pr-1 border border-border/60 rounded-xl p-3 bg-surface/40 text-xs">
           <div className="flex items-center justify-between text-xs font-semibold text-heading pb-1 border-b border-border/40">
-            <span>{diffs.length} modification(s) :</span>
+            <span>{t("diffCount", { count: diffs.length })} :</span>
             {diffs.length > 5 && (
               <button
                 type="button"
                 onClick={() => setIsListExpanded(!isListExpanded)}
                 className="text-[11px] text-primary hover:underline flex items-center gap-1"
               >
-                {isListExpanded ? "Réduire" : "Tout afficher"}
+                {isListExpanded ? t("collapse") : t("expandAll")}
                 {isListExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
               </button>
             )}
@@ -124,7 +124,7 @@ export function SaveConfirmDialog({
                               {formatMoney(d.oldPrice, "CDF")}
                             </span>
                           ) : (
-                            <span className="text-muted-foreground italic">Non proposé</span>
+                            <span className="text-muted-foreground italic">{t("notOffered")}</span>
                           )}
 
                           <ArrowRight className="size-3 text-muted-foreground" aria-hidden="true" />
@@ -134,14 +134,14 @@ export function SaveConfirmDialog({
                               {formatMoney(d.newPrice, "CDF")}
                             </span>
                           ) : (
-                            <span className="font-bold text-destructive">Retiré</span>
+                            <span className="font-bold text-destructive">{t("withdrawn")}</span>
                           )}
                         </div>
                       </div>
                     ))}
                     {!isListExpanded && items.length > 5 && (
                       <div className="text-[11px] text-muted-foreground italic text-center pt-0.5">
-                        ... et {items.length - 5} autre(s) modification(s)
+                        {t("moreChanges", { count: items.length - 5 })}
                       </div>
                     )}
                   </div>

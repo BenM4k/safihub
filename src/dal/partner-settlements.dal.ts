@@ -2,6 +2,7 @@ import "server-only";
 
 import { and, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { db, schema } from "./db";
+import { err, ok, type Result } from "@/lib/result";
 import type {
   PartnerDeliveredOrderDTO,
   PartnerPayoutDTO,
@@ -12,12 +13,16 @@ import type {
   PeriodType,
 } from "@/types/partner-settlements";
 
+import { toBukavuDateTime } from "@/services/availability/bukavu-time";
+
 export interface GetPartnerSettlementsParams {
   houseId: string;
   period?: PeriodType;
   from?: string;
   to?: string;
 }
+
+const BUKAVU_OFFSET_MS = 2 * 60 * 60 * 1000;
 
 /**
  * Computes date bounds in Africa/Lubumbashi (UTC+2) for consistent Bukavu business days.
@@ -33,11 +38,11 @@ export function computePeriodBounds(
   prevStart: Date;
   prevEnd: Date;
 } {
-  const current = new Date(now);
+  const bukavuNow = toBukavuDateTime(now);
 
   if (period === "custom" && customFrom && customTo) {
-    const start = new Date(`${customFrom}T00:00:00Z`);
-    const end = new Date(`${customTo}T23:59:59.999Z`);
+    const start = new Date(`${customFrom}T00:00:00.000+02:00`);
+    const end = new Date(`${customTo}T23:59:59.999+02:00`);
     const durationMs = Math.max(86400000, end.getTime() - start.getTime());
     const prevEnd = new Date(start.getTime() - 1);
     const prevStart = new Date(prevEnd.getTime() - durationMs);
@@ -45,77 +50,65 @@ export function computePeriodBounds(
   }
 
   if (period === "week") {
-    // Current week: Monday 00:00 to Sunday 23:59:59
-    const day = current.getDay(); // 0 is Sunday, 1 is Monday
-    const diffToMonday = day === 0 ? -6 : 1 - day;
-    const monday = new Date(current);
-    monday.setDate(current.getDate() + diffToMonday);
-    monday.setHours(0, 0, 0, 0);
+    // Current week: Monday 00:00 to Sunday 23:59:59 in Bukavu (weekday: 1=Mon ... 7=Sun)
+    const diffToMonday = 1 - bukavuNow.weekday;
+    const startMs =
+      Date.UTC(bukavuNow.year, bukavuNow.month - 1, bukavuNow.day + diffToMonday, 0, 0, 0, 0) -
+      BUKAVU_OFFSET_MS;
+    const start = new Date(startMs);
+    const end = new Date(startMs + 7 * 86400000 - 1);
 
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
+    const prevStart = new Date(startMs - 7 * 86400000);
+    const prevEnd = new Date(startMs - 1);
 
-    const prevMonday = new Date(monday);
-    prevMonday.setDate(monday.getDate() - 7);
-    const prevSunday = new Date(sunday);
-    prevSunday.setDate(sunday.getDate() - 7);
-
-    return { start: monday, end: sunday, prevStart: prevMonday, prevEnd: prevSunday };
+    return { start, end, prevStart, prevEnd };
   }
 
   if (period === "last30") {
-    const end = new Date(current);
-    end.setHours(23, 59, 59, 999);
-    const start = new Date(end.getTime() - 30 * 86400000);
-    start.setHours(0, 0, 0, 0);
+    // Exactly 30 calendar days ending at end of today in Bukavu
+    const endMs =
+      Date.UTC(bukavuNow.year, bukavuNow.month - 1, bukavuNow.day, 23, 59, 59, 999) -
+      BUKAVU_OFFSET_MS;
+    const startMs = endMs - 30 * 86400000 + 1;
+    const start = new Date(startMs);
+    const end = new Date(endMs);
 
-    const prevEnd = new Date(start.getTime() - 1);
-    const prevStart = new Date(prevEnd.getTime() - 30 * 86400000);
+    const prevEnd = new Date(startMs - 1);
+    const prevStart = new Date(prevEnd.getTime() - 30 * 86400000 + 1);
     return { start, end, prevStart, prevEnd };
   }
 
   // Default: "month"
-  const start = new Date(current.getFullYear(), current.getMonth(), 1, 0, 0, 0, 0);
-  const end = new Date(current.getFullYear(), current.getMonth() + 1, 0, 23, 59, 59, 999);
+  const startMs =
+    Date.UTC(bukavuNow.year, bukavuNow.month - 1, 1, 0, 0, 0, 0) - BUKAVU_OFFSET_MS;
+  const nextMonthMs =
+    Date.UTC(bukavuNow.year, bukavuNow.month, 1, 0, 0, 0, 0) - BUKAVU_OFFSET_MS;
+  const start = new Date(startMs);
+  const end = new Date(nextMonthMs - 1);
 
-  const prevStart = new Date(current.getFullYear(), current.getMonth() - 1, 1, 0, 0, 0, 0);
-  const prevEnd = new Date(current.getFullYear(), current.getMonth(), 0, 23, 59, 59, 999);
+  const prevStartMs =
+    Date.UTC(bukavuNow.year, bukavuNow.month - 2, 1, 0, 0, 0, 0) - BUKAVU_OFFSET_MS;
+  const prevStart = new Date(prevStartMs);
+  const prevEnd = new Date(startMs - 1);
 
   return { start, end, prevStart, prevEnd };
 }
 
-/**
- * Masks phone numbers for partner privacy compliance.
- * e.g. "+243 99 123 4567" -> "+243 99 ••• 4567"
- */
-export function maskPhoneNumber(phone: string | null | undefined): string | null {
-  if (!phone) return null;
-  const cleaned = phone.trim();
-  if (cleaned.length < 7) return cleaned;
+import { maskPhoneNumber } from "@/lib/phone-utils";
+export { maskPhoneNumber };
 
-  if (cleaned.startsWith("+243")) {
-    const withoutPrefix = cleaned.slice(4).trim();
-    const networkCode = withoutPrefix.slice(0, 2);
-    const lastFour = cleaned.slice(-4);
-    return `+243 ${networkCode} ••• ${lastFour}`;
-  }
-
-  const firstFour = cleaned.slice(0, 4);
-  const lastFour = cleaned.slice(-4);
-  return `${firstFour} ••• ${lastFour}`;
-}
 
 /**
  * Calculates next upcoming settlement date (Mondays weekly in Bukavu).
  */
 export function getNextPayoutDate(now: Date = new Date()): string {
-  const d = new Date(now);
-  const day = d.getDay();
-  // Monday is 1. If today is Monday, next payout is next Monday (or 7 days later).
-  const daysUntilNextMonday = ((1 + 7 - day) % 7) || 7;
-  const nextMonday = new Date(d);
-  nextMonday.setDate(d.getDate() + daysUntilNextMonday);
+  const bukavuNow = toBukavuDateTime(now);
+  // Monday is 1 in BukavuDateTime (1=Mon ... 7=Sun)
+  const daysUntilNextMonday = ((1 + 7 - bukavuNow.weekday) % 7) || 7;
+  const nextMondayMs =
+    Date.UTC(bukavuNow.year, bukavuNow.month - 1, bukavuNow.day + daysUntilNextMonday, 0, 0, 0, 0) -
+    BUKAVU_OFFSET_MS;
+  const nextMonday = new Date(nextMondayMs);
 
   return new Intl.DateTimeFormat("fr-FR", {
     timeZone: "Africa/Lubumbashi",
@@ -260,8 +253,7 @@ export async function getPartnerSettlementsData(
   >();
 
   let settlementIdx = 0;
-  let remainingInCurrentSettlement =
-    chronologicalSettlements.length > 0 ? chronologicalSettlements[0].amount : 0;
+  let availableSettlementFunds = 0;
 
   for (const order of chronologicalOrders) {
     if (order.disputeId && order.disputeStatus === "open") {
@@ -274,46 +266,46 @@ export async function getPartnerSettlementsData(
       (order.adjustedItemsTotal ?? order.itemsTotal) - order.commissionAmount
     );
 
-    if (settlementIdx < chronologicalSettlements.length) {
-      const activeSettlement = chronologicalSettlements[settlementIdx];
-      if (remainingInCurrentSettlement >= netOwed) {
-        remainingInCurrentSettlement -= netOwed;
-        const refMatch =
-          activeSettlement.note?.match(/\[RÉF:\s*([^\]]+)\]/i) ||
-          activeSettlement.note?.match(/Réf[^\w]*([a-zA-Z0-9_-]+)/i);
-        const refStr = refMatch ? refMatch[1] : `#${activeSettlement.id.slice(0, 8)}`;
+    // Accumulate settlement amounts in chronological order until they cover netOwed
+    while (availableSettlementFunds < netOwed && settlementIdx < chronologicalSettlements.length) {
+      availableSettlementFunds += chronologicalSettlements[settlementIdx].amount;
+      settlementIdx++;
+    }
 
-        orderSettlementMap.set(order.id, {
-          settlementId: activeSettlement.id,
-          settlementRef: refStr,
-          status: "settled",
-        });
+    if (availableSettlementFunds >= netOwed) {
+      availableSettlementFunds -= netOwed;
+      const activeSettlement = chronologicalSettlements[Math.max(0, settlementIdx - 1)];
+      const refMatch =
+        activeSettlement.note?.match(/\[RÉF:\s*([^\]]+)\]/i) ||
+        activeSettlement.note?.match(/Réf[^\w]*([a-zA-Z0-9_-]+)/i);
+      const refStr = refMatch ? refMatch[1] : `#${activeSettlement.id.slice(0, 8)}`;
 
-        // Add to settlement included orders
-        const rawName = (order.customerRawName ?? "").trim();
-        const parts = rawName.split(" ").filter(Boolean);
-        const firstName = parts[0] || "Client";
-        const initial = parts.length > 1 ? ` ${parts[1][0]}.` : "";
-        const customerDisplayName = `${firstName}${initial}`;
+      orderSettlementMap.set(order.id, {
+        settlementId: activeSettlement.id,
+        settlementRef: refStr,
+        status: "settled",
+      });
 
-        const existingList = settlementOrdersMap.get(activeSettlement.id) || [];
-        existingList.push({
-          id: order.id,
-          code: order.code,
-          shortReference: order.code.replace(/^SF-/, "#"),
-          customerDisplayName,
-          netAmount: netOwed,
-          deliveredAt: (order.deliveredAt || order.updatedAt)?.toISOString() ?? null,
-        });
-        settlementOrdersMap.set(activeSettlement.id, existingList);
+      // Add to settlement included orders
+      const rawName = (order.customerRawName ?? "").trim();
+      const parts = rawName.split(" ").filter(Boolean);
+      const firstName = parts[0] || "Client";
+      const initial = parts.length > 1 ? ` ${parts[1][0]}.` : "";
+      const customerDisplayName = `${firstName}${initial}`;
 
-        if (remainingInCurrentSettlement <= 0) {
-          settlementIdx++;
-          if (settlementIdx < chronologicalSettlements.length) {
-            remainingInCurrentSettlement = chronologicalSettlements[settlementIdx].amount;
-          }
-        }
-      }
+      const existingList = settlementOrdersMap.get(activeSettlement.id) || [];
+      existingList.push({
+        id: order.id,
+        code: order.code,
+        shortReference: order.code.replace(/^SF-/, "#"),
+        customerDisplayName,
+        netAmount: netOwed,
+        deliveredAt: (order.deliveredAt || order.updatedAt)?.toISOString() ?? null,
+      });
+      settlementOrdersMap.set(activeSettlement.id, existingList);
+    } else {
+      // Stop allocating subsequent orders when available funds cannot cover next order
+      break;
     }
   }
 
@@ -453,7 +445,8 @@ export async function getPartnerSettlementsData(
       ? Math.round((netTrendDiffCDF / prevNetReceivableCDF) * 100)
       : null;
 
-  const commissionRatePercent = house.commissionBps ? Math.round(house.commissionBps / 100) : 20;
+  const commissionRatePercent =
+    house.commissionBps != null ? house.commissionBps / 100 : 20;
 
   const isPayoutConfigured = Boolean(house.contactPhone && house.contactPhone.trim().length > 5);
 
@@ -512,4 +505,75 @@ export async function getPartnerSettlementsData(
       overdueThresholdDays: SETTLEMENT_OVERDUE_DAYS_THRESHOLD,
     },
   };
+}
+
+export async function recordSettlementSupportReport(params: {
+  houseId: string;
+  userId: string;
+  ticketReference: string;
+  reference: string;
+  targetType: "order" | "settlement";
+  orderId?: string;
+  settlementId?: string;
+  reasonCategory: string;
+  message: string;
+}): Promise<Result<void>> {
+  if (params.targetType === "order" && params.orderId) {
+    const [order] = await db
+      .select({ id: schema.orders.id, houseId: schema.orders.houseId })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.id, params.orderId),
+          eq(schema.orders.houseId, params.houseId)
+        )
+      )
+      .limit(1);
+
+    if (!order) {
+      return err("La commande spécifiée n'appartient pas à ce pressing.");
+    }
+
+    await db.insert(schema.disputes).values({
+      id: crypto.randomUUID(),
+      orderId: params.orderId,
+      openedBy: params.userId,
+      type: "payment",
+      description: `[Ticket ${params.ticketReference}] Catégorie: ${params.reasonCategory}. Message: ${params.message}`,
+      status: "open",
+    });
+  }
+
+  if (params.targetType === "settlement") {
+    const adminUsers = await db
+      .select({ id: schema.user.id })
+      .from(schema.user)
+      .where(eq(schema.user.role, "admin"));
+
+    for (const admin of adminUsers) {
+      await db.insert(schema.notifications).values({
+        id: crypto.randomUUID(),
+        userId: admin.id,
+        channel: "in_app",
+        templateKey: "admin_settlement_issue_reported",
+        locale: "fr",
+        title: `[Support] Signalement versement ${params.ticketReference}`,
+        body: `Signalement reçu du pressing ${params.houseId} pour le versement ${params.settlementId ?? params.reference}. Catégorie: ${params.reasonCategory}. Message: ${params.message}`,
+        status: "pending",
+      });
+    }
+  }
+
+  await db.insert(schema.notifications).values({
+    id: crypto.randomUUID(),
+    userId: params.userId,
+    channel: "in_app",
+    templateKey: "partner_settlement_issue_reported",
+    locale: "fr",
+    title: `Signalement ${params.ticketReference} reçu`,
+    body: `Votre signalement concernant la référence ${params.reference} a été transmis à l'équipe support SafiHub. Réf ticket : ${params.ticketReference}`,
+    status: "pending",
+  });
+
+  return ok(undefined);
 }

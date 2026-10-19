@@ -39,11 +39,32 @@ export function StatementModal({ isOpen, onClose, data }: StatementModalProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="statement-title"
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-150 print:p-0 print:bg-white"
     >
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #statement-printable, #statement-printable * {
+            visibility: visible;
+          }
+          #statement-printable {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            max-height: none !important;
+            overflow: visible !important;
+          }
+        }
+      `}</style>
       <div
+        id="statement-printable"
         ref={modalRef}
-        className="w-full max-w-2xl bg-card rounded-2xl shadow-2xl border border-border overflow-hidden flex flex-col my-auto max-h-[92vh]"
+        className="w-full max-w-2xl bg-card rounded-2xl shadow-2xl border border-border overflow-hidden flex flex-col my-auto max-h-[92vh] print:max-h-none print:overflow-visible print:border-none print:shadow-none print:max-w-full print:m-0"
       >
         {/* Modal Top Bar (screen only) */}
         <div className="p-4 border-b border-border flex items-center justify-between bg-surface print:hidden">

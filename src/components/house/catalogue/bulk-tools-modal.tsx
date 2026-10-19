@@ -70,7 +70,7 @@ export function BulkToolsModal({
           <span className="font-semibold text-heading">
             {selectedArticlesCount > 0
               ? t("selectionCount", { count: selectedArticlesCount })
-              : `Tous les articles du service actif (${totalFilteredArticlesCount})`}
+              : t("allActiveServiceArticles", { count: totalFilteredArticlesCount })}
           </span>
           <div className="flex items-center gap-2">
             {selectedArticlesCount < totalFilteredArticlesCount ? (

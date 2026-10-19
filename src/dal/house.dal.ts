@@ -900,11 +900,9 @@ export async function getAllHousesClosures(): Promise<HouseClosureRecord[]> {
 export async function getHouseTodayOrdersCount(houseId: string): Promise<number> {
   const bukavuNow = toBukavuDateTime(new Date());
   const startOfDay = new Date(
-    Date.UTC(bukavuNow.year, bukavuNow.month - 1, bukavuNow.day, 0, 0, 0, 0)
+    Date.UTC(bukavuNow.year, bukavuNow.month - 1, bukavuNow.day, 0, 0, 0, 0) - 2 * 60 * 60 * 1000
   );
-  const endOfDay = new Date(
-    Date.UTC(bukavuNow.year, bukavuNow.month - 1, bukavuNow.day, 23, 59, 59, 999)
-  );
+  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
 
   const [row] = await db
     .select({ count: sql<number>`count(*)::int` })

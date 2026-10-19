@@ -29,4 +29,7 @@ export interface SettingsPageData {
   todayOrdersCount: number;
   sessions: UserSessionDTO[];
   user: AuthenticatedUser;
+  currentSessionId?: string;
+  nextPayoutDate?: string;
 }
+

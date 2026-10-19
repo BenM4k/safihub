@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import { ExternalLink, MapPin } from "lucide-react";
 import { formatPhone } from "@/lib/order-formatters";
 
@@ -9,7 +6,6 @@ interface ContactLocationCardProps {
   whatsAppPhone: string;
   addressNote: string;
   onChangeContactPhone: (val: string) => void;
-  onChangeWhatsAppPhone: (val: string) => void;
   onChangeAddressNote: (val: string) => void;
 }
 
@@ -18,11 +14,10 @@ export function ContactLocationCard({
   whatsAppPhone,
   addressNote,
   onChangeContactPhone,
-  onChangeWhatsAppPhone,
   onChangeAddressNote,
 }: ContactLocationCardProps) {
-  const [latitude, setLatitude] = useState("-2.5085");
-  const [longitude, setLongitude] = useState("28.8617");
+  const latitude = "-2.5085";
+  const longitude = "28.8617";
 
   return (
     <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
@@ -59,15 +54,15 @@ export function ContactLocationCard({
           <label className="font-semibold text-foreground flex items-center justify-between mb-1.5">
             <span>Numéro WhatsApp (optionnel)</span>
             <span className="text-[10px] text-muted-foreground font-normal">
-              Coordination rapide
+              Bientôt disponible
             </span>
           </label>
           <input
             type="tel"
-            value={whatsAppPhone}
-            onChange={(e) => onChangeWhatsAppPhone(e.target.value)}
+            value={whatsAppPhone || ""}
+            disabled
             placeholder="+243..."
-            className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
+            className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border bg-secondary/60 text-muted-foreground text-xs font-mono cursor-not-allowed"
           />
         </div>
       </div>
@@ -105,16 +100,16 @@ export function ContactLocationCard({
             <input
               type="text"
               value={latitude}
-              onChange={(e) => setLatitude(e.target.value)}
+              disabled
               placeholder="Lat"
-              className="w-1/2 h-9 px-2.5 rounded-lg border border-border text-xs font-mono"
+              className="w-1/2 h-9 px-2.5 rounded-lg border border-border bg-secondary/60 text-muted-foreground text-xs font-mono cursor-not-allowed"
             />
             <input
               type="text"
               value={longitude}
-              onChange={(e) => setLongitude(e.target.value)}
+              disabled
               placeholder="Lng"
-              className="w-1/2 h-9 px-2.5 rounded-lg border border-border text-xs font-mono"
+              className="w-1/2 h-9 px-2.5 rounded-lg border border-border bg-secondary/60 text-muted-foreground text-xs font-mono cursor-not-allowed"
             />
           </div>
         </div>

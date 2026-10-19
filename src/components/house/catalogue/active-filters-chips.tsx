@@ -31,7 +31,7 @@ export function ActiveFiltersChips({
             type="button"
             onClick={() => onFilterChange({ ...filters, search: "" })}
             className="hover:text-destructive"
-            aria-label="Supprimer le filtre de recherche"
+            aria-label={t("removeSearchFilter")}
           >
             <X className="size-3" />
           </button>
@@ -44,7 +44,7 @@ export function ActiveFiltersChips({
             type="button"
             onClick={() => onFilterChange({ ...filters, category: "all" })}
             className="hover:text-destructive"
-            aria-label="Supprimer le filtre de catégorie"
+            aria-label={t("removeCategoryFilter")}
           >
             <X className="size-3" />
           </button>
@@ -61,7 +61,7 @@ export function ActiveFiltersChips({
             type="button"
             onClick={() => onFilterChange({ ...filters, status: "all" })}
             className="hover:text-destructive"
-            aria-label="Supprimer le filtre de statut"
+            aria-label={t("removeStatusFilter")}
           >
             <X className="size-3" />
           </button>

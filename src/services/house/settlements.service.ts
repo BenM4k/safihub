@@ -4,10 +4,10 @@ import { err, ok, type Result } from "@/lib/result";
 import {
   getHouseSettlementDetail,
   getPartnerSettlementsData,
+  recordSettlementSupportReport,
   type GetPartnerSettlementsParams,
 } from "@/dal";
 import type { PartnerSettlementsPageData } from "@/types/partner-settlements";
-import { db, schema } from "@/dal/db";
 
 export async function getHousePortalSettlements(houseId: string) {
   try {
@@ -60,28 +60,21 @@ export async function reportPartnerSettlementIssue(
     const cleanRef = params.reference.replace(/[^a-zA-Z0-9_-]/g, "");
     const ticketReference = `TIC-${params.targetType === "order" ? "ORD" : "VER"}-${cleanRef.slice(-6)}-${Date.now().toString(36).toUpperCase()}`;
 
-    // If target is order and orderId provided, record dispute
-    if (params.targetType === "order" && params.orderId) {
-      await db.insert(schema.disputes).values({
-        id: crypto.randomUUID(),
-        orderId: params.orderId,
-        openedBy: params.userId,
-        type: "payment",
-        description: `[Ticket ${ticketReference}] Catégorie: ${params.reasonCategory}. Message: ${params.message.trim()}`,
-        status: "open",
-      });
-    }
-
-    // Insert audit notification for support
-    await db.insert(schema.notifications).values({
+    const reportRes = await recordSettlementSupportReport({
+      houseId: params.houseId,
       userId: params.userId,
-      channel: "in_app",
-      templateKey: "partner_settlement_issue_reported",
-      locale: "fr",
-      title: `Signalement ${ticketReference} reçu`,
-      body: `Votre signalement concernant la référence ${params.reference} a été transmis à l'équipe support SafiHub. Réf ticket : ${ticketReference}`,
-      status: "pending",
+      ticketReference,
+      reference: params.reference,
+      targetType: params.targetType,
+      orderId: params.orderId,
+      settlementId: params.settlementId,
+      reasonCategory: params.reasonCategory,
+      message: params.message.trim(),
     });
+
+    if (!reportRes.ok) {
+      return err(reportRes.error);
+    }
 
     return ok({ ticketReference });
   } catch (error) {

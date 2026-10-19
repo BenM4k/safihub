@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   Ban,
   Bell,
@@ -23,56 +24,56 @@ interface SettingsNavProps {
 
 export const SECTIONS_CONFIG: Array<{
   id: SettingsSection;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
   icon: typeof Store;
 }> = [
   {
     id: "profil",
-    label: "Profil",
-    description: "Identité, vitrine, contact et repères coursiers",
+    labelKey: "tabProfil",
+    descriptionKey: "descProfil",
     icon: Store,
   },
   {
     id: "commandes",
-    label: "Commandes",
-    description: "Mise en pause, capacité quotidienne et commande minimum",
+    labelKey: "tabCommandes",
+    descriptionKey: "descCommandes",
     icon: ShoppingBag,
   },
   {
     id: "exclusions",
-    label: "Exclusions",
-    description: "Articles et matières non traités par votre pressing",
+    labelKey: "tabExclusions",
+    descriptionKey: "descExclusions",
     icon: Ban,
   },
   {
     id: "paiement",
-    label: "Paiement",
-    description: "Coordonnées Airtel Money, M-Pesa et modalités de versement",
+    labelKey: "tabPaiement",
+    descriptionKey: "descPaiement",
     icon: Wallet,
   },
   {
     id: "notifications",
-    label: "Notifications",
-    description: "Alertes sonores et canaux push pour les commandes",
+    labelKey: "tabNotifications",
+    descriptionKey: "descNotifications",
     icon: Bell,
   },
   {
     id: "equipe",
-    label: "Équipe",
-    description: "Membres, rôles et permissions du pressing",
+    labelKey: "tabEquipe",
+    descriptionKey: "descEquipe",
     icon: Users,
   },
   {
     id: "securite",
-    label: "Sécurité",
-    description: "Mot de passe, 2FA et gestion des sessions actives",
+    labelKey: "tabSecurite",
+    descriptionKey: "descSecurite",
     icon: KeyRound,
   },
   {
     id: "preferences",
-    label: "Préférences",
-    description: "Langue, fuseau horaire et zone sensible",
+    labelKey: "tabPreferences",
+    descriptionKey: "descPreferences",
     icon: Globe,
   },
 ];
@@ -83,9 +84,11 @@ export function SettingsDesktopTabs({
   isPaused,
   exclusionsCount,
 }: SettingsNavProps) {
+  const t = useTranslations("house.settings");
+
   return (
     <nav
-      aria-label="Sections des paramètres"
+      aria-label={t("navAria")}
       className="hidden md:flex items-center gap-1.5 p-1 bg-surface border border-border rounded-2xl overflow-x-auto"
     >
       {SECTIONS_CONFIG.map((sec) => {
@@ -104,7 +107,7 @@ export function SettingsDesktopTabs({
             }`}
           >
             <Icon className="size-3.5 shrink-0" aria-hidden="true" />
-            <span>{sec.label}</span>
+            <span>{t(sec.labelKey)}</span>
 
             {/* Badges */}
             {sec.id === "commandes" && isPaused && (
@@ -132,6 +135,8 @@ export function SettingsMobileList({
   exclusionsCount,
   staffCount,
 }: Omit<SettingsNavProps, "activeSection">) {
+  const t = useTranslations("house.settings");
+
   return (
     <div className="md:hidden space-y-2">
       {SECTIONS_CONFIG.map((sec) => {
@@ -150,10 +155,10 @@ export function SettingsMobileList({
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-heading text-sm">{sec.label}</span>
+                  <span className="font-bold text-heading text-sm">{t(sec.labelKey)}</span>
                   {sec.id === "commandes" && isPaused && (
                     <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-warning-soft text-warning border border-warning/30">
-                      En pause
+                      {t("inPause")}
                     </span>
                   )}
                   {sec.id === "exclusions" && exclusionsCount > 0 && (
@@ -163,12 +168,12 @@ export function SettingsMobileList({
                   )}
                   {sec.id === "equipe" && (
                     <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-secondary text-muted-foreground">
-                      {staffCount} membre(s)
+                      {t("staffCountBadge", { count: staffCount })}
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  {sec.description}
+                  {t(sec.descriptionKey)}
                 </p>
               </div>
             </div>

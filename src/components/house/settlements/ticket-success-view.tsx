@@ -2,6 +2,7 @@
 
 import { CheckCircle2, PhoneCall } from "lucide-react";
 import { formatMoney } from "@/lib/cash-formatters";
+import { getSupportWhatsAppUrl } from "@/lib/support-config";
 import { Button } from "@/components/ui/button";
 
 interface TicketSuccessViewProps {
@@ -17,9 +18,9 @@ export function TicketSuccessView({
   amount,
   onClose,
 }: TicketSuccessViewProps) {
-  const waLink = `https://wa.me/243999000123?text=${encodeURIComponent(
+  const waLink = getSupportWhatsAppUrl(
     `Bonjour Support SafiHub, je souhaite signaler une anomalie sur la référence ${reference} (${formatMoney(amount, "CDF")}). Réf ticket : ${ticketRef}`
-  )}`;
+  );
 
   return (
     <div className="p-6 text-center space-y-4">

@@ -51,9 +51,12 @@ export function PricingCell({
       }
     }
 
+    const effectivePrice =
+      nextPrice && nextPrice > 0 ? nextPrice : item.price > 0 ? item.price : 1000;
+
     onChange({
       isActive: nextActive,
-      price: nextActive ? nextPrice : null,
+      price: effectivePrice,
     });
   }
 

@@ -1,20 +1,19 @@
-"use client";
-
 import { Wallet } from "lucide-react";
-import { formatAmount } from "@/lib/order-formatters";
 import type { HouseRecord } from "@/dal";
 
 interface FinancialTermsCardProps {
   house: HouseRecord;
+  nextPayoutDate?: string;
 }
 
-export function FinancialTermsCard({ house }: FinancialTermsCardProps) {
-  const today = new Date();
-  const daysUntilFriday = (5 - today.getDay() + 7) % 7 || 7;
-  const nextFriday = new Date(today.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000);
-  const nextFridayLabel = `Vendredi ${nextFriday.getDate()} ${nextFriday.toLocaleDateString("fr-FR", { month: "short" })} à 16:00`;
+export function FinancialTermsCard({ house, nextPayoutDate }: FinancialTermsCardProps) {
+  const nextMondayLabel = nextPayoutDate ?? "Lundi prochain";
 
-  const commissionPercent = house.commissionBps !== null ? house.commissionBps / 100 : 20;
+  const commissionPercent = house.isOwnerHouse
+    ? 0
+    : house.commissionBps !== null
+    ? house.commissionBps / 100
+    : 20;
 
   return (
     <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
@@ -42,18 +41,18 @@ export function FinancialTermsCard({ house }: FinancialTermsCardProps) {
         <div className="p-3 bg-surface rounded-xl border border-border space-y-1">
           <span className="text-muted-foreground block text-[11px]">Fréquence de versement</span>
           <span className="font-bold text-heading text-sm">Hebdomadaire</span>
-          <span className="text-[10px] text-muted-foreground block">Chaque vendredi à 16:00</span>
+          <span className="text-[10px] text-muted-foreground block">Chaque lundi</span>
         </div>
 
         <div className="p-3 bg-surface rounded-xl border border-border space-y-1">
           <span className="text-muted-foreground block text-[11px]">Seuil minimum de versement</span>
-          <span className="font-bold text-heading text-sm font-mono">{formatAmount(20000)}</span>
-          <span className="text-[10px] text-muted-foreground block">Report automatique si inférieur</span>
+          <span className="font-bold text-heading text-sm font-mono">Aucun seuil</span>
+          <span className="text-[10px] text-muted-foreground block">Règlement intégral sans retenue</span>
         </div>
 
         <div className="p-3 bg-surface rounded-xl border border-border space-y-1">
           <span className="text-muted-foreground block text-[11px]">Prochain versement</span>
-          <span className="font-bold text-heading text-sm text-primary">{nextFridayLabel}</span>
+          <span className="font-bold text-heading text-sm text-primary">{nextMondayLabel}</span>
           <span className="text-[10px] text-muted-foreground block">Calculé en heure de Bukavu</span>
         </div>
       </div>

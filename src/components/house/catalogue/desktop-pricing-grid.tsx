@@ -107,7 +107,7 @@ export function DesktopPricingGrid({
                           {cat.label}
                         </span>
                         <span className="text-[11px] font-normal text-muted-foreground">
-                          ({cat.articles.length} {t("itemCol").toLowerCase()}s)
+                          ({t("articleCount", { count: cat.articles.length })})
                         </span>
                       </div>
                     </td>

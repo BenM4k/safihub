@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared";
-import { validateMemberActionGuardrails } from "@/services/auth/house-permissions";
+import { normalizeStaffRole, validateMemberActionGuardrails } from "@/services/auth/house-permissions";
 import { MembersListCard } from "./equipe/members-list-card";
 import { InviteModal } from "./equipe/invite-modal";
 import { PermissionsCard } from "./equipe/permissions-card";
@@ -12,19 +12,18 @@ import type { HouseStaffMemberRecord } from "@/dal";
 interface EquipeTabProps {
   staff: HouseStaffMemberRecord[];
   currentUserId: string;
+  currentUserRole?: string;
 }
 
-export function EquipeTab({ staff, currentUserId }: EquipeTabProps) {
+export function EquipeTab({ staff, currentUserId, currentUserRole }: EquipeTabProps) {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<HouseStaffMemberRecord | null>(null);
   const [guardrailError, setGuardrailError] = useState<string | null>(null);
 
-  function handleInvite(email: string, role: "manager" | "operator") {
-    setInviteSuccess(
-      `Invitation transmise à ${email} avec le rôle ${role === "manager" ? "Gérant" : "Opérateur"}.`
-    );
-    setTimeout(() => setInviteSuccess(null), 4000);
+  const callerRole = normalizeStaffRole(currentUserRole ?? "operator");
+
+  function handleInvite() {
+    setGuardrailError("Le système d'invitation par email/téléphone sera disponible dans une prochaine mise à jour.");
   }
 
   function handleRemoveMemberClick(member: HouseStaffMemberRecord) {
@@ -38,7 +37,7 @@ export function EquipeTab({ staff, currentUserId }: EquipeTabProps) {
         role: s.role ?? "operator",
       })),
       callerUserId: currentUserId,
-      callerRole: "owner",
+      callerRole,
       targetUserId: member.userId,
       isRemoval: true,
     });
@@ -48,17 +47,11 @@ export function EquipeTab({ staff, currentUserId }: EquipeTabProps) {
       return;
     }
 
-    setMemberToRemove(member);
+    setGuardrailError("La gestion des membres d'équipe sera activée avec les actions serveur dédiées.");
   }
 
   return (
     <div className="space-y-6">
-      {inviteSuccess && (
-        <div className="p-4 bg-success-soft border border-success/30 rounded-xl text-xs text-success font-semibold flex items-center gap-2">
-          <CheckCircle2 className="size-4 shrink-0" />
-          <span>{inviteSuccess}</span>
-        </div>
-      )}
       {guardrailError && (
         <div className="p-4 bg-destructive-soft border border-destructive/30 rounded-xl text-xs text-destructive font-semibold flex items-center gap-2">
           <AlertCircle className="size-4 shrink-0" />
@@ -67,11 +60,7 @@ export function EquipeTab({ staff, currentUserId }: EquipeTabProps) {
       )}
 
       {/* 1. Header and Staff List */}
-      <MembersListCard
-        staff={staff}
-        onOpenInvite={() => setIsInviteOpen(true)}
-        onRemoveClick={handleRemoveMemberClick}
-      />
+      <MembersListCard staff={staff} onRemoveClick={handleRemoveMemberClick} />
 
       {/* 2. Matrice des rôles & permissions */}
       <PermissionsCard />

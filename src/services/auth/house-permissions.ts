@@ -60,6 +60,16 @@ export interface StaffMemberRecord {
   createdAt?: Date | null;
 }
 
+export function normalizeStaffRole(rawRole: string): HouseStaffRole {
+  if (rawRole === "owner" || rawRole === "admin" || rawRole === "house") {
+    return "owner";
+  }
+  if (rawRole === "manager") {
+    return "manager";
+  }
+  return "operator";
+}
+
 /**
  * Validates whether a staff member can be demoted or removed from a house.
  * Guardrails enforced:
@@ -71,14 +81,14 @@ export interface StaffMemberRecord {
 export function validateMemberActionGuardrails({
   staffList,
   callerUserId,
-  callerRole = "owner",
+  callerRole,
   targetUserId,
   targetNewRole,
   isRemoval = false,
 }: {
   staffList: StaffMemberRecord[];
   callerUserId: string;
-  callerRole?: HouseStaffRole;
+  callerRole: HouseStaffRole;
   targetUserId: string;
   targetNewRole?: HouseStaffRole;
   isRemoval?: boolean;
@@ -113,8 +123,7 @@ export function validateMemberActionGuardrails({
   }
 
   // 3. Manager cannot remove or change owner
-  const targetCurrentRole: HouseStaffRole =
-    targetMember.role === "admin" || targetMember.role === "owner" ? "owner" : "operator";
+  const targetCurrentRole = normalizeStaffRole(targetMember.role);
   if (callerRole === "manager" && targetCurrentRole === "owner") {
     return {
       allowed: false,
@@ -124,7 +133,7 @@ export function validateMemberActionGuardrails({
 
   // 4. Last owner protection
   const ownerCount = staffList.filter(
-    (m) => m.role === "admin" || m.role === "owner" || m.role === "house"
+    (m) => normalizeStaffRole(m.role) === "owner"
   ).length;
 
   if (targetCurrentRole === "owner" && (isRemoval || (targetNewRole && targetNewRole !== "owner"))) {

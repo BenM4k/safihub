@@ -38,7 +38,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
       if (!res.ok) {
         setErrorMsg(res.error);
       } else {
-        setSuccessMsg("Demande envoyée à l'administrateur avec succès.");
+        setSuccessMsg(t("requestSuccess"));
         setName("");
         setNote("");
         setTimeout(() => {

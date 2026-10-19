@@ -22,10 +22,12 @@ export function PayoutsMobileList({
 }: PayoutsMobileListProps) {
   if (payouts.length === 0) {
     return (
-      <EmptyState
-        title="Aucun versement"
-        description="Aucun versement enregistré pour cette période."
-      />
+      <div className="md:hidden">
+        <EmptyState
+          title="Aucun versement"
+          description="Aucun versement enregistré pour cette période."
+        />
+      </div>
     );
   }
 
@@ -34,8 +36,16 @@ export function PayoutsMobileList({
       {payouts.map((p) => (
         <div
           key={p.id}
+          role="button"
+          tabIndex={0}
           onClick={() => onSelectPayout(p)}
-          className="p-4 rounded-xl bg-surface border border-border shadow-2xs space-y-2.5 cursor-pointer active:scale-[0.99] transition"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelectPayout(p);
+            }
+          }}
+          className="p-4 rounded-xl bg-surface border border-border shadow-2xs space-y-2.5 cursor-pointer active:scale-[0.99] transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
         >
           <div className="flex items-center justify-between gap-2">
             <span className="font-mono text-xs text-muted-foreground">

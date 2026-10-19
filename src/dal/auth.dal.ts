@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, ne, or } from "drizzle-orm";
+import { and, desc, eq, gt, ne, or } from "drizzle-orm";
 import { db, schema } from "./db";
 import { ok, err, type Result } from "@/lib/result";
 
@@ -413,7 +413,6 @@ export async function isPhoneOrEmailBlocked(params: {
 
 export interface UserSessionDTO {
   id: string;
-  token: string;
   createdAt: Date;
   expiresAt: Date;
   ipAddress: string | null;
@@ -427,14 +426,18 @@ export async function getUserActiveSessions(userId: string): Promise<UserSession
   const rows = await db
     .select({
       id: schema.session.id,
-      token: schema.session.token,
       createdAt: schema.session.createdAt,
       expiresAt: schema.session.expiresAt,
       ipAddress: schema.session.ipAddress,
       userAgent: schema.session.userAgent,
     })
     .from(schema.session)
-    .where(eq(schema.session.userId, userId))
+    .where(
+      and(
+        eq(schema.session.userId, userId),
+        gt(schema.session.expiresAt, new Date())
+      )
+    )
     .orderBy(desc(schema.session.createdAt));
 
   return rows;

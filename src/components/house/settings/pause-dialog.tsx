@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AlertCircle, PauseCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAccessibleDialog } from "@/components/house/orders/use-accessible-dialog";
+import { fromBukavuDateTime } from "@/services/availability/bukavu-time";
 import {
   REASON_PRESETS,
   DurationPicker,
@@ -21,6 +22,7 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
   const [durationMode, setDurationMode] = useState<"preset" | "custom">("preset");
   const [presetDurationHours, setPresetDurationHours] = useState<number>(4);
   const [customDateTime, setCustomDateTime] = useState<string>("");
+  const [dateError, setDateError] = useState<string | null>(null);
 
   const containerRef = useAccessibleDialog<HTMLDivElement>({ isOpen, onClose });
 
@@ -28,6 +30,7 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
 
   function handleConfirm(e: React.FormEvent) {
     e.preventDefault();
+    setDateError(null);
     const finalReason =
       selectedPreset === "Autre motif"
         ? customReason.trim() || "Mise en pause manuelle"
@@ -36,8 +39,22 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
     let computedUntil: string | null = null;
     if (durationMode === "preset") {
       computedUntil = new Date(Date.now() + presetDurationHours * 3600 * 1000).toISOString();
-    } else if (durationMode === "custom" && customDateTime) {
-      computedUntil = new Date(customDateTime).toISOString();
+    } else if (durationMode === "custom") {
+      if (!customDateTime || !customDateTime.includes("T")) {
+        setDateError("Veuillez sélectionner une date et heure.");
+        return;
+      }
+      const [datePart, timePart] = customDateTime.split("T");
+      if (!datePart || !timePart) {
+        setDateError("Format de date invalide.");
+        return;
+      }
+      const parsed = fromBukavuDateTime(datePart, timePart.slice(0, 5));
+      if (isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) {
+        setDateError("La date de reprise doit être située dans le futur (heure de Bukavu).");
+        return;
+      }
+      computedUntil = parsed.toISOString();
     }
 
     onConfirm({ reason: finalReason, pausedUntil: computedUntil });
@@ -125,10 +142,22 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
             durationMode={durationMode}
             presetDurationHours={presetDurationHours}
             customDateTime={customDateTime}
-            onSetDurationMode={setDurationMode}
+            onSetDurationMode={(m) => {
+              setDateError(null);
+              setDurationMode(m);
+            }}
             onSetPresetHours={setPresetDurationHours}
-            onSetCustomDateTime={setCustomDateTime}
+            onSetCustomDateTime={(val) => {
+              setDateError(null);
+              setCustomDateTime(val);
+            }}
           />
+
+          {dateError && (
+            <p className="text-destructive text-[11px] font-medium" role="alert">
+              {dateError}
+            </p>
+          )}
 
           <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
             <Button type="button" variant="outline" size="sm" onClick={onClose} className="text-xs font-semibold">

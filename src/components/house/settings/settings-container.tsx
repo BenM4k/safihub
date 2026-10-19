@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
 import { PageHeader, ConfirmDialog } from "@/components/shared";
 import {
@@ -29,7 +30,10 @@ export function SettingsContainer({
   todayOrdersCount,
   sessions,
   user,
+  currentSessionId,
+  nextPayoutDate,
 }: SettingsPageData) {
+  const t = useTranslations("house.settings");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -79,8 +83,8 @@ export function SettingsContainer({
     <div className="space-y-6 max-w-6xl mx-auto pb-16">
       {/* Page Title (Displayed once) */}
       <PageHeader
-        title="Paramètres"
-        subtitle={`Configuration opérationnelle et sécurité du pressing ${house.name}`}
+        title={t("title")}
+        subtitle={t("subtitleWithName", { name: house.name })}
       />
 
       {/* Desktop Tabs */}
@@ -102,11 +106,11 @@ export function SettingsContainer({
               className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground py-2 px-1 min-h-[44px]"
             >
               <ChevronLeft className="size-4" />
-              <span>Toutes les sections</span>
+              <span>{t("allSections")}</span>
             </button>
             <div className="mt-1 flex items-center gap-2">
               <h2 className="text-lg font-black text-heading">
-                {currentSectionConfig.label}
+                {t(currentSectionConfig.labelKey)}
               </h2>
             </div>
           </div>
@@ -141,12 +145,16 @@ export function SettingsContainer({
             catalogueItems={catalogueItems}
           />
         )}
-        {activeSection === "paiement" && <PaiementTab house={house} />}
+        {activeSection === "paiement" && (
+          <PaiementTab house={house} nextPayoutDate={nextPayoutDate} />
+        )}
         {activeSection === "notifications" && <NotificationsTab />}
         {activeSection === "equipe" && (
           <EquipeTab staff={staff} currentUserId={user.id} />
         )}
-        {activeSection === "securite" && <SecuriteTab sessions={sessions} />}
+        {activeSection === "securite" && (
+          <SecuriteTab sessions={sessions} currentSessionId={currentSessionId} />
+        )}
         {activeSection === "preferences" && <PreferencesTab />}
       </div>
 
@@ -160,10 +168,10 @@ export function SettingsContainer({
             setPendingSection(null);
           }
         }}
-        title="Modifications non enregistrées"
-        description="Vous avez des modifications en cours qui n'ont pas été enregistrées. Si vous quittez cet onglet, vos modifications seront perdues. Souhaitez-vous continuer ?"
-        confirmLabel="Quitter sans enregistrer"
-        cancelLabel="Rester sur cette section"
+        title={t("unsavedChangesTitle")}
+        description={t("unsavedChangesDesc")}
+        confirmLabel={t("discardAndLeave")}
+        cancelLabel={t("stayOnSection")}
         variant="destructive"
       />
     </div>

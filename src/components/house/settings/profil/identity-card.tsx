@@ -7,14 +7,12 @@ import type { HouseRecord } from "@/dal";
 
 interface IdentityCardProps {
   house: HouseRecord;
-  description: string;
-  onChangeDescription: (val: string) => void;
+  description?: string;
 }
 
 export function IdentityCard({
   house,
-  description,
-  onChangeDescription,
+  description = "Service de blanchisserie, lavage délicat et repassage professionnel à Bukavu.",
 }: IdentityCardProps) {
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -103,13 +101,13 @@ export function IdentityCard({
         </label>
         <textarea
           value={description}
-          onChange={(e) => onChangeDescription(e.target.value)}
-          maxLength={250}
+          readOnly
+          disabled
           rows={2}
-          className="w-full p-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          className="w-full p-3 rounded-xl border border-border bg-secondary/60 text-muted-foreground text-xs cursor-not-allowed"
         />
         <span className="text-[10px] text-muted-foreground block text-right mt-0.5">
-          {description.length} / 250 caractères
+          Géré par l&apos;administration SafiHub
         </span>
       </div>
 

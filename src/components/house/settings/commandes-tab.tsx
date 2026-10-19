@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { updateHouseCommandesAction } from "@/actions/house.actions";
 import { StickySaveBar } from "@/components/house/catalogue/sticky-save-bar";
@@ -57,9 +57,9 @@ export function CommandesTab({
   const dirtyCount = isDirty ? 1 : 0;
 
   // Notify parent of dirty status changes
-  if (onDirtyChange) {
-    onDirtyChange(isDirty);
-  }
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   function handleTogglePause() {
     if (isPaused) {

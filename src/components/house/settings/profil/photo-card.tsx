@@ -1,26 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Image as ImageIcon, Upload } from "lucide-react";
-import { validateBannerImageFile } from "@/lib/partner-dashboard";
+import { Image as ImageIcon } from "lucide-react";
 
 export function PhotoCard() {
-  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string | null>(null);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-
-  function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    setPhotoError(null);
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const validation = validateBannerImageFile(file);
-    if (!validation.ok) {
-      setPhotoError(validation.error);
-      return;
-    }
-
-    setCoverPhotoUrl(URL.createObjectURL(file));
-  }
+  const [photoError] = useState<string | null>(null);
 
   return (
     <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-3">
@@ -38,42 +22,15 @@ export function PhotoCard() {
         </div>
       )}
 
-      {coverPhotoUrl ? (
-        <div className="relative rounded-xl overflow-hidden border border-border h-40 bg-secondary">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={coverPhotoUrl}
-            alt="Vitrine du pressing"
-            className="w-full h-full object-cover"
-          />
-          <label className="absolute bottom-3 right-3 bg-black/70 hover:bg-black text-white text-xs px-3 py-1.5 rounded-lg cursor-pointer font-semibold backdrop-blur-xs flex items-center gap-1.5">
-            <Upload className="size-3.5" />
-            <span>Changer la photo</span>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handlePhotoUpload}
-              className="sr-only"
-            />
-          </label>
-        </div>
-      ) : (
-        <label className="p-6 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-surface transition space-y-2 text-center">
-          <Upload className="size-6 text-muted-foreground" />
-          <span className="text-xs font-semibold text-foreground">
-            Téléverser une photo de votre vitrine
-          </span>
-          <span className="text-[11px] text-muted-foreground">
-            Glissez-déposez ou cliquez pour parcourir (JPG, PNG, WebP &lt; 5 Mo)
-          </span>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handlePhotoUpload}
-            className="sr-only"
-          />
-        </label>
-      )}
+      <div className="p-6 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center bg-secondary/30 space-y-2 text-center">
+        <ImageIcon className="size-8 text-muted-foreground/60" />
+        <span className="text-xs font-semibold text-foreground">
+          Photo de vitrine officielle
+        </span>
+        <span className="text-[11px] text-muted-foreground max-w-sm">
+          Pour garantir la qualité d&apos;affichage aux clients, la photo de vitrine est validée et mise à jour par l&apos;équipe d&apos;assistance SafiHub.
+        </span>
+      </div>
 
       <p className="text-[11px] text-muted-foreground">
         Toute nouvelle photo de vitrine reste soumise à validation modérée par l&apos;équipe SafiHub avant publication publique.

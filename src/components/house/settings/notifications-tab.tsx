@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { MatrixTable, type NotificationMatrixRow } from "./notifications/matrix-table";
 import { QuietHoursCard } from "./notifications/quiet-hours-card";
 
+export type { NotificationMatrixRow };
+
 const INITIAL_ROWS: NotificationMatrixRow[] = [
   {
     eventKey: "new_order",
@@ -54,27 +56,33 @@ const INITIAL_ROWS: NotificationMatrixRow[] = [
   },
 ];
 
+export function toggleNotificationRow(
+  prev: NotificationMatrixRow[],
+  rowIndex: number,
+  channel: "appSound" | "push"
+): NotificationMatrixRow[] {
+  const next = [...prev];
+  const row = { ...next[rowIndex] };
+
+  // Rule: For new_order, at least one channel must stay true
+  if (row.eventKey === "new_order") {
+    const otherChannel = channel === "appSound" ? row.push : row.appSound;
+    if (!otherChannel && row[channel]) {
+      return prev; // Prevent disabling both
+    }
+  }
+
+  row[channel] = !row[channel];
+  next[rowIndex] = row;
+  return next;
+}
+
 export function NotificationsTab() {
   const [rows, setRows] = useState<NotificationMatrixRow[]>(INITIAL_ROWS);
   const [testNotice, setTestNotice] = useState<string | null>(null);
 
   function toggleChannel(rowIndex: number, channel: "appSound" | "push") {
-    setRows((prev) => {
-      const next = [...prev];
-      const row = { ...next[rowIndex] };
-
-      // Rule: For new_order, at least one channel must stay true
-      if (row.eventKey === "new_order") {
-        const otherChannel = channel === "appSound" ? row.push : row.appSound;
-        if (!otherChannel && row[channel]) {
-          return prev; // Prevent disabling both
-        }
-      }
-
-      row[channel] = !row[channel];
-      next[rowIndex] = row;
-      return next;
-    });
+    setRows((prev) => toggleNotificationRow(prev, rowIndex, channel));
   }
 
   function handleTestSound() {

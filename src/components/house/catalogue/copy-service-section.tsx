@@ -44,10 +44,10 @@ export function CopyServiceSection({
           className="flex-1 h-8 px-2.5 rounded-lg border border-border bg-card text-xs text-heading font-medium"
           aria-label={t("sourceServiceLabel")}
         >
-          <option value="">-- Choisir un service source --</option>
+          <option value="">{t("selectSourceServicePrompt")}</option>
           {otherServices.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.nameFr} ({s.configuredCount} prix définis)
+              {s.nameFr} ({t("pricesConfiguredCount", { count: s.configuredCount })})
             </option>
           ))}
         </select>

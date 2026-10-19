@@ -60,7 +60,7 @@ export function CatalogueView({
   // Filtering and active service URL sync
   const {
     activeServiceId,
-    handleSelectService,
+    handleSelectService: setFilterService,
     filters,
     setFilters,
     currentCategoryGroups,
@@ -68,10 +68,23 @@ export function CatalogueView({
     totalFilteredArticles,
   } = useCatalogueFilter(services, categoriesByService, edits);
 
+  function handleSelectService(serviceId: string) {
+    setSelectedArticleIds(new Set());
+    setFilterService(serviceId);
+  }
+
   function getTargetCells(): HouseCatalogueItemRecord[] {
     const activeItems = items.filter((i) => i.serviceId === activeServiceId);
-    if (selectedArticleIds.size === 0) return activeItems;
-    return activeItems.filter((i) => selectedArticleIds.has(i.itemId));
+    if (selectedArticleIds.size > 0) {
+      return activeItems.filter((i) => selectedArticleIds.has(i.itemId));
+    }
+    const visibleArticleIds = new Set<string>();
+    for (const group of filteredCategoryGroups) {
+      for (const article of group.articles) {
+        visibleArticleIds.add(article.id);
+      }
+    }
+    return activeItems.filter((i) => visibleArticleIds.has(i.itemId));
   }
 
   return (

@@ -25,6 +25,7 @@ export function PriceFieldInput({
 }: PriceFieldInputProps) {
   const [localValue, setLocalValue] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const skipCommitOnBlurRef = useRef(false);
 
   // Derived display value: if currently editing, use localValue; otherwise format price
   const displayString =
@@ -35,6 +36,10 @@ export function PriceFieldInput({
       : "";
 
   function handleBlur() {
+    if (skipCommitOnBlurRef.current) {
+      skipCommitOnBlurRef.current = false;
+      return;
+    }
     if (localValue === null) return;
     const raw = parseInt(localValue.replace(/\s+/g, ""), 10);
     setLocalValue(null);
@@ -51,6 +56,7 @@ export function PriceFieldInput({
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Escape") {
+      skipCommitOnBlurRef.current = true;
       setLocalValue(null);
       onRevertPrice();
       inputRef.current?.blur();

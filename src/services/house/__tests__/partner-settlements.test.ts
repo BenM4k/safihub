@@ -3,11 +3,14 @@ import {
   computePeriodBounds,
   maskPhoneNumber,
   getNextPayoutDate,
+  getPartnerSettlementsData,
 } from "@/dal/partner-settlements.dal";
+import { db } from "@/dal/db";
 import {
   getPartnerSettlements,
   reportPartnerSettlementIssue,
 } from "../settlements.service";
+import { toBukavuDateTime } from "@/services/availability/bukavu-time";
 
 // Mock the DB and Drizzle
 vi.mock("@/dal/db", () => {
@@ -98,8 +101,12 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
       expect(monthBounds.start.getDate()).toBe(1);
 
       const customBounds = computePeriodBounds("custom", "2026-10-01", "2026-10-10", fixedDate);
-      expect(customBounds.start.toISOString()).toContain("2026-10-01");
-      expect(customBounds.end.toISOString()).toContain("2026-10-10");
+      const bukavuStart = toBukavuDateTime(customBounds.start);
+      expect(bukavuStart.year).toBe(2026);
+      expect(bukavuStart.month).toBe(10);
+      expect(bukavuStart.day).toBe(1);
+      const bukavuEnd = toBukavuDateTime(customBounds.end);
+      expect(bukavuEnd.day).toBe(10);
     });
   });
 
@@ -139,61 +146,235 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
     });
   });
 
-  describe("FIFO Settlement to Order Allocation", () => {
-    it("allocates payouts to oldest delivered orders first and marks remaining as pending", () => {
-      const deliveredOrders = [
-        { id: "ord-1", code: "SF-1001", netOwed: 20000, deliveredAt: new Date("2026-10-01") },
-        { id: "ord-2", code: "SF-1002", netOwed: 30000, deliveredAt: new Date("2026-10-02") },
-        { id: "ord-3", code: "SF-1003", netOwed: 25000, deliveredAt: new Date("2026-10-03") },
+  describe("FIFO Settlement to Order Allocation (Production getPartnerSettlementsData)", () => {
+    function setupDbMocks(options: { settlements: unknown[]; orders: unknown[] }) {
+      const houseRecord = [
+        {
+          id: "house-1",
+          name: "Pressing Test",
+          slug: "test-slug",
+          contactPhone: "+243991234567",
+          commissionBps: 2000,
+        },
+      ];
+      const reversedSubquery: unknown[] = [];
+      const reversedSettlements: unknown[] = [];
+
+      let callCount = 0;
+      vi.mocked(db.select).mockImplementation(() => {
+        callCount++;
+        let result: unknown = [];
+        if (callCount === 1) result = houseRecord;
+        else if (callCount === 2) result = reversedSubquery;
+        else if (callCount === 3) result = options.settlements;
+        else if (callCount === 4) result = reversedSettlements;
+        else if (callCount === 5) result = options.orders;
+
+        const chain = {
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          orderBy: vi.fn().mockImplementation(() => Promise.resolve(result)),
+          limit: vi.fn().mockImplementation(() => Promise.resolve(result)),
+          innerJoin: vi.fn().mockReturnThis(),
+          leftJoin: vi.fn().mockReturnThis(),
+          then: (resolve: (val: unknown) => unknown) => Promise.resolve(result).then(resolve),
+        };
+        return chain as unknown as ReturnType<typeof db.select>;
+      });
+    }
+
+    it("allocates payouts to oldest delivered orders first and marks remaining as pending", async () => {
+      const orders = [
+        {
+          id: "ord-1",
+          code: "SF-1001",
+          itemsTotal: 25000,
+          adjustedItemsTotal: null,
+          commissionAmount: 5000,
+          commissionBps: 2000,
+          updatedAt: new Date("2026-10-01T10:00:00Z"),
+          deliverySlotEnd: new Date("2026-10-01T10:00:00Z"),
+          customerRawName: "Alice Mwamba",
+          disputeId: null,
+          disputeStatus: null,
+        },
+        {
+          id: "ord-2",
+          code: "SF-1002",
+          itemsTotal: 37500,
+          adjustedItemsTotal: null,
+          commissionAmount: 7500,
+          commissionBps: 2000,
+          updatedAt: new Date("2026-10-02T10:00:00Z"),
+          deliverySlotEnd: new Date("2026-10-02T10:00:00Z"),
+          customerRawName: "Bob Kasongo",
+          disputeId: null,
+          disputeStatus: null,
+        },
+        {
+          id: "ord-3",
+          code: "SF-1003",
+          itemsTotal: 31250,
+          adjustedItemsTotal: null,
+          commissionAmount: 6250,
+          commissionBps: 2000,
+          updatedAt: new Date("2026-10-03T10:00:00Z"),
+          deliverySlotEnd: new Date("2026-10-03T10:00:00Z"),
+          customerRawName: "Claire Bahati",
+          disputeId: null,
+          disputeStatus: null,
+        },
       ];
 
       const settlements = [
-        { id: "set-1", amount: 50000, reference: "SETT-OCT-01", createdAt: new Date("2026-10-05") },
+        {
+          id: "set-1",
+          amount: 50000,
+          currency: "CDF",
+          note: "Règlement [RÉF: SETT-OCT-01]",
+          createdAt: new Date("2026-10-05T10:00:00Z"),
+        },
       ];
 
-      // Simulate FIFO matching logic
-      let remainingPayout = settlements[0].amount;
-      const results: Record<string, "settled" | "pending"> = {};
+      setupDbMocks({ settlements, orders });
 
-      for (const order of deliveredOrders) {
-        if (remainingPayout >= order.netOwed) {
-          remainingPayout -= order.netOwed;
-          results[order.id] = "settled";
-        } else {
-          results[order.id] = "pending";
-        }
-      }
+      const data = await getPartnerSettlementsData({ houseId: "house-1", period: "month" });
 
-      expect(results["ord-1"]).toBe("settled");
-      expect(results["ord-2"]).toBe("settled");
-      expect(results["ord-3"]).toBe("pending");
-      expect(remainingPayout).toBe(0);
+      const ord1 = data.orders.find((o) => o.id === "ord-1");
+      const ord2 = data.orders.find((o) => o.id === "ord-2");
+      const ord3 = data.orders.find((o) => o.id === "ord-3");
+
+      expect(ord1?.settlementStatus).toBe("settled");
+      expect(ord2?.settlementStatus).toBe("settled");
+      expect(ord3?.settlementStatus).toBe("pending");
+
+      const payout = data.payouts.find((p) => p.id === "set-1");
+      expect(payout?.ordersCount).toBe(2);
+      expect(payout?.includedOrders.map((o) => o.id)).toEqual(["ord-1", "ord-2"]);
     });
 
-    it("does not settle orders with open disputes", () => {
-      const deliveredOrders = [
-        { id: "ord-1", code: "SF-1001", netOwed: 20000, isDisputed: true },
-        { id: "ord-2", code: "SF-1002", netOwed: 30000, isDisputed: false },
+    it("handles multiple settlements with remainder accumulation and stops when next order cannot be covered", async () => {
+      const orders = [
+        {
+          id: "ord-1",
+          code: "SF-1001",
+          itemsTotal: 25000,
+          adjustedItemsTotal: null,
+          commissionAmount: 5000, // net 20000
+          commissionBps: 2000,
+          updatedAt: new Date("2026-10-01T10:00:00Z"),
+          deliverySlotEnd: new Date("2026-10-01T10:00:00Z"),
+          customerRawName: "Alice Mwamba",
+          disputeId: null,
+          disputeStatus: null,
+        },
+        {
+          id: "ord-2",
+          code: "SF-1002",
+          itemsTotal: 37500,
+          adjustedItemsTotal: null,
+          commissionAmount: 7500, // net 30000
+          commissionBps: 2000,
+          updatedAt: new Date("2026-10-02T10:00:00Z"),
+          deliverySlotEnd: new Date("2026-10-02T10:00:00Z"),
+          customerRawName: "Bob Kasongo",
+          disputeId: null,
+          disputeStatus: null,
+        },
+        {
+          id: "ord-3",
+          code: "SF-1003",
+          itemsTotal: 31250,
+          adjustedItemsTotal: null,
+          commissionAmount: 6250, // net 25000
+          commissionBps: 2000,
+          updatedAt: new Date("2026-10-03T10:00:00Z"),
+          deliverySlotEnd: new Date("2026-10-03T10:00:00Z"),
+          customerRawName: "Claire Bahati",
+          disputeId: null,
+          disputeStatus: null,
+        },
       ];
 
-      let remainingPayout = 30000;
-      const results: Record<string, "settled" | "pending" | "disputed"> = {};
+      const settlements = [
+        {
+          id: "set-1",
+          amount: 25000,
+          currency: "CDF",
+          note: "Règlement [RÉF: SETT-01]",
+          createdAt: new Date("2026-10-04T10:00:00Z"),
+        },
+        {
+          id: "set-2",
+          amount: 35000,
+          currency: "CDF",
+          note: "Règlement [RÉF: SETT-02]",
+          createdAt: new Date("2026-10-06T10:00:00Z"),
+        },
+      ];
 
-      for (const order of deliveredOrders) {
-        if (order.isDisputed) {
-          results[order.id] = "disputed";
-          continue;
-        }
-        if (remainingPayout >= order.netOwed) {
-          remainingPayout -= order.netOwed;
-          results[order.id] = "settled";
-        } else {
-          results[order.id] = "pending";
-        }
-      }
+      setupDbMocks({ settlements, orders });
 
-      expect(results["ord-1"]).toBe("disputed");
-      expect(results["ord-2"]).toBe("settled");
+      const data = await getPartnerSettlementsData({ houseId: "house-1", period: "month" });
+
+      const ord1 = data.orders.find((o) => o.id === "ord-1");
+      const ord2 = data.orders.find((o) => o.id === "ord-2");
+      const ord3 = data.orders.find((o) => o.id === "ord-3");
+
+      expect(ord1?.settlementStatus).toBe("settled");
+      expect(ord2?.settlementStatus).toBe("settled");
+      expect(ord3?.settlementStatus).toBe("pending");
+    });
+
+    it("does not settle orders with open disputes", async () => {
+      const orders = [
+        {
+          id: "ord-1",
+          code: "SF-1001",
+          itemsTotal: 25000,
+          adjustedItemsTotal: null,
+          commissionAmount: 5000,
+          commissionBps: 2000,
+          updatedAt: new Date("2026-10-01T10:00:00Z"),
+          deliverySlotEnd: new Date("2026-10-01T10:00:00Z"),
+          customerRawName: "Alice Mwamba",
+          disputeId: "disp-1",
+          disputeStatus: "open",
+        },
+        {
+          id: "ord-2",
+          code: "SF-1002",
+          itemsTotal: 37500,
+          adjustedItemsTotal: null,
+          commissionAmount: 7500,
+          commissionBps: 2000,
+          updatedAt: new Date("2026-10-02T10:00:00Z"),
+          deliverySlotEnd: new Date("2026-10-02T10:00:00Z"),
+          customerRawName: "Bob Kasongo",
+          disputeId: null,
+          disputeStatus: null,
+        },
+      ];
+
+      const settlements = [
+        {
+          id: "set-1",
+          amount: 30000,
+          currency: "CDF",
+          note: "Règlement [RÉF: SETT-01]",
+          createdAt: new Date("2026-10-05T10:00:00Z"),
+        },
+      ];
+
+      setupDbMocks({ settlements, orders });
+
+      const data = await getPartnerSettlementsData({ houseId: "house-1", period: "month" });
+
+      const ord1 = data.orders.find((o) => o.id === "ord-1");
+      const ord2 = data.orders.find((o) => o.id === "ord-2");
+
+      expect(ord1?.settlementStatus).toBe("disputed");
+      expect(ord2?.settlementStatus).toBe("settled");
     });
   });
 
@@ -215,6 +396,16 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
     });
 
     it("successfully creates a ticket reference with valid inputs", async () => {
+      vi.mocked(db.select).mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([
+              { id: "e93f6b4a-2895-4670-bc2d-53909772c91a", houseId: "house-1" },
+            ]),
+          }),
+        }),
+      } as unknown as ReturnType<typeof db.select>);
+
       const res = await reportPartnerSettlementIssue({
         houseId: "house-1",
         userId: "user-1",

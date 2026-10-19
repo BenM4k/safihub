@@ -30,8 +30,16 @@ export function PayoutTableRow({
 
   return (
     <tr
+      tabIndex={0}
+      role="button"
       onClick={() => onSelectPayout(p)}
-      className="hover:bg-surface/70 transition cursor-pointer group"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelectPayout(p);
+        }
+      }}
+      className="hover:bg-surface/70 transition cursor-pointer group focus-visible:outline-hidden focus-visible:bg-surface"
     >
       <td className="py-3 px-4 font-mono font-medium text-heading">
         {new Intl.DateTimeFormat("fr-FR", {

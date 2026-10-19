@@ -6,15 +6,10 @@ import type { HouseStaffMemberRecord } from "@/dal";
 
 interface MembersListCardProps {
   staff: HouseStaffMemberRecord[];
-  onOpenInvite: () => void;
-  onRemoveClick: (member: HouseStaffMemberRecord) => void;
+  onRemoveClick?: (member: HouseStaffMemberRecord) => void;
 }
 
-export function MembersListCard({
-  staff,
-  onOpenInvite,
-  onRemoveClick,
-}: MembersListCardProps) {
+export function MembersListCard({ staff, onRemoveClick }: MembersListCardProps) {
   return (
     <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -31,11 +26,11 @@ export function MembersListCard({
         <Button
           type="button"
           size="sm"
-          onClick={onOpenInvite}
-          className="min-h-[44px] bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs"
+          disabled
+          className="min-h-[44px] bg-primary/50 text-primary-foreground font-bold text-xs shadow-xs cursor-not-allowed opacity-60"
         >
           <UserPlus className="size-3.5 mr-1.5" />
-          <span>Inviter un collaborateur</span>
+          <span>Inviter un collaborateur (Bientôt disponible)</span>
         </Button>
       </div>
 
@@ -72,10 +67,11 @@ export function MembersListCard({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => onRemoveClick(m)}
-                  className="text-destructive hover:text-destructive hover:bg-destructive-soft min-h-[40px] px-3 text-xs"
+                  disabled
+                  onClick={() => onRemoveClick?.(m)}
+                  className="text-muted-foreground opacity-50 cursor-not-allowed min-h-[40px] px-3 text-xs"
                 >
-                  Retirer
+                  Indisponible
                 </Button>
               </div>
             </div>

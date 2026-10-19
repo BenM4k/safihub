@@ -1,36 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { AlertTriangle, Clock, Download, Globe, ShieldAlert } from "lucide-react";
+import { Clock, Download, Globe, ShieldAlert, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/shared";
 
 export function PreferencesTab() {
-  const [selectedLanguage, setSelectedLanguage] = useState("fr");
-  const [isClosureDialogOpen, setIsClosureDialogOpen] = useState(false);
-  const [actionNotice, setActionNotice] = useState<string | null>(null);
-
-  function handleExportData() {
-    setActionNotice("Votre export complet de données a été généré et téléchargé.");
-    setTimeout(() => setActionNotice(null), 3000);
-  }
-
-  function handleCloseRequest() {
-    setIsClosureDialogOpen(false);
-    setActionNotice(
-      "Votre demande de fermeture a été transmise à l'administrateur SafiHub pour vérification des soldes et livraisons en cours."
-    );
-    setTimeout(() => setActionNotice(null), 5000);
-  }
-
   return (
     <div className="space-y-6">
-      {actionNotice && (
-        <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-xs text-primary font-semibold">
-          {actionNotice}
-        </div>
-      )}
-
       {/* 1. Regional Preferences */}
       <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
         <div className="flex items-center gap-2.5">
@@ -51,14 +26,15 @@ export function PreferencesTab() {
               Langue de l&apos;interface
             </label>
             <select
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border text-xs bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              disabled
+              value="fr"
+              className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border bg-secondary/60 text-muted-foreground text-xs font-medium cursor-not-allowed"
             >
-              <option value="fr">Français (RDC)</option>
-              <option value="sw">Kiswahili (Kivu)</option>
-              <option value="en">English</option>
+              <option value="fr">Français (RDC) — Géré via le widget en bas à droite</option>
             </select>
+            <span className="text-[10px] text-muted-foreground mt-1 block">
+              Utilisez le bouton flottant circulaire en bas à droite de l&apos;écran pour changer de langue (FR / EN / SW).
+            </span>
           </div>
 
           <div>
@@ -85,7 +61,7 @@ export function PreferencesTab() {
           <div>
             <h2 className="text-sm font-bold text-heading text-destructive">Zone sensible</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Actions irréversibles et demandes de clôture de compte.
+              Actions d&apos;export et demandes de clôture de compte.
             </p>
           </div>
         </div>
@@ -103,11 +79,11 @@ export function PreferencesTab() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleExportData}
-              className="min-h-[40px] px-3 text-xs font-semibold self-start sm:self-auto"
+              disabled
+              className="min-h-[40px] px-3 text-xs font-semibold self-start sm:self-auto opacity-50 cursor-not-allowed"
             >
               <Download className="size-3.5 mr-1.5" />
-              <span>Exporter les données</span>
+              <span>Exporter les données (Bientôt disponible)</span>
             </Button>
           </div>
 
@@ -119,31 +95,18 @@ export function PreferencesTab() {
                 Nécessite la clôture préalable de toutes les commandes en cours et la liquidation des versements dus.
               </p>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsClosureDialogOpen(true)}
-              className="min-h-[40px] px-3 text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive-soft self-start sm:self-auto"
+            <a
+              href="https://wa.me/243999999999"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-destructive border border-destructive/30 hover:bg-destructive-soft min-h-[40px] self-start sm:self-auto"
             >
-              <AlertTriangle className="size-3.5 mr-1.5" />
-              <span>Demander la fermeture</span>
-            </Button>
+              <Headphones className="size-3.5 mr-1.5" />
+              <span>Contacter le support pour fermeture</span>
+            </a>
           </div>
         </div>
       </section>
-
-      {/* Closure Confirm Dialog */}
-      <ConfirmDialog
-        isOpen={isClosureDialogOpen}
-        onClose={() => setIsClosureDialogOpen(false)}
-        onConfirm={async () => handleCloseRequest()}
-        title="Demande de fermeture de compte"
-        description="Une demande de clôture sera envoyée aux administrateurs SafiHub. Le compte ne pourra être définitivement fermé qu'après règlement intégral de votre solde et livraison de toutes les commandes en cours."
-        confirmLabel="Transmettre la demande"
-        cancelLabel="Annuler"
-        variant="destructive"
-      />
     </div>
   );
 }

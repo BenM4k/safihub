@@ -7,6 +7,7 @@ import {
   getHouseStaff,
   getUserActiveSessions,
 } from "@/dal";
+import { getNextPayoutDate } from "@/dal/partner-settlements.dal";
 import { getHouseSettings } from "@/services/house";
 import { SettingsContainer } from "@/components/house/settings";
 
@@ -42,6 +43,7 @@ export default async function PartnerSettingsPage({ params }: PageProps) {
   }
 
   const { house, exclusions, todayOrdersCount } = settingsRes.value;
+  const nextPayoutDate = getNextPayoutDate(new Date());
 
   return (
     <SettingsContainer
@@ -54,6 +56,8 @@ export default async function PartnerSettingsPage({ params }: PageProps) {
       todayOrdersCount={todayOrdersCount}
       sessions={sessions}
       user={authCtx.user}
+      currentSessionId={authCtx.session.id}
+      nextPayoutDate={nextPayoutDate}
     />
   );
 }

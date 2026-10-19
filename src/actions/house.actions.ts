@@ -23,6 +23,8 @@ import {
   updateNeighborhoodCoverage,
 } from "@/services/house";
 
+import { normalizeStaffRole, type HouseStaffRole } from "@/services/auth/house-permissions";
+
 async function getAuthenticatedHouseContext(providedHouseId?: string) {
   const authRes = await requireHouseAccess({ houseId: providedHouseId });
   if (!authRes.ok) return authRes;
@@ -39,11 +41,26 @@ async function getAuthenticatedHouseContext(providedHouseId?: string) {
     return err("No laundry house is selected or assigned to this account.");
   }
 
+  const staffRole: HouseStaffRole =
+    authRes.value.user.role === "admin" ? "owner" : normalizeStaffRole(authRes.value.user.role);
+
   return ok({
     user: authRes.value.user,
     houseId,
     actorRole: (authRes.value.user.role === "admin" ? "admin" : "house") as "admin" | "house",
+    staffRole,
+    isAdminOverride: authRes.value.user.role === "admin",
   });
+}
+
+function requireHouseManagerOrOwner(authCtx: {
+  isAdminOverride: boolean;
+  staffRole: HouseStaffRole;
+}): Result<void> {
+  if (authCtx.isAdminOverride || authCtx.staffRole === "owner" || authCtx.staffRole === "manager") {
+    return ok(undefined);
+  }
+  return err("Accès refusé : Seuls les gestionnaires et propriétaires peuvent modifier ces paramètres.");
 }
 
 // ----------------------------------------------------
@@ -234,6 +251,9 @@ export async function updateHouseCatalogueItemAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await updateHouseCatalogueItem({
     houseId: authCtx.value.houseId,
     serviceId: parsed.data.serviceId,
@@ -284,6 +304,9 @@ export async function updateHouseCatalogueBatchAction(input: {
 
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
 
   const res = await updateHouseCatalogueBatch({
     houseId: authCtx.value.houseId,
@@ -361,6 +384,9 @@ export async function updateHouseHoursAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await updateHouseHoursSchedule(authCtx.value.houseId, parsed.data.hours);
   if (res.ok) {
     revalidatePath("/partner", "layout");
@@ -390,6 +416,9 @@ export async function addHouseClosureAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await addHouseClosureEntry({
     houseId: authCtx.value.houseId,
     startsOn: parsed.data.startsOn,
@@ -410,6 +439,9 @@ export async function deleteHouseClosureAction(input: {
 }): Promise<Result<void>> {
   const authCtx = await getAuthenticatedHouseContext(input.houseId);
   if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
 
   const res = await deleteHouseClosureEntry(authCtx.value.houseId, input.closureId);
   if (res.ok) {
@@ -478,6 +510,9 @@ export async function updateHouseGeneralSettingsAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await updateHouseGeneralSettings({
     houseId: authCtx.value.houseId,
     dailyCapacity: parsed.data.dailyCapacity,
@@ -516,6 +551,9 @@ export async function addHouseExclusionAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await addHouseExclusionRule({
     houseId: authCtx.value.houseId,
     itemId: parsed.data.itemId,
@@ -536,6 +574,9 @@ export async function deleteHouseExclusionAction(input: {
 }): Promise<Result<void>> {
   const authCtx = await getAuthenticatedHouseContext(input.houseId);
   if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
 
   const res = await deleteHouseExclusionRule(authCtx.value.houseId, input.exclusionId);
   if (res.ok) {
@@ -568,6 +609,9 @@ export async function updateHouseExclusionAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await updateHouseExclusionRule({
     houseId: authCtx.value.houseId,
     exclusionId: parsed.data.exclusionId,
@@ -599,6 +643,9 @@ export async function toggleHousePauseAction(input: {
 
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
 
   try {
     const { updateHouse } = await import("@/dal");
@@ -644,10 +691,13 @@ export async function updateHouseCommandesAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   // Log pause audit if paused
   if (parsed.data.isPaused) {
     console.info(
-      `[House Pause Audit] House ${authCtx.value.houseId} paused by user ${authCtx.value.user.id} (${authCtx.value.user.email}). Reason: "${parsed.data.pauseReason || "Non précisé"}". PausedUntil: ${parsed.data.pausedUntil || "Indéterminé"}`
+      `[House Pause Audit] House ${authCtx.value.houseId} paused by user ${authCtx.value.user.id}. Reason: "${parsed.data.pauseReason || "Non précisé"}". PausedUntil: ${parsed.data.pausedUntil || "Indéterminé"}`
     );
   }
 

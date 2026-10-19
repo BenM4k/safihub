@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { AlertCircle, PhoneCall, Send, X } from "lucide-react";
 import { formatMoney } from "@/lib/cash-formatters";
+import { getSupportWhatsAppUrl } from "@/lib/support-config";
 import { reportPartnerSettlementIssueAction } from "@/actions/partner-settlement.actions";
 import { Button } from "@/components/ui/button";
 import { TicketSuccessView } from "./ticket-success-view";
@@ -81,9 +82,9 @@ export function SupportTicketForm({
     });
   }
 
-  const waLink = `https://wa.me/243999000123?text=${encodeURIComponent(
+  const waLink = getSupportWhatsAppUrl(
     `Bonjour Support SafiHub, je souhaite signaler une anomalie sur la référence ${target.reference} (${formatMoney(target.amount, "CDF")}).`
-  )}`;
+  );
 
   return (
     <div

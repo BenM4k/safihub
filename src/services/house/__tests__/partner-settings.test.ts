@@ -3,10 +3,19 @@ import { formatAmount, formatPhone } from "@/lib/order-formatters";
 import { validateBannerImageFile } from "@/lib/partner-dashboard";
 import {
   validateMemberActionGuardrails,
+  normalizeStaffRole,
   HOUSE_ROLE_PERMISSIONS,
   type StaffMemberRecord,
 } from "@/services/auth/house-permissions";
-import { addHouseExclusionRule } from "@/services/house/house.service";
+import {
+  addHouseExclusionRule,
+  updateHouseGeneralSettings,
+} from "@/services/house/house.service";
+import { fromBukavuDateTime } from "@/services/availability/bukavu-time";
+import {
+  toggleNotificationRow,
+  type NotificationMatrixRow,
+} from "@/components/house/settings/notifications-tab";
 
 // Mock DAL layer
 const mockExclusionsList: Array<{
@@ -33,6 +42,7 @@ vi.mock("@/dal", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/dal")>();
   return {
     ...actual,
+    updateHouse: vi.fn(async () => ({})),
     getHouseExclusions: vi.fn(async (houseId: string) => {
       return mockExclusionsList.filter((ex) => ex.houseId === houseId);
     }),
@@ -253,85 +263,154 @@ describe("Partner Settings - Comprehensive Unit Tests", () => {
   });
 
   describe("5. Pause Dialog & Date Bounds", () => {
-    it("calculates correct preset timestamps", () => {
+    it("converts Bukavu date and time strings accurately into UTC timestamps", () => {
+      // Bukavu is UTC+2 year-round. 14:00 local should be 12:00 UTC.
+      const parsedDate = fromBukavuDateTime("2026-06-15", "14:00");
+      expect(parsedDate.toISOString()).toBe("2026-06-15T12:00:00.000Z");
+    });
+
+    it("calculates preset pause timestamps in the future", () => {
       const now = Date.now();
       const oneHour = new Date(now + 1 * 3600 * 1000);
       const fourHours = new Date(now + 4 * 3600 * 1000);
+      const twentyFourHours = new Date(now + 24 * 3600 * 1000);
 
       expect(oneHour.getTime()).toBeGreaterThan(now);
       expect(fourHours.getTime() - oneHour.getTime()).toBe(3 * 3600 * 1000);
+      expect(twentyFourHours.getTime() - fourHours.getTime()).toBe(20 * 3600 * 1000);
     });
   });
 
   describe("6. Minimum Order Amount Bounds & Validation", () => {
-    it("validates positive bounds: rejects negative amounts and enforces max 500 000 CDF", () => {
-      const isAmountValid = (amount: number) => Number.isInteger(amount) && amount >= 0 && amount <= 500000;
+    it("rejects negative minimumOrderAmount in updateHouseGeneralSettings", async () => {
+      const res = await updateHouseGeneralSettings({
+        houseId: "house-1",
+        dailyCapacity: 20,
+        minimumOrderAmount: -500,
+        isPaused: false,
+      });
 
-      expect(isAmountValid(0)).toBe(true);
-      expect(isAmountValid(5000)).toBe(true);
-      expect(isAmountValid(500000)).toBe(true);
-      expect(isAmountValid(-100)).toBe(false);
-      expect(isAmountValid(500001)).toBe(false);
-      expect(isAmountValid(12.5)).toBe(false);
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toBe("Minimum order amount cannot be negative");
+      }
+    });
+
+    it("rejects zero or negative dailyCapacity when provided", async () => {
+      const resZero = await updateHouseGeneralSettings({
+        houseId: "house-1",
+        dailyCapacity: 0,
+        minimumOrderAmount: 5000,
+        isPaused: false,
+      });
+
+      expect(resZero.ok).toBe(false);
+      if (!resZero.ok) {
+        expect(resZero.error).toBe("Daily capacity must be a positive integer or null");
+      }
+    });
+
+    it("accepts valid positive minimumOrderAmount and dailyCapacity", async () => {
+      const res = await updateHouseGeneralSettings({
+        houseId: "house-1",
+        dailyCapacity: 25,
+        minimumOrderAmount: 7000,
+        isPaused: false,
+      });
+
+      expect(res.ok).toBe(true);
     });
   });
 
   describe("7. Notification Matrix Channel Invariant", () => {
     it("ensures new_order always maintains at least one active channel (appSound or push)", () => {
-      const toggleChannel = (
-        current: { appSound: boolean; push: boolean },
-        channelToToggle: "appSound" | "push"
-      ) => {
-        const next = { ...current };
-        const otherChannel = channelToToggle === "appSound" ? next.push : next.appSound;
-
-        // If toggling off, and the other channel is already off, block
-        if (!otherChannel && next[channelToToggle]) {
-          return current; // Block disabling
-        }
-
-        next[channelToToggle] = !next[channelToToggle];
-        return next;
-      };
+      const initialRows: NotificationMatrixRow[] = [
+        {
+          eventKey: "new_order",
+          label: "Nouvelle commande reçue",
+          appSound: true,
+          push: true,
+          sms: false,
+          whatsapp: false,
+          email: false,
+        },
+      ];
 
       // Both true initially -> can disable appSound
-      const step1 = toggleChannel({ appSound: true, push: true }, "appSound");
-      expect(step1).toEqual({ appSound: false, push: true });
+      const step1 = toggleNotificationRow(initialRows, 0, "appSound");
+      expect(step1[0]?.appSound).toBe(false);
+      expect(step1[0]?.push).toBe(true);
 
-      // Only push is true -> cannot disable push
-      const step2 = toggleChannel(step1, "push");
-      expect(step2).toEqual({ appSound: false, push: true }); // Blocked!
+      // Only push is true -> cannot disable push, toggle is prevented
+      const step2 = toggleNotificationRow(step1, 0, "push");
+      expect(step2[0]?.appSound).toBe(false);
+      expect(step2[0]?.push).toBe(true);
+      expect(step2).toBe(step1); // Returns identical reference when blocked
     });
   });
 
   describe("8. Payout Re-Authentication Requirement", () => {
-    it("rejects payout modifications without password confirmation", () => {
-      const validatePayoutReauth = (password?: string | null) => {
-        if (!password || password.trim().length === 0) {
-          return { ok: false, error: "Veuillez saisir votre mot de passe pour confirmer." };
-        }
-        return { ok: true };
-      };
-
-      expect(validatePayoutReauth("").ok).toBe(false);
-      expect(validatePayoutReauth(null).ok).toBe(false);
-      expect(validatePayoutReauth("   ").ok).toBe(false);
-      expect(validatePayoutReauth("validPassword123").ok).toBe(true);
+    it("enforces that only owners have permission to edit payout settings", () => {
+      expect(HOUSE_ROLE_PERMISSIONS.owner.canEditPayout).toBe(true);
+      expect(HOUSE_ROLE_PERMISSIONS.manager.canEditPayout).toBe(false);
+      expect(HOUSE_ROLE_PERMISSIONS.operator.canEditPayout).toBe(false);
     });
   });
 
-  describe("9. Tenant Isolation Guard", () => {
-    it("strictly isolates house operations by houseId scope", () => {
-      const callerContext = { houseId: "house-own-1", role: "house" };
-      const requestedHouseId = "house-other-2";
+  describe("9. Tenant Isolation & Staff Role Guardrails", () => {
+    it("normalizes roles consistently for house, admin, and owner", () => {
+      expect(normalizeStaffRole("owner")).toBe("owner");
+      expect(normalizeStaffRole("admin")).toBe("owner");
+      expect(normalizeStaffRole("house")).toBe("owner");
+      expect(normalizeStaffRole("manager")).toBe("manager");
+      expect(normalizeStaffRole("operator")).toBe("operator");
+      expect(normalizeStaffRole("unknown")).toBe("operator");
+    });
 
-      const canAccessHouse = (ctx: typeof callerContext, targetId: string) => {
-        if (ctx.role === "admin") return true;
-        return ctx.houseId === targetId;
-      };
+    it("prevents operators from managing team members", () => {
+      const staff: StaffMemberRecord[] = [
+        { userId: "op-1", name: "Op", email: "op@test.cd", role: "operator" },
+      ];
+      const res = validateMemberActionGuardrails({
+        staffList: staff,
+        callerUserId: "op-1",
+        callerRole: "operator",
+        targetUserId: "op-1",
+        isRemoval: true,
+      });
+      expect(res.allowed).toBe(false);
+    });
 
-      expect(canAccessHouse(callerContext, requestedHouseId)).toBe(false);
-      expect(canAccessHouse(callerContext, "house-own-1")).toBe(true);
+    it("prevents managers from removing or demoting an owner", () => {
+      const staff: StaffMemberRecord[] = [
+        { userId: "own-1", name: "Owner", email: "own@test.cd", role: "owner" },
+        { userId: "mgr-1", name: "Mgr", email: "mgr@test.cd", role: "manager" },
+      ];
+      const res = validateMemberActionGuardrails({
+        staffList: staff,
+        callerUserId: "mgr-1",
+        callerRole: "manager",
+        targetUserId: "own-1",
+        isRemoval: true,
+      });
+      expect(res.allowed).toBe(false);
+    });
+
+    it("prevents removing the last remaining owner", () => {
+      const staff: StaffMemberRecord[] = [
+        { userId: "own-1", name: "Owner", email: "own@test.cd", role: "owner" },
+      ];
+      const res = validateMemberActionGuardrails({
+        staffList: staff,
+        callerUserId: "own-1",
+        callerRole: "owner",
+        targetUserId: "own-1",
+        isRemoval: true,
+      });
+      expect(res.allowed).toBe(false);
+      if (!res.allowed) {
+        expect(res.error).toContain("dernier propriétaire");
+      }
     });
   });
 });

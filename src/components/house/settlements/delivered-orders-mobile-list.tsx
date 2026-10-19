@@ -21,10 +21,12 @@ export function DeliveredOrdersMobileList({
 }: DeliveredOrdersMobileListProps) {
   if (orders.length === 0) {
     return (
-      <EmptyState
-        title="Aucune commande livrée"
-        description="Aucune commande livrée trouvée pour cette période."
-      />
+      <div className="md:hidden">
+        <EmptyState
+          title="Aucune commande livrée"
+          description="Aucune commande livrée trouvée pour cette période."
+        />
+      </div>
     );
   }
 

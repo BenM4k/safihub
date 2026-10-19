@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { PackageCheck, Receipt } from "lucide-react";
 import type {
   PartnerDeliveredOrderDTO,
@@ -17,57 +18,23 @@ import { PayoutDetailSheet } from "./payout-detail-sheet";
 import { SupportTicketDialog, type SupportTicketTarget } from "./support-ticket-dialog";
 import { HowItWorksCard } from "./how-it-works-card";
 import { StatementModal } from "./statement-modal";
+import { PayoutReceiptModal } from "./payout-receipt-modal";
+import { buildSettlementsCsv } from "./settlements-csv";
 
 interface SettlementsViewProps {
   data: PartnerSettlementsPageData;
 }
 
 export function SettlementsView({ data }: SettlementsViewProps) {
+  const t = useTranslations("house.settlements");
   const [activeTab, setActiveTab] = useState<"orders" | "payouts">("orders");
   const [selectedPayout, setSelectedPayout] = useState<PartnerPayoutDTO | null>(null);
+  const [receiptPayout, setReceiptPayout] = useState<PartnerPayoutDTO | null>(null);
   const [ticketTarget, setTicketTarget] = useState<SupportTicketTarget | null>(null);
   const [isStatementModalOpen, setIsStatementModalOpen] = useState(false);
 
-  // CSV export handler with French Excel encoding
   function handleExportCsv(type: "orders" | "payouts") {
-    let csvContent = "\uFEFF"; // UTF-8 BOM
-    let filename = "";
-
-    if (type === "orders") {
-      filename = `commandes-livrees-${data.houseSlug}-${data.selectedPeriod}.csv`;
-      csvContent += "Code;Client;Date livraison;Montant articles (CDF);Commission SafiHub (CDF);Net pressing (CDF);Statut règlement;Référence versement\n";
-
-      for (const o of data.orders) {
-        const row = [
-          `"${o.code}"`,
-          `"${o.customerDisplayName}"`,
-          `"${o.deliveredAt ? o.deliveredAt.split("T")[0] : ""}"`,
-          o.itemsTotal,
-          o.commissionAmount,
-          o.netReceivable,
-          `"${o.settlementStatus}"`,
-          `"${o.settlementReference || ""}"`,
-        ];
-        csvContent += row.join(";") + "\n";
-      }
-    } else {
-      filename = `versements-recus-${data.houseSlug}-${data.selectedPeriod}.csv`;
-      csvContent += "Référence;Date;Période couverte;Méthode;Montant (CDF);Statut;Commandes incluses\n";
-
-      for (const p of data.payouts) {
-        const row = [
-          `"${p.reference || p.id}"`,
-          `"${p.date.split("T")[0]}"`,
-          `"${p.periodCovered || ""}"`,
-          `"${p.method}"`,
-          p.amount,
-          `"${p.status}"`,
-          p.ordersCount,
-        ];
-        csvContent += row.join(";") + "\n";
-      }
-    }
-
+    const { csvContent, filename } = buildSettlementsCsv(type, data);
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -100,8 +67,8 @@ export function SettlementsView({ data }: SettlementsViewProps) {
   }
 
   function handleOpenReceiptModal(payout: PartnerPayoutDTO) {
-    setSelectedPayout(payout);
-    setIsStatementModalOpen(true);
+    setSelectedPayout(null);
+    setReceiptPayout(payout);
   }
 
   return (
@@ -126,7 +93,7 @@ export function SettlementsView({ data }: SettlementsViewProps) {
 
       {/* 5. Full-width Tabs for Commandes livrées vs Versements */}
       <div className="space-y-4">
-        <div className="flex border-b border-border gap-2" role="tablist" aria-label="Onglets d'activité">
+        <div className="flex border-b border-border gap-2" role="tablist" aria-label={t("activityTabsAria")}>
           <button
             type="button"
             role="tab"
@@ -139,7 +106,7 @@ export function SettlementsView({ data }: SettlementsViewProps) {
             }`}
           >
             <PackageCheck className="size-4" />
-            <span>Commandes livrées</span>
+            <span>{t("tabDeliveredOrders")}</span>
             <span className="px-2 py-0.5 rounded-full text-2xs font-semibold bg-surface border border-border">
               {data.orders.length}
             </span>
@@ -157,7 +124,7 @@ export function SettlementsView({ data }: SettlementsViewProps) {
             }`}
           >
             <Receipt className="size-4" />
-            <span>Versements reçus</span>
+            <span>{t("tabPayoutsReceived")}</span>
             <span className="px-2 py-0.5 rounded-full text-2xs font-semibold bg-surface border border-border">
               {data.payouts.length}
             </span>
@@ -207,6 +174,15 @@ export function SettlementsView({ data }: SettlementsViewProps) {
         isOpen={isStatementModalOpen}
         onClose={() => setIsStatementModalOpen(false)}
         data={data}
+      />
+
+      {/* Official Payout Receipt Modal */}
+      <PayoutReceiptModal
+        isOpen={Boolean(receiptPayout)}
+        onClose={() => setReceiptPayout(null)}
+        payout={receiptPayout}
+        houseName={data.houseName}
+        maskedAccount={data.hero.maskedAccount}
       />
     </div>
   );

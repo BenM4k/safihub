@@ -1,6 +1,12 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 export default function PartnerSettlementsLoading() {
+  const t = useTranslations("house.settlements");
+
   return (
-    <div className="space-y-6 animate-pulse" aria-busy="true" aria-label="Chargement des revenus et versements">
+    <div className="space-y-6 animate-pulse" aria-busy="true" aria-label={t("loadingAria")}>
       {/* Header skeleton */}
       <div className="space-y-2 pb-5 border-b border-border">
         <div className="h-8 w-64 bg-surface rounded-lg" />

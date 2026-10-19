@@ -42,7 +42,7 @@ export default async function PartnerSettlementsPage({
   if (!settlementsRes.ok) {
     return (
       <div className="p-6 bg-destructive-light text-destructive-base rounded-2xl border border-destructive-base/30 text-sm">
-        <h2 className="font-bold text-base">Erreur de chargement des revenus</h2>
+        <h2 className="font-bold text-base">{t("errorTitle")}</h2>
         <p className="mt-1">{settlementsRes.error}</p>
       </div>
     );

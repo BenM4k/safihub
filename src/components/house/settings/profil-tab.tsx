@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { updateHouseGeneralSettingsAction } from "@/actions/house.actions";
 import { StickySaveBar } from "@/components/house/catalogue/sticky-save-bar";
@@ -21,11 +21,7 @@ export function ProfilTab({ house, onDirtyChange }: ProfilTabProps) {
   const initialAddressNote = house.addressNote ?? "";
 
   const [contactPhone, setContactPhone] = useState(initialPhone);
-  const [whatsAppPhone, setWhatsAppPhone] = useState("");
   const [addressNote, setAddressNote] = useState(initialAddressNote);
-  const [description, setDescription] = useState(
-    "Service de blanchisserie, lavage délicat et repassage professionnel à Bukavu."
-  );
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -33,9 +29,9 @@ export function ProfilTab({ house, onDirtyChange }: ProfilTabProps) {
   const isDirty = contactPhone !== initialPhone || addressNote !== initialAddressNote;
   const dirtyCount = isDirty ? 1 : 0;
 
-  if (onDirtyChange) {
-    onDirtyChange(isDirty);
-  }
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   function handleReset() {
     setContactPhone(initialPhone);
@@ -83,11 +79,7 @@ export function ProfilTab({ house, onDirtyChange }: ProfilTabProps) {
       )}
 
       {/* 1. Identity & Public Link */}
-      <IdentityCard
-        house={house}
-        description={description}
-        onChangeDescription={setDescription}
-      />
+      <IdentityCard house={house} />
 
       {/* 2. Photo de vitrine */}
       <PhotoCard />
@@ -95,10 +87,9 @@ export function ProfilTab({ house, onDirtyChange }: ProfilTabProps) {
       {/* 3. Contact & Localisation */}
       <ContactLocationCard
         contactPhone={contactPhone}
-        whatsAppPhone={whatsAppPhone}
+        whatsAppPhone=""
         addressNote={addressNote}
         onChangeContactPhone={setContactPhone}
-        onChangeWhatsAppPhone={setWhatsAppPhone}
         onChangeAddressNote={setAddressNote}
       />
 

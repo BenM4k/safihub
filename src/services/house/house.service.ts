@@ -632,14 +632,30 @@ export async function updateHouseGeneralSettings(params: {
       return err("Daily capacity must be a positive integer or null");
     }
 
-    await updateHouse(params.houseId, {
+    const updatePayload: Partial<{
+      dailyCapacity: number | null;
+      minimumOrderAmount: number;
+      isPaused: boolean;
+      pausedUntil: Date | null;
+      addressNote: string | null;
+      contactPhone: string | null;
+    }> = {
       dailyCapacity: params.dailyCapacity,
       minimumOrderAmount: params.minimumOrderAmount,
       isPaused: params.isPaused,
-      pausedUntil: params.pausedUntil ?? null,
-      addressNote: params.addressNote ?? null,
-      contactPhone: params.contactPhone ?? null,
-    });
+    };
+
+    if (params.pausedUntil !== undefined) {
+      updatePayload.pausedUntil = params.pausedUntil;
+    }
+    if (params.addressNote !== undefined) {
+      updatePayload.addressNote = params.addressNote;
+    }
+    if (params.contactPhone !== undefined) {
+      updatePayload.contactPhone = params.contactPhone;
+    }
+
+    await updateHouse(params.houseId, updatePayload);
 
     return ok(undefined);
   } catch (error) {
