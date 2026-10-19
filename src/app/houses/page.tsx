@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Metadata } from "next";
 import { Navbar } from "@/components/home/header/navbar";
 import { getCurrentUser } from "@/services/auth";
@@ -30,7 +31,12 @@ export default async function CustomerHousesPage({
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar variant="solid" user={user} />
       <main className="flex-1 overflow-hidden">
-        <HousesSplitView initialData={pageData} />
+        <Suspense fallback={null}>
+          <HousesSplitView
+            initialData={pageData}
+            initialNeighborhoodId={params.neighborhoodId}
+          />
+        </Suspense>
       </main>
     </div>
   );
