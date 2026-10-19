@@ -15,6 +15,7 @@ import {
   markPartnerOrderReady,
   handoverPartnerOrderToCourier,
   reportPartnerOrderIssueActionService,
+  type PartnerOrderDetailDTO,
 } from "@/services/house/partner-order.service";
 import type {
   PartnerOrderListItemDTO,
@@ -22,7 +23,6 @@ import type {
   PartnerOrderTab,
 } from "@/dal/partner-order.dal";
 import type {
-  HouseOrderDetailRecord,
   OrderItemRecord,
   OrderEventRecord,
 } from "@/dal/order.dal";
@@ -51,6 +51,10 @@ const listOrdersSchema = z.object({
   search: z.string().optional(),
   date: z.string().optional(),
   sort: z.enum(["deadline", "promised", "recent"]).optional(),
+  page: z.number().int().min(1).optional(),
+  pageSize: z.number().int().min(1).optional(),
+  limit: z.number().int().min(1).optional(),
+  offset: z.number().int().min(0).optional(),
 });
 
 export async function listPartnerOrdersAction(
@@ -64,11 +68,18 @@ export async function listPartnerOrdersAction(
   const authCtx = await getAuthenticatedPartnerContext(parsed.data.houseSlug);
   if (!authCtx.ok) return authCtx;
 
+  const limit = parsed.data.pageSize ?? parsed.data.limit ?? 50;
+  const offset = parsed.data.page
+    ? (parsed.data.page - 1) * limit
+    : (parsed.data.offset ?? 0);
+
   return listPartnerOrders(authCtx.value.houseId, {
     tab: parsed.data.tab as PartnerOrderTab | undefined,
     search: parsed.data.search,
     date: parsed.data.date,
     sort: parsed.data.sort,
+    limit,
+    offset,
   });
 }
 
@@ -99,7 +110,7 @@ export async function getPartnerOrderDetailAction(
   input: z.infer<typeof orderDetailSchema>
 ): Promise<
   Result<{
-    order: HouseOrderDetailRecord;
+    order: PartnerOrderDetailDTO;
     items: OrderItemRecord[];
     events: OrderEventRecord[];
   }>
@@ -140,7 +151,7 @@ export async function acceptPartnerOrderAction(
 
   if (res.ok) {
     revalidatePath(`/partner/${parsed.data.houseSlug}/orders`, "page");
-    revalidatePath(`/partner/${parsed.data.houseSlug}/dashboard`, "page");
+    revalidatePath(`/partner/${parsed.data.houseSlug}`, "layout");
   }
 
   return res;
@@ -173,7 +184,7 @@ export async function rejectPartnerOrderAction(
 
   if (res.ok) {
     revalidatePath(`/partner/${parsed.data.houseSlug}/orders`, "page");
-    revalidatePath(`/partner/${parsed.data.houseSlug}/dashboard`, "page");
+    revalidatePath(`/partner/${parsed.data.houseSlug}`, "layout");
   }
 
   return res;
@@ -199,6 +210,7 @@ export async function markPartnerOrderReceivedAction(
 
   if (res.ok) {
     revalidatePath(`/partner/${parsed.data.houseSlug}/orders`, "page");
+    revalidatePath(`/partner/${parsed.data.houseSlug}`, "layout");
   }
 
   return res;
@@ -224,6 +236,7 @@ export async function startPartnerOrderWashingAction(
 
   if (res.ok) {
     revalidatePath(`/partner/${parsed.data.houseSlug}/orders`, "page");
+    revalidatePath(`/partner/${parsed.data.houseSlug}`, "layout");
   }
 
   return res;
@@ -249,6 +262,7 @@ export async function markPartnerOrderReadyAction(
 
   if (res.ok) {
     revalidatePath(`/partner/${parsed.data.houseSlug}/orders`, "page");
+    revalidatePath(`/partner/${parsed.data.houseSlug}`, "layout");
   }
 
   return res;
@@ -281,6 +295,7 @@ export async function handoverPartnerOrderToCourierAction(
 
   if (res.ok) {
     revalidatePath(`/partner/${parsed.data.houseSlug}/orders`, "page");
+    revalidatePath(`/partner/${parsed.data.houseSlug}`, "layout");
   }
 
   return res;
@@ -315,6 +330,7 @@ export async function reportPartnerOrderIssueAction(
 
   if (res.ok) {
     revalidatePath(`/partner/${parsed.data.houseSlug}/orders`, "page");
+    revalidatePath(`/partner/${parsed.data.houseSlug}`, "layout");
   }
 
   return res;

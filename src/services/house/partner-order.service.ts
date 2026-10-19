@@ -10,6 +10,7 @@ import {
   getOrderItems,
   getOrderEvents,
   transitionOrderStatusAtomic,
+  UNREVEALED_CUSTOMER_STATUSES,
   type PartnerOrderListItemDTO,
   type PartnerOrderQueryFilters,
   type PartnerOrderTabCounts,
@@ -43,12 +44,14 @@ export async function getPartnerOrderTabCounts(
   }
 }
 
+export type PartnerOrderDetailDTO = Omit<HouseOrderDetailRecord, "trackingToken">;
+
 export async function getPartnerOrderDetail(
   houseId: string,
   orderId: string
 ): Promise<
   Result<{
-    order: HouseOrderDetailRecord;
+    order: PartnerOrderDetailDTO;
     items: OrderItemRecord[];
     events: OrderEventRecord[];
   }>
@@ -64,7 +67,21 @@ export async function getPartnerOrderDetail(
       getOrderEvents(orderId),
     ]);
 
-    return ok({ order, items, events });
+    const { trackingToken: _, ...orderWithoutToken } = order;
+    void _;
+    const isRevealed = !UNREVEALED_CUSTOMER_STATUSES.includes(order.status);
+    const rawName = (order.customerFirstName ?? "").trim();
+    const nameParts = rawName.split(" ").filter(Boolean);
+    const firstName = nameParts[0] || "Client";
+    const lastInitial = nameParts.length > 1 ? ` ${nameParts[1][0]}.` : "";
+    const maskedName = isRevealed ? (rawName || "Client") : `${firstName}${lastInitial}`;
+
+    const safeOrder: PartnerOrderDetailDTO = {
+      ...orderWithoutToken,
+      customerFirstName: maskedName,
+    };
+
+    return ok({ order: safeOrder, items, events });
   } catch (error) {
     return err(error instanceof Error ? error.message : "Erreur lors du chargement du détail.");
   }

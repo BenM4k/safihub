@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { PartnerOrderListItemDTO } from "@/dal/partner-order.dal";
 import { formatAmount, formatDateTime } from "@/lib/order-formatters";
+import { useAccessibleDialog } from "./use-accessible-dialog";
 
 interface PartnerOrderTicketDialogProps {
   order: PartnerOrderListItemDTO | null;
@@ -20,6 +21,14 @@ export function PartnerOrderTicketDialog({
 }: PartnerOrderTicketDialogProps) {
   const t = useTranslations("house.orders");
   const ticketRef = useRef<HTMLDivElement>(null);
+  const printButtonRef = useRef<HTMLButtonElement>(null);
+
+  const containerRef = useAccessibleDialog<HTMLDivElement>({
+    isOpen,
+    onClose,
+    initialFocusRef: printButtonRef,
+    trapTab: true,
+  });
 
   if (!isOpen || !order) return null;
 
@@ -34,7 +43,11 @@ export function PartnerOrderTicketDialog({
       aria-labelledby="ticket-dialog-title"
       className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
     >
-      <div className="bg-card rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-border space-y-4 font-sans">
+      <div
+        ref={containerRef}
+        tabIndex={-1}
+        className="bg-card rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-border space-y-4 font-sans outline-none"
+      >
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="flex items-center gap-2">
             <Printer className="size-4 text-primary" />
@@ -45,7 +58,7 @@ export function PartnerOrderTicketDialog({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t("close")}
             className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
           >
             <X className="size-4" />
@@ -69,29 +82,29 @@ export function PartnerOrderTicketDialog({
             <div className="p-2 border border-slate-900 rounded-lg bg-slate-50 flex items-center justify-center">
               <QrCode className="size-20 text-slate-900" />
             </div>
-            <span className="text-[9px] text-slate-500 mt-1 uppercase">Scan coursier / atelier</span>
+            <span className="text-[9px] text-slate-500 mt-1 uppercase">{t("ticketScanNote")}</span>
           </div>
 
           {/* Customer & Location */}
           <div className="border-t border-dashed border-slate-300 pt-2 space-y-1 text-[11px]">
-            <div><strong>Client :</strong> {order.customerDisplayName}</div>
-            {order.customerPhone && <div><strong>Tél :</strong> {order.customerPhone}</div>}
-            <div><strong>Quartier :</strong> {order.neighborhoodName}</div>
+            <div><strong>{t("customer")} :</strong> {order.customerDisplayName}</div>
+            {order.customerPhone && <div><strong>{t("phone")} :</strong> {order.customerPhone}</div>}
+            <div><strong>{t("neighborhood")} :</strong> {order.neighborhoodName}</div>
           </div>
 
           {/* Items & Services */}
           <div className="border-t border-dashed border-slate-300 pt-2 space-y-1 text-[11px]">
-            <div><strong>Articles :</strong> {order.itemsSummary}</div>
-            <div><strong>Services :</strong> {order.services.join(", ")}</div>
+            <div><strong>{t("itemsCount")} :</strong> {order.itemsSummary}</div>
+            <div><strong>{t("services")} :</strong> {order.services.join(", ")}</div>
             {order.estimatedDeliveryAt && (
-              <div><strong>Promis le :</strong> {formatDateTime(order.estimatedDeliveryAt)}</div>
+              <div><strong>{t("promisedDate")} :</strong> {formatDateTime(order.estimatedDeliveryAt)}</div>
             )}
           </div>
 
           {/* Amount */}
           <div className="border-t border-dashed border-slate-300 pt-2 text-right">
-            <div className="text-xs">Total : <strong>{formatAmount(order.totalDue, order.currency)}</strong></div>
-            <div className="text-xs text-slate-700">Part atelier : <strong>{formatAmount(order.netPartnerShare, order.currency)}</strong></div>
+            <div className="text-xs">{t("totalAmount")} : <strong>{formatAmount(order.totalDue, order.currency)}</strong></div>
+            <div className="text-xs text-slate-700">{t("partnerShare")} : <strong>{formatAmount(order.netPartnerShare, order.currency)}</strong></div>
           </div>
         </div>
 
@@ -104,9 +117,10 @@ export function PartnerOrderTicketDialog({
             onClick={onClose}
             className="text-xs min-h-[44px] sm:min-h-[36px]"
           >
-            Fermer
+            {t("close")}
           </Button>
           <Button
+            ref={printButtonRef}
             type="button"
             size="sm"
             onClick={handlePrint}

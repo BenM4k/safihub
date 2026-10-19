@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { AlertCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { useAccessibleDialog } from "@/components/house/orders/use-accessible-dialog";
 
 interface OrderRejectDialogProps {
   isOpen: boolean;
@@ -26,8 +28,27 @@ export function OrderRejectDialog({
   onClose,
   onConfirm,
 }: OrderRejectDialogProps) {
+  const t = useTranslations("house.orders");
   const [selectedPreset, setSelectedPreset] = useState(PRESET_REASONS[0]);
   const [customText, setCustomText] = useState("");
+
+  const [prevOrderCode, setPrevOrderCode] = useState(orderCode);
+  if (orderCode !== prevOrderCode) {
+    setPrevOrderCode(orderCode);
+    setSelectedPreset(PRESET_REASONS[0]);
+    setCustomText("");
+  }
+
+  function handleClose() {
+    setSelectedPreset(PRESET_REASONS[0]);
+    setCustomText("");
+    onClose();
+  }
+
+  const containerRef = useAccessibleDialog<HTMLDivElement>({
+    isOpen,
+    onClose: handleClose,
+  });
 
   if (!isOpen) return null;
 
@@ -46,33 +67,37 @@ export function OrderRejectDialog({
       aria-labelledby="reject-dialog-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-xs animate-in fade-in font-sans"
     >
-      <div className="w-full max-w-md bg-white rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div
+        ref={containerRef}
+        tabIndex={-1}
+        className="w-full max-w-md bg-card rounded-3xl p-6 space-y-4 shadow-2xl border border-border outline-none"
+      >
         <div className="flex items-center gap-3">
-          <div className="size-11 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+          <div className="size-11 rounded-2xl bg-destructive-soft text-destructive flex items-center justify-center shrink-0">
             <AlertTriangle className="size-5" />
           </div>
           <div>
-            <h3 id="reject-dialog-title" className="font-display font-black text-base text-slate-900">
-              Refuser la commande {orderCode}
+            <h3 id="reject-dialog-title" className="font-display font-black text-base text-heading">
+              {t("rejectModalTitle")} ({orderCode})
             </h3>
-            <p className="text-xs text-slate-500">
-              Sélectionnez le motif opérationnel du refus
+            <p className="text-xs text-muted-foreground">
+              {t("rejectModalDesc")}
             </p>
           </div>
         </div>
 
         {/* Warning note regarding acceptance rate */}
-        <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200/80 text-xs text-amber-900 flex items-start gap-2">
+        <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200/80 text-xs text-amber-900 dark:bg-amber-950/40 dark:border-amber-900 dark:text-amber-200 flex items-start gap-2">
           <AlertCircle className="size-4 shrink-0 text-amber-600 mt-0.5" />
           <p className="leading-relaxed">
-            <strong>Impact sur le profil :</strong> Les refus et les expirations de commande sont comptabilisés dans votre taux d&apos;acceptation mensuel (taux minimum recommandé : 85%).
+            {t("rejectWarningRate")}
           </p>
         </div>
 
         {/* Reason choices */}
         <div className="space-y-2">
           <label className="text-xs font-bold text-heading block">
-            Motif de non-prise en charge
+            {t("rejectReasonLabel")}
           </label>
           <div className="grid gap-2">
             {PRESET_REASONS.map((reason) => (
@@ -101,7 +126,7 @@ export function OrderRejectDialog({
             <textarea
               value={customText}
               onChange={(e) => setCustomText(e.target.value)}
-              placeholder="Précisez la raison pour l'équipe SafiHub..."
+              placeholder={t("rejectReasonPlaceholder")}
               rows={2}
               className="w-full mt-2 p-2.5 rounded-xl border border-border-strong text-xs text-foreground placeholder:text-muted-foreground focus:outline-primary"
             />
@@ -116,13 +141,13 @@ export function OrderRejectDialog({
             onClick={onClose}
             className="text-xs font-semibold"
           >
-            Annuler
+            {t("cancel")}
           </Button>
           <Button
             type="button"
             disabled={isPending || (selectedPreset === "Autre motif" && !customText.trim())}
             onClick={handleConfirm}
-            className="text-xs font-bold bg-destructive hover:bg-destructive/90 text-white min-w-[120px]"
+            className="text-xs font-bold bg-destructive hover:bg-destructive/90 text-primary-foreground min-w-[120px]"
           >
             {isPending ? (
               <>
@@ -130,7 +155,7 @@ export function OrderRejectDialog({
                 Refus en cours...
               </>
             ) : (
-              "Confirmer le refus"
+              t("confirmReject")
             )}
           </Button>
         </div>

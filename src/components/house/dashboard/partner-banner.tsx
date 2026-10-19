@@ -27,21 +27,36 @@ interface PartnerBannerProps {
       badgeClass: string;
     };
   };
+  isPaused?: boolean;
+  isPauseDialogOpen?: boolean;
+  onOpenPauseDialog?: () => void;
+  onClosePauseDialog?: () => void;
+  onPauseChanged?: (paused: boolean) => void;
 }
 
 function getStoredCover(houseId: string): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return localStorage.getItem(`safihub_house_cover_${houseId}`);
+    const val = localStorage.getItem(`safihub_house_cover_${houseId}`);
+    return val && !val.startsWith("blob:") ? val : null;
   } catch {
     return null;
   }
 }
 
-export function PartnerBanner({ house }: PartnerBannerProps) {
+const noopSubscribe = () => () => {};
+
+export function PartnerBanner({
+  house,
+  isPaused: liftedIsPaused,
+  isPauseDialogOpen: liftedIsPauseDialogOpen,
+  onOpenPauseDialog,
+  onClosePauseDialog,
+  onPauseChanged,
+}: PartnerBannerProps) {
   const [uploadedCoverUrl, setUploadedCoverUrl] = useState<string | null>(null);
   const storedCover = useSyncExternalStore(
-    () => () => {},
+    noopSubscribe,
     () => getStoredCover(house.id),
     () => null
   );
@@ -49,8 +64,12 @@ export function PartnerBanner({ house }: PartnerBannerProps) {
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [stagedPreviewUrl, setStagedPreviewUrl] = useState<string | null>(null);
-  const [isPauseDialogOpen, setIsPauseDialogOpen] = useState(false);
-  const [isPausedState, setIsPausedState] = useState(house.isPaused);
+  const [internalPauseDialogOpen, setInternalPauseDialogOpen] = useState(false);
+  const [internalPausedState, setInternalPausedState] = useState(house.isPaused);
+
+  const isPausedState = liftedIsPaused ?? internalPausedState;
+  const isPauseDialogOpen = liftedIsPauseDialogOpen ?? internalPauseDialogOpen;
+
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,10 +94,12 @@ export function PartnerBanner({ house }: PartnerBannerProps) {
 
   function handleSaveCover(newUrl: string) {
     setUploadedCoverUrl(newUrl);
-    try {
-      localStorage.setItem(`safihub_house_cover_${house.id}`, newUrl);
-    } catch {
-      // ignore
+    if (!newUrl.startsWith("blob:")) {
+      try {
+        localStorage.setItem(`safihub_house_cover_${house.id}`, newUrl);
+      } catch {
+        // ignore
+      }
     }
   }
 
@@ -89,8 +110,13 @@ export function PartnerBanner({ house }: PartnerBannerProps) {
         isPaused: targetPause,
       });
       if (res.ok) {
-        setIsPausedState(targetPause);
-        setIsPauseDialogOpen(false);
+        setInternalPausedState(targetPause);
+        onPauseChanged?.(targetPause);
+        if (onClosePauseDialog) {
+          onClosePauseDialog();
+        } else {
+          setInternalPauseDialogOpen(false);
+        }
       }
     });
   }
@@ -141,7 +167,7 @@ export function PartnerBanner({ house }: PartnerBannerProps) {
             <PartnerBannerActions
               slug={house.slug}
               isPaused={isPausedState}
-              onOpenPauseDialog={() => setIsPauseDialogOpen(true)}
+              onOpenPauseDialog={onOpenPauseDialog ?? (() => setInternalPauseDialogOpen(true))}
             />
           </div>
 
@@ -167,7 +193,7 @@ export function PartnerBanner({ house }: PartnerBannerProps) {
       {/* Confirmation dialog for pause toggle */}
       <PartnerPauseDialog
         isOpen={isPauseDialogOpen}
-        onClose={() => setIsPauseDialogOpen(false)}
+        onClose={onClosePauseDialog ?? (() => setInternalPauseDialogOpen(false))}
         isPaused={isPausedState}
         onConfirm={() => handleTogglePause(!isPausedState)}
         isPending={isPending}

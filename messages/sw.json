@@ -18,6 +18,16 @@
       "sw": "Kiswahili"
     }
   },
+  "appShell": {
+    "topBar": {
+      "soundDisableAria": "Zima arifa za sauti",
+      "soundEnableAria": "Washa arifa za sauti",
+      "soundEnabledTitle": "Sauti imewashwa (bofya ili kuzima)",
+      "soundDisabledTitle": "Sauti imezimwa (bofya ili kuwasha)",
+      "userMenuAria": "Menyu ya akaunti ya mtumiaji",
+      "logout": "Ondoka"
+    }
+  },
   "preferences": {
     "title": "Ufikivu na Mapendeleo",
     "shortcut": "Alt+A",
@@ -1374,7 +1384,8 @@
       "selectHouse": "Kichagua dobi",
       "allHouses": "Madobi yote ya washirika",
       "clientView": "Tazama ukurasa wa umma",
-      "back": "Rudi"
+      "back": "Rudi",
+      "pressingsCount": "{count, plural, =1 {duka 1 la dobi} other {maduka # ya dobi}}"
     },
     "nav": {
       "title": "Eneo la Pressing",
@@ -1403,6 +1414,8 @@
       "title": "Dashibodi",
       "subtitle": "Fuatilia maagizo yako, muda wa kukubali, na mzigo wa kazi wa leo",
       "waitingTitle": "Maagizo Yanayosubiri Kukubaliwa",
+      "waitingSubtitle": "Maagizo ya hivi karibuni yanayohitaji uthibitisho wako",
+      "viewAllWithCount": "Tazama yote ({count})",
       "remainingTime": "Muda uliosalia",
       "timeExpired": "Muda umeisha",
       "todayWorkload": "Mzigo wa Kazi wa Leo",
@@ -1420,7 +1433,33 @@
       "configureHours": "Saa za Kazi",
       "housePaused": "Pressing Imesitishwa",
       "houseActive": "Pressing Imefunguliwa",
-      "noWaitingOrders": "Hakuna maagizo yanayosubiri kukubaliwa kwa sasa."
+      "noWaitingOrders": "Hakuna maagizo yanayosubiri kukubaliwa kwa sasa.",
+      "noWaitingOrdersDesc": "Maagizo yote yanayoingia yamechakatwa.",
+      "missedRecent": "Maagizo ya hivi karibuni yaliyopitwa na wakati",
+      "missedRecentDesc": "Maagizo haya yalipitisha muda wa dakika 45 bila jibu.",
+      "expiredBadge": "Imeisha muda",
+      "acceptSuccessNotice": "Agizo limekubaliwa kwa mafanikio!",
+      "view": "Tazama",
+      "error": {
+        "title": "Hitilafu imetokea",
+        "description": "Imeshindikana kupakia data za dashibodi ya dobi.",
+        "retry": "Jaribu tena"
+      }
+    },
+    "alerts": {
+      "priorityAlertsAria": "Arifa za kipaumbele za dobi",
+      "dismissAria": "Ondoa arifa hii",
+      "manage": "Simamia",
+      "expiringOrderTitle": "Agizo la dharura linalosubiri kukubaliwa",
+      "expiringOrderMessage": "Agizo {code} linaisha muda baada ya dakika {mins}. Thibitisha haraka ili kudumisha kiwango chako cha ukubalifu.",
+      "capacityWarningTitle": "Uwezo wa kila siku unakaribia kufikiwa",
+      "capacityWarningMessage": "Maagizo {count} kati ya {total} yamekubaliwa leo ({percent}%).",
+      "missingHoursTitle": "Masaa ya kazi hayajawekwa",
+      "missingHoursMessage": "Weka masaa yako ya kufungua ili kuwezesha ulinzi wa muda wa usiku.",
+      "unpricedItemsTitle": "Bidhaa za orodha zisizo na bei",
+      "unpricedItemsMessage": "Bidhaa {count} katika orodha yako bado hazina bei iliyowekwa.",
+      "housePausedTitle": "Mapokezi ya maagizo mapya yamesitishwa",
+      "housePausedMessage": "Duka lako la dobi limesitishwa kwa muda. Maagizo yanayoendelea bado yanaendelea."
     },
     "orders": {
       "title": "Maagizo ya Karakana",
@@ -1505,7 +1544,49 @@
       "issueSuccess": "Tatizo limeripotiwa",
       "markReceivedSuccess": "Nguo zimepokelewa dobi",
       "startWashingSuccess": "Ufuaji umeanza",
-      "markReadySuccess": "Agizo limewekwa tayari"
+      "markReadySuccess": "Agizo limewekwa tayari",
+      "newOrderNotification": "Agizo jipya la SafiHub #{code} limefika hivi punde.",
+      "secondaryActionsAria": "Menyu ya vitendo vya ziada kwa agizo",
+      "tabsAriaLabel": "Chuja maagizo kwa hatua ya usindikaji",
+      "paginationAria": "Urambazaji wa kurasa za maagizo",
+      "paginationRange": "Inaonyesha {from}–{to} kati ya maagizo {total}",
+      "rowsPerPage": "Safu kwa kila ukurasa",
+      "previousPage": "Ukurasa uliopita",
+      "nextPage": "Ukurasa unaofuata",
+      "previous": "Iliyopita",
+      "next": "Inayofuata",
+      "thOrder": "Agizo",
+      "thCustomer": "Mteja & Mtaa",
+      "thItemsServices": "Vitu & Huduma",
+      "thDeadline": "Muda wa mwisho / Tarehe iliyoahidiwa",
+      "thAmountShare": "Kiasi / Fungu la dobi",
+      "thAction": "Kitendo kikuu",
+      "thActionsSecondary": "Vitendo",
+      "tagPromised": "Iliyoahidiwa",
+      "tagPickup": "Mkusanyiko",
+      "soundEnabledTitle": "Sauti imewashwa (bofya ili kuzima)",
+      "soundDisabledTitle": "Sauti imezimwa (bofya ili kuwasha)",
+      "refreshOrdersAria": "Onyesha upya orodha ya maagizo",
+      "privacyNoticeCreated": "Ulinzi wa Faragha: Maelezo kamili ya mawasiliano ya mteja yanaonekana tu baada ya agizo kukubaliwa.",
+      "privacyNoticeAccepted": "Ulinzi wa Faragha: Maelezo ya mawasiliano ya mteja yanaonekana kusaidia uratibu wa agizo lako lililokubaliwa.",
+      "financialTitle": "Mchanganuo wa kifedha wa agizo",
+      "financialTotalClient": "Jumla iliyolipwa na mteja",
+      "financialCommission": "Ada ya SafiHub ({percent}%)",
+      "financialPartnerShare": "Fungu halisi la duka lako",
+      "itemsHeader": "Vitu vilivyokabidhiwa ({count})",
+      "itemsLoading": "Inapakia maelezo ya vitu...",
+      "itemsStandardFabric": "Kawaida",
+      "itemsStandardService": "Ufuaji wa kawaida",
+      "itemsQuantity": "Idadi: {count}",
+      "timelineTitle": "Historia ya hatua za agizo",
+      "close": "Funga",
+      "ticketScanNote": "Changanua msimbo huu wakati wa kumkabidhi mjumbe au kupata agizo",
+      "phone": "Simu",
+      "services": "Huduma",
+      "promisedDate": "Tarehe iliyoahidiwa",
+      "orderCodeLabel": "Agizo {code}",
+      "issueDetailsPlaceholder": "Eleza kwa kina tatizo lililogunduliwa kwenye agizo hili...",
+      "optionalDetailsPlaceholder": "Maelezo ya hiari au maagizo..."
     },
     "reception": {
       "title": "Hesabu ya Mapokezi (AC 10)",

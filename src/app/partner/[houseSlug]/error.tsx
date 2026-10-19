@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 export default function PartnerDashboardError({
@@ -11,6 +12,8 @@ export default function PartnerDashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("house.dashboard.error");
+
   useEffect(() => {
     console.error("Partner dashboard error:", error);
   }, [error]);
@@ -26,11 +29,10 @@ export default function PartnerDashboardError({
 
       <div className="space-y-1">
         <h2 className="font-display font-black text-lg text-heading">
-          Impossible de charger le tableau de bord
+          {t("title")}
         </h2>
         <p className="text-xs sm:text-sm text-foreground max-w-md mx-auto">
-          Une erreur temporaire est survenue lors de la récupération des données de votre pressing.
-          Veuillez réessayer ou vérifier votre connexion internet.
+          {t("description")}
         </p>
       </div>
 
@@ -41,7 +43,7 @@ export default function PartnerDashboardError({
           className="rounded-xl font-bold bg-primary hover:bg-primary-hover text-primary-foreground text-xs px-5 h-10 gap-2 cursor-pointer"
         >
           <RotateCcw className="size-4" />
-          <span>Réessayer</span>
+          <span>{t("retry")}</span>
         </Button>
       </div>
     </div>

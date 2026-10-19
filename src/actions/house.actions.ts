@@ -514,14 +514,22 @@ export async function toggleHousePauseAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
-  const { updateHouse } = await import("@/dal");
-  await updateHouse(authCtx.value.houseId, {
-    isPaused: parsed.data.isPaused,
-    pausedUntil: null,
-  });
+  try {
+    const { updateHouse } = await import("@/dal");
+    await updateHouse(authCtx.value.houseId, {
+      isPaused: parsed.data.isPaused,
+      pausedUntil: null,
+    });
 
-  revalidatePath("/partner", "layout");
-  revalidatePath("/houses");
-  return ok(undefined);
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
+    return ok(undefined);
+  } catch (error) {
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Erreur lors de la mise à jour du statut de pause."
+    );
+  }
 }
 

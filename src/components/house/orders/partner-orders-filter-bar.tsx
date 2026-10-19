@@ -98,7 +98,7 @@ export function PartnerOrdersFilterBar({
         <button
           type="button"
           onClick={onToggleSound}
-          title={soundEnabled ? "Son activé (cliquer pour couper)" : "Son désactivé (cliquer pour activer)"}
+          title={soundEnabled ? t("soundEnabledTitle") : t("soundDisabledTitle")}
           aria-label={t("soundToggle")}
           className={`inline-flex items-center justify-center p-2 rounded-xl border min-w-[44px] min-h-[44px] sm:min-w-[38px] sm:min-h-[38px] transition-colors cursor-pointer ${
             soundEnabled
@@ -118,7 +118,7 @@ export function PartnerOrdersFilterBar({
           type="button"
           onClick={onRefresh}
           disabled={isRefreshing}
-          aria-label="Actualiser les commandes"
+          aria-label={t("refreshOrdersAria")}
           className="inline-flex items-center justify-center p-2 rounded-xl border border-border bg-surface hover:bg-card text-muted-foreground hover:text-foreground min-w-[44px] min-h-[44px] sm:min-w-[38px] sm:min-h-[38px] transition-colors cursor-pointer"
         >
           <RefreshCw className={`size-4 ${isRefreshing ? "animate-spin text-primary" : ""}`} />

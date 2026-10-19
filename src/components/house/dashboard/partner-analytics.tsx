@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { BarChart3, AlertTriangle, Star } from "lucide-react";
 import { formatAmount } from "@/lib/order-formatters";
 import type { HouseDashboardMetrics } from "@/dal";
@@ -11,18 +10,16 @@ interface PartnerAnalyticsProps {
 }
 
 export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
-  const [period, setPeriod] = useState<"7d" | "30d">("7d");
-
   const capacity = metrics.dailyCapacity ?? 30; // fallback to standard threshold if null
   const used = metrics.todayOrdersCount;
   const capacityPercent = Math.min(100, Math.round((used / capacity) * 100));
   const isHighCapacity = capacityPercent >= 80;
 
-  const maxRevenue = Math.max(...metrics.dailyChart.map((d) => d.revenueCDF), 1000);
+  const maxRevenue = Math.max(...metrics.dailyChart.map((d) => d.revenueCDF ?? 0), 1000);
 
   return (
     <div className="grid lg:grid-cols-3 gap-4 font-sans">
-      {/* 1. Accessible Bar Chart (7j / 30j) */}
+      {/* 1. Accessible Bar Chart (7 derniers jours) */}
       <div className="lg:col-span-2 p-5 rounded-3xl bg-card border border-border shadow-xs space-y-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -34,34 +31,9 @@ export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
                 Commandes & Revenus
               </h3>
               <p className="text-xs text-muted-foreground">
-                Évolution des volumes traités ({period === "7d" ? "7 derniers jours" : "30 derniers jours"})
+                Évolution des volumes traités (7 derniers jours)
               </p>
             </div>
-          </div>
-
-          <div className="inline-flex rounded-xl bg-secondary p-0.5 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => setPeriod("7d")}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                period === "7d"
-                  ? "bg-card text-heading shadow-xs"
-                  : "text-muted-foreground hover:text-heading"
-              }`}
-            >
-              7 j
-            </button>
-            <button
-              type="button"
-              onClick={() => setPeriod("30d")}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                period === "30d"
-                  ? "bg-card text-heading shadow-xs"
-                  : "text-muted-foreground hover:text-heading"
-              }`}
-            >
-              30 j
-            </button>
           </div>
         </div>
 
@@ -69,7 +41,10 @@ export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
         <div className="space-y-3 pt-2">
           <div className="h-44 flex items-end justify-between gap-2 sm:gap-4 px-2 pt-4 border-b border-border">
             {metrics.dailyChart.map((point) => {
-              const heightPercent = Math.max(8, Math.round((point.revenueCDF / maxRevenue) * 100));
+              const rev = point.revenueCDF ?? 0;
+              const heightPercent = Math.max(8, Math.round((rev / maxRevenue) * 100));
+              const revLabel = point.revenueCDF !== null ? formatAmount(point.revenueCDF) : "--";
+              const countLabel = point.ordersCount !== null ? `${point.ordersCount} cmd(s)` : "--";
 
               return (
                 <div
@@ -78,15 +53,15 @@ export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
                 >
                   {/* Tooltip on hover/focus */}
                   <div className="absolute -top-12 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity bg-heading text-background text-[10px] font-bold py-1 px-2 rounded-lg pointer-events-none whitespace-nowrap z-20 shadow-md">
-                    <div>{formatAmount(point.revenueCDF)}</div>
-                    <div className="text-muted-foreground font-normal">{point.ordersCount} cmd(s)</div>
+                    <div>{revLabel}</div>
+                    <div className="text-muted-foreground font-normal">{countLabel}</div>
                   </div>
 
                   {/* Visual Bar with accessible aria-label - Solid Royal Indigo, strictly no gradients */}
                   <div
                     tabIndex={0}
                     role="img"
-                    aria-label={`${point.label} : ${point.ordersCount} commandes, ${formatAmount(point.revenueCDF)}`}
+                    aria-label={`${point.label} : ${countLabel}, ${revLabel}`}
                     style={{ height: `${heightPercent}%` }}
                     className="w-full max-w-[36px] rounded-t-lg bg-primary hover:bg-primary-hover transition-all cursor-pointer focus:outline-ring"
                   />

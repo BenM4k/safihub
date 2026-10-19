@@ -15,6 +15,7 @@ export function OrderAcceptanceDetails({
     ? new Date(order.pickupSlotStart).toLocaleTimeString("fr-FR", {
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: "Africa/Lubumbashi",
       })
     : null;
 
@@ -23,6 +24,7 @@ export function OrderAcceptanceDetails({
         weekday: "short",
         day: "numeric",
         month: "short",
+        timeZone: "Africa/Lubumbashi",
       })
     : null;
 

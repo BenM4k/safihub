@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type {
   PartnerOrderListItemDTO,
   PartnerOrderTab,
@@ -19,18 +20,39 @@ import {
   startPartnerOrderWashingAction,
 } from "@/actions/partner-orders.actions";
 
+const VALID_TABS: PartnerOrderTab[] = [
+  "to_accept",
+  "to_collect",
+  "in_treatment",
+  "ready",
+  "delivered",
+  "failed",
+];
+const VALID_SORTS = ["deadline", "promised", "recent"] as const;
+
 export function usePartnerOrders(
   initialOrders: PartnerOrderListItemDTO[],
   initialCounts: PartnerOrderTabCounts,
-  houseSlug: string
+  houseSlug: string,
+  customTranslator?: (key: string, params?: Record<string, string | number | boolean>) => string
 ) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const defaultT = useTranslations("house.orders");
+  const t = customTranslator ?? defaultT;
 
-  const currentTab = (searchParams.get("tab") as PartnerOrderTab) || "to_accept";
+  const rawTab = searchParams.get("tab");
+  const currentTab: PartnerOrderTab = VALID_TABS.includes(rawTab as PartnerOrderTab)
+    ? (rawTab as PartnerOrderTab)
+    : "to_accept";
+
   const currentSearch = searchParams.get("search") || "";
   const currentDate = searchParams.get("date") || "";
-  const currentSort = (searchParams.get("sort") as "deadline" | "promised" | "recent") || "promised";
+
+  const rawSort = searchParams.get("sort");
+  const currentSort = VALID_SORTS.includes(rawSort as (typeof VALID_SORTS)[number])
+    ? (rawSort as (typeof VALID_SORTS)[number])
+    : "promised";
 
   const pageParam = parseInt(searchParams.get("page") || "1", 10);
   const currentPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
@@ -47,11 +69,14 @@ export function usePartnerOrders(
   const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const [, startTransition] = useTransition();
-  const previousOrderIdsRef = useRef<Set<string>>(new Set(initialOrders.map((o) => o.id)));
 
+  const knownOrderIdsByTabRef = useRef<Map<PartnerOrderTab, Set<string>>>(
+    new Map([[currentTab, new Set(initialOrders.map((o) => o.id))]])
+  );
+  const previousTabRef = useRef<PartnerOrderTab>(currentTab);
+  const latestRequestIdRef = useRef(0);
   const isFirstRender = useRef(true);
 
-  // Sync state if server passes updated initialOrders or initialCounts
   if (prevInitialOrders !== initialOrders) {
     setPrevInitialOrders(initialOrders);
     setOrders(initialOrders);
@@ -63,22 +88,22 @@ export function usePartnerOrders(
   }
 
   useEffect(() => {
-    previousOrderIdsRef.current = new Set(initialOrders.map((o) => o.id));
-  }, [initialOrders]);
+    const existing = knownOrderIdsByTabRef.current.get(currentTab) ?? new Set();
+    initialOrders.forEach((o) => existing.add(o.id));
+    knownOrderIdsByTabRef.current.set(currentTab, existing);
+  }, [initialOrders, currentTab]);
 
-  // Derived paginated slice
-  const totalItems = orders.length;
-  const paginatedOrders = orders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const totalItems = counts[currentTab] ?? orders.length;
+  const paginatedOrders = orders;
 
-  // Audio & Notification helpers
   function playAudioChime() {
     try {
       const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // A5
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
       gain.gain.setValueAtTime(0.3, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
       osc.connect(gain);
@@ -96,15 +121,17 @@ export function usePartnerOrders(
     }
   }
 
-  // Core fetcher for explicit filters
   const fetchOrdersData = useCallback(
     async (
       tab: PartnerOrderTab,
       search: string,
       date: string,
       sort: "deadline" | "promised" | "recent",
+      page: number,
+      size: number,
       silent = false
     ) => {
+      const requestId = ++latestRequestIdRef.current;
       if (!silent) setIsRefreshing(true);
       try {
         const [ordersRes, countsRes] = await Promise.all([
@@ -114,18 +141,27 @@ export function usePartnerOrders(
             search: search || undefined,
             date: date || undefined,
             sort,
+            page,
+            pageSize: size,
           }),
           getPartnerOrderTabCountsAction({ houseSlug }),
         ]);
 
+        if (requestId !== latestRequestIdRef.current) return;
+
         if (ordersRes.ok) {
-          // Detect new orders
-          const newOrders = ordersRes.value.filter((o) => !previousOrderIdsRef.current.has(o.id));
-          if (newOrders.length > 0 && tab === "to_accept" && soundEnabled && !isFirstRender.current) {
+          const tabKnown = knownOrderIdsByTabRef.current.get(tab) ?? new Set();
+          const isSameTab = previousTabRef.current === tab;
+          const newOrders = ordersRes.value.filter((o) => !tabKnown.has(o.id));
+
+          if (isSameTab && newOrders.length > 0 && tab === "to_accept" && soundEnabled && !isFirstRender.current) {
             playAudioChime();
-            showNotification(`Nouvelle commande : ${newOrders[0].shortReference}`);
+            showNotification(t("newOrderNotification", { code: newOrders[0].shortReference }));
           }
-          previousOrderIdsRef.current = new Set(ordersRes.value.map((o) => o.id));
+
+          ordersRes.value.forEach((o) => tabKnown.add(o.id));
+          knownOrderIdsByTabRef.current.set(tab, tabKnown);
+          previousTabRef.current = tab;
           setOrders(ordersRes.value);
         }
 
@@ -133,21 +169,21 @@ export function usePartnerOrders(
           setCounts(countsRes.value);
         }
       } finally {
-        if (!silent) setIsRefreshing(false);
+        if (!silent && requestId === latestRequestIdRef.current) {
+          setIsRefreshing(false);
+        }
       }
     },
-    [houseSlug, soundEnabled]
+    [houseSlug, soundEnabled, t]
   );
 
-  // Refetch orders & counts preserving scroll
   const refreshData = useCallback(
     async (silent = false) => {
-      await fetchOrdersData(currentTab, currentSearch, currentDate, currentSort, silent);
+      await fetchOrdersData(currentTab, currentSearch, currentDate, currentSort, currentPage, pageSize, silent);
     },
-    [fetchOrdersData, currentTab, currentSearch, currentDate, currentSort]
+    [fetchOrdersData, currentTab, currentSearch, currentDate, currentSort, currentPage, pageSize]
   );
 
-  // Sync state with URL params and immediately refresh data
   function updateUrl(params: {
     tab?: string;
     search?: string;
@@ -157,10 +193,6 @@ export function usePartnerOrders(
     pageSize?: number;
   }) {
     const nextParams = new URLSearchParams(searchParams.toString());
-    const nextTab = (params.tab !== undefined ? params.tab : currentTab) as PartnerOrderTab;
-    const nextSearch = params.search !== undefined ? params.search : currentSearch;
-    const nextDate = params.date !== undefined ? params.date : currentDate;
-    const nextSort = (params.sort !== undefined ? params.sort : currentSort) as "deadline" | "promised" | "recent";
 
     if (params.tab !== undefined) {
       if (params.tab === "to_accept") nextParams.delete("tab");
@@ -186,7 +218,6 @@ export function usePartnerOrders(
       if (params.pageSize === 10) nextParams.delete("pageSize");
       else nextParams.set("pageSize", String(params.pageSize));
     }
-    // When changing filters without explicit page, reset page to 1
     if (
       (params.tab !== undefined ||
         params.search !== undefined ||
@@ -198,9 +229,6 @@ export function usePartnerOrders(
     }
 
     router.replace(`?${nextParams.toString()}`, { scroll: false });
-
-    // Immediately fetch new data without waiting for manual refresh
-    fetchOrdersData(nextTab, nextSearch, nextDate, nextSort, false);
   }
 
   function handlePageChange(newPage: number) {
@@ -211,16 +239,14 @@ export function usePartnerOrders(
     updateUrl({ pageSize: newSize, page: 1 });
   }
 
-  // Automatic refresh on browser history navigation (back/forward)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
-    fetchOrdersData(currentTab, currentSearch, currentDate, currentSort, false);
-  }, [fetchOrdersData, currentTab, currentSearch, currentDate, currentSort]);
+    fetchOrdersData(currentTab, currentSearch, currentDate, currentSort, currentPage, pageSize, false);
+  }, [fetchOrdersData, currentTab, currentSearch, currentDate, currentSort, currentPage, pageSize]);
 
-  // Polling every 25 seconds
   useEffect(() => {
     const timer = setInterval(() => {
       refreshData(true);
@@ -233,14 +259,13 @@ export function usePartnerOrders(
     setTimeout(() => setFeedbackToast(null), 4000);
   }
 
-  // Action handlers
   async function handleAccept(orderId: string) {
     setPendingOrderId(orderId);
     startTransition(async () => {
       const res = await acceptPartnerOrderAction({ houseSlug, orderId });
       setPendingOrderId(null);
       if (res.ok) {
-        showToast("Commande acceptée avec succès");
+        showToast(t("acceptSuccess"));
         refreshData(true);
       } else {
         showToast(res.error, "error");
@@ -252,7 +277,7 @@ export function usePartnerOrders(
   async function handleReject(orderId: string, reason: string) {
     const res = await rejectPartnerOrderAction({ houseSlug, orderId, reason });
     if (res.ok) {
-      showToast("Commande refusée");
+      showToast(t("rejectSuccess"));
       refreshData(true);
     } else {
       throw new Error(res.error);
@@ -265,7 +290,7 @@ export function usePartnerOrders(
       const res = await markPartnerOrderReceivedAction({ houseSlug, orderId });
       setPendingOrderId(null);
       if (res.ok) {
-        showToast("Linge réceptionné au pressing");
+        showToast(t("markReceivedSuccess"));
         refreshData(true);
       } else {
         showToast(res.error, "error");
@@ -280,7 +305,7 @@ export function usePartnerOrders(
       const res = await startPartnerOrderWashingAction({ houseSlug, orderId });
       setPendingOrderId(null);
       if (res.ok) {
-        showToast("Traitement démarré");
+        showToast(t("startWashingSuccess"));
         refreshData(true);
       } else {
         showToast(res.error, "error");
@@ -295,7 +320,7 @@ export function usePartnerOrders(
       const res = await markPartnerOrderReadyAction({ houseSlug, orderId });
       setPendingOrderId(null);
       if (res.ok) {
-        showToast("Commande marquée comme prête");
+        showToast(t("markReadySuccess"));
         refreshData(true);
       } else {
         showToast(res.error, "error");
@@ -310,7 +335,7 @@ export function usePartnerOrders(
       const res = await handoverPartnerOrderToCourierAction({ houseSlug, orderId });
       setPendingOrderId(null);
       if (res.ok) {
-        showToast("Remise au coursier enregistrée");
+        showToast(t("handoverSuccess"));
         refreshData(true);
       } else {
         showToast(res.error, "error");
@@ -322,7 +347,7 @@ export function usePartnerOrders(
   async function handleReportIssue(orderId: string, reason: string, note?: string) {
     const res = await reportPartnerOrderIssueAction({ houseSlug, orderId, reason, note });
     if (res.ok) {
-      showToast("Signalement transmis avec succès");
+      showToast(t("issueSuccess"));
       refreshData(true);
     } else {
       throw new Error(res.error);

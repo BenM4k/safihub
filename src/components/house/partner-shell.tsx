@@ -11,9 +11,15 @@ import {
   Settings,
   ShieldAlert,
 } from "lucide-react";
-import { AppShell, type AppShellNavGroup, type AppShellNavItem, type AppShellUser } from "@/components/layout/app-shell";
+import {
+  AppShell,
+  type AppShellNavGroup,
+  type AppShellNavItem,
+  type AppShellUser,
+} from "@/components/layout/app-shell";
 import { HouseSwitcher } from "./house-switcher";
 import type { HouseMembershipInfo } from "@/dal";
+import { useTranslations } from "next-intl";
 
 interface PartnerShellProps {
   houseSlug: string;
@@ -26,6 +32,28 @@ interface PartnerShellProps {
   children: ReactNode;
 }
 
+function subscribeSound(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener("safihub-sound-toggled", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("safihub-sound-toggled", callback);
+  };
+}
+
+function getSoundSnapshot() {
+  try {
+    const stored = localStorage.getItem("safihub_sound_enabled");
+    return stored !== "false";
+  } catch {
+    return true;
+  }
+}
+
+function getServerSoundSnapshot() {
+  return true;
+}
+
 export function PartnerShell({
   houseSlug,
   houseName,
@@ -36,25 +64,10 @@ export function PartnerShell({
   waitingCount = 0,
   children,
 }: PartnerShellProps) {
-  // Reactive sound preference with useSyncExternalStore
   const soundEnabled = useSyncExternalStore(
-    (callback) => {
-      window.addEventListener("storage", callback);
-      window.addEventListener("safihub-sound-toggled", callback);
-      return () => {
-        window.removeEventListener("storage", callback);
-        window.removeEventListener("safihub-sound-toggled", callback);
-      };
-    },
-    () => {
-      try {
-        const stored = localStorage.getItem("safihub_sound_enabled");
-        return stored !== "false";
-      } catch {
-        return true;
-      }
-    },
-    () => true
+    subscribeSound,
+    getSoundSnapshot,
+    getServerSoundSnapshot,
   );
 
   function handleToggleSound() {
@@ -68,6 +81,8 @@ export function PartnerShell({
     }
   }
 
+  const t = useTranslations("house.nav");
+  const tHeader = useTranslations("house.header");
   const basePath = `/partner/${houseSlug}`;
 
   const sidebarGroups: AppShellNavGroup[] = [
@@ -75,45 +90,45 @@ export function PartnerShell({
       items: [
         {
           href: basePath,
-          label: "Accueil",
+          label: t("dashboard"),
           icon: LayoutDashboard,
           exactMatch: true,
         },
         {
           href: `${basePath}/orders`,
-          label: "Commandes",
+          label: t("orders"),
           icon: ShoppingBag,
           badge: waitingCount > 0 ? waitingCount : null,
           badgeVariant: "warning",
         },
         {
           href: `${basePath}/catalogue`,
-          label: "Catalogue et tarifs",
+          label: t("catalogue"),
           icon: Tag,
         },
         {
           href: `${basePath}/settlements`,
-          label: "Règlements",
+          label: t("settlements"),
           icon: Wallet,
         },
       ],
     },
     {
-      title: "Mon pressing",
+      title: t("title"),
       items: [
         {
           href: `${basePath}/hours`,
-          label: "Horaires et fermetures",
+          label: t("hours"),
           icon: Clock,
         },
         {
           href: `${basePath}/coverage`,
-          label: "Zones couvertes",
+          label: t("coverage"),
           icon: MapPin,
         },
         {
           href: `${basePath}/settings`,
-          label: "Paramètres",
+          label: t("settings"),
           icon: Settings,
         },
       ],
@@ -123,46 +138,46 @@ export function PartnerShell({
   const mobileTabs: AppShellNavItem[] = [
     {
       href: basePath,
-      label: "Accueil",
+      label: t("dashboard"),
       icon: LayoutDashboard,
       exactMatch: true,
     },
     {
       href: `${basePath}/orders`,
-      label: "Commandes",
+      label: t("orders"),
       icon: ShoppingBag,
       badge: waitingCount > 0 ? waitingCount : null,
       badgeVariant: "warning",
     },
     {
       href: `${basePath}/catalogue`,
-      label: "Catalogue",
+      label: t("catalogue"),
       icon: Tag,
     },
     {
       href: `${basePath}/settlements`,
-      label: "Règlements",
+      label: t("settlements"),
       icon: Wallet,
     },
   ];
 
   const moreGroups: AppShellNavGroup[] = [
     {
-      title: "Mon pressing",
+      title: t("title"),
       items: [
         {
           href: `${basePath}/hours`,
-          label: "Horaires et fermetures",
+          label: t("hours"),
           icon: Clock,
         },
         {
           href: `${basePath}/coverage`,
-          label: "Zones couvertes",
+          label: t("coverage"),
           icon: MapPin,
         },
         {
           href: `${basePath}/settings`,
-          label: "Paramètres",
+          label: t("settings"),
           icon: Settings,
         },
       ],
@@ -184,7 +199,7 @@ export function PartnerShell({
       }
       user={user}
       publicViewHref={`/houses/${houseSlug}`}
-      publicViewLabel="Voir ma page publique"
+      publicViewLabel={tHeader("clientView")}
       soundEnabled={soundEnabled}
       onToggleSound={handleToggleSound}
       storageKey="safihub_partner_sidebar_collapsed"
@@ -192,7 +207,7 @@ export function PartnerShell({
         isAdminOverride ? (
           <div className="bg-amber-500 text-white text-xs font-bold px-4 py-1.5 flex items-center justify-center gap-2">
             <ShieldAlert className="size-3.5" />
-            <span>Mode administrateur : consultation et actions au nom du pressing</span>
+            <span>{tHeader("adminModeWarning")}</span>
           </div>
         ) : undefined
       }

@@ -10,6 +10,7 @@ import {
   LogOut,
   ChevronDown,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { logoutAction } from "@/actions/auth.actions";
 import { NotificationsInboxWidget } from "@/components/notifications/notifications-inbox-widget";
@@ -36,6 +37,7 @@ export function AppTopBar({
   onToggleSound,
   className,
 }: AppTopBarProps) {
+  const t = useTranslations("appShell.topBar");
   const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   return (
@@ -53,8 +55,8 @@ export function AppTopBar({
             <button
               type="button"
               onClick={onToggleSound}
-              aria-label={soundEnabled ? "Désactiver les alertes sonores" : "Activer les alertes sonores"}
-              title={soundEnabled ? "Son activé (cliquer pour couper)" : "Son désactivé (cliquer pour activer)"}
+              aria-label={soundEnabled ? t("soundDisableAria") : t("soundEnableAria")}
+              title={soundEnabled ? t("soundEnabledTitle") : t("soundDisabledTitle")}
               className="size-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-heading hover:bg-secondary transition cursor-pointer"
             >
               {soundEnabled ? (
@@ -92,7 +94,7 @@ export function AppTopBar({
               onClick={() => setIsAccountOpen((prev) => !prev)}
               aria-expanded={isAccountOpen}
               aria-haspopup="true"
-              aria-label="Menu du compte utilisateur"
+              aria-label={t("userMenuAria")}
               className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-secondary transition cursor-pointer"
             >
               <div className="size-8 rounded-full bg-primary-soft text-primary flex items-center justify-center font-bold text-xs">
@@ -142,7 +144,7 @@ export function AppTopBar({
                     className="w-full flex items-center gap-2 px-4 py-2 text-xs font-semibold text-destructive hover:bg-destructive-soft transition cursor-pointer"
                   >
                     <LogOut className="size-3.5" />
-                    <span>Déconnexion</span>
+                    <span>{t("logout")}</span>
                   </button>
                 </form>
               </div>

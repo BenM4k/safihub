@@ -145,7 +145,7 @@ export function OrderActions({
                   type="submit"
                   size="sm"
                   disabled={isPending || !rejectReason.trim()}
-                  className="bg-destructive hover:bg-destructive/90 text-white font-semibold text-xs"
+                  className="bg-destructive hover:bg-destructive/90 text-primary-foreground font-semibold text-xs"
                 >
                   {isPending && <Loader2 className="size-3.5 animate-spin mr-1" />}
                   <span>{t("confirmReject")}</span>

@@ -91,7 +91,11 @@ export function PartnerTables({
                       {formatAmount(ord.totalDue)}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
-                      {new Date(ord.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                      {new Date(ord.createdAt).toLocaleDateString("fr-FR", {
+                        day: "numeric",
+                        month: "short",
+                        timeZone: "Africa/Lubumbashi",
+                      })}
                     </span>
                   </div>
                 </div>
@@ -123,7 +127,11 @@ export function PartnerTables({
           <div className="divide-y divide-border overflow-x-auto">
             {upcomingPickups.map((ord) => {
               const slotTime = ord.pickupSlotStart
-                ? new Date(ord.pickupSlotStart).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+                ? new Date(ord.pickupSlotStart).toLocaleTimeString("fr-FR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    timeZone: "Africa/Lubumbashi",
+                  })
                 : "Aujourd'hui";
 
               return (

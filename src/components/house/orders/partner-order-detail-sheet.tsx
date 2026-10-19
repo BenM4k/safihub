@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Clock, Loader2, MapPin, Package, Phone, Shield, User, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, MapPin, Package, Phone, Shield, User, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { PartnerOrderListItemDTO } from "@/dal/partner-order.dal";
 import type { OrderItemRecord, OrderEventRecord } from "@/dal/order.dal";
 import { getPartnerOrderDetailAction } from "@/actions/partner-orders.actions";
-import { formatAmount, formatDateTime, getOrderStatusConfig } from "@/lib/order-formatters";
+import { formatAmount, getOrderStatusConfig } from "@/lib/order-formatters";
+import { useAccessibleDialog } from "./use-accessible-dialog";
+import { OrderDetailFinancials, OrderDetailTimeline } from "./partner-order-detail-parts";
 
 interface PartnerOrderDetailSheetProps {
   order: PartnerOrderListItemDTO | null;
@@ -20,11 +23,20 @@ export function PartnerOrderDetailSheet({
   isOpen,
   onClose,
 }: PartnerOrderDetailSheetProps) {
+  const t = useTranslations("house.orders");
   const [items, setItems] = useState<OrderItemRecord[]>([]);
   const [events, setEvents] = useState<OrderEventRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [prevOrderId, setPrevOrderId] = useState<string | null>(null);
+
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useAccessibleDialog<HTMLDivElement>({
+    isOpen,
+    onClose,
+    initialFocusRef: closeButtonRef,
+    trapTab: true,
+  });
 
   if (isOpen && order && order.id !== prevOrderId) {
     setPrevOrderId(order.id);
@@ -65,7 +77,11 @@ export function PartnerOrderDetailSheet({
       aria-labelledby="order-sheet-title"
       className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex justify-end animate-in fade-in"
     >
-      <div className="w-full max-w-lg bg-card h-full shadow-2xl border-l border-border flex flex-col font-sans overflow-hidden animate-in slide-in-from-right duration-200">
+      <div
+        ref={containerRef}
+        tabIndex={-1}
+        className="w-full max-w-lg bg-card h-full shadow-2xl border-l border-border flex flex-col font-sans overflow-hidden animate-in slide-in-from-right duration-200 outline-none"
+      >
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between gap-3">
           <div className="space-y-1 min-w-0">
@@ -81,9 +97,10 @@ export function PartnerOrderDetailSheet({
             <p className="text-xs text-muted-foreground font-mono truncate">{order.code}</p>
           </div>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t("close")}
             className="text-muted-foreground hover:text-foreground p-2 rounded-xl hover:bg-surface transition-colors cursor-pointer"
           >
             <X className="size-5" />
@@ -97,9 +114,9 @@ export function PartnerOrderDetailSheet({
             <Shield className="size-4 text-primary shrink-0 mt-0.5" />
             <div className="text-muted-foreground">
               {order.status === "created" ? (
-                <span><strong>Protection AC 15 :</strong> Coordonnées complètes masquées avant acceptation.</span>
+                <span><strong>AC 15 :</strong> {t("privacyNoticeCreated")}</span>
               ) : (
-                <span><strong>Acceptée :</strong> Coordonnées client débloquées pour coordination pressing.</span>
+                <span><strong>{t("actionAccept")} :</strong> {t("privacyNoticeAccepted")}</span>
               )}
             </div>
           </div>
@@ -127,35 +144,25 @@ export function PartnerOrderDetailSheet({
           </div>
 
           {/* Financial Breakdown */}
-          <div className="p-3.5 bg-surface rounded-xl border border-border space-y-2">
-            <h3 className="font-bold text-heading uppercase tracking-wider text-[11px]">Règlement & Rémunération</h3>
-            <div className="space-y-1.5 pt-1">
-              <div className="flex justify-between text-muted-foreground">
-                <span>Total facturé au client :</span>
-                <span className="font-semibold text-foreground">{formatAmount(order.totalDue, order.currency)}</span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Commission SafiHub ({order.commissionBps / 100}%) :</span>
-                <span className="text-destructive font-medium">-{formatAmount(order.commissionAmount, order.currency)}</span>
-              </div>
-              <div className="flex justify-between pt-1.5 border-t border-border font-bold text-sm">
-                <span className="text-primary">Votre part atelier :</span>
-                <span className="text-primary font-black font-mono">{formatAmount(order.netPartnerShare, order.currency)}</span>
-              </div>
-            </div>
-          </div>
+          <OrderDetailFinancials
+            order={order}
+            title={t("financialTitle")}
+            totalClientLabel={t("financialTotalClient")}
+            commissionLabel={t("financialCommission", { percent: order.commissionBps / 100 })}
+            partnerShareLabel={t("financialPartnerShare")}
+          />
 
           {/* Items breakdown */}
           <div className="space-y-2">
             <h3 className="font-bold text-heading uppercase tracking-wider text-[11px] flex items-center gap-1.5">
               <Package className="size-3.5 text-primary" />
-              <span>Articles ({items.length || order.itemsCount})</span>
+              <span>{t("itemsHeader", { count: items.length || order.itemsCount })}</span>
             </h3>
 
             {isLoading ? (
               <div className="p-6 text-center text-muted-foreground">
                 <Loader2 className="size-5 animate-spin mx-auto mb-1 text-primary" />
-                <span>Chargement des articles...</span>
+                <span>{t("itemsLoading")}</span>
               </div>
             ) : errorMsg ? (
               <div className="p-3 bg-destructive-soft text-destructive rounded-xl text-xs">{errorMsg}</div>
@@ -170,12 +177,12 @@ export function PartnerOrderDetailSheet({
                         {it.itemNameFr ?? it.customLabel ?? "Article"}
                       </div>
                       <div className="text-[11px] text-muted-foreground">
-                        {it.fabricNameFr ?? "Standard"} • {it.serviceNameFr ?? "Lavage"}
+                        {it.fabricNameFr ?? t("itemsStandardFabric")} • {it.serviceNameFr ?? t("itemsStandardService")}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-black text-foreground">
-                        Qté: {it.receivedQuantity ?? it.declaredQuantity}
+                        {t("itemsQuantity", { count: it.receivedQuantity ?? it.declaredQuantity })}
                       </div>
                       <div className="text-[11px] text-muted-foreground">
                         {formatAmount(it.unitPrice)}
@@ -188,22 +195,10 @@ export function PartnerOrderDetailSheet({
           </div>
 
           {/* Timeline */}
-          {events.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-border">
-              <h3 className="font-bold text-heading uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                <Clock className="size-3.5 text-primary" />
-                <span>Historique des étapes</span>
-              </h3>
-              <div className="space-y-2 pl-2 border-l-2 border-border ml-1">
-                {events.map((ev) => (
-                  <div key={ev.id} className="pl-3 space-y-0.5">
-                    <div className="font-semibold text-foreground">{ev.note || ev.type}</div>
-                    <div className="text-[10px] text-muted-foreground">{formatDateTime(ev.createdAt)}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <OrderDetailTimeline
+            events={events}
+            title={t("timelineTitle")}
+          />
         </div>
       </div>
     </div>

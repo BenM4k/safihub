@@ -18,6 +18,16 @@
       "sw": "Kiswahili"
     }
   },
+  "appShell": {
+    "topBar": {
+      "soundDisableAria": "Disable sound alerts",
+      "soundEnableAria": "Enable sound alerts",
+      "soundEnabledTitle": "Sound enabled (click to mute)",
+      "soundDisabledTitle": "Sound disabled (click to enable)",
+      "userMenuAria": "User account menu",
+      "logout": "Log out"
+    }
+  },
   "preferences": {
     "title": "Accessibility",
     "shortcut": "Alt+A",
@@ -1374,7 +1384,8 @@
       "selectHouse": "House Selector",
       "allHouses": "All Partner Pressings",
       "clientView": "View public page",
-      "back": "Back"
+      "back": "Back",
+      "pressingsCount": "{count, plural, =1 {1 laundry house} other {# laundry houses}}"
     },
     "nav": {
       "title": "Pressing Portal",
@@ -1403,6 +1414,8 @@
       "title": "Dashboard",
       "subtitle": "Track your orders, acceptance deadlines, and daily workload",
       "waitingTitle": "Orders Awaiting Acceptance",
+      "waitingSubtitle": "Recent orders requiring your confirmation",
+      "viewAllWithCount": "View all ({count})",
       "remainingTime": "Time remaining",
       "timeExpired": "Expired",
       "todayWorkload": "Today's Workload",
@@ -1420,7 +1433,33 @@
       "configureHours": "Opening Hours",
       "housePaused": "Pressing Paused",
       "houseActive": "Pressing Open",
-      "noWaitingOrders": "No orders awaiting acceptance right now."
+      "noWaitingOrders": "No orders awaiting acceptance right now.",
+      "noWaitingOrdersDesc": "All incoming orders have been processed.",
+      "missedRecent": "Recent orders missed past deadline",
+      "missedRecentDesc": "These orders exceeded the 45-minute acceptance window without response.",
+      "expiredBadge": "Expired",
+      "acceptSuccessNotice": "Order accepted successfully!",
+      "view": "View",
+      "error": {
+        "title": "An error occurred",
+        "description": "Unable to load laundry house dashboard data.",
+        "retry": "Try again"
+      }
+    },
+    "alerts": {
+      "priorityAlertsAria": "Laundry house priority alerts",
+      "dismissAria": "Dismiss this alert",
+      "manage": "Manage",
+      "expiringOrderTitle": "Urgent order awaiting acceptance",
+      "expiringOrderMessage": "Order {code} expires in {mins} min. Confirm quickly to maintain your acceptance rate.",
+      "capacityWarningTitle": "Daily capacity nearly reached",
+      "capacityWarningMessage": "{count} out of {total} orders accepted today ({percent}%).",
+      "missingHoursTitle": "Operating hours not set",
+      "missingHoursMessage": "Set your opening hours to enable overnight deadline protection.",
+      "unpricedItemsTitle": "Catalogue items without prices",
+      "unpricedItemsMessage": "{count} item(s) in your catalogue do not have a price set yet.",
+      "housePausedTitle": "New orders paused",
+      "housePausedMessage": "Your laundry house is temporarily paused. In-progress orders remain active."
     },
     "orders": {
       "title": "House Orders",
@@ -1505,7 +1544,49 @@
       "issueSuccess": "Issue reported successfully",
       "markReceivedSuccess": "Laundry marked as received",
       "startWashingSuccess": "Treatment started",
-      "markReadySuccess": "Order marked as ready"
+      "markReadySuccess": "Order marked as ready",
+      "newOrderNotification": "A new SafiHub order #{code} has just arrived.",
+      "secondaryActionsAria": "Secondary actions menu for order",
+      "tabsAriaLabel": "Filter orders by fulfillment stage",
+      "paginationAria": "Orders pagination navigation",
+      "paginationRange": "Showing {from}–{to} of {total} orders",
+      "rowsPerPage": "Rows per page",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "previous": "Previous",
+      "next": "Next",
+      "thOrder": "Order",
+      "thCustomer": "Customer & Neighborhood",
+      "thItemsServices": "Items & Services",
+      "thDeadline": "Deadline / Promised Date",
+      "thAmountShare": "Amount / Partner Share",
+      "thAction": "Primary Action",
+      "thActionsSecondary": "Actions",
+      "tagPromised": "Promised",
+      "tagPickup": "Pickup",
+      "soundEnabledTitle": "Sound enabled (click to mute)",
+      "soundDisabledTitle": "Sound disabled (click to enable)",
+      "refreshOrdersAria": "Refresh orders list",
+      "privacyNoticeCreated": "Privacy Notice: Full customer contact details are only revealed once the order is accepted.",
+      "privacyNoticeAccepted": "Privacy Notice: Customer contact details are visible to facilitate logistics for your accepted order.",
+      "financialTitle": "Order financial breakdown",
+      "financialTotalClient": "Total paid by customer",
+      "financialCommission": "SafiHub commission ({percent}%)",
+      "financialPartnerShare": "Net share for your workshop",
+      "itemsHeader": "Entrusted items ({count})",
+      "itemsLoading": "Loading item details...",
+      "itemsStandardFabric": "Standard",
+      "itemsStandardService": "Standard wash",
+      "itemsQuantity": "Qty: {count}",
+      "timelineTitle": "Order event timeline",
+      "close": "Close",
+      "ticketScanNote": "Scan this barcode upon courier handover or to locate the order",
+      "phone": "Phone",
+      "services": "Services",
+      "promisedDate": "Promised date",
+      "orderCodeLabel": "Order {code}",
+      "issueDetailsPlaceholder": "Describe the observed problem with this order in detail...",
+      "optionalDetailsPlaceholder": "Optional additional details or instructions..."
     },
     "reception": {
       "title": "Reception Count (AC 10)",

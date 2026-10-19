@@ -17,6 +17,8 @@ interface PageProps {
     search?: string;
     date?: string;
     sort?: string;
+    page?: string;
+    pageSize?: string;
   }>;
 }
 
@@ -25,7 +27,7 @@ export default async function PartnerOrdersPage({
   searchParams,
 }: PageProps) {
   const { houseSlug } = await params;
-  const { tab, search, date, sort } = await searchParams;
+  const { tab, search, date, sort, page, pageSize } = await searchParams;
 
   const authCtx = await guardHouseRoute({ houseSlug });
   const houseId = authCtx.houseId;
@@ -44,13 +46,21 @@ export default async function PartnerOrdersPage({
     ? sort
     : "promised") as "deadline" | "promised" | "recent";
 
+  const pageNum = parseInt(page || "1", 10);
+  const currentPage = isNaN(pageNum) || pageNum < 1 ? 1 : pageNum;
+  const pageSizeNum = parseInt(pageSize || "10", 10);
+  const validPageSize = [10, 20, 50].includes(pageSizeNum) ? pageSizeNum : 10;
+  const limit = validPageSize;
+  const offset = (currentPage - 1) * limit;
+
   const [ordersRes, countsRes] = await Promise.all([
     listPartnerOrders(houseId, {
       tab: validTab,
       search: search || undefined,
       date: date || undefined,
       sort: validSort,
-      limit: 50,
+      limit,
+      offset,
     }),
     getPartnerOrderTabCounts(houseId),
   ]);

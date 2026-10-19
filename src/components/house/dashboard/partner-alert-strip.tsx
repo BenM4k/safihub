@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, AlertTriangle, ArrowRight, Info, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { HouseDashboardAlert } from "@/dal";
 
 interface PartnerAlertStripProps {
@@ -10,6 +11,7 @@ interface PartnerAlertStripProps {
 }
 
 export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
+  const t = useTranslations("house.alerts");
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
   const activeAlerts = alerts.filter((a) => !dismissedIds.has(a.id));
@@ -27,7 +29,7 @@ export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
   }
 
   return (
-    <div className="space-y-2.5 font-sans" aria-label="Alertes prioritaires">
+    <div className="space-y-2.5 font-sans" aria-label={t("priorityAlertsAria")}>
       {activeAlerts.map((alert) => {
         const isCritical = alert.severity === "critical";
         const isWarning = alert.severity === "warning";
@@ -46,6 +48,12 @@ export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
 
         const Icon = isCritical ? AlertCircle : isWarning ? AlertTriangle : Info;
 
+        type AlertKey = Parameters<typeof t>[0];
+        const title = alert.titleKey ? t(alert.titleKey as AlertKey) : alert.title;
+        const message = alert.messageKey
+          ? t(alert.messageKey as AlertKey, alert.messageParams ?? {})
+          : alert.message;
+
         return (
           <div
             key={alert.id}
@@ -56,10 +64,10 @@ export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
               <Icon className={`size-5 shrink-0 mt-0.5 ${iconColor}`} />
               <div className="space-y-0.5 min-w-0">
                 <p className="text-xs sm:text-sm font-bold leading-tight">
-                  {alert.title}
+                  {title}
                 </p>
                 <p className="text-xs opacity-90 leading-relaxed">
-                  {alert.message}
+                  {message}
                 </p>
               </div>
             </div>
@@ -70,14 +78,14 @@ export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
                   href={alert.link}
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-card hover:bg-surface text-heading shadow-xs border border-border transition"
                 >
-                  <span>Gérer</span>
+                  <span>{t("manage")}</span>
                   <ArrowRight className="size-3" />
                 </Link>
               )}
               <button
                 type="button"
                 onClick={() => handleDismiss(alert.id)}
-                aria-label="Ignorer cette alerte"
+                aria-label={t("dismissAria")}
                 className="size-7 rounded-lg text-muted-foreground hover:text-heading hover:bg-black/5 flex items-center justify-center transition cursor-pointer"
               >
                 <X className="size-4" />

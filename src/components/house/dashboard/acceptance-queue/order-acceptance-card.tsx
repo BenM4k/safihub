@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   Clock,
@@ -27,6 +27,40 @@ interface OrderAcceptanceCardProps {
   onOpenReject: (order: HouseOrderListItemRecord) => void;
 }
 
+// Module-level ticker for 1-second countdowns to ensure stable primitive snapshots
+let currentTimestamp = 0;
+const subscribers = new Set<() => void>();
+let timerId: ReturnType<typeof setInterval> | null = null;
+
+function subscribeToTimer(callback: () => void) {
+  subscribers.add(callback);
+  if (!timerId && typeof window !== "undefined") {
+    currentTimestamp = Date.now();
+    timerId = setInterval(() => {
+      currentTimestamp = Date.now();
+      subscribers.forEach((cb) => cb());
+    }, 1000);
+  }
+  return () => {
+    subscribers.delete(callback);
+    if (subscribers.size === 0 && timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+  };
+}
+
+function getTimerSnapshot() {
+  if (currentTimestamp === 0 && typeof window !== "undefined") {
+    currentTimestamp = Date.now();
+  }
+  return currentTimestamp;
+}
+
+function getServerTimerSnapshot() {
+  return 0;
+}
+
 export function OrderAcceptanceCard({
   order,
   houseSlug,
@@ -35,11 +69,21 @@ export function OrderAcceptanceCard({
   onAccept,
   onOpenReject,
 }: OrderAcceptanceCardProps) {
-  const [now] = useState(() => new Date());
-  const countdown = computeOrderAcceptanceCountdown(
-    order.acceptanceDeadlineAt,
-    now,
+  const timestamp = useSyncExternalStore(
+    subscribeToTimer,
+    getTimerSnapshot,
+    getServerTimerSnapshot,
   );
+  const now = timestamp > 0 ? new Date(timestamp) : null;
+
+  const countdown = now
+    ? computeOrderAcceptanceCountdown(order.acceptanceDeadlineAt, now)
+    : {
+        isExpired: false,
+        minutesRemaining: 45,
+        label: "--",
+        urgency: "normal" as const,
+      };
 
   const shortRef = order.code.startsWith("ORD-")
     ? `#${order.code.slice(4, 8).toUpperCase()}`
@@ -84,13 +128,15 @@ export function OrderAcceptanceCard({
         </div>
 
         {/* Live Countdown Badge */}
-        <div
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border ${countdownBadgeStyle}`}
-          aria-live="polite"
-        >
-          <Clock className="size-3.5 shrink-0" />
-          <span>{countdown.label}</span>
-        </div>
+        {now && (
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border ${countdownBadgeStyle}`}
+            aria-live="polite"
+          >
+            <Clock className="size-3.5 shrink-0" />
+            <span>{countdown.label}</span>
+          </div>
+        )}
       </div>
 
       {/* Customer and details summary */}

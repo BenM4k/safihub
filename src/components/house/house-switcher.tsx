@@ -49,7 +49,7 @@ export function HouseSwitcher({
         aria-label={t("selectHouse")}
         className={cn(
           "flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-secondary hover:border-border-strong transition text-xs font-semibold text-foreground shadow-xs max-w-[220px] sm:max-w-[280px]",
-          isOpen ? "ring-2 ring-primary/20 border-primary bg-white" : ""
+          isOpen ? "ring-2 ring-primary/20 border-primary bg-card" : ""
         )}
       >
         <Building2 className="size-3.5 text-primary shrink-0" />
@@ -76,7 +76,7 @@ export function HouseSwitcher({
               {t("selectHouse")}
             </span>
             <span className="text-[10px] font-semibold text-muted-foreground">
-              {memberships.length} {memberships.length > 1 ? "pressings" : "pressing"}
+              {t("pressingsCount", { count: memberships.length })}
             </span>
           </div>
 

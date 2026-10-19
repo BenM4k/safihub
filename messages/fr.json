@@ -18,6 +18,16 @@
       "sw": "Kiswahili"
     }
   },
+  "appShell": {
+    "topBar": {
+      "soundDisableAria": "Désactiver les alertes sonores",
+      "soundEnableAria": "Activer les alertes sonores",
+      "soundEnabledTitle": "Son activé (cliquer pour couper)",
+      "soundDisabledTitle": "Son désactivé (cliquer pour activer)",
+      "userMenuAria": "Menu du compte utilisateur",
+      "logout": "Déconnexion"
+    }
+  },
   "preferences": {
     "title": "Accessibilité & Préférences",
     "shortcut": "Alt+A",
@@ -1374,7 +1384,8 @@
       "selectHouse": "Sélecteur de maison",
       "allHouses": "Tous les pressings",
       "clientView": "Voir ma page publique",
-      "back": "Retour"
+      "back": "Retour",
+      "pressingsCount": "{count, plural, =1 {1 pressing} other {# pressings}}"
     },
     "nav": {
       "title": "Espace Pressing",
@@ -1403,6 +1414,8 @@
       "title": "Tableau de bord",
       "subtitle": "Suivez vos commandes, vos délais d'acceptation et votre charge du jour",
       "waitingTitle": "Commandes en attente d'acceptation",
+      "waitingSubtitle": "Commandes récentes nécessitant votre confirmation",
+      "viewAllWithCount": "Voir tout ({count})",
       "remainingTime": "Temps restant",
       "timeExpired": "Expiré",
       "todayWorkload": "Charge du jour",
@@ -1420,7 +1433,33 @@
       "configureHours": "Horaires d'ouverture",
       "housePaused": "Pressing en pause",
       "houseActive": "Pressing ouvert",
-      "noWaitingOrders": "Aucune commande en attente d'acceptation pour le moment."
+      "noWaitingOrders": "Aucune commande en attente d'acceptation pour le moment.",
+      "noWaitingOrdersDesc": "Toutes les commandes entrantes ont été traitées.",
+      "missedRecent": "Commandes récentes non acceptées à temps",
+      "missedRecentDesc": "Ces commandes ont dépassé le délai de 45 minutes sans réponse.",
+      "expiredBadge": "Expirée",
+      "acceptSuccessNotice": "Commande acceptée avec succès !",
+      "view": "Voir",
+      "error": {
+        "title": "Une erreur est survenue",
+        "description": "Impossible de charger les données du tableau de bord pressing.",
+        "retry": "Réessayer"
+      }
+    },
+    "alerts": {
+      "priorityAlertsAria": "Alertes prioritaires du pressing",
+      "dismissAria": "Ignorer cette alerte",
+      "manage": "Gérer",
+      "expiringOrderTitle": "Commande urgente à accepter",
+      "expiringOrderMessage": "La commande {code} expire dans {mins} min. Confirmez rapidement pour maintenir votre taux d'acceptation.",
+      "capacityWarningTitle": "Capacité journalière bientôt atteinte",
+      "capacityWarningMessage": "{count} sur {total} commandes acceptées aujourd'hui ({percent}%).",
+      "missingHoursTitle": "Horaires non configurés",
+      "missingHoursMessage": "Configurez vos horaires d'ouverture pour activer la protection des délais de nuit.",
+      "unpricedItemsTitle": "Articles du catalogue sans tarif",
+      "unpricedItemsMessage": "{count} article(s) de votre catalogue n'ont pas encore de prix défini.",
+      "housePausedTitle": "Réception de nouvelles commandes suspendue",
+      "housePausedMessage": "Votre pressing est temporairement en pause. Vos commandes en cours restent actives."
     },
     "orders": {
       "title": "Commandes de l'atelier",
@@ -1505,7 +1544,49 @@
       "issueSuccess": "Signalement enregistré avec succès",
       "markReceivedSuccess": "Linge réceptionné au pressing",
       "startWashingSuccess": "Traitement démarré",
-      "markReadySuccess": "Commande marquée comme prête"
+      "markReadySuccess": "Commande marquée comme prête",
+      "newOrderNotification": "Une nouvelle commande SafiHub #{code} vient d'arriver.",
+      "secondaryActionsAria": "Menu des actions secondaires pour la commande",
+      "tabsAriaLabel": "Filtrer les commandes par étape de traitement",
+      "paginationAria": "Navigation de pagination des commandes",
+      "paginationRange": "Affichage {from}–{to} sur {total} commandes",
+      "rowsPerPage": "Lignes par page",
+      "previousPage": "Page précédente",
+      "nextPage": "Page suivante",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "thOrder": "Commande",
+      "thCustomer": "Client & Quartier",
+      "thItemsServices": "Articles & Prestations",
+      "thDeadline": "Délai / Date promise",
+      "thAmountShare": "Montant / Part atelier",
+      "thAction": "Action principale",
+      "thActionsSecondary": "Actions",
+      "tagPromised": "Promise",
+      "tagPickup": "Collectée",
+      "soundEnabledTitle": "Son activé (cliquer pour couper)",
+      "soundDisabledTitle": "Son désactivé (cliquer pour activer)",
+      "refreshOrdersAria": "Actualiser la liste des commandes",
+      "privacyNoticeCreated": "Protection des données : Les coordonnées complètes du client s'affichent uniquement après acceptation de la commande.",
+      "privacyNoticeAccepted": "Protection des données : Les coordonnées complètes du client sont visibles pour faciliter la logistique de votre commande acceptée.",
+      "financialTitle": "Détail financier de la commande",
+      "financialTotalClient": "Total payé par le client",
+      "financialCommission": "Commission SafiHub ({percent}%)",
+      "financialPartnerShare": "Part nette de votre atelier",
+      "itemsHeader": "Articles confiés ({count})",
+      "itemsLoading": "Chargement du détail des articles...",
+      "itemsStandardFabric": "Standard",
+      "itemsStandardService": "Lavage standard",
+      "itemsQuantity": "Qté : {count}",
+      "timelineTitle": "Historique des étapes de la commande",
+      "close": "Fermer",
+      "ticketScanNote": "Scannez ce code-barres lors de la remise coursier ou pour retrouver la commande",
+      "phone": "Téléphone",
+      "services": "Prestations",
+      "promisedDate": "Date promise",
+      "orderCodeLabel": "Commande {code}",
+      "issueDetailsPlaceholder": "Décrivez précisément le problème constaté sur cette commande...",
+      "optionalDetailsPlaceholder": "Précisions ou instructions optionnelles..."
     },
     "reception": {
       "title": "Comptage de réception (AC 10)",

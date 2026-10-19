@@ -28,7 +28,7 @@ export function PartnerOrdersTabs({
   return (
     <div
       role="tablist"
-      aria-label="Étapes des commandes du pressing"
+      aria-label={t("tabsAriaLabel")}
       className="flex items-center gap-1.5 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar scroll-smooth"
     >
       {tabs.map((tab) => {

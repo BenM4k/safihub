@@ -117,7 +117,7 @@ export function PartnerOrderCard({
       {order.estimatedDeliveryAt && (
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-surface px-2.5 py-1.5 rounded-lg border border-border">
           <Clock className="size-3 text-muted-foreground shrink-0" aria-hidden="true" />
-          <span>Date promise : <strong className="text-heading font-semibold">{formatDateTime(order.estimatedDeliveryAt)}</strong></span>
+          <span>{t("promisedDate")} : <strong className="text-heading font-semibold">{formatDateTime(order.estimatedDeliveryAt)}</strong></span>
         </div>
       )}
 

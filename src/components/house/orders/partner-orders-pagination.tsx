@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 interface PartnerOrdersPaginationProps {
@@ -18,6 +19,8 @@ export function PartnerOrdersPagination({
   onPageChange,
   onPageSizeChange,
 }: PartnerOrdersPaginationProps) {
+  const t = useTranslations("house.orders");
+
   if (totalItems <= 0) return null;
 
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -26,18 +29,18 @@ export function PartnerOrdersPagination({
 
   return (
     <nav
-      aria-label="Pagination des commandes"
+      aria-label={t("paginationAria")}
       className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border text-xs text-muted-foreground font-sans"
     >
       {/* Range and page size */}
       <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
         <span className="font-medium text-foreground">
-          {from}–{to} sur {totalItems}
+          {t("paginationRange", { from, to, total: totalItems })}
         </span>
 
         <div className="flex items-center gap-1.5">
           <label htmlFor="partnerPageSizeSelect" className="text-[11px] text-muted-foreground">
-            Lignes :
+            {t("rowsPerPage")}
           </label>
           <select
             id="partnerPageSizeSelect"
@@ -60,11 +63,11 @@ export function PartnerOrdersPagination({
           size="sm"
           disabled={currentPage <= 1}
           onClick={() => onPageChange(currentPage - 1)}
-          aria-label="Page précédente"
+          aria-label={t("previousPage")}
           className="min-h-[44px] sm:min-h-[36px] px-3 text-xs font-semibold border-border bg-card hover:bg-surface text-foreground gap-1 cursor-pointer disabled:opacity-40"
         >
           <ChevronLeft className="size-4" />
-          <span className="hidden sm:inline">Précédent</span>
+          <span className="hidden sm:inline">{t("previous")}</span>
         </Button>
 
         <span className="px-2 font-mono text-xs font-bold text-heading">
@@ -77,10 +80,10 @@ export function PartnerOrdersPagination({
           size="sm"
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(currentPage + 1)}
-          aria-label="Page suivante"
+          aria-label={t("nextPage")}
           className="min-h-[44px] sm:min-h-[36px] px-3 text-xs font-semibold border-border bg-card hover:bg-surface text-foreground gap-1 cursor-pointer disabled:opacity-40"
         >
-          <span className="hidden sm:inline">Suivant</span>
+          <span className="hidden sm:inline">{t("next")}</span>
           <ChevronRight className="size-4" />
         </Button>
       </div>

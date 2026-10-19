@@ -108,6 +108,36 @@ vi.mock("@/dal", async (importOriginal) => {
         };
       }
 
+      if (houseId === "house-alpha" && orderId === "ord-received") {
+        return {
+          id: "ord-received",
+          code: "ORD-20261015-alpha05",
+          trackingToken: "trk_alpha_05",
+          customerRawName: "Clarisse Baraka",
+          customerFirstName: "Clarisse",
+          neighborhoodId: "neigh-1",
+          neighborhoodName: "Ibanda",
+          status: "received",
+          source: "app",
+          totalDue: 25000,
+          itemsTotal: 20000,
+          adjustedItemsTotal: null,
+          commissionAmount: 4000,
+          commissionBps: 2000,
+          currency: "CDF",
+          pickupSlotStart: new Date(),
+          pickupSlotEnd: new Date(),
+          deliverySlotStart: null,
+          deliverySlotEnd: null,
+          estimatedDeliveryAt: null,
+          acceptanceDeadlineAt: null,
+          receptionDeadlineAt: null,
+          notes: null,
+          createdAt: new Date(),
+          updatedAt: null,
+        };
+      }
+
       if (houseId === "house-alpha" && orderId === "ord-washing") {
         return {
           id: "ord-washing",

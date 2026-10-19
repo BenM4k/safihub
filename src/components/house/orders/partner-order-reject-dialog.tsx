@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AlertTriangle, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { PartnerOrderListItemDTO } from "@/dal/partner-order.dal";
+import { useAccessibleDialog } from "./use-accessible-dialog";
 
 interface PartnerOrderRejectDialogProps {
   order: PartnerOrderListItemDTO | null;
@@ -24,6 +25,30 @@ export function PartnerOrderRejectDialog({
   const [customDetails, setCustomDetails] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const initialRadioRef = useRef<HTMLInputElement>(null);
+
+  const [prevOrderId, setPrevOrderId] = useState(order?.id);
+  if (order?.id !== prevOrderId) {
+    setPrevOrderId(order?.id);
+    setSelectedReason("Capacité journalière atteinte");
+    setCustomDetails("");
+    setErrorMsg(null);
+  }
+
+  function handleClose() {
+    setSelectedReason("Capacité journalière atteinte");
+    setCustomDetails("");
+    setErrorMsg(null);
+    onClose();
+  }
+
+  const containerRef = useAccessibleDialog<HTMLDivElement>({
+    isOpen,
+    onClose: handleClose,
+    initialFocusRef: initialRadioRef,
+    trapTab: true,
+  });
 
   if (!isOpen || !order) return null;
 
@@ -60,7 +85,11 @@ export function PartnerOrderRejectDialog({
       aria-labelledby="reject-dialog-title"
       className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
     >
-      <div className="bg-card rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-border space-y-4 font-sans">
+      <div
+        ref={containerRef}
+        tabIndex={-1}
+        className="bg-card rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-border space-y-4 font-sans outline-none"
+      >
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -74,7 +103,7 @@ export function PartnerOrderRejectDialog({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t("close")}
             className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
           >
             <X className="size-4" />
@@ -95,12 +124,13 @@ export function PartnerOrderRejectDialog({
               {t("rejectReasonLabel")}
             </label>
             <div className="space-y-1.5">
-              {presetReasons.map((reason) => (
+              {presetReasons.map((reason, idx) => (
                 <label
                   key={reason}
                   className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-surface text-xs font-medium cursor-pointer"
                 >
                   <input
+                    ref={idx === 0 ? initialRadioRef : undefined}
                     type="radio"
                     name="rejectReason"
                     value={reason}
@@ -119,7 +149,7 @@ export function PartnerOrderRejectDialog({
               rows={2}
               value={customDetails}
               onChange={(e) => setCustomDetails(e.target.value)}
-              placeholder="Précisions supplémentaires facultatives..."
+              placeholder={t("optionalDetailsPlaceholder")}
               className="w-full text-xs rounded-xl border border-border bg-surface text-foreground p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
@@ -143,7 +173,7 @@ export function PartnerOrderRejectDialog({
               type="submit"
               size="sm"
               disabled={isSubmitting}
-              className="bg-destructive hover:bg-destructive/90 text-white font-bold text-xs min-h-[44px] sm:min-h-[36px]"
+              className="bg-destructive hover:bg-destructive/90 text-primary-foreground font-bold text-xs min-h-[44px] sm:min-h-[36px]"
             >
               {isSubmitting && <Loader2 className="size-3.5 animate-spin mr-1.5" />}
               <span>{t("confirmReject")}</span>

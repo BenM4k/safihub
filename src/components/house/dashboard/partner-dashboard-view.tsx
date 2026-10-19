@@ -18,6 +18,45 @@ interface PartnerDashboardViewProps {
   houseSlug: string;
 }
 
+function subscribeSound(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener("safihub-sound-toggled", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("safihub-sound-toggled", callback);
+  };
+}
+
+function getSoundSnapshot() {
+  try {
+    const stored = localStorage.getItem("safihub_sound_enabled");
+    return stored !== "false";
+  } catch {
+    return true;
+  }
+}
+
+function getServerSoundSnapshot() {
+  return true;
+}
+
+function subscribeOnline(callback: () => void) {
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
+
+function getOnlineSnapshot() {
+  return typeof navigator !== "undefined" ? navigator.onLine : true;
+}
+
+function getServerOnlineSnapshot() {
+  return true;
+}
+
 export function PartnerDashboardView({
   initialMetrics,
   houseSlug,
@@ -25,41 +64,20 @@ export function PartnerDashboardView({
   const router = useRouter();
   const [lastUpdated, setLastUpdated] = useState(() => new Date());
   const prevWaitingCountRef = useRef(initialMetrics.waitingAcceptanceCount);
+  const [isPaused, setIsPaused] = useState(initialMetrics.house.isPaused);
+  const [isPauseDialogOpen, setIsPauseDialogOpen] = useState(false);
   const metrics = initialMetrics;
 
-  // Synchronize soundEnabled from external storage
   const soundEnabled = useSyncExternalStore(
-    (callback) => {
-      window.addEventListener("storage", callback);
-      window.addEventListener("safihub-sound-toggled", callback);
-      return () => {
-        window.removeEventListener("storage", callback);
-        window.removeEventListener("safihub-sound-toggled", callback);
-      };
-    },
-    () => {
-      try {
-        const stored = localStorage.getItem("safihub_sound_enabled");
-        return stored !== "false";
-      } catch {
-        return true;
-      }
-    },
-    () => true
+    subscribeSound,
+    getSoundSnapshot,
+    getServerSoundSnapshot,
   );
 
-  // Online / offline detection via useSyncExternalStore
   const isOnline = useSyncExternalStore(
-    (callback) => {
-      window.addEventListener("online", callback);
-      window.addEventListener("offline", callback);
-      return () => {
-        window.removeEventListener("online", callback);
-        window.removeEventListener("offline", callback);
-      };
-    },
-    () => navigator.onLine,
-    () => true
+    subscribeOnline,
+    getOnlineSnapshot,
+    getServerOnlineSnapshot,
   );
 
   // Play chime if new order arrived and sound enabled (side effect only, no setState)
@@ -109,7 +127,14 @@ export function PartnerDashboardView({
       )}
 
       {/* 1. Identity Banner Header */}
-      <PartnerBanner house={metrics.house} />
+      <PartnerBanner
+        house={metrics.house}
+        isPaused={isPaused}
+        isPauseDialogOpen={isPauseDialogOpen}
+        onOpenPauseDialog={() => setIsPauseDialogOpen(true)}
+        onClosePauseDialog={() => setIsPauseDialogOpen(false)}
+        onPauseChanged={setIsPaused}
+      />
 
       {/* 2. Priority Alert Strip (Hidden if empty) */}
       <PartnerAlertStrip alerts={metrics.alerts} />
@@ -119,6 +144,7 @@ export function PartnerDashboardView({
         orders={metrics.waitingAcceptanceOrders}
         missedOrders={metrics.missedOrders}
         houseSlug={houseSlug}
+        waitingAcceptanceCount={metrics.waitingAcceptanceCount}
       />
 
       {/* 4. Clickable KPI Row */}
@@ -140,11 +166,8 @@ export function PartnerDashboardView({
       {/* 8. Contextual Actions */}
       <PartnerContextualActions
         houseSlug={houseSlug}
-        onOpenPause={() => {
-          const bannerBtn = document.querySelector('button[aria-pressed]') as HTMLButtonElement | null;
-          bannerBtn?.click();
-        }}
-        isPaused={metrics.isPaused}
+        onOpenPause={() => setIsPauseDialogOpen(true)}
+        isPaused={isPaused}
       />
     </div>
   );

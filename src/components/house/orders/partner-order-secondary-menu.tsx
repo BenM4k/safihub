@@ -39,7 +39,7 @@ export function PartnerOrderSecondaryMenu({
     <div className="relative inline-block text-left" ref={menuRef}>
       <button
         type="button"
-        aria-label="Actions secondaires de la commande"
+        aria-label={t("secondaryActionsAria")}
         aria-expanded={isOpen}
         onClick={() => setIsOpen((prev) => !prev)}
         className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] rounded-lg border border-border bg-card text-foreground hover:bg-surface transition-colors cursor-pointer"

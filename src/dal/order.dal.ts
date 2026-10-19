@@ -793,6 +793,8 @@ export async function getHouseOrdersRestricted(
     search?: string;
     limit?: number;
     offset?: number;
+    orderBy?: "createdAt" | "acceptanceDeadlineAt";
+    orderDirection?: "asc" | "desc";
   }
 ): Promise<HouseOrderListItemRecord[]> {
   const conditions = [eq(schema.orders.houseId, houseId)];
@@ -809,6 +811,14 @@ export async function getHouseOrdersRestricted(
         ilike(schema.neighborhoods.name, q)
       )!
     );
+  }
+
+  let orderClause = desc(schema.orders.createdAt);
+  if (filters?.orderBy === "acceptanceDeadlineAt") {
+    orderClause =
+      filters?.orderDirection === "desc"
+        ? sql`${schema.orders.acceptanceDeadlineAt} DESC NULLS LAST`
+        : sql`${schema.orders.acceptanceDeadlineAt} ASC NULLS LAST`;
   }
 
   const rows = await db
@@ -844,7 +854,7 @@ export async function getHouseOrdersRestricted(
       eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
     )
     .where(and(...conditions))
-    .orderBy(desc(schema.orders.createdAt))
+    .orderBy(orderClause)
     .limit(filters?.limit ?? 50)
     .offset(filters?.offset ?? 0);
 
@@ -931,6 +941,10 @@ export interface HouseDashboardAlert {
   severity: "warning" | "critical" | "info";
   title: string;
   message: string;
+  titleKey?: string;
+  titleParams?: Record<string, string | number>;
+  messageKey?: string;
+  messageParams?: Record<string, string | number>;
   link?: string;
 }
 
@@ -959,8 +973,8 @@ export interface HouseDashboardMetrics {
   dailyChart: Array<{
     date: string;
     label: string;
-    ordersCount: number;
-    revenueCDF: number;
+    ordersCount: number | null;
+    revenueCDF: number | null;
   }>;
   recentOrders: HouseOrderListItemRecord[];
   upcomingPickups: HouseOrderListItemRecord[];
@@ -1096,8 +1110,14 @@ export async function getHouseDashboardMetrics(
     upcomingPickupsRaw,
     [unpricedItemsCountRow],
     last30dOrders,
+    deliveredLast30dRows,
   ] = await Promise.all([
-    getHouseOrdersRestricted(houseId, { status: "created", limit: 5 }),
+    getHouseOrdersRestricted(houseId, {
+      status: "created",
+      limit: 5,
+      orderBy: "acceptanceDeadlineAt",
+      orderDirection: "asc",
+    }),
     getHouseOrdersRestricted(houseId, { status: "expired", limit: 5 }),
     db
       .select({
@@ -1248,6 +1268,21 @@ export async function getHouseDashboardMetrics(
           gte(schema.orders.createdAt, thirtyDaysAgo)
         )
       ),
+    db
+      .select({
+        itemsTotal: schema.orders.itemsTotal,
+        adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+        commissionAmount: schema.orders.commissionAmount,
+        updatedAt: schema.orders.updatedAt,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          eq(schema.orders.status, "delivered"),
+          gte(schema.orders.updatedAt, thirtyDaysAgo)
+        )
+      ),
   ]);
 
   // Enrich order summaries
@@ -1322,26 +1357,50 @@ export async function getHouseDashboardMetrics(
 
   const acceptanceRate30d = computeAcceptanceRate(accepted30d, rejected30d, expired30d);
 
-  // Daily 7-day chart data
-  const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+  // Daily 7-day chart data calculated from actual last30dOrders & deliveredLast30dRows
+  const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
   const dailyChart = [];
   for (let i = 6; i >= 0; i--) {
     const dayDate = new Date(startOfDay.getTime() - i * 24 * 60 * 60 * 1000);
     const dayBukavu = toBukavuDateTime(dayDate);
-    const dayLabel = dayNames[dayDate.getUTCDay()] || dayBukavu.dateString.slice(5);
+    const dayLabel = dayNames[dayBukavu.weekday - 1] || dayBukavu.dateString.slice(5);
+
+    const dayStart = new Date(dayDate.getTime());
+    const dayEnd = new Date(dayDate.getTime() + 24 * 60 * 60 * 1000 - 1);
+
+    const dayOrders = last30dOrders.filter(
+      (o) => o.createdAt && o.createdAt >= dayStart && o.createdAt <= dayEnd
+    );
+    const ordersCount = dayOrders.length;
+
+    const dayDelivered = deliveredLast30dRows.filter(
+      (r) => r.updatedAt && r.updatedAt >= dayStart && r.updatedAt <= dayEnd
+    );
+    const revenueCDF = dayDelivered.reduce(
+      (sum, r) => sum + Math.max(0, (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0)),
+      0
+    );
 
     dailyChart.push({
       date: dayBukavu.dateString,
       label: dayLabel,
-      ordersCount: i === 0 ? todayOrdersCount : Math.max(0, Math.round(todayOrdersCount * 0.7)),
-      revenueCDF: i === 0 ? todayNetRevenueCDF : Math.max(0, Math.round(todayNetRevenueCDF * 0.8)),
+      ordersCount,
+      revenueCDF,
     });
   }
 
-  // Next settlement date: upcoming Friday at 16:00
+  // Next settlement date: upcoming Friday at 16:00 (Bukavu-local calculation)
   const daysUntilFriday = (5 - bukavuNow.weekday + 7) % 7 || 7;
   const nextFriday = new Date(startOfDay.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000);
-  const nextSettlementDate = `Vendredi ${nextFriday.getUTCDate()} ${nextFriday.toLocaleString("fr-FR", { month: "short" })}`;
+  const nextFridayBukavu = toBukavuDateTime(nextFriday);
+  const nextFridayUtc = new Date(
+    Date.UTC(nextFridayBukavu.year, nextFridayBukavu.month - 1, nextFridayBukavu.day)
+  );
+  const nextSettlementMonth = nextFridayUtc.toLocaleDateString("fr-FR", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  const nextSettlementDate = `Vendredi ${nextFridayBukavu.day} ${nextSettlementMonth}`;
 
   // Status pill
   const statusPill = computeHouseOpenStatus({
@@ -1366,7 +1425,10 @@ export async function getHouseDashboardMetrics(
       id: "alert-expiring-order",
       type: "expiring_order",
       severity: cd.urgency === "critical" ? "critical" : "warning",
+      titleKey: "expiringOrderTitle",
       title: "Commande en attente urgente",
+      messageKey: "expiringOrderMessage",
+      messageParams: { code: imminentOrder.code, mins: cd.minutesRemaining },
       message: `La commande ${imminentOrder.code} expire dans ${cd.minutesRemaining} min. Confirmez rapidement pour maintenir votre taux d'acceptation.`,
       link: `#queue-section`,
     });
@@ -1381,7 +1443,14 @@ export async function getHouseDashboardMetrics(
       id: "alert-capacity",
       type: "capacity_warning",
       severity: "warning",
+      titleKey: "capacityWarningTitle",
       title: "Capacité journalière bientôt atteinte",
+      messageKey: "capacityWarningMessage",
+      messageParams: {
+        count: todayOrdersCount,
+        total: houseRow.dailyCapacity,
+        percent: Math.round((todayOrdersCount / houseRow.dailyCapacity) * 100),
+      },
       message: `${todayOrdersCount} sur ${houseRow.dailyCapacity} commandes acceptées aujourd'hui (${Math.round((todayOrdersCount / houseRow.dailyCapacity) * 100)}%).`,
       link: `/partner/${houseRow.slug}/settings`,
     });
@@ -1393,7 +1462,9 @@ export async function getHouseDashboardMetrics(
       id: "alert-hours",
       type: "missing_hours",
       severity: "warning",
+      titleKey: "missingHoursTitle",
       title: "Horaires non configurés",
+      messageKey: "missingHoursMessage",
       message: "Configurez vos heures d'ouverture pour activer la protection des délais de nuit.",
       link: `/partner/${houseRow?.slug}/hours`,
     });
@@ -1405,7 +1476,10 @@ export async function getHouseDashboardMetrics(
       id: "alert-unpriced-items",
       type: "unpriced_items",
       severity: "warning",
+      titleKey: "unpricedItemsTitle",
       title: "Articles du catalogue sans tarif",
+      messageKey: "unpricedItemsMessage",
+      messageParams: { count: unpricedItemsCountRow.count },
       message: `${unpricedItemsCountRow.count} article(s) de votre catalogue n'ont pas encore de prix défini.`,
       link: `/partner/${houseRow?.slug}/catalogue`,
     });
@@ -1417,7 +1491,9 @@ export async function getHouseDashboardMetrics(
       id: "alert-paused",
       type: "house_paused",
       severity: "info",
+      titleKey: "housePausedTitle",
       title: "Réception de nouvelles commandes suspendue",
+      messageKey: "housePausedMessage",
       message: "Votre pressing est temporairement en pause. Vos commandes en cours restent actives.",
     });
   }
@@ -1441,9 +1517,9 @@ export async function getHouseDashboardMetrics(
     balanceOwedCDF: settlementDetail.balanceOwedCDF,
     nextSettlementDate,
     acceptanceRate30d,
-    acceptanceRateTrend: 4, // +4% vs last period
-    avgAcceptanceMinutes: 8,
-    onTimeDeliveryRate: 98,
+    acceptanceRateTrend: null,
+    avgAcceptanceMinutes: null,
+    onTimeDeliveryRate: null,
     dailyChart,
     recentOrders,
     upcomingPickups,

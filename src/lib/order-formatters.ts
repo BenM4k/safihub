@@ -274,7 +274,7 @@ export const ORDER_STATUS_CONFIG: Record<OrderStatus, StatusConfig> = {
     label: "En confirmation",
     category: "draft",
     dotClass: "bg-ink-400",
-    badgeClass: "bg-ink-100 text-ink-700 border-ink-200",
+    badgeClass: "bg-ink-100 text-ink-700 border-ink-300",
   },
 };
 
@@ -284,7 +284,7 @@ export function getOrderStatusConfig(status: OrderStatus): StatusConfig {
       label: status.replace(/_/g, " "),
       category: "draft",
       dotClass: "bg-ink-400",
-      badgeClass: "bg-ink-100 text-ink-700 border-ink-200",
+      badgeClass: "bg-ink-100 text-ink-700 border-ink-300",
     }
   );
 }

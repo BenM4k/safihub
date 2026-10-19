@@ -24,7 +24,7 @@ export async function HouseHeader({
   return (
     <header className="w-full bg-card border-b border-border shadow-xs sticky top-0 z-30">
       {isAdminOverride && (
-        <div className="bg-warning text-white text-xs font-bold px-4 py-1.5 flex items-center justify-center gap-2">
+        <div className="bg-warning text-primary-foreground text-xs font-bold px-4 py-1.5 flex items-center justify-center gap-2">
           <ShieldAlert className="size-3.5" />
           <span>{t("adminModeWarning")}</span>
         </div>

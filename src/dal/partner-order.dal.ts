@@ -31,6 +31,14 @@ export const TAB_STATUS_MAP: Record<PartnerOrderTab, OrderStatus[]> = {
   ],
 };
 
+export const UNREVEALED_CUSTOMER_STATUSES: OrderStatus[] = [
+  "awaiting_confirmation",
+  "created",
+  "rejected",
+  "expired",
+  "cancelled",
+];
+
 export interface PartnerOrderListItemDTO {
   id: string;
   code: string;
@@ -98,16 +106,17 @@ export async function getPartnerOrdersRestricted(
     conditions.push(
       or(
         sql`${schema.orders.code} ILIKE ${q}`,
-        sql`${schema.user.name} ILIKE ${q}`,
-        sql`${schema.neighborhoods.name} ILIKE ${q}`
+        sql`${schema.neighborhoods.name} ILIKE ${q}`,
+        sql`(${schema.orders.status} NOT IN ('awaiting_confirmation', 'created', 'rejected', 'expired', 'cancelled') AND ${schema.user.name} ILIKE ${q})`,
+        sql`(${schema.orders.status} IN ('awaiting_confirmation', 'created', 'rejected', 'expired', 'cancelled') AND split_part(${schema.user.name}, ' ', 1) ILIKE ${q})`
       )!
     );
   }
 
   if (filters.date) {
-    // Format YYYY-MM-DD
-    const dayStart = new Date(`${filters.date}T00:00:00.000Z`);
-    const dayEnd = new Date(`${filters.date}T23:59:59.999Z`);
+    // Format YYYY-MM-DD in Africa/Lubumbashi (UTC+02:00)
+    const dayStart = new Date(`${filters.date}T00:00:00.000+02:00`);
+    const dayEnd = new Date(`${filters.date}T23:59:59.999+02:00`);
     if (!isNaN(dayStart.getTime()) && !isNaN(dayEnd.getTime())) {
       conditions.push(
         and(
@@ -225,15 +234,15 @@ export async function getPartnerOrdersRestricted(
     const services = servicesSet.size > 0 ? Array.from(servicesSet) : ["Lavage"];
 
     // Customer privacy:
-    // Before acceptance ('created'): first name + initial only, phone hidden
+    // Before acceptance ('created', 'rejected', 'expired', 'cancelled'): first name + initial only, phone hidden
     // After acceptance: full name, phone shown
+    const isRevealed = !UNREVEALED_CUSTOMER_STATUSES.includes(r.status);
     const rawName = (r.customerRawName ?? "").trim();
     const nameParts = rawName.split(" ").filter(Boolean);
     const firstName = nameParts[0] || "Client";
     const lastInitial = nameParts.length > 1 ? ` ${nameParts[1][0]}.` : "";
-    const customerDisplayName =
-      r.status === "created" ? `${firstName}${lastInitial}` : rawName || "Client";
-    const customerPhone = r.status === "created" ? null : formatPhone(r.contactPhone);
+    const customerDisplayName = isRevealed ? (rawName || "Client") : `${firstName}${lastInitial}`;
+    const customerPhone = isRevealed ? formatPhone(r.contactPhone) : null;
 
     // Net partner share
     const netPartnerShare = computeNetRevenue(
@@ -242,9 +251,11 @@ export async function getPartnerOrdersRestricted(
     );
 
     // At risk indicator: active order whose promised delivery is within 3 hours or passed
-    const isTerminal = ["delivered", "rejected", "expired", "cancelled"].includes(
-      r.status
-    );
+    const terminalStatuses: OrderStatus[] = [
+      ...TAB_STATUS_MAP.delivered,
+      ...TAB_STATUS_MAP.failed,
+    ];
+    const isTerminal = terminalStatuses.includes(r.status);
     const promisedMs = r.estimatedDeliveryAt ? new Date(r.estimatedDeliveryAt).getTime() : null;
     const isAtRisk =
       !isTerminal &&
@@ -348,7 +359,7 @@ export async function recordPartnerOrderHandover(params: {
     )
     .limit(1);
 
-  if (!order) return false;
+  if (!order || !["ready", "delivery_assigned"].includes(order.status)) return false;
 
   await db.insert(schema.orderEvents).values({
     orderId: params.orderId,

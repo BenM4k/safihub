@@ -42,13 +42,13 @@ export function PartnerOrdersTable({
         <table className="w-full text-left text-xs border-collapse">
           <thead className="bg-surface text-muted-foreground font-semibold border-b border-border sticky top-0 z-10">
             <tr>
-              <th scope="col" className="py-3 px-4">Commande</th>
-              <th scope="col" className="py-3 px-4">Client</th>
-              <th scope="col" className="py-3 px-4">Articles & Services</th>
-              <th scope="col" className="py-3 px-4">Échéance</th>
-              <th scope="col" className="py-3 px-4 text-right">Montant & Part</th>
-              <th scope="col" className="py-3 px-4 text-center">Action</th>
-              <th scope="col" className="py-3 px-3 text-center w-12"><span className="sr-only">Actions</span></th>
+              <th scope="col" className="py-3 px-4">{t("thOrder")}</th>
+              <th scope="col" className="py-3 px-4">{t("thCustomer")}</th>
+              <th scope="col" className="py-3 px-4">{t("thItemsServices")}</th>
+              <th scope="col" className="py-3 px-4">{t("thDeadline")}</th>
+              <th scope="col" className="py-3 px-4 text-right">{t("thAmountShare")}</th>
+              <th scope="col" className="py-3 px-4 text-center">{t("thAction")}</th>
+              <th scope="col" className="py-3 px-3 text-center w-12"><span className="sr-only">{t("thActionsSecondary")}</span></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -125,14 +125,14 @@ export function PartnerOrdersTable({
                           <span className="block text-foreground font-semibold">
                             {formatDateTime(order.estimatedDeliveryAt)}
                           </span>
-                          <span>(Promise)</span>
+                          <span>({t("tagPromised")})</span>
                         </div>
                       ) : (
                         <div>
                           <span className="block text-foreground font-medium">
                             {formatDateTime(order.pickupSlotStart)}
                           </span>
-                          <span>(Collecte)</span>
+                          <span>({t("tagPickup")})</span>
                         </div>
                       )}
                     </div>
