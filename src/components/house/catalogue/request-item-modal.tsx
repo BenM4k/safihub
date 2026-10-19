@@ -38,7 +38,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
       if (!res.ok) {
         setErrorMsg(res.error);
       } else {
-        setSuccessMsg("Demande envoyée à l'administrateur avec succès.");
+        setSuccessMsg(t("requestSuccess"));
         setName("");
         setNote("");
         setTimeout(() => {
@@ -52,15 +52,16 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
   return (
     <>
       <Button
+        variant="outline"
         onClick={() => setIsOpen(true)}
-        className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs shadow-xs"
+        className="text-xs font-semibold rounded-xl border-border hover:bg-surface text-heading shadow-2xs"
       >
-        <PlusCircle className="size-3.5 mr-1.5" />
+        <PlusCircle className="size-3.5 mr-1.5 text-primary" />
         <span>{t("requestItem")}</span>
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-card rounded-2xl max-w-md w-full p-6 shadow-xl border border-border space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-start justify-between gap-2">
               <div>

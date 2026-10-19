@@ -9,6 +9,7 @@ import {
   acceptIncomingOrder,
   addHouseClosureEntry,
   addHouseExclusionRule,
+  updateHouseExclusionRule,
   deleteHouseClosureEntry,
   deleteHouseExclusionRule,
   markOrderReady,
@@ -16,10 +17,13 @@ import {
   requestCatalogueItem,
   submitHouseReception,
   updateHouseCatalogueItem,
+  updateHouseCatalogueBatch,
   updateHouseGeneralSettings,
   updateHouseHoursSchedule,
   updateNeighborhoodCoverage,
 } from "@/services/house";
+
+import { normalizeStaffRole, type HouseStaffRole } from "@/services/auth/house-permissions";
 
 async function getAuthenticatedHouseContext(providedHouseId?: string) {
   const authRes = await requireHouseAccess({ houseId: providedHouseId });
@@ -37,11 +41,26 @@ async function getAuthenticatedHouseContext(providedHouseId?: string) {
     return err("No laundry house is selected or assigned to this account.");
   }
 
+  const staffRole: HouseStaffRole =
+    authRes.value.user.role === "admin" ? "owner" : normalizeStaffRole(authRes.value.user.role);
+
   return ok({
     user: authRes.value.user,
     houseId,
     actorRole: (authRes.value.user.role === "admin" ? "admin" : "house") as "admin" | "house",
+    staffRole,
+    isAdminOverride: authRes.value.user.role === "admin",
   });
+}
+
+function requireHouseManagerOrOwner(authCtx: {
+  isAdminOverride: boolean;
+  staffRole: HouseStaffRole;
+}): Result<void> {
+  if (authCtx.isAdminOverride || authCtx.staffRole === "owner" || authCtx.staffRole === "manager") {
+    return ok(undefined);
+  }
+  return err("Accès refusé : Seuls les gestionnaires et propriétaires peuvent modifier ces paramètres.");
 }
 
 // ----------------------------------------------------
@@ -232,6 +251,9 @@ export async function updateHouseCatalogueItemAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await updateHouseCatalogueItem({
     houseId: authCtx.value.houseId,
     serviceId: parsed.data.serviceId,
@@ -240,6 +262,55 @@ export async function updateHouseCatalogueItemAction(input: {
     price: parsed.data.price,
     isActive: parsed.data.isActive,
     currency: parsed.data.currency,
+  });
+
+  if (res.ok) {
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
+  }
+
+  return res;
+}
+
+const batchItemSchema = z.object({
+  serviceId: z.string().uuid("Identifiant de service invalide"),
+  itemId: z.string().uuid("Identifiant d'article invalide"),
+  fabricId: z.string().uuid("Identifiant de matière invalide"),
+  price: z.number().int().min(0, "Le prix ne peut être négatif"),
+  isActive: z.boolean(),
+  currency: z.enum(["CDF", "USD"]).optional(),
+});
+
+const updateCatalogueBatchSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  items: z.array(batchItemSchema).min(1, "Aucune modification fournie"),
+});
+
+export async function updateHouseCatalogueBatchAction(input: {
+  houseId?: string;
+  items: Array<{
+    serviceId: string;
+    itemId: string;
+    fabricId: string;
+    price: number;
+    isActive: boolean;
+    currency?: "CDF" | "USD";
+  }>;
+}): Promise<Result<{ updatedCount: number }>> {
+  const parsed = updateCatalogueBatchSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Paramètres de catalogue invalides");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
+  const res = await updateHouseCatalogueBatch({
+    houseId: authCtx.value.houseId,
+    items: parsed.data.items,
   });
 
   if (res.ok) {
@@ -313,6 +384,9 @@ export async function updateHouseHoursAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await updateHouseHoursSchedule(authCtx.value.houseId, parsed.data.hours);
   if (res.ok) {
     revalidatePath("/partner", "layout");
@@ -342,6 +416,9 @@ export async function addHouseClosureAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await addHouseClosureEntry({
     houseId: authCtx.value.houseId,
     startsOn: parsed.data.startsOn,
@@ -362,6 +439,9 @@ export async function deleteHouseClosureAction(input: {
 }): Promise<Result<void>> {
   const authCtx = await getAuthenticatedHouseContext(input.houseId);
   if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
 
   const res = await deleteHouseClosureEntry(authCtx.value.houseId, input.closureId);
   if (res.ok) {
@@ -430,6 +510,9 @@ export async function updateHouseGeneralSettingsAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await updateHouseGeneralSettings({
     houseId: authCtx.value.houseId,
     dailyCapacity: parsed.data.dailyCapacity,
@@ -468,6 +551,9 @@ export async function addHouseExclusionAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await addHouseExclusionRule({
     houseId: authCtx.value.houseId,
     itemId: parsed.data.itemId,
@@ -489,7 +575,51 @@ export async function deleteHouseExclusionAction(input: {
   const authCtx = await getAuthenticatedHouseContext(input.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await deleteHouseExclusionRule(authCtx.value.houseId, input.exclusionId);
+  if (res.ok) {
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
+  }
+  return res;
+}
+
+const updateExclusionSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  exclusionId: z.string().uuid("Identifiant d'exclusion invalide"),
+  itemId: z.string().uuid().optional().nullable(),
+  fabricId: z.string().uuid().optional().nullable(),
+  note: z.string().optional().nullable(),
+});
+
+export async function updateHouseExclusionAction(input: {
+  exclusionId: string;
+  itemId?: string | null;
+  fabricId?: string | null;
+  note?: string | null;
+  houseId?: string;
+}): Promise<Result<void>> {
+  const parsed = updateExclusionSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Exclusion invalide");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
+  const res = await updateHouseExclusionRule({
+    houseId: authCtx.value.houseId,
+    exclusionId: parsed.data.exclusionId,
+    itemId: parsed.data.itemId,
+    fabricId: parsed.data.fabricId,
+    note: parsed.data.note,
+  });
+
   if (res.ok) {
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
@@ -514,6 +644,9 @@ export async function toggleHousePauseAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   try {
     const { updateHouse } = await import("@/dal");
     await updateHouse(authCtx.value.houseId, {
@@ -529,6 +662,72 @@ export async function toggleHousePauseAction(input: {
       error instanceof Error
         ? error.message
         : "Erreur lors de la mise à jour du statut de pause."
+    );
+  }
+}
+
+const updateCommandesSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  dailyCapacity: z.number().int().positive().nullable(),
+  minimumOrderAmount: z.number().int().min(0, "Le montant minimum ne peut pas être négatif").max(500000, "Le montant maximum autorisé est de 500 000 CDF"),
+  isPaused: z.boolean(),
+  pausedUntil: z.string().optional().nullable(),
+  pauseReason: z.string().optional().nullable(),
+});
+
+export async function updateHouseCommandesAction(input: {
+  dailyCapacity: number | null;
+  minimumOrderAmount: number;
+  isPaused: boolean;
+  pausedUntil?: string | null;
+  pauseReason?: string | null;
+  houseId?: string;
+}): Promise<Result<void>> {
+  const parsed = updateCommandesSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Paramètres invalides");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
+  // Log pause audit if paused
+  if (parsed.data.isPaused) {
+    console.info(
+      `[House Pause Audit] House ${authCtx.value.houseId} paused by user ${authCtx.value.user.id}. Reason: "${parsed.data.pauseReason || "Non précisé"}". PausedUntil: ${parsed.data.pausedUntil || "Indéterminé"}`
+    );
+  }
+
+  const res = await updateHouseGeneralSettings({
+    houseId: authCtx.value.houseId,
+    dailyCapacity: parsed.data.dailyCapacity,
+    minimumOrderAmount: parsed.data.minimumOrderAmount,
+    isPaused: parsed.data.isPaused,
+    pausedUntil: parsed.data.pausedUntil ? new Date(parsed.data.pausedUntil) : null,
+  });
+
+  if (res.ok) {
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
+  }
+  return res;
+}
+
+export async function revokeOtherSessionsAction(): Promise<Result<{ revokedCount: number }>> {
+  const authRes = await requireHouseAccess();
+  if (!authRes.ok) return authRes;
+
+  try {
+    const { revokeOtherUserSessions } = await import("@/dal");
+    const count = await revokeOtherUserSessions(authRes.value.user.id, authRes.value.session.id);
+    revalidatePath("/partner", "layout");
+    return ok({ revokedCount: count });
+  } catch (error) {
+    return err(
+      error instanceof Error ? error.message : "Erreur lors de la révocation des autres sessions."
     );
   }
 }

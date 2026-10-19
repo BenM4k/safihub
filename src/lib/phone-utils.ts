@@ -83,3 +83,25 @@ export function isValidDrcPhone(input: string | null | undefined): boolean {
   // DRC mobile networks start with 8 or 9 and have 9 digits
   return /^[89]\d{8}$/.test(national);
 }
+
+/**
+ * Masks a phone number for partner privacy, revealing country/carrier prefix and last 4 digits.
+ * e.g. "+243 99 123 4567" -> "+243 99 ••• 4567"
+ */
+export function maskPhoneNumber(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  const cleaned = phone.trim();
+  if (cleaned.length < 7) return cleaned;
+
+  if (cleaned.startsWith("+243")) {
+    const withoutPrefix = cleaned.slice(4).trim();
+    const networkCode = withoutPrefix.slice(0, 2);
+    const lastFour = cleaned.slice(-4);
+    return `+243 ${networkCode} ••• ${lastFour}`;
+  }
+
+  const firstFour = cleaned.slice(0, 4);
+  const lastFour = cleaned.slice(-4);
+  return `${firstFour} ••• ${lastFour}`;
+}
+
