@@ -9,6 +9,7 @@ export * from "./house";
 export * from "./mission";
 export * from "./ops";
 export * from "./order";
+export * from "./review";
 
 // Relational query schema definitions
 export * from "./relations";

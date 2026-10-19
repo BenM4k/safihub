@@ -15,6 +15,12 @@ import {
 import { courierProfiles, courierShifts, missions } from "./mission";
 import { cashLedger, orderPhotos } from "./ops";
 import { disputes, orderEvents, orderItems, orders } from "./order";
+import {
+  houseRatingStats,
+  reviewReplies,
+  reviewReports,
+  reviews,
+} from "./review";
 
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
@@ -270,3 +276,47 @@ export const cashLedgerRelations = relations(cashLedger, ({ one }) => ({
   house: one(houses, { fields: [cashLedger.houseId], references: [houses.id] }),
   courier: one(user, { fields: [cashLedger.courierId], references: [user.id] }),
 }));
+
+export const reviewsRelations = relations(reviews, ({ one, many }) => ({
+  order: one(orders, { fields: [reviews.orderId], references: [orders.id] }),
+  house: one(houses, { fields: [reviews.houseId], references: [houses.id] }),
+  customer: one(user, { fields: [reviews.customerId], references: [user.id] }),
+  reply: one(reviewReplies),
+  reports: many(reviewReports),
+}));
+
+export const reviewRepliesRelations = relations(reviewReplies, ({ one }) => ({
+  review: one(reviews, {
+    fields: [reviewReplies.reviewId],
+    references: [reviews.id],
+  }),
+  house: one(houses, {
+    fields: [reviewReplies.houseId],
+    references: [houses.id],
+  }),
+  author: one(user, {
+    fields: [reviewReplies.authorId],
+    references: [user.id],
+  }),
+}));
+
+export const reviewReportsRelations = relations(reviewReports, ({ one }) => ({
+  review: one(reviews, {
+    fields: [reviewReports.reviewId],
+    references: [reviews.id],
+  }),
+  reporter: one(user, {
+    fields: [reviewReports.reporterId],
+    references: [user.id],
+  }),
+}));
+
+export const houseRatingStatsRelations = relations(
+  houseRatingStats,
+  ({ one }) => ({
+    house: one(houses, {
+      fields: [houseRatingStats.houseId],
+      references: [houses.id],
+    }),
+  })
+);

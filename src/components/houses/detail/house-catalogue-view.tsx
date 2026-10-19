@@ -1,71 +1,86 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { HouseProfileHeader } from "./house-profile-header";
-import { HouseExclusionsBanner } from "./house-exclusions-banner";
-import { ServiceTabsNav } from "./service-tabs-nav";
-import { CatalogueItemCard } from "./catalogue-item-card";
-import { HouseCartDrawer } from "./house-cart-drawer";
+import { useTranslations } from "next-intl";
 import { SwitchHouseDialog } from "@/components/cart/switch-house-dialog";
 import { useCartHydrated } from "@/lib/stores/use-cart-hydrated";
-import { Button } from "@/components/ui/button";
-import { getCartEstimateAction } from "@/actions/customer-order.actions";
+import { PressingBanner } from "./pressing-banner";
+import { PressingIdentityHeader } from "./pressing-identity-header";
+import { PressingGallery } from "./pressing-gallery";
+import { PressingCategoryNav } from "./pressing-category-nav";
+import { PressingArticleCard } from "./pressing-article-card";
+import { PressingDecisionCard } from "./pressing-decision-card";
+import { PressingDeliverySelector, type NeighborhoodOption } from "./pressing-delivery-selector";
+import { PressingPracticalInfo } from "./pressing-practical-info";
+import { PressingReviewsSection } from "./pressing-reviews-section";
+import { PressingMobileCartBar } from "./pressing-mobile-cart-bar";
+import { PressingCartTransferBanner } from "./pressing-cart-transfer-banner";
+import { HouseExclusionsBanner } from "./house-exclusions-banner";
+import { usePressingArticles } from "./use-pressing-articles";
+import { usePressingCartSubtotal } from "./use-pressing-cart-subtotal";
 import type { CustomerHouseDetailData, CustomerHouseCatalogueItem } from "@/dal";
+import type { HouseReviewItem, HouseReviewStatsData } from "@/dal/review.dal";
 
 interface HouseCatalogueViewProps {
   data: CustomerHouseDetailData;
+  initialReviews: HouseReviewItem[];
+  stats: HouseReviewStatsData;
+  eligibleOrders: Array<{ id: string; createdAt: Date }>;
+  neighborhoods: Array<{ id: string; name: string; zoneId: string }>;
+  zoneFees: Record<string, number>;
+  usdExchangeRate?: number | null;
+  isAuthenticated: boolean;
 }
 
-export function HouseCatalogueView({ data }: HouseCatalogueViewProps) {
+export function HouseCatalogueView({
+  data,
+  initialReviews,
+  stats,
+  eligibleOrders,
+  neighborhoods,
+  zoneFees,
+  usdExchangeRate,
+  isAuthenticated,
+}: HouseCatalogueViewProps) {
   const router = useRouter();
   const cart = useCartHydrated();
-  const [activeServiceSlug, setActiveServiceSlug] = useState<string | null>(null);
-  const [serverSubtotal, setServerSubtotal] = useState<number>(0);
-  const [priceWarning, setPriceWarning] = useState<string | null>(null);
+  const t = useTranslations("customerHouses");
 
-  const isCurrentHouse = cart.isHydrated && cart.houseId === data.house.id;
+  const { isCurrentHouse, currentHouseItems, activeSubtotal, totalItemsCount } =
+    usePressingCartSubtotal(data.house.id, cart);
 
-  const currentHouseItems = useMemo(
-    () => (isCurrentHouse ? cart.items : []),
-    [isCurrentHouse, cart.items]
-  );
+  const {
+    activeCategory,
+    setActiveCategory,
+    activeServiceSlug,
+    setActiveServiceSlug,
+    activeFabricId,
+    setActiveFabricId,
+    searchQuery,
+    setSearchQuery,
+    categoriesWithCounts,
+    uniqueFabrics,
+    filteredArticles,
+  } = usePressingArticles(data.items);
 
-  // Re-estimate on cart changes from server (Task 5.5: server-calculated estimate)
-  useEffect(() => {
-    if (!isCurrentHouse || currentHouseItems.length === 0) {
-      return;
-    }
-
-    let isMounted = true;
-    getCartEstimateAction(
-      data.house.id,
-      currentHouseItems.map((i) => ({
-        houseItemId: i.houseItemId,
-        serviceId: i.serviceId,
-        itemId: i.itemId,
-        fabricId: i.fabricId,
-        quantity: i.quantity,
-        expectedUnitPrice: i.expectedUnitPrice,
-      })),
-      cart.customerNeighborhoodId || undefined
-    ).then((res) => {
-      if (isMounted && res.success && res.data) {
-        setServerSubtotal(res.data.itemsTotal);
-        if (res.data.priceChanges.length > 0) {
-          setPriceWarning("Certains prix d'articles ont été mis à jour par l'atelier.");
-        } else {
-          setPriceWarning(null);
-        }
-      }
+  // Neighborhood options with fee mapping
+  const neighborhoodOptions: NeighborhoodOption[] = useMemo(() => {
+    return neighborhoods.map((n) => {
+      const fee = zoneFees[n.zoneId] ?? 3000;
+      return {
+        id: n.id,
+        name: n.name,
+        zoneId: n.zoneId,
+        isServed: true,
+        deliveryFeeCdf: fee,
+      };
     });
+  }, [neighborhoods, zoneFees]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [data.house.id, currentHouseItems, isCurrentHouse, cart.customerNeighborhoodId]);
-
-  const activeSubtotal = !isCurrentHouse || currentHouseItems.length === 0 ? 0 : serverSubtotal;
+  const selectedNeighborhood = neighborhoodOptions.find(
+    (n) => n.id === cart.customerNeighborhoodId
+  );
 
   const handleUpdateQuantity = (item: CustomerHouseCatalogueItem, delta: number) => {
     if (delta > 0) {
@@ -85,110 +100,133 @@ export function HouseCatalogueView({ data }: HouseCatalogueViewProps) {
     }
   };
 
-  const displayedItems = useMemo(() => {
-    if (!activeServiceSlug) return data.items;
-    return data.items.filter((item) => item.serviceSlug === activeServiceSlug);
-  }, [data.items, activeServiceSlug]);
-
-  const groupedByCategory = useMemo(() => {
-    const groups = new Map<string, typeof displayedItems>();
-    for (const it of displayedItems) {
-      const cat = it.itemCategory || "Général";
-      const list = groups.get(cat) || [];
-      list.push(it);
-      groups.set(cat, list);
-    }
-    return Array.from(groups.entries());
-  }, [displayedItems]);
-
-  const totalItemsCount = isCurrentHouse
-    ? currentHouseItems.reduce((acc, it) => acc + it.quantity, 0)
-    : 0;
+  const isHouseAvailable = !data.house.isPaused;
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-28">
       <SwitchHouseDialog />
-      <HouseProfileHeader house={data.house} />
+
+      {/* 1. Full-width Cover Banner & Logo */}
+      <PressingBanner
+        name={data.house.name}
+        coverImageUrl={data.house.coverImageUrl}
+        logoUrl={data.house.logoUrl}
+      />
+
+      {/* 2. Identity Header */}
+      <PressingIdentityHeader house={data.house} />
+
+      {/* 3. Photo Gallery with Lightbox */}
+      <PressingGallery
+        photos={data.house.galleryImages || []}
+        houseName={data.house.name}
+      />
+
+      {/* Mixed cart warning & transfer prompt */}
+      <PressingCartTransferBanner
+        houseId={data.house.id}
+        houseName={data.house.name}
+        items={data.items}
+        cartHouseId={cart.houseId}
+        cartItemsCount={cart.items.length}
+        isHydrated={cart.isHydrated}
+        onTransfer={(hId, hName, itms) => cart.transferCartToHouse(hId, hName, itms)}
+      />
+
+      {/* Exclusions banner */}
       <HouseExclusionsBanner exclusions={data.exclusions} />
-      <ServiceTabsNav
+
+      {/* Sticky Category Bar with search, filters & chips */}
+      <PressingCategoryNav
+        categories={categoriesWithCounts}
+        activeCategory={activeCategory}
+        onSelectCategory={setActiveCategory}
         services={data.services}
         activeServiceSlug={activeServiceSlug}
         onSelectService={setActiveServiceSlug}
+        fabrics={uniqueFabrics}
+        activeFabricId={activeFabricId}
+        onSelectFabric={setActiveFabricId}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
-      {cart.isHydrated && cart.houseId && cart.houseId !== data.house.id && cart.items.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
-          <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-indigo-950">
-            <div className="text-xs sm:text-sm">
-              <span className="font-bold">Panier conservé ({cart.items.length} article(s)) :</span>{" "}
-              Transférez directement les articles de votre panier vers {data.house.name} sans devoir les re-sélectionner.
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              className="font-bold bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
-              onClick={() => {
-                cart.transferCartToHouse(data.house.id, data.house.name, data.items);
-              }}
-            >
-              Transférer mon panier vers ce pressing
-            </Button>
-          </div>
-        </div>
-      )}
-
+      {/* Main Grid: Articles + Sticky Decision Card */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">
-              Tarifs & Articles disponibles
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Sélectionnez les vêtements et linges à confier à {data.house.name}.
-            </p>
-          </div>
-          {priceWarning && (
-            <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
-              {priceWarning}
-            </div>
-          )}
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          {/* Left Column: Catalogue Articles & Details */}
+          <div className="lg:col-span-2 space-y-10">
+            {filteredArticles.length === 0 ? (
+              <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 p-6">
+                <p className="text-sm text-slate-500 font-medium">
+                  {t("noArticlesMatch")}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {filteredArticles.map((art) => (
+                  <PressingArticleCard
+                    key={art.key}
+                    itemName={art.itemNameFr}
+                    serviceName={art.serviceNameFr}
+                    variants={art.variants}
+                    getQuantityInCart={(hId) =>
+                      isCurrentHouse
+                        ? currentHouseItems.find((ci) => ci.houseItemId === hId)?.quantity || 0
+                        : 0
+                    }
+                    onUpdateQuantity={handleUpdateQuantity}
+                    isHouseAvailable={isHouseAvailable}
+                    usdExchangeRate={usdExchangeRate}
+                  />
+                ))}
+              </div>
+            )}
 
-        {displayedItems.length === 0 ? (
-          <div className="py-16 text-center bg-white rounded-3xl border border-slate-200">
-            <p className="text-sm text-slate-500 font-medium">
-              Aucun article configuré pour ce service dans cet établissement.
-            </p>
+            {/* Neighborhood Delivery Selector */}
+            <PressingDeliverySelector
+              neighborhoods={neighborhoodOptions}
+              selectedNeighborhoodId={cart.customerNeighborhoodId}
+              onSelectNeighborhood={(id) => cart.setCustomerNeighborhoodId(id)}
+            />
+
+            {/* Practical Information */}
+            <PressingPracticalInfo
+              weeklyHours={data.weeklyHours}
+              description={data.house.description}
+              createdAt={data.house.createdAt}
+            />
+
+            {/* Customer Reviews Section */}
+            <PressingReviewsSection
+              houseId={data.house.id}
+              houseName={data.house.name}
+              initialReviews={initialReviews}
+              stats={stats}
+              eligibleOrders={eligibleOrders}
+              isAuthenticated={isAuthenticated}
+            />
           </div>
-        ) : (
-          <div className="space-y-8">
-            {groupedByCategory.map(([category, items]) => (
-              <section key={category}>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 pl-1">
-                  Catégorie : {category}
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {items.map((item) => {
-                    const inCartQty = isCurrentHouse
-                      ? currentHouseItems.find((ci) => ci.houseItemId === item.houseItemId)?.quantity || 0
-                      : 0;
-                    return (
-                      <CatalogueItemCard
-                        key={item.houseItemId}
-                        item={item}
-                        quantityInCart={inCartQty}
-                        onUpdateQuantity={(delta) => handleUpdateQuantity(item, delta)}
-                      />
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+
+          {/* Right Column: Desktop Sticky Decision Card */}
+          <div className="hidden lg:block">
+            <PressingDecisionCard
+              turnaroundHours={data.house.turnaroundHours}
+              minimumOrderAmount={data.house.minimumOrderAmount}
+              subtotalCdf={activeSubtotal}
+              totalItemsCount={totalItemsCount}
+              isPaused={Boolean(data.house.isPaused)}
+              isOpenNow={Boolean(data.house.isOpenNow)}
+              deliveryFee={selectedNeighborhood?.deliveryFeeCdf ?? null}
+              neighborhoodName={selectedNeighborhood?.name}
+              onProceedOrder={() => router.push("/checkout")}
+            />
           </div>
-        )}
+        </div>
       </main>
 
-      <HouseCartDrawer
+      {/* Mobile Sticky Cart Bar */}
+      <PressingMobileCartBar
         totalItemsCount={totalItemsCount}
         subtotalCdf={activeSubtotal}
         minimumOrderAmount={data.house.minimumOrderAmount}

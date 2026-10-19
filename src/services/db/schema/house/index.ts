@@ -5,6 +5,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   smallint,
@@ -38,6 +39,10 @@ export const houses = pgTable(
     /** Address note for couriers and the admin. Never shown to customers beyond the neighborhood. */
     addressNote: text("address_note"),
     contactPhone: text("contact_phone"),
+    coverImageUrl: text("cover_image_url"),
+    logoUrl: text("logo_url"),
+    galleryImages: jsonb("gallery_images").$type<string[]>(),
+    description: text("description"),
     /** Null means: use settings.default_commission_bps. The owner's own house can be 0. */
     commissionBps: integer("commission_bps"),
     minimumOrderAmount: integer("minimum_order_amount").notNull().default(0),

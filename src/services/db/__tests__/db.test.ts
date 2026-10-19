@@ -60,6 +60,12 @@ describe("Database Architecture & Schema", () => {
     expect(schema.exchangeRates).toBeDefined();
     expect(schema.notifications).toBeDefined();
     expect(schema.pushSubscriptions).toBeDefined();
+
+    // Reviews & Ratings
+    expect(schema.reviews).toBeDefined();
+    expect(schema.reviewReplies).toBeDefined();
+    expect(schema.reviewReports).toBeDefined();
+    expect(schema.houseRatingStats).toBeDefined();
   });
 
   it("exports Drizzle relations for relational queries", () => {
@@ -69,6 +75,10 @@ describe("Database Architecture & Schema", () => {
     expect(schema.zonesRelations).toBeDefined();
     expect(schema.neighborhoodsRelations).toBeDefined();
     expect(schema.customerAddressesRelations).toBeDefined();
+    expect(schema.reviewsRelations).toBeDefined();
+    expect(schema.reviewRepliesRelations).toBeDefined();
+    expect(schema.reviewReportsRelations).toBeDefined();
+    expect(schema.houseRatingStatsRelations).toBeDefined();
   });
 });
 
