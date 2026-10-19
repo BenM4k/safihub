@@ -13,6 +13,8 @@ interface HousesListPanelProps {
   onSortChange: (sort: "recommended" | "turnaround" | "price" | "rating") => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  activeNeighborhood?: { id: string; name: string } | null;
+  onClearNeighborhood?: () => void;
   hoveredHouseId: string | null;
   onHoverHouse: (id: string | null) => void;
   onRequestCoverage: () => void;
@@ -24,6 +26,8 @@ export function HousesListPanel({
   onSortChange,
   hasActiveFilters,
   onClearFilters,
+  activeNeighborhood,
+  onClearNeighborhood,
   hoveredHouseId,
   onHoverHouse,
   onRequestCoverage,
@@ -38,6 +42,8 @@ export function HousesListPanel({
         onSortChange={onSortChange}
         hasActiveFilters={hasActiveFilters}
         onClearFilters={onClearFilters}
+        activeNeighborhood={activeNeighborhood}
+        onClearNeighborhood={onClearNeighborhood}
       />
 
       {houses.length === 0 ? (

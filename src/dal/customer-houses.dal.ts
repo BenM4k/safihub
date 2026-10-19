@@ -2,6 +2,7 @@ import "server-only";
 import { asc, eq, inArray, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { toBukavuDateTime } from "@/services/availability/bukavu-time";
+import { filterCatalogueOutliers } from "@/services/catalog/outliers";
 
 export interface CustomerHouseSummary {
   id: string;
@@ -64,8 +65,8 @@ export interface CustomerHouseDetailData {
     neighborhoodName: string;
     zoneId: string;
     zoneName: string;
-    addressNote: string | null;
-    contactPhone: string | null;
+    addressNote?: string | null;
+    contactPhone?: string | null;
     minimumOrderAmount: number;
     turnaroundHours: number;
     dailyCapacity: number | null;
@@ -75,8 +76,18 @@ export interface CustomerHouseDetailData {
     rating: number | null;
     reviewCount: number;
     imageUrl: string;
+    coverImageUrl?: string | null;
+    logoUrl?: string | null;
+    galleryImages?: string[] | null;
+    description?: string | null;
+    createdAt?: Date | null;
     isActive?: boolean;
     isPaused?: boolean;
+    ratingStats?: {
+      reviewCount: number;
+      averageRating: number | null;
+      distribution: Record<string, number>;
+    } | null;
   };
   services: Array<{
     id: string;
@@ -298,6 +309,11 @@ export async function getCustomerHouseDetail(
       zoneName: schema.zones.name,
       addressNote: schema.houses.addressNote,
       contactPhone: schema.houses.contactPhone,
+      coverImageUrl: schema.houses.coverImageUrl,
+      logoUrl: schema.houses.logoUrl,
+      galleryImages: schema.houses.galleryImages,
+      description: schema.houses.description,
+      createdAt: schema.houses.createdAt,
       minimumOrderAmount: schema.houses.minimumOrderAmount,
       turnaroundHours: schema.houses.turnaroundHours,
       dailyCapacity: schema.houses.dailyCapacity,
@@ -321,7 +337,7 @@ export async function getCustomerHouseDetail(
   const now = new Date();
   const bukavuNow = toBukavuDateTime(now);
 
-  const [weeklyHours, rawExclusions, rawHouseItems] = await Promise.all([
+  const [weeklyHours, rawExclusions, rawHouseItems, [ratingStatsRow]] = await Promise.all([
     db
       .select({
         weekday: schema.houseHours.weekday,
@@ -374,6 +390,11 @@ export async function getCustomerHouseDetail(
         asc(schema.items.sortOrder),
         asc(schema.fabrics.sortOrder)
       ),
+    db
+      .select()
+      .from(schema.houseRatingStats)
+      .where(eq(schema.houseRatingStats.houseId, house.id))
+      .limit(1),
   ]);
 
   const excludedItemIds = new Set<string>();
@@ -445,7 +466,27 @@ export async function getCustomerHouseDetail(
     });
   }
 
-  const imageUrl = HOUSE_STOCK_IMAGES[house.name] || DEFAULT_HOUSE_IMAGE;
+  const imageUrl = house.coverImageUrl || HOUSE_STOCK_IMAGES[house.name] || DEFAULT_HOUSE_IMAGE;
+  const reviewCount = ratingStatsRow?.reviewCount ?? 0;
+  // Threshold: below 3 reviews, rating is null so the UI displays "Nouveau"
+  const rating =
+    reviewCount >= 3 && ratingStatsRow?.averageRating
+      ? Number(ratingStatsRow.averageRating)
+      : null;
+
+  const defaultGallery = [
+    imageUrl,
+    "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1521656693074-0ef32e80a5d5?auto=format&fit=crop&w=1200&q=80",
+  ];
+
+  const galleryImages =
+    house.galleryImages && Array.isArray(house.galleryImages) && house.galleryImages.length > 0
+      ? house.galleryImages
+      : defaultGallery;
+
+  const { validItems } = filterCatalogueOutliers(items);
 
   return {
     house: {
@@ -464,14 +505,26 @@ export async function getCustomerHouseDetail(
       cutoffMinutes: house.cutoffMinutes,
       isOpenNow,
       todayHoursText,
-      rating: null,
-      reviewCount: 0,
+      rating,
+      reviewCount,
       imageUrl,
+      coverImageUrl: house.coverImageUrl || imageUrl,
+      logoUrl: house.logoUrl ?? null,
+      galleryImages,
+      description: house.description ?? "Pressing artisanal & moderne à Bukavu, partenaire vérifié SafiHub.",
+      createdAt: house.createdAt,
       isActive: house.isActive,
       isPaused: house.isPaused,
+      ratingStats: ratingStatsRow
+        ? {
+            reviewCount: ratingStatsRow.reviewCount,
+            averageRating: ratingStatsRow.averageRating ? Number(ratingStatsRow.averageRating) : null,
+            distribution: ratingStatsRow.distribution as Record<string, number>,
+          }
+        : null,
     },
     services: Array.from(serviceMap.values()),
-    items,
+    items: validItems,
     exclusions: rawExclusions,
     weeklyHours,
   };

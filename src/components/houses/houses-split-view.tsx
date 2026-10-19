@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Map, List } from "lucide-react";
 import { SearchTopBar } from "./search-top-bar";
@@ -12,10 +13,13 @@ import type { CustomerHousesPageData } from "@/services/house/customer-search.se
 
 interface HousesSplitViewProps {
   initialData: CustomerHousesPageData;
+  initialNeighborhoodId?: string;
 }
 
-export function HousesSplitView({ initialData }: HousesSplitViewProps) {
+export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSplitViewProps) {
   const t = useTranslations("customerHouses");
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // State
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,27 +34,59 @@ export function HousesSplitView({ initialData }: HousesSplitViewProps) {
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [isSaveSearchOpen, setIsSaveSearchOpen] = useState(false);
 
-  // Active filter count
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (openNowOnly) count++;
-    if (selectedService) count++;
-    if (maxTurnaround) count++;
-    if (maxMinOrder) count++;
-    return count;
-  }, [openNowOnly, selectedService, maxTurnaround, maxMinOrder]);
+  // Active neighborhood resolution
+  const currentNeighborhoodId = searchParams.get("neighborhoodId") ?? initialNeighborhoodId ?? null;
+  const activeNeighborhood = useMemo(() => {
+    if (!currentNeighborhoodId) return null;
+    return initialData.neighborhoods.find((n) => n.id === currentNeighborhoodId) ?? null;
+  }, [currentNeighborhoodId, initialData.neighborhoods]);
 
-  const hasActiveFilters = Boolean(
-    searchQuery || openNowOnly || selectedService || maxTurnaround || maxMinOrder
+  const handleClearNeighborhood = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("neighborhoodId");
+    const qs = params.toString();
+    router.push(qs ? `/houses?${qs}` : "/houses");
+  }, [router, searchParams]);
+
+  const handleSelectNeighborhood = useCallback(
+    (neighborhoodId: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (neighborhoodId) {
+        params.set("neighborhoodId", neighborhoodId);
+      } else {
+        params.delete("neighborhoodId");
+      }
+      const qs = params.toString();
+      router.push(qs ? `/houses?${qs}` : "/houses");
+    },
+    [router, searchParams]
   );
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setSearchQuery("");
     setOpenNowOnly(false);
     setSelectedService(null);
     setMaxTurnaround(null);
     setMaxMinOrder(null);
-  };
+    if (currentNeighborhoodId) {
+      handleClearNeighborhood();
+    }
+  }, [currentNeighborhoodId, handleClearNeighborhood]);
+
+  // Active filter count
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (activeNeighborhood) count++;
+    if (openNowOnly) count++;
+    if (selectedService) count++;
+    if (maxTurnaround) count++;
+    if (maxMinOrder) count++;
+    return count;
+  }, [activeNeighborhood, openNowOnly, selectedService, maxTurnaround, maxMinOrder]);
+
+  const hasActiveFilters = Boolean(
+    activeNeighborhood || searchQuery || openNowOnly || selectedService || maxTurnaround || maxMinOrder
+  );
 
   // Filter and sort houses
   const filteredHouses = useMemo(() => {
@@ -127,6 +163,8 @@ export function HousesSplitView({ initialData }: HousesSplitViewProps) {
         selectedService={selectedService}
         onSelectService={setSelectedService}
         availableServices={initialData.availableServices}
+        activeNeighborhood={activeNeighborhood}
+        onClearNeighborhood={handleClearNeighborhood}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onOpenAllFilters={() => setIsFilterSheetOpen(true)}
@@ -148,6 +186,8 @@ export function HousesSplitView({ initialData }: HousesSplitViewProps) {
             onSortChange={setCurrentSort}
             hasActiveFilters={hasActiveFilters}
             onClearFilters={handleClearFilters}
+            activeNeighborhood={activeNeighborhood}
+            onClearNeighborhood={handleClearNeighborhood}
             hoveredHouseId={hoveredHouseId}
             onHoverHouse={setHoveredHouseId}
             onRequestCoverage={() => setIsSaveSearchOpen(true)}
@@ -174,7 +214,7 @@ export function HousesSplitView({ initialData }: HousesSplitViewProps) {
           <button
             type="button"
             onClick={() => setViewMode((m) => (m === "map" ? "list" : "map"))}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 text-white font-bold text-xs shadow-xl active:scale-95 transition"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 text-white font-bold text-xs shadow-xl active:scale-95 transition cursor-pointer"
           >
             {viewMode === "map" ? (
               <>
@@ -195,6 +235,9 @@ export function HousesSplitView({ initialData }: HousesSplitViewProps) {
       <FilterSheetDialog
         isOpen={isFilterSheetOpen}
         onClose={() => setIsFilterSheetOpen(false)}
+        neighborhoods={initialData.neighborhoods}
+        selectedNeighborhoodId={currentNeighborhoodId}
+        onSelectNeighborhood={handleSelectNeighborhood}
         selectedService={selectedService}
         onSelectService={setSelectedService}
         availableServices={initialData.availableServices}

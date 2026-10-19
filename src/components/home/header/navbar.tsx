@@ -35,7 +35,7 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
     <header
       className={
         isSolid
-          ? "sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs transition-all pointer-events-auto"
+          ? "sticky top-0 left-0 right-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs transition-all pointer-events-auto"
           : "fixed top-0 left-0 right-0 z-50 w-full bg-transparent transition-all pointer-events-none"
       }
     >

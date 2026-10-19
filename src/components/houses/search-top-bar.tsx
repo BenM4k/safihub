@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, SlidersHorizontal, Map, List, Bookmark, Clock, Check } from "lucide-react";
+import { Search, SlidersHorizontal, Map, List, Bookmark, Clock, Check, MapPin, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +12,8 @@ interface SearchTopBarProps {
   selectedService: string | null;
   onSelectService: (slug: string | null) => void;
   availableServices: Array<{ slug: string; nameFr: string; nameSw: string }>;
+  activeNeighborhood?: { id: string; name: string } | null;
+  onClearNeighborhood?: () => void;
   viewMode: "split" | "list" | "map";
   onViewModeChange: (mode: "split" | "list" | "map") => void;
   onOpenAllFilters: () => void;
@@ -27,6 +29,8 @@ export function SearchTopBar({
   selectedService,
   onSelectService,
   availableServices,
+  activeNeighborhood,
+  onClearNeighborhood,
   viewMode,
   onViewModeChange,
   onOpenAllFilters,
@@ -51,6 +55,27 @@ export function SearchTopBar({
               className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-full focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
             />
           </div>
+
+          {/* Active neighborhood filter badge */}
+          {activeNeighborhood && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 shadow-2xs shrink-0 animate-fade-in">
+              <MapPin className="size-3.5 text-primary shrink-0" />
+              <span className="truncate max-w-[140px] sm:max-w-[200px]">
+                {activeNeighborhood.name}
+              </span>
+              {onClearNeighborhood && (
+                <button
+                  type="button"
+                  onClick={onClearNeighborhood}
+                  className="size-4 rounded-full hover:bg-primary/20 flex items-center justify-center transition cursor-pointer text-primary"
+                  aria-label={t("clearNeighborhoodFilter")}
+                  title={t("clearNeighborhoodFilter")}
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Service filter quick pills */}
           <div className="hidden sm:flex items-center gap-1.5 overflow-x-auto py-0.5">

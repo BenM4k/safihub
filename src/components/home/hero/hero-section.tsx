@@ -27,7 +27,7 @@ export function HeroSection({
           : t("ctaOrder");
 
   return (
-    <section className="min-h-[calc(100dvh-4.5rem)] flex items-center py-12 md:py-16 bg-white overflow-hidden">
+    <section className="min-h-[calc(100dvh-4.5rem)] flex items-center pt-38 pb-12 sm:pt-32 sm:pb-16 md:py-16 bg-white overflow-hidden">
       <div className="container-page">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
           {/* Left Column: matching reference typography and layout */}
@@ -83,4 +83,3 @@ export function HeroSection({
     </section>
   );
 }
-

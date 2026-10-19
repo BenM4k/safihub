@@ -15,3 +15,4 @@ export * from "./notifications.dal";
 export * from "./house-application.dal";
 export * from "./partner-order.dal";
 export * from "./partner-settlements.dal";
+export * from "./review.dal";

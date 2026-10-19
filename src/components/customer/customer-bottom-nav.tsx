@@ -21,12 +21,8 @@ const TABS: NavTab[] = [
   { href: "/notifications", labelKey: "notifications", icon: Bell },
 ];
 
-export function CustomerBottomNav() {
-  const pathname = usePathname();
-  const t = useTranslations("nav");
-  const cart = useCartStore();
-
-  // Exclude landing, auth (login/registration), partner application, and internal role portals
+export function shouldShowCustomerBottomNav(pathname: string): boolean {
+  // Exclude landing, auth, partner portals, internal roles, checkout, and specific pressing storefronts
   if (
     pathname === "/" ||
     pathname.startsWith("/login") ||
@@ -37,8 +33,21 @@ export function CustomerBottomNav() {
     pathname.startsWith("/partners") ||
     pathname.startsWith("/partner") ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/courier")
+    pathname.startsWith("/courier") ||
+    pathname.startsWith("/checkout") ||
+    (pathname.startsWith("/houses/") && pathname !== "/houses")
   ) {
+    return false;
+  }
+  return true;
+}
+
+export function CustomerBottomNav() {
+  const pathname = usePathname();
+  const t = useTranslations("nav");
+  const cart = useCartStore();
+
+  if (!shouldShowCustomerBottomNav(pathname)) {
     return null;
   }
 

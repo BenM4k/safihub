@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "ignorePatterns": [
+    "public/courier-sw.js",
+    "!src/**/coverage/**"
+  ],
+  "ignoreDependencies": [
+    "web-push",
+    "@types/web-push"
+  ],
+  "rules": {
+    "unused-files": "error",
+    "circular-dependencies": "warn",
+    "unused-exports": "warn",
+    "unused-types": "warn",
+    "unused-server-actions": "warn"
+  }
+}

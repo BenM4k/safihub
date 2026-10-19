@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ArrowUpDown, X } from "lucide-react";
+import { ArrowUpDown, X, MapPin } from "lucide-react";
 
 interface HousesResultsHeaderProps {
   totalCount: number;
@@ -9,6 +9,8 @@ interface HousesResultsHeaderProps {
   onSortChange: (sort: "recommended" | "turnaround" | "price" | "rating") => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  activeNeighborhood?: { id: string; name: string } | null;
+  onClearNeighborhood?: () => void;
 }
 
 export function HousesResultsHeader({
@@ -17,6 +19,8 @@ export function HousesResultsHeader({
   onSortChange,
   hasActiveFilters,
   onClearFilters,
+  activeNeighborhood,
+  onClearNeighborhood,
 }: HousesResultsHeaderProps) {
   const t = useTranslations("customerHouses");
 
@@ -26,10 +30,32 @@ export function HousesResultsHeader({
         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
           {t("pageTitle")}
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          {totalCount === 1
-            ? t("resultsCountSingle")
-            : t("resultsCount", { count: totalCount })}
+        <p className="text-xs sm:text-sm text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+          <span>
+            {totalCount === 1
+              ? t("resultsCountSingle")
+              : t("resultsCount", { count: totalCount })}
+          </span>
+          {activeNeighborhood && (
+            <>
+              <span className="text-slate-300">•</span>
+              <span className="inline-flex items-center gap-1 font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full text-xs">
+                <MapPin className="size-3 shrink-0" />
+                <span>{activeNeighborhood.name}</span>
+                {onClearNeighborhood && (
+                  <button
+                    type="button"
+                    onClick={onClearNeighborhood}
+                    className="hover:text-primary-hover p-0.5 rounded-full hover:bg-primary/20 transition cursor-pointer"
+                    aria-label={t("clearNeighborhoodFilter")}
+                    title={t("clearNeighborhoodFilter")}
+                  >
+                    <X className="size-3" />
+                  </button>
+                )}
+              </span>
+            </>
+          )}
         </p>
       </div>
 
