@@ -1,7 +1,8 @@
 import "server-only";
-import { and, asc, desc, eq, or } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, notInArray, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { generateUniqueSlug } from "@/lib/slug";
+import { toBukavuDateTime } from "@/services/availability";
 
 export interface HouseMembershipInfo {
   houseId: string;
@@ -456,6 +457,32 @@ export async function deleteHouseExclusion(id: string, houseId?: string): Promis
   return result.length > 0;
 }
 
+export async function updateHouseExclusion(
+  id: string,
+  houseId: string,
+  data: {
+    itemId?: string | null;
+    fabricId?: string | null;
+    note?: string | null;
+  }
+): Promise<boolean> {
+  const result = await db
+    .update(schema.houseExclusions)
+    .set({
+      itemId: data.itemId ?? null,
+      fabricId: data.fabricId ?? null,
+      note: data.note ?? null,
+    })
+    .where(
+      and(
+        eq(schema.houseExclusions.id, id),
+        eq(schema.houseExclusions.houseId, houseId)
+      )
+    )
+    .returning({ id: schema.houseExclusions.id });
+  return result.length > 0;
+}
+
 export async function getHouseCoverage(houseId: string): Promise<HouseCoverageRecord[]> {
   const rows = await db
     .select({
@@ -623,6 +650,54 @@ export async function upsertHouseItemPrice(params: {
         updatedAt: new Date(),
       },
     });
+}
+
+/**
+ * Batch updates house price & availability for master item combinations atomically.
+ * Invariant: Frozen prices on existing orders are never affected.
+ */
+export async function upsertHouseItemPricesBatch(
+  items: Array<{
+    houseId: string;
+    serviceId: string;
+    itemId: string;
+    fabricId: string;
+    price: number;
+    isActive: boolean;
+    currency?: "CDF" | "USD";
+  }>
+): Promise<void> {
+  if (items.length === 0) return;
+
+  await db.transaction(async (tx) => {
+    for (const item of items) {
+      await tx
+        .insert(schema.houseItems)
+        .values({
+          houseId: item.houseId,
+          serviceId: item.serviceId,
+          itemId: item.itemId,
+          fabricId: item.fabricId,
+          price: item.price,
+          currency: item.currency ?? "CDF",
+          isActive: item.isActive,
+        })
+        .onConflictDoUpdate({
+          target: [
+            schema.houseItems.houseId,
+            schema.houseItems.serviceId,
+            schema.houseItems.itemId,
+            schema.houseItems.fabricId,
+          ],
+          set: {
+            price: item.price,
+            isActive: item.isActive,
+            currency: item.currency ?? "CDF",
+            updatedAt: new Date(),
+          },
+        });
+    }
+  });
 }
 
 /**
@@ -817,5 +892,32 @@ export async function getAllHousesClosures(): Promise<HouseClosureRecord[]> {
     .select()
     .from(schema.houseClosures)
     .orderBy(asc(schema.houseClosures.startsOn));
+}
+
+/**
+ * Computes today's count of active/accepted orders for a house in Bukavu business time.
+ */
+export async function getHouseTodayOrdersCount(houseId: string): Promise<number> {
+  const bukavuNow = toBukavuDateTime(new Date());
+  const startOfDay = new Date(
+    Date.UTC(bukavuNow.year, bukavuNow.month - 1, bukavuNow.day, 0, 0, 0, 0)
+  );
+  const endOfDay = new Date(
+    Date.UTC(bukavuNow.year, bukavuNow.month - 1, bukavuNow.day, 23, 59, 59, 999)
+  );
+
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.orders)
+    .where(
+      and(
+        eq(schema.orders.houseId, houseId),
+        gte(schema.orders.createdAt, startOfDay),
+        lte(schema.orders.createdAt, endOfDay),
+        notInArray(schema.orders.status, ["rejected", "cancelled", "expired"])
+      )
+    );
+
+  return row?.count ?? 0;
 }
 

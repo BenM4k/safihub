@@ -5,6 +5,7 @@ import {
   submitHouseReception,
   markOrderReady,
   updateHouseCatalogueItem,
+  updateHouseCatalogueBatch,
   requestCatalogueItem,
   updateHouseHoursSchedule,
   addHouseClosureEntry,
@@ -213,6 +214,7 @@ vi.mock("@/dal", async (importOriginal) => {
     transitionOrderStatusAtomic: vi.fn(async () => true),
     saveReceptionCountTransaction: vi.fn(async () => {}),
     upsertHouseItemPrice: vi.fn(async () => {}),
+    upsertHouseItemPricesBatch: vi.fn(async () => {}),
     createHouseItemRequest: vi.fn(async () => {}),
     setHouseHours: vi.fn(async () => {}),
     createHouseClosure: vi.fn(async () => {}),
@@ -374,6 +376,73 @@ describe("Phase 4: House Portal Domain Services Unit Tests", () => {
       expect(res.ok).toBe(false);
       if (!res.ok) {
         expect(res.error).toContain("required");
+      }
+    });
+
+    it("successfully updates catalogue pricing in batch", async () => {
+      const res = await updateHouseCatalogueBatch({
+        houseId: "house-1",
+        items: [
+          {
+            serviceId: "srv-1",
+            itemId: "it-1",
+            fabricId: "fab-1",
+            price: 3500,
+            isActive: true,
+          },
+          {
+            serviceId: "srv-1",
+            itemId: "it-2",
+            fabricId: "fab-1",
+            price: 0,
+            isActive: false,
+          },
+        ],
+      });
+
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.value.updatedCount).toBe(2);
+      }
+    });
+
+    it("rejects batch update if any item has negative price", async () => {
+      const res = await updateHouseCatalogueBatch({
+        houseId: "house-1",
+        items: [
+          {
+            serviceId: "srv-1",
+            itemId: "it-1",
+            fabricId: "fab-1",
+            price: -100,
+            isActive: true,
+          },
+        ],
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toContain("negative");
+      }
+    });
+
+    it("rejects batch update if offered item has price <= 0", async () => {
+      const res = await updateHouseCatalogueBatch({
+        houseId: "house-1",
+        items: [
+          {
+            serviceId: "srv-1",
+            itemId: "it-1",
+            fabricId: "fab-1",
+            price: 0,
+            isActive: true,
+          },
+        ],
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toContain("greater than 0");
       }
     });
   });

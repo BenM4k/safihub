@@ -1,10 +1,14 @@
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
 import { guardHouseRoute } from "@/services/auth";
-import { getMasterItems, getMasterFabrics } from "@/dal";
+import {
+  getMasterItems,
+  getMasterFabrics,
+  getHouseCatalogueItems,
+  getHouseStaff,
+  getUserActiveSessions,
+} from "@/dal";
 import { getHouseSettings } from "@/services/house";
-import { GeneralSettingsForm } from "@/components/house/settings/general-settings-form";
-import { ExclusionsManager } from "@/components/house/settings/exclusions-manager";
+import { SettingsContainer } from "@/components/house/settings";
 
 interface PageProps {
   params: Promise<{ houseSlug: string }>;
@@ -19,45 +23,37 @@ export default async function PartnerSettingsPage({ params }: PageProps) {
     notFound();
   }
 
-  const t = await getTranslations("house.settings");
-
-  const [settingsRes, masterItems, masterFabrics] = await Promise.all([
-    getHouseSettings(houseId),
-    getMasterItems(),
-    getMasterFabrics(),
-  ]);
+  const [settingsRes, masterItems, masterFabrics, catalogueItems, staff, sessions] =
+    await Promise.all([
+      getHouseSettings(houseId),
+      getMasterItems(),
+      getMasterFabrics(),
+      getHouseCatalogueItems(houseId),
+      getHouseStaff(houseId),
+      getUserActiveSessions(authCtx.user.id),
+    ]);
 
   if (!settingsRes.ok) {
     return (
-      <div className="p-6 bg-rose-50 text-rose-700 rounded-2xl border border-rose-200 text-sm">
+      <div className="p-6 bg-destructive-soft text-destructive rounded-2xl border border-destructive/30 text-sm">
         {settingsRes.error}
       </div>
     );
   }
 
-  const { house, exclusions } = settingsRes.value;
+  const { house, exclusions, todayOrdersCount } = settingsRes.value;
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-          {t("title")}
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          {t("subtitle")}
-        </p>
-      </div>
-
-      {/* General Settings */}
-      <GeneralSettingsForm house={house} />
-
-      {/* Exclusions Manager */}
-      <ExclusionsManager
-        houseId={houseId}
-        exclusions={exclusions}
-        masterItems={masterItems}
-        masterFabrics={masterFabrics}
-      />
-    </div>
+    <SettingsContainer
+      house={house}
+      exclusions={exclusions}
+      masterItems={masterItems}
+      masterFabrics={masterFabrics}
+      catalogueItems={catalogueItems}
+      staff={staff}
+      todayOrdersCount={todayOrdersCount}
+      sessions={sessions}
+      user={authCtx.user}
+    />
   );
 }

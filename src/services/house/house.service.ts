@@ -6,6 +6,7 @@ import {
   createHouseItemRequest,
   deleteHouseClosure,
   deleteHouseExclusion,
+  updateHouseExclusion,
   getHouseById,
   getHouseCatalogueItems,
   getHouseClosures,
@@ -16,6 +17,7 @@ import {
   getHouseItemRequests,
   getHouseOrderDetailRestricted,
   getHouseOrdersRestricted,
+  getHouseTodayOrdersCount,
   getOrderEvents,
   getOrderItems,
   saveReceptionCountTransaction,
@@ -24,6 +26,7 @@ import {
   updateHouse,
   upsertHouseCoverage,
   upsertHouseItemPrice,
+  upsertHouseItemPricesBatch,
   type HouseCatalogueItemRecord,
   type HouseCoverageWithLimitsData,
   type HouseDashboardMetrics,
@@ -398,6 +401,50 @@ export async function updateHouseCatalogueItem(params: {
 }
 
 /**
+ * Task 4.4: Batch update house catalogue pricing/availability atomically.
+ * Invariant: Affects new orders only. Existing orders retain frozen prices.
+ */
+export async function updateHouseCatalogueBatch(params: {
+  houseId: string;
+  items: Array<{
+    serviceId: string;
+    itemId: string;
+    fabricId: string;
+    price: number;
+    isActive: boolean;
+    currency?: "CDF" | "USD";
+  }>;
+}): Promise<Result<{ updatedCount: number }>> {
+  try {
+    if (params.items.length === 0) {
+      return ok({ updatedCount: 0 });
+    }
+
+    for (const item of params.items) {
+      if (item.price < 0) {
+        return err("Price cannot be negative");
+      }
+      if (item.isActive && item.price <= 0) {
+        return err("Offered items must have a price greater than 0");
+      }
+    }
+
+    await upsertHouseItemPricesBatch(
+      params.items.map((it) => ({
+        ...it,
+        houseId: params.houseId,
+      }))
+    );
+
+    return ok({ updatedCount: params.items.length });
+  } catch (error) {
+    return err(
+      error instanceof Error ? error.message : "Failed to batch update catalogue pricing"
+    );
+  }
+}
+
+/**
  * Task 4.4: Request a new item or fabric from admin.
  */
 export async function requestCatalogueItem(params: {
@@ -552,16 +599,17 @@ export async function updateNeighborhoodCoverage(params: {
  */
 export async function getHouseSettings(houseId: string) {
   try {
-    const [house, exclusions] = await Promise.all([
+    const [house, exclusions, todayOrdersCount] = await Promise.all([
       getHouseById(houseId),
       getHouseExclusions(houseId),
+      getHouseTodayOrdersCount(houseId),
     ]);
 
     if (!house) {
       return err("House not found");
     }
 
-    return ok({ house, exclusions });
+    return ok({ house, exclusions, todayOrdersCount });
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to load house settings");
   }
@@ -606,11 +654,28 @@ export async function addHouseExclusionRule(params: {
   note?: string | null;
 }): Promise<Result<void>> {
   try {
-    if (!params.itemId && !params.fabricId) {
-      return err("An item or fabric must be selected for the exclusion");
+    const cleanItemId = params.itemId || null;
+    const cleanFabricId = params.fabricId || null;
+
+    if (!cleanItemId && !cleanFabricId) {
+      return err("Veuillez sélectionner au moins un article ou une matière (la combinaison 'Tous les articles' et 'Toutes les matières' n'est pas autorisée).");
     }
 
-    await createHouseExclusion(params);
+    const existing = await getHouseExclusions(params.houseId);
+    const isDuplicate = existing.some(
+      (ex) => (ex.itemId || null) === cleanItemId && (ex.fabricId || null) === cleanFabricId
+    );
+
+    if (isDuplicate) {
+      return err("Cette règle d'exclusion existe déjà pour votre pressing.");
+    }
+
+    await createHouseExclusion({
+      houseId: params.houseId,
+      itemId: cleanItemId,
+      fabricId: cleanFabricId,
+      note: params.note ? params.note.trim() : null,
+    });
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to add exclusion rule");
@@ -629,5 +694,48 @@ export async function deleteHouseExclusionRule(
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to delete exclusion");
+  }
+}
+
+export async function updateHouseExclusionRule(params: {
+  houseId: string;
+  exclusionId: string;
+  itemId?: string | null;
+  fabricId?: string | null;
+  note?: string | null;
+}): Promise<Result<void>> {
+  try {
+    const cleanItemId = params.itemId || null;
+    const cleanFabricId = params.fabricId || null;
+
+    if (!cleanItemId && !cleanFabricId) {
+      return err("Veuillez sélectionner au moins un article ou une matière (la combinaison 'Tous les articles' et 'Toutes les matières' n'est pas autorisée).");
+    }
+
+    const existing = await getHouseExclusions(params.houseId);
+    const isDuplicate = existing.some(
+      (ex) =>
+        ex.id !== params.exclusionId &&
+        (ex.itemId || null) === cleanItemId &&
+        (ex.fabricId || null) === cleanFabricId
+    );
+
+    if (isDuplicate) {
+      return err("Cette règle d'exclusion existe déjà pour votre pressing.");
+    }
+
+    const updated = await updateHouseExclusion(params.exclusionId, params.houseId, {
+      itemId: cleanItemId,
+      fabricId: cleanFabricId,
+      note: params.note ? params.note.trim() : null,
+    });
+
+    if (!updated) {
+      return err("Règle d'exclusion introuvable.");
+    }
+
+    return ok(undefined);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Erreur lors de la modification de l'exclusion");
   }
 }

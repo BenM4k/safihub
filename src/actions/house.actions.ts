@@ -9,6 +9,7 @@ import {
   acceptIncomingOrder,
   addHouseClosureEntry,
   addHouseExclusionRule,
+  updateHouseExclusionRule,
   deleteHouseClosureEntry,
   deleteHouseExclusionRule,
   markOrderReady,
@@ -16,6 +17,7 @@ import {
   requestCatalogueItem,
   submitHouseReception,
   updateHouseCatalogueItem,
+  updateHouseCatalogueBatch,
   updateHouseGeneralSettings,
   updateHouseHoursSchedule,
   updateNeighborhoodCoverage,
@@ -240,6 +242,52 @@ export async function updateHouseCatalogueItemAction(input: {
     price: parsed.data.price,
     isActive: parsed.data.isActive,
     currency: parsed.data.currency,
+  });
+
+  if (res.ok) {
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
+  }
+
+  return res;
+}
+
+const batchItemSchema = z.object({
+  serviceId: z.string().uuid("Identifiant de service invalide"),
+  itemId: z.string().uuid("Identifiant d'article invalide"),
+  fabricId: z.string().uuid("Identifiant de matière invalide"),
+  price: z.number().int().min(0, "Le prix ne peut être négatif"),
+  isActive: z.boolean(),
+  currency: z.enum(["CDF", "USD"]).optional(),
+});
+
+const updateCatalogueBatchSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  items: z.array(batchItemSchema).min(1, "Aucune modification fournie"),
+});
+
+export async function updateHouseCatalogueBatchAction(input: {
+  houseId?: string;
+  items: Array<{
+    serviceId: string;
+    itemId: string;
+    fabricId: string;
+    price: number;
+    isActive: boolean;
+    currency?: "CDF" | "USD";
+  }>;
+}): Promise<Result<{ updatedCount: number }>> {
+  const parsed = updateCatalogueBatchSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Paramètres de catalogue invalides");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const res = await updateHouseCatalogueBatch({
+    houseId: authCtx.value.houseId,
+    items: parsed.data.items,
   });
 
   if (res.ok) {
@@ -497,6 +545,44 @@ export async function deleteHouseExclusionAction(input: {
   return res;
 }
 
+const updateExclusionSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  exclusionId: z.string().uuid("Identifiant d'exclusion invalide"),
+  itemId: z.string().uuid().optional().nullable(),
+  fabricId: z.string().uuid().optional().nullable(),
+  note: z.string().optional().nullable(),
+});
+
+export async function updateHouseExclusionAction(input: {
+  exclusionId: string;
+  itemId?: string | null;
+  fabricId?: string | null;
+  note?: string | null;
+  houseId?: string;
+}): Promise<Result<void>> {
+  const parsed = updateExclusionSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Exclusion invalide");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const res = await updateHouseExclusionRule({
+    houseId: authCtx.value.houseId,
+    exclusionId: parsed.data.exclusionId,
+    itemId: parsed.data.itemId,
+    fabricId: parsed.data.fabricId,
+    note: parsed.data.note,
+  });
+
+  if (res.ok) {
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
+  }
+  return res;
+}
+
 const toggleHousePauseSchema = z.object({
   houseId: z.string().uuid().optional(),
   isPaused: z.boolean(),
@@ -529,6 +615,69 @@ export async function toggleHousePauseAction(input: {
       error instanceof Error
         ? error.message
         : "Erreur lors de la mise à jour du statut de pause."
+    );
+  }
+}
+
+const updateCommandesSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  dailyCapacity: z.number().int().positive().nullable(),
+  minimumOrderAmount: z.number().int().min(0, "Le montant minimum ne peut pas être négatif").max(500000, "Le montant maximum autorisé est de 500 000 CDF"),
+  isPaused: z.boolean(),
+  pausedUntil: z.string().optional().nullable(),
+  pauseReason: z.string().optional().nullable(),
+});
+
+export async function updateHouseCommandesAction(input: {
+  dailyCapacity: number | null;
+  minimumOrderAmount: number;
+  isPaused: boolean;
+  pausedUntil?: string | null;
+  pauseReason?: string | null;
+  houseId?: string;
+}): Promise<Result<void>> {
+  const parsed = updateCommandesSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Paramètres invalides");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  // Log pause audit if paused
+  if (parsed.data.isPaused) {
+    console.info(
+      `[House Pause Audit] House ${authCtx.value.houseId} paused by user ${authCtx.value.user.id} (${authCtx.value.user.email}). Reason: "${parsed.data.pauseReason || "Non précisé"}". PausedUntil: ${parsed.data.pausedUntil || "Indéterminé"}`
+    );
+  }
+
+  const res = await updateHouseGeneralSettings({
+    houseId: authCtx.value.houseId,
+    dailyCapacity: parsed.data.dailyCapacity,
+    minimumOrderAmount: parsed.data.minimumOrderAmount,
+    isPaused: parsed.data.isPaused,
+    pausedUntil: parsed.data.pausedUntil ? new Date(parsed.data.pausedUntil) : null,
+  });
+
+  if (res.ok) {
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
+  }
+  return res;
+}
+
+export async function revokeOtherSessionsAction(): Promise<Result<{ revokedCount: number }>> {
+  const authRes = await requireHouseAccess();
+  if (!authRes.ok) return authRes;
+
+  try {
+    const { revokeOtherUserSessions } = await import("@/dal");
+    const count = await revokeOtherUserSessions(authRes.value.user.id, authRes.value.session.id);
+    revalidatePath("/partner", "layout");
+    return ok({ revokedCount: count });
+  } catch (error) {
+    return err(
+      error instanceof Error ? error.message : "Erreur lors de la révocation des autres sessions."
     );
   }
 }

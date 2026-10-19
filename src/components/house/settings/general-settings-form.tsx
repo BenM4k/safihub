@@ -64,7 +64,7 @@ export function GeneralSettingsForm({
       if (!res.ok) {
         setErrorMsg(res.error);
       } else {
-        setSuccessMsg("Paramètres de l'atelier enregistrés avec succès.");
+        setSuccessMsg("Paramètres du pressing enregistrés avec succès.");
         setTimeout(() => setSuccessMsg(null), 3000);
       }
     });

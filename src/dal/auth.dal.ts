@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, ne, or } from "drizzle-orm";
+import { and, desc, eq, ne, or } from "drizzle-orm";
 import { db, schema } from "./db";
 import { ok, err, type Result } from "@/lib/result";
 
@@ -409,5 +409,54 @@ export async function isPhoneOrEmailBlocked(params: {
     .limit(1);
 
   return users.length > 0;
+}
+
+export interface UserSessionDTO {
+  id: string;
+  token: string;
+  createdAt: Date;
+  expiresAt: Date;
+  ipAddress: string | null;
+  userAgent: string | null;
+}
+
+/**
+ * Retrieves all active sessions for a user, sorted newest first.
+ */
+export async function getUserActiveSessions(userId: string): Promise<UserSessionDTO[]> {
+  const rows = await db
+    .select({
+      id: schema.session.id,
+      token: schema.session.token,
+      createdAt: schema.session.createdAt,
+      expiresAt: schema.session.expiresAt,
+      ipAddress: schema.session.ipAddress,
+      userAgent: schema.session.userAgent,
+    })
+    .from(schema.session)
+    .where(eq(schema.session.userId, userId))
+    .orderBy(desc(schema.session.createdAt));
+
+  return rows;
+}
+
+/**
+ * Revokes all sessions for a user except the currently active session.
+ */
+export async function revokeOtherUserSessions(
+  userId: string,
+  currentSessionId: string
+): Promise<number> {
+  const result = await db
+    .delete(schema.session)
+    .where(
+      and(
+        eq(schema.session.userId, userId),
+        ne(schema.session.id, currentSessionId)
+      )
+    )
+    .returning({ id: schema.session.id });
+
+  return result.length;
 }
 

@@ -1,16 +1,20 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { guardHouseRoute } from "@/services/auth";
-import { getHousePortalSettlements } from "@/services/house";
-import { HouseSettlementSummaryCards } from "@/components/house/settlements/house-settlement-summary-cards";
-import { HousePayoutHistoryTable } from "@/components/house/settlements/house-payout-history-table";
-import { HouseSettledOrdersTable } from "@/components/house/settlements/house-settled-orders-table";
+import { getPartnerSettlements } from "@/services/house";
+import { PageHeader } from "@/components/shared";
+import { SettlementsView } from "@/components/house/settlements/settlements-view";
+import type { PeriodType } from "@/types/partner-settlements";
 
 interface PageProps {
   params: Promise<{ houseSlug: string }>;
+  searchParams: Promise<{ period?: string; from?: string; to?: string }>;
 }
 
-export default async function PartnerSettlementsPage({ params }: PageProps) {
+export default async function PartnerSettlementsPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { houseSlug } = await params;
   const authCtx = await guardHouseRoute({ houseSlug });
   const houseId = authCtx.houseId;
@@ -19,13 +23,27 @@ export default async function PartnerSettlementsPage({ params }: PageProps) {
     notFound();
   }
 
+  const queryParams = await searchParams;
   const t = await getTranslations("house.settlements");
-  const settlementsRes = await getHousePortalSettlements(houseId);
+
+  const validPeriods: PeriodType[] = ["week", "month", "last30", "custom"];
+  const period: PeriodType =
+    queryParams.period && validPeriods.includes(queryParams.period as PeriodType)
+      ? (queryParams.period as PeriodType)
+      : "month";
+
+  const settlementsRes = await getPartnerSettlements({
+    houseId,
+    period,
+    from: queryParams.from,
+    to: queryParams.to,
+  });
 
   if (!settlementsRes.ok) {
     return (
-      <div className="p-6 bg-rose-50 text-rose-700 rounded-2xl border border-rose-200 text-sm">
-        {settlementsRes.error}
+      <div className="p-6 bg-destructive-light text-destructive-base rounded-2xl border border-destructive-base/30 text-sm">
+        <h2 className="font-bold text-base">Erreur de chargement des revenus</h2>
+        <p className="mt-1">{settlementsRes.error}</p>
       </div>
     );
   }
@@ -34,26 +52,12 @@ export default async function PartnerSettlementsPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-heading tracking-tight">
-          {t("title")}
-        </h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          {t("subtitle")} — {data.name}
-        </p>
-      </div>
-
-      <HouseSettlementSummaryCards
-        balanceOwedCDF={data.balanceOwedCDF}
-        totalRevenueCDF={data.totalRevenueCDF}
-        totalCommissionCDF={data.totalCommissionCDF}
-        totalSettledCDF={data.totalSettledCDF}
+      <PageHeader
+        title={t("title")}
+        subtitle={`${t("subtitle")} — ${data.houseName}`}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <HousePayoutHistoryTable payouts={data.settlements} />
-        <HouseSettledOrdersTable orders={data.orders} />
-      </div>
+      <SettlementsView data={data} />
     </div>
   );
 }
