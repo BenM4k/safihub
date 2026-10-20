@@ -2,11 +2,14 @@ import "server-only";
 import { err, ok, type Result } from "@/lib/result";
 import {
   createHouseClosure,
+  createHouseClosuresBatch,
+  updateHouseClosure,
   createHouseExclusion,
   createHouseItemRequest,
   deleteHouseClosure,
   deleteHouseExclusion,
   updateHouseExclusion,
+  getWaitingAcceptanceCount,
   getHouseById,
   getHouseCatalogueItems,
   getHouseClosures,
@@ -20,11 +23,13 @@ import {
   getHouseTodayOrdersCount,
   getOrderEvents,
   getOrderItems,
+  recordCoverageExtensionTicket,
   saveReceptionCountTransaction,
   setHouseHours,
   transitionOrderStatusAtomic,
   updateHouse,
   upsertHouseCoverage,
+  upsertHouseCoverageBatch,
   upsertHouseItemPrice,
   upsertHouseItemPricesBatch,
   type HouseCatalogueItemRecord,
@@ -480,11 +485,18 @@ export async function listHouseCatalogueRequests(houseId: string) {
  */
 export async function getHouseHoursData(houseId: string) {
   try {
-    const [hours, closures] = await Promise.all([
+    const [hours, closures, waitingOrdersCount] = await Promise.all([
       getHouseHours(houseId),
       getHouseClosures(houseId),
+      getWaitingAcceptanceCount(houseId),
     ]);
-    return ok({ hours, closures });
+    return ok({
+      hours,
+      closures,
+      waitingOrdersCount,
+      timezone: "Africa/Lubumbashi",
+      timezoneLabel: "Heure de Bukavu, UTC+2",
+    });
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to load hours");
   }
@@ -495,12 +507,27 @@ export async function updateHouseHoursSchedule(
   hours: Array<{ weekday: number; opensAt: string; closesAt: string }>
 ): Promise<Result<void>> {
   try {
+    const byDay: Record<number, Array<{ opensAt: string; closesAt: string }>> = {};
+
     for (const h of hours) {
       if (h.weekday < 1 || h.weekday > 7) {
         return err("Weekday must be between 1 and 7");
       }
       if (h.closesAt <= h.opensAt) {
         return err(`Closing time (${h.closesAt}) must be after opening time (${h.opensAt})`);
+      }
+      if (!byDay[h.weekday]) byDay[h.weekday] = [];
+      byDay[h.weekday].push({ opensAt: h.opensAt, closesAt: h.closesAt });
+    }
+
+    // Check overlaps within same weekday
+    for (const [weekdayStr, ranges] of Object.entries(byDay)) {
+      for (let i = 0; i < ranges.length; i++) {
+        for (let j = i + 1; j < ranges.length; j++) {
+          if (ranges[i].opensAt < ranges[j].closesAt && ranges[j].opensAt < ranges[i].closesAt) {
+            return err(`Time ranges overlap for weekday ${weekdayStr}`);
+          }
+        }
       }
     }
 
@@ -529,6 +556,62 @@ export async function addHouseClosureEntry(params: {
   }
 }
 
+export async function updateHouseClosureEntry(
+  houseId: string,
+  closureId: string,
+  params: {
+    startsOn: string;
+    endsOn: string;
+    reason?: string;
+  }
+): Promise<Result<void>> {
+  try {
+    if (params.endsOn < params.startsOn) {
+      return err("La date de fin doit être égale ou postérieure à la date de début");
+    }
+
+    const updated = await updateHouseClosure(closureId, houseId, {
+      startsOn: params.startsOn,
+      endsOn: params.endsOn,
+      reason: params.reason,
+    });
+
+    if (!updated) {
+      return err("Fermeture introuvable ou non autorisée pour ce pressing");
+    }
+
+    return ok(undefined);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to update closure");
+  }
+}
+
+export async function importHouseHolidays(
+  houseId: string,
+  holidays: Array<{
+    startsOn: string;
+    endsOn: string;
+    reason: string;
+  }>
+): Promise<Result<{ importedCount: number }>> {
+  try {
+    if (holidays.length === 0) {
+      return ok({ importedCount: 0 });
+    }
+
+    // Filter out duplicate closures already present for the house
+    const existing = await getHouseClosures(houseId);
+    const toInsert = holidays.filter((h) => {
+      return !existing.some((e) => e.startsOn === h.startsOn && e.endsOn === h.endsOn);
+    });
+
+    const count = await createHouseClosuresBatch(houseId, toInsert);
+    return ok({ importedCount: count });
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to import holidays");
+  }
+}
+
 export async function deleteHouseClosureEntry(
   houseId: string,
   closureId: string
@@ -543,6 +626,7 @@ export async function deleteHouseClosureEntry(
     return err(error instanceof Error ? error.message : "Failed to delete closure");
   }
 }
+
 
 /**
  * Task 4.5: Coverage with distance limits.
@@ -591,6 +675,47 @@ export async function updateNeighborhoodCoverage(params: {
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to update coverage");
+  }
+}
+
+export async function updateNeighborhoodCoverageBatch(params: {
+  houseId: string;
+  items: Array<{ neighborhoodId: string; isActive: boolean }>;
+}): Promise<Result<{ updatedCount: number }>> {
+  try {
+    if (params.items.length === 0) {
+      return ok({ updatedCount: 0 });
+    }
+
+    const coverageData = await getHouseCoverageWithLimits(params.houseId);
+    if (!coverageData) {
+      return err("Pressing introuvable");
+    }
+
+    const itemsMap = new Map(coverageData.items.map((i) => [i.neighborhoodId, i]));
+
+    for (const item of params.items) {
+      if (item.isActive) {
+        const target = itemsMap.get(item.neighborhoodId);
+        if (!target) {
+          return err(`Quartier introuvable (ID: ${item.neighborhoodId})`);
+        }
+        if (!target.isAllowedByDistance) {
+          return err(
+            `Impossible de desservir '${target.neighborhoodName}' : le niveau de distance (${target.distanceLevel ?? "inconnu"}) dépasse la limite autorisée (${coverageData.effectiveMaxDistanceLevel}).`
+          );
+        }
+      }
+    }
+
+    await upsertHouseCoverageBatch(params.houseId, params.items);
+    return ok({ updatedCount: params.items.length });
+  } catch (error) {
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Échec de l'enregistrement de la couverture par lot"
+    );
   }
 }
 
@@ -753,5 +878,66 @@ export async function updateHouseExclusionRule(params: {
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Erreur lors de la modification de l'exclusion");
+  }
+}
+
+export interface RequestCoverageExtensionParams {
+  houseId: string;
+  userId: string;
+  targetDistanceLevel: number;
+  requestedNeighborhoodIds?: string[];
+  reasonCategory: string;
+  note: string;
+}
+
+/**
+ * Handles an in-app internal support ticket requesting coverage perimeter extension.
+ * Validates target level against current level, generates a unique ticket reference,
+ * and records in-app notifications.
+ */
+export async function requestCoverageExtension(
+  params: RequestCoverageExtensionParams
+): Promise<Result<{ ticketReference: string }>> {
+  try {
+    if (!params.houseId || !params.userId) {
+      return err("Session de pressing non authentifiée");
+    }
+    if (!params.note?.trim() || params.note.trim().length < 5) {
+      return err("Veuillez fournir une description détaillée (au moins 5 caractères)");
+    }
+    if (params.targetDistanceLevel < 1 || params.targetDistanceLevel > 3) {
+      return err("Niveau de distance cible invalide (1 à 3)");
+    }
+
+    const coverageData = await getHouseCoverageWithLimits(params.houseId);
+    if (!coverageData) {
+      return err("Pressing introuvable");
+    }
+
+    const currentLevel = coverageData.effectiveMaxDistanceLevel;
+    if (params.targetDistanceLevel <= currentLevel) {
+      return err(`Votre pressing dessert déjà jusqu'au niveau ${currentLevel}.`);
+    }
+
+    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const timeCode = Date.now().toString(36).toUpperCase();
+    const ticketReference = `TIC-EXT-${suffix}-${timeCode}`;
+
+    const res = await recordCoverageExtensionTicket({
+      houseId: params.houseId,
+      userId: params.userId,
+      ticketReference,
+      currentDistanceLevel: currentLevel,
+      targetDistanceLevel: params.targetDistanceLevel,
+      requestedNeighborhoodIds: params.requestedNeighborhoodIds,
+      reasonCategory: params.reasonCategory,
+      note: params.note.trim(),
+    });
+
+    return res;
+  } catch (error) {
+    return err(
+      error instanceof Error ? error.message : "Erreur lors de la transmission de la demande"
+    );
   }
 }

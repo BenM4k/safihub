@@ -1,0 +1,28 @@
+"use client";
+
+import { CustomerErrorView } from "@/components/customer/customer-error-view";
+
+interface TrackOrderErrorProps {
+  error: Error & { digest?: string };
+  reset: () => void;
+}
+
+export default function TrackOrderError({
+  error,
+  reset,
+}: TrackOrderErrorProps) {
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-50/50">
+      <div className="h-18 border-b border-slate-200/80 bg-white" />
+      <main className="flex-1 flex flex-col justify-center py-12 px-4">
+        <CustomerErrorView
+          error={error}
+          reset={reset}
+          title="Erreur lors du suivi de commande"
+          description="Impossible de charger cette commande via le lien de suivi sécurisé. Veuillez vérifier le lien ou réessayer."
+          showHousesLink={false}
+        />
+      </main>
+    </div>
+  );
+}

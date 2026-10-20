@@ -1,168 +1,189 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Check, ShieldAlert, MapPin, Info } from "lucide-react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { updateNeighborhoodCoverageAction } from "@/actions/house.actions";
+import { AlertCircle, Check, RotateCcw } from "lucide-react";
 import type { HouseCoverageWithLimitsData } from "@/dal";
+import { EmptyState } from "@/components/admin/shared/empty-state";
+import { CoverageHeader } from "./coverage-header";
+import { DeliveryPerimeterCard } from "./delivery-perimeter-card";
+import { CoverageFilterBar } from "./coverage-filter-bar";
+import { CommuneGroupCard } from "./commune-group-card";
+import { CoverageSaveBar } from "./coverage-save-bar";
+import { DeselectImpactDialog } from "./deselect-impact-dialog";
+import { ZeroCoverageDialog } from "./zero-coverage-dialog";
+import { CoverageExtensionTicketDialog } from "./coverage-extension-ticket-dialog";
+import { useCoverageState } from "./use-coverage-state";
+import { useCoverageFilters } from "./use-coverage-filters";
 
-export function CoverageManager({
-  coverageData,
-}: {
+interface CoverageManagerProps {
   coverageData: HouseCoverageWithLimitsData;
-}) {
+}
+
+export function CoverageManager({ coverageData }: CoverageManagerProps) {
   const t = useTranslations("house.coverage");
-  const [isPending, startTransition] = useTransition();
-  const [coveredMap, setCoveredMap] = useState<Record<string, boolean>>(() => {
-    const map: Record<string, boolean> = {};
-    for (const it of coverageData.items) {
-      map[it.neighborhoodId] = it.isCovered;
-    }
-    return map;
+  const [isExtensionDialogOpen, setIsExtensionDialogOpen] = useState(false);
+
+  const {
+    coveredMap,
+    diffs,
+    dirtyIds,
+    totalCoveredCount,
+    isSaving,
+    errorMsg,
+    saveSuccessMsg,
+    impactTarget,
+    showZeroModal,
+    setShowZeroModal,
+    handleToggle,
+    confirmImpactDeselect,
+    cancelImpactDeselect,
+    handleGroupToggle,
+    getGroupTriState,
+    handleReset,
+    triggerSave,
+  } = useCoverageState({
+    items: coverageData.items,
+    houseId: coverageData.houseId,
   });
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Group items by zone
-  const zonesMap = new Map<string, typeof coverageData.items>();
-  for (const it of coverageData.items) {
-    if (!zonesMap.has(it.zoneName)) {
-      zonesMap.set(it.zoneName, []);
-    }
-    zonesMap.get(it.zoneName)!.push(it);
-  }
-
-  function handleToggle(neighborhoodId: string, currentVal: boolean, isAllowed: boolean) {
-    if (!isAllowed && !currentVal) {
-      // Invariant: cannot enable if beyond distance limit!
-      setErrorMsg("Ce quartier dépasse la distance maximale autorisée pour votre pressing.");
-      return;
-    }
-
-    const nextVal = !currentVal;
-    setCoveredMap((prev) => ({ ...prev, [neighborhoodId]: nextVal }));
-    setErrorMsg(null);
-
-    startTransition(async () => {
-      const res = await updateNeighborhoodCoverageAction({
-        houseId: coverageData.houseId,
-        neighborhoodId,
-        isActive: nextVal,
-      });
-
-      if (!res.ok) {
-        // Revert on error
-        setCoveredMap((prev) => ({ ...prev, [neighborhoodId]: currentVal }));
-        setErrorMsg(res.error);
-      }
-    });
-  }
+  const {
+    searchQuery,
+    setSearchQuery,
+    filterStatus,
+    setFilterStatus,
+    groupedZones,
+    filterCounts,
+  } = useCoverageFilters({
+    items: coverageData.items,
+    coveredMap,
+  });
 
   return (
-    <div className="space-y-5">
-      {/* Distance limit overview banner */}
-      <div className="p-4 bg-primary-soft border border-primary/20 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-        <div className="space-y-0.5">
-          <h2 className="text-sm font-bold text-heading flex items-center gap-1.5">
-            <Info className="size-4 text-primary" />
-            <span>Périmètre de livraison & Niveau de distance</span>
-          </h2>
-          <p className="text-xs text-foreground">
-            {t("subtitle")}
-          </p>
-        </div>
+    <div className="space-y-6 pb-28">
+      {/* 1. Header with live count */}
+      <CoverageHeader
+        coveredCount={totalCoveredCount}
+        totalCount={coverageData.items.length}
+      />
 
-        <div className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs shrink-0 shadow-xs">
-          <span>{t("effectiveMaxDistance")} :</span>
-          <span className="text-sm font-black underline">
-            {coverageData.effectiveMaxDistanceLevel}
-          </span>
-        </div>
-      </div>
+      {/* 2. Perimeter Information Card */}
+      <DeliveryPerimeterCard
+        effectiveMaxDistance={coverageData.effectiveMaxDistanceLevel}
+        houseName={coverageData.houseName}
+        onRequestExtension={() => setIsExtensionDialogOpen(true)}
+      />
 
-      {errorMsg && (
-        <div className="p-3 bg-destructive-soft text-destructive text-xs font-semibold rounded-xl border border-destructive/20">
-          {errorMsg}
+      {/* Success Banner */}
+      {saveSuccessMsg && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="p-3.5 bg-success-soft text-success text-xs font-bold rounded-xl border border-success/30 flex items-center gap-2 animate-in fade-in duration-150"
+        >
+          <Check className="size-4 shrink-0 text-success" aria-hidden="true" />
+          <span>{saveSuccessMsg}</span>
         </div>
       )}
 
-      {/* Neighborhoods grouped by zone */}
-      <div className="space-y-4">
-        {Array.from(zonesMap.entries()).map(([zoneName, items]) => (
-          <div
-            key={zoneName}
-            className="bg-card rounded-2xl border border-border overflow-hidden shadow-xs"
-          >
-            <div className="p-3.5 bg-surface border-b border-border flex items-center justify-between">
-              <span className="font-bold text-xs text-heading flex items-center gap-1.5">
-                <MapPin className="size-3.5 text-primary" />
-                Zone {zoneName} ({items.length} quartiers)
-              </span>
-            </div>
-
-            <div className="divide-y divide-border">
-              {items.map((n) => {
-                const isCovered = Boolean(coveredMap[n.neighborhoodId]);
-                const isAllowed = n.isAllowedByDistance;
-
-                return (
-                  <div
-                    key={n.neighborhoodId}
-                    className={`p-3.5 sm:p-4 flex items-center justify-between gap-3 text-xs transition ${
-                      !isAllowed ? "bg-surface/40 opacity-75" : "hover:bg-surface"
-                    }`}
-                  >
-                    <div className="space-y-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-heading">
-                          {n.neighborhoodName}
-                        </span>
-
-                        {/* Distance level badge */}
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                            isAllowed
-                              ? "bg-secondary text-foreground"
-                              : "bg-destructive-soft text-destructive border border-destructive/20"
-                          }`}
-                        >
-                          Distance: Niveau {n.distanceLevel ?? 0}
-                        </span>
-
-                        {/* Beyond limit warning tag */}
-                        {!isAllowed && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-destructive">
-                            <ShieldAlert className="size-3" />
-                            {t("distanceExceeded")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Toggle button */}
-                    <div className="shrink-0 flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={!isAllowed || isPending}
-                        onClick={() => handleToggle(n.neighborhoodId, isCovered, isAllowed)}
-                        title={!isAllowed ? t("distanceExceededTooltip") : undefined}
-                        className={`size-8 rounded-xl inline-flex items-center justify-center transition shadow-2xs ${
-                          isCovered
-                            ? "bg-success text-primary-foreground hover:bg-success/90"
-                            : !isAllowed
-                            ? "bg-secondary text-muted-foreground/40 cursor-not-allowed"
-                            : "bg-secondary text-muted-foreground hover:bg-secondary/80"
-                        }`}
-                      >
-                        <Check className="size-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+      {/* Error Banner with Retry */}
+      {errorMsg && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="p-3.5 bg-destructive-soft text-destructive text-xs font-semibold rounded-xl border border-destructive/20 flex items-center justify-between gap-2 animate-in fade-in duration-150"
+        >
+          <div className="flex items-center gap-2">
+            <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+            <span>{errorMsg}</span>
           </div>
-        ))}
-      </div>
+          {diffs.length > 0 && (
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => triggerSave()}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-destructive text-white text-xs font-bold hover:bg-destructive/90 transition shadow-xs"
+            >
+              <RotateCcw className="size-3" aria-hidden="true" />
+              <span>Réessayer</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 3. Filter Bar */}
+      {coverageData.items.length > 0 && (
+        <CoverageFilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          filterStatus={filterStatus}
+          onFilterStatusChange={setFilterStatus}
+          counts={filterCounts}
+        />
+      )}
+
+      {/* 4. Groups or Empty State */}
+      {coverageData.items.length === 0 ? (
+        <EmptyState
+          title={t("emptyStateTitle")}
+          description={t("emptyStateDesc")}
+        />
+      ) : groupedZones.length === 0 ? (
+        <EmptyState
+          title="Aucun résultat"
+          description={t("noFilterResults")}
+        />
+      ) : (
+        <div className="space-y-4">
+          {groupedZones.map(([zoneName, zoneItems]) => (
+            <CommuneGroupCard
+              key={zoneName}
+              zoneName={zoneName}
+              items={zoneItems}
+              coveredMap={coveredMap}
+              dirtyIds={dirtyIds}
+              disabled={isSaving}
+              effectiveMaxDistance={coverageData.effectiveMaxDistanceLevel}
+              triState={getGroupTriState(zoneItems)}
+              onToggleQuartier={handleToggle}
+              onToggleGroup={handleGroupToggle}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* 5. Sticky Save Bar */}
+      <CoverageSaveBar
+        dirtyCount={diffs.length}
+        isSaving={isSaving}
+        onCancel={handleReset}
+        onSave={() => triggerSave(false)}
+      />
+
+      {/* 6. Active Orders Safeguard Dialog */}
+      <DeselectImpactDialog
+        isOpen={impactTarget !== null}
+        neighborhoodName={impactTarget?.neighborhoodName ?? ""}
+        activeOrdersCount={impactTarget?.activeOrdersCount ?? 0}
+        onConfirm={confirmImpactDeselect}
+        onCancel={cancelImpactDeselect}
+      />
+
+      {/* 7. Zero Coverage Warning Dialog */}
+      <ZeroCoverageDialog
+        isOpen={showZeroModal}
+        isSaving={isSaving}
+        onConfirm={() => triggerSave(true)}
+        onCancel={() => setShowZeroModal(false)}
+      />
+
+      {/* 8. Internal Coverage Extension Support Ticket Dialog */}
+      <CoverageExtensionTicketDialog
+        isOpen={isExtensionDialogOpen}
+        effectiveMaxDistance={coverageData.effectiveMaxDistanceLevel}
+        houseId={coverageData.houseId}
+        onClose={() => setIsExtensionDialogOpen(false)}
+      />
     </div>
   );
 }
