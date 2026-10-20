@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CustomerErrorView } from "@/components/customer/customer-error-view";
 
 interface CartErrorProps {
@@ -8,6 +9,8 @@ interface CartErrorProps {
 }
 
 export default function CartError({ error, reset }: CartErrorProps) {
+  const t = useTranslations("errors");
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50/50">
       <div className="h-18 border-b border-slate-200/80 bg-white" />
@@ -15,7 +18,8 @@ export default function CartError({ error, reset }: CartErrorProps) {
         <CustomerErrorView
           error={error}
           reset={reset}
-          title="Erreur lors du chargement de votre panier"
+          title={t("cartTitle")}
+          description={t("cartDesc")}
           showHousesLink={true}
         />
       </main>

@@ -1146,8 +1146,11 @@ export async function recordCoverageExtensionTicket(
       ? ` Quartiers ciblés : ${neighborhoodNames.join(", ")}.`
       : "";
 
+  const notificationRows: Array<typeof schema.notifications.$inferInsert> = [];
+  const now = new Date();
+
   for (const admin of adminUsers) {
-    await db.insert(schema.notifications).values({
+    notificationRows.push({
       id: crypto.randomUUID(),
       userId: admin.id,
       channel: "in_app",
@@ -1156,10 +1159,11 @@ export async function recordCoverageExtensionTicket(
       title: `[Support Pressing] Demande d'extension ${params.ticketReference}`,
       body: `Demande reçue du pressing « ${house.name} » pour étendre son périmètre de Niveau ${params.currentDistanceLevel} à Niveau ${params.targetDistanceLevel}.${neighListStr} Motif : ${params.reasonCategory}. Précisions : ${params.note}`,
       status: "pending",
+      createdAt: now,
     });
   }
 
-  await db.insert(schema.notifications).values({
+  notificationRows.push({
     id: crypto.randomUUID(),
     userId: params.userId,
     channel: "in_app",
@@ -1168,6 +1172,11 @@ export async function recordCoverageExtensionTicket(
     title: `Demande d'extension ${params.ticketReference} enregistrée`,
     body: `Votre demande d'extension vers le Niveau ${params.targetDistanceLevel} a été enregistrée (Réf : ${params.ticketReference}). L'équipe SafiHub l'étudiera sous 24h ouvrées directement sur la plateforme.`,
     status: "pending",
+    createdAt: now,
+  });
+
+  await db.transaction(async (tx) => {
+    await tx.insert(schema.notifications).values(notificationRows);
   });
 
   return ok({ ticketReference: params.ticketReference });

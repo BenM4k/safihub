@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CustomerErrorView } from "@/components/customer/customer-error-view";
 
 interface TrackOrderErrorProps {
@@ -11,6 +12,8 @@ export default function TrackOrderError({
   error,
   reset,
 }: TrackOrderErrorProps) {
+  const t = useTranslations("errors");
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50/50">
       <div className="h-18 border-b border-slate-200/80 bg-white" />
@@ -18,8 +21,8 @@ export default function TrackOrderError({
         <CustomerErrorView
           error={error}
           reset={reset}
-          title="Erreur lors du suivi de commande"
-          description="Impossible de charger cette commande via le lien de suivi sécurisé. Veuillez vérifier le lien ou réessayer."
+          title={t("trackOrderTitle")}
+          description={t("trackOrderDesc")}
           showHousesLink={false}
         />
       </main>

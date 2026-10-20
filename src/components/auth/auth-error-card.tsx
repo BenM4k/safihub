@@ -36,8 +36,7 @@ export function AuthErrorCard({
   }, [error]);
 
   const displayTitle = title ?? tAuth("errorTitle");
-  const displayDescription =
-    description ?? error.message ?? tAuth("errorDesc");
+  const displayDescription = description ?? tAuth("errorDesc");
 
   return (
     <div

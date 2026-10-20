@@ -34,9 +34,9 @@ export function LegalPageSkeleton({ activeTabLabel = "Document Légal" }: { acti
         <div className="mt-8 sm:mt-10 flex justify-center">
           <div className="h-11 w-full max-w-xl rounded-full bg-slate-100/90 border border-slate-200 p-1 flex items-center justify-between gap-1">
             <div className="h-9 w-1/4 rounded-full bg-slate-200" />
-            <div className="h-9 w-1/4 rounded-full bg-slate-150" />
-            <div className="h-9 w-1/4 rounded-full bg-slate-150" />
-            <div className="h-9 w-1/4 rounded-full bg-slate-150" />
+            <div className="h-9 w-1/4 rounded-full bg-slate-200/60" />
+            <div className="h-9 w-1/4 rounded-full bg-slate-200/60" />
+            <div className="h-9 w-1/4 rounded-full bg-slate-200/60" />
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CustomerErrorView } from "@/components/customer/customer-error-view";
 
 interface CoverageErrorProps {
@@ -8,6 +9,8 @@ interface CoverageErrorProps {
 }
 
 export default function CoverageError({ error, reset }: CoverageErrorProps) {
+  const t = useTranslations("errors");
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50/50">
       <div className="h-18 border-b border-slate-200/80 bg-white" />
@@ -15,8 +18,8 @@ export default function CoverageError({ error, reset }: CoverageErrorProps) {
         <CustomerErrorView
           error={error}
           reset={reset}
-          title="Erreur lors du chargement de la demande"
-          description="Impossible de charger le formulaire de demande d'extension de quartier. Veuillez réessayer."
+          title={t("coverageTitle")}
+          description={t("coverageDesc")}
           showHousesLink={false}
         />
       </main>

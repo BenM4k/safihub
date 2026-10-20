@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CustomerErrorView } from "@/components/customer/customer-error-view";
 
 interface AccountErrorProps {
@@ -8,6 +9,8 @@ interface AccountErrorProps {
 }
 
 export default function AccountError({ error, reset }: AccountErrorProps) {
+  const t = useTranslations("errors");
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50/50">
       <div className="h-18 border-b border-slate-200/80 bg-white" />
@@ -15,8 +18,8 @@ export default function AccountError({ error, reset }: AccountErrorProps) {
         <CustomerErrorView
           error={error}
           reset={reset}
-          title="Erreur lors de l'accès à votre compte"
-          description="Impossible de charger votre profil et vos adresses de livraison. Veuillez réessayer."
+          title={t("accountTitle")}
+          description={t("accountDesc")}
           showHousesLink={false}
         />
       </main>

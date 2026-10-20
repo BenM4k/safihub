@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAccessibleDialog } from "@/components/house/orders/use-accessible-dialog";
+import { toBukavuDateTime } from "@/services/availability";
 import {
   checkClosureOverlap,
   formatDateFr,
@@ -71,7 +72,7 @@ function ClosureModalContent({
     trapTab: true,
   });
 
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = toBukavuDateTime(new Date()).dateString;
   const [startsOn, setStartsOn] = useState(() => closureToEdit?.startsOn ?? todayIso);
   const [endsOn, setEndsOn] = useState(() => closureToEdit?.endsOn ?? todayIso);
   const [reason, setReason] = useState(() => closureToEdit?.reason ?? "");

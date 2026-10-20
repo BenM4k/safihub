@@ -1,7 +1,5 @@
-/**
- * DRC Official Legal Public Holidays (Jours fériés légaux en RDC).
- * Standard official list confirmed for Bukavu & Democratic Republic of the Congo.
- */
+import { toBukavuDateTime } from "@/services/availability";
+
 
 export interface DrcHolidayTemplate {
   key: string;
@@ -106,14 +104,26 @@ export interface DrcYearHoliday {
 
 /**
  * Returns DRC holidays for a specific year, formatted for selection.
+ * If a legal public holiday falls on a Sunday, the statutory DRC practice
+ * carries it back to the preceding day (Saturday).
  */
 export function getDrcHolidaysForYear(year: number, referenceDate: Date = new Date()): DrcYearHoliday[] {
   const pad = (n: number) => n.toString().padStart(2, "0");
-  const refIso = referenceDate.toISOString().slice(0, 10);
+  const refIso = toBukavuDateTime(referenceDate).dateString;
 
   return DRC_PUBLIC_HOLIDAYS.map((h) => {
-    const date = `${year}-${pad(h.month)}-${pad(h.day)}`;
-    const monthDay = `${pad(h.day)}/${pad(h.month)}`;
+    // Construct calendar date in UTC to check day of week
+    const calDate = new Date(Date.UTC(year, h.month - 1, h.day));
+    // If it falls on Sunday (day 0), carry back to preceding day (day - 1)
+    if (calDate.getUTCDay() === 0) {
+      calDate.setUTCDate(calDate.getUTCDate() - 1);
+    }
+    const cYear = calDate.getUTCFullYear();
+    const cMonth = calDate.getUTCMonth() + 1;
+    const cDay = calDate.getUTCDate();
+
+    const date = `${cYear}-${pad(cMonth)}-${pad(cDay)}`;
+    const monthDay = `${pad(cDay)}/${pad(cMonth)}`;
     return {
       id: `${year}_${h.key}`,
       name: h.nameFr,

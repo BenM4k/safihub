@@ -17,6 +17,7 @@ interface HoursPageViewProps {
   initialClosures: HouseClosureRecord[];
   waitingOrdersCount?: number;
   isPaused?: boolean;
+  houseId?: string;
 }
 
 export function HoursPageView({
@@ -24,6 +25,7 @@ export function HoursPageView({
   initialClosures,
   waitingOrdersCount = 0,
   isPaused = false,
+  houseId,
 }: HoursPageViewProps) {
   // Build initial live schedule map for reactive header updates
   const [liveSchedule, setLiveSchedule] = useState<Record<number, DaySchedule>>(() => {
@@ -71,12 +73,14 @@ export function HoursPageView({
         initialHours={initialHours}
         waitingOrdersCount={waitingOrdersCount}
         onScheduleChange={setLiveSchedule}
+        houseId={houseId}
       />
 
       {/* Temporary closures manager with modals, DRC holidays quick action, and collapsible past */}
       <ClosuresManager
         closures={initialClosures}
         waitingOrdersCount={waitingOrdersCount}
+        houseId={houseId}
       />
     </div>
   );

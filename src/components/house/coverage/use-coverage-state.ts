@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { updateNeighborhoodCoverageBatchAction } from "@/actions/house.actions";
 import type { HouseCoverageWithLimitsItem } from "@/dal";
 import type { CoverageDiff, TriState } from "./types";
@@ -10,7 +11,8 @@ interface UseCoverageStateProps {
   houseId?: string;
 }
 
-export function useCoverageState({ items }: UseCoverageStateProps) {
+export function useCoverageState({ items, houseId }: UseCoverageStateProps) {
+  const t = useTranslations("house.coverage");
   const [isPending, startTransition] = useTransition();
 
   const [initialMap, setInitialMap] = useState<Record<string, boolean>>(() => {
@@ -90,9 +92,7 @@ export function useCoverageState({ items }: UseCoverageStateProps) {
 
     // Disallow enabling if beyond distance limit
     if (nextVal && !item.isAllowedByDistance) {
-      setErrorMsg(
-        `Impossible d'activer ce quartier : il dépasse la distance maximale autorisée.`
-      );
+      setErrorMsg(t("distanceLimitExceeded"));
       return;
     }
 
@@ -133,6 +133,31 @@ export function useCoverageState({ items }: UseCoverageStateProps) {
 
     setErrorMsg(null);
     setSaveSuccessMsg(null);
+
+    // Safeguard when deselecting: check if any item has active orders
+    if (!nextVal) {
+      const itemsWithOrders = eligible.filter((i) => (i.activeOrdersCount ?? 0) > 0);
+      if (itemsWithOrders.length > 0) {
+        // Trigger impact dialog on the first impacted item, while deselecting those without active orders
+        const firstImpacted = itemsWithOrders[0];
+        setCoveredMap((prev) => {
+          const updated = { ...prev };
+          for (const item of eligible) {
+            if ((item.activeOrdersCount ?? 0) === 0) {
+              updated[item.neighborhoodId] = false;
+            }
+          }
+          return updated;
+        });
+
+        setImpactTarget({
+          neighborhoodId: firstImpacted.neighborhoodId,
+          neighborhoodName: firstImpacted.neighborhoodName,
+          activeOrdersCount: firstImpacted.activeOrdersCount ?? 0,
+        });
+        return;
+      }
+    }
 
     setCoveredMap((prev) => {
       const updated = { ...prev };
@@ -178,6 +203,7 @@ export function useCoverageState({ items }: UseCoverageStateProps) {
 
       const res = await updateNeighborhoodCoverageBatchAction({
         items: payload,
+        houseId,
       });
 
       if (!res.ok) {
@@ -194,7 +220,7 @@ export function useCoverageState({ items }: UseCoverageStateProps) {
         return next;
       });
 
-      setSaveSuccessMsg("Modifications de couverture enregistrées avec succès.");
+      setSaveSuccessMsg(t("saveSuccess"));
       setShowZeroModal(false);
 
       setTimeout(() => {

@@ -374,8 +374,8 @@ const updateHoursSchema = z.object({
   hours: z.array(
     z.object({
       weekday: z.number().int().min(1).max(7),
-      opensAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format d'ouverture invalide (HH:MM)"),
-      closesAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format de fermeture invalide (HH:MM)"),
+      opensAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "Format d'ouverture invalide (HH:MM)"),
+      closesAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "Format de fermeture invalide (HH:MM)"),
     })
   ),
 });
@@ -490,13 +490,19 @@ export async function updateHouseClosureAction(input: {
 
 const importHolidaysSchema = z.object({
   houseId: z.string().uuid().optional(),
-  holidays: z.array(
-    z.object({
-      startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      reason: z.string(),
-    })
-  ),
+  holidays: z
+    .array(
+      z
+        .object({
+          startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          reason: z.string().min(1).max(100),
+        })
+        .refine((data) => data.endsOn >= data.startsOn, {
+          message: "La date de fin doit être postérieure ou égale à la date de début",
+        })
+    )
+    .max(31, "Maximum 31 jours fériés par importation"),
 });
 
 export async function importHouseHolidaysAction(input: {

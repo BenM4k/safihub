@@ -14,7 +14,8 @@ export function useHoursEditorState(
   initialHours: HouseHourRecord[],
   waitingOrdersCount: number,
   onScheduleChange?: (schedule: Record<number, DaySchedule>) => void,
-  saveSuccessText: string = "Horaires enregistrés avec succès."
+  saveSuccessText: string = "Horaires enregistrés avec succès.",
+  houseId?: string
 ) {
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -44,7 +45,7 @@ export function useHoursEditorState(
     return map;
   });
 
-  const [initialSnapshot] = useState(() => JSON.stringify(schedule));
+  const [initialSnapshot, setInitialSnapshot] = useState(() => JSON.stringify(schedule));
   const isDirty = JSON.stringify(schedule) !== initialSnapshot;
 
   useEffect(() => {
@@ -83,13 +84,17 @@ export function useHoursEditorState(
     setSchedule((prev) => {
       const ranges = [...prev[weekday].ranges];
       if (ranges.length >= 2) return prev;
-      const last = ranges[0];
-      const newOpen = last.closesAt < "14:00" ? "14:00" : "15:00";
+      const first = { ...ranges[0] };
+      const newOpen = first.closesAt < "14:00" ? "14:00" : "15:00";
+      // If the first range closes at or after the new slot opens, shorten it (e.g. to 12:00) to prevent overlap
+      if (first.closesAt > newOpen) {
+        first.closesAt = "12:00";
+      }
       return {
         ...prev,
         [weekday]: {
           ...prev[weekday],
-          ranges: [...ranges, { opensAt: newOpen, closesAt: "18:00" }],
+          ranges: [first, { opensAt: newOpen, closesAt: "18:00" }],
         },
       };
     });
@@ -186,10 +191,11 @@ export function useHoursEditorState(
     }
 
     startTransition(async () => {
-      const res = await updateHouseHoursAction({ hours: hoursPayload });
+      const res = await updateHouseHoursAction({ hours: hoursPayload, houseId });
       if (!res.ok) {
         setErrorMsg(res.error);
       } else {
+        setInitialSnapshot(JSON.stringify(schedule));
         setSuccessMsg(saveSuccessText);
         setTimeout(() => setSuccessMsg(null), 4000);
       }

@@ -35,8 +35,7 @@ export function CustomerErrorView({
   }, [error]);
 
   const displayTitle = title || t("technicalInterruption");
-  const displayDescription =
-    description || error.message || t("criticalErrorDesc");
+  const displayDescription = description || t("criticalErrorDesc");
 
   return (
     <div
@@ -88,7 +87,7 @@ export function CustomerErrorView({
           >
             <Link href="/houses">
               <Sparkles className="size-4" />
-              <span>Voir les pressings</span>
+              <span>{t("viewHouses")}</span>
             </Link>
           </Button>
         ) : (

@@ -46,6 +46,7 @@ export default async function PartnerHoursPage({ params }: PageProps) {
         initialClosures={hoursDataRes.value.closures}
         waitingOrdersCount={hoursDataRes.value.waitingOrdersCount}
         isPaused={Boolean(house?.isPaused)}
+        houseId={houseId}
       />
     </div>
   );

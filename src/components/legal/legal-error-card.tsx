@@ -46,7 +46,7 @@ export function LegalErrorCard({
 
       {/* Description */}
       <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto mb-6">
-        {error.message || t("criticalErrorDesc")}
+        {t("criticalErrorDesc")}
       </p>
 
       {/* Digest Reference */}

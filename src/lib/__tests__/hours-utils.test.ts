@@ -60,7 +60,7 @@ describe("hours-utils", () => {
   });
 
   describe("calculateWeeklyTotalMinutes & formatWeeklyHoursTotal", () => {
-    it("computes 66 hours for standard 6-day 08:00-18:00 plus Sat 08:00-14:00", () => {
+    it("computes 56 hours for standard 6-day 08:00-18:00 plus Sat 08:00-14:00", () => {
       const schedule: Record<number, DaySchedule> = {
         1: { weekday: 1, name: "Lundi", shortName: "Lun", isOpen: true, ranges: [{ opensAt: "08:00", closesAt: "18:00" }] },
         2: { weekday: 2, name: "Mardi", shortName: "Mar", isOpen: true, ranges: [{ opensAt: "08:00", closesAt: "18:00" }] },

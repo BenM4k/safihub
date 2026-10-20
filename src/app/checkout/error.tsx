@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CustomerErrorView } from "@/components/customer/customer-error-view";
 
 interface CheckoutErrorProps {
@@ -8,6 +9,8 @@ interface CheckoutErrorProps {
 }
 
 export default function CheckoutError({ error, reset }: CheckoutErrorProps) {
+  const t = useTranslations("errors");
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50/50">
       <div className="h-18 border-b border-slate-200/80 bg-white" />
@@ -15,8 +18,8 @@ export default function CheckoutError({ error, reset }: CheckoutErrorProps) {
         <CustomerErrorView
           error={error}
           reset={reset}
-          title="Erreur lors de la préparation de la commande"
-          description="Une erreur est survenue lors du chargement de vos informations de livraison. Votre panier reste intact."
+          title={t("checkoutTitle")}
+          description={t("checkoutDesc")}
           showHousesLink={false}
         />
       </main>

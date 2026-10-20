@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CustomerErrorView } from "@/components/customer/customer-error-view";
 
 interface NotificationsErrorProps {
@@ -11,6 +12,8 @@ export default function NotificationsError({
   error,
   reset,
 }: NotificationsErrorProps) {
+  const t = useTranslations("errors");
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       <div className="h-18 border-b border-slate-200/80 bg-white" />
@@ -18,8 +21,8 @@ export default function NotificationsError({
         <CustomerErrorView
           error={error}
           reset={reset}
-          title="Erreur lors de l'accès aux notifications"
-          description="Impossible de charger vos alertes et notifications en temps réel. Veuillez réessayer."
+          title={t("notificationsTitle")}
+          description={t("notificationsDesc")}
           showHousesLink={false}
         />
       </main>

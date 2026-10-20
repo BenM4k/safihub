@@ -21,11 +21,13 @@ import type { HouseClosureRecord } from "@/dal";
 interface ClosuresManagerProps {
   closures: HouseClosureRecord[];
   waitingOrdersCount?: number;
+  houseId?: string;
 }
 
 export function ClosuresManager({
   closures: initialClosures,
   waitingOrdersCount = 0,
+  houseId,
 }: ClosuresManagerProps) {
   const t = useTranslations("house.hours");
   const [isPending, startTransition] = useTransition();
@@ -64,6 +66,7 @@ export function ClosuresManager({
         startsOn: data.startsOn,
         endsOn: data.endsOn,
         reason: data.reason,
+        houseId,
       });
       if (res.ok) {
         setSuccessMsg(t("closureUpdateSuccess"));
@@ -75,6 +78,7 @@ export function ClosuresManager({
         startsOn: data.startsOn,
         endsOn: data.endsOn,
         reason: data.reason,
+        houseId,
       });
       if (res.ok) {
         setSuccessMsg(t("closureAddSuccess"));
@@ -88,7 +92,7 @@ export function ClosuresManager({
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    const res = await importHouseHolidaysAction({ holidays });
+    const res = await importHouseHolidaysAction({ holidays, houseId });
     if (res.ok) {
       setSuccessMsg(t("holidaysImportSuccess", { count: res.value.importedCount }));
       setTimeout(() => setSuccessMsg(null), 3000);
@@ -103,7 +107,7 @@ export function ClosuresManager({
     setErrorMsg(null);
 
     startTransition(async () => {
-      const res = await deleteHouseClosureAction({ closureId: targetId });
+      const res = await deleteHouseClosureAction({ closureId: targetId, houseId });
       if (!res.ok) {
         setErrorMsg(res.error);
       } else {

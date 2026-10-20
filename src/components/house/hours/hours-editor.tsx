@@ -14,12 +14,14 @@ interface HoursEditorProps {
   initialHours: HouseHourRecord[];
   waitingOrdersCount?: number;
   onScheduleChange?: (schedule: Record<number, DaySchedule>) => void;
+  houseId?: string;
 }
 
 export function HoursEditor({
   initialHours,
   waitingOrdersCount = 0,
   onScheduleChange,
+  houseId,
 }: HoursEditorProps) {
   const t = useTranslations("house.hours");
 
@@ -46,7 +48,8 @@ export function HoursEditor({
     initialHours,
     waitingOrdersCount,
     onScheduleChange,
-    t("saveSuccess")
+    t("saveSuccess"),
+    houseId
   );
 
   return (

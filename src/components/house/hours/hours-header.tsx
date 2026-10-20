@@ -9,6 +9,7 @@ import {
   calculateWeeklyTotalMinutes,
   computeTimerExample,
   formatDateFr,
+  getClosureStatus,
   type DaySchedule,
   type ClosureItem,
 } from "@/lib/hours-utils";
@@ -29,7 +30,7 @@ export function HoursHeader({ schedule, closures, isPaused = false }: HoursHeade
 
   // Find next upcoming or ongoing closure for customer preview
   const upcomingClosure = closures
-    .filter((c) => c.endsOn >= new Date().toISOString().slice(0, 10))
+    .filter((c) => getClosureStatus(c) !== "past")
     .sort((a, b) => a.startsOn.localeCompare(b.startsOn))[0];
 
   return (

@@ -1,8 +1,10 @@
 "use client";
 
+import { useRef } from "react";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAccessibleDialog } from "@/components/house/orders/use-accessible-dialog";
 
 interface DeselectImpactDialogProps {
   isOpen: boolean;
@@ -20,6 +22,14 @@ export function DeselectImpactDialog({
   onCancel,
 }: DeselectImpactDialogProps) {
   const t = useTranslations("house.coverage");
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  const containerRef = useAccessibleDialog<HTMLDivElement>({
+    isOpen,
+    onClose: onCancel,
+    initialFocusRef: closeButtonRef,
+    trapTab: true,
+  });
 
   if (!isOpen) return null;
 
@@ -30,7 +40,11 @@ export function DeselectImpactDialog({
       aria-labelledby="impact-dialog-title"
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
     >
-      <div className="w-full max-w-md bg-card rounded-2xl shadow-lift border border-border overflow-hidden animate-in zoom-in-95 duration-150">
+      <div
+        ref={containerRef}
+        tabIndex={-1}
+        className="w-full max-w-md bg-card rounded-2xl shadow-lift border border-border overflow-hidden animate-in zoom-in-95 duration-150 outline-none"
+      >
         <div className="p-4 border-b border-border flex items-center justify-between bg-surface">
           <div className="flex items-center gap-2.5">
             <div className="size-8 rounded-xl flex items-center justify-center bg-warning-soft text-warning border border-warning/30">
@@ -42,10 +56,11 @@ export function DeselectImpactDialog({
           </div>
 
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onCancel}
-            className="p-1.5 text-muted-foreground hover:text-heading rounded-lg hover:bg-muted transition"
-            aria-label="Fermer"
+            className="p-1.5 text-muted-foreground hover:text-heading rounded-lg hover:bg-muted transition cursor-pointer"
+            aria-label={t("closeDialog")}
           >
             <X className="size-4" />
           </button>
@@ -56,7 +71,7 @@ export function DeselectImpactDialog({
             <Clock className="size-4 text-warning mt-0.5 shrink-0" />
             <div className="space-y-1 text-xs">
               <span className="font-bold text-heading">
-                {activeOrdersCount} {activeOrdersCount > 1 ? "commandes en cours" : "commande en cours"}
+                {t("activeOrdersCount", { count: activeOrdersCount })}
               </span>
               <p className="text-foreground leading-relaxed">
                 {t("activeOrdersImpactDesc", {
@@ -68,7 +83,7 @@ export function DeselectImpactDialog({
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Confirmez-vous le retrait du quartier <strong className="text-heading">« {neighborhoodName} »</strong> de votre zone de couverture ?
+            {t("confirmDeselectPrompt", { neighborhood: neighborhoodName })}
           </p>
 
           <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
@@ -77,7 +92,7 @@ export function DeselectImpactDialog({
               variant="outline"
               size="sm"
               onClick={onCancel}
-              className="text-xs font-semibold rounded-xl min-h-[40px] px-4"
+              className="text-xs font-semibold rounded-xl min-h-[40px] px-4 cursor-pointer"
             >
               {t("cancelChanges")}
             </Button>
@@ -85,9 +100,9 @@ export function DeselectImpactDialog({
               type="button"
               size="sm"
               onClick={onConfirm}
-              className="text-xs font-bold rounded-xl min-h-[40px] px-4 bg-warning hover:bg-warning/90 text-white shadow-xs"
+              className="text-xs font-bold rounded-xl min-h-[40px] px-4 bg-warning hover:bg-warning/90 text-white shadow-xs cursor-pointer"
             >
-              Confirmer le retrait
+              {t("confirmDeselectAction")}
             </Button>
           </div>
         </div>
