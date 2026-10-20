@@ -1,173 +1,160 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Check, Loader2, Save } from "lucide-react";
+import { AlertCircle, AlertTriangle, Check, Loader2, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { updateHouseHoursAction } from "@/actions/house.actions";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/shared";
+import { ScheduleRow } from "./schedule-row";
+import { SchedulePresets } from "./schedule-presets";
+import { useHoursEditorState } from "./use-hours-editor-state";
+import { WEEKDAY_DEFS, type DaySchedule } from "@/lib/hours-utils";
 import type { HouseHourRecord } from "@/dal";
 
-const WEEKDAYS = [
-  { day: 1, name: "Lundi" },
-  { day: 2, name: "Mardi" },
-  { day: 3, name: "Mercredi" },
-  { day: 4, name: "Jeudi" },
-  { day: 5, name: "Vendredi" },
-  { day: 6, name: "Samedi" },
-  { day: 7, name: "Dimanche" },
-];
+interface HoursEditorProps {
+  initialHours: HouseHourRecord[];
+  waitingOrdersCount?: number;
+  onScheduleChange?: (schedule: Record<number, DaySchedule>) => void;
+  houseId?: string;
+}
 
 export function HoursEditor({
   initialHours,
+  waitingOrdersCount = 0,
+  onScheduleChange,
   houseId,
-}: {
-  initialHours: HouseHourRecord[];
-  houseId?: string;
-}) {
+}: HoursEditorProps) {
   const t = useTranslations("house.hours");
-  const [isPending, startTransition] = useTransition();
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const [schedule, setSchedule] = useState<
-    Record<number, { isOpen: boolean; opensAt: string; closesAt: string }>
-  >(() => {
-    const map: Record<number, { isOpen: boolean; opensAt: string; closesAt: string }> = {};
-    for (const w of WEEKDAYS) {
-      const match = initialHours.find((h) => h.weekday === w.day);
-      map[w.day] = {
-        isOpen: Boolean(match),
-        opensAt: match ? match.opensAt.slice(0, 5) : "08:00",
-        closesAt: match ? match.closesAt.slice(0, 5) : "18:00",
-      };
-    }
-    return map;
-  });
-
-  function toggleDay(weekday: number) {
-    setSchedule((prev) => ({
-      ...prev,
-      [weekday]: { ...prev[weekday], isOpen: !prev[weekday].isOpen },
-    }));
-  }
-
-  function updateTime(weekday: number, field: "opensAt" | "closesAt", val: string) {
-    setSchedule((prev) => ({
-      ...prev,
-      [weekday]: { ...prev[weekday], [field]: val },
-    }));
-  }
-
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setErrorMsg(null);
-    setSuccessMsg(null);
-
-    const hoursPayload: Array<{ weekday: number; opensAt: string; closesAt: string }> = [];
-
-    for (const w of WEEKDAYS) {
-      const dayData = schedule[w.day];
-      if (dayData.isOpen) {
-        if (dayData.closesAt <= dayData.opensAt) {
-          setErrorMsg(`${w.name}: L'heure de fermeture doit être après l'heure d'ouverture.`);
-          return;
-        }
-        hoursPayload.push({
-          weekday: w.day,
-          opensAt: `${dayData.opensAt}:00`,
-          closesAt: `${dayData.closesAt}:00`,
-        });
-      }
-    }
-
-    startTransition(async () => {
-      const res = await updateHouseHoursAction({
-        hours: hoursPayload,
-        houseId,
-      });
-
-      if (!res.ok) {
-        setErrorMsg(res.error);
-      } else {
-        setSuccessMsg("Horaires d'ouverture enregistrés avec succès.");
-        setTimeout(() => setSuccessMsg(null), 3000);
-      }
-    });
-  }
+  const {
+    schedule,
+    isPending,
+    isDirty,
+    errorMsg,
+    successMsg,
+    isValid,
+    hasAtLeastOneOpenDay,
+    isConfirmOpen,
+    setIsConfirmOpen,
+    handleToggleOpen,
+    handleUpdateRange,
+    handleAddRange,
+    handleRemoveRange,
+    applyPresetStandard,
+    applyToAllWeekdays,
+    copyDayToOthers,
+    handleInitiateSave,
+    executeSave,
+  } = useHoursEditorState(
+    initialHours,
+    waitingOrdersCount,
+    onScheduleChange,
+    t("saveSuccess"),
+    houseId
+  );
 
   return (
-    <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-xs space-y-5">
-      <div className="border-b border-border pb-3 flex items-center justify-between">
+    <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 shadow-xs space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border pb-3">
         <div>
-          <h2 className="text-base font-bold text-heading">{t("weeklySchedule")}</h2>
+          <h2 className="text-base font-bold text-heading font-display">{t("weeklySchedule")}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">{t("subtitle")}</p>
         </div>
+
+        {isDirty && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-warning-soft text-warning border border-warning/30 self-start sm:self-auto">
+            <span className="size-1.5 rounded-full bg-warning animate-ping" />
+            <span>{t("unsavedChanges")}</span>
+          </span>
+        )}
       </div>
 
-      <form onSubmit={handleSave} className="space-y-4">
-        <div className="divide-y divide-border border border-border rounded-xl overflow-hidden">
-          {WEEKDAYS.map((w) => {
-            const data = schedule[w.day];
-            return (
-              <div
-                key={w.day}
-                className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface"
-              >
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => toggleDay(w.day)}
-                    className={`size-6 rounded-md inline-flex items-center justify-center transition ${
-                      data.isOpen ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                    }`}
-                  >
-                    <Check className="size-3.5" />
-                  </button>
-                  <span className="font-semibold text-xs sm:text-sm text-heading">
-                    {w.name}
-                  </span>
-                </div>
+      <SchedulePresets
+        onApplyPresetStandard={applyPresetStandard}
+        onApplyToAllWeekdays={applyToAllWeekdays}
+        onCopyDayToOthers={copyDayToOthers}
+        disabled={isPending}
+      />
 
-                {data.isOpen ? (
-                  <div className="flex items-center gap-2 self-end sm:self-auto text-xs">
-                    <span className="text-muted-foreground text-[11px]">{t("opensAt")}</span>
-                    <input
-                      type="time"
-                      value={data.opensAt}
-                      onChange={(e) => updateTime(w.day, "opensAt", e.target.value)}
-                      className="px-2 py-1 rounded-lg border border-border font-mono text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    />
-                    <span className="text-muted-foreground text-[11px]">—</span>
-                    <span className="text-muted-foreground text-[11px]">{t("closesAt")}</span>
-                    <input
-                      type="time"
-                      value={data.closesAt}
-                      onChange={(e) => updateTime(w.day, "closesAt", e.target.value)}
-                      className="px-2 py-1 rounded-lg border border-border font-mono text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    />
-                  </div>
-                ) : (
-                  <span className="text-xs text-muted-foreground italic self-end sm:self-auto">
-                    {t("closed")}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+      <form onSubmit={handleInitiateSave} className="space-y-4">
+        <div className="border border-border rounded-xl overflow-hidden bg-card">
+          <div className="hidden sm:flex items-center justify-between px-4 py-2.5 bg-surface border-b border-border text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+            <span className="min-w-40">{t("day")}</span>
+            <div className="flex items-center gap-12 pr-6">
+              <span>{t("opensAt")}</span>
+              <span>{t("closesAt")}</span>
+            </div>
+          </div>
+
+          {WEEKDAY_DEFS.map((def) => (
+            <ScheduleRow
+              key={def.weekday}
+              day={schedule[def.weekday]}
+              onToggleOpen={handleToggleOpen}
+              onUpdateRange={handleUpdateRange}
+              onAddRange={handleAddRange}
+              onRemoveRange={handleRemoveRange}
+              disabled={isPending}
+            />
+          ))}
         </div>
 
-        {errorMsg && <p className="text-xs text-destructive font-semibold">{errorMsg}</p>}
-        {successMsg && <p className="text-xs text-success font-semibold">{successMsg}</p>}
+        {!hasAtLeastOneOpenDay && (
+          <div className="p-3 bg-warning-soft text-warning rounded-xl border border-warning/30 text-xs flex items-center gap-2">
+            <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
+            <span>Attention : vous devez garder au moins 1 jour ouvert pour recevoir des commandes.</span>
+          </div>
+        )}
 
-        <Button
-          type="submit"
-          disabled={isPending}
-          className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs"
-        >
-          {isPending ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Save className="size-3.5 mr-1.5" />}
-          <span>{t("saveHours")}</span>
-        </Button>
+        <div aria-live="polite">
+          {errorMsg && (
+            <div className="p-3 bg-destructive-soft text-destructive rounded-xl border border-destructive/20 text-xs flex items-center gap-2 font-semibold">
+              <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+          {successMsg && (
+            <div className="p-3 bg-success-soft text-success rounded-xl border border-success/30 text-xs flex items-center gap-2 font-semibold">
+              <Check className="size-4 shrink-0" aria-hidden="true" />
+              <span>{successMsg}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <Button
+            type="submit"
+            disabled={isPending || !isValid || !isDirty}
+            className="h-11 sm:h-10 px-5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer min-w-36 disabled:opacity-50"
+          >
+            {isPending ? (
+              <Loader2 className="size-4 animate-spin mr-2" aria-hidden="true" />
+            ) : (
+              <Save className="size-4 mr-2" aria-hidden="true" />
+            )}
+            <span>{t("saveHours")}</span>
+          </Button>
+
+          {isDirty && (
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              N&apos;oubliez pas d&apos;enregistrer vos modifications.
+            </span>
+          )}
+        </div>
       </form>
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={async () => {
+          setIsConfirmOpen(false);
+          executeSave();
+        }}
+        title={t("confirmPendingOrdersTitle")}
+        description={t("confirmPendingOrdersDesc", { count: waitingOrdersCount })}
+        confirmLabel="Confirmer et enregistrer"
+        cancelLabel="Annuler"
+        variant="primary"
+      />
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { err, ok, type Result } from "@/lib/result";
 import {
   acceptIncomingOrder,
   addHouseClosureEntry,
+  updateHouseClosureEntry,
+  importHouseHolidays,
   addHouseExclusionRule,
   updateHouseExclusionRule,
   deleteHouseClosureEntry,
@@ -20,7 +22,9 @@ import {
   updateHouseCatalogueBatch,
   updateHouseGeneralSettings,
   updateHouseHoursSchedule,
+  requestCoverageExtension,
   updateNeighborhoodCoverage,
+  updateNeighborhoodCoverageBatch,
 } from "@/services/house";
 
 import { normalizeStaffRole, type HouseStaffRole } from "@/services/auth/house-permissions";
@@ -29,8 +33,12 @@ async function getAuthenticatedHouseContext(providedHouseId?: string) {
   const authRes = await requireHouseAccess({ houseId: providedHouseId });
   if (!authRes.ok) return authRes;
 
-  let houseId = providedHouseId || authRes.value.houseId || authRes.value.primaryHouseId;
-  if (!houseId && authRes.value.user.role === "admin") {
+  const isPlatformAdmin = authRes.value.user.role === "admin";
+  let houseId = isPlatformAdmin
+    ? providedHouseId || authRes.value.houseId || authRes.value.primaryHouseId
+    : authRes.value.houseId || authRes.value.primaryHouseId;
+
+  if (!houseId && isPlatformAdmin) {
     const allHouses = await getHouses();
     if (allHouses.length > 0) {
       houseId = allHouses[0].id;
@@ -366,8 +374,8 @@ const updateHoursSchema = z.object({
   hours: z.array(
     z.object({
       weekday: z.number().int().min(1).max(7),
-      opensAt: z.string(),
-      closesAt: z.string(),
+      opensAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "Format d'ouverture invalide (HH:MM)"),
+      closesAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "Format de fermeture invalide (HH:MM)"),
     })
   ),
 });
@@ -397,9 +405,9 @@ export async function updateHouseHoursAction(input: {
 
 const addClosureSchema = z.object({
   houseId: z.string().uuid().optional(),
-  startsOn: z.string(),
-  endsOn: z.string(),
-  reason: z.string().optional(),
+  startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date de début invalide"),
+  endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date de fin invalide"),
+  reason: z.string().max(100).optional(),
 });
 
 export async function addHouseClosureAction(input: {
@@ -411,6 +419,10 @@ export async function addHouseClosureAction(input: {
   const parsed = addClosureSchema.safeParse(input);
   if (!parsed.success) {
     return err(parsed.error.issues[0]?.message ?? "Période de fermeture invalide");
+  }
+
+  if (parsed.data.endsOn < parsed.data.startsOn) {
+    return err("La date de fin doit être égale ou postérieure à la date de début");
   }
 
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
@@ -433,23 +445,117 @@ export async function addHouseClosureAction(input: {
   return res;
 }
 
-export async function deleteHouseClosureAction(input: {
+const updateClosureSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  closureId: z.string().uuid("Identifiant de fermeture invalide"),
+  startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date de début invalide"),
+  endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date de fin invalide"),
+  reason: z.string().max(100).optional(),
+});
+
+export async function updateHouseClosureAction(input: {
   closureId: string;
+  startsOn: string;
+  endsOn: string;
+  reason?: string;
   houseId?: string;
 }): Promise<Result<void>> {
-  const authCtx = await getAuthenticatedHouseContext(input.houseId);
+  const parsed = updateClosureSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Modification de fermeture invalide");
+  }
+
+  if (parsed.data.endsOn < parsed.data.startsOn) {
+    return err("La date de fin doit être égale ou postérieure à la date de début");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
   const roleCheck = requireHouseManagerOrOwner(authCtx.value);
   if (!roleCheck.ok) return roleCheck;
 
-  const res = await deleteHouseClosureEntry(authCtx.value.houseId, input.closureId);
+  const res = await updateHouseClosureEntry(authCtx.value.houseId, parsed.data.closureId, {
+    startsOn: parsed.data.startsOn,
+    endsOn: parsed.data.endsOn,
+    reason: parsed.data.reason,
+  });
+
   if (res.ok) {
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
   return res;
 }
+
+const importHolidaysSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  holidays: z
+    .array(
+      z
+        .object({
+          startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          reason: z.string().min(1).max(100),
+        })
+        .refine((data) => data.endsOn >= data.startsOn, {
+          message: "La date de fin doit être postérieure ou égale à la date de début",
+        })
+    )
+    .max(31, "Maximum 31 jours fériés par importation"),
+});
+
+export async function importHouseHolidaysAction(input: {
+  holidays: Array<{ startsOn: string; endsOn: string; reason: string }>;
+  houseId?: string;
+}): Promise<Result<{ importedCount: number }>> {
+  const parsed = importHolidaysSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Importation de jours fériés invalide");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
+  const res = await importHouseHolidays(authCtx.value.houseId, parsed.data.holidays);
+  if (res.ok) {
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
+  }
+  return res;
+}
+
+const deleteClosureSchema = z.object({
+  closureId: z.string().uuid("Identifiant de fermeture invalide"),
+  houseId: z.string().uuid().optional(),
+});
+
+export async function deleteHouseClosureAction(input: {
+  closureId: string;
+  houseId?: string;
+}): Promise<Result<void>> {
+  const parsed = deleteClosureSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Suppression invalide");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
+  const res = await deleteHouseClosureEntry(authCtx.value.houseId, parsed.data.closureId);
+  if (res.ok) {
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
+  }
+  return res;
+}
+
 
 const updateCoverageSchema = z.object({
   houseId: z.string().uuid().optional(),
@@ -470,6 +576,9 @@ export async function updateNeighborhoodCoverageAction(input: {
   const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
   if (!authCtx.ok) return authCtx;
 
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
   const res = await updateNeighborhoodCoverage({
     houseId: authCtx.value.houseId,
     neighborhoodId: parsed.data.neighborhoodId,
@@ -480,6 +589,85 @@ export async function updateNeighborhoodCoverageAction(input: {
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
+  return res;
+}
+
+const updateCoverageBatchSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  items: z
+    .array(
+      z.object({
+        neighborhoodId: z.string().uuid("ID de quartier invalide"),
+        isActive: z.boolean(),
+      })
+    )
+    .min(1, "Aucune modification fournie"),
+});
+
+export async function updateNeighborhoodCoverageBatchAction(input: {
+  items: Array<{ neighborhoodId: string; isActive: boolean }>;
+  houseId?: string;
+}): Promise<Result<{ updatedCount: number }>> {
+  const parsed = updateCoverageBatchSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Paramètres de couverture invalides");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
+  const res = await updateNeighborhoodCoverageBatch({
+    houseId: authCtx.value.houseId,
+    items: parsed.data.items,
+  });
+
+  if (res.ok) {
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
+  }
+  return res;
+}
+
+const requestCoverageExtensionSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  targetDistanceLevel: z.number().int().min(1).max(3),
+  requestedNeighborhoodIds: z.array(z.string().uuid()).optional(),
+  reasonCategory: z.string().min(1, "Catégorie requise"),
+  note: z.string().min(5, "Veuillez détailler votre motivation (au moins 5 caractères)"),
+});
+
+export type RequestCoverageExtensionInput = z.infer<typeof requestCoverageExtensionSchema>;
+
+export async function requestCoverageExtensionAction(
+  input: RequestCoverageExtensionInput
+): Promise<Result<{ ticketReference: string }>> {
+  const parsed = requestCoverageExtensionSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Paramètres invalides");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
+  const res = await requestCoverageExtension({
+    houseId: authCtx.value.houseId,
+    userId: authCtx.value.user.id,
+    targetDistanceLevel: parsed.data.targetDistanceLevel,
+    requestedNeighborhoodIds: parsed.data.requestedNeighborhoodIds,
+    reasonCategory: parsed.data.reasonCategory,
+    note: parsed.data.note,
+  });
+
+  if (res.ok) {
+    revalidatePath("/partner", "layout");
+  }
+
   return res;
 }
 

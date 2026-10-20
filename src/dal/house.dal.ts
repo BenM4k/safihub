@@ -1,8 +1,9 @@
 import "server-only";
-import { and, asc, desc, eq, gte, lte, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lte, notInArray, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { generateUniqueSlug } from "@/lib/slug";
 import { toBukavuDateTime } from "@/services/availability";
+import { err, ok, type Result } from "@/lib/result";
 
 export interface HouseMembershipInfo {
   houseId: string;
@@ -412,6 +413,55 @@ export async function deleteHouseClosure(id: string, houseId?: string): Promise<
   return result.length > 0;
 }
 
+export async function updateHouseClosure(
+  id: string,
+  houseId: string,
+  data: {
+    startsOn: string;
+    endsOn: string;
+    reason?: string | null;
+  }
+): Promise<boolean> {
+  const result = await db
+    .update(schema.houseClosures)
+    .set({
+      startsOn: data.startsOn,
+      endsOn: data.endsOn,
+      reason: data.reason ?? null,
+    })
+    .where(
+      and(
+        eq(schema.houseClosures.id, id),
+        eq(schema.houseClosures.houseId, houseId)
+      )
+    )
+    .returning({ id: schema.houseClosures.id });
+  return result.length > 0;
+}
+
+export async function createHouseClosuresBatch(
+  houseId: string,
+  closures: Array<{
+    startsOn: string;
+    endsOn: string;
+    reason?: string | null;
+  }>
+): Promise<number> {
+  if (closures.length === 0) return 0;
+  const inserted = await db
+    .insert(schema.houseClosures)
+    .values(
+      closures.map((c) => ({
+        houseId,
+        startsOn: c.startsOn,
+        endsOn: c.endsOn,
+        reason: c.reason ?? null,
+      }))
+    )
+    .returning({ id: schema.houseClosures.id });
+  return inserted.length;
+}
+
 export async function getHouseExclusions(houseId: string): Promise<HouseExclusionRecord[]> {
   const rows = await db
     .select({
@@ -521,6 +571,31 @@ export async function upsertHouseCoverage(data: {
         isActive: data.isActive,
       },
     });
+}
+
+export async function upsertHouseCoverageBatch(
+  houseId: string,
+  items: Array<{ neighborhoodId: string; isActive: boolean }>
+): Promise<void> {
+  if (items.length === 0) return;
+
+  await db.transaction(async (tx) => {
+    for (const item of items) {
+      await tx
+        .insert(schema.houseCoverage)
+        .values({
+          houseId,
+          neighborhoodId: item.neighborhoodId,
+          isActive: item.isActive,
+        })
+        .onConflictDoUpdate({
+          target: [schema.houseCoverage.houseId, schema.houseCoverage.neighborhoodId],
+          set: {
+            isActive: item.isActive,
+          },
+        });
+    }
+  });
 }
 
 export interface HouseCatalogueItemRecord {
@@ -760,6 +835,11 @@ export interface HouseCoverageWithLimitsItem {
   distanceLevel: number | null;
   isAllowedByDistance: boolean;
   isCovered: boolean;
+  deliveryFee?: number | null;
+  deliveryFeeCurrency?: "CDF" | "USD";
+  activeOrdersCount?: number;
+  orders30dCount?: number;
+  demandCount?: number;
 }
 
 export interface HouseCoverageWithLimitsData {
@@ -791,20 +871,54 @@ export async function getHouseCoverageWithLimits(
 
   if (!house) return null;
 
-  const [houseNeighborhood] = await db
-    .select({
-      id: schema.neighborhoods.id,
-      zoneId: schema.neighborhoods.zoneId,
-    })
-    .from(schema.neighborhoods)
-    .where(eq(schema.neighborhoods.id, house.neighborhoodId))
-    .limit(1);
+  const houseNeighborhood = house.neighborhoodId
+    ? (
+        await db
+          .select({
+            id: schema.neighborhoods.id,
+            zoneId: schema.neighborhoods.zoneId,
+          })
+          .from(schema.neighborhoods)
+          .where(eq(schema.neighborhoods.id, house.neighborhoodId))
+          .limit(1)
+      )[0] ?? null
+    : null;
 
   const [settings] = await db.select().from(schema.settings).limit(1);
   const globalMaxDistance = settings?.maxCoverageDistanceLevel ?? 2;
   const effectiveMaxDistance = house.maxDistanceLevel ?? globalMaxDistance;
 
-  const [allNeighborhoods, allZoneFees, existingCoverage] = await Promise.all([
+  const activeStatuses: (typeof schema.orderStatusEnum.enumValues)[number][] = [
+    "created",
+    "accepted",
+    "pickup_assigned",
+    "pickup_in_progress",
+    "picked_up",
+    "received",
+    "price_adjusted",
+    "washing",
+    "ready",
+    "delivery_slot_confirmed",
+    "delivery_assigned",
+    "delivery_in_progress",
+  ];
+
+  const terminalStatuses: (typeof schema.orderStatusEnum.enumValues)[number][] = [
+    "rejected",
+    "cancelled",
+    "expired",
+  ];
+
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const [
+    allNeighborhoods,
+    allZoneFees,
+    existingCoverage,
+    activeOrderRows,
+    recentOrderRows,
+    demandRows,
+  ] = await Promise.all([
     db
       .select({
         id: schema.neighborhoods.id,
@@ -821,6 +935,8 @@ export async function getHouseCoverageWithLimits(
         customerZoneId: schema.zoneFees.customerZoneId,
         houseZoneId: schema.zoneFees.houseZoneId,
         distanceLevel: schema.zoneFees.distanceLevel,
+        deliveryFee: schema.zoneFees.deliveryFee,
+        currency: schema.zoneFees.currency,
       })
       .from(schema.zoneFees),
     db
@@ -830,6 +946,41 @@ export async function getHouseCoverageWithLimits(
       })
       .from(schema.houseCoverage)
       .where(eq(schema.houseCoverage.houseId, houseId)),
+    db
+      .select({
+        neighborhoodId: schema.orders.neighborhoodId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          inArray(schema.orders.status, activeStatuses)
+        )
+      )
+      .groupBy(schema.orders.neighborhoodId),
+    db
+      .select({
+        neighborhoodId: schema.orders.neighborhoodId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          gte(schema.orders.createdAt, thirtyDaysAgo),
+          notInArray(schema.orders.status, terminalStatuses)
+        )
+      )
+      .groupBy(schema.orders.neighborhoodId),
+    db
+      .select({
+        neighborhoodId: schema.coverageRequests.neighborhoodId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(schema.coverageRequests)
+      .where(sql`${schema.coverageRequests.neighborhoodId} is not null`)
+      .groupBy(schema.coverageRequests.neighborhoodId),
   ]);
 
   const coverageMap = new Map<string, boolean>();
@@ -837,22 +988,46 @@ export async function getHouseCoverageWithLimits(
     coverageMap.set(c.neighborhoodId, c.isActive);
   }
 
+  const activeOrdersMap = new Map<string, number>();
+  for (const row of activeOrderRows) {
+    if (row.neighborhoodId) activeOrdersMap.set(row.neighborhoodId, row.count);
+  }
+
+  const recentOrdersMap = new Map<string, number>();
+  for (const row of recentOrderRows) {
+    if (row.neighborhoodId) recentOrdersMap.set(row.neighborhoodId, row.count);
+  }
+
+  const demandMap = new Map<string, number>();
+  for (const row of demandRows) {
+    if (row.neighborhoodId) demandMap.set(row.neighborhoodId, row.count);
+  }
+
   const houseZoneId = houseNeighborhood?.zoneId ?? null;
 
-  const distanceMap = new Map<string, number>();
+  interface ZoneFeeDetail {
+    distanceLevel: number;
+    deliveryFee: number;
+    currency: "CDF" | "USD";
+  }
+  const feeMap = new Map<string, ZoneFeeDetail>();
   if (houseZoneId) {
     for (const zf of allZoneFees) {
       if (zf.houseZoneId === houseZoneId) {
-        distanceMap.set(zf.customerZoneId, zf.distanceLevel);
+        feeMap.set(zf.customerZoneId, {
+          distanceLevel: zf.distanceLevel,
+          deliveryFee: zf.deliveryFee,
+          currency: zf.currency,
+        });
       }
     }
   }
 
   const items: HouseCoverageWithLimitsItem[] = allNeighborhoods.map((n) => {
-    // If in the same zone, distance level is 0 or whatever is in zoneFees
-    let distLevel = distanceMap.get(n.zoneId) ?? null;
+    const feeInfo = feeMap.get(n.zoneId);
+    let distLevel = feeInfo?.distanceLevel ?? null;
     if (distLevel === null && houseZoneId === n.zoneId) {
-      distLevel = 0;
+      distLevel = 1;
     }
 
     const isAllowed =
@@ -867,6 +1042,11 @@ export async function getHouseCoverageWithLimits(
       distanceLevel: distLevel,
       isAllowedByDistance: isAllowed,
       isCovered: Boolean(coverageMap.get(n.id)),
+      deliveryFee: feeInfo?.deliveryFee ?? null,
+      deliveryFeeCurrency: feeInfo?.currency ?? "CDF",
+      activeOrdersCount: activeOrdersMap.get(n.id) ?? 0,
+      orders30dCount: recentOrdersMap.get(n.id) ?? 0,
+      demandCount: demandMap.get(n.id) ?? 0,
     };
   });
 
@@ -917,5 +1097,88 @@ export async function getHouseTodayOrdersCount(houseId: string): Promise<number>
     );
 
   return row?.count ?? 0;
+}
+
+export interface RecordCoverageExtensionTicketParams {
+  houseId: string;
+  userId: string;
+  ticketReference: string;
+  currentDistanceLevel: number;
+  targetDistanceLevel: number;
+  requestedNeighborhoodIds?: string[];
+  reasonCategory: string;
+  note: string;
+}
+
+/**
+ * Records an internal support ticket for a laundry house requesting coverage perimeter expansion.
+ * Dispatches in-app notifications to SafiHub platform admins and confirms receipt to the partner.
+ */
+export async function recordCoverageExtensionTicket(
+  params: RecordCoverageExtensionTicketParams
+): Promise<Result<{ ticketReference: string }>> {
+  const [house] = await db
+    .select({ id: schema.houses.id, name: schema.houses.name })
+    .from(schema.houses)
+    .where(eq(schema.houses.id, params.houseId))
+    .limit(1);
+
+  if (!house) {
+    return err("Pressing introuvable.");
+  }
+
+  let neighborhoodNames: string[] = [];
+  if (params.requestedNeighborhoodIds && params.requestedNeighborhoodIds.length > 0) {
+    const neighs = await db
+      .select({ name: schema.neighborhoods.name })
+      .from(schema.neighborhoods)
+      .where(inArray(schema.neighborhoods.id, params.requestedNeighborhoodIds));
+    neighborhoodNames = neighs.map((n) => n.name);
+  }
+
+  const adminUsers = await db
+    .select({ id: schema.user.id })
+    .from(schema.user)
+    .where(eq(schema.user.role, "admin"));
+
+  const neighListStr =
+    neighborhoodNames.length > 0
+      ? ` Quartiers ciblés : ${neighborhoodNames.join(", ")}.`
+      : "";
+
+  const notificationRows: Array<typeof schema.notifications.$inferInsert> = [];
+  const now = new Date();
+
+  for (const admin of adminUsers) {
+    notificationRows.push({
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      channel: "in_app",
+      templateKey: "admin_coverage_extension_ticket",
+      locale: "fr",
+      title: `[Support Pressing] Demande d'extension ${params.ticketReference}`,
+      body: `Demande reçue du pressing « ${house.name} » pour étendre son périmètre de Niveau ${params.currentDistanceLevel} à Niveau ${params.targetDistanceLevel}.${neighListStr} Motif : ${params.reasonCategory}. Précisions : ${params.note}`,
+      status: "pending",
+      createdAt: now,
+    });
+  }
+
+  notificationRows.push({
+    id: crypto.randomUUID(),
+    userId: params.userId,
+    channel: "in_app",
+    templateKey: "partner_coverage_extension_ticket",
+    locale: "fr",
+    title: `Demande d'extension ${params.ticketReference} enregistrée`,
+    body: `Votre demande d'extension vers le Niveau ${params.targetDistanceLevel} a été enregistrée (Réf : ${params.ticketReference}). L'équipe SafiHub l'étudiera sous 24h ouvrées directement sur la plateforme.`,
+    status: "pending",
+    createdAt: now,
+  });
+
+  await db.transaction(async (tx) => {
+    await tx.insert(schema.notifications).values(notificationRows);
+  });
+
+  return ok({ ticketReference: params.ticketReference });
 }
 
