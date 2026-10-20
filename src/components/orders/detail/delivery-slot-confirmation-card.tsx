@@ -51,22 +51,22 @@ export function DeliverySlotConfirmationCard({
   };
 
   return (
-    <div className="bg-purple-50/90 rounded-3xl border border-purple-200 p-5 sm:p-6 text-purple-950 space-y-4">
+    <div className="bg-primary/10 rounded-3xl border border-primary/20 p-5 sm:p-6 text-foreground space-y-4">
       <div className="flex items-start gap-3">
-        <Sparkles className="size-5 text-purple-600 shrink-0 mt-0.5" />
+        <Sparkles className="size-5 text-primary shrink-0 mt-0.5" />
         <div className="text-xs sm:text-sm space-y-1">
-          <p className="font-bold text-purple-950">{t("readyForDeliveryTitle")}</p>
-          <p className="text-purple-900/90 leading-relaxed">
+          <p className="font-bold text-heading">{t("readyForDeliveryTitle")}</p>
+          <p className="text-muted-foreground leading-relaxed">
             {t("readyForDeliveryDesc")}
           </p>
         </div>
       </div>
 
-      <div className="p-3.5 bg-white/80 rounded-2xl border border-purple-200 flex items-center gap-3">
-        <Calendar className="size-5 text-purple-600 shrink-0" />
+      <div className="p-3.5 bg-card rounded-2xl border border-border flex items-center gap-3">
+        <Calendar className="size-5 text-primary shrink-0" />
         <div className="text-xs">
-          <span className="font-bold text-slate-800 block">Créneau proposé par l&apos;atelier :</span>
-          <span className="text-purple-950 font-black text-sm">
+          <span className="font-bold text-foreground block">Créneau proposé par l&apos;atelier :</span>
+          <span className="text-primary font-black text-sm">
             {deliverySlotStart ? (
               <>
                 {formatBukavuDateTime(deliverySlotStart)}
@@ -80,7 +80,7 @@ export function DeliverySlotConfirmationCard({
       </div>
 
       {error && (
-        <div className="p-3 rounded-xl bg-white border border-rose-300 text-rose-700 text-xs font-semibold">
+        <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold">
           {error}
         </div>
       )}

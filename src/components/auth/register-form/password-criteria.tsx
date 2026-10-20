@@ -27,14 +27,14 @@ export function PasswordCriteria({ checks }: PasswordCriteriaProps) {
           <div
             key={criterion.key}
             className={`flex items-center gap-1.5 text-xs transition-colors ${
-              isMet ? "text-emerald-600 font-medium" : "text-muted-foreground"
+              isMet ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-muted-foreground"
             }`}
           >
             <CheckCircle2
               className={`size-3.5 shrink-0 transition-colors ${
                 isMet
-                  ? "text-emerald-500 fill-emerald-100"
-                  : "text-slate-300"
+                  ? "text-emerald-500 fill-emerald-100 dark:fill-emerald-950/60"
+                  : "text-slate-300 dark:text-slate-600"
               }`}
             />
             <span>{criterion.label}</span>

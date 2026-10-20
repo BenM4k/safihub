@@ -25,13 +25,13 @@ export function ConsentField({
           <input
             id="register-consent"
             type="checkbox"
-            className="mt-1 size-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer accent-sky-600"
+            className="mt-1 size-4 rounded border-slate-300 dark:border-slate-700 dark:bg-card text-primary focus:ring-primary cursor-pointer accent-sky-600"
             aria-describedby={error ? "consent-error" : undefined}
             {...registration}
           />
           <label
             htmlFor="register-consent"
-            className="text-xs sm:text-sm text-slate-600 leading-normal cursor-pointer select-none"
+            className="text-xs sm:text-sm text-muted-foreground leading-normal cursor-pointer select-none"
           >
             {t("consentLabel")}{" "}
             <Link
@@ -56,7 +56,7 @@ export function ConsentField({
         {error && (
           <p
             id="consent-error"
-            className="text-xs font-medium text-red-500 pl-6.5"
+            className="text-xs font-medium text-red-500 dark:text-red-400 pl-6.5"
           >
             {error}
           </p>
@@ -69,12 +69,12 @@ export function ConsentField({
           <input
             id="register-photo-consent"
             type="checkbox"
-            className="mt-1 size-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer accent-sky-600"
+            className="mt-1 size-4 rounded border-slate-300 dark:border-slate-700 dark:bg-card text-primary focus:ring-primary cursor-pointer accent-sky-600"
             {...photoRegistration}
           />
           <label
             htmlFor="register-photo-consent"
-            className="text-xs sm:text-sm text-slate-600 leading-normal cursor-pointer select-none"
+            className="text-xs sm:text-sm text-muted-foreground leading-normal cursor-pointer select-none"
           >
             {t("photoConsentLabel")}{" "}
             <Link

@@ -47,7 +47,7 @@ function ResetPasswordFormContent() {
   if (!token) {
     return (
       <div className="space-y-4">
-        <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium">
+        <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-sm font-medium">
           {t("invalidToken")}
         </div>
         <div className="text-center pt-2">
@@ -92,7 +92,7 @@ function ResetPasswordFormContent() {
       {serverError && (
         <div
           role="alert"
-          className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-medium"
+          className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs sm:text-sm font-medium"
         >
           {serverError}
         </div>
@@ -113,7 +113,7 @@ function ResetPasswordFormContent() {
           {...register("password")}
         />
         {errors.password?.message && (
-          <p id="pass-error" className="text-xs font-medium text-red-500 mt-1">
+          <p id="pass-error" className="text-xs font-medium text-red-500 dark:text-red-400 mt-1">
             {errors.password.message}
           </p>
         )}
@@ -134,7 +134,7 @@ function ResetPasswordFormContent() {
           {...register("confirmPassword")}
         />
         {errors.confirmPassword?.message && (
-          <p id="confirm-error" className="text-xs font-medium text-red-500 mt-1">
+          <p id="confirm-error" className="text-xs font-medium text-red-500 dark:text-red-400 mt-1">
             {errors.confirmPassword.message}
           </p>
         )}
@@ -152,7 +152,7 @@ function ResetPasswordFormContent() {
         </Button>
       </div>
 
-      <div className="mt-6 text-center text-sm text-slate-600">
+      <div className="mt-6 text-center text-sm text-muted-foreground">
         <Link
           href="/login"
           className="font-medium text-primary hover:underline underline-offset-4"
@@ -168,7 +168,7 @@ export function ResetPasswordForm() {
   return (
     <div className="w-full max-w-sm sm:max-w-md mx-auto">
       <ResetPasswordHeader />
-      <Suspense fallback={<div className="h-48 animate-pulse bg-slate-100 rounded-lg" />}>
+      <Suspense fallback={<div className="h-48 animate-pulse bg-muted rounded-lg" />}>
         <ResetPasswordFormContent />
       </Suspense>
     </div>

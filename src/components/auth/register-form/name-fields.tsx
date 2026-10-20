@@ -31,7 +31,7 @@ export function NameFields({ register, errors }: NameFieldsProps) {
           {...register("firstName")}
         />
         {errors.firstName?.message && (
-          <p id="firstName-error" className="text-xs font-medium text-red-500">
+          <p id="firstName-error" className="text-xs font-medium text-red-500 dark:text-red-400">
             {errors.firstName.message}
           </p>
         )}
@@ -52,7 +52,7 @@ export function NameFields({ register, errors }: NameFieldsProps) {
           {...register("lastName")}
         />
         {errors.lastName?.message && (
-          <p id="lastName-error" className="text-xs font-medium text-red-500">
+          <p id="lastName-error" className="text-xs font-medium text-red-500 dark:text-red-400">
             {errors.lastName.message}
           </p>
         )}

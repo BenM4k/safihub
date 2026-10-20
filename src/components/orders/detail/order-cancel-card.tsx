@@ -35,19 +35,19 @@ export function OrderCancelCard({ orderId, status }: OrderCancelCardProps) {
   };
 
   return (
-    <div className="bg-rose-50/60 rounded-3xl border border-rose-200/80 p-5 sm:p-6 text-rose-950 space-y-4">
+    <div className="bg-rose-500/10 rounded-3xl border border-rose-500/20 p-5 sm:p-6 text-rose-700 dark:text-rose-300 space-y-4">
       <div className="flex items-start gap-3">
-        <AlertTriangle className="size-5 text-rose-600 shrink-0 mt-0.5" />
+        <AlertTriangle className="size-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
         <div className="text-xs sm:text-sm">
-          <p className="font-bold text-rose-900">Annulation de commande</p>
-          <p className="text-rose-700/90 mt-0.5 leading-relaxed">
+          <p className="font-bold text-rose-700 dark:text-rose-300">Annulation de commande</p>
+          <p className="text-rose-600/90 dark:text-rose-400/90 mt-0.5 leading-relaxed">
             {t("cancelConfirm")}
           </p>
         </div>
       </div>
 
       {error && (
-        <div className="p-3 rounded-xl bg-white border border-rose-300 text-rose-700 text-xs font-semibold">
+        <div className="p-3 rounded-xl bg-card border border-rose-500/30 text-rose-700 dark:text-rose-400 text-xs font-semibold">
           {error}
         </div>
       )}
@@ -82,7 +82,7 @@ export function OrderCancelCard({ orderId, status }: OrderCancelCardProps) {
           variant="outline"
           size="sm"
           onClick={() => setShowConfirm(true)}
-          className="bg-white text-rose-700 border-rose-300 hover:bg-rose-100 font-bold text-xs"
+          className="bg-card text-rose-700 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/10 font-bold text-xs"
         >
           {t("cancelOrder")}
         </Button>

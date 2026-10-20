@@ -22,12 +22,12 @@ export function CatalogueCard({
       className={`card card-interactive bg-card border transition-all flex flex-col justify-between overflow-hidden group ${
         isSelected
           ? "border-primary ring-2 ring-primary/20 shadow-card"
-          : "border-border"
+          : "border-border hover:border-border-strong"
       }`}
     >
       <div>
         {/* Product image container */}
-        <div className="relative aspect-16/10 w-full overflow-hidden rounded-xl bg-muted mb-4">
+        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-muted border border-border/40 mb-4">
           <Image
             src={product.imageUrl}
             alt={product.name}
@@ -38,13 +38,13 @@ export function CatalogueCard({
 
           {/* Tag badge */}
           {product.tag && (
-            <span className="absolute top-2.5 left-2.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-heading text-white shadow-soft">
+            <span className="absolute top-2.5 left-2.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-900/80 dark:bg-card/90 text-white dark:text-foreground border border-white/20 dark:border-border backdrop-blur-xs shadow-soft">
               {product.tag}
             </span>
           )}
 
           {/* Turnaround badge */}
-          <span className="absolute bottom-2.5 right-2.5 flex items-center gap-1 bg-card/90 backdrop-blur-sm text-heading text-[11px] font-bold px-2 py-0.5 rounded-full border border-border shadow-soft">
+          <span className="absolute bottom-2.5 right-2.5 flex items-center gap-1 bg-white/90 dark:bg-card/90 backdrop-blur-sm text-heading text-[11px] font-bold px-2 py-0.5 rounded-full border border-border shadow-soft">
             <Clock className="size-3 text-primary" />
             <span>{product.turnaroundHours}h</span>
           </span>
@@ -83,7 +83,7 @@ export function CatalogueCard({
           variant={isSelected ? "secondary" : "outline"}
           onClick={() => onToggle(product.id)}
           className={`text-xs font-bold transition-all ${
-            !isSelected && "hover:bg-primary hover:text-white"
+            !isSelected ? "hover:bg-primary hover:text-white hover:border-primary" : ""
           }`}
           aria-label={
             isSelected ? "Retirer du panier" : "Ajouter à la commande"

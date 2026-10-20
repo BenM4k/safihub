@@ -128,13 +128,11 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Prevent mobile / iOS Safari viewport auto-zoom on form focus: minimum 16px */
-  @media (max-width: 639px) {
-    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
-    select,
-    textarea {
-      font-size: 1rem; /* 16px */
-    }
+  /* Prevent mobile / iOS Safari viewport auto-zoom on form focus: minimum 16px (1rem) */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea {
+    font-size: 1rem; /* 16px minimum */
   }
 
   /* Accessibility + low-end devices: honour reduced motion */

@@ -14,12 +14,12 @@ export function HouseExclusionsBanner({ exclusions }: HouseExclusionsBannerProps
   if (!exclusions || exclusions.length === 0) return null;
 
   return (
-    <div className="w-full bg-amber-50 border-b border-amber-200/80 px-4 sm:px-6 py-3">
-      <div className="max-w-7xl mx-auto flex items-start gap-3 text-amber-900">
-        <AlertCircle className="size-4 text-amber-600 mt-0.5 shrink-0" />
+    <div className="w-full bg-amber-500/10 border-b border-amber-500/20 px-4 sm:px-6 py-3">
+      <div className="max-w-7xl mx-auto flex items-start gap-3 text-amber-700 dark:text-amber-300">
+        <AlertCircle className="size-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
         <div className="text-xs leading-relaxed">
           <strong className="font-bold mr-1">{t("exclusionsNotice")}</strong>
-          <span className="text-amber-800">
+          <span className="text-amber-700/90 dark:text-amber-400/90">
             {exclusions.map((ex, i) => {
               const target = ex.itemNameFr || ex.fabricNameFr || "Article spécifique";
               const note = ex.note ? ` (${ex.note})` : "";

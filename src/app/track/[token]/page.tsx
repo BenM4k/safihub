@@ -47,19 +47,19 @@ export default async function TrackOrderPage({ params }: TrackOrderPageProps) {
   const photos = photosRes.ok ? photosRes.value : [];
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/50">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar variant="solid" user={user} />
       <main className="flex-1 flex flex-col py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col space-y-6">
           <div className="flex items-center justify-between">
             <Link
               href="/track"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
             >
               <ArrowLeft className="size-3.5" />
               <span>{t("otherLookup")}</span>
             </Link>
-            <span className="text-xs text-slate-400 font-medium">
+            <span className="text-xs text-muted-foreground font-medium">
               {t("guestTrackingBadge")}
             </span>
           </div>

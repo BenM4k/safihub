@@ -7,7 +7,7 @@ export function LoginSwitch() {
   const t = useTranslations("auth");
 
   return (
-    <div className="mt-8 text-center text-sm text-slate-600">
+    <div className="mt-8 text-center text-sm text-muted-foreground">
       <span>{t("noAccount")} </span>
       <Link
         href="/register"

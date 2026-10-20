@@ -48,13 +48,13 @@ export function HousesListPanel({
 
       {houses.length === 0 ? (
         <div className="my-auto py-12 px-4 text-center max-w-md mx-auto">
-          <div className="size-16 rounded-2xl bg-slate-100 border border-slate-200 text-slate-400 flex items-center justify-center mx-auto mb-4">
+          <div className="size-16 rounded-2xl bg-muted border border-border text-muted-foreground flex items-center justify-center mx-auto mb-4">
             <SearchX className="size-8" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900 mb-1">
+          <h3 className="text-lg font-bold text-heading mb-1">
             {t("noResultsTitle")}
           </h3>
-          <p className="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-6 leading-relaxed">
             {t("noResultsText")}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5">

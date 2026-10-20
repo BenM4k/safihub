@@ -7,7 +7,7 @@ export default function AuthLayout({
 }) {
 
   return (
-    <div className="min-h-screen w-full bg-white grid grid-cols-1 lg:grid-cols-2">
+    <div className="min-h-screen w-full bg-background grid grid-cols-1 lg:grid-cols-2">
       {/* Left Column: Navigation, Form, Copyright */}
       <div className="flex flex-col justify-between min-h-screen p-6 sm:p-10 lg:p-12 xl:p-14">
         {/* Brand header */}

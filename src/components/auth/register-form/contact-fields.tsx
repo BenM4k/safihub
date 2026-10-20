@@ -31,7 +31,7 @@ export function ContactFields({ register, errors }: ContactFieldsProps) {
           {...register("email")}
         />
         {errors.email?.message && (
-          <p id="email-error" className="text-xs font-medium text-red-500">
+          <p id="email-error" className="text-xs font-medium text-red-500 dark:text-red-400">
             {errors.email.message}
           </p>
         )}
@@ -52,7 +52,7 @@ export function ContactFields({ register, errors }: ContactFieldsProps) {
           {...register("phone")}
         />
         {errors.phone?.message && (
-          <p id="phone-error" className="text-xs font-medium text-red-500">
+          <p id="phone-error" className="text-xs font-medium text-red-500 dark:text-red-400">
             {errors.phone.message}
           </p>
         )}

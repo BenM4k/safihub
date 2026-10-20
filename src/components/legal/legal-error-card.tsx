@@ -32,10 +32,10 @@ export function LegalErrorCard({
     <div
       role="alert"
       aria-live="assertive"
-      className="w-full max-w-lg mx-auto p-8 sm:p-12 rounded-3xl bg-white border border-slate-200/90 shadow-xs text-center flex flex-col items-center my-8"
+      className="w-full max-w-lg mx-auto p-8 sm:p-12 rounded-3xl bg-card border border-border shadow-xs text-center flex flex-col items-center my-8"
     >
       {/* Icon Badge */}
-      <div className="size-14 rounded-2xl bg-destructive-light text-destructive-base border border-destructive-base/20 flex items-center justify-center mb-5 shadow-2xs">
+      <div className="size-14 rounded-2xl bg-destructive-soft text-destructive border border-destructive/20 flex items-center justify-center mb-5 shadow-2xs">
         <AlertCircle className="size-7" />
       </div>
 
@@ -45,13 +45,13 @@ export function LegalErrorCard({
       </h1>
 
       {/* Description */}
-      <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto mb-6">
+      <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto mb-6">
         {t("criticalErrorDesc")}
       </p>
 
       {/* Digest Reference */}
       {error.digest && (
-        <div className="w-full mb-6 p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-mono text-slate-500 text-center select-all">
+        <div className="w-full mb-6 p-2.5 rounded-xl bg-muted border border-border text-xs font-mono text-muted-foreground text-center select-all">
           {t("referenceCode")} : {error.digest}
         </div>
       )}
@@ -73,7 +73,7 @@ export function LegalErrorCard({
           variant="outline"
           size="pill"
           asChild
-          className="w-full sm:flex-1 gap-2 border-slate-200 text-heading hover:bg-slate-50"
+          className="w-full sm:flex-1 gap-2 border-border text-heading hover:bg-muted"
         >
           <Link href="/">
             <Home className="size-4" />

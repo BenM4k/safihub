@@ -153,7 +153,7 @@ export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSp
   ]);
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-5rem)] bg-white overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-5rem)] bg-background overflow-hidden">
       {/* Sticky Search Top Bar */}
       <SearchTopBar
         searchQuery={searchQuery}
@@ -176,7 +176,7 @@ export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSp
       <div className="flex-1 flex overflow-hidden relative">
         {/* Left Column: House Cards List */}
         <div
-          className={`w-full lg:w-[58%] xl:w-[52%] flex flex-col h-full bg-slate-50/50 ${
+          className={`w-full lg:w-[58%] xl:w-[52%] flex flex-col h-full bg-background dark:bg-card/20 ${
             viewMode === "map" ? "hidden lg:flex" : "flex"
           }`}
         >
@@ -196,7 +196,7 @@ export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSp
 
         {/* Right Column: Interactive Bukavu Map */}
         <div
-          className={`flex-1 h-full border-l border-slate-200 ${
+          className={`flex-1 h-full border-l border-border ${
             viewMode === "list" ? "hidden lg:flex" : "flex"
           }`}
         >
@@ -214,7 +214,7 @@ export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSp
           <button
             type="button"
             onClick={() => setViewMode((m) => (m === "map" ? "list" : "map"))}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 text-white font-bold text-xs shadow-xl active:scale-95 transition cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 dark:bg-primary text-white font-bold text-xs shadow-xl active:scale-95 transition cursor-pointer"
           >
             {viewMode === "map" ? (
               <>

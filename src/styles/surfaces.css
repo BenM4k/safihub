@@ -49,6 +49,10 @@
   background-color: rgba(255, 255, 255, 0.92);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
+
+  @variant dark {
+    background-color: rgba(16, 24, 40, 0.92);
+  }
 }
 
 /* Solid Brand Surface: Solid #2824D5 (NO GRADIENTS) */
@@ -64,6 +68,10 @@
 
 @utility bg-wash-warm {
   background-color: #FDFCF7;
+
+  @variant dark {
+    background-color: #141824;
+  }
 }
 
 /* Solid text accent: Solid primary color (NO GRADIENTS) */
@@ -90,6 +98,10 @@
   font-weight: 600;
   line-height: 1.25;
   letter-spacing: 0.01em;
+
+  @variant dark {
+    border-color: rgba(75, 82, 242, 0.35);
+  }
 }
 
 @utility icon-tile {
@@ -114,4 +126,8 @@
   color: var(--color-primary);
   border: 1px solid #D9DDFF;
   box-shadow: none;
+
+  @variant dark {
+    border-color: rgba(75, 82, 242, 0.35);
+  }
 }

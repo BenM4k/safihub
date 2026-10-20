@@ -65,14 +65,14 @@ export function PressingReviewsSection({
   const visibleReviews = filteredReviews.slice(0, displayCount);
 
   return (
-    <section id="avis" className="bg-white rounded-3xl border border-slate-200/90 p-6 space-y-6">
+    <section id="avis" className="bg-card rounded-3xl border border-border p-6 space-y-6">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-xl font-black text-heading tracking-tight">
             {t("reviewsTitle")}
           </h2>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs text-muted-foreground font-medium mt-0.5">
             Retours d&apos;expérience vérifiés des clients SafiHub à Bukavu.
           </p>
         </div>
@@ -90,12 +90,12 @@ export function PressingReviewsSection({
       </div>
 
       {eligibilityNotice && (
-        <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium flex items-center justify-between animate-in fade-in">
+        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-medium flex items-center justify-between animate-in fade-in">
           <span>{eligibilityNotice}</span>
           <button
             type="button"
             onClick={() => setEligibilityNotice(null)}
-            className="text-amber-800 hover:text-amber-950 font-bold ml-2 text-sm"
+            className="text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-100 font-bold ml-2 text-sm"
           >
             ✕
           </button>
@@ -117,8 +117,8 @@ export function PressingReviewsSection({
             onClick={() => setSelectedStarFilter(null)}
             className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 ${
               selectedStarFilter === null
-                ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                ? "bg-foreground text-background"
+                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
             }`}
           >
             {t("allRatings", { count: reviewCount })}
@@ -130,8 +130,8 @@ export function PressingReviewsSection({
               onClick={() => setSelectedStarFilter(star)}
               className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 ${
                 selectedStarFilter === star
-                  ? "bg-slate-900 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  ? "bg-foreground text-background"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
               }`}
             >
               {star} ★
@@ -141,11 +141,11 @@ export function PressingReviewsSection({
 
         {/* Sort select */}
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-500 font-medium">Trier par :</span>
+          <span className="text-muted-foreground font-medium">Trier par :</span>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800"
+            className="p-2 md:p-1.5 rounded-lg bg-card border border-border text-base md:text-xs font-bold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="recent">{t("sortRecent")}</option>
             <option value="highest">{t("sortHighest")}</option>
@@ -156,8 +156,8 @@ export function PressingReviewsSection({
 
       {/* Reviews List */}
       {visibleReviews.length === 0 ? (
-        <div className="py-12 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-          <p className="text-xs sm:text-sm text-slate-500 font-medium">
+        <div className="py-12 text-center bg-muted/30 rounded-2xl border border-dashed border-border">
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
             {t("noReviewsYet")}
           </p>
         </div>

@@ -51,7 +51,7 @@ export function CatalogueShowcase() {
               onClick={() => setActiveCategory(col.id)}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border ${
                 isActive
-                  ? "bg-heading text-background border-heading shadow-soft scale-102"
+                  ? "bg-slate-900 text-white border-slate-900 dark:bg-primary dark:text-white dark:border-primary shadow-soft scale-102"
                   : "bg-card text-muted-foreground border-border hover:border-heading/40 hover:text-heading"
               }`}
             >

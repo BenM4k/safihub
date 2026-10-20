@@ -78,7 +78,8 @@ export function NotificationsInboxWidget({
         aria-label={t("title")}
         aria-expanded={isOpen}
         className={`relative p-2 rounded-full transition focus:outline-hidden focus:ring-2 focus:ring-primary/20 ${
-          buttonClassName || "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          buttonClassName ||
+          "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
         }`}
       >
         <Bell className="size-5" />
@@ -90,14 +91,14 @@ export function NotificationsInboxWidget({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl border border-slate-200 bg-white p-3 shadow-xl z-50 animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card p-3 shadow-xl z-50 animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-border">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm text-slate-900">
+              <span className="font-semibold text-sm text-slate-900 dark:text-heading">
                 {t("title")}
               </span>
               {unreadCount > 0 && (
-                <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                <span className="rounded-full bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 text-xs font-semibold text-rose-700 dark:text-rose-300">
                   {unreadCount} {t("unread")}
                 </span>
               )}
@@ -119,13 +120,13 @@ export function NotificationsInboxWidget({
             )}
           </div>
 
-          <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto my-1">
+          <div className="divide-y divide-slate-100 dark:divide-border max-h-72 overflow-y-auto my-1">
             {isLoading ? (
-              <div className="py-8 flex justify-center text-slate-400">
+              <div className="py-8 flex justify-center text-slate-400 dark:text-slate-500">
                 <Loader2 className="size-5 animate-spin" />
               </div>
             ) : items.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-500">
+              <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
                 {t("emptyTitle")}
               </div>
             ) : (
@@ -133,13 +134,15 @@ export function NotificationsInboxWidget({
                 <div
                   key={item.id}
                   className={`py-2 px-1 text-left transition ${
-                    !item.readAt ? "bg-slate-50/70 font-medium" : "opacity-80"
+                    !item.readAt
+                      ? "bg-slate-50/70 dark:bg-slate-800/40 font-medium"
+                      : "opacity-80"
                   }`}
                 >
-                  <p className="text-xs text-slate-900 font-semibold line-clamp-1">
+                  <p className="text-xs text-slate-900 dark:text-heading font-semibold line-clamp-1">
                     {item.title || t("title")}
                   </p>
-                  <p className="text-xs text-slate-600 line-clamp-2 mt-0.5">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mt-0.5">
                     {item.body}
                   </p>
                 </div>
@@ -147,7 +150,7 @@ export function NotificationsInboxWidget({
             )}
           </div>
 
-          <div className="pt-2 border-t border-slate-100 text-center">
+          <div className="pt-2 border-t border-slate-100 dark:border-border text-center">
             <Link
               href="/notifications"
               onClick={() => setIsOpen(false)}

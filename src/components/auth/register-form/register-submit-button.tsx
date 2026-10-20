@@ -23,7 +23,7 @@ export function RegisterSubmitButton({
       variant="primary"
       size="pill"
       disabled={pending || isDisabled}
-      className="w-full text-base font-semibold shadow-xs disabled:bg-slate-200 disabled:text-slate-400 disabled:opacity-100"
+      className="w-full text-base font-semibold shadow-xs disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:opacity-100"
     >
       {pending ? t("registering") : t("signUp")}
     </Button>

@@ -31,19 +31,19 @@ export function PressingMobileCartBar({
   if (totalItemsCount === 0) return null;
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200/90 shadow-2xl animate-in slide-in-from-bottom-3">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-2xl animate-in slide-in-from-bottom-3">
       {/* Minimum order progress ribbon if not reached */}
       {minimumOrderAmount > 0 && !isMinOrderReached && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2">
-          <div className="flex items-center justify-between gap-2 text-xs text-amber-900">
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2">
+          <div className="flex items-center justify-between gap-2 text-xs text-amber-700 dark:text-amber-300">
             <span className="font-semibold text-[11px]">
               {t("minOrderRemaining", {
                 amount: formatAmount(remainingCdf),
               })}
             </span>
-            <div className="w-24 bg-amber-200/80 rounded-full h-1.5 overflow-hidden shrink-0">
+            <div className="w-24 bg-amber-500/20 rounded-full h-1.5 overflow-hidden shrink-0">
               <div
-                className="bg-amber-600 h-1.5 rounded-full transition-all duration-300"
+                className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -62,10 +62,10 @@ export function PressingMobileCartBar({
           </div>
 
           <div className="min-w-0">
-            <span className="text-base font-black text-slate-900 tabular-nums block truncate">
+            <span className="text-base font-black text-heading tabular-nums block truncate">
               {formatAmount(subtotalCdf)}
             </span>
-            <span className="text-[11px] text-slate-500 font-medium block truncate">
+            <span className="text-[11px] text-muted-foreground font-medium block truncate">
               {t("cartBarItems", { count: totalItemsCount })} · {houseName}
             </span>
           </div>

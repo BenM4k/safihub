@@ -39,25 +39,25 @@ export function PressingPracticalInfo({
     : null;
 
   return (
-    <section className="bg-white rounded-3xl border border-slate-200/90 p-6 space-y-6">
+    <section className="bg-card rounded-3xl border border-border p-6 space-y-6">
       <div className="flex items-center gap-2">
         <Info className="size-5 text-primary" />
-        <h2 className="text-lg font-black text-slate-900 tracking-tight">
+        <h2 className="text-lg font-black text-heading tracking-tight">
           {t("practicalInfoTitle")}
         </h2>
       </div>
 
       {/* Description */}
       {description && (
-        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
           {description}
         </p>
       )}
 
       {/* Weekly Hours Table */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-          <Clock className="size-4 text-slate-400" />
+        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+          <Clock className="size-4 text-muted-foreground/70" />
           <span>{t("weeklySchedule")}</span>
         </div>
 
@@ -70,10 +70,10 @@ export function PressingPracticalInfo({
             return (
               <div
                 key={key}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-muted/50 border border-border"
               >
-                <span className="font-semibold text-slate-700">{t(key)}</span>
-                <span className={`font-bold ${hasHours ? "text-slate-900" : "text-slate-400"}`}>
+                <span className="font-semibold text-muted-foreground">{t(key)}</span>
+                <span className={`font-bold ${hasHours ? "text-heading" : "text-muted-foreground/50"}`}>
                   {hasHours
                     ? hoursForDay
                         .map((h) => `${h.opensAt.slice(0, 5)} - ${h.closesAt.slice(0, 5)}`)
@@ -88,7 +88,7 @@ export function PressingPracticalInfo({
 
       {/* Membership & Trust Tag */}
       {memberSinceFormatted && (
-        <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-500 font-medium">
+        <div className="pt-2 border-t border-border flex items-center gap-2 text-xs text-muted-foreground font-medium">
           <ShieldCheck className="size-4 text-primary shrink-0" />
           <span>{t("memberSince", { date: memberSinceFormatted })}</span>
         </div>

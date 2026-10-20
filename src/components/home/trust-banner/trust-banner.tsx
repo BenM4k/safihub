@@ -26,7 +26,7 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
   ];
 
   return (
-    <section className="min-h-screen flex flex-col justify-center py-16 md:py-24 border-t border-border bg-white overflow-hidden">
+    <section className="min-h-screen flex flex-col justify-center py-16 md:py-24 border-t border-border bg-background overflow-hidden">
       <div className="container-page flex flex-col gap-14 md:gap-20">
         {/* Top: Trusted by partners bar with dividers (from reference trust.png) */}
         <div>
@@ -34,7 +34,7 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
             Partenaires de confiance & entreprises à Bukavu
           </p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-y border-slate-200 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 py-4 sm:py-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-y border-border divide-y sm:divide-y-0 sm:divide-x divide-border py-4 sm:py-6">
             {partners.map((partner, index) => (
               <div
                 key={index}
@@ -55,9 +55,9 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
           {/* Left: Interactive network circle graphic matching reference */}
           <div className="lg:col-span-6 flex justify-center">
-            <div className="relative size-90 sm:size-100 rounded-full bg-[#E5E2FE]/60 border border-indigo-100 flex items-center justify-center p-6">
+            <div className="relative size-90 sm:size-100 rounded-full bg-primary-soft/40 dark:bg-card/70 border border-primary/20 dark:border-border flex items-center justify-center p-6">
               {/* Central Map Badge */}
-              <div className="size-36 sm:size-44 rounded-full bg-white shadow-md border border-indigo-100 flex flex-col items-center justify-center p-4 text-center">
+              <div className="size-36 sm:size-44 rounded-full bg-card shadow-md border border-border flex flex-col items-center justify-center p-4 text-center">
                 <MapPin className="size-7 text-primary mb-1 animate-bounce" />
                 <span className="font-display font-extrabold text-sm sm:text-base text-heading leading-tight">
                   Grand Bukavu
@@ -68,7 +68,7 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
               </div>
 
               {/* Orbiting Avatar Pins */}
-              <div className="absolute top-6 left-1/4 -translate-x-1/2 flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-200">
+              <div className="absolute top-6 left-1/4 -translate-x-1/2 flex items-center gap-2 bg-card px-3 py-1.5 rounded-full shadow-sm border border-border">
                 <div className="size-6 rounded-full overflow-hidden relative">
                   <Image
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"
@@ -80,7 +80,7 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
                 <span className="text-xs font-bold text-heading">Nguba</span>
               </div>
 
-              <div className="absolute top-1/4 right-3 flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-200">
+              <div className="absolute top-1/4 right-3 flex items-center gap-2 bg-card px-3 py-1.5 rounded-full shadow-sm border border-border">
                 <div className="size-6 rounded-full overflow-hidden relative">
                   <Image
                     src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80"
@@ -92,7 +92,7 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
                 <span className="text-xs font-bold text-heading">Muhumba</span>
               </div>
 
-              <div className="absolute bottom-10 left-8 flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-200">
+              <div className="absolute bottom-10 left-8 flex items-center gap-2 bg-card px-3 py-1.5 rounded-full shadow-sm border border-border">
                 <div className="size-6 rounded-full overflow-hidden relative">
                   <Image
                     src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80"
@@ -104,7 +104,7 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
                 <span className="text-xs font-bold text-heading">La Botte</span>
               </div>
 
-              <div className="absolute bottom-8 right-12 flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-200">
+              <div className="absolute bottom-8 right-12 flex items-center gap-2 bg-card px-3 py-1.5 rounded-full shadow-sm border border-border">
                 <div className="size-6 rounded-full overflow-hidden relative">
                   <Image
                     src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80"

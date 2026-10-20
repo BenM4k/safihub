@@ -13,11 +13,11 @@ const buttonVariants = cva(
         primary:
           "bg-primary text-primary-foreground shadow-xs hover:bg-primary-hover",
         secondary:
-          "bg-primary-soft text-primary hover:bg-[#E0E3FE]",
+          "bg-primary-soft text-primary hover:bg-[#E0E3FE] dark:hover:bg-primary-soft/80",
         contrast:
-          "bg-heading text-white hover:bg-primary",
+          "bg-heading text-background hover:bg-primary hover:text-white",
         outline:
-          "border border-border-strong bg-white text-ink-700 hover:bg-muted hover:border-heading",
+          "border border-border-strong bg-card text-foreground hover:bg-muted hover:border-heading",
         ghost:
           "text-heading hover:bg-muted",
         destructive:
@@ -25,7 +25,7 @@ const buttonVariants = cva(
         link:
           "text-primary underline-offset-4 hover:underline p-0 h-auto font-medium",
         social:
-          "border border-slate-200 bg-white text-ink-700 font-medium hover:bg-slate-50/80 shadow-none justify-center",
+          "border border-border bg-card text-foreground font-medium hover:bg-muted shadow-none justify-center",
       },
       size: {
         default: "min-h-[2.75rem] px-5 py-2.5 rounded-[var(--radius)]",

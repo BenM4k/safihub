@@ -10,10 +10,10 @@ export function LoginHeader() {
 
   return (
     <div className="text-left mb-6">
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-heading tracking-tight">
         {t("loginTitle")}
       </h1>
-      <p className="mt-1.5 text-sm text-slate-600 font-normal">
+      <p className="mt-1.5 text-sm text-muted-foreground font-normal">
         {t("loginSubtitle")}
       </p>
     </div>

@@ -13,7 +13,7 @@ export function FaqSection() {
   };
 
   return (
-    <section id="faq" className="min-h-screen flex flex-col justify-center py-16 md:py-24 border-t border-border bg-white overflow-hidden">
+    <section id="faq" className="min-h-screen flex flex-col justify-center py-16 md:py-24 border-t border-border bg-background overflow-hidden">
       <div className="container-page flex flex-col items-center">
         {/* Title matching reference faqs.png */}
         <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-heading text-center mb-12 tracking-tight">
@@ -29,7 +29,7 @@ export function FaqSection() {
               return (
                 <div
                   key={faq.id}
-                  className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/90 shadow-md transition-all animate-fade-in"
+                  className="bg-card rounded-2xl p-6 sm:p-7 border border-border shadow-md transition-all animate-fade-in"
                 >
                   <button
                     type="button"
@@ -37,7 +37,7 @@ export function FaqSection() {
                     className="w-full text-left flex items-start justify-between gap-4 font-display font-bold text-base sm:text-lg text-heading cursor-pointer"
                   >
                     <span>{faq.question}</span>
-                    <X className="size-5 text-slate-500 shrink-0 mt-0.5 hover:text-heading" />
+                    <X className="size-5 text-muted-foreground shrink-0 mt-0.5 hover:text-heading" />
                   </button>
                   <p className="pt-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
                     {faq.answer}
@@ -49,7 +49,7 @@ export function FaqSection() {
             return (
               <div
                 key={faq.id}
-                className="border-b border-slate-200 py-4.5 transition-colors"
+                className="border-b border-border py-4.5 transition-colors"
               >
                 <button
                   type="button"
@@ -57,7 +57,7 @@ export function FaqSection() {
                   className="w-full text-left flex items-center justify-between gap-4 font-display font-bold text-base sm:text-lg text-heading hover:text-primary transition-colors cursor-pointer"
                 >
                   <span>{faq.question}</span>
-                  <Plus className="size-5 text-slate-400 shrink-0" />
+                  <Plus className="size-5 text-muted-foreground shrink-0" />
                 </button>
               </div>
             );
@@ -77,7 +77,7 @@ export function FaqSection() {
         </div>
 
         {/* Get in touch soft container preview (from bottom of faqs.png) */}
-        <div className="w-full max-w-4xl lg:max-w-5xl rounded-3xl bg-[#E5E2FE]/60 border border-indigo-100 p-6 sm:p-9 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="w-full max-w-4xl lg:max-w-5xl rounded-3xl bg-primary-soft/50 dark:bg-card border border-primary/20 dark:border-border p-6 sm:p-9 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="space-y-1 text-center sm:text-left">
             <h3 className="text-xl font-bold text-heading">
               Prenez contact avec notre équipe
@@ -87,7 +87,7 @@ export function FaqSection() {
             </p>
           </div>
 
-          <Button asChild variant="contrast" size="default" className="shrink-0">
+          <Button asChild variant="contrast" size="default" className="shrink-0 dark:bg-primary dark:text-white dark:hover:bg-primary-hover">
             <a
               href="https://wa.me/243999000123"
               target="_blank"

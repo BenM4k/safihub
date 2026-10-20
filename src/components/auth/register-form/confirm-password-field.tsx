@@ -42,7 +42,7 @@ export function ConfirmPasswordField({
         <button
           type="button"
           onClick={() => setShowPassword((prev) => !prev)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
           aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? (
@@ -54,7 +54,7 @@ export function ConfirmPasswordField({
       </div>
 
       {error && (
-        <p id="confirm-error" className="text-xs font-medium text-red-500">
+        <p id="confirm-error" className="text-xs font-medium text-red-500 dark:text-red-400">
           {error}
         </p>
       )}

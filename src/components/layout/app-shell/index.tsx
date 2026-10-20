@@ -52,7 +52,7 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-surface/50 text-foreground flex font-sans antialiased">
+    <div className="min-h-screen bg-background text-foreground flex font-sans antialiased">
       {/* Desktop Sidebar (hidden on mobile < 768px) */}
       <div className="hidden md:block shrink-0 sticky top-0 h-screen z-30">
         <AppSidebar

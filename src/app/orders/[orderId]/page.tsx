@@ -46,14 +46,14 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
     (ACTIVE_ORDER_STATUSES as string[]).includes(order.status) || order.status === "delivered";
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/50">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar variant="solid" user={user} />
       <main className="flex-1 flex flex-col py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col space-y-6">
           <div className="flex items-center justify-between">
           <Link
             href="/orders"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
           >
             <ArrowLeft className="size-3.5" />
             <span>Toutes mes commandes</span>
@@ -62,7 +62,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           {canDispute && order.status !== "disputed" && (
             <Link
               href={`/orders/${order.id}/dispute`}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-rose-600 transition"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 transition"
             >
               <AlertCircle className="size-3.5 text-rose-500" />
               <span>Signaler un litige / problème</span>

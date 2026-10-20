@@ -40,19 +40,19 @@ export function SearchTopBar({
   const t = useTranslations("customerHouses");
 
   return (
-    <div className="w-full bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sticky top-0 z-30 shadow-2xs">
+    <div className="w-full bg-card/95 backdrop-blur-md border-b border-border px-4 sm:px-6 py-3 sticky top-0 z-30 shadow-2xs">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         {/* Search input + Quick filter pills */}
         <div className="flex flex-1 flex-wrap items-center gap-2.5">
-          {/* Main search box */}
+          {/* Main search box with min 16px font size */}
           <div className="relative flex-1 min-w-[240px] max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={t("searchPlaceholder")}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-full focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+              className="w-full pl-9 pr-4 py-2 text-base bg-muted/60 dark:bg-card border border-border rounded-full text-foreground placeholder:text-muted-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
             />
           </div>
 
@@ -82,10 +82,10 @@ export function SearchTopBar({
             <button
               type="button"
               onClick={() => onSelectService(null)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer ${
                 selectedService === null
-                  ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
-                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                  ? "bg-slate-900 text-white border-slate-900 shadow-2xs dark:bg-primary dark:border-primary dark:text-white"
+                  : "bg-card text-muted-foreground border-border hover:border-border-strong hover:text-foreground"
               }`}
             >
               {t("allServicesTab")}
@@ -97,10 +97,10 @@ export function SearchTopBar({
                   key={svc.slug}
                   type="button"
                   onClick={() => onSelectService(isSelected ? null : svc.slug)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer ${
                     isSelected
                       ? "bg-primary text-white border-primary shadow-2xs"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                      : "bg-card text-muted-foreground border-border hover:border-border-strong hover:text-foreground"
                   }`}
                 >
                   {svc.nameFr}
@@ -113,13 +113,13 @@ export function SearchTopBar({
           <button
             type="button"
             onClick={onToggleOpenNow}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer ${
               openNowOnly
-                ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs"
-                : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                ? "bg-emerald-600 dark:bg-emerald-700 text-white border-emerald-600 dark:border-emerald-700 shadow-2xs"
+                : "bg-card text-foreground border-border hover:border-border-strong"
             }`}
           >
-            {openNowOnly ? <Check className="size-3.5" /> : <Clock className="size-3.5 text-slate-400" />}
+            {openNowOnly ? <Check className="size-3.5" /> : <Clock className="size-3.5 text-muted-foreground" />}
             <span>{t("filterOpenNow")}</span>
           </button>
 
@@ -129,7 +129,7 @@ export function SearchTopBar({
             variant="outline"
             size="sm"
             onClick={onOpenAllFilters}
-            className="rounded-full text-xs h-8 px-3 border-slate-200 text-slate-700 font-semibold gap-1.5 hover:bg-slate-50"
+            className="rounded-full text-xs h-8 px-3 font-semibold gap-1.5"
           >
             <SlidersHorizontal className="size-3.5" />
             <span>{t("allFilters")}</span>
@@ -144,14 +144,14 @@ export function SearchTopBar({
         {/* Right side: View switchers & Save Search */}
         <div className="flex items-center justify-between sm:justify-end gap-2.5">
           {/* List / Map view mode pills */}
-          <div className="inline-flex p-0.5 bg-slate-100 border border-slate-200/80 rounded-full">
+          <div className="inline-flex p-0.5 bg-muted border border-border rounded-full">
             <button
               type="button"
               onClick={() => onViewModeChange(viewMode === "map" ? "split" : "list")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full transition ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full transition cursor-pointer ${
                 viewMode === "list" || viewMode === "split"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-900"
+                  ? "bg-card text-heading shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <List className="size-3.5" />
@@ -160,10 +160,10 @@ export function SearchTopBar({
             <button
               type="button"
               onClick={() => onViewModeChange("map")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full transition ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full transition cursor-pointer ${
                 viewMode === "map"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-900"
+                  ? "bg-card text-heading shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Map className="size-3.5" />
@@ -174,9 +174,10 @@ export function SearchTopBar({
           {/* Save search button matching reference */}
           <Button
             type="button"
+            variant="contrast"
             size="sm"
             onClick={onOpenSaveSearch}
-            className="rounded-full text-xs h-8 px-3.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold gap-1.5 shadow-2xs"
+            className="rounded-full text-xs h-8 px-3.5 font-semibold gap-1.5 shadow-2xs"
           >
             <Bookmark className="size-3.5" />
             <span>{t("saveSearch")}</span>

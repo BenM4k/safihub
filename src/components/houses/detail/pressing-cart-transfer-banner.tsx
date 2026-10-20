@@ -28,9 +28,9 @@ export function PressingCartTransferBanner({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
-      <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-indigo-950">
+      <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-foreground">
         <div className="text-xs sm:text-sm">
-          <span className="font-bold">Panier conservé ({cartItemsCount} article(s)) :</span>{" "}
+          <span className="font-bold text-heading">Panier conservé ({cartItemsCount} article(s)) :</span>{" "}
           Transférez les articles vers {houseName} en recalculant les tarifs.
         </div>
         <Button

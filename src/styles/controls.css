@@ -83,21 +83,25 @@
 @utility btn-secondary {
   --btn-bg: var(--color-primary-soft);
   --btn-fg: var(--color-primary);
-  --btn-bg-hover: #E0E3FE;
+  --btn-bg-hover: var(--color-brand-100);
   --btn-fg-hover: var(--color-primary);
+
+  @variant dark {
+    --btn-bg-hover: rgba(75, 82, 242, 0.28);
+  }
 }
 
-/* Solid Dark Slate #101828 */
+/* Solid Heading Contrast */
 @utility btn-contrast {
   --btn-bg: var(--color-heading);
-  --btn-fg: #FFFFFF;
+  --btn-fg: var(--color-background);
   --btn-bg-hover: var(--color-primary);
   --btn-fg-hover: #FFFFFF;
 }
 
 @utility btn-outline {
-  --btn-bg: #FFFFFF;
-  --btn-fg: var(--color-ink-700);
+  --btn-bg: var(--color-card);
+  --btn-fg: var(--color-foreground);
   --btn-border: var(--color-border-strong);
   --btn-bg-hover: var(--color-muted);
   --btn-border-hover: var(--color-heading);

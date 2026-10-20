@@ -59,25 +59,25 @@ export function PressingCategoryNav({
   };
 
   return (
-    <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 py-3 space-y-2.5 transition">
+    <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-md border-b border-border py-3 space-y-2.5 transition">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-2.5">
         {/* Row 1: Search & Service/Fabric Filters */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-          {/* Search bar */}
+          {/* Search bar with min 16px font size */}
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={t("searchArticles")}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-100/80 focus:bg-white border border-slate-200 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-muted/60 hover:bg-muted focus:bg-card border border-border text-base font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => onSearchChange("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X className="size-3.5" />
               </button>
@@ -86,14 +86,14 @@ export function PressingCategoryNav({
 
           {/* Service tabs (only if multiple services exist) */}
           {hasMultipleServices && (
-            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar p-1 rounded-xl bg-slate-100 border border-slate-200">
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar p-1 rounded-xl bg-muted border border-border">
               <button
                 type="button"
                 onClick={() => onSelectService(null)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                   activeServiceSlug === null
-                    ? "bg-white text-slate-900 shadow-2xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-card text-heading shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {t("allServices")}
@@ -103,10 +103,10 @@ export function PressingCategoryNav({
                   key={srv.id}
                   type="button"
                   onClick={() => onSelectService(srv.slug)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                     activeServiceSlug === srv.slug
-                      ? "bg-white text-slate-900 shadow-2xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-card text-heading shadow-2xs"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {srv.nameFr}
@@ -115,12 +115,12 @@ export function PressingCategoryNav({
             </div>
           )}
 
-          {/* Fabric filter select */}
+          {/* Fabric filter select with min 16px font size */}
           {fabrics.length > 1 && (
             <select
               value={activeFabricId || ""}
               onChange={(e) => onSelectFabric(e.target.value || null)}
-              className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-100/80 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="px-3 py-2 rounded-xl bg-muted/60 hover:bg-muted border border-border text-base font-bold text-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">{t("allFabrics")}</option>
               {fabrics.map((f) => (
@@ -139,8 +139,8 @@ export function PressingCategoryNav({
             onClick={() => onSelectCategory(null)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
               activeCategory === null
-                ? "bg-slate-900 text-white shadow-2xs"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                ? "bg-primary text-white shadow-2xs"
+                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
             }`}
           >
             Tous ({categories.reduce((acc, c) => acc + c.count, 0)})
@@ -154,8 +154,8 @@ export function PressingCategoryNav({
                 onClick={() => onSelectCategory(c.key)}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
                   isSelected
-                    ? "bg-slate-900 text-white shadow-2xs"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-primary text-white shadow-2xs"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                 }`}
               >
                 {getCategoryLabel(c.key)} ({c.count})
@@ -167,50 +167,50 @@ export function PressingCategoryNav({
         {/* Row 3: Removable Active Filter pills */}
         {hasActiveFilters && (
           <div className="flex items-center gap-2 flex-wrap pt-1 text-xs">
-            <span className="font-semibold text-slate-400">{t("activeFilters")}</span>
+            <span className="font-semibold text-muted-foreground">{t("activeFilters")}</span>
             {activeCategory && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-800 font-semibold text-[11px]">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted text-foreground border border-border font-semibold text-[11px]">
                 {getCategoryLabel(activeCategory)}
                 <button
                   type="button"
                   onClick={() => onSelectCategory(null)}
-                  className="hover:text-rose-600"
+                  className="hover:text-rose-600 dark:hover:text-rose-400"
                 >
                   <X className="size-3" />
                 </button>
               </span>
             )}
             {activeServiceSlug && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-800 font-semibold text-[11px]">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted text-foreground border border-border font-semibold text-[11px]">
                 {services.find((s) => s.slug === activeServiceSlug)?.nameFr}
                 <button
                   type="button"
                   onClick={() => onSelectService(null)}
-                  className="hover:text-rose-600"
+                  className="hover:text-rose-600 dark:hover:text-rose-400"
                 >
                   <X className="size-3" />
                 </button>
               </span>
             )}
             {activeFabricId && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-800 font-semibold text-[11px]">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted text-foreground border border-border font-semibold text-[11px]">
                 {fabrics.find((f) => f.id === activeFabricId)?.nameFr}
                 <button
                   type="button"
                   onClick={() => onSelectFabric(null)}
-                  className="hover:text-rose-600"
+                  className="hover:text-rose-600 dark:hover:text-rose-400"
                 >
                   <X className="size-3" />
                 </button>
               </span>
             )}
             {searchQuery && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-800 font-semibold text-[11px]">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted text-foreground border border-border font-semibold text-[11px]">
                 &ldquo;{searchQuery}&rdquo;
                 <button
                   type="button"
                   onClick={() => onSearchChange("")}
-                  className="hover:text-rose-600"
+                  className="hover:text-rose-600 dark:hover:text-rose-400"
                 >
                   <X className="size-3" />
                 </button>
@@ -224,7 +224,7 @@ export function PressingCategoryNav({
                 onSelectFabric(null);
                 onSearchChange("");
               }}
-              className="text-primary hover:underline text-[11px] font-bold ml-1"
+              className="text-primary hover:underline text-[11px] font-bold ml-1 cursor-pointer"
             >
               {t("clearAllFilters")}
             </button>

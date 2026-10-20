@@ -28,7 +28,7 @@ export default async function CustomerHousesPage({
   ]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar variant="solid" user={user} />
       <main className="flex-1 overflow-hidden">
         <Suspense fallback={null}>

@@ -65,9 +65,9 @@ export function ForgotPasswordForm() {
 
       {isSuccess ? (
         <div className="space-y-4">
-          <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800">
+          <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300">
             <h3 className="text-sm font-semibold">{t("resetLinkSentTitle")}</h3>
-            <p className="mt-1 text-xs sm:text-sm text-emerald-700">
+            <p className="mt-1 text-xs sm:text-sm text-emerald-700 dark:text-emerald-300">
               {t("resetLinkSentDesc")}
             </p>
           </div>
@@ -86,7 +86,7 @@ export function ForgotPasswordForm() {
           {serverError && (
             <div
               role="alert"
-              className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-medium"
+              className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs sm:text-sm font-medium"
             >
               {serverError}
             </div>
@@ -106,7 +106,7 @@ export function ForgotPasswordForm() {
               {...register("email")}
             />
             {errors.email?.message && (
-              <p id="email-error" className="text-xs font-medium text-red-500 mt-1">
+              <p id="email-error" className="text-xs font-medium text-red-500 dark:text-red-400 mt-1">
                 {errors.email.message}
               </p>
             )}
@@ -124,7 +124,7 @@ export function ForgotPasswordForm() {
             </Button>
           </div>
 
-          <div className="mt-6 text-center text-sm text-slate-600">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             <Link
               href="/login"
               className="font-medium text-primary hover:underline underline-offset-4"

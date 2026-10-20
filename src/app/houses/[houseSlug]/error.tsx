@@ -15,8 +15,8 @@ export default function CustomerHouseDetailError({
   const t = useTranslations("errors");
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <div className="h-18 border-b border-slate-200/80 bg-white" />
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="h-18 border-b border-border bg-card" />
       <main className="flex-1 flex flex-col justify-center py-12 px-4">
         <CustomerErrorView
           error={error}

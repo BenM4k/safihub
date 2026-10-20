@@ -82,49 +82,49 @@ export function PressingReviewFormDialog({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
     >
-      <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-card w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-border relative max-h-[90vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 transition"
+          className="absolute top-5 right-5 text-muted-foreground hover:text-foreground transition"
         >
           <X className="size-5" />
         </button>
 
-        <h2 className="text-lg font-black text-slate-900 tracking-tight mb-1">
+        <h2 className="text-lg font-black text-heading tracking-tight mb-1">
           {t("dialogSubmitReviewTitle")}
         </h2>
-        <p className="text-xs text-slate-500 mb-5">
+        <p className="text-xs text-muted-foreground mb-5">
           {houseName} · {t("dialogSubmitReviewDesc")}
         </p>
 
         {isSuccess ? (
           <div className="py-10 text-center space-y-2">
-            <CheckCircle2 className="size-10 text-emerald-600 mx-auto" />
-            <p className="text-sm font-bold text-slate-900">{t("reviewSuccess")}</p>
+            <CheckCircle2 className="size-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
+            <p className="text-sm font-bold text-heading">{t("reviewSuccess")}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             {errorMessage && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-semibold">
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 font-semibold">
                 {errorMessage}
               </div>
             )}
 
             {/* Order selector */}
             <div>
-              <label className="font-bold text-slate-700 block mb-1">
+              <label className="font-bold text-foreground block mb-1">
                 {t("orderSelectLabel")}
               </label>
               <select
                 value={selectedOrderId}
                 onChange={(e) => setSelectedOrderId(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium"
+                className="w-full p-2.5 rounded-xl bg-muted/50 border border-border text-foreground font-medium text-base"
               >
                 {eligibleOrders.map((o) => (
-                  <option key={o.id} value={o.id}>
+                  <option key={o.id} value={o.id} className="bg-card text-foreground">
                     Commande du {new Date(o.createdAt).toLocaleDateString("fr-FR")}
                   </option>
                 ))}
@@ -133,7 +133,7 @@ export function PressingReviewFormDialog({
 
             {/* Global Rating (Large clickable stars) */}
             <div>
-              <label className="font-bold text-slate-700 block mb-1.5">
+              <label className="font-bold text-foreground block mb-1.5">
                 {t("globalRatingLabel")}
               </label>
               <div className="flex items-center gap-1.5">
@@ -146,20 +146,20 @@ export function PressingReviewFormDialog({
                   >
                     <Star
                       className={`size-6 ${
-                        star <= rating ? "fill-amber-400 text-amber-400" : "text-slate-200"
+                        star <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
                       }`}
                     />
                   </button>
                 ))}
-                <span className="text-xs font-black text-slate-700 ml-2">
+                <span className="text-xs font-black text-foreground ml-2">
                   {rating} / 5
                 </span>
               </div>
             </div>
 
             {/* Optional Criteria Grid */}
-            <div className="pt-2 border-t border-slate-100 space-y-2.5">
-              <span className="font-bold text-slate-500 block">
+            <div className="pt-2 border-t border-border space-y-2.5">
+              <span className="font-bold text-muted-foreground block">
                 {t("criteriaRatingsOptional")}
               </span>
               <div className="grid grid-cols-2 gap-2.5">
@@ -169,8 +169,8 @@ export function PressingReviewFormDialog({
                   { label: t("criteriaCare"), val: ratingCare, setVal: setRatingCare },
                   { label: t("criteriaValue"), val: ratingValue, setVal: setRatingValue },
                 ].map((crit) => (
-                  <div key={crit.label} className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                    <span className="text-[11px] font-semibold text-slate-700 block mb-1">
+                  <div key={crit.label} className="p-2.5 rounded-xl bg-muted/50 border border-border">
+                    <span className="text-[11px] font-semibold text-foreground block mb-1">
                       {crit.label}
                     </span>
                     <div className="flex items-center gap-1">
@@ -183,7 +183,7 @@ export function PressingReviewFormDialog({
                         >
                           <Star
                             className={`size-3.5 ${
-                              s <= crit.val ? "fill-amber-400 text-amber-400" : "text-slate-200"
+                              s <= crit.val ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
                             }`}
                           />
                         </button>
@@ -196,7 +196,7 @@ export function PressingReviewFormDialog({
 
             {/* Comment */}
             <div>
-              <label className="font-bold text-slate-700 block mb-1">
+              <label className="font-bold text-foreground block mb-1">
                 {t("commentLabel")}
               </label>
               <textarea
@@ -205,9 +205,9 @@ export function PressingReviewFormDialog({
                 maxLength={1000}
                 rows={3}
                 placeholder={t("commentPlaceholder")}
-                className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-normal focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full p-2.5 rounded-xl bg-muted/50 border border-border text-foreground font-normal text-base placeholder:text-muted-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
-              <span className="text-[10px] text-slate-400 float-right">
+              <span className="text-[10px] text-muted-foreground float-right">
                 {comment.length} / 1000
               </span>
             </div>

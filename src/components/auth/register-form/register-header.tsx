@@ -10,10 +10,10 @@ export function RegisterHeader() {
 
   return (
     <div className="text-left mb-6">
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-heading tracking-tight">
         {t("registerTitle")}
       </h1>
-      <p className="mt-1 text-sm text-slate-600 font-normal">
+      <p className="mt-1 text-sm text-muted-foreground font-normal">
         {t("registerSubtitle")}
       </p>
 
@@ -27,10 +27,10 @@ export function RegisterHeader() {
         aria-valuemax={5}
       >
         <span className="size-2 rounded-full bg-primary" />
-        <span className="size-1.5 rounded-full bg-slate-200" />
-        <span className="size-1.5 rounded-full bg-slate-200" />
-        <span className="size-1.5 rounded-full bg-slate-200" />
-        <span className="size-1.5 rounded-full bg-slate-200" />
+        <span className="size-1.5 rounded-full bg-slate-200 dark:bg-slate-700" />
+        <span className="size-1.5 rounded-full bg-slate-200 dark:bg-slate-700" />
+        <span className="size-1.5 rounded-full bg-slate-200 dark:bg-slate-700" />
+        <span className="size-1.5 rounded-full bg-slate-200 dark:bg-slate-700" />
       </div>
     </div>
   );

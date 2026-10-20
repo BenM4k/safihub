@@ -59,7 +59,7 @@ export function CustomerBottomNav() {
   return (
     <nav
       aria-label="Client Navigation"
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg md:hidden print:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border shadow-lg md:hidden print:hidden"
     >
       <div className="max-w-md mx-auto grid grid-cols-5 h-16 items-center">
         {TABS.map((tab) => {
@@ -78,7 +78,7 @@ export function CustomerBottomNav() {
                 "flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-colors touch-manipulation select-none py-1 relative",
                 isActive
                   ? "text-primary font-bold"
-                  : "text-slate-500 hover:text-slate-900"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div

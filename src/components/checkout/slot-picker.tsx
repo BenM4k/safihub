@@ -73,20 +73,20 @@ export function SlotPicker({
   };
 
   return (
-    <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3">
-      <div className="flex items-center gap-2 text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
+    <div className="p-5 bg-card rounded-2xl border border-border shadow-2xs space-y-3">
+      <div className="flex items-center gap-2 text-sm font-bold text-heading border-b border-border pb-2">
         <Calendar className="size-4 text-primary" />
         <span>{t("stepPickup")}</span>
       </div>
 
       {/* AC 1: Next proposed slot banner if server rejected slot */}
       {nextProposedSlot && (
-        <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2 animate-in fade-in-50">
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs space-y-2 animate-in fade-in-50">
           <div className="flex items-start gap-2">
-            <AlertCircle className="size-4 text-amber-600 shrink-0 mt-0.5" />
+            <AlertCircle className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold">{t("nextAvailableSlotNotice")}</p>
-              <p className="mt-0.5 text-amber-800">
+              <p className="mt-0.5 text-amber-700/90 dark:text-amber-400/90">
                 {new Date(nextProposedSlot.start).toLocaleString("fr-FR", {
                   weekday: "long",
                   day: "numeric",
@@ -101,7 +101,7 @@ export function SlotPicker({
             <button
               type="button"
               onClick={() => onAcceptProposedSlot(nextProposedSlot)}
-              className="px-3 py-1.5 rounded-lg bg-amber-600 text-white font-bold text-xs hover:bg-amber-700 transition"
+              className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition cursor-pointer"
             >
               {t("acceptNextSlot")}
             </button>
@@ -117,14 +117,14 @@ export function SlotPicker({
               key={idx}
               type="button"
               onClick={() => onSelectSlot(opt.slot)}
-              className={`p-3 rounded-xl border text-left flex items-center justify-between text-xs transition ${
+              className={`p-3 rounded-xl border text-left flex items-center justify-between text-xs transition cursor-pointer ${
                 active
-                  ? "border-primary bg-primary-soft/30 text-primary font-bold shadow-2xs"
-                  : "border-slate-200 hover:border-slate-300 text-slate-700 font-medium"
+                  ? "border-primary bg-primary/10 text-primary font-bold shadow-2xs"
+                  : "border-border bg-muted/40 hover:border-border-strong text-muted-foreground hover:text-foreground font-medium"
               }`}
             >
               <div className="flex items-center gap-2">
-                <Clock className={`size-3.5 ${active ? "text-primary" : "text-slate-400"}`} />
+                <Clock className={`size-3.5 ${active ? "text-primary" : "text-muted-foreground/70"}`} />
                 <span>{opt.label}</span>
               </div>
               {active && <span className="size-2 rounded-full bg-primary" />}

@@ -28,7 +28,7 @@ export default async function PartnerDashboardPage({ params }: PageProps) {
 
   if (!dashboardRes.ok) {
     return (
-      <div className="p-6 bg-rose-50 text-rose-700 rounded-3xl border border-rose-200 text-sm font-sans">
+      <div className="p-6 bg-destructive/10 text-destructive rounded-3xl border border-destructive/20 text-sm font-sans">
         <h2 className="font-bold text-base mb-1">Erreur de chargement</h2>
         <p>{dashboardRes.error}</p>
       </div>

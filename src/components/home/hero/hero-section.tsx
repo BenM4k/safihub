@@ -27,20 +27,20 @@ export function HeroSection({
           : t("ctaOrder");
 
   return (
-    <section className="min-h-[calc(100dvh-4.5rem)] flex items-center pt-38 pb-12 sm:pt-32 sm:pb-16 md:py-16 bg-white overflow-hidden">
+    <section className="min-h-[calc(100dvh-4.5rem)] flex items-center pt-38 pb-12 sm:pt-32 sm:pb-16 md:py-16 bg-background overflow-hidden">
       <div className="container-page">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
           {/* Left Column: matching reference typography and layout */}
           <div className="lg:col-span-6 stack gap-5 text-left">
             {/* Top 3 green check pills */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-success-light text-[#027A48]">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-success-light dark:bg-emerald-950/50 text-[#027A48] dark:text-emerald-400 border border-transparent dark:border-emerald-800/60">
                 <Check className="size-3 stroke-3" /> {t("badgeCompliant")}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-success-light text-[#027A48]">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-success-light dark:bg-emerald-950/50 text-[#027A48] dark:text-emerald-400 border border-transparent dark:border-emerald-800/60">
                 <Check className="size-3 stroke-3" /> {t("badgeSecure")}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-success-light text-[#027A48]">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-success-light dark:bg-emerald-950/50 text-[#027A48] dark:text-emerald-400 border border-transparent dark:border-emerald-800/60">
                 <Check className="size-3 stroke-3" /> {t("badgeBukavu")}
               </span>
             </div>

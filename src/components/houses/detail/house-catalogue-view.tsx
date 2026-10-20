@@ -103,7 +103,7 @@ export function HouseCatalogueView({
   const isHouseAvailable = !data.house.isPaused;
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-28">
+    <div className="min-h-screen bg-background pb-28">
       <SwitchHouseDialog />
 
       {/* 1. Full-width Cover Banner & Logo */}
@@ -157,8 +157,8 @@ export function HouseCatalogueView({
           {/* Left Column: Catalogue Articles & Details */}
           <div className="lg:col-span-2 space-y-10">
             {filteredArticles.length === 0 ? (
-              <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 p-6">
-                <p className="text-sm text-slate-500 font-medium">
+              <div className="py-16 text-center bg-card rounded-3xl border border-border p-6">
+                <p className="text-sm text-muted-foreground font-medium">
                   {t("noArticlesMatch")}
                 </p>
               </div>

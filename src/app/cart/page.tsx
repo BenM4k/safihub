@@ -18,7 +18,7 @@ export default async function CartPage() {
   const user = await getCurrentUser();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/50">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar variant="solid" user={user} />
       <main className="flex-1 flex flex-col">
         <Suspense

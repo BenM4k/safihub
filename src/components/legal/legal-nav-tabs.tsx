@@ -36,7 +36,7 @@ export function LegalNavTabs({ activeTab }: LegalNavTabsProps) {
   return (
     <nav
       aria-label="Navigation légale"
-      className="inline-flex flex-wrap items-center justify-center p-1.5 rounded-full bg-slate-100/90 border border-slate-200 shadow-2xs gap-1"
+      className="inline-flex flex-wrap items-center justify-center p-1.5 rounded-full bg-slate-100/90 dark:bg-card/90 border border-slate-200 dark:border-border shadow-2xs gap-1"
     >
       {tabs.map((tab) => {
         const Icon = tab.icon;
@@ -48,8 +48,8 @@ export function LegalNavTabs({ activeTab }: LegalNavTabsProps) {
             href={tab.href}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all ${
               isActive
-                ? "bg-slate-900 text-white shadow-xs"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                ? "bg-slate-900 text-white dark:bg-primary dark:text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800"
             }`}
           >
             <Icon className="size-3.5 sm:size-4 shrink-0" />

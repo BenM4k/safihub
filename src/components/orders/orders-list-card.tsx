@@ -16,20 +16,20 @@ const STATUS_CONFIG: Record<
   string,
   { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className?: string }
 > = {
-  awaiting_confirmation: { label: "En attente de confirmation", variant: "outline", className: "bg-amber-50 text-amber-700 border-amber-200" },
-  created: { label: "En attente d'acceptation", variant: "outline", className: "bg-amber-50 text-amber-700 border-amber-200" },
+  awaiting_confirmation: { label: "En attente de confirmation", variant: "outline", className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20" },
+  created: { label: "En attente d'acceptation", variant: "outline", className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20" },
   accepted: { label: "Acceptée par le pressing", variant: "default" },
   pickup_assigned: { label: "Coursier assigné (collecte)", variant: "secondary" },
   pickup_in_progress: { label: "Coursier en route", variant: "secondary" },
   picked_up: { label: "Linge collecté", variant: "secondary" },
   received: { label: "Linge reçu à l'atelier", variant: "secondary" },
-  price_adjusted: { label: "Ajustement de prix requis", variant: "outline", className: "bg-orange-50 text-orange-700 border-orange-200" },
+  price_adjusted: { label: "Ajustement de prix requis", variant: "outline", className: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20" },
   washing: { label: "En cours de lavage / repassage", variant: "default" },
-  ready: { label: "Prêt pour livraison", variant: "outline", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  ready: { label: "Prêt pour livraison", variant: "outline", className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20" },
   delivery_slot_confirmed: { label: "Créneau confirmé", variant: "default" },
   delivery_assigned: { label: "Coursier assigné (livraison)", variant: "secondary" },
   delivery_in_progress: { label: "En cours de livraison", variant: "default" },
-  delivered: { label: "Livrée", variant: "outline", className: "bg-emerald-50 text-emerald-700 border-emerald-200 font-bold" },
+  delivered: { label: "Livrée", variant: "outline", className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 font-bold" },
   expired: { label: "Expirée", variant: "destructive" },
   cancelled: { label: "Annulée", variant: "outline" },
   disputed: { label: "En litige", variant: "destructive" },
@@ -81,14 +81,14 @@ export function OrderListCard({
   };
 
   return (
-    <div className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-primary/50 hover:shadow-xs transition">
+    <div className="p-5 bg-card rounded-2xl border border-border hover:border-primary/50 hover:shadow-xs transition">
       <Link
         href={`/orders/${order.id}`}
         className="block group"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-black text-slate-900 group-hover:text-primary transition">
+            <span className="text-sm font-black text-heading group-hover:text-primary transition">
               {order.code}
             </span>
             <Badge variant={statusCfg.variant} className={statusCfg.className}>
@@ -96,8 +96,8 @@ export function OrderListCard({
             </Badge>
           </div>
 
-          <span className="text-xs text-slate-500 flex items-center gap-1">
-            <Calendar className="size-3 text-slate-400" />
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <Calendar className="size-3 text-muted-foreground/70" />
             <span>
               {new Date(order.createdAt).toLocaleDateString("fr-FR", {
                 day: "numeric",
@@ -110,15 +110,15 @@ export function OrderListCard({
           </span>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border text-xs">
           <div className="space-y-1">
-            <p className="text-slate-700 font-bold flex items-center gap-1.5">
-              <Store className="size-3.5 text-slate-400" />
+            <p className="text-foreground font-bold flex items-center gap-1.5">
+              <Store className="size-3.5 text-muted-foreground/70" />
               <span>{order.houseName || "Pressing"}</span>
-              <span className="font-normal text-slate-400">· {order.neighborhoodName}</span>
+              <span className="font-normal text-muted-foreground">· {order.neighborhoodName}</span>
             </p>
-            <p className="text-slate-500 flex items-center gap-1.5">
-              <Clock className="size-3.5 text-slate-400" />
+            <p className="text-muted-foreground flex items-center gap-1.5">
+              <Clock className="size-3.5 text-muted-foreground/70" />
               <span>
                 Collecte :{" "}
                 {new Date(order.pickupSlotStart).toLocaleTimeString("fr-FR", {
@@ -130,11 +130,11 @@ export function OrderListCard({
           </div>
 
           <div className="flex items-center justify-between sm:justify-end gap-3 flex-wrap">
-            <span className="text-base font-black text-slate-900">
+            <span className="text-base font-black text-heading">
               {order.totalDue.toLocaleString("fr-FR")} CDF
             </span>
 
-            <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-primary/5 transition">
+            <div className="size-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition">
               <ArrowRight className="size-4 group-hover:translate-x-0.5 transition" />
             </div>
           </div>

@@ -97,7 +97,7 @@ export function RegisterForm() {
       {serverError && (
         <div
           role="alert"
-          className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-medium"
+          className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs sm:text-sm font-medium"
         >
           {serverError}
         </div>

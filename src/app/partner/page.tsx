@@ -22,7 +22,7 @@ export default async function PartnerChooserPage() {
   // If house user with multiple memberships
   if (authCtx.user.role === "house" && authCtx.memberships && authCtx.memberships.length > 1) {
     return (
-      <div className="min-h-screen bg-surface py-12 px-4 sm:px-6">
+      <div className="min-h-screen bg-background py-12 px-4 sm:px-6">
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="text-center space-y-2">
             <div className="size-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center mx-auto shadow-sm">
@@ -67,7 +67,7 @@ export default async function PartnerChooserPage() {
     const allHouses = await getHouses();
 
     return (
-      <div className="min-h-screen bg-surface py-12 px-4 sm:px-6">
+      <div className="min-h-screen bg-background py-12 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto space-y-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-warning-soft text-warning text-xs font-bold border border-warning/20">
@@ -113,7 +113,7 @@ export default async function PartnerChooserPage() {
 
   // Default empty state if no memberships assigned
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-card rounded-2xl border border-border p-8 text-center space-y-4">
         <Store className="size-10 text-muted-foreground mx-auto" />
         <h2 className="text-lg font-bold text-heading">{t("noHouseTitle")}</h2>

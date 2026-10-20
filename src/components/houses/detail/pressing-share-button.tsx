@@ -48,17 +48,17 @@ export function PressingShareButton({ name }: PressingShareButtonProps) {
       <button
         type="button"
         onClick={handleShare}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-2xs active:scale-95"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer"
         title={t("shareHouse")}
       >
         {isCopied ? (
           <>
-            <Check className="size-3.5 text-emerald-600" />
-            <span className="text-emerald-700">{t("shareSuccess")}</span>
+            <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-emerald-700 dark:text-emerald-400">{t("shareSuccess")}</span>
           </>
         ) : (
           <>
-            <Share2 className="size-3.5 text-slate-500" />
+            <Share2 className="size-3.5 text-muted-foreground" />
             <span>{t("shareHouse")}</span>
           </>
         )}

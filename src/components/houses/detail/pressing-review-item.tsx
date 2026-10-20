@@ -44,15 +44,15 @@ export function PressingReviewItem({ review, houseName }: PressingReviewItemProp
   const photos = Array.isArray(review.photos) ? (review.photos as string[]) : [];
 
   return (
-    <div className="p-5 rounded-3xl bg-slate-50/70 border border-slate-200/80 space-y-3.5 transition">
+    <div className="p-5 rounded-3xl bg-card border border-border space-y-3.5 transition">
       {/* Header: Author, Rating, Date, Verified Badge */}
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-black text-slate-900">
+            <span className="text-sm font-black text-heading">
               {review.customerFirstName} {review.customerLastInitial}
             </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
               <ShieldCheck className="size-3" />
               <span>{t("verifiedOrder")}</span>
             </span>
@@ -68,12 +68,12 @@ export function PressingReviewItem({ review, houseName }: PressingReviewItemProp
                 <Star
                   key={star}
                   className={`size-3.5 ${
-                    star <= review.rating ? "fill-amber-500" : "fill-slate-200 text-slate-200"
+                    star <= review.rating ? "fill-amber-500" : "fill-muted text-muted-foreground/30"
                   }`}
                 />
               ))}
             </div>
-            <span className="text-[11px] text-slate-400 font-medium">
+            <span className="text-[11px] text-muted-foreground font-medium">
               {reviewDateFormatted}
             </span>
           </div>
@@ -83,7 +83,7 @@ export function PressingReviewItem({ review, houseName }: PressingReviewItemProp
         <button
           type="button"
           onClick={() => setIsReporting(!isReporting)}
-          className="text-slate-400 hover:text-slate-600 transition p-1 rounded-lg"
+          className="text-muted-foreground hover:text-foreground transition p-1 rounded-lg"
           title={t("reportReview")}
         >
           <Flag className="size-3.5" />
@@ -92,25 +92,25 @@ export function PressingReviewItem({ review, houseName }: PressingReviewItemProp
 
       {/* Report Form */}
       {isReporting && (
-        <form onSubmit={handleReport} className="p-3 bg-white rounded-2xl border border-slate-200 space-y-2">
+        <form onSubmit={handleReport} className="p-3 bg-muted/50 rounded-2xl border border-border space-y-2">
           <input
             type="text"
             value={reportReason}
             onChange={(e) => setReportReason(e.target.value)}
             placeholder={t("reportReasonPlaceholder")}
-            className="w-full text-xs p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800"
+            className="w-full text-base p-2.5 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground"
           />
           <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setIsReporting(false)}
-              className="text-xs text-slate-500 font-semibold"
+              className="text-xs text-muted-foreground hover:text-foreground font-semibold"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="px-3 py-1 rounded-lg bg-rose-600 text-white text-xs font-bold"
+              className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"
             >
               Envoyer
             </button>
@@ -119,14 +119,14 @@ export function PressingReviewItem({ review, houseName }: PressingReviewItemProp
       )}
 
       {reportSent && (
-        <p className="text-[11px] text-emerald-700 font-semibold">
+        <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
           {t("reportSuccess")}
         </p>
       )}
 
       {/* Comment */}
       {review.comment && (
-        <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
+        <p className="text-xs sm:text-sm text-foreground leading-relaxed font-normal">
           {review.comment}
         </p>
       )}
@@ -139,7 +139,7 @@ export function PressingReviewItem({ review, houseName }: PressingReviewItemProp
               key={idx}
               type="button"
               onClick={() => setActivePhotoIndex(idx)}
-              className="relative size-14 sm:size-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 cursor-pointer shadow-2xs hover:opacity-90"
+              className="relative size-14 sm:size-16 rounded-xl overflow-hidden border border-border bg-muted cursor-pointer shadow-2xs hover:opacity-90"
             >
               <Image
                 src={photoUrl}
@@ -155,12 +155,12 @@ export function PressingReviewItem({ review, houseName }: PressingReviewItemProp
 
       {/* Partner Reply */}
       {review.reply && (
-        <div className="mt-3 p-3.5 rounded-2xl bg-white border border-slate-200/80 space-y-1 text-xs">
-          <div className="flex items-center gap-1.5 font-bold text-slate-900">
+        <div className="mt-3 p-3.5 rounded-2xl bg-muted/40 border border-border space-y-1 text-xs">
+          <div className="flex items-center gap-1.5 font-bold text-heading">
             <MessageSquare className="size-3.5 text-primary" />
             <span>{t("partnerReplyTitle")} ({houseName})</span>
           </div>
-          <p className="text-slate-600 leading-relaxed">
+          <p className="text-muted-foreground leading-relaxed">
             {review.reply.text}
           </p>
         </div>

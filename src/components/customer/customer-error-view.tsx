@@ -41,26 +41,26 @@ export function CustomerErrorView({
     <div
       role="alert"
       aria-live="assertive"
-      className="w-full max-w-lg mx-auto my-10 sm:my-16 p-6 sm:p-10 rounded-3xl bg-white border border-slate-200/90 shadow-xs text-center flex flex-col items-center"
+      className="w-full max-w-lg mx-auto my-10 sm:my-16 p-6 sm:p-10 rounded-3xl bg-card border border-border shadow-xs text-center flex flex-col items-center"
     >
       {/* Icon Badge */}
-      <div className="size-14 rounded-2xl bg-destructive-light text-destructive-base border border-destructive-base/20 flex items-center justify-center mb-5 shadow-2xs">
+      <div className="size-14 rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 flex items-center justify-center mb-5 shadow-2xs">
         <AlertCircle className="size-7" />
       </div>
 
       {/* Headline */}
-      <h1 className="font-display font-black text-xl sm:text-2xl text-slate-900 tracking-tight mb-2">
+      <h1 className="font-display font-black text-xl sm:text-2xl text-heading tracking-tight mb-2">
         {displayTitle}
       </h1>
 
       {/* Description */}
-      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-md mx-auto mb-5">
+      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md mx-auto mb-5">
         {displayDescription}
       </p>
 
       {/* Optional Error Digest */}
       {error.digest && (
-        <div className="w-full mb-5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-mono text-slate-500 text-center select-all">
+        <div className="w-full mb-5 px-3 py-1.5 rounded-xl bg-muted border border-border text-xs font-mono text-muted-foreground text-center select-all">
           {t("referenceCode")} : {error.digest}
         </div>
       )}
@@ -83,7 +83,7 @@ export function CustomerErrorView({
             variant="outline"
             size="pill"
             asChild
-            className="w-full sm:flex-1 gap-2 border-slate-200 text-slate-900 hover:bg-slate-50"
+            className="w-full sm:flex-1 gap-2 border-border text-foreground hover:bg-muted"
           >
             <Link href="/houses">
               <Sparkles className="size-4" />
@@ -95,7 +95,7 @@ export function CustomerErrorView({
             variant="outline"
             size="pill"
             asChild
-            className="w-full sm:flex-1 gap-2 border-slate-200 text-slate-900 hover:bg-slate-50"
+            className="w-full sm:flex-1 gap-2 border-border text-foreground hover:bg-muted"
           >
             <Link href="/">
               <Home className="size-4" />

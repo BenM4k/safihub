@@ -37,37 +37,37 @@ export function PressingVerifiedPopover() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl p-4 shadow-xl border border-slate-200 z-50 animate-in fade-in zoom-in-95">
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
-            <div className="flex items-center gap-1.5 text-xs font-black text-slate-900">
+        <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 bg-card rounded-2xl p-4 shadow-xl border border-border z-50 animate-in fade-in zoom-in-95">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-border">
+            <div className="flex items-center gap-1.5 text-xs font-black text-heading">
               <ShieldCheck className="size-4 text-primary" />
               <span>{t("verifiedPopoverTitle")}</span>
             </div>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="text-slate-400 hover:text-slate-700 transition"
+              className="text-muted-foreground hover:text-foreground transition"
               aria-label={t("verifiedClose")}
             >
               <X className="size-4" />
             </button>
           </div>
 
-          <p className="text-[11px] text-slate-500 mb-3 font-medium">
+          <p className="text-[11px] text-muted-foreground mb-3 font-medium">
             Ce pressing a été audité et validé par l&apos;équipe SafiHub sur les critères suivants :
           </p>
 
-          <ul className="space-y-2 text-xs text-slate-700 font-medium">
+          <ul className="space-y-2 text-xs text-foreground font-medium">
             <li className="flex items-start gap-2">
-              <CheckCircle2 className="size-3.5 text-emerald-600 mt-0.5 shrink-0" />
+              <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
               <span>{t("verifiedPoint1")}</span>
             </li>
             <li className="flex items-start gap-2">
-              <CheckCircle2 className="size-3.5 text-emerald-600 mt-0.5 shrink-0" />
+              <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
               <span>{t("verifiedPoint2")}</span>
             </li>
             <li className="flex items-start gap-2">
-              <CheckCircle2 className="size-3.5 text-emerald-600 mt-0.5 shrink-0" />
+              <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
               <span>{t("verifiedPoint3")}</span>
             </li>
           </ul>

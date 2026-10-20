@@ -42,7 +42,7 @@ export function Testimonials() {
   const nextIndex = (activeIndex + 1) % testimonials.length;
 
   return (
-    <section className="min-h-screen flex flex-col justify-center py-16 md:py-24 border-t border-border bg-white overflow-hidden">
+    <section className="min-h-screen flex flex-col justify-center py-16 md:py-24 border-t border-border bg-background overflow-hidden">
       <div className="container-page flex flex-col items-center">
         {/* Section title matching reference */}
         <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-heading text-center mb-12 tracking-tight">
@@ -54,7 +54,7 @@ export function Testimonials() {
           {/* Left Peek Card (desktop) */}
           <div
             onClick={() => setActiveIndex(prevIndex)}
-            className="hidden lg:block w-[16%] opacity-35 hover:opacity-60 transition-opacity cursor-pointer p-6 sm:p-7 rounded-2xl bg-white border border-slate-200/80 shadow-xs scale-95 shrink-0"
+            className="hidden lg:block w-[16%] opacity-35 hover:opacity-60 transition-opacity cursor-pointer p-6 sm:p-7 rounded-2xl bg-card border border-border shadow-xs scale-95 shrink-0"
           >
             <div className="flex gap-1 mb-3">
               {[...Array(5)].map((_, i) => (
@@ -64,13 +64,13 @@ export function Testimonials() {
                 />
               ))}
             </div>
-            <p className="text-xs text-slate-500 line-clamp-3">
+            <p className="text-xs text-muted-foreground line-clamp-3">
               « {testimonials[prevIndex].comment} »
             </p>
           </div>
 
           {/* Active Center Card (matching reference testimonial.png) */}
-          <div className="w-full lg:w-[68%] bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-8 sm:p-12 shadow-sm flex flex-col justify-between min-h-67.5 sm:min-h-80">
+          <div className="w-full lg:w-[68%] bg-card rounded-2xl sm:rounded-3xl border border-border p-8 sm:p-12 shadow-sm flex flex-col justify-between min-h-67.5 sm:min-h-80">
             <div>
               {/* Stars */}
               <div className="flex gap-1 mb-5">
@@ -89,9 +89,9 @@ export function Testimonials() {
             </div>
 
             {/* Bottom row: Author on left, Company badge on right */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-4 border-t border-border">
               <div className="flex items-center gap-3">
-                <div className="relative size-11 rounded-full overflow-hidden border border-slate-200 shrink-0">
+                <div className="relative size-11 rounded-full overflow-hidden border border-border shrink-0">
                   <Image
                     src={current.avatarUrl}
                     alt={current.author}
@@ -110,7 +110,7 @@ export function Testimonials() {
                 </div>
               </div>
 
-              <span className="text-xs font-bold text-primary bg-brand-50 px-3 py-1 rounded-full border border-indigo-100">
+              <span className="text-xs font-bold text-primary bg-primary-soft px-3 py-1 rounded-full border border-primary/20">
                 {current.neighborhood}
               </span>
             </div>
@@ -119,7 +119,7 @@ export function Testimonials() {
           {/* Right Peek Card (desktop) */}
           <div
             onClick={() => setActiveIndex(nextIndex)}
-            className="hidden lg:block w-[18%] opacity-35 hover:opacity-60 transition-opacity cursor-pointer p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs scale-90 shrink-0"
+            className="hidden lg:block w-[18%] opacity-35 hover:opacity-60 transition-opacity cursor-pointer p-6 rounded-2xl bg-card border border-border shadow-xs scale-90 shrink-0"
           >
             <div className="flex gap-1 mb-3">
               {[...Array(5)].map((_, i) => (
@@ -129,7 +129,7 @@ export function Testimonials() {
                 />
               ))}
             </div>
-            <p className="text-xs text-slate-500 line-clamp-3">
+            <p className="text-xs text-muted-foreground line-clamp-3">
               « {testimonials[nextIndex].comment} »
             </p>
           </div>
@@ -146,7 +146,7 @@ export function Testimonials() {
               className={`size-2.5 rounded-full transition-all ${
                 i === activeIndex
                   ? "bg-primary w-5"
-                  : "bg-slate-200 hover:bg-slate-300"
+                  : "bg-muted border border-border hover:bg-muted-foreground/30"
               }`}
             />
           ))}

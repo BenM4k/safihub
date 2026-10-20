@@ -73,24 +73,24 @@ export function PriceAdjustmentCard({
   );
 
   return (
-    <div className="bg-orange-50/90 rounded-3xl border border-orange-200 p-5 sm:p-6 text-orange-950 space-y-4">
+    <div className="bg-orange-500/10 rounded-3xl border border-orange-500/20 p-5 sm:p-6 text-orange-700 dark:text-orange-300 space-y-4">
       <div className="flex items-start gap-3">
-        <AlertCircle className="size-5 text-orange-600 shrink-0 mt-0.5" />
+        <AlertCircle className="size-5 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
         <div className="text-xs sm:text-sm space-y-1">
-          <p className="font-bold text-orange-950">{t("priceAdjustmentTitle")}</p>
-          <p className="text-orange-900/90 leading-relaxed">
+          <p className="font-bold text-orange-700 dark:text-orange-300">{t("priceAdjustmentTitle")}</p>
+          <p className="text-orange-600/90 dark:text-orange-400/90 leading-relaxed">
             {t("priceAdjustmentDesc", { amount: totalDue.toLocaleString() })}
           </p>
         </div>
       </div>
 
       {discrepancies.length > 0 && (
-        <div className="p-3 bg-white/80 rounded-2xl border border-orange-200/80 space-y-1.5 text-xs">
-          <span className="font-bold text-orange-950 block">Détails constatés à l&apos;atelier :</span>
+        <div className="p-3 bg-card rounded-2xl border border-border space-y-1.5 text-xs">
+          <span className="font-bold text-heading block">Détails constatés à l&apos;atelier :</span>
           {discrepancies.map((it) => (
-            <div key={it.id} className="flex justify-between text-orange-900">
+            <div key={it.id} className="flex justify-between text-muted-foreground">
               <span>{it.itemNameFr || "Article"} :</span>
-              <span className="font-medium">
+              <span className="font-medium text-foreground">
                 {it.status === "returned"
                   ? "Non accepté (sera retourné)"
                   : `Quantité : ${it.receivedQuantity} reçu(s) (déclaré: ${it.declaredQuantity})`}
@@ -101,7 +101,7 @@ export function PriceAdjustmentCard({
       )}
 
       {error && (
-        <div className="p-3 rounded-xl bg-white border border-rose-300 text-rose-700 text-xs font-semibold">
+        <div className="p-3 rounded-xl bg-card border border-rose-500/30 text-rose-700 dark:text-rose-400 text-xs font-semibold">
           {error}
         </div>
       )}
@@ -122,7 +122,7 @@ export function PriceAdjustmentCard({
           variant="outline"
           disabled={loading}
           onClick={handleDecline}
-          className="border-orange-300 text-orange-900 hover:bg-orange-100 text-xs sm:text-sm"
+          className="border-orange-500/30 text-orange-700 dark:text-orange-300 hover:bg-orange-500/10 text-xs sm:text-sm"
         >
           <X className="size-4 mr-1.5" />
           {t("declineAdjustment")}

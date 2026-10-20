@@ -42,26 +42,26 @@ export function AuthErrorCard({
     <div
       role="alert"
       aria-live="assertive"
-      className="w-full max-w-sm sm:max-w-md mx-auto p-6 sm:p-8 rounded-3xl bg-white border border-border shadow-xs text-center flex flex-col items-center"
+      className="w-full max-w-sm sm:max-w-md mx-auto p-6 sm:p-8 rounded-3xl bg-card border border-border shadow-xs text-center flex flex-col items-center"
     >
       {/* Icon Badge */}
-      <div className="size-14 rounded-2xl bg-destructive-light text-destructive-base border border-destructive-base/20 flex items-center justify-center mb-5 shadow-2xs">
+      <div className="size-14 rounded-2xl bg-destructive-soft text-destructive border border-destructive/20 flex items-center justify-center mb-5 shadow-2xs">
         <AlertCircle className="size-7" />
       </div>
 
       {/* Heading */}
-      <h1 className="text-xl sm:text-2xl font-black text-ink-900 tracking-tight font-display mb-2">
+      <h1 className="text-xl sm:text-2xl font-black text-heading tracking-tight font-display mb-2">
         {displayTitle}
       </h1>
 
       {/* Description */}
-      <p className="text-xs sm:text-sm text-ink-600 leading-relaxed max-w-xs mx-auto mb-5">
+      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto mb-5">
         {displayDescription}
       </p>
 
       {/* Optional Error Digest */}
       {error.digest && (
-        <div className="w-full mb-5 px-3 py-1.5 rounded-lg bg-ink-50 border border-ink-200 text-[11px] font-mono text-ink-500 select-all">
+        <div className="w-full mb-5 px-3 py-1.5 rounded-lg bg-muted border border-border text-[11px] font-mono text-muted-foreground select-all">
           {tErrors("referenceCode")}: {error.digest}
         </div>
       )}
@@ -84,7 +84,7 @@ export function AuthErrorCard({
             variant="outline"
             size="pill"
             asChild
-            className="w-full gap-2 border-border-strong text-ink-700 hover:bg-ink-50"
+            className="w-full gap-2 border-border-strong text-foreground hover:bg-muted"
           >
             <Link href="/login">
               <ArrowLeft className="size-4" />
@@ -96,7 +96,7 @@ export function AuthErrorCard({
             variant="outline"
             size="pill"
             asChild
-            className="w-full gap-2 border-border-strong text-ink-700 hover:bg-ink-50"
+            className="w-full gap-2 border-border-strong text-foreground hover:bg-muted"
           >
             <Link href="/">
               <Home className="size-4" />

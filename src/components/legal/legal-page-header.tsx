@@ -32,7 +32,7 @@ export function LegalPageHeader({
         Dernière mise à jour : {lastUpdated} • Bukavu, RDC
       </p>
 
-      <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+      <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
         {description}
       </p>
 
@@ -40,7 +40,7 @@ export function LegalPageHeader({
         <LegalNavTabs activeTab={activeTab} />
       </div>
 
-      <hr className="border-slate-200/80 mt-12 sm:mt-16 mb-16 sm:mb-24" />
+      <hr className="border-slate-200/80 dark:border-border mt-12 sm:mt-16 mb-16 sm:mb-24" />
     </header>
   );
 }

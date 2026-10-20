@@ -22,7 +22,7 @@ export const TABS: TabItem[] = [
     ],
     imageUrl:
       "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=800&q=80",
-    bgTint: "bg-[#BAE6FD]/60",
+    bgTint: "bg-[#BAE6FD]/60 dark:bg-sky-950/40",
   },
   {
     id: "suits",
@@ -37,7 +37,7 @@ export const TABS: TabItem[] = [
     ],
     imageUrl:
       "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80",
-    bgTint: "bg-[#DDD9FE]/70",
+    bgTint: "bg-[#DDD9FE]/70 dark:bg-violet-950/40",
   },
   {
     id: "bedding",
@@ -52,7 +52,7 @@ export const TABS: TabItem[] = [
     ],
     imageUrl:
       "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80",
-    bgTint: "bg-[#BBF7D0]/60",
+    bgTint: "bg-[#BBF7D0]/60 dark:bg-emerald-950/40",
   },
   {
     id: "shoes",
@@ -67,6 +67,6 @@ export const TABS: TabItem[] = [
     ],
     imageUrl:
       "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80",
-    bgTint: "bg-[#FED7AA]/60",
+    bgTint: "bg-[#FED7AA]/60 dark:bg-amber-950/40",
   },
 ];

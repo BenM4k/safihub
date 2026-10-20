@@ -35,7 +35,7 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
     <header
       className={
         isSolid
-          ? "sticky top-0 left-0 right-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs transition-all pointer-events-auto"
+          ? "sticky top-0 left-0 right-0 z-50 w-full bg-white/95 dark:bg-card/95 backdrop-blur-md border-b border-slate-200/90 dark:border-border shadow-2xs transition-all pointer-events-auto"
           : "fixed top-0 left-0 right-0 z-50 w-full bg-transparent transition-all pointer-events-none"
       }
     >
@@ -52,7 +52,7 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
         </Link>
 
         {/* Center Pill Segmented Nav */}
-        <nav className="hidden md:flex items-center bg-white/95 backdrop-blur-xs border border-slate-200/90 shadow-xs rounded-full px-2 py-1 text-xs sm:text-sm font-semibold text-foreground">
+        <nav className="hidden md:flex items-center bg-white/95 dark:bg-card/95 backdrop-blur-xs border border-slate-200/90 dark:border-border shadow-xs rounded-full px-2 py-1 text-xs sm:text-sm font-semibold text-foreground">
           {isAuthenticated ? (
             <>
               <Link
@@ -119,7 +119,7 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
                   type="submit"
                   variant="ghost"
                   size="sm"
-                  className="text-xs font-semibold text-heading hover:text-rose-600"
+                  className="text-xs font-semibold text-heading hover:text-rose-600 dark:hover:text-rose-400"
                 >
                   {tNav("logout")}
                 </Button>

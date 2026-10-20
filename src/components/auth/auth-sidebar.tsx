@@ -9,9 +9,9 @@ export function AuthSidebar() {
       aria-label="SafiHub Présentation"
       className="hidden lg:flex flex-col items-center justify-center p-8 xl:p-12 2xl:p-16 h-full"
     >
-      <div className="w-full max-w-2xl bg-[#DDF1FD] rounded-[2.25rem] p-8 xl:p-12 flex flex-col items-center justify-center shadow-xs">
+      <div className="w-full max-w-2xl bg-[#DDF1FD] dark:bg-slate-900/60 dark:border dark:border-border rounded-[2.25rem] p-8 xl:p-12 flex flex-col items-center justify-center shadow-xs">
         {/* Rounded showcase photograph */}
-        <div className="relative w-full aspect-16/10 rounded-2xl overflow-hidden shadow-sm bg-white/50">
+        <div className="relative w-full aspect-16/10 rounded-2xl overflow-hidden shadow-sm bg-white/50 dark:bg-black/30">
           <Image
             src="/images/auth-showcase.jpg"
             alt="Client satisfait tenant du linge propre et fraîchement repassé SafiHub"
@@ -23,7 +23,7 @@ export function AuthSidebar() {
         </div>
 
         {/* Testimonial / Value prop caption */}
-        <p className="mt-8 text-center text-sm xl:text-base font-medium text-slate-700 leading-relaxed max-w-lg">
+        <p className="mt-8 text-center text-sm xl:text-base font-medium text-slate-700 dark:text-slate-300 leading-relaxed max-w-lg">
           Join thousands of customers using SafiHub to schedule laundry &amp;
           dry cleaning seamlessly. Anytime, anywhere.
         </p>

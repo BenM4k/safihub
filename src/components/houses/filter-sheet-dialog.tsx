@@ -66,19 +66,19 @@ export function FilterSheetDialog({
       aria-labelledby="filter-sheet-title"
       ref={dialogRef}
       tabIndex={-1}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in outline-hidden"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in outline-hidden"
     >
-      <div className="w-full max-w-lg rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-lg rounded-3xl bg-card border border-border shadow-2xl p-6 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-          <h3 id="filter-sheet-title" className="text-lg font-black text-slate-900 tracking-tight">
+        <div className="flex items-center justify-between pb-4 border-b border-border">
+          <h3 id="filter-sheet-title" className="text-lg font-black text-heading tracking-tight">
             {t("allFilters")}
           </h3>
           <button
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+            className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition cursor-pointer"
           >
             <X className="size-5" />
           </button>
@@ -101,13 +101,13 @@ export function FilterSheetDialog({
         />
 
         {/* Footer Actions */}
-        <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+        <div className="pt-4 border-t border-border flex items-center justify-between gap-3">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={onResetFilters}
-            className="text-xs font-bold text-slate-600 hover:text-rose-600 cursor-pointer"
+            className="text-xs font-bold text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
           >
             {t("clearFilters")}
           </Button>

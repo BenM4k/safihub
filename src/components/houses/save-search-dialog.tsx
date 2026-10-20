@@ -53,14 +53,14 @@ export function SaveSearchDialog({
       aria-labelledby="save-search-title"
       ref={dialogRef}
       tabIndex={-1}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in outline-hidden"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in outline-hidden"
     >
-      <div className="w-full max-w-md rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 relative">
+      <div className="w-full max-w-md rounded-3xl bg-card border border-border shadow-2xl p-6 relative">
         <button
           type="button"
           onClick={onClose}
           aria-label="Fermer"
-          className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+          className="absolute top-4 right-4 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition cursor-pointer"
         >
           <X className="size-5" />
         </button>
@@ -71,17 +71,17 @@ export function SaveSearchDialog({
               <Bell className="size-5" />
             </div>
             <div>
-              <h3 id="save-search-title" className="text-base font-bold text-slate-900">
+              <h3 id="save-search-title" className="text-base font-bold text-heading">
                 {t("alertModalTitle")}
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {t("alertModalDesc")}
               </p>
             </div>
           </div>
 
           <div className="space-y-1.5 pt-2">
-            <label className="text-xs font-bold text-slate-700">
+            <label className="text-xs font-bold text-foreground">
               {t("phoneLabel")}
             </label>
             <input
@@ -90,21 +90,21 @@ export function SaveSearchDialog({
               placeholder="+243 999 000 000"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">
+            <label className="text-xs font-bold text-foreground">
               {t("neighborhoodLabel")}
             </label>
             <select
               value={neighborhoodId}
               onChange={(e) => setNeighborhoodId(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             >
               {neighborhoods.map((n) => (
-                <option key={n.id} value={n.id}>
+                <option key={n.id} value={n.id} className="bg-card text-foreground">
                   {n.name} ({n.zoneName || "Bukavu"})
                 </option>
               ))}

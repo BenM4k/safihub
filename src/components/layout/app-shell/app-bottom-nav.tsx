@@ -41,7 +41,7 @@ export function AppBottomNav({
       <nav
         aria-label="Navigation mobile"
         className={cn(
-          "md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-border shadow-nav px-2 pt-1.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] font-sans",
+          "md:hidden fixed bottom-0 inset-x-0 z-40 bg-card/95 backdrop-blur-md border-t border-border shadow-nav px-2 pt-1.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] font-sans",
           className
         )}
       >
@@ -124,7 +124,7 @@ export function AppBottomNav({
                 type="button"
                 onClick={() => setIsMoreOpen(false)}
                 aria-label="Fermer le menu"
-                className="size-9 rounded-full bg-secondary text-muted-foreground flex items-center justify-center hover:bg-slate-200 transition cursor-pointer"
+                className="size-9 rounded-full bg-secondary text-muted-foreground flex items-center justify-center hover:bg-secondary/80 transition cursor-pointer"
               >
                 <X className="size-5" />
               </button>

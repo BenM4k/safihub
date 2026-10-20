@@ -41,7 +41,7 @@ export function AppTopBar({
   const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   return (
-    <header className={cn("w-full bg-white border-b border-border shadow-xs sticky top-0 z-30 font-sans", className)}>
+    <header className={cn("w-full bg-card border-b border-border shadow-xs sticky top-0 z-30 font-sans", className)}>
       <div className="w-full px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
         {/* Left slot (e.g. Pressing switcher + status) */}
         <div className="flex items-center gap-2 min-w-0 flex-1">

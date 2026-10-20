@@ -24,25 +24,25 @@ export function OrderStatusTimeline({ events }: OrderStatusTimelineProps) {
   };
 
   return (
-    <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-4">
-      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+    <div className="p-6 bg-card rounded-2xl border border-border shadow-2xs space-y-4">
+      <h3 className="text-base font-bold text-heading flex items-center gap-2 border-b border-border pb-3">
         <Clock className="size-4 text-primary" />
         <span>Historique & Suivi d&apos;état</span>
       </h3>
 
-      <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+      <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
         {events.map((ev) => (
           <div key={ev.id} className="relative group">
-            <span className="absolute -left-6 top-0.5 size-5 rounded-full bg-white border-2 border-slate-300 flex items-center justify-center">
+            <span className="absolute -left-6 top-0.5 size-5 rounded-full bg-card border-2 border-border flex items-center justify-center">
               {getEventIcon(ev.type, ev.toStatus)}
             </span>
 
             <div className="space-y-0.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <p className="text-xs font-bold text-slate-900">
+                <p className="text-xs font-bold text-heading">
                   {ev.note || ev.toStatus || ev.type}
                 </p>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-muted-foreground/70">
                   {new Date(ev.createdAt).toLocaleTimeString("fr-FR", {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -56,7 +56,7 @@ export function OrderStatusTimeline({ events }: OrderStatusTimelineProps) {
               </div>
 
               {ev.approvalMethod && (
-                <p className="text-[11px] text-emerald-700 font-medium">
+                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
                   Méthode de validation : {ev.approvalMethod}
                 </p>
               )}

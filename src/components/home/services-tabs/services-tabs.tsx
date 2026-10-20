@@ -27,7 +27,7 @@ export function ServicesTabs({ user }: { user?: AuthenticatedUser | null } = {})
   return (
     <section
       id="services"
-      className="min-h-screen flex flex-col justify-center py-16 md:py-24 border-t border-border bg-white overflow-hidden"
+      className="min-h-screen flex flex-col justify-center py-16 md:py-24 border-t border-border bg-background overflow-hidden"
     >
       <div className="container-page flex flex-col items-center">
         {/* Section title matching reference Use Legitify for */}
@@ -35,8 +35,8 @@ export function ServicesTabs({ user }: { user?: AuthenticatedUser | null } = {})
           Utilisez SafiHub pour
         </h2>
 
-        {/* Tab Capsule Bar (black pill when active) */}
-        <div className="flex flex-wrap items-center justify-center border border-slate-200 rounded-full p-1.5 mb-14 sm:mb-18 bg-white shadow-xs max-w-4xl">
+        {/* Tab Capsule Bar (black pill when active in light, primary in dark) */}
+        <div className="flex flex-wrap items-center justify-center border border-border rounded-full p-1.5 mb-14 sm:mb-18 bg-card shadow-xs max-w-4xl">
           {TABS.map((tab) => {
             const isActive = tab.id === activeTabId;
             return (
@@ -44,10 +44,10 @@ export function ServicesTabs({ user }: { user?: AuthenticatedUser | null } = {})
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTabId(tab.id)}
-                className={`px-4 sm:px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
+                className={`px-4 sm:px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                   isActive
-                    ? "bg-ink-900 text-white shadow-xs"
-                    : "text-slate-600 hover:text-heading"
+                    ? "bg-slate-900 text-white dark:bg-primary dark:text-white shadow-xs"
+                    : "text-muted-foreground hover:text-heading"
                 }`}
               >
                 {tab.name}
@@ -95,13 +95,13 @@ export function ServicesTabs({ user }: { user?: AuthenticatedUser | null } = {})
               <div
                 className={`absolute inset-0 rounded-4xl ${activeTab.bgTint} transition-colors duration-300 p-4`}
               >
-                <div className="size-8 rounded-lg bg-white/70 flex items-center justify-center text-primary">
+                <div className="size-8 rounded-lg bg-card/80 border border-border/60 flex items-center justify-center text-primary">
                   <Shirt className="size-4" />
                 </div>
               </div>
 
               {/* Overlapping foreground photo */}
-              <div className="relative w-[85%] h-[90%] rounded-2xl overflow-hidden shadow-md border border-white/80 z-10 mr-[-2%]">
+              <div className="relative w-[85%] h-[90%] rounded-2xl overflow-hidden shadow-md border border-border z-10 mr-[-2%]">
                 <Image
                   src={activeTab.imageUrl}
                   alt={activeTab.title}

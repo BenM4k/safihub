@@ -111,7 +111,7 @@ export function HowItWorks() {
         </div>
 
         {/* Reassurance banner below */}
-        <div className="mt-10 card bg-surface border border-border p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-10 card bg-card border border-border p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
               <Sparkles className="size-5" />

@@ -183,14 +183,14 @@ export function CheckoutForm({
   if (cart.items.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[calc(100dvh-14rem)] py-12 px-4 text-center">
-        <div className="p-8 sm:p-10 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs max-w-md w-full flex flex-col items-center">
+        <div className="p-8 sm:p-10 text-center bg-card rounded-3xl border border-border shadow-xs max-w-md w-full flex flex-col items-center">
           <div className="size-16 sm:size-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-2xs">
             <ShoppingBag className="size-8 sm:size-10" />
           </div>
-          <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-2">
+          <h3 className="text-xl sm:text-2xl font-black text-heading tracking-tight mb-2">
             {t("emptyCartTitle")}
           </h3>
-          <p className="text-xs sm:text-sm text-slate-500 mb-6 max-w-xs leading-relaxed">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
             {t("emptyCartDesc")}
           </p>
           <Button
@@ -217,13 +217,13 @@ export function CheckoutForm({
         onCancel={() => setPriceChangeDetails(null)}
       />
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-heading tracking-tight">
             {t("title")}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Pressing sélectionné : <span className="font-bold text-slate-800">{cart.houseName}</span>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Pressing sélectionné : <span className="font-bold text-heading">{cart.houseName}</span>
           </p>
         </div>
       </div>
@@ -231,9 +231,9 @@ export function CheckoutForm({
       {serverError && (
         <div
           role="alert"
-          className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs sm:text-sm font-medium flex items-center gap-2.5 animate-in fade-in-50"
+          className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 text-xs sm:text-sm font-medium flex items-center gap-2.5 animate-in fade-in-50"
         >
-          <AlertCircle className="size-5 text-rose-600 shrink-0" />
+          <AlertCircle className="size-5 text-rose-600 dark:text-rose-400 shrink-0" />
           <span>{serverError}</span>
         </div>
       )}
@@ -284,28 +284,28 @@ export function CheckoutForm({
 
         {/* Right Column: Sticky Summary & Confirmation */}
         <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24 space-y-4">
-          <div className="p-5 sm:p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-            <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
+          <div className="p-5 sm:p-6 bg-card rounded-2xl border border-border shadow-2xs space-y-4">
+            <h3 className="text-base font-bold text-heading border-b border-border pb-3">
               {t("stepReview")}
             </h3>
 
             <div className="space-y-2 text-xs sm:text-sm">
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-muted-foreground">
                 <span>{t("subtotalWithCount", { count: cart.items.reduce((a, b) => a + b.quantity, 0) })}</span>
-                <span className="font-semibold text-slate-900">{subtotalCdf.toLocaleString("fr-FR")} CDF</span>
+                <span className="font-semibold text-heading">{subtotalCdf.toLocaleString("fr-FR")} CDF</span>
               </div>
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-muted-foreground">
                 <span>{t("deliveryFeeLabel")}</span>
-                <span className="font-semibold text-slate-900">{deliveryFeeCdf.toLocaleString("fr-FR")} CDF</span>
+                <span className="font-semibold text-heading">{deliveryFeeCdf.toLocaleString("fr-FR")} CDF</span>
               </div>
-              <div className="pt-3 border-t border-slate-100 flex justify-between text-sm sm:text-base font-black text-slate-900">
+              <div className="pt-3 border-t border-border flex justify-between text-sm sm:text-base font-black text-heading">
                 <span>{t("amountDueOnDelivery")}</span>
                 <span className="text-primary text-base sm:text-lg">{totalDue.toLocaleString("fr-FR")} CDF</span>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5 text-xs text-slate-700">
-              <ShieldCheck className="size-4 text-emerald-600 shrink-0" />
+            <div className="p-3.5 rounded-xl bg-muted/50 border border-border flex items-center gap-2.5 text-xs text-muted-foreground">
+              <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>{t("cashOnDelivery")}</span>
             </div>
 

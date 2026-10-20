@@ -34,7 +34,7 @@ export default async function CustomerOrdersPage({
   const initialTab = sp?.tab === "past" ? "past" : "active";
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/50">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar variant="solid" user={user} />
       <main className="flex-1 flex flex-col py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col space-y-6">
@@ -42,15 +42,15 @@ export default async function CustomerOrdersPage({
             <div className="space-y-1">
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition mb-2"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition mb-2"
               >
                 <ArrowLeft className="size-3.5" />
                 <span>Accueil</span>
               </Link>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-black text-heading tracking-tight">
                 Mes commandes
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Suivi en temps réel de votre linge confié aux ateliers de Bukavu.
               </p>
             </div>

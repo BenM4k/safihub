@@ -31,12 +31,12 @@ export function CartView() {
   if (!hasItems) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[calc(100dvh-14rem)] py-12 px-4 text-center">
-        <div className="max-w-md w-full p-8 sm:p-10 bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col items-center">
+        <div className="max-w-md w-full p-8 sm:p-10 bg-card rounded-3xl border border-border shadow-xs flex flex-col items-center">
           <div className="size-16 sm:size-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-2xs">
             <ShoppingBag className="size-8 sm:size-10" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t("empty")}</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-2 mb-6 max-w-xs">{t("emptyDesc")}</p>
+          <h1 className="text-xl sm:text-2xl font-black text-heading tracking-tight">{t("empty")}</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-2 mb-6 max-w-xs">{t("emptyDesc")}</p>
           <Button asChild size="lg" className="rounded-xl font-bold shadow-sm w-full sm:w-auto px-6">
             <Link href="/houses">{t("browseHouses")}</Link>
           </Button>
@@ -47,11 +47,11 @@ export function CartView() {
 
   return (
     <div className="w-full max-w-6xl mx-auto py-8 sm:py-10 px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-5 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-5 mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">{t("title")}</h1>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-heading">{t("title")}</h1>
           {cart.houseName && (
-            <p className="text-xs sm:text-sm text-slate-500 flex items-center gap-1.5 mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
               <Store className="size-3.5 text-primary shrink-0" />
               <span>{t("houseNotice", { houseName: cart.houseName })}</span>
             </p>
@@ -61,7 +61,7 @@ export function CartView() {
           variant="ghost"
           size="sm"
           onClick={() => cart.clearCart()}
-          className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 w-fit cursor-pointer"
+          className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-500/10 w-fit cursor-pointer"
         >
           <Trash2 className="size-3.5 mr-1.5" />
           {t("clearCart")}
@@ -71,16 +71,16 @@ export function CartView() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
         {/* Cart items list */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-4">
-          <div className="divide-y divide-slate-100 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div className="divide-y divide-border bg-card rounded-2xl border border-border shadow-2xs overflow-hidden">
             {items.map((item) => {
               const itemTotal = (item.expectedUnitPrice || 0) * item.quantity;
               return (
                 <div key={item.houseItemId} className="p-4 sm:p-5 flex items-center justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-900 truncate">
+                    <p className="text-sm font-semibold text-heading truncate">
                       {item.itemName || t("itemFallback")}
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {item.fabricName || ""} {item.serviceName ? `• ${item.serviceName}` : ""}
                     </p>
                     <p className="text-xs font-mono font-medium text-primary mt-1">
@@ -89,22 +89,22 @@ export function CartView() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                    <div className="flex items-center border border-border rounded-lg overflow-hidden bg-muted/50">
                       <button
                         type="button"
                         onClick={() => cart.updateQuantity(item.houseItemId, -1)}
-                        className="size-8 flex items-center justify-center text-slate-600 hover:bg-slate-200 cursor-pointer"
+                        className="size-8 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
                         aria-label={t("decreaseQuantity")}
                       >
                         <Minus className="size-3" />
                       </button>
-                      <span className="w-8 text-center text-xs font-bold font-mono text-slate-800">
+                      <span className="w-8 text-center text-xs font-bold font-mono text-foreground">
                         {item.quantity}
                       </span>
                       <button
                         type="button"
                         onClick={() => cart.updateQuantity(item.houseItemId, 1)}
-                        className="size-8 flex items-center justify-center text-slate-600 hover:bg-slate-200 cursor-pointer"
+                        className="size-8 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
                         aria-label={t("increaseQuantity")}
                       >
                         <Plus className="size-3" />
@@ -112,7 +112,7 @@ export function CartView() {
                     </div>
 
                     <div className="w-24 sm:w-28 text-right">
-                      <p className="text-xs sm:text-sm font-bold font-mono text-slate-900">
+                      <p className="text-xs sm:text-sm font-bold font-mono text-heading">
                         {itemTotal.toLocaleString("fr-FR")} CDF
                       </p>
                     </div>
@@ -125,17 +125,17 @@ export function CartView() {
 
         {/* Order summary sidebar */}
         <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24 space-y-4">
-          <div className="p-5 sm:p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-            <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
+          <div className="p-5 sm:p-6 bg-card rounded-2xl border border-border shadow-2xs space-y-4">
+            <h2 className="text-base font-bold text-heading border-b border-border pb-3">
               {t("total")}
             </h2>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-600">{t("subtotal")}</span>
-              <span className="font-mono font-bold text-slate-900">
+              <span className="text-muted-foreground">{t("subtotal")}</span>
+              <span className="font-mono font-bold text-heading">
                 {subtotalCdf.toLocaleString("fr-FR")} CDF
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs text-slate-400">
+            <div className="flex items-center justify-between text-xs text-muted-foreground/70">
               <span>{t("usdEstimate")}</span>
               <span className="font-mono">${subtotalUsd}</span>
             </div>

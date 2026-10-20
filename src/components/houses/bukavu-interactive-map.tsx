@@ -53,7 +53,7 @@ export function BukavuInteractiveMap({
         className={`absolute inset-0 transition-all duration-700 ${
           mapType === "satellite"
             ? "bg-[#182a38] opacity-100"
-            : "bg-[#e5e9ec] opacity-100"
+            : "bg-[#e5e9ec] dark:bg-[#131b26] opacity-100"
         }`}
         style={{
           transform: `scale(${zoomLevel})`,
@@ -63,7 +63,7 @@ export function BukavuInteractiveMap({
         {/* Lake Kivu representation */}
         <div
           className={`absolute top-0 right-0 w-[55%] h-[65%] rounded-bl-[120px] transition-colors ${
-            mapType === "satellite" ? "bg-[#0b1f33]/90" : "bg-[#a5c9eb]"
+            mapType === "satellite" ? "bg-[#0b1f33]/90" : "bg-[#a5c9eb] dark:bg-[#0b1f33]/90"
           }`}
         >
           <div className="absolute top-8 right-8 text-[11px] font-bold tracking-widest uppercase opacity-40 text-cyan-200">
@@ -91,10 +91,10 @@ export function BukavuInteractiveMap({
         <button
           type="button"
           onClick={() => setIsDrawing((prev) => !prev)}
-          className={`h-8 px-3 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-md backdrop-blur-md transition ${
+          className={`h-8 px-3 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer ${
             isDrawing
               ? "bg-primary text-white"
-              : "bg-white/95 text-slate-800 hover:bg-white"
+              : "bg-card/95 border border-border text-foreground hover:bg-card"
           }`}
         >
           <Pencil className="size-3.5" />
@@ -103,12 +103,12 @@ export function BukavuInteractiveMap({
       </div>
 
       <div className="absolute top-4 right-4 z-20">
-        <div className="inline-flex p-0.5 bg-white/95 backdrop-blur-md shadow-md rounded-full text-xs font-bold text-slate-700">
+        <div className="inline-flex p-0.5 bg-card/95 border border-border backdrop-blur-md shadow-md rounded-full text-xs font-bold text-foreground">
           <button
             type="button"
             onClick={() => setMapType("map")}
-            className={`px-3 py-1 rounded-full transition ${
-              mapType === "map" ? "bg-slate-900 text-white shadow-2xs" : "hover:text-slate-900"
+            className={`px-3 py-1 rounded-full transition cursor-pointer ${
+              mapType === "map" ? "bg-primary text-white shadow-2xs" : "hover:text-primary"
             }`}
           >
             {t("mapPlan")}
@@ -116,8 +116,8 @@ export function BukavuInteractiveMap({
           <button
             type="button"
             onClick={() => setMapType("satellite")}
-            className={`px-3 py-1 rounded-full transition ${
-              mapType === "satellite" ? "bg-slate-900 text-white shadow-2xs" : "hover:text-slate-900"
+            className={`px-3 py-1 rounded-full transition cursor-pointer ${
+              mapType === "satellite" ? "bg-primary text-white shadow-2xs" : "hover:text-primary"
             }`}
           >
             {t("mapSatellite")}
@@ -130,7 +130,7 @@ export function BukavuInteractiveMap({
         <button
           type="button"
           onClick={() => setZoomLevel((z) => Math.min(1.4, z + 0.1))}
-          className="size-8 rounded-full bg-white/95 backdrop-blur-md shadow-md text-slate-800 flex items-center justify-center hover:bg-white transition"
+          className="size-8 rounded-full bg-card/95 border border-border backdrop-blur-md shadow-md text-foreground flex items-center justify-center hover:bg-card transition cursor-pointer"
           aria-label={t("zoomIn")}
         >
           <Plus className="size-4" />
@@ -138,7 +138,7 @@ export function BukavuInteractiveMap({
         <button
           type="button"
           onClick={() => setZoomLevel((z) => Math.max(0.8, z - 0.1))}
-          className="size-8 rounded-full bg-white/95 backdrop-blur-md shadow-md text-slate-800 flex items-center justify-center hover:bg-white transition"
+          className="size-8 rounded-full bg-card/95 border border-border backdrop-blur-md shadow-md text-foreground flex items-center justify-center hover:bg-card transition cursor-pointer"
           aria-label={t("zoomOut")}
         >
           <Minus className="size-4" />
@@ -162,10 +162,10 @@ export function BukavuInteractiveMap({
                 onClick={() => onSelectHouse(house.id === selectedHouseId ? null : house.id)}
                 onMouseEnter={() => onHoverHouse(house.id)}
                 onMouseLeave={() => onHoverHouse(null)}
-                className={`group flex items-center gap-1 px-2.5 py-1 rounded-full font-black text-xs shadow-lg transition-all transform ${
+                className={`group flex items-center gap-1 px-2.5 py-1 rounded-full font-black text-xs shadow-lg transition-all transform cursor-pointer ${
                   isSelected
                     ? "bg-primary text-white scale-115 ring-4 ring-primary/30 z-30"
-                    : "bg-white text-slate-900 hover:scale-105 hover:bg-slate-50 z-20"
+                    : "bg-card text-foreground border border-border hover:scale-105 hover:bg-muted z-20"
                 }`}
               >
                 <span className="size-1.5 rounded-full bg-emerald-500" />
@@ -183,10 +183,10 @@ export function BukavuInteractiveMap({
 
       {/* Active House Preview Popup at Bottom Right matching Zillow/Airbnb style */}
       {activeHouse && (
-        <div className="absolute bottom-6 right-4 z-30 w-72 rounded-2xl bg-white p-3 shadow-2xl border border-slate-200/90 animate-in fade-in slide-in-from-bottom-2">
+        <div className="absolute bottom-6 right-4 z-30 w-72 rounded-2xl bg-card p-3 shadow-2xl border border-border animate-in fade-in slide-in-from-bottom-2">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex items-center gap-2">
-              <div className="relative size-12 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+              <div className="relative size-12 rounded-xl overflow-hidden bg-muted shrink-0">
                 <Image
                   src={activeHouse.imageUrl}
                   alt={activeHouse.name}
@@ -195,14 +195,14 @@ export function BukavuInteractiveMap({
                 />
               </div>
               <div className="min-w-0">
-                <h4 className="text-xs font-bold text-slate-900 truncate">
+                <h4 className="text-xs font-bold text-heading truncate">
                   {activeHouse.name}
                 </h4>
-                <p className="text-[11px] text-slate-500 truncate">
+                <p className="text-[11px] text-muted-foreground truncate">
                   {activeHouse.neighborhoodName}
                 </p>
                 {activeHouse.rating !== null && (
-                  <div className="flex items-center gap-1 text-[11px] font-bold text-amber-600">
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-amber-500">
                     <Star className="size-3 fill-amber-500 text-amber-500" />
                     <span>{activeHouse.rating.toFixed(1)}</span>
                   </div>
@@ -212,14 +212,14 @@ export function BukavuInteractiveMap({
             <button
               type="button"
               onClick={() => onSelectHouse(null)}
-              className="text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+              className="text-muted-foreground hover:text-foreground p-0.5 rounded-full cursor-pointer"
             >
               <X className="size-3.5" />
             </button>
           </div>
 
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-            <span className="text-xs font-black text-slate-900">
+          <div className="pt-2 border-t border-border flex items-center justify-between gap-2">
+            <span className="text-xs font-black text-heading">
               Min. {activeHouse.minimumOrderAmount.toLocaleString("fr-FR")} CDF
             </span>
             <Link

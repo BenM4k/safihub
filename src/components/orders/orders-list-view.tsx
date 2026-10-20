@@ -58,14 +58,14 @@ export function OrdersListView({
   if (orders.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[calc(100dvh-18rem)] py-12 px-4 text-center">
-        <div className="p-8 sm:p-12 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs max-w-md w-full flex flex-col items-center">
+        <div className="p-8 sm:p-12 text-center bg-card rounded-3xl border border-border shadow-xs max-w-md w-full flex flex-col items-center">
           <div className="size-16 sm:size-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-2xs">
             <ShoppingBag className="size-8 sm:size-10" />
           </div>
-          <h3 className="text-xl sm:text-2xl font-black text-slate-900 mb-2">
+          <h3 className="text-xl sm:text-2xl font-black text-heading mb-2">
             {t("emptyActive")}
           </h3>
-          <p className="text-xs sm:text-sm text-slate-500 mb-6 max-w-xs leading-relaxed">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
             {t("empty")}
           </p>
           <Link
@@ -83,7 +83,7 @@ export function OrdersListView({
   return (
     <div className="space-y-6 flex-1 flex flex-col">
       {/* Segmented Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+      <div className="flex items-center gap-2 border-b border-border pb-3">
         <button
           type="button"
           onClick={() => handleTabChange("active")}
@@ -91,7 +91,7 @@ export function OrdersListView({
             "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer",
             activeTab === "active"
               ? "bg-primary text-white shadow-xs"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           )}
         >
           {t("activeTab", { count: activeOrders.length })}
@@ -104,7 +104,7 @@ export function OrdersListView({
             "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer",
             activeTab === "past"
               ? "bg-primary text-white shadow-xs"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           )}
         >
           {t("pastTab", { count: pastOrders.length })}
@@ -113,11 +113,11 @@ export function OrdersListView({
 
       {/* Orders List / Empty State */}
       {displayedList.length === 0 ? (
-        <div className="p-12 sm:p-16 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col items-center justify-center min-h-[320px]">
-          <div className="size-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
+        <div className="p-12 sm:p-16 text-center bg-card rounded-3xl border border-border shadow-xs flex flex-col items-center justify-center min-h-[320px]">
+          <div className="size-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center mb-3">
             <ShoppingBag className="size-7" />
           </div>
-          <p className="text-sm font-semibold text-slate-700">
+          <p className="text-sm font-semibold text-muted-foreground">
             {activeTab === "active" ? t("emptyActive") : t("emptyPast")}
           </p>
         </div>

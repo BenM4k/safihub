@@ -46,15 +46,15 @@ export function TrackLookupCard({ recentOrders = [] }: TrackLookupCardProps) {
     <div className="flex-1 flex flex-col items-center justify-center min-h-[calc(100dvh-16rem)] py-8 sm:py-12 px-4 w-full">
       <div className="w-full max-w-lg mx-auto flex flex-col items-center">
         {/* Main centered card */}
-        <div className="w-full p-8 sm:p-10 bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col items-center text-center">
+        <div className="w-full p-8 sm:p-10 bg-card rounded-3xl border border-border shadow-xs flex flex-col items-center text-center">
           <div className="size-16 sm:size-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-2xs">
             <Search className="size-8 sm:size-10" />
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-heading tracking-tight">
             {t("searchTitle")}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-2 mb-6 max-w-sm leading-relaxed">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-2 mb-6 max-w-sm leading-relaxed">
             {t("searchSubtitle")}
           </p>
 
@@ -74,12 +74,12 @@ export function TrackLookupCard({ recentOrders = [] }: TrackLookupCardProps) {
                 aria-invalid={Boolean(error)}
                 aria-describedby={error ? "track-token-error" : undefined}
                 placeholder={t("inputPlaceholder")}
-                className="w-full px-4 py-3.5 rounded-2xl border border-slate-300 bg-slate-50/50 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+                className="w-full px-4 py-3.5 rounded-2xl border border-border bg-muted/60 text-base font-medium text-foreground placeholder:text-muted-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
               />
             </div>
 
             {error && (
-              <p id="track-token-error" className="text-xs text-rose-600 font-medium text-left px-1">
+              <p id="track-token-error" className="text-xs text-rose-600 dark:text-rose-400 font-medium text-left px-1">
                 {error}
               </p>
             )}
@@ -98,9 +98,9 @@ export function TrackLookupCard({ recentOrders = [] }: TrackLookupCardProps) {
 
         {/* If user is logged in and has active/recent orders, display quick access */}
         {recentOrders.length > 0 && (
-          <div className="w-full mt-6 p-5 sm:p-6 bg-white rounded-3xl border border-slate-200/80 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+          <div className="w-full mt-6 p-5 sm:p-6 bg-card rounded-3xl border border-border shadow-2xs space-y-3">
+            <div className="flex items-center justify-between border-b border-border pb-2.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <Package className="size-3.5 text-primary" />
                 <span>{t("myActiveOrders")}</span>
               </span>
@@ -113,17 +113,17 @@ export function TrackLookupCard({ recentOrders = [] }: TrackLookupCardProps) {
               </Link>
             </div>
 
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-border">
               {recentOrders.slice(0, 3).map((ord) => (
                 <div
                   key={ord.id}
                   className="py-2.5 flex items-center justify-between gap-3 text-left"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">
+                    <p className="text-xs font-bold text-heading truncate">
                       {ord.code} • {ord.houseName}
                     </p>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-muted-foreground">
                       {ord.totalDue.toLocaleString("fr-FR")} {ord.currency}
                     </p>
                   </div>

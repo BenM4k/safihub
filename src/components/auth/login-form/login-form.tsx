@@ -28,7 +28,7 @@ function LoginSuccessBanner() {
   if (!isRegistered && !isReset) return null;
 
   return (
-    <div className="mb-4 p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-medium">
+    <div className="mb-4 p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm font-medium">
       {isRegistered && t("registeredSuccess")}
       {isReset && t("resetSuccess")}
     </div>
@@ -89,7 +89,7 @@ export function LoginForm() {
       {serverError && (
         <div
           role="alert"
-          className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-medium"
+          className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs sm:text-sm font-medium"
         >
           {serverError}
         </div>
@@ -111,7 +111,7 @@ export function LoginForm() {
             {...register("email")}
           />
           {errors.email?.message && (
-            <p id="email-error" className="text-xs font-medium text-red-500 mt-1">
+            <p id="email-error" className="text-xs font-medium text-red-500 dark:text-red-400 mt-1">
               {errors.email.message}
             </p>
           )}
@@ -140,7 +140,7 @@ export function LoginForm() {
             {...register("password")}
           />
           {errors.password?.message && (
-            <p id="password-error" className="text-xs font-medium text-red-500 mt-1">
+            <p id="password-error" className="text-xs font-medium text-red-500 dark:text-red-400 mt-1">
               {errors.password.message}
             </p>
           )}

@@ -125,7 +125,7 @@ export function MobileNavDrawer({ isOpen, onClose, user }: MobileNavDrawerProps)
             <Link
               href="/partners/apply"
               onClick={onClose}
-              className="link-quiet py-2.5 border-b border-border text-heading flex items-center justify-between text-violet-700"
+              className="link-quiet py-2.5 border-b border-border text-heading flex items-center justify-between text-violet-700 dark:text-violet-400"
             >
               {tNav("becomePartner")}
               <ArrowRight className="size-4 text-muted-foreground" />

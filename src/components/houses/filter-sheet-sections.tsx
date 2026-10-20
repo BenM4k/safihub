@@ -40,30 +40,30 @@ export function FilterSheetSections({
       {/* Neighborhood Section */}
       {neighborhoods && neighborhoods.length > 0 && onSelectNeighborhood && (
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2.5">
             {t("filterNeighborhood")}
           </label>
           <div className="relative">
             <select
               value={selectedNeighborhoodId ?? ""}
               onChange={(e) => onSelectNeighborhood(e.target.value || null)}
-              className="w-full py-2.5 pl-9 pr-4 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer transition"
+              className="w-full py-2.5 pl-9 pr-4 rounded-xl border border-border bg-card text-base font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer transition"
             >
-              <option value="">{t("allNeighborhoods")}</option>
+              <option value="" className="bg-card text-foreground">{t("allNeighborhoods")}</option>
               {neighborhoods.map((n) => (
-                <option key={n.id} value={n.id}>
+                <option key={n.id} value={n.id} className="bg-card text-foreground">
                   {n.name}
                 </option>
               ))}
             </select>
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
           </div>
         </div>
       )}
 
       {/* Service Section */}
       <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2.5">
+        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2.5">
           {t("filterServices")}
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -72,8 +72,8 @@ export function FilterSheetSections({
             onClick={() => onSelectService(null)}
             className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer ${
               selectedService === null
-                ? "border-primary bg-primary-soft/30 text-primary"
-                : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                ? "border-primary bg-primary text-white"
+                : "border-border bg-card text-foreground hover:bg-muted"
             }`}
           >
             {t("allServicesTab")}
@@ -87,8 +87,8 @@ export function FilterSheetSections({
                 onClick={() => onSelectService(isSelected ? null : s.slug)}
                 className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer ${
                   isSelected
-                    ? "border-primary bg-primary-soft/30 text-primary"
-                    : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                    ? "border-primary bg-primary text-white"
+                    : "border-border bg-card text-foreground hover:bg-muted"
                 }`}
               >
                 {s.nameFr}
@@ -100,7 +100,7 @@ export function FilterSheetSections({
 
       {/* Turnaround Section */}
       <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2.5">
+        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2.5">
           {t("filterTurnaround")}
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -116,7 +116,7 @@ export function FilterSheetSections({
               className={`py-2 px-3 rounded-xl border text-xs font-bold transition text-center cursor-pointer ${
                 maxTurnaround === opt.value
                   ? "border-primary bg-primary text-white"
-                  : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                  : "border-border bg-card text-foreground hover:bg-muted"
               }`}
             >
               {opt.label}
@@ -127,7 +127,7 @@ export function FilterSheetSections({
 
       {/* Min Order Section */}
       <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2.5">
+        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2.5">
           {t("filterPrice")} ({t("minOrderLabel")})
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -143,7 +143,7 @@ export function FilterSheetSections({
               className={`py-2 px-3 rounded-xl border text-xs font-bold transition text-center cursor-pointer ${
                 maxMinOrder === opt.value
                   ? "border-primary bg-primary text-white"
-                  : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                  : "border-border bg-card text-foreground hover:bg-muted"
               }`}
             >
               {opt.label}
@@ -157,16 +157,16 @@ export function FilterSheetSections({
         <button
           type="button"
           onClick={onToggleOpenNow}
-          className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition cursor-pointer"
+          className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-card border border-border hover:bg-muted transition cursor-pointer"
         >
-          <span className="text-sm font-bold text-slate-800">
+          <span className="text-sm font-bold text-heading">
             {t("filterOpenNow")}
           </span>
           <div
             className={`size-6 rounded-md flex items-center justify-center border transition ${
               openNowOnly
                 ? "bg-emerald-600 border-emerald-600 text-white"
-                : "bg-white border-slate-300"
+                : "bg-muted border-border"
             }`}
           >
             {openNowOnly && <Check className="size-4 stroke-3" />}

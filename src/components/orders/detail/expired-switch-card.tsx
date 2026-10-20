@@ -37,12 +37,12 @@ export function ExpiredSwitchCard({ order, items }: ExpiredSwitchCardProps) {
   };
 
   return (
-    <div className="bg-amber-50/80 rounded-3xl border border-amber-200 p-5 sm:p-6 text-amber-950 space-y-4">
+    <div className="bg-amber-500/10 rounded-3xl border border-amber-500/20 p-5 sm:p-6 text-amber-700 dark:text-amber-300 space-y-4">
       <div className="flex items-start gap-3">
-        <Clock className="size-5 text-amber-600 shrink-0 mt-0.5" />
+        <Clock className="size-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
         <div className="text-xs sm:text-sm">
-          <p className="font-bold text-amber-900">{t("expiredTitle")}</p>
-          <p className="text-amber-800/90 mt-1 leading-relaxed">
+          <p className="font-bold text-amber-700 dark:text-amber-300">{t("expiredTitle")}</p>
+          <p className="text-amber-600/90 dark:text-amber-400/90 mt-1 leading-relaxed">
             {t("expiredDesc")}
           </p>
         </div>

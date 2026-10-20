@@ -99,7 +99,7 @@ export default async function CustomerHouseDetailPage({
   const pageUrl = `https://safihub.cd/houses/${data.house.slug}`;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
       <PressingJsonLd house={data.house} url={pageUrl} />
       <Navbar variant="solid" user={user} />
       <main className="flex-1">

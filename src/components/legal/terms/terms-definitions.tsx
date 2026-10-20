@@ -6,14 +6,14 @@ export function TermsDefinitions() {
       <h2 className="font-display font-bold text-2xl sm:text-3xl lg:text-4xl tracking-tight text-heading mb-6 sm:mb-8">
         1. Définitions & Interprétation
       </h2>
-      <p className="text-slate-600 leading-relaxed text-base sm:text-lg mb-8">
+      <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-base sm:text-lg mb-8">
         Les présentes Conditions Générales d&apos;Utilisation (ci-après les «{" "}
         <strong>CGU</strong> ») régissent l&apos;accès et l&apos;utilisation de
         la plateforme <strong>SafiHub</strong>, opérant à Bukavu, Province du
         Sud-Kivu, République Démocratique du Congo.
       </p>
 
-      <div className="space-y-5 sm:space-y-6 text-slate-600 leading-relaxed">
+      <div className="space-y-5 sm:space-y-6 text-slate-600 dark:text-slate-300 leading-relaxed">
         <p>
           <strong className="text-heading font-semibold">« SafiHub »</strong> :
           désigne la société opératrice de la marketplace numérique de pressing
@@ -56,9 +56,9 @@ export function TermsDefinitions() {
         </p>
       </div>
 
-      <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-3">
+      <div className="mt-6 p-4 rounded-xl bg-slate-50 dark:bg-card border border-slate-200/80 dark:border-border flex items-start gap-3">
         <Info className="size-5 text-primary shrink-0 mt-0.5" />
-        <div className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+        <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <strong className="text-heading font-semibold">
             Spécificité locale de Bukavu :
           </strong>{" "}

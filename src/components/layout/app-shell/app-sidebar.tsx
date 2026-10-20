@@ -36,7 +36,7 @@ export function AppSidebar({
     <aside
       aria-label="Navigation principale"
       className={cn(
-        "bg-white border-r border-border flex flex-col justify-between shrink-0 h-full transition-[width] duration-200 ease-in-out font-sans z-20",
+        "bg-card border-r border-border flex flex-col justify-between shrink-0 h-full transition-[width] duration-200 ease-in-out font-sans z-20",
         isCollapsed ? "w-[72px]" : "w-60",
         className
       )}
@@ -113,7 +113,7 @@ export function AppSidebar({
                       <span className="relative inline-flex items-center justify-center shrink-0">
                         <Icon className={cn("size-4.5 shrink-0", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-heading")} />
                         {isCollapsed && Boolean(item.badge) && (
-                          <span className="absolute -top-1 -right-1 size-2 rounded-full bg-warning ring-2 ring-white" />
+                          <span className="absolute -top-1 -right-1 size-2 rounded-full bg-warning ring-2 ring-card" />
                         )}
                       </span>
 
@@ -125,7 +125,7 @@ export function AppSidebar({
                               className={cn(
                                 "px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0",
                                 isActive
-                                  ? "bg-white/20 text-white"
+                                  ? "bg-primary-foreground/20 text-primary-foreground"
                                   : "bg-warning-soft text-warning border border-warning/30 font-bold"
                               )}
                             >
