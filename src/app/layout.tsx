@@ -4,6 +4,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { CustomerBottomNav } from "@/components/customer/customer-bottom-nav";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 // One variable font for display + body keeps the payload small on 3G.
@@ -42,9 +44,12 @@ export default async function RootLayout({
       </head>
       <body className="flex min-h-full flex-col pb-16 md:pb-0">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {children}
-          <CustomerBottomNav />
-          <LanguageSwitcher />
+          <TooltipProvider>
+            {children}
+            <CustomerBottomNav />
+            <LanguageSwitcher />
+            <Toaster position="bottom-center" />
+          </TooltipProvider>
         </NextIntlClientProvider>
       </body>
     </html>

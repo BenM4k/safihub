@@ -47,11 +47,14 @@ export function usePressingCartSubtotal(
   const totalItemsCount = isCurrentHouse
     ? currentHouseItems.reduce((acc, it) => acc + it.quantity, 0)
     : 0;
+  const getQuantityInCart = (hId: string) =>
+    isCurrentHouse ? currentHouseItems.find((ci) => ci.houseItemId === hId)?.quantity || 0 : 0;
 
   return {
     isCurrentHouse,
     currentHouseItems,
     activeSubtotal,
     totalItemsCount,
+    getQuantityInCart,
   };
 }

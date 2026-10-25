@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FilterSheetSections } from "./filter-sheet-sections";
 import type { NeighborhoodRecord } from "@/dal";
 
@@ -43,46 +47,15 @@ export function FilterSheetDialog({
   onResetFilters,
 }: FilterSheetDialogProps) {
   const t = useTranslations("customerHouses");
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    dialogRef.current?.focus();
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="filter-sheet-title"
-      ref={dialogRef}
-      tabIndex={-1}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in outline-hidden"
-    >
-      <div className="w-full max-w-lg rounded-3xl bg-card border border-border shadow-2xl p-6 flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-border">
-          <h3 id="filter-sheet-title" className="text-lg font-black text-heading tracking-tight">
+    <Dialog open={isOpen} onOpenChange={(open: boolean) => { if (!open) onClose(); }}>
+      <DialogContent className="w-full max-w-lg rounded-3xl bg-card border border-border shadow-2xl p-6 flex flex-col max-h-[90vh]">
+        <DialogHeader className="pb-4 border-b border-border text-left">
+          <DialogTitle className="text-lg font-black text-heading tracking-tight">
             {t("allFilters")}
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition cursor-pointer"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
         {/* Scrollable Filters Body */}
         <FilterSheetSections
@@ -121,7 +94,7 @@ export function FilterSheetDialog({
             {t("viewList")}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,16 +1,32 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { X, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { NeighborhoodRecord } from "@/dal";
 
 interface SaveSearchDialogProps {
   isOpen: boolean;
   onClose: () => void;
   neighborhoods: NeighborhoodRecord[];
-  selectedNeighborhoodId?: string;
+  selectedNeighborhoodId?: string | null;
+  initialNeighborhoodId?: string | null;
 }
 
 export function SaveSearchDialog({
@@ -18,27 +34,13 @@ export function SaveSearchDialog({
   onClose,
   neighborhoods,
   selectedNeighborhoodId,
+  initialNeighborhoodId,
 }: SaveSearchDialogProps) {
   const t = useTranslations("customerHouses");
   const [phone, setPhone] = useState("");
   const [neighborhoodId, setNeighborhoodId] = useState(
-    selectedNeighborhoodId || (neighborhoods[0]?.id ?? "")
+    selectedNeighborhoodId || initialNeighborhoodId || (neighborhoods[0]?.id ?? "")
   );
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    dialogRef.current?.focus();
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,68 +49,62 @@ export function SaveSearchDialog({
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="save-search-title"
-      ref={dialogRef}
-      tabIndex={-1}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in outline-hidden"
-    >
-      <div className="w-full max-w-md rounded-3xl bg-card border border-border shadow-2xl p-6 relative">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Fermer"
-          className="absolute top-4 right-4 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition cursor-pointer"
-        >
-          <X className="size-5" />
-        </button>
+    <Dialog open={isOpen} onOpenChange={(open: boolean) => { if (!open) onClose(); }}>
+      <DialogContent className="w-full max-w-md rounded-3xl bg-card border border-border shadow-2xl p-6">
+        <DialogHeader className="flex flex-row items-center gap-2.5 space-y-0 text-left">
+          <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center shrink-0">
+            <Bell className="size-5" />
+          </div>
+          <div>
+            <DialogTitle className="text-base font-bold text-heading">
+              {t("alertModalTitle")}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+              {t("alertModalDesc")}
+            </DialogDescription>
+          </div>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center gap-2.5">
-            <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center">
-              <Bell className="size-5" />
-            </div>
-            <div>
-              <h3 id="save-search-title" className="text-base font-bold text-heading">
-                {t("alertModalTitle")}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {t("alertModalDesc")}
-              </p>
-            </div>
-          </div>
-
           <div className="space-y-1.5 pt-2">
-            <label className="text-xs font-bold text-foreground">
+            <label htmlFor="save-search-phone" className="text-xs font-bold text-foreground block">
               {t("phoneLabel")}
             </label>
             <input
+              id="save-search-phone"
               type="tel"
               required
               placeholder="+243 999 000 000"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">
+            <label htmlFor="save-search-neighborhood" className="text-xs font-bold text-foreground block">
               {t("neighborhoodLabel")}
             </label>
-            <select
+            <Select
               value={neighborhoodId}
-              onChange={(e) => setNeighborhoodId(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              onValueChange={(val: string) => setNeighborhoodId(val)}
             >
-              {neighborhoods.map((n) => (
-                <option key={n.id} value={n.id} className="bg-card text-foreground">
-                  {n.name} ({n.zoneName || "Bukavu"})
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                id="save-search-neighborhood"
+                className="w-full h-auto px-3.5 py-2.5 rounded-xl border border-border bg-card text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
+              >
+                <SelectValue placeholder={t("neighborhoodLabel")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {neighborhoods.map((n) => (
+                    <SelectItem key={n.id} value={n.id} className="bg-card text-foreground">
+                      {n.name} ({n.zoneName || "Bukavu"})
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="pt-3">
@@ -122,7 +118,7 @@ export function SaveSearchDialog({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

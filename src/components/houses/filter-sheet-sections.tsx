@@ -1,7 +1,16 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Check, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import type { NeighborhoodRecord } from "@/dal";
 
 interface FilterSheetSectionsProps {
@@ -44,18 +53,24 @@ export function FilterSheetSections({
             {t("filterNeighborhood")}
           </label>
           <div className="relative">
-            <select
-              value={selectedNeighborhoodId ?? ""}
-              onChange={(e) => onSelectNeighborhood(e.target.value || null)}
-              className="w-full py-2.5 pl-9 pr-4 rounded-xl border border-border bg-card text-base font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer transition"
+            <Select
+              value={selectedNeighborhoodId ?? "all"}
+              onValueChange={(val: string) => onSelectNeighborhood(val === "all" ? null : val)}
             >
-              <option value="" className="bg-card text-foreground">{t("allNeighborhoods")}</option>
-              {neighborhoods.map((n) => (
-                <option key={n.id} value={n.id} className="bg-card text-foreground">
-                  {n.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full h-auto py-2.5 pl-9 pr-4 rounded-xl border border-border bg-card text-base font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer transition">
+                <SelectValue placeholder={t("allNeighborhoods")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="all" className="bg-card text-foreground">{t("allNeighborhoods")}</SelectItem>
+                  {neighborhoods.map((n) => (
+                    <SelectItem key={n.id} value={n.id} className="bg-card text-foreground">
+                      {n.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
           </div>
         </div>
@@ -154,24 +169,17 @@ export function FilterSheetSections({
 
       {/* Open Now Switch */}
       <div className="pt-2">
-        <button
-          type="button"
-          onClick={onToggleOpenNow}
-          className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-card border border-border hover:bg-muted transition cursor-pointer"
-        >
+        <label className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-card border border-border hover:bg-muted transition cursor-pointer">
           <span className="text-sm font-bold text-heading">
             {t("filterOpenNow")}
           </span>
-          <div
-            className={`size-6 rounded-md flex items-center justify-center border transition ${
-              openNowOnly
-                ? "bg-emerald-600 border-emerald-600 text-white"
-                : "bg-muted border-border"
-            }`}
-          >
-            {openNowOnly && <Check className="size-4 stroke-3" />}
-          </div>
-        </button>
+          <Switch
+            checked={openNowOnly}
+            onCheckedChange={(checked: boolean) => {
+              if (checked !== openNowOnly) onToggleOpenNow();
+            }}
+          />
+        </label>
       </div>
     </div>
   );

@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import { Plus, X, ArrowRight } from "lucide-react";
 import { SAMPLE_FAQS } from "@/lib/sample-data";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 export function FaqSection() {
-  const [openId, setOpenId] = useState<string | null>("faq-2");
-
-  const toggle = (id: string) => {
-    setOpenId((prev) => (prev === id ? null : id));
-  };
-
   return (
     <section id="faq" className="min-h-screen flex flex-col justify-center py-16 md:py-24 border-t border-border bg-background overflow-hidden">
       <div className="container-page flex flex-col items-center">
@@ -21,47 +20,25 @@ export function FaqSection() {
         </h2>
 
         {/* Clean Accordion List matching reference */}
-        <div className="w-full max-w-4xl lg:max-w-5xl space-y-4 mb-10">
-          {SAMPLE_FAQS.map((faq) => {
-            const isOpen = openId === faq.id;
-
-            if (isOpen) {
-              return (
-                <div
-                  key={faq.id}
-                  className="bg-card rounded-2xl p-6 sm:p-7 border border-border shadow-md transition-all animate-fade-in"
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggle(faq.id)}
-                    className="w-full text-left flex items-start justify-between gap-4 font-display font-bold text-base sm:text-lg text-heading cursor-pointer"
-                  >
-                    <span>{faq.question}</span>
-                    <X className="size-5 text-muted-foreground shrink-0 mt-0.5 hover:text-heading" />
-                  </button>
-                  <p className="pt-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
-                    {faq.answer}
-                  </p>
-                </div>
-              );
-            }
-
-            return (
-              <div
+        <div className="w-full max-w-4xl lg:max-w-5xl mb-10">
+          <Accordion type="single" collapsible defaultValue="faq-2" className="space-y-4">
+            {SAMPLE_FAQS.map((faq) => (
+              <AccordionItem
                 key={faq.id}
-                className="border-b border-border py-4.5 transition-colors"
+                value={faq.id}
+                className="border-b border-border py-4.5 transition-colors data-[state=open]:bg-card data-[state=open]:rounded-2xl data-[state=open]:p-6 sm:data-[state=open]:p-7 data-[state=open]:border data-[state=open]:border-border data-[state=open]:shadow-md data-[state=open]:animate-fade-in data-[state=open]:border-b data-[state=open]:py-6"
               >
-                <button
-                  type="button"
-                  onClick={() => toggle(faq.id)}
-                  className="w-full text-left flex items-center justify-between gap-4 font-display font-bold text-base sm:text-lg text-heading hover:text-primary transition-colors cursor-pointer"
-                >
+                <AccordionTrigger className="w-full text-left flex items-start justify-between gap-4 font-display font-bold text-base sm:text-lg text-heading hover:text-primary transition-colors cursor-pointer hover:no-underline py-0 [&>svg:last-child]:hidden group/trigger">
                   <span>{faq.question}</span>
-                  <Plus className="size-5 text-muted-foreground shrink-0" />
-                </button>
-              </div>
-            );
-          })}
+                  <Plus className="size-5 text-muted-foreground shrink-0 group-data-[state=open]/trigger:hidden" />
+                  <X className="size-5 text-muted-foreground shrink-0 hidden group-data-[state=open]/trigger:block mt-0.5 hover:text-heading" />
+                </AccordionTrigger>
+                <AccordionContent className="pt-3 text-sm sm:text-base text-muted-foreground leading-relaxed pb-0">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
 
         {/* Centered Blue Button (from faqs.png) */}

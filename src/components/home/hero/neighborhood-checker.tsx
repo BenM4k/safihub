@@ -4,6 +4,14 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, AlertTriangle, PauseCircle, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCartStore } from "@/lib/stores/cart-store";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { NeighborhoodRecord } from "@/dal";
 
 interface NeighborhoodCheckerProps {
@@ -15,7 +23,7 @@ export function NeighborhoodChecker({ neighborhoods }: NeighborhoodCheckerProps)
   const { customerNeighborhoodId, setCustomerNeighborhoodId } = useCartStore();
 
   const handleSelect = (id: string) => {
-    setCustomerNeighborhoodId(id || null);
+    setCustomerNeighborhoodId(id === "none" ? null : id || null);
   };
 
   const selectedNeighborhood = neighborhoods.find((n) => n.id === customerNeighborhoodId);
@@ -28,20 +36,28 @@ export function NeighborhoodChecker({ neighborhoods }: NeighborhoodCheckerProps)
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">
-        <select
-          id="neighborhood-checker-select"
-          aria-labelledby="neighborhood-checker-title"
-          value={customerNeighborhoodId ?? ""}
-          onChange={(e) => handleSelect(e.target.value)}
-          className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-background text-base font-medium text-slate-800 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+        <Select
+          value={customerNeighborhoodId ?? "none"}
+          onValueChange={(id: string) => handleSelect(id)}
         >
-          <option value="">{t("placeholder")}</option>
-          {neighborhoods.map((n) => (
-            <option key={n.id} value={n.id}>
-              {n.name} ({n.zoneName || "Bukavu"})
-            </option>
-          ))}
-        </select>
+          <SelectTrigger
+            id="neighborhood-checker-select"
+            aria-labelledby="neighborhood-checker-title"
+            className="w-full h-auto px-3 py-2.5 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-background text-base font-medium text-slate-800 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition cursor-pointer"
+          >
+            <SelectValue placeholder={t("placeholder")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="none" className="bg-card text-foreground">{t("placeholder")}</SelectItem>
+              {neighborhoods.map((n) => (
+                <SelectItem key={n.id} value={n.id} className="bg-card text-foreground">
+                  {n.name} ({n.zoneName || "Bukavu"})
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Dynamic Neighborhood Status Feedback */}

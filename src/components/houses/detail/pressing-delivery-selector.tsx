@@ -3,6 +3,14 @@
 import { MapPin, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { formatAmount } from "@/lib/order-formatters";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface NeighborhoodOption {
   id: string;
@@ -35,18 +43,24 @@ export function PressingDeliverySelector({
       </div>
 
       <div className="relative">
-        <select
-          value={selectedNeighborhoodId || ""}
-          onChange={(e) => onSelectNeighborhood(e.target.value || null)}
-          className="w-full p-2.5 rounded-2xl bg-muted/60 border border-border text-base font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 dark:bg-card"
+        <Select
+          value={selectedNeighborhoodId || "none"}
+          onValueChange={(val: string) => onSelectNeighborhood(val === "none" ? null : val)}
         >
-          <option value="">{t("chooseNeighborhood")}</option>
-          {neighborhoods.map((n) => (
-            <option key={n.id} value={n.id}>
-              {n.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full h-auto p-2.5 rounded-2xl bg-muted/60 border border-border text-base font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 dark:bg-card cursor-pointer">
+            <SelectValue placeholder={t("chooseNeighborhood")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="none" className="bg-card text-foreground">{t("chooseNeighborhood")}</SelectItem>
+              {neighborhoods.map((n) => (
+                <SelectItem key={n.id} value={n.id} className="bg-card text-foreground">
+                  {n.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
 
       {currentOption && (

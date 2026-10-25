@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { SwitchHouseDialog } from "@/components/cart/switch-house-dialog";
@@ -11,7 +10,7 @@ import { PressingGallery } from "./pressing-gallery";
 import { PressingCategoryNav } from "./pressing-category-nav";
 import { PressingArticleCard } from "./pressing-article-card";
 import { PressingDecisionCard } from "./pressing-decision-card";
-import { PressingDeliverySelector, type NeighborhoodOption } from "./pressing-delivery-selector";
+import { PressingDeliverySelector } from "./pressing-delivery-selector";
 import { PressingPracticalInfo } from "./pressing-practical-info";
 import { PressingReviewsSection } from "./pressing-reviews-section";
 import { PressingMobileCartBar } from "./pressing-mobile-cart-bar";
@@ -19,7 +18,8 @@ import { PressingCartTransferBanner } from "./pressing-cart-transfer-banner";
 import { HouseExclusionsBanner } from "./house-exclusions-banner";
 import { usePressingArticles } from "./use-pressing-articles";
 import { usePressingCartSubtotal } from "./use-pressing-cart-subtotal";
-import type { CustomerHouseDetailData, CustomerHouseCatalogueItem } from "@/dal";
+import { useHouseCatalogue } from "./use-house-catalogue";
+import type { CustomerHouseDetailData } from "@/dal";
 import type { HouseReviewItem, HouseReviewStatsData } from "@/dal/review.dal";
 
 interface HouseCatalogueViewProps {
@@ -47,7 +47,7 @@ export function HouseCatalogueView({
   const cart = useCartHydrated();
   const t = useTranslations("customerHouses");
 
-  const { isCurrentHouse, currentHouseItems, activeSubtotal, totalItemsCount } =
+  const { activeSubtotal, totalItemsCount, getQuantityInCart } =
     usePressingCartSubtotal(data.house.id, cart);
 
   const {
@@ -64,59 +64,21 @@ export function HouseCatalogueView({
     filteredArticles,
   } = usePressingArticles(data.items);
 
-  // Neighborhood options with fee mapping
-  const neighborhoodOptions: NeighborhoodOption[] = useMemo(() => {
-    return neighborhoods.map((n) => {
-      const fee = zoneFees[n.zoneId] ?? 3000;
-      return {
-        id: n.id,
-        name: n.name,
-        zoneId: n.zoneId,
-        isServed: true,
-        deliveryFeeCdf: fee,
-      };
-    });
-  }, [neighborhoods, zoneFees]);
-
-  const selectedNeighborhood = neighborhoodOptions.find(
-    (n) => n.id === cart.customerNeighborhoodId
-  );
-
-  const handleUpdateQuantity = (item: CustomerHouseCatalogueItem, delta: number) => {
-    if (delta > 0) {
-      cart.addItem(data.house.id, data.house.name, {
-        houseItemId: item.houseItemId,
-        serviceId: item.serviceId,
-        itemId: item.itemId,
-        fabricId: item.fabricId,
-        itemName: item.itemNameFr,
-        fabricName: item.fabricNameFr,
-        serviceName: item.serviceNameFr,
-        expectedUnitPrice: item.priceCdf,
-        quantity: delta,
-      });
-    } else {
-      cart.updateQuantity(item.houseItemId, delta);
-    }
-  };
+  const { neighborhoodOptions, selectedNeighborhood, handleUpdateQuantity } =
+    useHouseCatalogue(data.house.id, data.house.name, neighborhoods, zoneFees, cart);
 
   const isHouseAvailable = !data.house.isPaused;
+  const handleProceedOrder = () => router.push("/checkout");
 
   return (
     <div className="min-h-screen bg-background pb-28">
       <SwitchHouseDialog />
-
-      {/* 1. Full-width Cover Banner & Logo */}
       <PressingBanner
         name={data.house.name}
         coverImageUrl={data.house.coverImageUrl}
         logoUrl={data.house.logoUrl}
       />
-
-      {/* 2. Identity Header */}
       <PressingIdentityHeader house={data.house} />
-
-      {/* 3. Photo Gallery with Lightbox */}
       <PressingGallery
         photos={data.house.galleryImages || []}
         houseName={data.house.name}
@@ -170,11 +132,7 @@ export function HouseCatalogueView({
                     itemName={art.itemNameFr}
                     serviceName={art.serviceNameFr}
                     variants={art.variants}
-                    getQuantityInCart={(hId) =>
-                      isCurrentHouse
-                        ? currentHouseItems.find((ci) => ci.houseItemId === hId)?.quantity || 0
-                        : 0
-                    }
+                    getQuantityInCart={getQuantityInCart}
                     onUpdateQuantity={handleUpdateQuantity}
                     isHouseAvailable={isHouseAvailable}
                     usdExchangeRate={usdExchangeRate}
@@ -219,7 +177,7 @@ export function HouseCatalogueView({
               isOpenNow={Boolean(data.house.isOpenNow)}
               deliveryFee={selectedNeighborhood?.deliveryFeeCdf ?? null}
               neighborhoodName={selectedNeighborhood?.name}
-              onProceedOrder={() => router.push("/checkout")}
+              onProceedOrder={handleProceedOrder}
             />
           </div>
         </div>
@@ -230,7 +188,7 @@ export function HouseCatalogueView({
         totalItemsCount={totalItemsCount}
         subtotalCdf={activeSubtotal}
         minimumOrderAmount={data.house.minimumOrderAmount}
-        onProceedOrder={() => router.push("/checkout")}
+        onProceedOrder={handleProceedOrder}
         houseName={data.house.name}
       />
     </div>

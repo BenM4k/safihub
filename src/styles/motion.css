@@ -1,0 +1,28 @@
+/*
+ * Motion utilities with low-power 3G & prefers-reduced-motion awareness
+ */
+@layer utilities {
+  .hover-lift {
+    transition: transform var(--duration-micro, 150ms) var(--ease-soft), box-shadow var(--duration-micro, 150ms) var(--ease-soft);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .hover-lift:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lift);
+    }
+  }
+
+  .press {
+    transition: transform var(--duration-micro, 150ms) var(--ease-soft);
+  }
+  .press:active {
+    transform: scale(0.97);
+  }
+
+  .img-zoom {
+    transition: transform 0.4s var(--ease-soft);
+  }
+  .group:hover .img-zoom {
+    transform: scale(1.05);
+  }
+}

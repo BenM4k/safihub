@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { PressingReviewItem } from "./pressing-review-item";
 import { PressingReviewsSummary } from "./pressing-reviews-summary";
+import { PressingReviewsFilterBar } from "./pressing-reviews-filter-bar";
 import { PressingReviewFormDialog } from "./pressing-review-form-dialog";
 import type { HouseReviewItem, HouseReviewStatsData } from "@/dal/review.dal";
 
@@ -110,49 +111,13 @@ export function PressingReviewsSection({
       />
 
       {/* Filter and Sort controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          <button
-            type="button"
-            onClick={() => setSelectedStarFilter(null)}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 ${
-              selectedStarFilter === null
-                ? "bg-foreground text-background"
-                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-            }`}
-          >
-            {t("allRatings", { count: reviewCount })}
-          </button>
-          {[5, 4, 3, 2, 1].map((star) => (
-            <button
-              key={star}
-              type="button"
-              onClick={() => setSelectedStarFilter(star)}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 ${
-                selectedStarFilter === star
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              }`}
-            >
-              {star} ★
-            </button>
-          ))}
-        </div>
-
-        {/* Sort select */}
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-muted-foreground font-medium">Trier par :</span>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="p-2 md:p-1.5 rounded-lg bg-card border border-border text-base md:text-xs font-bold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="recent">{t("sortRecent")}</option>
-            <option value="highest">{t("sortHighest")}</option>
-            <option value="lowest">{t("sortLowest")}</option>
-          </select>
-        </div>
-      </div>
+      <PressingReviewsFilterBar
+        reviewCount={reviewCount}
+        selectedStarFilter={selectedStarFilter}
+        onSelectStarFilter={setSelectedStarFilter}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+      />
 
       {/* Reviews List */}
       {visibleReviews.length === 0 ? (

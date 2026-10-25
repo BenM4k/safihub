@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Heart, Share2, Star, Clock, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import type { CustomerHouseSummary } from "@/dal";
 
 interface HouseCardProps {
@@ -22,32 +23,38 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const url = `${window.location.origin}/houses/${targetSlug}`;
     if (navigator.share) {
       try {
         await navigator.share({
           title: house.name,
           text: `Pressing ${house.name} à Bukavu`,
-          url: `${window.location.origin}/houses/${targetSlug}`,
+          url,
         });
       } catch {
         // Ignored if cancelled
       }
     } else {
-      navigator.clipboard?.writeText(`${window.location.origin}/houses/${targetSlug}`);
+      navigator.clipboard?.writeText(url);
+      toast.success("Lien copié dans le presse-papier !");
     }
   };
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsFavorited((prev) => !prev);
+    setIsFavorited((prev) => {
+      const next = !prev;
+      if (next) toast.success(`${house.name} ajouté aux favoris`);
+      return next;
+    });
   };
 
   return (
     <div
       onMouseEnter={() => onHover?.(house.id)}
       onMouseLeave={() => onHover?.(null)}
-      className={`group flex flex-col rounded-2xl bg-card border transition-all overflow-hidden ${
+      className={`group flex flex-col rounded-2xl bg-card border transition-all overflow-hidden hover-lift ${
         isHighlighted
           ? "border-primary ring-2 ring-primary/20 shadow-md"
           : "border-border hover:border-border-strong hover:shadow-xs"
