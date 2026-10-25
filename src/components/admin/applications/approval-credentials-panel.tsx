@@ -13,6 +13,8 @@ interface ApprovalCredentialsPanelProps {
   houseId: string;
   temporaryPassword: string;
   isNewAccount: boolean;
+  passwordApplied?: boolean;
+  onDismiss?: () => void;
 }
 
 export function ApprovalCredentialsPanel({
@@ -22,6 +24,8 @@ export function ApprovalCredentialsPanel({
   houseId,
   temporaryPassword,
   isNewAccount,
+  passwordApplied,
+  onDismiss,
 }: ApprovalCredentialsPanelProps) {
   const t = useTranslations("admin.applications");
   const [showPassword, setShowPassword] = useState(true);
@@ -40,13 +44,20 @@ export function ApprovalCredentialsPanel({
   };
 
   const handleCopyWhatsapp = () => {
-    const text = t("whatsappTemplate", {
-      name: contactName,
-      houseName,
-      email,
-      password: temporaryPassword,
-      loginUrl,
-    });
+    const text = temporaryPassword
+      ? t("whatsappTemplate", {
+          name: contactName,
+          houseName,
+          email,
+          password: temporaryPassword,
+          loginUrl,
+        })
+      : t("whatsappExistingAccountTemplate", {
+          name: contactName,
+          houseName,
+          email,
+          loginUrl,
+        });
     navigator.clipboard.writeText(text);
     setCopiedWhatsapp(true);
     setTimeout(() => setCopiedWhatsapp(false), 2000);
@@ -61,7 +72,11 @@ export function ApprovalCredentialsPanel({
         <div>
           <h4 className="text-sm font-bold text-heading">{t("credentialsTitle")}</h4>
           {!isNewAccount && (
-            <p className="text-2xs text-emerald-800 mt-0.5">{t("existingAccountNote")}</p>
+            <p className="text-2xs text-emerald-800 mt-0.5">
+              {passwordApplied === false
+                ? t("existingAccountKeptPasswordNote")
+                : t("existingAccountNote")}
+            </p>
           )}
         </div>
       </div>
@@ -81,61 +96,81 @@ export function ApprovalCredentialsPanel({
             <span className="text-muted-foreground block text-2xs uppercase tracking-wider font-semibold">
               {t("temporaryPassword")}
             </span>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="font-mono font-bold text-heading text-xs bg-slate-100 px-2 py-1 rounded select-all">
-                {showPassword ? temporaryPassword : "••••••••••••"}
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="p-1 text-muted-foreground hover:text-heading"
-                title={showPassword ? "Masquer" : "Afficher"}
-              >
-                {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-              </button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCopyPassword}
-                className="h-7 px-2 text-2xs gap-1 border-emerald-200"
-              >
-                {copiedPassword ? (
-                  <>
-                    <Check className="size-3 text-emerald-600" />
-                    <span>{t("copied")}</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="size-3" />
-                    <span>{t("copyPassword")}</span>
-                  </>
-                )}
-              </Button>
-            </div>
+            {temporaryPassword ? (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="font-mono font-bold text-heading text-xs bg-slate-100 px-2 py-1 rounded select-all">
+                  {showPassword ? temporaryPassword : "••••••••••••"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="p-1 text-muted-foreground hover:text-heading"
+                  title={showPassword ? t("hidePassword") : t("showPassword")}
+                >
+                  {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                </button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyPassword}
+                  className="h-7 px-2 text-2xs gap-1 border-emerald-200"
+                >
+                  {copiedPassword ? (
+                    <>
+                      <Check className="size-3 text-emerald-600" />
+                      <span>{t("copied")}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="size-3" />
+                      <span>{t("copyPassword")}</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic mt-0.5">
+                {t("existingAccountKeptPasswordNote")}
+              </p>
+            )}
           </div>
         </div>
 
         <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleCopyWhatsapp}
-            className="h-8 text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white border-transparent gap-1.5 shadow-xs"
-          >
-            {copiedWhatsapp ? (
-              <>
-                <Check className="size-3.5" />
-                <span>{t("copied")}</span>
-              </>
-            ) : (
-              <>
-                <MessageSquare className="size-3.5" />
-                <span>{t("copyWhatsapp")}</span>
-              </>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCopyWhatsapp}
+              className="h-8 text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white border-transparent gap-1.5 shadow-xs"
+            >
+              {copiedWhatsapp ? (
+                <>
+                  <Check className="size-3.5" />
+                  <span>{t("copied")}</span>
+                </>
+              ) : (
+                <>
+                  <MessageSquare className="size-3.5" />
+                  <span>{t("copyWhatsapp")}</span>
+                </>
+              )}
+            </Button>
+
+            {onDismiss && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onDismiss}
+                className="h-8 text-xs font-semibold border-emerald-300 text-emerald-800 hover:bg-emerald-100"
+              >
+                {t("dismissCredentials")}
+              </Button>
             )}
-          </Button>
+          </div>
 
           <Link
             href={`/admin/houses/${houseId}`}

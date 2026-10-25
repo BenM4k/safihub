@@ -15,7 +15,7 @@ interface SlotPickerProps {
   onAcceptProposedSlot?: (slot: TimeSlot) => void;
 }
 
-function formatSlotLabel(slot: TimeSlot): string {
+function formatSlotLabel(slot: TimeSlot, t: (key: string) => string): string {
   const start = new Date(slot.start);
   const end = new Date(slot.end);
   const startLocal = toBukavuDateTime(start);
@@ -25,11 +25,11 @@ function formatSlotLabel(slot: TimeSlot): string {
   let dayLabel: string;
 
   if (startLocal.dateString === nowLocal.dateString) {
-    dayLabel = "Aujourd'hui";
+    dayLabel = t("today");
   } else {
     const tomorrowLocal = toBukavuDateTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
     if (startLocal.dateString === tomorrowLocal.dateString) {
-      dayLabel = "Demain";
+      dayLabel = t("tomorrow");
     } else {
       dayLabel = start.toLocaleDateString("fr-FR", {
         weekday: "short",
@@ -126,7 +126,7 @@ export function SlotPicker({
               >
                 <div className="flex items-center gap-2">
                   <Clock className={`size-3.5 ${active ? "text-primary" : "text-muted-foreground/70"}`} />
-                  <span>{formatSlotLabel(slot)}</span>
+                  <span>{formatSlotLabel(slot, t)}</span>
                 </div>
                 {active && <span className="size-2 rounded-full bg-primary" />}
               </button>

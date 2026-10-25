@@ -26,19 +26,19 @@ export async function ApplicationEquipmentCard({
             <Droplets className="size-3.5 text-blue-500" />
             {t("waterSupply")}
           </span>
-          <span className="font-medium text-heading">{servicesNote || "Standard"}</span>
+          <span className="font-medium text-heading">{servicesNote || t("standardFallback")}</span>
         </div>
         <div className="p-3 bg-slate-50 rounded-lg stack gap-1">
           <span className="text-muted-foreground flex items-center gap-1.5">
             <Zap className="size-3.5 text-amber-500" />
             {t("electricitySupply")}
           </span>
-          <span className="font-medium text-heading">{hoursNote || "Standard"}</span>
+          <span className="font-medium text-heading">{hoursNote || t("standardFallback")}</span>
         </div>
       </div>
       {message && (
         <div className="pt-2 border-t border-slate-100 text-xs">
-          <span className="text-muted-foreground block mb-1">Message :</span>
+          <span className="text-muted-foreground block mb-1">{t("messageLabel")}</span>
           <p className="text-heading italic bg-slate-50/70 p-3 rounded-lg leading-relaxed">
             &quot;{message}&quot;
           </p>

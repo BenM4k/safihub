@@ -51,6 +51,18 @@ export function CourierHousesPanel({
     });
   }, [houses, filter, search]);
 
+  const siblingHouses = useMemo(() => {
+    if (!unassignTarget) return [];
+    return houses
+      .filter(
+        (h) =>
+          h.id !== unassignTarget.id &&
+          h.zoneId === unassignTarget.zoneId &&
+          h.serviceStatus !== "none"
+      )
+      .map((h) => ({ id: h.id, name: h.name }));
+  }, [houses, unassignTarget]);
+
   const handleAssign = (houseId: string) => {
     setMsg(null);
     startTransition(async () => {
@@ -58,7 +70,7 @@ export function CourierHousesPanel({
       if (!res.ok) {
         setMsg({ type: "error", text: res.error });
       } else {
-        setMsg({ type: "success", text: "Pressing assigné avec succès." });
+        setMsg({ type: "success", text: t("assignSuccess") });
       }
     });
   };
@@ -72,7 +84,7 @@ export function CourierHousesPanel({
       if (!res.ok) {
         setMsg({ type: "error", text: res.error });
       } else {
-        setMsg({ type: "success", text: "Pressing retiré avec succès." });
+        setMsg({ type: "success", text: t("unassignSuccess") });
       }
     });
   };
@@ -82,7 +94,7 @@ export function CourierHousesPanel({
       <UnassignHouseDialog
         isOpen={Boolean(unassignTarget)}
         house={unassignTarget}
-        siblingHouses={[]}
+        siblingHouses={siblingHouses}
         isPending={isPending}
         onConfirm={handleConfirmUnassign}
         onCancel={() => setUnassignTarget(null)}

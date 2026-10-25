@@ -57,6 +57,7 @@ vi.mock("@/dal/house-application.dal", () => ({
     houseSlug: house.slug,
     userId: user.id,
     isNewAccount: true,
+    passwordApplied: true,
   })),
 }));
 
@@ -306,6 +307,28 @@ describe("Partner Application Pipeline", () => {
       expect(res.ok).toBe(true);
       if (res.ok) {
         expect(res.value.temporaryPassword).toBe("CustomPassword123!");
+      }
+    });
+
+    it("does not return temporary password when passwordApplied is false for existing account", async () => {
+      const { approveHouseApplicationTransaction } = await import("@/dal/house-application.dal");
+      vi.mocked(approveHouseApplicationTransaction).mockResolvedValueOnce({
+        houseId: "house-existing-123",
+        houseSlug: "pressing-etoile-du-kivu",
+        userId: "user-existing-1",
+        isNewAccount: false,
+        passwordApplied: false,
+      });
+
+      const res = await approvePartnerApplication({
+        applicationId: "app-123",
+        adminUserId: "admin-1",
+      });
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.value.temporaryPassword).toBe("");
+        expect(res.value.passwordApplied).toBe(false);
+        expect(res.value.isNewAccount).toBe(false);
       }
     });
 

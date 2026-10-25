@@ -45,7 +45,7 @@ export function UnassignHouseDialog({
                   zoneName: house.zoneName,
                   siblings: siblingNames,
                 })
-              : `Cette action retirera la zone ${house.zoneName} du coursier.`}
+              : t("removeHouseNoSiblingsDesc", { zoneName: house.zoneName })}
           </p>
         </div>
 
@@ -74,7 +74,7 @@ export function UnassignHouseDialog({
             disabled={isPending}
             className="font-bold"
           >
-            {isPending ? "..." : t("confirmUnassign")}
+            {isPending ? t("unassignPending") : t("confirmUnassign")}
           </Button>
         </div>
       </div>

@@ -100,5 +100,6 @@ export async function buildOrderValidationContext(scope?: {
     customerCompletedOrdersCount: validationData.customerCompletedOrdersCount,
     dailyOrdersForPhoneCount: validationData.dailyOrdersForPhoneCount,
     isCustomerBlocked: validationData.isCustomerBlocked,
+    bookedOrdersByDate: validationData.bookedOrdersByDate ?? {},
   };
 }

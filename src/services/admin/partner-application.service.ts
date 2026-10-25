@@ -63,6 +63,7 @@ export async function approvePartnerApplication(params: {
     userId: string;
     temporaryPassword: string;
     isNewAccount: boolean;
+    passwordApplied: boolean;
   }>
 > {
   try {
@@ -141,12 +142,14 @@ export async function approvePartnerApplication(params: {
       console.error("[approvePartnerApplication] Email dispatch warning:", err);
     });
 
+    const passwordApplied = result.passwordApplied ?? result.isNewAccount;
     return ok({
       houseId: result.houseId,
       houseSlug: result.houseSlug,
       userId: result.userId,
-      temporaryPassword: plainPassword,
+      temporaryPassword: passwordApplied ? plainPassword : "",
       isNewAccount: result.isNewAccount,
+      passwordApplied,
     });
   } catch (error) {
     return err(

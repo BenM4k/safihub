@@ -20,7 +20,6 @@ export function CourierHouseRow({
   onRequestUnassign,
 }: CourierHouseRowProps) {
   const t = useTranslations("admin.couriers");
-  const isAssigned = house.serviceStatus !== "none";
 
   return (
     <div className="p-3.5 rounded-xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs hover:border-border-strong transition">
@@ -75,18 +74,7 @@ export function CourierHouseRow({
       </div>
 
       <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-        {isAssigned ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isPending}
-            onClick={() => onRequestUnassign(house)}
-            className="text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border-border"
-          >
-            {t("unassignHouse")}
-          </Button>
-        ) : (
+        {(house.serviceStatus === "none" || house.serviceStatus === "partial") && (
           <Button
             type="button"
             variant="primary"
@@ -96,6 +84,18 @@ export function CourierHouseRow({
             className="text-xs font-bold"
           >
             {t("assignHouse")}
+          </Button>
+        )}
+        {(house.serviceStatus === "full" || house.serviceStatus === "partial") && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isPending}
+            onClick={() => onRequestUnassign(house)}
+            className="text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border-border"
+          >
+            {t("unassignHouse")}
           </Button>
         )}
       </div>

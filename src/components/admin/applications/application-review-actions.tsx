@@ -45,7 +45,13 @@ export function ApplicationReviewActions({
     userId: string;
     temporaryPassword: string;
     isNewAccount: boolean;
+    passwordApplied?: boolean;
   } | null>(null);
+
+  const handleDismissCredentials = () => {
+    setApprovedCredentials(null);
+    router.refresh();
+  };
 
   const handleApprove = () => {
     setError(null);
@@ -64,11 +70,18 @@ export function ApplicationReviewActions({
 
       const res = await approveApplicationAction(formData);
       if (!res.ok) {
-        setError(res.error);
+        if (res.error === "PASSWORD_TOO_SHORT") {
+          setError(t("errorPasswordTooShort"));
+        } else if (res.error === "INVALID_APPLICATION_ID") {
+          setError(t("errorInvalidApplicationId"));
+        } else if (res.error === "INVALID_NEIGHBORHOOD_ID") {
+          setError(t("errorInvalidNeighborhoodId"));
+        } else {
+          setError(res.error);
+        }
       } else {
         setSuccess(t("createdHouseSuccess"));
         setApprovedCredentials(res.value);
-        router.refresh();
       }
     });
   };
@@ -118,6 +131,8 @@ export function ApplicationReviewActions({
           houseId={approvedCredentials.houseId}
           temporaryPassword={approvedCredentials.temporaryPassword}
           isNewAccount={approvedCredentials.isNewAccount}
+          passwordApplied={approvedCredentials.passwordApplied}
+          onDismiss={handleDismissCredentials}
         />
       )}
 

@@ -22,6 +22,8 @@ export interface CheckoutPickupSlotsResult {
   failureCode?: string;
 }
 
+export const DEFAULT_CANDIDATE_HORIZON_DAYS = 7;
+
 /**
  * Computes available pickup slots for checkout on the server.
  * Uses spec standard 2-hour slots in Bukavu timezone, filtered by:
@@ -81,8 +83,13 @@ export async function getCheckoutPickupSlots(
   const refTime = referenceTime ?? context.currentTime ?? new Date();
   const leadTimeMinutes = context.settings.leadTimeMinutes ?? 30;
 
-  // 3. Generate spec candidate slots (4 days, 4 slots/day)
-  const candidates = generatePickupSlotCandidates(refTime, 4, leadTimeMinutes);
+
+  // 3. Generate spec candidate slots (7 days, 4 slots/day)
+  const candidates = generatePickupSlotCandidates(
+    refTime,
+    DEFAULT_CANDIDATE_HORIZON_DAYS,
+    leadTimeMinutes
+  );
 
   const houseHours = context.houseHours.filter((h) => (h.houseId ? h.houseId === house.id : true));
   const houseClosures = context.houseClosures.filter((c) => (c.houseId ? c.houseId === house.id : true));

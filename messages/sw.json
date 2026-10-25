@@ -658,7 +658,11 @@
       "filterAll": "Maduka yote",
       "filterAssigned": "Yaliyopangwa",
       "filterUnassigned": "Yanayopatikana",
-      "searchHouses": "Tafuta duka la dobi…"
+      "searchHouses": "Tafuta duka la dobi…",
+      "assignSuccess": "Dobi limepewa kazi kwa mafanikio.",
+      "unassignSuccess": "Dobi limeondolewa kwa mafanikio.",
+      "removeHouseNoSiblingsDesc": "Kitendo hiki kitaondoa eneo la {zoneName} kwa dereva.",
+      "unassignPending": "Inaondoa..."
     },
     "users": {
       "title": "Usimamizi wa Akaunti za Watumiaji",
@@ -1533,7 +1537,17 @@
       "optionalCustomPassword": "Nenosiri maalum (hiari)",
       "passwordHelp": "Acha wazi ili kuzalisha nenosiri salama kiotomatiki.",
       "generateNewPassword": "Zalisha nenosiri jingine",
-      "statusLabel": "Hali"
+      "statusLabel": "Hali",
+      "hidePassword": "Ficha",
+      "showPassword": "Onyesha",
+      "standardFallback": "Kawaida",
+      "messageLabel": "Ujumbe:",
+      "dismissCredentials": "Funga",
+      "existingAccountKeptPasswordNote": "Mshirika huyu tayari ana akaunti inayotumika. Nenosiri lake lililopo limehifadhiwa.",
+      "whatsappExistingAccountTemplate": "Hujambo {name}, duka lako '{houseName}' limeidhinishwa kwenye SafiHub! Unaweza kuingia ukitumia anwani yako ya barua pepe ({email}) na nenosiri lako la kawaida kupitia {loginUrl}",
+      "errorPasswordTooShort": "Nenosiri lazima liwe na angalau herufi 8",
+      "errorInvalidApplicationId": "Kitambulisho cha ombi si sahihi",
+      "errorInvalidNeighborhoodId": "Mtaa si sahihi"
     },
     "disputes": {
       "title": "Migogoro",
@@ -2389,7 +2403,9 @@
     "landmarkError": "Tafadhali weka alama maalum ya eneo.",
     "phoneError": "Tafadhali weka nambari ya simu.",
     "generalError": "Hitilafu imetokea wakati wa kuagiza.",
-    "selectedHouse": "Duka la dobi lililochaguliwa:"
+    "selectedHouse": "Duka la dobi lililochaguliwa:",
+    "today": "Leo",
+    "tomorrow": "Kesho"
   },
   "orders": {
     "title": "Maagizo Yangu",

@@ -658,7 +658,11 @@
       "filterAll": "Tous les pressings",
       "filterAssigned": "Assignés",
       "filterUnassigned": "Disponibles",
-      "searchHouses": "Rechercher un pressing…"
+      "searchHouses": "Rechercher un pressing…",
+      "assignSuccess": "Pressing assigné avec succès.",
+      "unassignSuccess": "Pressing retiré avec succès.",
+      "removeHouseNoSiblingsDesc": "Cette action retirera la zone {zoneName} du coursier.",
+      "unassignPending": "Retrait en cours..."
     },
     "users": {
       "title": "Gestion des comptes utilisateurs",
@@ -1533,7 +1537,17 @@
       "optionalCustomPassword": "Mot de passe personnalisé (optionnel)",
       "passwordHelp": "Laisser vide pour générer un mot de passe sécurisé automatiquement.",
       "generateNewPassword": "Générer un autre mot de passe",
-      "statusLabel": "Statut"
+      "statusLabel": "Statut",
+      "hidePassword": "Masquer",
+      "showPassword": "Afficher",
+      "standardFallback": "Standard",
+      "messageLabel": "Message :",
+      "dismissCredentials": "Fermer",
+      "existingAccountKeptPasswordNote": "Ce partenaire possède déjà un compte actif. Son mot de passe existant est conservé.",
+      "whatsappExistingAccountTemplate": "Bonjour {name}, votre pressing '{houseName}' a été approuvé sur SafiHub ! Vous pouvez vous connecter avec votre adresse e-mail ({email}) et votre mot de passe habituel sur {loginUrl}",
+      "errorPasswordTooShort": "Le mot de passe doit comporter au moins 8 caractères",
+      "errorInvalidApplicationId": "ID de candidature invalide",
+      "errorInvalidNeighborhoodId": "Quartier invalide"
     },
     "disputes": {
       "title": "Litiges",
@@ -2389,7 +2403,9 @@
     "landmarkError": "Veuillez indiquer un point de repère précis.",
     "phoneError": "Veuillez indiquer un numéro de téléphone de contact.",
     "generalError": "Une erreur est survenue lors de la commande.",
-    "selectedHouse": "Pressing sélectionné :"
+    "selectedHouse": "Pressing sélectionné :",
+    "today": "Aujourd'hui",
+    "tomorrow": "Demain"
   },
   "orders": {
     "title": "Mes commandes",

@@ -52,8 +52,13 @@ export async function getAdminUsers(params?: {
       : defaultRoles;
   const targetRoles = allowedRoles.length > 0 ? allowedRoles : defaultRoles;
 
-  if (params?.role && params.role !== "all" && ["admin", "house"].includes(params.role)) {
-    conditions.push(eq(schema.user.role, params.role));
+  if (params?.role && params.role !== "all") {
+    if (targetRoles.includes(params.role)) {
+      conditions.push(eq(schema.user.role, params.role));
+    } else {
+      // Conflicting filters: requested role is not permitted within targetRoles
+      return [];
+    }
   } else {
     // Only return admin and house operational roles (couriers and customers are managed separately)
     conditions.push(inArray(schema.user.role, targetRoles));

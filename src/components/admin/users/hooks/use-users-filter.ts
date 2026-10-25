@@ -28,6 +28,33 @@ export function useUsersFilter(
     hideTestAccounts: initialFilters?.hideTestAccounts ?? true,
   });
 
+  const [prevInitialFilters, setPrevInitialFilters] = useState(initialFilters);
+
+  if (
+    initialFilters &&
+    (initialFilters.search !== prevInitialFilters?.search ||
+      initialFilters.role !== prevInitialFilters?.role ||
+      initialFilters.status !== prevInitialFilters?.status ||
+      initialFilters.hideTestAccounts !== prevInitialFilters?.hideTestAccounts)
+  ) {
+    setPrevInitialFilters(initialFilters);
+    setFilters((prev) => ({
+      ...prev,
+      ...(initialFilters.search !== prevInitialFilters?.search
+        ? { search: initialFilters.search ?? "" }
+        : {}),
+      ...(initialFilters.role !== prevInitialFilters?.role
+        ? { role: initialFilters.role ?? "all" }
+        : {}),
+      ...(initialFilters.status !== prevInitialFilters?.status
+        ? { status: initialFilters.status ?? "all" }
+        : {}),
+      ...(initialFilters.hideTestAccounts !== prevInitialFilters?.hideTestAccounts
+        ? { hideTestAccounts: initialFilters.hideTestAccounts ?? true }
+        : {}),
+    }));
+  }
+
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       if (filters.hideTestAccounts && isTestStaffAccount(u)) {

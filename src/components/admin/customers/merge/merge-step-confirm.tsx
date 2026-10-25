@@ -44,9 +44,7 @@ export function MergeStepConfirm({
 
       <div className="space-y-1.5">
         <label className="text-2xs font-bold text-ink-700">
-          {t.rich("typeToConfirm", {
-            keyword: () => <span className="font-mono text-destructive font-black">{confirmKeyword}</span>,
-          })}
+          {t("typeToConfirm", { keyword: confirmKeyword })}
         </label>
         <Input
           value={typedConfirm}

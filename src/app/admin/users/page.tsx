@@ -9,19 +9,42 @@ import { UserRow } from "@/components/admin/users/types";
 
 interface PageProps {
   searchParams: Promise<{
-    search?: string;
-    role?: string;
-    status?: string;
+    search?: string | string[];
+    role?: string | string[];
+    status?: string | string[];
   }>;
+}
+
+const ALLOWED_ROLES = ["admin", "house"] as const;
+const ALLOWED_STATUSES = ["active", "blocked", "invitation_sent"] as const;
+
+function normalizeParam(val: string | string[] | undefined): string | undefined {
+  if (Array.isArray(val)) {
+    return val[0];
+  }
+  return val;
 }
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
   const sp = await searchParams;
 
+  const rawSearch = normalizeParam(sp.search)?.trim() ?? "";
+  const rawRole = normalizeParam(sp.role);
+  const rawStatus = normalizeParam(sp.status);
+
+  const role =
+    rawRole && (ALLOWED_ROLES as readonly string[]).includes(rawRole)
+      ? rawRole
+      : "all";
+  const status =
+    rawStatus && (ALLOWED_STATUSES as readonly string[]).includes(rawStatus)
+      ? rawStatus
+      : "all";
+
   const [currentUser, usersRes, housesRes, activeAdminsRes] = await Promise.all(
     [
       getCurrentUser(),
-      listAdminUsers({ roles: ["admin", "house"], limit: 500 }),
+      listAdminUsers({ roles: ["admin", "house"] }),
       listAdminHouses(),
       getActiveAdminsCount(),
     ],
@@ -44,9 +67,9 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       isAdmin={isAdmin}
       activeAdminsCount={activeAdminsCount}
       initialFilters={{
-        search: sp.search ?? "",
-        role: sp.role ?? "all",
-        status: sp.status ?? "all",
+        search: rawSearch,
+        role,
+        status,
       }}
     />
   );

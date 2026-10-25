@@ -658,7 +658,11 @@
       "filterAll": "All houses",
       "filterAssigned": "Assigned",
       "filterUnassigned": "Available",
-      "searchHouses": "Search a house…"
+      "searchHouses": "Search a house…",
+      "assignSuccess": "Laundry house assigned successfully.",
+      "unassignSuccess": "Laundry house unassigned successfully.",
+      "removeHouseNoSiblingsDesc": "This action will remove zone {zoneName} from the courier.",
+      "unassignPending": "Removing..."
     },
     "users": {
       "title": "User Accounts Management",
@@ -1533,7 +1537,17 @@
       "optionalCustomPassword": "Custom password (optional)",
       "passwordHelp": "Leave empty to automatically generate a secure password.",
       "generateNewPassword": "Generate another password",
-      "statusLabel": "Status"
+      "statusLabel": "Status",
+      "hidePassword": "Hide",
+      "showPassword": "Show",
+      "standardFallback": "Standard",
+      "messageLabel": "Message:",
+      "dismissCredentials": "Dismiss",
+      "existingAccountKeptPasswordNote": "This partner already has an active account. Their existing password has been retained.",
+      "whatsappExistingAccountTemplate": "Hello {name}, your laundry house '{houseName}' has been approved on SafiHub! You can log in with your email address ({email}) and your usual password at {loginUrl}",
+      "errorPasswordTooShort": "Password must be at least 8 characters",
+      "errorInvalidApplicationId": "Invalid application ID",
+      "errorInvalidNeighborhoodId": "Invalid neighborhood"
     },
     "disputes": {
       "title": "Disputes",
@@ -2389,7 +2403,9 @@
     "landmarkError": "Please provide an accurate landmark.",
     "phoneError": "Please provide a contact phone number.",
     "generalError": "An error occurred while placing your order.",
-    "selectedHouse": "Selected laundry house:"
+    "selectedHouse": "Selected laundry house:",
+    "today": "Today",
+    "tomorrow": "Tomorrow"
   },
   "orders": {
     "title": "My Orders",

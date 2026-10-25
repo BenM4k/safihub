@@ -233,7 +233,13 @@ export async function approveHouseApplicationTransaction(params: {
     email: string;
     contactPhone?: string | null;
   };
-}): Promise<{ houseId: string; userId: string; houseSlug: string; isNewAccount: boolean }> {
+}): Promise<{
+  houseId: string;
+  userId: string;
+  houseSlug: string;
+  isNewAccount: boolean;
+  passwordApplied: boolean;
+}> {
   return await db.transaction(async (tx) => {
     // 1. Create house (isActive: false until configured)
     const [createdHouse] = await tx
@@ -286,7 +292,8 @@ export async function approveHouseApplicationTransaction(params: {
       });
     }
 
-    // 2b. Set password credential if hashedPassword provided
+    let passwordApplied = false;
+    // 2b. Set password credential only if hashedPassword provided and no credential exists
     if (params.hashedPassword) {
       const [existingCred] = await tx
         .select({ id: schema.account.id })
@@ -299,12 +306,7 @@ export async function approveHouseApplicationTransaction(params: {
         )
         .limit(1);
 
-      if (existingCred) {
-        await tx
-          .update(schema.account)
-          .set({ password: params.hashedPassword, updatedAt: new Date() })
-          .where(eq(schema.account.id, existingCred.id));
-      } else {
+      if (!existingCred) {
         await tx.insert(schema.account).values({
           id: crypto.randomUUID(),
           userId,
@@ -312,6 +314,7 @@ export async function approveHouseApplicationTransaction(params: {
           providerId: "credential",
           password: params.hashedPassword,
         });
+        passwordApplied = true;
       }
     }
 
@@ -345,6 +348,12 @@ export async function approveHouseApplicationTransaction(params: {
       );
     }
 
-    return { houseId, userId, houseSlug: createdHouse!.slug, isNewAccount };
+    return {
+      houseId,
+      userId,
+      houseSlug: createdHouse!.slug,
+      isNewAccount,
+      passwordApplied,
+    };
   });
 }
