@@ -67,7 +67,7 @@ export function CustomersRowActionsMenu({
           setOpen((prev) => !prev);
         }}
         className="size-8 rounded-lg border-2 border-border-strong bg-white hover:bg-surface text-ink-600 hover:text-heading flex items-center justify-center transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary shadow-2xs"
-        aria-label={`Actions pour ${customer.name || "ce client"}`}
+        aria-label={t("actionsForCustomer", { name: customer.name || "—" })}
         aria-haspopup="true"
         aria-expanded={open}
       >
@@ -112,7 +112,7 @@ export function CustomersRowActionsMenu({
               type="button"
               role="menuitem"
               disabled={!isAdmin}
-              title={!isAdmin ? "Réservé aux administrateurs" : undefined}
+              title={!isAdmin ? t("adminOnly") : undefined}
               onClick={() => {
                 setOpen(false);
                 onResetPassword(customer);
@@ -129,7 +129,7 @@ export function CustomersRowActionsMenu({
               type="button"
               role="menuitem"
               disabled={!isAdmin}
-              title={!isAdmin ? "Réservé aux administrateurs" : undefined}
+              title={!isAdmin ? t("adminOnly") : undefined}
               onClick={() => {
                 setOpen(false);
                 onMergeGuest(customer);
@@ -147,7 +147,7 @@ export function CustomersRowActionsMenu({
             type="button"
             role="menuitem"
             disabled={!isAdmin}
-            title={!isAdmin ? "Réservé aux administrateurs" : undefined}
+            title={!isAdmin ? t("adminOnly") : undefined}
             onClick={() => {
               setOpen(false);
               onToggleBlock(customer);

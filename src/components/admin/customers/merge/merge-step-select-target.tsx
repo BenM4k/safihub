@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Check, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatCustomerName } from "@/lib/customer-formatters";
@@ -26,17 +27,19 @@ export function MergeStepSelectTarget({
   onSelect,
   onBackToGuest,
 }: MergeStepSelectTargetProps) {
+  const t = useTranslations("admin.customers.mergeDialog");
+
   return (
     <div className="space-y-3">
       <div className="p-2.5 rounded-lg bg-surface border-2 border-border-strong text-xs flex items-center justify-between">
         <div>
-          <span className="text-2xs text-ink-500 font-semibold block">Compte invité sélectionné :</span>
+          <span className="text-2xs text-ink-500 font-semibold block">{t("selectedGuestLabel")}</span>
           <span className="font-bold text-heading">{formatCustomerName(selectedGuest?.name, selectedGuest?.contactPhone)}</span>
           <span className="text-2xs text-ink-500 ml-2">({selectedGuest?.contactPhone || "—"})</span>
         </div>
         {!isPreselected && (
           <button type="button" onClick={onBackToGuest} className="text-primary text-xs underline font-bold">
-            Modifier
+            {t("modifyBtn")}
           </button>
         )}
       </div>
@@ -46,29 +49,29 @@ export function MergeStepSelectTarget({
         <Input
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Rechercher le compte cible inscrit (nom, e-mail, téléphone)…"
+          placeholder={t("searchTargetPlaceholder")}
           className="pl-9 h-10 text-xs border-2 border-border-strong rounded-lg"
         />
       </div>
 
       <div className="divide-y divide-border-strong border-2 border-border-strong rounded-xl max-h-56 overflow-y-auto">
         {candidates.length === 0 ? (
-          <div className="p-4 text-center text-xs text-ink-400">Aucun compte inscrit actif trouvé.</div>
+          <div className="p-4 text-center text-xs text-ink-400">{t("noTargetsFound")}</div>
         ) : (
-          candidates.map((t) => (
+          candidates.map((tItem) => (
             <button
               type="button"
-              key={t.id}
-              onClick={() => onSelect(t)}
+              key={tItem.id}
+              onClick={() => onSelect(tItem)}
               className={`w-full text-left p-3 text-xs flex items-center justify-between cursor-pointer hover:bg-surface ${
-                selectedTarget?.id === t.id ? "bg-primary-soft font-bold text-primary" : ""
+                selectedTarget?.id === tItem.id ? "bg-primary-soft font-bold text-primary" : ""
               }`}
             >
               <div>
-                <div className="font-semibold text-heading">{t.name}</div>
-                <div className="text-2xs text-ink-500">{t.email} · {t.contactPhone || "Sans tél"}</div>
+                <div className="font-semibold text-heading">{tItem.name}</div>
+                <div className="text-2xs text-ink-500">{tItem.email} · {tItem.contactPhone || t("noPhone")}</div>
               </div>
-              {selectedTarget?.id === t.id && <Check className="size-4 text-primary" />}
+              {selectedTarget?.id === tItem.id && <Check className="size-4 text-primary" />}
             </button>
           ))
         )}

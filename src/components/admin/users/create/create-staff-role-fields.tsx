@@ -49,7 +49,6 @@ export function CreateStaffRoleFields({
           className="w-full min-h-[40px] px-3 rounded-xl border-2 border-border-strong bg-surface text-xs font-semibold text-heading focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
         >
           <option value="">{t("chooseRole")}</option>
-          <option value="courier">{t("roleCourier")}</option>
           <option value="house">{t("roleHouse")}</option>
           <option value="admin">{t("roleAdmin")}</option>
         </select>

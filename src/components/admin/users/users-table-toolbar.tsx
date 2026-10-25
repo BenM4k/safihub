@@ -52,23 +52,6 @@ export function UsersTableToolbar({
 
         {/* Filter dropdowns */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Type filter */}
-          <select
-            value={filters.type}
-            onChange={(e) =>
-              onChange({
-                ...filters,
-                type: e.target.value as "all" | "staff" | "customer",
-              })
-            }
-            className="min-h-[40px] px-3 rounded-xl border-2 border-border-strong bg-surface text-xs font-semibold text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-            aria-label={t("filterType")}
-          >
-            <option value="staff">{t("typeStaff")}</option>
-            <option value="customer">{t("typeCustomer")}</option>
-            <option value="all">{t("typeAll")}</option>
-          </select>
-
           {/* Role filter */}
           <select
             value={filters.role}
@@ -78,9 +61,7 @@ export function UsersTableToolbar({
           >
             <option value="all">{t("roleAll")}</option>
             <option value="admin">{t("roleAdmin")}</option>
-            <option value="courier">{t("roleCourier")}</option>
             <option value="house">{t("roleHouse")}</option>
-            <option value="customer">{t("roleCustomer")}</option>
           </select>
 
           {/* Status filter */}

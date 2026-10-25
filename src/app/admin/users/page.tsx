@@ -1,25 +1,39 @@
 import { getCurrentUser } from "@/services/auth";
-import { listAdminHouses, listAdminUsers } from "@/services/admin";
-import { countActiveAdmins } from "@/dal";
+import {
+  getActiveAdminsCount,
+  listAdminHouses,
+  listAdminUsers,
+} from "@/services/admin";
 import { UsersManagementView } from "@/components/admin/users/users-management-view";
 import { UserRow } from "@/components/admin/users/types";
 
-export default async function AdminUsersPage() {
-  const [currentUser, usersRes, housesRes, activeAdminsCount] =
-    await Promise.all([
+interface PageProps {
+  searchParams: Promise<{
+    search?: string;
+    role?: string;
+    status?: string;
+  }>;
+}
+
+export default async function AdminUsersPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+
+  const [currentUser, usersRes, housesRes, activeAdminsRes] = await Promise.all(
+    [
       getCurrentUser(),
-      listAdminUsers(),
+      listAdminUsers({ roles: ["admin", "house"], limit: 500 }),
       listAdminHouses(),
-      countActiveAdmins(),
-    ]);
+      getActiveAdminsCount(),
+    ],
+  );
 
   let users = [] as UserRow[];
   if (usersRes.ok) {
-    // throw new Error(usersRes.error);
     users = usersRes.value;
   }
 
   const houses = housesRes.ok ? housesRes.value : [];
+  const activeAdminsCount = activeAdminsRes.ok ? activeAdminsRes.value : 0;
   const isAdmin = currentUser?.role === "admin";
 
   return (
@@ -29,6 +43,11 @@ export default async function AdminUsersPage() {
       currentUserId={currentUser?.id}
       isAdmin={isAdmin}
       activeAdminsCount={activeAdminsCount}
+      initialFilters={{
+        search: sp.search ?? "",
+        role: sp.role ?? "all",
+        status: sp.status ?? "all",
+      }}
     />
   );
 }

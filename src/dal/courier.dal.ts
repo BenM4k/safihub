@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, notInArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
 import { DEFAULT_RETRY_FEE_CDF, RETRY_FEE_FAILED_PICKUP_COUNT } from "@/lib/fees";
@@ -17,6 +17,7 @@ export interface CourierRecord {
   status: string;
   coveredZoneCount: number;
   shiftCount: number;
+  servedHouseCount: number;
   createdAt: Date;
 }
 
@@ -79,12 +80,31 @@ export async function getCouriers(): Promise<CourierRecord[]> {
 
   const zones = await db.select().from(schema.courierZones);
   const zoneCounts = new Map<string, number>();
+  const courierZonesMap = new Map<string, Set<string>>();
   for (const z of zones) {
     zoneCounts.set(z.courierId, (zoneCounts.get(z.courierId) || 0) + 1);
+    if (!courierZonesMap.has(z.courierId)) {
+      courierZonesMap.set(z.courierId, new Set());
+    }
+    courierZonesMap.get(z.courierId)!.add(z.zoneId);
   }
+
+  const rawHouses = await db
+    .select({
+      id: schema.houses.id,
+      zoneId: schema.neighborhoods.zoneId,
+    })
+    .from(schema.houses)
+    .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
+    .where(eq(schema.houses.isActive, true));
 
   return users.map((u) => {
     const prof = profileMap.get(u.id);
+    const cZones = courierZonesMap.get(u.id);
+    const servedHouseCount = cZones
+      ? rawHouses.filter((h) => cZones.has(h.zoneId)).length
+      : 0;
+
     return {
       userId: u.id,
       name: u.name,
@@ -98,6 +118,7 @@ export async function getCouriers(): Promise<CourierRecord[]> {
       status: u.status,
       coveredZoneCount: zoneCounts.get(u.id) || 0,
       shiftCount: shiftCounts.get(u.id) || 0,
+      servedHouseCount,
       createdAt: prof?.createdAt ?? new Date(),
     };
   });
@@ -127,6 +148,18 @@ export async function getCourierById(courierId: string): Promise<CourierRecord |
   const shifts = await getCourierShifts(courierId);
   const zones = await getCourierZones(courierId);
 
+  const rawHouses = await db
+    .select({
+      id: schema.houses.id,
+      zoneId: schema.neighborhoods.zoneId,
+    })
+    .from(schema.houses)
+    .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
+    .where(eq(schema.houses.isActive, true));
+
+  const cZones = new Set(zones.map((z) => z.zoneId));
+  const servedHouseCount = rawHouses.filter((h) => cZones.has(h.zoneId)).length;
+
   return {
     userId: u.id,
     name: u.name,
@@ -140,6 +173,7 @@ export async function getCourierById(courierId: string): Promise<CourierRecord |
     status: u.status,
     coveredZoneCount: zones.length,
     shiftCount: shifts.length,
+    servedHouseCount,
     createdAt: prof?.createdAt ?? new Date(),
   };
 }
@@ -1642,5 +1676,98 @@ export async function addOrderPhotoRecord(params: {
     .returning({ id: schema.orderPhotos.id });
 
   return created!.id;
+}
+
+export interface HouseCourierAssignmentRecord {
+  id: string;
+  name: string;
+  slug: string;
+  isActive: boolean;
+  neighborhoodId: string;
+  neighborhoodName: string;
+  zoneId: string;
+  zoneName: string;
+  coveredZoneIds: string[];
+}
+
+export async function getHousesForCourierAssignment(): Promise<HouseCourierAssignmentRecord[]> {
+  const rawHouses = await db
+    .select({
+      id: schema.houses.id,
+      name: schema.houses.name,
+      slug: schema.houses.slug,
+      isActive: schema.houses.isActive,
+      neighborhoodId: schema.houses.neighborhoodId,
+      neighborhoodName: schema.neighborhoods.name,
+      zoneId: schema.neighborhoods.zoneId,
+      zoneName: schema.zones.name,
+    })
+    .from(schema.houses)
+    .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
+    .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
+    .where(eq(schema.houses.isActive, true))
+    .orderBy(asc(schema.houses.name));
+
+  if (rawHouses.length === 0) return [];
+
+  const houseIds = rawHouses.map((h) => h.id);
+
+  const coverageRows = await db
+    .select({
+      houseId: schema.houseCoverage.houseId,
+      zoneId: schema.neighborhoods.zoneId,
+    })
+    .from(schema.houseCoverage)
+    .innerJoin(schema.neighborhoods, eq(schema.houseCoverage.neighborhoodId, schema.neighborhoods.id))
+    .where(
+      and(
+        inArray(schema.houseCoverage.houseId, houseIds),
+        eq(schema.houseCoverage.isActive, true)
+      )
+    );
+
+  const coveredZonesByHouse = new Map<string, Set<string>>();
+  for (const r of coverageRows) {
+    if (!coveredZonesByHouse.has(r.houseId)) {
+      coveredZonesByHouse.set(r.houseId, new Set());
+    }
+    coveredZonesByHouse.get(r.houseId)!.add(r.zoneId);
+  }
+
+  return rawHouses.map((h) => ({
+    id: h.id,
+    name: h.name,
+    slug: h.slug,
+    isActive: h.isActive,
+    neighborhoodId: h.neighborhoodId,
+    neighborhoodName: h.neighborhoodName,
+    zoneId: h.zoneId,
+    zoneName: h.zoneName,
+    coveredZoneIds: Array.from(coveredZonesByHouse.get(h.id) ?? []),
+  }));
+}
+
+export async function getSiblingHousesInZone(
+  zoneId: string,
+  excludeHouseId?: string
+): Promise<{ id: string; name: string }[]> {
+  const conditions = [
+    eq(schema.neighborhoods.zoneId, zoneId),
+    eq(schema.houses.isActive, true),
+  ];
+  if (excludeHouseId) {
+    conditions.push(ne(schema.houses.id, excludeHouseId));
+  }
+
+  const rows = await db
+    .select({
+      id: schema.houses.id,
+      name: schema.houses.name,
+    })
+    .from(schema.houses)
+    .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
+    .where(and(...conditions));
+
+  return rows;
 }
 

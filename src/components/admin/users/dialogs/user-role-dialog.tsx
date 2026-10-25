@@ -30,7 +30,7 @@ export function UserRoleDialog({
   onSuccess,
 }: UserRoleDialogProps) {
   const t = useTranslations("admin.users");
-  const [selectedRole, setSelectedRole] = useState<string>("courier");
+  const [selectedRole, setSelectedRole] = useState<string>("house");
   const [selectedHouseId, setSelectedHouseId] = useState<string>("");
   const [selfConfirmed, setSelfConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,7 +45,7 @@ export function UserRoleDialog({
     setPrevUser(user);
     setPrevIsOpen(isOpen);
     if (isOpen && user) {
-      setSelectedRole(user.role || "courier");
+      setSelectedRole(user.role || "house");
       setSelectedHouseId(user.houseId || "");
       setSelfConfirmed(false);
       setError(null);

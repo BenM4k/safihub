@@ -28,6 +28,7 @@ export async function CouriersTable({ couriers }: CouriersTableProps) {
               <th className="px-4 py-3">Plafond espèces</th>
               <th className="px-4 py-3">Dépôt garantie</th>
               <th className="px-4 py-3">Créneaux / Zones</th>
+              <th className="px-4 py-3">{t("housesServed")}</th>
               <th className="px-4 py-3">Statut</th>
               <th className="px-4 py-3 text-right">Action</th>
             </tr>
@@ -49,6 +50,11 @@ export async function CouriersTable({ couriers }: CouriersTableProps) {
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {c.shiftCount} créneau(x) • {c.coveredZoneCount} zone(s)
+                </td>
+                <td className="px-4 py-3 text-muted-foreground font-semibold">
+                  <Badge variant="outline" className="bg-slate-50 text-heading border-border">
+                    {t("housesCount", { count: c.servedHouseCount })}
+                  </Badge>
                 </td>
                 <td className="px-4 py-3">
                   <Badge variant="outline" className={c.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}>

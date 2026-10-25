@@ -99,6 +99,7 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       houseClosures: [],
       houseCoverage: [{ houseId, neighborhoodId, isActive: true, pausedUntil: null }],
       courierShifts: [{ courierId: "cour_1", weekday: 1, startsAt: "07:30", endsAt: "18:30" }],
+      courierZones: [{ courierId: "cour_1", zoneId: "zone_1" }],
       customerCompletedOrdersCount: 0,
       customerOpenOrdersCount: 0,
       dailyOrdersForPhoneCount: 0,
@@ -173,6 +174,7 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       houseClosures: [],
       houseCoverage: [{ houseId, neighborhoodId, isActive: true, pausedUntil: null }],
       courierShifts: [{ courierId: "cour_1", weekday: 1, startsAt: "07:30", endsAt: "18:30" }],
+      courierZones: [{ courierId: "cour_1", zoneId: "zone_1" }],
       customerCompletedOrdersCount: 0, // No completed orders!
       customerOpenOrdersCount: 0,
       dailyOrdersForPhoneCount: 0,
@@ -249,6 +251,7 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       houseClosures: [],
       houseCoverage: [{ houseId, neighborhoodId, isActive: true, pausedUntil: null }],
       courierShifts: [{ courierId: "cour_1", weekday: 1, startsAt: "07:30", endsAt: "18:30" }],
+      courierZones: [{ courierId: "cour_1", zoneId: "zone_1" }],
       customerCompletedOrdersCount: 1, // Repeat customer!
       customerOpenOrdersCount: 0,
       dailyOrdersForPhoneCount: 0,

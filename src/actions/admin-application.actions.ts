@@ -13,6 +13,10 @@ const approveSchema = z.object({
   applicationId: z.string().uuid("ID de candidature invalide"),
   neighborhoodId: z.string().uuid("Quartier invalide").optional(),
   adminNote: z.string().optional(),
+  customPassword: z
+    .string()
+    .min(8, "Le mot de passe doit comporter au moins 8 caractères")
+    .optional(),
 });
 
 const rejectSchema = z.object({
@@ -20,13 +24,21 @@ const rejectSchema = z.object({
   adminNote: z.string().min(1, "Un motif de rejet est obligatoire"),
 });
 
-export async function approveApplicationAction(
-  formData: FormData
-): Promise<Result<{ houseId: string; houseSlug: string; userId: string }>> {
+export async function approveApplicationAction(formData: FormData): Promise<
+  Result<{
+    houseId: string;
+    houseSlug: string;
+    userId: string;
+    temporaryPassword: string;
+    isNewAccount: boolean;
+  }>
+> {
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
   const rawNeighborhoodId = formData.get("neighborhoodId")?.toString();
+  const rawCustomPassword = formData.get("customPassword")?.toString()?.trim();
+
   const parsed = approveSchema.safeParse({
     applicationId: formData.get("applicationId"),
     neighborhoodId:
@@ -34,6 +46,10 @@ export async function approveApplicationAction(
         ? rawNeighborhoodId
         : undefined,
     adminNote: formData.get("adminNote")?.toString() || undefined,
+    customPassword:
+      rawCustomPassword && rawCustomPassword.length > 0
+        ? rawCustomPassword
+        : undefined,
   });
 
   if (!parsed.success) {
@@ -45,6 +61,7 @@ export async function approveApplicationAction(
     adminUserId: auth.value.user.id,
     neighborhoodId: parsed.data.neighborhoodId,
     adminNote: parsed.data.adminNote,
+    customPassword: parsed.data.customPassword,
   });
 
   if (!res.ok) return err(res.error);
@@ -52,6 +69,7 @@ export async function approveApplicationAction(
   revalidatePath("/admin/applications");
   revalidatePath(`/admin/applications/${parsed.data.applicationId}`);
   revalidatePath("/admin/houses");
+  revalidatePath("/admin/users");
 
   return ok(res.value);
 }

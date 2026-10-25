@@ -18,11 +18,17 @@ import {
   type ZoneRecord,
 } from "@/dal";
 
+import {
+  getCourierAssignedHouses,
+  type CourierAssignedHouse,
+} from "./courier-house-assignment.service";
+
 export interface CourierDetailFull {
   courier: CourierRecord;
   shifts: CourierShiftRecord[];
   zones: CourierZoneRecord[];
   allZones: ZoneRecord[];
+  houses: CourierAssignedHouse[];
 }
 
 export async function listAdminCouriers(): Promise<Result<CourierRecord[]>> {
@@ -49,7 +55,9 @@ export async function getAdminCourierDetail(
       getZones(),
     ]);
 
-    return ok({ courier, shifts, zones, allZones });
+    const houses = await getCourierAssignedHouses(courierId, zones);
+
+    return ok({ courier, shifts, zones, allZones, houses });
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to load courier detail");
   }

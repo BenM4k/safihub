@@ -9,7 +9,10 @@ import type {
   UserSortState,
 } from "../types";
 
-export function useUsersFilter(users: UserRow[]) {
+export function useUsersFilter(
+  users: UserRow[],
+  initialFilters?: Partial<UserFiltersState>
+) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [sortState, setSortState] = useState<UserSortState>({
@@ -17,25 +20,17 @@ export function useUsersFilter(users: UserRow[]) {
     direction: "desc",
   });
 
-  // Default type to 'staff' and hide test accounts by default as required
+  // Hide test accounts by default as required
   const [filters, setFilters] = useState<UserFiltersState>({
-    search: "",
-    role: "all",
-    status: "all",
-    type: "staff",
-    hideTestAccounts: true,
+    search: initialFilters?.search ?? "",
+    role: initialFilters?.role ?? "all",
+    status: initialFilters?.status ?? "all",
+    hideTestAccounts: initialFilters?.hideTestAccounts ?? true,
   });
 
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       if (filters.hideTestAccounts && isTestStaffAccount(u)) {
-        return false;
-      }
-
-      if (filters.type === "staff" && u.role === "customer") {
-        return false;
-      }
-      if (filters.type === "customer" && u.role !== "customer") {
         return false;
       }
 
@@ -111,7 +106,6 @@ export function useUsersFilter(users: UserRow[]) {
       search: "",
       role: "all",
       status: "all",
-      type: "staff",
       hideTestAccounts: true,
     });
     setCurrentPage(1);
@@ -124,7 +118,7 @@ export function useUsersFilter(users: UserRow[]) {
   }, [users, filters.hideTestAccounts]);
 
   const staffCount = useMemo(
-    () => baseUsersForKpis.filter((u) => u.role !== "customer").length,
+    () => baseUsersForKpis.length,
     [baseUsersForKpis]
   );
   const activeCount = useMemo(

@@ -3,11 +3,12 @@ import { hashPassword } from "better-auth/crypto";
 import { err, ok, type Result } from "@/lib/result";
 import {
   blockAdminUserWithGuard,
+  countActiveAdmins,
   createStaffAccountTransaction,
   deleteUserSessions,
+  getAdminUsers,
   getUserById,
   mergeGuestUser,
-  searchUsers,
   setUserPasswordCredential,
   updateUserRoleAndStatus,
   updateUserRoleWithHouseAndGuard,
@@ -18,15 +19,25 @@ import {
 export async function listAdminUsers(params?: {
   query?: string;
   role?: string;
+  roles?: string[];
   status?: string;
   limit?: number;
   offset?: number;
 }): Promise<Result<UserRecord[]>> {
   try {
-    const users = await searchUsers(params);
+    const users = await getAdminUsers(params);
     return ok(users);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to load users");
+  }
+}
+
+export async function getActiveAdminsCount(): Promise<Result<number>> {
+  try {
+    const count = await countActiveAdmins();
+    return ok(count);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to count active admins");
   }
 }
 

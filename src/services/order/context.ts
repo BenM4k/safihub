@@ -82,6 +82,7 @@ export async function buildOrderValidationContext(scope?: {
     houseHours: validationData.houseHours,
     houseClosures: validationData.houseClosures,
     courierShifts: validationData.courierShifts,
+    courierZones: validationData.courierZones,
     settings: {
       maxItemsPerOrder: dbSettings.maxItemsPerOrder,
       defaultCommissionBps: dbSettings.defaultCommissionBps,

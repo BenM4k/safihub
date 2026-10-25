@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, count, desc, eq, gte, ilike, inArray, ne, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { toBukavuDateTime, fromBukavuDateTime } from "@/services/availability/bukavu-time";
 import { ok, err, type Result } from "@/lib/result";
@@ -516,6 +516,10 @@ export interface OrderValidationData {
     startsAt: string;
     endsAt: string;
   }>;
+  courierZones: Array<{
+    courierId: string;
+    zoneId: string;
+  }>;
   customerOpenOrdersCount?: number;
   customerCompletedOrdersCount?: number;
   dailyOrdersForPhoneCount?: number;
@@ -598,7 +602,29 @@ export async function getOrderValidationData(scope?: {
       startsAt: schema.courierShifts.startsAt,
       endsAt: schema.courierShifts.endsAt,
     })
-    .from(schema.courierShifts);
+    .from(schema.courierShifts)
+    .innerJoin(schema.user, eq(schema.courierShifts.courierId, schema.user.id))
+    .leftJoin(
+      schema.courierProfiles,
+      eq(schema.courierShifts.courierId, schema.courierProfiles.userId)
+    )
+    .where(
+      and(
+        eq(schema.user.role, "courier"),
+        eq(schema.user.status, "active"),
+        or(
+          isNull(schema.courierProfiles.isActive),
+          eq(schema.courierProfiles.isActive, true)
+        )
+      )
+    );
+
+  const courierZonesQuery = db
+    .select({
+      courierId: schema.courierZones.courierId,
+      zoneId: schema.courierZones.zoneId,
+    })
+    .from(schema.courierZones);
 
   // Queries for open orders, completed orders, daily phone cap and block status
   const openStatuses = [
@@ -688,6 +714,7 @@ export async function getOrderValidationData(scope?: {
     houseClosures,
     houseCoverage,
     courierShifts,
+    courierZones,
     openOrdersResult,
     completedOrdersResult,
     dailyOrdersResult,
@@ -710,6 +737,7 @@ export async function getOrderValidationData(scope?: {
       ? houseCoverageQuery.where(eq(schema.houseCoverage.houseId, scope.houseId))
       : houseCoverageQuery,
     courierShiftsQuery,
+    courierZonesQuery,
     openOrdersPromise,
     completedOrdersPromise,
     dailyOrdersPromise,
@@ -730,6 +758,7 @@ export async function getOrderValidationData(scope?: {
     houseClosures,
     houseCoverage,
     courierShifts,
+    courierZones,
     customerOpenOrdersCount: openOrdersResult[0]?.count ?? 0,
     customerCompletedOrdersCount: completedOrdersResult[0]?.count ?? 0,
     dailyOrdersForPhoneCount: dailyOrdersResult[0]?.count ?? 0,

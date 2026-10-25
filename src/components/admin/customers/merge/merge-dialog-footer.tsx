@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,6 +23,7 @@ export function MergeDialogFooter({
   onNext,
   onFinalSubmit,
 }: MergeDialogFooterProps) {
+  const t = useTranslations("admin.customers.mergeDialog");
   const isFirstStep = step === 1 || (step === 2 && preselectedGuest);
 
   return (
@@ -34,7 +36,7 @@ export function MergeDialogFooter({
         disabled={loading}
         className="min-h-[40px] px-4 text-xs font-semibold border-2 border-border-strong"
       >
-        {isFirstStep ? "Annuler" : "Retour"}
+        {isFirstStep ? t("cancelBtn") : t("backBtn")}
       </Button>
 
       {step === 1 && (
@@ -44,7 +46,7 @@ export function MergeDialogFooter({
           onClick={onNext}
           className="min-h-[40px] px-4 text-xs font-bold bg-primary text-white"
         >
-          <span>Continuer</span>
+          <span>{t("continueBtn")}</span>
           <ArrowRight className="size-3.5 ml-1" />
         </Button>
       )}
@@ -56,7 +58,7 @@ export function MergeDialogFooter({
           onClick={onNext}
           className="min-h-[40px] px-4 text-xs font-bold bg-primary text-white"
         >
-          <span>{loading ? "Chargement..." : "Voir l'aperçu"}</span>
+          <span>{loading ? t("previewLoadingBtn") : t("viewPreviewBtn")}</span>
           <ArrowRight className="size-3.5 ml-1" />
         </Button>
       )}
@@ -67,7 +69,7 @@ export function MergeDialogFooter({
           onClick={onNext}
           className="min-h-[40px] px-4 text-xs font-bold bg-primary text-white"
         >
-          <span>Passer à la confirmation</span>
+          <span>{t("goToConfirmBtn")}</span>
           <ArrowRight className="size-3.5 ml-1" />
         </Button>
       )}
@@ -79,7 +81,7 @@ export function MergeDialogFooter({
           onClick={onFinalSubmit}
           className="min-h-[40px] px-4 text-xs font-bold bg-destructive text-white hover:bg-destructive/90 disabled:opacity-40"
         >
-          {loading ? "Fusion en cours..." : "Confirmer la fusion irréversible"}
+          {loading ? t("mergingBtn") : t("confirmMergeBtn")}
         </Button>
       )}
     </div>

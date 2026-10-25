@@ -9,6 +9,8 @@ import {
   updateAdminCourierProfile,
   updateAdminCourierShifts,
   updateAdminCourierZones,
+  assignCourierToHouses,
+  unassignCourierFromHouse,
 } from "@/services/admin";
 
 const createCourierSchema = z.object({
@@ -95,6 +97,36 @@ export async function updateCourierZonesAction(
   const res = await updateAdminCourierZones({ courierId, zoneIds });
   if (res.ok) {
     revalidatePath(`/admin/couriers/${courierId}`);
+  }
+  return res;
+}
+
+export async function assignCourierHousesAction(
+  courierId: string,
+  houseIds: string[]
+): Promise<Result<{ addedZoneCount: number }>> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err(auth.error);
+
+  const res = await assignCourierToHouses({ courierId, houseIds });
+  if (res.ok) {
+    revalidatePath(`/admin/couriers/${courierId}`);
+    revalidatePath("/admin/couriers");
+  }
+  return res;
+}
+
+export async function unassignCourierHouseAction(
+  courierId: string,
+  houseId: string
+): Promise<Result<{ removedZoneId: string; affectedSiblingHouses: { id: string; name: string }[] }>> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err(auth.error);
+
+  const res = await unassignCourierFromHouse({ courierId, houseId });
+  if (res.ok) {
+    revalidatePath(`/admin/couriers/${courierId}`);
+    revalidatePath("/admin/couriers");
   }
   return res;
 }

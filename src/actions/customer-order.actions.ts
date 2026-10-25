@@ -11,6 +11,7 @@ import {
   confirmCustomerDeliverySlot,
   declineCustomerPriceAdjustment,
   estimateCustomerCart,
+  getCheckoutPickupSlots,
   openCustomerOrderDispute,
   placeCustomerOrder,
   reorderPastOrder,
@@ -28,6 +29,27 @@ export interface CheckoutActionResult {
   failureCode?: string;
   details?: Record<string, unknown>;
   nextAvailableSlot?: TimeSlot | null;
+}
+
+export async function getPickupSlotsAction(
+  houseId: string,
+  neighborhoodId: string
+): Promise<{
+  success: boolean;
+  slots: TimeSlot[];
+  nextAvailableSlot: TimeSlot | null;
+  reason?: string;
+}> {
+  if (!houseId || !neighborhoodId) {
+    return { success: false, slots: [], nextAvailableSlot: null, reason: "Paramètres manquants" };
+  }
+  const res = await getCheckoutPickupSlots({ houseId, neighborhoodId });
+  return {
+    success: true,
+    slots: res.slots,
+    nextAvailableSlot: res.nextAvailableSlot,
+    reason: res.reason,
+  };
 }
 
 export async function getCartEstimateAction(

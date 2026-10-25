@@ -129,7 +129,7 @@ export function CustomersTableRow({
           <StatusPill
             status="blocked"
             customLabel={t("statusBlocked")}
-            title={customer.banReason ? `Motif : ${customer.banReason}` : undefined}
+            title={customer.banReason ? t("reasonPrefix", { reason: customer.banReason }) : undefined}
           />
         ) : (
           <StatusPill status="active" customLabel={t("statusActive")} />

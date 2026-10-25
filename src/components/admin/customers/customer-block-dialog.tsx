@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { AlertTriangle, Ban, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ export function CustomerBlockDialog({
   onClose,
   onSuccess,
 }: CustomerBlockDialogProps) {
+  const t = useTranslations("admin.customers.blockDialog");
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export function CustomerBlockDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isBlocked && !reason.trim()) {
-      setError("Le motif de blocage est obligatoire.");
+      setError(t("reasonRequiredError"));
       return;
     }
 
@@ -60,7 +62,7 @@ export function CustomerBlockDialog({
       const res = isBlocked ? await unblockCustomerAction(fd) : await blockCustomerAction(fd);
 
       if (!res.ok) {
-        setError(res.error || "Une erreur est survenue.");
+        setError(res.error);
       } else {
         onSuccess();
         onClose();
@@ -87,14 +89,14 @@ export function CustomerBlockDialog({
               <Ban className="size-4" />
             </div>
             <h2 className="text-sm font-bold text-heading font-display">
-              {isBlocked ? "Débloquer le client" : "Bloquer le client"}
+              {isBlocked ? t("titleUnblock") : t("titleBlock")}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="p-1.5 text-ink-400 hover:text-heading rounded-lg hover:bg-surface-hover"
-            aria-label="Fermer"
+            aria-label={t("close")}
           >
             <X className="size-4" />
           </button>
@@ -104,13 +106,11 @@ export function CustomerBlockDialog({
           <div className="text-xs text-ink-700 leading-relaxed">
             {isBlocked ? (
               <p>
-                Êtes-vous sûr de vouloir lever le blocage pour{" "}
-                <span className="font-bold text-heading">{displayName}</span> ? Le client pourra à nouveau se connecter et commander.
+                {t("confirmUnblockText", { name: displayName })}
               </p>
             ) : (
               <p>
-                Vous vous apprêtez à bloquer le compte de{" "}
-                <span className="font-bold text-heading">{displayName}</span>. Ce client ne pourra plus se connecter ni commander.
+                {t("confirmBlockText", { name: displayName })}
               </p>
             )}
           </div>
@@ -119,9 +119,9 @@ export function CustomerBlockDialog({
             <div className="p-3 rounded-lg bg-amber-50 border-2 border-amber-300 text-xs text-amber-800 flex items-start gap-2">
               <AlertTriangle className="size-4 shrink-0 text-amber-600 mt-0.5" />
               <div>
-                <span className="font-bold block">Commandes en cours actives !</span>
+                <span className="font-bold block">{t("activeOrdersWarning")}</span>
                 <span className="text-2xs text-amber-700">
-                  Ce client a des commandes non finalisées. Assurez-vous de coordonner avec les pressings et coursiers concernés.
+                  {t("activeOrdersDesc")}
                 </span>
               </div>
             </div>
@@ -136,7 +136,7 @@ export function CustomerBlockDialog({
           {!isBlocked && (
             <div className="space-y-1.5">
               <Label htmlFor="blockReasonInput" className="text-xs font-semibold text-heading">
-                Motif obligatoire <span className="text-destructive">*</span>
+                {t("reasonLabel")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="blockReasonInput"
@@ -144,7 +144,7 @@ export function CustomerBlockDialog({
                 required
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Ex : Réclamation non résolue, abus répété, impayé…"
+                placeholder={t("reasonPlaceholder")}
                 className="h-10 text-xs border-2 border-border-strong rounded-lg"
                 disabled={loading}
               />
@@ -160,7 +160,7 @@ export function CustomerBlockDialog({
               disabled={loading}
               className="min-h-[40px] px-4 text-xs font-semibold border-2 border-border-strong"
             >
-              Annuler
+              {t("cancelBtn")}
             </Button>
             <Button
               type="submit"
@@ -172,7 +172,7 @@ export function CustomerBlockDialog({
                   : "bg-destructive hover:bg-destructive/90"
               }`}
             >
-              {loading ? "Traitement..." : isBlocked ? "Confirmer le déblocage" : "Confirmer le blocage"}
+              {loading ? t("processingBtn") : isBlocked ? t("confirmUnblockBtn") : t("confirmBlockBtn")}
             </Button>
           </div>
         </form>

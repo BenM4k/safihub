@@ -11,7 +11,7 @@ import { useUsersFilter } from "./hooks/use-users-filter";
 import { exportUsersCsv } from "./users-export";
 import { UsersTable } from "./users-table";
 import { UsersTableToolbar } from "./users-table-toolbar";
-import type { UserDetailsTab, UserRow } from "./types";
+import type { UserDetailsTab, UserFiltersState, UserRow } from "./types";
 
 interface UsersManagementViewProps {
   initialUsers: UserRow[];
@@ -19,6 +19,7 @@ interface UsersManagementViewProps {
   currentUserId?: string | null;
   isAdmin: boolean;
   activeAdminsCount: number;
+  initialFilters?: Partial<UserFiltersState>;
 }
 
 export function UsersManagementView({
@@ -27,6 +28,7 @@ export function UsersManagementView({
   currentUserId,
   isAdmin,
   activeAdminsCount,
+  initialFilters,
 }: UsersManagementViewProps) {
   const router = useRouter();
   const t = useTranslations("admin.users");
@@ -46,7 +48,7 @@ export function UsersManagementView({
     staffCount,
     activeCount,
     blockedCount,
-  } = useUsersFilter(initialUsers);
+  } = useUsersFilter(initialUsers, initialFilters);
 
   // Sheets & Dialogs State
   const [createSheetOpen, setCreateSheetOpen] = useState(false);

@@ -170,6 +170,41 @@ export async function updateHouseApplication(
   return updated ?? null;
 }
 
+export async function getPendingApplicationByEmail(
+  email: string
+): Promise<HouseApplicationRecord | null> {
+  const [row] = await db
+    .select({
+      id: schema.houseApplications.id,
+      houseName: schema.houseApplications.houseName,
+      contactName: schema.houseApplications.contactName,
+      phone: schema.houseApplications.phone,
+      email: schema.houseApplications.email,
+      neighborhoodId: schema.houseApplications.neighborhoodId,
+      neighborhoodText: schema.houseApplications.neighborhoodText,
+      addressNote: schema.houseApplications.addressNote,
+      servicesNote: schema.houseApplications.servicesNote,
+      hoursNote: schema.houseApplications.hoursNote,
+      message: schema.houseApplications.message,
+      status: schema.houseApplications.status,
+      adminNote: schema.houseApplications.adminNote,
+      reviewedBy: schema.houseApplications.reviewedBy,
+      reviewedAt: schema.houseApplications.reviewedAt,
+      createdHouseId: schema.houseApplications.createdHouseId,
+      createdAt: schema.houseApplications.createdAt,
+    })
+    .from(schema.houseApplications)
+    .where(
+      and(
+        eq(schema.houseApplications.email, email.trim().toLowerCase()),
+        eq(schema.houseApplications.status, "pending")
+      )
+    )
+    .limit(1);
+
+  return row ?? null;
+}
+
 export async function isHouseSlugAvailable(slug: string): Promise<boolean> {
   const [existing] = await db
     .select({ id: schema.houses.id })
@@ -184,6 +219,7 @@ export async function approveHouseApplicationTransaction(params: {
   applicationId: string;
   adminUserId: string;
   adminNote?: string | null;
+  hashedPassword?: string;
   house: {
     name: string;
     slug: string;
@@ -197,7 +233,7 @@ export async function approveHouseApplicationTransaction(params: {
     email: string;
     contactPhone?: string | null;
   };
-}): Promise<{ houseId: string; userId: string; houseSlug: string }> {
+}): Promise<{ houseId: string; userId: string; houseSlug: string; isNewAccount: boolean }> {
   return await db.transaction(async (tx) => {
     // 1. Create house (isActive: false until configured)
     const [createdHouse] = await tx
@@ -223,6 +259,7 @@ export async function approveHouseApplicationTransaction(params: {
       .limit(1);
 
     let userId: string;
+    let isNewAccount = false;
     if (existingUser) {
       if (existingUser.role !== "customer" && existingUser.role !== "house") {
         throw new Error(
@@ -236,6 +273,7 @@ export async function approveHouseApplicationTransaction(params: {
         .where(eq(schema.user.id, userId));
     } else {
       userId = params.user.id;
+      isNewAccount = true;
       await tx.insert(schema.user).values({
         id: userId,
         name: params.user.name.trim(),
@@ -246,6 +284,35 @@ export async function approveHouseApplicationTransaction(params: {
         status: "active",
         banned: false,
       });
+    }
+
+    // 2b. Set password credential if hashedPassword provided
+    if (params.hashedPassword) {
+      const [existingCred] = await tx
+        .select({ id: schema.account.id })
+        .from(schema.account)
+        .where(
+          and(
+            eq(schema.account.userId, userId),
+            eq(schema.account.providerId, "credential")
+          )
+        )
+        .limit(1);
+
+      if (existingCred) {
+        await tx
+          .update(schema.account)
+          .set({ password: params.hashedPassword, updatedAt: new Date() })
+          .where(eq(schema.account.id, existingCred.id));
+      } else {
+        await tx.insert(schema.account).values({
+          id: crypto.randomUUID(),
+          userId,
+          accountId: userId,
+          providerId: "credential",
+          password: params.hashedPassword,
+        });
+      }
     }
 
     // 3. Link user to house
@@ -278,6 +345,6 @@ export async function approveHouseApplicationTransaction(params: {
       );
     }
 
-    return { houseId, userId, houseSlug: createdHouse!.slug };
+    return { houseId, userId, houseSlug: createdHouse!.slug, isNewAccount };
   });
 }

@@ -57,6 +57,8 @@ These domain rules govern all business logic in SafiHub and must never be violat
 7. **Direct Client Storage (Cloudflare R2):** Condition and delivery photos upload directly from client devices via short-lived presigned URLs (zero server streaming). Photos are compressed on-device (< 1280px, WebP < 300KB).
 8. **Courier Offline First:** Courier mission execution (counts, photos, cash) must function offline (Zustand + IndexedDB) and replay safely on reconnection.
 9. **Mandatory Multilingual Coverage (FR/EN/SW):** Every user-facing UI element, route, feature, modal, toast, and error message must be localized across French (`fr`), English (`en`), and Swahili (`sw`) using `next-intl`. Key parity across `messages/{fr,en,sw}.json` is strictly maintained and type-checked via `IntlMessages`. The locale is persisted in a cookie (`NEXT_LOCALE`) toggled via a bottom-right floating circular widget.
+10. **Dual-Zone Courier Coverage & Dynamic Slot Feasibility (AC 20):** A courier serves a house by covering both the house's facility zone and the customer's delivery zone in `courier_zones`. Pickup slots are dynamically generated on the server (4 standard Bukavu windows: 08–10, 10–12, 14–16, 16–18) and only offered when at least one active on-shift courier covers both zones.
+
 
 ---
 

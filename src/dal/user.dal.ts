@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, gte, ilike, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 import { err, ok, type Result } from "@/lib/result";
 import { db, schema } from "./db";
 
@@ -30,17 +30,33 @@ export interface AdminCustomerRecord extends UserRecord {
   firstOrderSource: string | null;
 }
 
-export async function searchUsers(params?: {
+/**
+ * Powers the /admin/users route initial load and filters.
+ * Strictly queries operational staff roles: admin, house.
+ * Couriers are managed on /admin/couriers and customers on /admin/customers.
+ */
+export async function getAdminUsers(params?: {
   query?: string;
   role?: string;
+  roles?: string[];
   status?: string;
   limit?: number;
   offset?: number;
 }): Promise<UserRecord[]> {
   const conditions = [];
 
-  if (params?.role && params.role !== "all") {
+  const defaultRoles = ["admin", "house"];
+  const allowedRoles =
+    params?.roles && params.roles.length > 0
+      ? params.roles.filter((r) => ["admin", "house"].includes(r))
+      : defaultRoles;
+  const targetRoles = allowedRoles.length > 0 ? allowedRoles : defaultRoles;
+
+  if (params?.role && params.role !== "all" && ["admin", "house"].includes(params.role)) {
     conditions.push(eq(schema.user.role, params.role));
+  } else {
+    // Only return admin and house operational roles (couriers and customers are managed separately)
+    conditions.push(inArray(schema.user.role, targetRoles));
   }
 
   if (params?.status && params.status !== "all") {
@@ -75,18 +91,18 @@ export async function searchUsers(params?: {
       updatedAt: schema.user.updatedAt,
       houseId: sql<string | null>`(
         select hm.house_id from ${schema.houseMembers} hm 
-        where hm.user_id = ${schema.user.id} 
+        where hm.user_id = "user".id 
         limit 1
       )`,
       houseName: sql<string | null>`(
         select h.name from ${schema.houseMembers} hm 
         join ${schema.houses} h on h.id = hm.house_id 
-        where hm.user_id = ${schema.user.id} 
+        where hm.user_id = "user".id 
         limit 1
       )`,
       lastLoginAt: sql<Date | null>`(
         select max(s.created_at) from ${schema.session} s 
-        where s.user_id = ${schema.user.id}
+        where s.user_id = "user".id
       )`,
     })
     .from(schema.user)
@@ -103,6 +119,11 @@ export async function searchUsers(params?: {
 
   return await query;
 }
+
+/**
+ * Backward-compatible alias for getAdminUsers.
+ */
+export const searchUsers = getAdminUsers;
 
 export async function deleteUserSessions(userId: string): Promise<void> {
   await db.delete(schema.session).where(eq(schema.session.userId, userId));
@@ -376,6 +397,11 @@ export interface GetAdminCustomersParams {
   sortOrder?: "asc" | "desc";
 }
 
+/**
+ * Powers the /admin/customers route initial load and filters.
+ * Strictly queries end customers (role: 'customer').
+ * Never includes operational platform staff (admin, courier, house).
+ */
 export async function getAdminCustomers(params?: GetAdminCustomersParams): Promise<{
   customers: AdminCustomerRecord[];
   totalCount: number;
