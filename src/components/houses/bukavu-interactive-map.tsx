@@ -191,6 +191,7 @@ export function BukavuInteractiveMap({
                   src={activeHouse.imageUrl}
                   alt={activeHouse.name}
                   fill
+                  sizes="48px"
                   className="object-cover"
                 />
               </div>

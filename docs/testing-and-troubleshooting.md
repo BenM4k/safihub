@@ -195,3 +195,15 @@ Each acceptance criterion from the product specification is mapped to an automat
 - **Trap:** Calling `applyRetryFeeToOrder` (non-transactional, uses the global `db`) from inside `failPickupMissionAtomic`, or charging on every failure past the threshold.
 - **Fix:** The DAL transaction increments `deliveryFee`/`totalDue` and writes a `note` audit event only when the customer failed-pickup count equals `RETRY_FEE_FAILED_PICKUP_COUNT` (2, from `src/lib/fees.ts`).
 
+### 30. Direct User Insertions Omit Better Auth Credential Accounts
+- **Trap:** Inserting rows into `schema.user` directly (e.g. during partner application approval) creates a user profile without an associated `schema.account` record with `providerId: 'credential'`. As a result, the user has no password and cannot sign in via email/password, leaving the account stranded or reliant on external email deliverability.
+- **Fix:** In `approveHouseApplicationTransaction`, atomically insert or update the credential record in `schema.account` using `hashedPassword` (`better-auth/crypto`) in the same database transaction. Return the generated temporary password once to the administrator to transmit directly to the partner via WhatsApp or SMS.
+
+### 31. Synchronous setState in useEffect (React 19 / ESLint)
+- **Trap:** Synchronously calling `setSlots([])` or `setIsLoading(true)` in the body of a `useEffect` triggers cascading render warnings and fails `pnpm lint` with `react-hooks/set-state-in-effect`.
+- **Fix:** Derive loading and fallback states during render (`const isLoading = hasParams && !matchesCurrentParams`). Only invoke `setState` inside asynchronous resolution handlers (`.then()`, `.catch()`).
+
+### 32. Mocking Neighborhood Status in Domain Tests
+- **Trap:** Setting `status: "active"` when mocking `NeighborhoodData` fails TypeScript compilation because `NeighborhoodStatus` is strictly `"served" | "paused" | "not_served"`.
+- **Fix:** Use `"served"` for active operational neighborhoods in mock test contexts.
+

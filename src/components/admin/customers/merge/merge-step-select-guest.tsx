@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Check, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatCustomerName } from "@/lib/customer-formatters";
@@ -20,6 +21,8 @@ export function MergeStepSelectGuest({
   onSearchChange,
   onSelect,
 }: MergeStepSelectGuestProps) {
+  const t = useTranslations("admin.customers.mergeDialog");
+
   return (
     <div className="space-y-3">
       <div className="relative">
@@ -27,14 +30,14 @@ export function MergeStepSelectGuest({
         <Input
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Rechercher le compte invité par nom ou téléphone…"
+          placeholder={t("searchGuestPlaceholder")}
           className="pl-9 h-10 text-xs border-2 border-border-strong rounded-lg"
         />
       </div>
 
       <div className="divide-y divide-border-strong border-2 border-border-strong rounded-xl max-h-60 overflow-y-auto">
         {candidates.length === 0 ? (
-          <div className="p-4 text-center text-xs text-ink-400">Aucun compte invité trouvé.</div>
+          <div className="p-4 text-center text-xs text-ink-400">{t("noGuestsFound")}</div>
         ) : (
           candidates.map((g) => (
             <button
@@ -48,7 +51,7 @@ export function MergeStepSelectGuest({
               <div>
                 <div className="font-semibold text-heading">{formatCustomerName(g.name, g.contactPhone)}</div>
                 <div className="text-2xs text-ink-500">
-                  {g.contactPhone || "Sans téléphone"} · {g.ordersCount} commande(s)
+                  {g.contactPhone || t("noPhone")} · {t("ordersCount", { count: g.ordersCount })}
                 </div>
               </div>
               {selectedGuest?.id === g.id && <Check className="size-4 text-primary" />}

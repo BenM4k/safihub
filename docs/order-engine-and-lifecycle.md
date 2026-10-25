@@ -148,3 +148,24 @@ Couriers receive per-leg pay (`missions.courierPay`) credited directly upon comp
 Because some partner laundry facilities in Bukavu may experience network downtime or lack smartphone connectivity:
 - The admin back-office can execute actions on behalf of a house (accept, reject, record reception count, mark ready) after phone or WhatsApp communication.
 - Every on-behalf action explicitly sets `order_events.onBehalfOf = houseId` and records admin rationale notes.
+
+---
+
+## 7. Server-Side Pickup Slot Generation & Dual-Zone Feasibility
+
+In accordance with Section 11 (AC 1, AC 20):
+- **No Client Timestamps:** The client checkout UI does not compute pickup slots.
+- **Server Action (`getPickupSlotsAction`):** Queries `getCheckoutPickupSlots(houseId, neighborhoodId)`.
+- **4 Standard Daily Windows (Africa/Lubumbashi):**
+  - `08:00 - 10:00`
+  - `10:00 - 12:00`
+  - `14:00 - 16:00`
+  - `16:00 - 18:00`
+- **Candidate Filtering & Validation:**
+  - Candidates generated across a 7-day rolling horizon.
+  - Excludes past slots and slots violating `house.cutoffMinutes`.
+  - Excludes dates in `house_closures` and days/hours outside `house_hours`.
+  - Excludes slots where daily active orders reach `house.dailyCapacity`.
+  - **Courier Shift & Zone Enforcement (AC 20):** Cross-checks `courier_shifts` (`weekday`, `startTime`, `endTime`, `isActive=true`) for active couriers covering both `neighborhood.zoneId` (customer) and `house.neighborhood.zoneId` (house facility) via `courier_zones`.
+- If no slots are available today, the response suggests `nextAvailableSlot` on the next feasible date.
+

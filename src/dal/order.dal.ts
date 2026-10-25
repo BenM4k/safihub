@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, count, desc, eq, gte, ilike, inArray, ne, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { toBukavuDateTime, fromBukavuDateTime } from "@/services/availability/bukavu-time";
 import { ok, err, type Result } from "@/lib/result";
@@ -516,10 +516,15 @@ export interface OrderValidationData {
     startsAt: string;
     endsAt: string;
   }>;
+  courierZones: Array<{
+    courierId: string;
+    zoneId: string;
+  }>;
   customerOpenOrdersCount?: number;
   customerCompletedOrdersCount?: number;
   dailyOrdersForPhoneCount?: number;
   isCustomerBlocked?: boolean;
+  bookedOrdersByDate?: Record<string, number>;
 }
 
 export async function getOrderValidationData(scope?: {
@@ -598,7 +603,29 @@ export async function getOrderValidationData(scope?: {
       startsAt: schema.courierShifts.startsAt,
       endsAt: schema.courierShifts.endsAt,
     })
-    .from(schema.courierShifts);
+    .from(schema.courierShifts)
+    .innerJoin(schema.user, eq(schema.courierShifts.courierId, schema.user.id))
+    .leftJoin(
+      schema.courierProfiles,
+      eq(schema.courierShifts.courierId, schema.courierProfiles.userId)
+    )
+    .where(
+      and(
+        eq(schema.user.role, "courier"),
+        eq(schema.user.status, "active"),
+        or(
+          isNull(schema.courierProfiles.isActive),
+          eq(schema.courierProfiles.isActive, true)
+        )
+      )
+    );
+
+  const courierZonesQuery = db
+    .select({
+      courierId: schema.courierZones.courierId,
+      zoneId: schema.courierZones.zoneId,
+    })
+    .from(schema.courierZones);
 
   // Queries for open orders, completed orders, daily phone cap and block status
   const openStatuses = [
@@ -681,6 +708,23 @@ export async function getOrderValidationData(scope?: {
         .limit(1)
     : Promise.resolve([]);
 
+  const bookedOrdersPromise = scope?.houseId
+    ? db
+        .select({
+          dateStr: sql<string>`to_char(${schema.orders.pickupSlotStart} at time zone 'Africa/Lubumbashi', 'YYYY-MM-DD')`,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(schema.orders)
+        .where(
+          and(
+            eq(schema.orders.houseId, scope.houseId),
+            sql`${schema.orders.status} != 'cancelled'`,
+            gte(schema.orders.pickupSlotStart, sql`now() - interval '1 day'`)
+          )
+        )
+        .groupBy(sql`to_char(${schema.orders.pickupSlotStart} at time zone 'Africa/Lubumbashi', 'YYYY-MM-DD')`)
+    : Promise.resolve([] as Array<{ dateStr: string; count: number }>);
+
   const [
     existingOrders,
     houseItems,
@@ -688,11 +732,13 @@ export async function getOrderValidationData(scope?: {
     houseClosures,
     houseCoverage,
     courierShifts,
+    courierZones,
     openOrdersResult,
     completedOrdersResult,
     dailyOrdersResult,
     customerUserResult,
     phoneUserResult,
+    bookedOrdersResult,
   ] = await Promise.all([
     orderConditions.length > 0
       ? existingOrdersQuery.where(and(...orderConditions))
@@ -710,11 +756,13 @@ export async function getOrderValidationData(scope?: {
       ? houseCoverageQuery.where(eq(schema.houseCoverage.houseId, scope.houseId))
       : houseCoverageQuery,
     courierShiftsQuery,
+    courierZonesQuery,
     openOrdersPromise,
     completedOrdersPromise,
     dailyOrdersPromise,
     customerUserPromise,
     phoneUserPromise,
+    bookedOrdersPromise,
   ]);
 
   const customerUser = customerUserResult[0];
@@ -723,6 +771,13 @@ export async function getOrderValidationData(scope?: {
     phoneUserResult.length > 0
   );
 
+  const bookedOrdersByDate: Record<string, number> = {};
+  for (const row of bookedOrdersResult) {
+    if (row.dateStr) {
+      bookedOrdersByDate[row.dateStr] = Number(row.count) || 0;
+    }
+  }
+
   return {
     existingOrders,
     houseItems,
@@ -730,6 +785,8 @@ export async function getOrderValidationData(scope?: {
     houseClosures,
     houseCoverage,
     courierShifts,
+    courierZones,
+    bookedOrdersByDate,
     customerOpenOrdersCount: openOrdersResult[0]?.count ?? 0,
     customerCompletedOrdersCount: completedOrdersResult[0]?.count ?? 0,
     dailyOrdersForPhoneCount: dailyOrdersResult[0]?.count ?? 0,

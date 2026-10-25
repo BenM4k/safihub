@@ -95,3 +95,28 @@ When the admin dispatches a mission in `/admin/dispatch`:
   )
   ```
 - If no courier covers both zones, the admin receives an explicit alert to adjust assignments or dispatch a cross-zone mission.
+
+---
+
+## 6. Courier ↔ House Assignment & Pickup Slot Feasibility
+
+To bridge laundry houses and couriers without redundant schema tables, SafiHub maps house operational scope onto `courier_zones`:
+
+1. **Admin Assignment (`/admin/couriers/[courierId]`):**
+   - The admin assigns a laundry house to a courier.
+   - Under the hood, this adds the house's facility zone (`house.neighborhood.zoneId`) and all delivery zones the house covers (`house_coverage -> neighborhood.zoneId`) to `courier_zones`.
+   - On the courier index table (`/admin/couriers`), the system displays the count and badges of active laundry houses served by each courier.
+   - An alert banner warns the admin if any active laundry house currently has 0 couriers covering its facility zone.
+
+2. **Unassigning a House:**
+   - Removing a house unassigns the house's facility zone from `courier_zones`.
+   - If other houses in that zone are still covered by the courier, a confirmation dialog warns the admin of the impact.
+
+3. **Server-Side Slot Feasibility (AC 20):**
+   - Candidate pickup windows (08:00–10:00, 10:00–12:00, 14:00–16:00, 16:00–18:00 Africa/Lubumbashi) are generated on the server for the next 7 days.
+   - A slot is offered at checkout **only** if:
+     1. The house is open during the window (verified against `house_hours` and `house_closures`).
+     2. Lead time $\ge$ `house.cutoffMinutes`.
+     3. Daily capacity is not exceeded.
+     4. **Active Courier On Shift:** At least one active courier has an active shift (`courier_shifts`) covering the slot weekday/time, and covers BOTH the customer's zone and the house's facility zone (`courier_zones`).
+

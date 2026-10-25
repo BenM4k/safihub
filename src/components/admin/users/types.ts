@@ -15,6 +15,5 @@ export interface UserFiltersState {
   search: string;
   role: string;
   status: string;
-  type: "all" | "staff" | "customer";
   hideTestAccounts: boolean;
 }

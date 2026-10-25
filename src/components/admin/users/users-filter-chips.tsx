@@ -18,7 +18,6 @@ export function UsersFilterChips({ filters, onChange, onReset }: UsersFilterChip
     Boolean(filters.search.trim()) ||
     filters.role !== "all" ||
     filters.status !== "all" ||
-    filters.type !== "staff" ||
     !filters.hideTestAccounts;
 
   if (!hasActiveFilters) return null;
@@ -42,25 +41,6 @@ export function UsersFilterChips({ filters, onChange, onReset }: UsersFilterChip
         </span>
       )}
 
-      {/* Type chip */}
-      {filters.type !== "staff" && (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface border-2 border-border-strong text-ink-800">
-          <span>
-            {t("chipType", {
-              type: filters.type === "all" ? t("typeAll") : t("typeCustomer"),
-            })}
-          </span>
-          <button
-            type="button"
-            onClick={() => onChange({ ...filters, type: "staff" })}
-            className="text-ink-400 hover:text-ink-800 focus:outline-none"
-            aria-label={t("resetTypeFilter")}
-          >
-            <X className="size-3.5" />
-          </button>
-        </span>
-      )}
-
       {/* Role chip */}
       {filters.role !== "all" && (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface border-2 border-border-strong text-ink-800">
@@ -73,9 +53,7 @@ export function UsersFilterChips({ filters, onChange, onReset }: UsersFilterChip
                     ? t("roleCourier")
                     : filters.role === "house"
                       ? t("roleHouse")
-                      : filters.role === "customer"
-                        ? t("roleCustomer")
-                        : filters.role,
+                      : filters.role,
             })}
           </span>
           <button

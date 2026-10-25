@@ -42,6 +42,7 @@ vi.mock("@/dal/house-application.dal", () => ({
     if (id === "app-approved") return { ...mockApplication, id: "app-approved", status: "approved" };
     return null;
   }),
+  getPendingApplicationByEmail: vi.fn(async () => null),
   listHouseApplications: vi.fn(async () => ({
     applications: [mockApplication],
     total: 1,
@@ -55,6 +56,8 @@ vi.mock("@/dal/house-application.dal", () => ({
     houseId: "house-new-123",
     houseSlug: house.slug,
     userId: user.id,
+    isNewAccount: true,
+    passwordApplied: true,
   })),
 }));
 
@@ -128,7 +131,24 @@ describe("Partner Application Pipeline", () => {
       });
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toBe("EMAIL_REQUIRED");
+        expect(res.error).toBe("EMAIL_INVALID");
+      }
+    });
+
+    it("rejects application if pending application already exists for email", async () => {
+      const { getPendingApplicationByEmail } = await import("@/dal/house-application.dal");
+      vi.mocked(getPendingApplicationByEmail).mockResolvedValueOnce(mockApplication);
+
+      const res = await submitPartnerApplication({
+        houseName: "Pressing Test",
+        contactName: "Amani",
+        phone: "+243999000123",
+        email: "amani@pressing.cd",
+        neighborhoodId: "neigh-1",
+      });
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toBe("APPLICATION_PENDING");
       }
     });
 
@@ -262,7 +282,7 @@ describe("Partner Application Pipeline", () => {
       }
     });
 
-    it("successfully approves pending application and creates house with slug", async () => {
+    it("successfully approves pending application and creates house with slug and credentials", async () => {
       const res = await approvePartnerApplication({
         applicationId: "app-123",
         adminUserId: "admin-1",
@@ -272,6 +292,43 @@ describe("Partner Application Pipeline", () => {
       if (res.ok) {
         expect(res.value.houseId).toBe("house-new-123");
         expect(res.value.houseSlug).toBe("pressing-etoile-du-kivu");
+        expect(res.value.temporaryPassword).toBeDefined();
+        expect(res.value.temporaryPassword.length).toBeGreaterThanOrEqual(8);
+        expect(res.value.isNewAccount).toBe(true);
+      }
+    });
+
+    it("accepts custom password if provided during approval", async () => {
+      const res = await approvePartnerApplication({
+        applicationId: "app-123",
+        adminUserId: "admin-1",
+        customPassword: "CustomPassword123!",
+      });
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.value.temporaryPassword).toBe("CustomPassword123!");
+      }
+    });
+
+    it("does not return temporary password when passwordApplied is false for existing account", async () => {
+      const { approveHouseApplicationTransaction } = await import("@/dal/house-application.dal");
+      vi.mocked(approveHouseApplicationTransaction).mockResolvedValueOnce({
+        houseId: "house-existing-123",
+        houseSlug: "pressing-etoile-du-kivu",
+        userId: "user-existing-1",
+        isNewAccount: false,
+        passwordApplied: false,
+      });
+
+      const res = await approvePartnerApplication({
+        applicationId: "app-123",
+        adminUserId: "admin-1",
+      });
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.value.temporaryPassword).toBe("");
+        expect(res.value.passwordApplied).toBe(false);
+        expect(res.value.isNewAccount).toBe(false);
       }
     });
 

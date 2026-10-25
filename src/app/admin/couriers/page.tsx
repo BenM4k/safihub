@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { listAdminCouriers } from "@/services/admin";
 import { CouriersTable } from "@/components/admin/couriers/couriers-table";
 import { CourierCreateForm } from "@/components/admin/couriers/courier-create-form";
+import { HousesWithoutCourierAlert } from "@/components/admin/couriers/houses-without-courier-alert";
 
 export default async function AdminCouriersPage() {
   const t = await getTranslations("admin.couriers");
@@ -17,6 +18,7 @@ export default async function AdminCouriersPage() {
         <p className="text-xs text-muted-foreground mt-1">{t("subtitle")}</p>
       </div>
 
+      <HousesWithoutCourierAlert />
       <CourierCreateForm />
       <CouriersTable couriers={couriers} />
     </div>

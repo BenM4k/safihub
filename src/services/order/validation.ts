@@ -1,6 +1,7 @@
 import { err, ok, type Result } from "@/lib/result";
 import {
   evaluateSlotValidity,
+  filterShiftsForZonePair,
   findNextAvailableSlot,
   type CourierShiftSegment,
   type HouseClosure,
@@ -91,6 +92,7 @@ export interface OrderValidationContext {
   houseHours: HouseHourSegment[];
   houseClosures: HouseClosure[];
   courierShifts: CourierShiftSegment[];
+  courierZones?: Array<{ courierId: string; zoneId: string }>;
   bookedOrdersByDate?: Record<string, number>;
   currentTime?: Date;
   settings: PlatformSettingsConfig;
@@ -288,8 +290,15 @@ export function validateOrderCheckout(
     });
   }
 
-  // 5. Validate Slot Availability & Opening Hours (AC 1, AC 5)
+  // 5. Validate Slot Availability & Opening Hours (AC 1, AC 5, AC 20)
   const currentTime = context.currentTime ?? new Date();
+  const eligibleShifts = filterShiftsForZonePair({
+    shifts: context.courierShifts,
+    courierZones: context.courierZones,
+    customerZoneId: customerNeighborhood.zoneId,
+    houseZoneId: houseNeighborhood.zoneId,
+  });
+
   const slotEval = evaluateSlotValidity({
     slot: input.pickupSlot,
     houseHours: context.houseHours.filter((h) => (h.houseId ? h.houseId === house.id : true)),
@@ -297,7 +306,7 @@ export function validateOrderCheckout(
     cutoffMinutes: house.cutoffMinutes,
     dailyCapacity: house.dailyCapacity,
     bookedOrdersByDate: context.bookedOrdersByDate ?? {},
-    courierShifts: context.courierShifts,
+    courierShifts: eligibleShifts,
     currentTime,
     leadTimeMinutes: context.settings.leadTimeMinutes,
   });
@@ -311,7 +320,7 @@ export function validateOrderCheckout(
       cutoffMinutes: house.cutoffMinutes,
       dailyCapacity: house.dailyCapacity,
       bookedOrdersByDate: context.bookedOrdersByDate ?? {},
-      courierShifts: context.courierShifts,
+      courierShifts: eligibleShifts,
       leadTimeMinutes: context.settings.leadTimeMinutes,
     });
 

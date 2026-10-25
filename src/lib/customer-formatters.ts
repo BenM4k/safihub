@@ -56,6 +56,8 @@ export function isTestCustomer(customer: {
     email.endsWith("@test.invalid") ||
     email.endsWith("@example.com") ||
     email.includes("test@") ||
+    email.includes("-fallback-") ||
+    email.includes("nonadmin-") ||
     name.includes("test") ||
     phone.includes("000000") ||
     phone === "+243000000000"

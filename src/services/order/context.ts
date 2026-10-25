@@ -82,6 +82,7 @@ export async function buildOrderValidationContext(scope?: {
     houseHours: validationData.houseHours,
     houseClosures: validationData.houseClosures,
     courierShifts: validationData.courierShifts,
+    courierZones: validationData.courierZones,
     settings: {
       maxItemsPerOrder: dbSettings.maxItemsPerOrder,
       defaultCommissionBps: dbSettings.defaultCommissionBps,
@@ -99,5 +100,6 @@ export async function buildOrderValidationContext(scope?: {
     customerCompletedOrdersCount: validationData.customerCompletedOrdersCount,
     dailyOrdersForPhoneCount: validationData.dailyOrdersForPhoneCount,
     isCustomerBlocked: validationData.isCustomerBlocked,
+    bookedOrdersByDate: validationData.bookedOrdersByDate ?? {},
   };
 }

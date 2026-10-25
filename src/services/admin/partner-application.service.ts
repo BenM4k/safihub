@@ -1,4 +1,5 @@
 import "server-only";
+import { hashPassword } from "better-auth/crypto";
 import { err, ok, type Result } from "@/lib/result";
 import {
   approveHouseApplicationTransaction,
@@ -10,6 +11,7 @@ import {
 } from "@/dal/house-application.dal";
 import { getNeighborhoods } from "@/dal/coverage.dal";
 import { generateUniqueSlug } from "@/lib/slug";
+import { generateSecurePassword } from "@/lib/user-guardrails";
 import { sendPartnerInvitationEmail } from "@/services/email";
 import type { ApplicationStatus } from "@/services/db/schema";
 
@@ -53,7 +55,17 @@ export async function approvePartnerApplication(params: {
   adminUserId: string;
   neighborhoodId?: string;
   adminNote?: string | null;
-}): Promise<Result<{ houseId: string; houseSlug: string; userId: string }>> {
+  customPassword?: string;
+}): Promise<
+  Result<{
+    houseId: string;
+    houseSlug: string;
+    userId: string;
+    temporaryPassword: string;
+    isNewAccount: boolean;
+    passwordApplied: boolean;
+  }>
+> {
   try {
     const application = await getHouseApplicationById(params.applicationId);
     if (!application) {
@@ -88,11 +100,20 @@ export async function approvePartnerApplication(params: {
 
     const newUserId = `usr_house_${crypto.randomUUID().slice(0, 8)}`;
 
-    // Execute atomic transaction
+    // Generate or validate temporary password
+    const plainPassword =
+      params.customPassword && params.customPassword.trim().length >= 8
+        ? params.customPassword.trim()
+        : generateSecurePassword();
+
+    const hashedPassword = await hashPassword(plainPassword);
+
+    // Execute atomic transaction with credential setup
     const result = await approveHouseApplicationTransaction({
       applicationId: application.id,
       adminUserId: params.adminUserId,
       adminNote: params.adminNote ?? null,
+      hashedPassword,
       house: {
         name: application.houseName,
         slug,
@@ -108,9 +129,9 @@ export async function approvePartnerApplication(params: {
       },
     });
 
-    // Send invitation email with password setup URL
+    // Send invitation email with direct login link
     const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
-    const inviteUrl = `${baseUrl}/forgot-password?email=${encodeURIComponent(application.email)}`;
+    const inviteUrl = `${baseUrl}/login`;
 
     await sendPartnerInvitationEmail({
       email: application.email,
@@ -121,7 +142,15 @@ export async function approvePartnerApplication(params: {
       console.error("[approvePartnerApplication] Email dispatch warning:", err);
     });
 
-    return ok(result);
+    const passwordApplied = result.passwordApplied ?? result.isNewAccount;
+    return ok({
+      houseId: result.houseId,
+      houseSlug: result.houseSlug,
+      userId: result.userId,
+      temporaryPassword: passwordApplied ? plainPassword : "",
+      isNewAccount: result.isNewAccount,
+      passwordApplied,
+    });
   } catch (error) {
     return err(
       error instanceof Error

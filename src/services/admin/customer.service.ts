@@ -52,6 +52,10 @@ export interface CustomerMergePreview {
   addressesToMoveCount: number;
 }
 
+/**
+ * Lists registered and guest end-customers (role: 'customer') with order and spend statistics.
+ * Excludes operational staff (courier, house, admin).
+ */
 export async function listAdminCustomers(
   params?: GetAdminCustomersParams
 ): Promise<Result<{ customers: AdminCustomerRecord[]; totalCount: number }>> {

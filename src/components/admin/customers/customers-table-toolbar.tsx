@@ -41,7 +41,7 @@ export function CustomersTableToolbar({
               type="button"
               onClick={() => onChange({ ...filters, search: "" })}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-400 hover:text-heading p-1"
-              aria-label="Effacer la recherche"
+              aria-label={t("clearSearch")}
             >
               <X className="size-3.5" />
             </button>

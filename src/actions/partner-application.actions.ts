@@ -56,6 +56,8 @@ export async function submitPartnerApplicationAction(
       | "contactNameRequired"
       | "phoneRequired"
       | "emailRequired"
+      | "emailInvalid"
+      | "applicationPending"
       | "neighborhoodRequired"
       | "createFailed";
 
@@ -65,6 +67,8 @@ export async function submitPartnerApplicationAction(
       CONTACT_NAME_REQUIRED: "contactNameRequired",
       PHONE_REQUIRED: "phoneRequired",
       EMAIL_REQUIRED: "emailRequired",
+      EMAIL_INVALID: "emailInvalid",
+      APPLICATION_PENDING: "applicationPending",
       NEIGHBORHOOD_REQUIRED: "neighborhoodRequired",
       CREATE_FAILED: "createFailed",
     };

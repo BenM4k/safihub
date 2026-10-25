@@ -1,71 +1,59 @@
 "use client";
 
-import { useMemo } from "react";
-import { Clock, Calendar, AlertCircle } from "lucide-react";
+import { Clock, Calendar, AlertCircle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toBukavuDateTime } from "@/services/availability";
 import type { TimeSlot } from "@/services/availability";
 
-interface SlotOption {
-  label: string;
-  slot: TimeSlot;
-}
-
 interface SlotPickerProps {
+  slots: TimeSlot[];
+  isLoading: boolean;
+  neighborhoodSelected: boolean;
   selectedSlot: TimeSlot | null;
   onSelectSlot: (slot: TimeSlot) => void;
   nextProposedSlot?: TimeSlot | null;
   onAcceptProposedSlot?: (slot: TimeSlot) => void;
 }
 
+function formatSlotLabel(slot: TimeSlot, t: (key: string) => string): string {
+  const start = new Date(slot.start);
+  const end = new Date(slot.end);
+  const startLocal = toBukavuDateTime(start);
+  const endLocal = toBukavuDateTime(end);
+
+  const nowLocal = toBukavuDateTime(new Date());
+  let dayLabel: string;
+
+  if (startLocal.dateString === nowLocal.dateString) {
+    dayLabel = t("today");
+  } else {
+    const tomorrowLocal = toBukavuDateTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    if (startLocal.dateString === tomorrowLocal.dateString) {
+      dayLabel = t("tomorrow");
+    } else {
+      dayLabel = start.toLocaleDateString("fr-FR", {
+        weekday: "short",
+        day: "numeric",
+      });
+    }
+  }
+
+  const startFormatted = startLocal.timeString.replace(":", "h");
+  const endFormatted = endLocal.timeString.replace(":", "h");
+
+  return `${dayLabel} · ${startFormatted} - ${endFormatted}`;
+}
+
 export function SlotPicker({
+  slots,
+  isLoading,
+  neighborhoodSelected,
   selectedSlot,
   onSelectSlot,
   nextProposedSlot,
   onAcceptProposedSlot,
 }: SlotPickerProps) {
   const t = useTranslations("checkout");
-
-  // Generate standard upcoming 2-hour slots for Bukavu timezone
-  const availableSlots: SlotOption[] = useMemo(() => {
-    const slots: SlotOption[] = [];
-    const now = new Date();
-
-    for (let dayOffset = 0; dayOffset <= 3; dayOffset++) {
-      const d = new Date(now);
-      d.setDate(d.getDate() + dayOffset);
-      const dayName =
-        dayOffset === 0
-          ? "Aujourd'hui"
-          : dayOffset === 1
-          ? "Demain"
-          : d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" });
-
-      const hours = [
-        { startH: 8, endH: 10, label: "08h00 - 10h00" },
-        { startH: 11, endH: 13, label: "11h00 - 13h00" },
-        { startH: 14, endH: 16, label: "14h00 - 16h00" },
-        { startH: 16, endH: 18, label: "16h00 - 18h00" },
-      ];
-
-      for (const h of hours) {
-        const slotStart = new Date(d);
-        slotStart.setHours(h.startH, 0, 0, 0);
-        const slotEnd = new Date(d);
-        slotEnd.setHours(h.endH, 0, 0, 0);
-
-        if (slotStart.getTime() > now.getTime() + 30 * 60 * 1000) {
-          slots.push({
-            label: `${dayName} · ${h.label}`,
-            slot: {
-              start: slotStart,
-              end: slotEnd,
-            },
-          });
-        }
-      }
-    }
-    return slots.slice(0, 8);
-  }, []);
 
   const isSelected = (slot: TimeSlot) => {
     if (!selectedSlot) return false;
@@ -79,7 +67,6 @@ export function SlotPicker({
         <span>{t("stepPickup")}</span>
       </div>
 
-      {/* AC 1: Next proposed slot banner if server rejected slot */}
       {nextProposedSlot && (
         <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs space-y-2 animate-in fade-in-50">
           <div className="flex items-start gap-2">
@@ -109,29 +96,44 @@ export function SlotPicker({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {availableSlots.map((opt, idx) => {
-          const active = isSelected(opt.slot);
-          return (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => onSelectSlot(opt.slot)}
-              className={`p-3 rounded-xl border text-left flex items-center justify-between text-xs transition cursor-pointer ${
-                active
-                  ? "border-primary bg-primary/10 text-primary font-bold shadow-2xs"
-                  : "border-border bg-muted/40 hover:border-border-strong text-muted-foreground hover:text-foreground font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Clock className={`size-3.5 ${active ? "text-primary" : "text-muted-foreground/70"}`} />
-                <span>{opt.label}</span>
-              </div>
-              {active && <span className="size-2 rounded-full bg-primary" />}
-            </button>
-          );
-        })}
-      </div>
+      {!neighborhoodSelected ? (
+        <div className="p-4 rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
+          {t("selectNeighborhoodFirst")}
+        </div>
+      ) : isLoading ? (
+        <div className="p-8 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="size-4 animate-spin text-primary" />
+          <span>{t("slotsLoading")}</span>
+        </div>
+      ) : slots.length === 0 ? (
+        <div className="p-4 rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
+          {t("noSlotsAvailable")}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {slots.map((slot, idx) => {
+            const active = isSelected(slot);
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => onSelectSlot(slot)}
+                className={`p-3 rounded-xl border text-left flex items-center justify-between text-xs transition cursor-pointer ${
+                  active
+                    ? "border-primary bg-primary/10 text-primary font-bold shadow-2xs"
+                    : "border-border bg-muted/40 hover:border-border-strong text-muted-foreground hover:text-foreground font-medium"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Clock className={`size-3.5 ${active ? "text-primary" : "text-muted-foreground/70"}`} />
+                  <span>{formatSlotLabel(slot, t)}</span>
+                </div>
+                {active && <span className="size-2 rounded-full bg-primary" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -5,3 +5,4 @@ export * from "./deadlines";
 export * from "./verification";
 export * from "./customer-order.service";
 export * from "./context";
+export * from "./pickup-slots.service";

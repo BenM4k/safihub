@@ -74,6 +74,11 @@ export async function ApplicationsTable({ applications }: ApplicationsTableProps
                     <div className="text-[11px] text-muted-foreground font-mono">
                       {app.phone}
                     </div>
+                    {app.email && (
+                      <div className="text-[11px] text-ink-500 truncate max-w-[200px]" title={app.email}>
+                        {app.email}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     <div className="font-medium text-heading">

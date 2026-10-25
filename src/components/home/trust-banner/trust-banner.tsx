@@ -74,6 +74,7 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"
                     alt="Nguba"
                     fill
+                    sizes="24px"
                     className="object-cover"
                   />
                 </div>
@@ -86,6 +87,7 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
                     src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80"
                     alt="Muhumba"
                     fill
+                    sizes="24px"
                     className="object-cover"
                   />
                 </div>
@@ -98,6 +100,7 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
                     src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80"
                     alt="La Botte"
                     fill
+                    sizes="24px"
                     className="object-cover"
                   />
                 </div>
@@ -110,6 +113,7 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
                     src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80"
                     alt="Kadutu"
                     fill
+                    sizes="24px"
                     className="object-cover"
                   />
                 </div>

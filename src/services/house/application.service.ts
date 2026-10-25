@@ -2,9 +2,11 @@ import "server-only";
 import { err, ok, type Result } from "@/lib/result";
 import {
   createHouseApplication,
+  getPendingApplicationByEmail,
   type HouseApplicationRecord,
 } from "@/dal/house-application.dal";
 import { rateLimitPartnerApplication } from "@/services/abuse/rate-limiter";
+import { partnerApplicationSchema } from "@/lib/validations/partner-application.schema";
 
 export async function submitPartnerApplication(params: {
   houseName: string;
@@ -35,40 +37,31 @@ export async function submitPartnerApplication(params: {
       }
     }
 
-    // 2. Validate essential fields
-    if (!params.houseName?.trim() || params.houseName.trim().length < 2) {
-      return err("HOUSE_NAME_REQUIRED");
-    }
-    if (!params.contactName?.trim() || params.contactName.trim().length < 2) {
-      return err("CONTACT_NAME_REQUIRED");
-    }
-    if (!params.phone?.trim() || params.phone.trim().length < 6) {
-      return err("PHONE_REQUIRED");
-    }
-    if (!params.email?.trim() || !params.email.includes("@")) {
-      return err("EMAIL_REQUIRED");
+    // 2. Validate essential fields via shared Zod schema
+    const parsed = partnerApplicationSchema.safeParse(params);
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0]?.message || "CREATE_FAILED";
+      return err(firstIssue);
     }
 
-    const hasNeighborhood =
-      Boolean(params.neighborhoodId && params.neighborhoodId.trim().length > 0) ||
-      Boolean(params.neighborhoodText && params.neighborhoodText.trim().length > 0);
-
-    if (!hasNeighborhood) {
-      return err("NEIGHBORHOOD_REQUIRED");
+    // 3. Guard against duplicate pending application for the same email
+    const existingPending = await getPendingApplicationByEmail(parsed.data.email);
+    if (existingPending) {
+      return err("APPLICATION_PENDING");
     }
 
-    // 3. Persist application
+    // 4. Persist application
     const application = await createHouseApplication({
-      houseName: params.houseName,
-      contactName: params.contactName,
-      phone: params.phone,
-      email: params.email,
-      neighborhoodId: params.neighborhoodId || null,
-      neighborhoodText: params.neighborhoodText || null,
-      addressNote: params.addressNote || null,
-      servicesNote: params.servicesNote || null,
-      hoursNote: params.hoursNote || null,
-      message: params.message || null,
+      houseName: parsed.data.houseName,
+      contactName: parsed.data.contactName,
+      phone: parsed.data.phone,
+      email: parsed.data.email,
+      neighborhoodId: parsed.data.neighborhoodId || null,
+      neighborhoodText: parsed.data.neighborhoodText || null,
+      addressNote: parsed.data.addressNote || null,
+      servicesNote: parsed.data.servicesNote || null,
+      hoursNote: parsed.data.hoursNote || null,
+      message: parsed.data.message || null,
     });
 
     return ok(application);

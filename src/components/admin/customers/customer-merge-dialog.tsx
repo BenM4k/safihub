@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { GitMerge, X } from "lucide-react";
 import { mergeCustomerAccountsAction, previewCustomerMergeAction } from "@/actions/admin-customer.actions";
 import type { CustomerMergePreview } from "@/services/admin";
@@ -26,6 +27,7 @@ export function CustomerMergeDialog({
   onClose,
   onSuccess,
 }: CustomerMergeDialogProps) {
+  const t = useTranslations("admin.customers.mergeDialog");
   const [step, setStep] = useState<1 | 2 | 3 | 4>(preselectedGuest ? 2 : 1);
   const [selectedGuest, setSelectedGuest] = useState<CustomerRow | null>(preselectedGuest);
   const [selectedTarget, setSelectedTarget] = useState<CustomerRow | null>(null);
@@ -36,6 +38,11 @@ export function CustomerMergeDialog({
   const [typedConfirm, setTypedConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const confirmKeyword = t("confirmKeyword");
+  const isConfirmMatch =
+    typedConfirm.trim().toUpperCase() === confirmKeyword.toUpperCase() ||
+    typedConfirm.trim().toUpperCase() === "FUSIONNER";
 
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
   const [prevGuest, setPrevGuest] = useState(preselectedGuest);
@@ -92,7 +99,7 @@ export function CustomerMergeDialog({
   };
 
   const handleFinalMerge = async () => {
-    if (!selectedGuest || !selectedTarget || !confirmedCheck || typedConfirm.trim() !== "FUSIONNER") {
+    if (!selectedGuest || !selectedTarget || !confirmedCheck || !isConfirmMatch) {
       return;
     }
     setLoading(true);
@@ -121,13 +128,13 @@ export function CustomerMergeDialog({
             </div>
             <div>
               <h2 className="text-sm font-bold text-heading font-display">
-                Fusion de comptes clients · Étape {step}/4
+                {t("stepTitle", { step })}
               </h2>
               <p className="text-2xs text-ink-500">
-                {step === 1 && "Sélection du compte invité source"}
-                {step === 2 && "Sélection du compte inscrit cible"}
-                {step === 3 && "Aperçu des éléments à transférer"}
-                {step === 4 && "Confirmation définitive et irréversible"}
+                {step === 1 && t("stepDesc1")}
+                {step === 2 && t("stepDesc2")}
+                {step === 3 && t("stepDesc3")}
+                {step === 4 && t("stepDesc4")}
               </p>
             </div>
           </div>
@@ -135,7 +142,7 @@ export function CustomerMergeDialog({
             type="button"
             onClick={onClose}
             className="p-1.5 text-ink-400 hover:text-heading rounded-lg hover:bg-surface-hover cursor-pointer"
-            aria-label="Fermer"
+            aria-label={t("close")}
           >
             <X className="size-4" />
           </button>
@@ -194,7 +201,7 @@ export function CustomerMergeDialog({
                 ? Boolean(selectedTarget)
                 : step === 3
                   ? true
-                  : Boolean(confirmedCheck && typedConfirm.trim() === "FUSIONNER")
+                  : Boolean(confirmedCheck && isConfirmMatch)
           }
           onBackOrCancel={() => {
             if (step === 1) onClose();

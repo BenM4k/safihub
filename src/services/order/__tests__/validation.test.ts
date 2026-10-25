@@ -280,4 +280,19 @@ describe("Order Checkout Validation Engine", () => {
       ).toBe(true);
     }
   });
+
+  it("refuses slot when courier on shift does not cover both customer and house zones (AC 20)", () => {
+    const contextWithCourierOutOfZone = {
+      ...defaultContext,
+      courierZones: [
+        { courierId: "cour_1", zoneId: "zone_bagira" }, // cour_1 does NOT cover zone_ibanda!
+      ],
+    };
+
+    const res = validateOrderCheckout(baseInput, contextWithCourierOutOfZone);
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error.code).toBe("SLOT_INVALID");
+    }
+  });
 });
