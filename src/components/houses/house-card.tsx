@@ -34,20 +34,26 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
       } catch {
         // Ignored if cancelled
       }
+    } else if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success("Lien copié dans le presse-papier !");
+      } catch {
+        toast.error("Impossible de copier le lien");
+      }
     } else {
-      navigator.clipboard?.writeText(url);
-      toast.success("Lien copié dans le presse-papier !");
+      toast.error("Presse-papier indisponible");
     }
   };
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsFavorited((prev) => {
-      const next = !prev;
-      if (next) toast.success(`${house.name} ajouté aux favoris`);
-      return next;
-    });
+    const next = !isFavorited;
+    setIsFavorited(next);
+    if (next) {
+      toast.success(`${house.name} ajouté aux favoris`);
+    }
   };
 
   return (

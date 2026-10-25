@@ -58,14 +58,17 @@ export function PressingReviewsFilterBar({
       </div>
 
       <div className="flex items-center gap-2 text-xs">
-        <span className="text-muted-foreground font-medium">
-          Trier par :
+        <span id="reviews-sort-label" className="text-muted-foreground font-medium">
+          {t("sortBy")} :
         </span>
         <Select
           value={sortBy}
           onValueChange={(val: string) => onSortChange(val as typeof sortBy)}
         >
-          <SelectTrigger className="h-auto p-2 md:p-1.5 rounded-lg bg-card border border-border text-base md:text-xs font-bold text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer">
+          <SelectTrigger
+            aria-labelledby="reviews-sort-label"
+            className="h-auto p-2 md:p-1.5 rounded-lg bg-card border border-border text-base md:text-xs font-bold text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent align="end">

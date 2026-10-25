@@ -152,6 +152,7 @@ export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSp
         isOpen={isSaveSearchOpen}
         onClose={() => setIsSaveSearchOpen(false)}
         neighborhoods={initialData.neighborhoods}
+        selectedNeighborhoodId={currentNeighborhoodId}
       />
     </div>
   );

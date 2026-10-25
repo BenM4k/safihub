@@ -63,7 +63,7 @@ export function PressingLightbox({
     <Dialog open={isOpen} onOpenChange={(open: boolean) => { if (!open) onClose(); }}>
       <DialogContent
         showCloseButton={false}
-        className="fixed inset-0 max-w-none w-screen h-screen bg-black/90 backdrop-blur-md border-0 p-4 flex items-center justify-center rounded-none shadow-none z-50 outline-none"
+        className="fixed inset-0 top-0 left-0 translate-x-0 translate-y-0 max-w-none sm:max-w-none w-screen h-screen bg-black/90 backdrop-blur-md border-0 p-4 flex items-center justify-center rounded-none shadow-none z-50 outline-none"
       >
         <DialogTitle className="sr-only">
           Galerie photos — {title}

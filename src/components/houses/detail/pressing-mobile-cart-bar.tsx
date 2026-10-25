@@ -56,7 +56,7 @@ export function PressingMobileCartBar({
         <div className="flex items-center gap-2.5">
           <div className="size-10 rounded-2xl bg-primary-soft text-primary flex items-center justify-center relative shrink-0">
             <ShoppingBag className="size-5" />
-            <span className="absolute -top-1 -right-1 size-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center animate-in scale-in duration-150">
+            <span className="absolute -top-1 -right-1 size-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center animate-in zoom-in-50 duration-150">
               {totalItemsCount}
             </span>
           </div>

@@ -32,9 +32,12 @@ export function PressingReviewCriteria({
                   key={s}
                   type="button"
                   onClick={() => crit.setVal(s)}
+                  aria-label={`${crit.label}: ${s} / 5`}
+                  aria-pressed={crit.val === s}
                   className="hover:scale-110 cursor-pointer"
                 >
                   <Star
+                    aria-hidden="true"
                     className={`size-3.5 ${
                       s <= crit.val ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
                     }`}

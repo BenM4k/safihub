@@ -49,7 +49,7 @@ export function FilterSheetSections({
       {/* Neighborhood Section */}
       {neighborhoods && neighborhoods.length > 0 && onSelectNeighborhood && (
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2.5">
+          <label htmlFor="filter-neighborhood-trigger" className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2.5">
             {t("filterNeighborhood")}
           </label>
           <div className="relative">
@@ -57,7 +57,7 @@ export function FilterSheetSections({
               value={selectedNeighborhoodId ?? "all"}
               onValueChange={(val: string) => onSelectNeighborhood(val === "all" ? null : val)}
             >
-              <SelectTrigger className="w-full h-auto py-2.5 pl-9 pr-4 rounded-xl border border-border bg-card text-base font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer transition">
+              <SelectTrigger id="filter-neighborhood-trigger" className="w-full h-auto py-2.5 pl-9 pr-4 rounded-xl border border-border bg-card text-base font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer transition">
                 <SelectValue placeholder={t("allNeighborhoods")} />
               </SelectTrigger>
               <SelectContent>

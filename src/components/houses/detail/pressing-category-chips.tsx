@@ -90,9 +90,10 @@ export function PressingCategoryChips({
               <button
                 type="button"
                 onClick={() => onSelectCategory(null)}
+                aria-label={t("removeFilter", { label: getCategoryLabel(activeCategory) })}
                 className="hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
               >
-                <X className="size-3" />
+                <X className="size-3" aria-hidden="true" />
               </button>
             </span>
           )}
@@ -102,9 +103,12 @@ export function PressingCategoryChips({
               <button
                 type="button"
                 onClick={() => onSelectService(null)}
+                aria-label={t("removeFilter", {
+                  label: services.find((s) => s.slug === activeServiceSlug)?.nameFr ?? "",
+                })}
                 className="hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
               >
-                <X className="size-3" />
+                <X className="size-3" aria-hidden="true" />
               </button>
             </span>
           )}
@@ -114,9 +118,12 @@ export function PressingCategoryChips({
               <button
                 type="button"
                 onClick={() => onSelectFabric(null)}
+                aria-label={t("removeFilter", {
+                  label: fabrics.find((f) => f.id === activeFabricId)?.nameFr ?? "",
+                })}
                 className="hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
               >
-                <X className="size-3" />
+                <X className="size-3" aria-hidden="true" />
               </button>
             </span>
           )}
@@ -126,9 +133,10 @@ export function PressingCategoryChips({
               <button
                 type="button"
                 onClick={() => onSearchChange("")}
+                aria-label={t("removeFilter", { label: searchQuery })}
                 className="hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
               >
-                <X className="size-3" />
+                <X className="size-3" aria-hidden="true" />
               </button>
             </span>
           )}

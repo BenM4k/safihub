@@ -22,7 +22,9 @@
   .img-zoom {
     transition: transform 0.4s var(--ease-soft);
   }
-  .group:hover .img-zoom {
-    transform: scale(1.05);
+  @media (hover: hover) and (pointer: fine) {
+    .group:hover .img-zoom {
+      transform: scale(1.05);
+    }
   }
 }

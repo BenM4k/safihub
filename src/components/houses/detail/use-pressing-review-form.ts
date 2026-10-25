@@ -38,27 +38,31 @@ export function usePressingReviewForm(
 
     setErrorMessage(null);
     startTransition(async () => {
-      const res = await submitReviewAction({
-        orderId: selectedOrderId,
-        houseId,
-        rating,
-        ratingQuality,
-        ratingPunctuality,
-        ratingCare,
-        ratingValue,
-        comment: comment.trim() || undefined,
-        photos: [],
-      });
+      try {
+        const res = await submitReviewAction({
+          orderId: selectedOrderId,
+          houseId,
+          rating,
+          ratingQuality,
+          ratingPunctuality,
+          ratingCare,
+          ratingValue,
+          comment: comment.trim() || undefined,
+          photos: [],
+        });
 
-      if (!res.success) {
-        setErrorMessage(res.error || "Une erreur est survenue.");
-      } else {
-        setIsSuccess(true);
-        toast.success(t("reviewSuccess"));
-        setTimeout(() => {
-          onReviewSubmitted();
-          onClose();
-        }, 1200);
+        if (!res.success) {
+          setErrorMessage(res.error || "Une erreur est survenue.");
+        } else {
+          setIsSuccess(true);
+          toast.success(t("reviewSuccess"));
+          setTimeout(() => {
+            onReviewSubmitted();
+            onClose();
+          }, 1200);
+        }
+      } catch {
+        setErrorMessage("Une erreur est survenue.");
       }
     });
   };

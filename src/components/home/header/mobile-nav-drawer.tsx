@@ -41,7 +41,7 @@ export function MobileNavDrawer({ isOpen, onClose, user }: MobileNavDrawerProps)
       <SheetContent
         side="top"
         showCloseButton={false}
-        className="fixed inset-x-0 top-20 bottom-0 h-[calc(100dvh-5rem)] max-w-none w-full border-t-0 bg-background/95 backdrop-blur-md flex flex-col justify-between p-6 overflow-y-auto z-40 shadow-none"
+        className="fixed inset-x-0 top-20 bottom-0 h-[calc(100dvh-5rem)] max-w-none w-full border-t-0 bg-background/95 backdrop-blur-md flex flex-col justify-between p-6 overflow-y-auto shadow-none"
       >
         <SheetTitle className="sr-only">{tNav("openMenu")}</SheetTitle>
 

@@ -74,9 +74,10 @@ export function PressingCategoryNav({
               <button
                 type="button"
                 onClick={() => onSearchChange("")}
+                aria-label={t("clearSearch")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                <X className="size-3.5" />
+                <X className="size-3.5" aria-hidden="true" />
               </button>
             )}
           </div>
