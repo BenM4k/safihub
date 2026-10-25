@@ -9,3 +9,6 @@
 @import "../styles/layout.css";
 @import "../styles/controls.css";
 @import "../styles/surfaces.css";
+@import "../styles/motion.css";
+@import "tw-animate-css";
+

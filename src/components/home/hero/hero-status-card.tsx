@@ -59,7 +59,7 @@ export function HeroStatusCard() {
             {/* Right side: 2 Video / Avatar tiles */}
             <div className="col-span-5 flex flex-col gap-2">
               {/* Tile 1: Laundry House */}
-              <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-muted border border-border">
+              <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-muted border border-border animate-float shadow-2xs">
                 <Image
                   src="https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=300&q=80"
                   alt="Pressing"
@@ -73,7 +73,7 @@ export function HeroStatusCard() {
               </div>
 
               {/* Tile 2: Courier */}
-              <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-muted border border-border">
+              <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-muted border border-border animate-float [animation-delay:3s] shadow-2xs">
                 <Image
                   src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80"
                   alt="Coursier"

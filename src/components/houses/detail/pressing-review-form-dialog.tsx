@@ -1,15 +1,25 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Star, X, Loader2, CheckCircle2 } from "lucide-react";
+import { Star, CheckCircle2, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { submitReviewAction } from "@/actions/review.actions";
-
-interface EligibleOrder {
-  id: string;
-  createdAt: Date;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PressingReviewCriteria } from "./pressing-review-criteria";
+import { usePressingReviewForm, type EligibleOrder } from "./use-pressing-review-form";
 
 interface PressingReviewFormDialogProps {
   isOpen: boolean;
@@ -28,211 +38,192 @@ export function PressingReviewFormDialog({
   eligibleOrders,
   onReviewSubmitted,
 }: PressingReviewFormDialogProps) {
-  const t = useTranslations("customerHouses");
-  const [isPending, startTransition] = useTransition();
-
-  const [selectedOrderId, setSelectedOrderId] = useState<string>(
-    eligibleOrders[0]?.id || ""
+  return (
+    <Dialog open={isOpen} onOpenChange={(open: boolean) => { if (!open) onClose(); }}>
+      <DialogContent className="w-full max-w-lg rounded-3xl p-6 shadow-2xl border-border max-h-[90vh] overflow-y-auto">
+        {isOpen && (
+          <ReviewFormBody
+            houseId={houseId}
+            houseName={houseName}
+            eligibleOrders={eligibleOrders}
+            onReviewSubmitted={onReviewSubmitted}
+            onClose={onClose}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
-  const [rating, setRating] = useState<number>(5);
-  const [ratingQuality, setRatingQuality] = useState<number>(5);
-  const [ratingPunctuality, setRatingPunctuality] = useState<number>(5);
-  const [ratingCare, setRatingCare] = useState<number>(5);
-  const [ratingValue, setRatingValue] = useState<number>(5);
-  const [comment, setComment] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
+}
 
-  if (!isOpen) return null;
+interface ReviewFormBodyProps {
+  houseId: string;
+  houseName: string;
+  eligibleOrders: EligibleOrder[];
+  onReviewSubmitted: () => void;
+  onClose: () => void;
+}
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
+function ReviewFormBody({
+  houseId,
+  houseName,
+  eligibleOrders,
+  onReviewSubmitted,
+  onClose,
+}: ReviewFormBodyProps) {
+  const t = useTranslations("customerHouses");
+  const {
+    isPending,
+    selectedOrderId,
+    setSelectedOrderId,
+    rating,
+    setRating,
+    ratingQuality,
+    setRatingQuality,
+    ratingPunctuality,
+    setRatingPunctuality,
+    ratingCare,
+    setRatingCare,
+    ratingValue,
+    setRatingValue,
+    comment,
+    setComment,
+    errorMessage,
+    isSuccess,
+    handleSubmit,
+  } = usePressingReviewForm(houseId, eligibleOrders, onReviewSubmitted, onClose);
 
-    if (!selectedOrderId) {
-      setErrorMessage("Veuillez sélectionner une commande livrée.");
-      return;
-    }
-
-    startTransition(async () => {
-      const res = await submitReviewAction({
-        orderId: selectedOrderId,
-        houseId,
-        rating,
-        ratingQuality,
-        ratingPunctuality,
-        ratingCare,
-        ratingValue,
-        comment: comment.trim() || null,
-      });
-
-      if (!res.success) {
-        setErrorMessage(res.error || "Une erreur est survenue.");
-      } else {
-        setIsSuccess(true);
-        setTimeout(() => {
-          onReviewSubmitted();
-          onClose();
-        }, 1500);
-      }
-    });
-  };
+  const criteria = [
+    { label: t("criteriaQuality"), val: ratingQuality, setVal: setRatingQuality },
+    { label: t("criteriaPunctuality"), val: ratingPunctuality, setVal: setRatingPunctuality },
+    { label: t("criteriaCare"), val: ratingCare, setVal: setRatingCare },
+    { label: t("criteriaValue"), val: ratingValue, setVal: setRatingValue },
+  ];
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
-    >
-      <div className="bg-card w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-border relative max-h-[90vh] overflow-y-auto">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-5 right-5 text-muted-foreground hover:text-foreground transition"
-        >
-          <X className="size-5" />
-        </button>
-
-        <h2 className="text-lg font-black text-heading tracking-tight mb-1">
+    <>
+      <DialogHeader className="mb-2 text-left">
+        <DialogTitle className="text-lg font-black text-heading tracking-tight">
           {t("dialogSubmitReviewTitle")}
-        </h2>
-        <p className="text-xs text-muted-foreground mb-5">
+        </DialogTitle>
+        <DialogDescription className="text-xs text-muted-foreground">
           {houseName} · {t("dialogSubmitReviewDesc")}
-        </p>
+        </DialogDescription>
+      </DialogHeader>
 
-        {isSuccess ? (
-          <div className="py-10 text-center space-y-2">
-            <CheckCircle2 className="size-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
-            <p className="text-sm font-bold text-heading">{t("reviewSuccess")}</p>
+      {isSuccess ? (
+        <div className="py-10 text-center space-y-2">
+          <CheckCircle2 className="size-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
+          <p className="text-sm font-bold text-heading">{t("reviewSuccess")}</p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          {errorMessage && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 font-semibold">
+              {errorMessage}
+            </div>
+          )}
+
+          {/* Order selector */}
+          <div>
+            <label htmlFor="order-selector" className="font-bold text-foreground block mb-1">
+              {t("orderSelectLabel")}
+            </label>
+            <Select
+              value={selectedOrderId}
+              onValueChange={(val: string) => setSelectedOrderId(val)}
+            >
+              <SelectTrigger
+                id="order-selector"
+                className="w-full h-auto p-2.5 rounded-xl bg-muted/50 border border-border text-foreground font-medium text-base cursor-pointer"
+              >
+                <SelectValue placeholder={t("orderSelectLabel")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {eligibleOrders.map((o) => (
+                    <SelectItem key={o.id} value={o.id} className="bg-card text-foreground">
+                      Commande du {new Date(o.createdAt).toLocaleDateString("fr-FR")}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-            {errorMessage && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 font-semibold">
-                {errorMessage}
-              </div>
-            )}
 
-            {/* Order selector */}
-            <div>
-              <label className="font-bold text-foreground block mb-1">
-                {t("orderSelectLabel")}
-              </label>
-              <select
-                value={selectedOrderId}
-                onChange={(e) => setSelectedOrderId(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-muted/50 border border-border text-foreground font-medium text-base"
-              >
-                {eligibleOrders.map((o) => (
-                  <option key={o.id} value={o.id} className="bg-card text-foreground">
-                    Commande du {new Date(o.createdAt).toLocaleDateString("fr-FR")}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Global Rating (Large clickable stars) */}
-            <div>
-              <label className="font-bold text-foreground block mb-1.5">
-                {t("globalRatingLabel")}
-              </label>
-              <div className="flex items-center gap-1.5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    className="p-1 hover:scale-110 transition cursor-pointer"
-                  >
-                    <Star
-                      className={`size-6 ${
-                        star <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
-                      }`}
-                    />
-                  </button>
-                ))}
-                <span className="text-xs font-black text-foreground ml-2">
-                  {rating} / 5
-                </span>
-              </div>
-            </div>
-
-            {/* Optional Criteria Grid */}
-            <div className="pt-2 border-t border-border space-y-2.5">
-              <span className="font-bold text-muted-foreground block">
-                {t("criteriaRatingsOptional")}
-              </span>
-              <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  { label: t("criteriaQuality"), val: ratingQuality, setVal: setRatingQuality },
-                  { label: t("criteriaPunctuality"), val: ratingPunctuality, setVal: setRatingPunctuality },
-                  { label: t("criteriaCare"), val: ratingCare, setVal: setRatingCare },
-                  { label: t("criteriaValue"), val: ratingValue, setVal: setRatingValue },
-                ].map((crit) => (
-                  <div key={crit.label} className="p-2.5 rounded-xl bg-muted/50 border border-border">
-                    <span className="text-[11px] font-semibold text-foreground block mb-1">
-                      {crit.label}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => crit.setVal(s)}
-                          className="hover:scale-110"
-                        >
-                          <Star
-                            className={`size-3.5 ${
-                              s <= crit.val ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
-                            }`}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Comment */}
-            <div>
-              <label className="font-bold text-foreground block mb-1">
-                {t("commentLabel")}
-              </label>
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                maxLength={1000}
-                rows={3}
-                placeholder={t("commentPlaceholder")}
-                className="w-full p-2.5 rounded-xl bg-muted/50 border border-border text-foreground font-normal text-base placeholder:text-muted-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-              <span className="text-[10px] text-muted-foreground float-right">
-                {comment.length} / 1000
+          {/* Global Rating (Large clickable stars) */}
+          <div>
+            <label className="font-bold text-foreground block mb-1.5">
+              {t("globalRatingLabel")}
+            </label>
+            <div className="flex items-center gap-1.5">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  aria-label={`${t("globalRatingLabel")}: ${star} / 5`}
+                  aria-pressed={star === rating}
+                  className="p-1 hover:scale-110 transition cursor-pointer"
+                >
+                  <Star
+                    aria-hidden="true"
+                    className={`size-6 ${
+                      star <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
+                    }`}
+                  />
+                </button>
+              ))}
+              <span className="text-xs font-black text-foreground ml-2">
+                {rating} / 5
               </span>
             </div>
+          </div>
 
-            {/* Submit CTA */}
-            <div className="pt-3">
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={isPending}
-                className="w-full py-3 rounded-xl font-black text-sm"
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin mr-2" />
-                    <span>{t("submitting")}</span>
-                  </>
-                ) : (
-                  <span>{t("submitReviewBtn")}</span>
-                )}
-              </Button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>
+          {/* Optional Criteria Grid */}
+          <PressingReviewCriteria
+            title={t("criteriaRatingsOptional")}
+            criteria={criteria}
+          />
+
+          {/* Comment */}
+          <div>
+            <label htmlFor="review-comment" className="font-bold text-foreground block mb-1">
+              {t("commentLabel")}
+            </label>
+            <textarea
+              id="review-comment"
+              value={comment}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComment(e.target.value)}
+              maxLength={1000}
+              rows={3}
+              placeholder={t("commentPlaceholder")}
+              className="w-full p-2.5 rounded-xl bg-muted/50 border border-border text-foreground font-normal text-base placeholder:text-muted-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            <span className="text-[10px] text-muted-foreground float-right">
+              {comment.length} / 1000
+            </span>
+          </div>
+
+          {/* Submit CTA */}
+          <div className="pt-3">
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={isPending}
+              className="w-full py-3 rounded-xl font-black text-sm"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin mr-2" />
+                  <span>{t("submitting")}</span>
+                </>
+              ) : (
+                <span>{t("submitReviewBtn")}</span>
+              )}
+            </Button>
+          </div>
+        </form>
+      )}
+    </>
   );
 }

@@ -52,7 +52,7 @@ export function PressingArticleCard({
 
   return (
     <div
-      className={`rounded-3xl border p-4 sm:p-5 flex flex-col justify-between transition-all bg-card ${
+      className={`rounded-3xl border p-4 sm:p-5 flex flex-col justify-between transition-all bg-card hover-lift ${
         selectedItem?.isExcluded
           ? "border-border/60 opacity-60 bg-muted/30"
           : quantityInCart > 0

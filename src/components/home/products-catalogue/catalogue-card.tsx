@@ -3,8 +3,8 @@
 import Image from "next/image";
 import { Clock, Plus, Check } from "lucide-react";
 import type { ProductItem } from "@/lib/sample-data";
-
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface CatalogueCardProps {
   product: ProductItem;
@@ -19,7 +19,7 @@ export function CatalogueCard({
 }: CatalogueCardProps) {
   return (
     <div
-      className={`card card-interactive bg-card border transition-all flex flex-col justify-between overflow-hidden group ${
+      className={`card card-interactive hover-lift bg-card border transition-all flex flex-col justify-between overflow-hidden group ${
         isSelected
           ? "border-primary ring-2 ring-primary/20 shadow-card"
           : "border-border hover:border-border-strong"
@@ -38,16 +38,22 @@ export function CatalogueCard({
 
           {/* Tag badge */}
           {product.tag && (
-            <span className="absolute top-2.5 left-2.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-900/80 dark:bg-card/90 text-white dark:text-foreground border border-white/20 dark:border-border backdrop-blur-xs shadow-soft">
+            <Badge
+              variant="secondary"
+              className="absolute top-2.5 left-2.5 text-[11px] font-semibold bg-slate-900/80 dark:bg-card/90 text-white dark:text-foreground border border-white/20 dark:border-border backdrop-blur-xs shadow-soft"
+            >
               {product.tag}
-            </span>
+            </Badge>
           )}
 
           {/* Turnaround badge */}
-          <span className="absolute bottom-2.5 right-2.5 flex items-center gap-1 bg-white/90 dark:bg-card/90 backdrop-blur-sm text-heading text-[11px] font-bold px-2 py-0.5 rounded-full border border-border shadow-soft">
+          <Badge
+            variant="outline"
+            className="absolute bottom-2.5 right-2.5 flex items-center gap-1 bg-white/90 dark:bg-card/90 backdrop-blur-sm text-heading text-[11px] font-bold border-border shadow-soft"
+          >
             <Clock className="size-3 text-primary" />
             <span>{product.turnaroundHours}h</span>
-          </span>
+          </Badge>
         </div>
 
         {/* Product details */}
@@ -82,7 +88,7 @@ export function CatalogueCard({
           size="sm"
           variant={isSelected ? "secondary" : "outline"}
           onClick={() => onToggle(product.id)}
-          className={`text-xs font-bold transition-all ${
+          className={`text-xs font-bold transition-all press ${
             !isSelected ? "hover:bg-primary hover:text-white hover:border-primary" : ""
           }`}
           aria-label={
@@ -91,7 +97,7 @@ export function CatalogueCard({
         >
           {isSelected ? (
             <>
-              <Check className="size-3.5" />
+              <Check className="size-3.5 animate-in scale-in duration-150" />
               <span>Sélectionné</span>
             </>
           ) : (

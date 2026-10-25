@@ -2200,6 +2200,8 @@
     "allServices": "All services",
     "activeFilters": "Active filters:",
     "clearAllFilters": "Clear all",
+    "removeFilter": "Remove filter {label}",
+    "clearSearch": "Clear search",
     "noArticlesMatch": "No items match your search criteria.",
     "fromPrice": "From {price}",
     "indicativeUsd": "≈ ${amount} (indicative rate)",

@@ -32,6 +32,8 @@ No `tailwind.config` — everything lives in CSS. `src/app/globals.css` imports,
 | `src/styles/layout.css` | `container-page/narrow/prose`, `section(-sm)`, `stack(-n)`, `cluster(-n)`, `grid-auto-{container}` / `grid-auto-[14rem]`, `split`, `touch`. |
 | `src/styles/controls.css` | `btn` + variant (`btn-primary/secondary/contrast/outline/ghost/warm/destructive`) + size (`btn-sm/lg/icon/block`); `link`, `link-quiet`, `link-arrow`. |
 | `src/styles/surfaces.css` | `card`, `card-interactive`, `panel`, `surface-float`, `glass`, `bg-brand`, `bg-wash(-warm)`, `text-gradient`, `orb`, `eyebrow`, `icon-tile(-soft)`. |
+| `src/styles/motion.css` | Micro-interaction utilities: `.hover-lift`, `.press`, `.img-zoom` adhering to reduced-motion and touch-safe interaction. |
+| `tw-animate-css` | Tailwind v4 animation package restoring standard `animate-in`, `fade-in`, `slide-in-from-*` primitives with GPU acceleration. |
 
 **Rules**
 

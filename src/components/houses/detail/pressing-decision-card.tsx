@@ -40,7 +40,7 @@ export function PressingDecisionCard({
   const canOrder = !isPaused && isMinOrderReached && totalItemsCount > 0;
 
   return (
-    <div className="sticky top-20 bg-card rounded-3xl border border-border p-5 shadow-sm space-y-5">
+    <div className="sticky top-20 bg-card rounded-3xl border border-border p-5 shadow-sm space-y-5 hover-lift">
       <div>
         <h2 className="text-base font-black text-heading tracking-tight mb-1">
           {t("decisionCardTitle")}

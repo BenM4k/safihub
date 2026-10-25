@@ -2200,6 +2200,8 @@
     "allServices": "Huduma zote",
     "activeFilters": "Vichujio vilivyo hai:",
     "clearAllFilters": "Futa vyote",
+    "removeFilter": "Ondoa kichujio cha {label}",
+    "clearSearch": "Futa utafutaji",
     "noArticlesMatch": "Hakuna nguo inayolingana na utafutaji wako.",
     "fromPrice": "Kuanzia {price}",
     "indicativeUsd": "≈ ${amount} (kiwango cha kukadiria)",

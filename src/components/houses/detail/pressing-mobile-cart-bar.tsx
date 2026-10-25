@@ -31,7 +31,7 @@ export function PressingMobileCartBar({
   if (totalItemsCount === 0) return null;
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-2xl animate-in slide-in-from-bottom-3">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-2xl animate-in slide-in-from-bottom duration-300">
       {/* Minimum order progress ribbon if not reached */}
       {minimumOrderAmount > 0 && !isMinOrderReached && (
         <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2">
@@ -56,7 +56,7 @@ export function PressingMobileCartBar({
         <div className="flex items-center gap-2.5">
           <div className="size-10 rounded-2xl bg-primary-soft text-primary flex items-center justify-center relative shrink-0">
             <ShoppingBag className="size-5" />
-            <span className="absolute -top-1 -right-1 size-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 size-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center animate-in zoom-in-50 duration-150">
               {totalItemsCount}
             </span>
           </div>
@@ -78,7 +78,7 @@ export function PressingMobileCartBar({
           size="sm"
           onClick={onProceedOrder}
           disabled={!isMinOrderReached}
-          className="px-4 py-2.5 rounded-xl font-black text-xs gap-1.5 shrink-0 shadow-sm"
+          className="px-4 py-2.5 rounded-xl font-black text-xs gap-1.5 shrink-0 shadow-sm press hover-lift"
         >
           <span>{t("orderNow")}</span>
           <ArrowRight className="size-3.5" />

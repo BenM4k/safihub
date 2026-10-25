@@ -2,6 +2,14 @@
 
 import { useTranslations } from "next-intl";
 import { ArrowUpDown, X, MapPin } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface HousesResultsHeaderProps {
   totalCount: number;
@@ -71,24 +79,28 @@ export function HousesResultsHeader({
           </button>
         )}
 
-        <div className="flex items-center gap-1.5 bg-muted/60 border border-border rounded-xl px-2.5 py-1 text-xs">
-          <ArrowUpDown className="size-3 text-muted-foreground" />
-          <span className="text-muted-foreground font-medium">{t("sortBy")}:</span>
-          <select
-            value={currentSort}
-            onChange={(e) =>
-              onSortChange(
-                e.target.value as "recommended" | "turnaround" | "price" | "rating"
-              )
-            }
-            className="bg-transparent font-bold text-foreground text-base sm:text-xs focus:outline-none cursor-pointer"
-          >
-            <option value="recommended" className="bg-card text-foreground">{t("sortRecommended")}</option>
-            <option value="turnaround" className="bg-card text-foreground">{t("sortTurnaround")}</option>
-            <option value="price" className="bg-card text-foreground">{t("sortPrice")}</option>
-            <option value="rating" className="bg-card text-foreground">{t("sortRating")}</option>
-          </select>
-        </div>
+        <Select
+          value={currentSort}
+          onValueChange={(val: string) =>
+            onSortChange(
+              val as "recommended" | "turnaround" | "price" | "rating"
+            )
+          }
+        >
+          <SelectTrigger className="h-auto bg-muted/60 border border-border rounded-xl px-2.5 py-1 text-xs font-bold text-foreground shadow-none gap-1.5 cursor-pointer focus:ring-0 focus-visible:ring-0 dark:bg-muted/60">
+            <ArrowUpDown className="size-3 text-muted-foreground shrink-0" />
+            <span className="text-muted-foreground font-medium">{t("sortBy")}:</span>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="end">
+            <SelectGroup>
+              <SelectItem value="recommended">{t("sortRecommended")}</SelectItem>
+              <SelectItem value="turnaround">{t("sortTurnaround")}</SelectItem>
+              <SelectItem value="price">{t("sortPrice")}</SelectItem>
+              <SelectItem value="rating">{t("sortRating")}</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
