@@ -3,6 +3,7 @@
 import { Calendar, Clock, Edit2, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   formatDateFr,
   calculateDurationDays,
@@ -26,7 +27,6 @@ export function ClosureCard({
   const t = useTranslations("house.hours");
   const status = getClosureStatus(closure);
   const durationDays = calculateDurationDays(closure.startsOn, closure.endsOn);
-  const durationLabel = `${durationDays} ${durationDays > 1 ? "jours" : "jour"}`;
 
   const statusConfig = {
     upcoming: {
@@ -49,9 +49,9 @@ export function ClosureCard({
   const StatusIcon = statusConfig.icon;
 
   return (
-    <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-surface/50 border-b border-border last:border-b-0 transition-colors">
+    <div className="py-3 px-2 sm:px-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-muted/30 border-b border-border/60 last:border-b-0 transition-colors">
       <div className="flex items-start sm:items-center gap-3 min-w-0">
-        <div className="size-9 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shrink-0">
+        <div className="size-8 rounded-lg bg-muted/40 border border-border flex items-center justify-center text-primary shrink-0">
           <Calendar className="size-4" aria-hidden="true" />
         </div>
 
@@ -64,17 +64,18 @@ export function ClosureCard({
             </span>
 
             {/* Duration pill */}
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-surface border border-border text-foreground">
-              {durationLabel}
-            </span>
+            <Badge variant="outline" className="text-[11px] font-semibold text-muted-foreground">
+              {t("daysCount", { count: durationDays })}
+            </Badge>
 
             {/* Status pill */}
-            <span
-              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${statusConfig.badgeClass}`}
+            <Badge
+              variant="outline"
+              className={`inline-flex items-center gap-1 text-[11px] font-bold border ${statusConfig.badgeClass}`}
             >
               <StatusIcon className="size-3" aria-hidden="true" />
               <span>{statusConfig.label}</span>
-            </span>
+            </Badge>
           </div>
 
           {closure.reason && (
@@ -93,11 +94,11 @@ export function ClosureCard({
           variant="outline"
           disabled={disabled}
           onClick={() => onEdit(closure)}
-          aria-label={`Modifier la fermeture du ${formatDateFr(closure.startsOn)}`}
-          className="h-8 px-2.5 text-xs text-foreground bg-card hover:bg-surface border-border cursor-pointer"
+          aria-label={t("editClosureAria", { date: formatDateFr(closure.startsOn) })}
+          className="h-8 px-2.5 text-xs text-foreground cursor-pointer"
         >
           <Edit2 className="size-3.5 mr-1 text-muted-foreground" aria-hidden="true" />
-          <span>Modifier</span>
+          <span>{t("edit")}</span>
         </Button>
 
         <Button
@@ -106,7 +107,7 @@ export function ClosureCard({
           variant="ghost"
           disabled={disabled}
           onClick={() => onDelete(closure.id)}
-          aria-label={`Supprimer la fermeture du ${formatDateFr(closure.startsOn)}`}
+          aria-label={t("deleteClosureAria", { date: formatDateFr(closure.startsOn) })}
           className="h-8 px-2.5 text-xs text-destructive hover:bg-destructive-soft hover:text-destructive cursor-pointer"
         >
           <Trash2 className="size-3.5 mr-1" aria-hidden="true" />

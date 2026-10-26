@@ -1,43 +1,44 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AlertTriangle, Check, Loader2, RotateCcw } from "lucide-react";
+import { AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { submitHouseReceptionAction } from "@/actions/house.actions";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  ReceptionItemRow,
+  type ReceptionItemState,
+} from "./reception-item-row";
 import type { OrderItemRecord } from "@/dal";
 
-interface ItemState {
-  orderItemId: string;
-  itemName: string;
-  fabricName: string;
-  declaredQuantity: number;
-  receivedQuantity: number;
-  unitPrice: number;
-  isExplicitlyRejected: boolean;
+interface ReceptionCountFormProps {
+  orderId: string;
+  houseId?: string;
+  items: OrderItemRecord[];
 }
 
+/**
+ * Critical 3-point count input form with discrepancy detection and price adjustment alerts.
+ */
 export function ReceptionCountForm({
   orderId,
   houseId,
   items,
-}: {
-  orderId: string;
-  houseId?: string;
-  items: OrderItemRecord[];
-}) {
+}: ReceptionCountFormProps) {
   const t = useTranslations("house.reception");
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const [itemStates, setItemStates] = useState<ItemState[]>(() =>
+  const [itemStates, setItemStates] = useState<ReceptionItemState[]>(() =>
     items.map((it) => ({
       orderItemId: it.id,
       itemName: it.itemNameFr ?? it.customLabel ?? "Article",
       fabricName: it.fabricNameFr ?? "Standard",
       declaredQuantity: it.declaredQuantity,
-      receivedQuantity: it.receivedQuantity !== null ? it.receivedQuantity : it.declaredQuantity,
+      receivedQuantity:
+        it.receivedQuantity !== null ? it.receivedQuantity : it.declaredQuantity,
       unitPrice: it.unitPrice,
       isExplicitlyRejected: it.status === "returned",
     }))
@@ -63,7 +64,6 @@ export function ReceptionCountForm({
     );
   }
 
-  // Calculate discrepancies
   let hasDiscrepancy = false;
   let returnedCount = 0;
 
@@ -71,11 +71,8 @@ export function ReceptionCountForm({
     if (it.isExplicitlyRejected) {
       hasDiscrepancy = true;
       returnedCount += it.receivedQuantity;
-      // Excluded item is 0 CDF in cleaning total!
-    } else {
-      if (it.receivedQuantity !== it.declaredQuantity) {
-        hasDiscrepancy = true;
-      }
+    } else if (it.receivedQuantity !== it.declaredQuantity) {
+      hasDiscrepancy = true;
     }
   }
 
@@ -101,87 +98,64 @@ export function ReceptionCountForm({
         setErrorMsg(res.error);
       } else {
         setSuccessMsg(
-          res.value.hasPriceAdjustment
-            ? "Comptage validé avec ajustement de prix (en attente d'approbation client)."
-            : "Comptage conforme validé ! Lavage en cours."
+          res.value.hasPriceAdjustment ? t("countGapAlert") : t("readySuccess")
         );
       }
     });
   }
 
   return (
-    <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-xs space-y-4 p-5 sm:p-6">
+    <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-xs space-y-4 p-5 sm:p-6 font-sans">
       <div className="border-b border-border pb-3">
         <h2 className="text-base font-bold text-heading">{t("title")}</h2>
         <p className="text-xs text-muted-foreground mt-0.5">{t("subtitle")}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="divide-y divide-border border border-border rounded-xl overflow-hidden">
+        <div className="divide-y divide-border border border-border rounded-xl overflow-hidden bg-card">
           {itemStates.map((item) => (
-            <div
+            <ReceptionItemRow
               key={item.orderItemId}
-              className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${
-                item.isExplicitlyRejected ? "bg-destructive-soft/40" : "hover:bg-surface"
-              }`}
-            >
-              <div className="space-y-0.5">
-                <span className="font-bold text-xs text-heading block">
-                  {item.itemName} ({item.fabricName})
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  Déclaré: <strong>{item.declaredQuantity}</strong> • Prix unitaire:{" "}
-                  <strong>{item.unitPrice.toLocaleString()} CDF</strong>
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3 self-end sm:self-auto">
-                <div className="flex items-center gap-1.5">
-                  <label className="text-xs font-semibold text-foreground">Reçu:</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={item.receivedQuantity}
-                    onChange={(e) =>
-                      handleQuantityChange(item.orderItemId, parseInt(e.target.value) || 0)
-                    }
-                    className="w-16 h-8 text-center text-xs font-bold rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  />
-                </div>
-
-                {/* AC 10 exclusion toggle button */}
-                <button
-                  type="button"
-                  onClick={() => handleToggleReject(item.orderItemId)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${
-                    item.isExplicitlyRejected
-                      ? "bg-destructive text-primary-foreground shadow-xs"
-                      : "bg-secondary text-foreground hover:bg-secondary/80"
-                  }`}
-                >
-                  <RotateCcw className="size-3" />
-                  <span>{item.isExplicitlyRejected ? "Exclu (Retour)" : "Exclure (AC 10)"}</span>
-                </button>
-              </div>
-            </div>
+              item={item}
+              onQuantityChange={(val) =>
+                handleQuantityChange(item.orderItemId, val)
+              }
+              onToggleReject={() => handleToggleReject(item.orderItemId)}
+              declaredLabel={t("declaredCol")}
+              unitPriceLabel={t("unitPriceCol")}
+              receivedLabel={t("receivedCol")}
+              excludeLabel={t("markExcluded")}
+              excludedLabel={t("returnedExcluded")}
+            />
           ))}
         </div>
 
         {/* Live Discrepancy Alert */}
         {hasDiscrepancy ? (
-          <div className="p-3.5 bg-warning-soft rounded-xl border border-warning/20 flex items-start gap-2.5 text-xs text-warning">
-            <AlertTriangle className="size-4 shrink-0 mt-0.5 text-warning" />
-            <div>
-              <p className="font-bold">{t("adjustmentWarning")}</p>
-              <p className="mt-0.5">{t("countGapAlert")}</p>
-              {returnedCount > 0 && <p className="mt-1 font-semibold">{t("excludedItemAlert")}</p>}
-            </div>
-          </div>
+          <Alert
+            variant="destructive"
+            className="border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200 py-3"
+          >
+            <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400" />
+            <AlertTitle className="text-xs font-bold text-amber-900 dark:text-amber-200">
+              {t("adjustmentWarning")}
+            </AlertTitle>
+            <AlertDescription className="text-xs mt-0.5 text-amber-800 dark:text-amber-300">
+              {t("countGapAlert")}
+              {returnedCount > 0 && (
+                <span className="block mt-1 font-semibold">
+                  {t("excludedItemAlert")}
+                </span>
+              )}
+            </AlertDescription>
+          </Alert>
         ) : (
-          <div className="p-3.5 bg-success-soft rounded-xl border border-success/20 flex items-center gap-2.5 text-xs text-success">
-            <Check className="size-4 text-success" />
-            <span>Comptage conforme aux pièces déclarées. Aucun ajustement de prix nécessaire.</span>
-          </div>
+          <Alert variant="success" className="py-3">
+            <Check className="size-4" />
+            <AlertDescription className="text-xs">
+              {t("accepted")}
+            </AlertDescription>
+          </Alert>
         )}
 
         {errorMsg && (
@@ -194,9 +168,9 @@ export function ReceptionCountForm({
         <Button
           type="submit"
           disabled={isPending}
-          className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs py-2.5 shadow-xs"
+          className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs py-2.5 shadow-xs cursor-pointer"
         >
-          {isPending ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : null}
+          {isPending && <Loader2 className="size-3.5 animate-spin mr-1.5" />}
           <span>{t("submitCount")}</span>
         </Button>
       </form>

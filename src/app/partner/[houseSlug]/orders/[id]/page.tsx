@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { guardHouseRoute } from "@/services/auth";
 import { getHouseOrderDetail } from "@/services/house";
 import { getOrderPhotosWithSignedUrlsService } from "@/services/storage";
@@ -16,6 +17,7 @@ interface PageProps {
 
 export default async function PartnerOrderDetailPage({ params }: PageProps) {
   const { houseSlug, id } = await params;
+  const t = await getTranslations("house.orders");
   const authCtx = await guardHouseRoute({ houseSlug });
   const houseId = authCtx.houseId;
 
@@ -41,10 +43,10 @@ export default async function PartnerOrderDetailPage({ params }: PageProps) {
       <div>
         <Link
           href={`/partner/${houseSlug}/orders`}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition mb-3"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition mb-3"
         >
           <ArrowLeft className="size-3.5" />
-          <span>Retour aux commandes</span>
+          <span>{t("backToOrders")}</span>
         </Link>
       </div>
 
@@ -54,17 +56,17 @@ export default async function PartnerOrderDetailPage({ params }: PageProps) {
       {/* Items list with declared / counted quantities */}
       <OrderDetailItems items={items} />
 
-      {/* Phase 7: Order photos gallery */}
+      {/* Order photos gallery */}
       {photos.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-            Photos de la commande ({photos.length})
+        <div className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-3">
+          <h2 className="text-sm font-bold text-heading uppercase tracking-wider">
+            {t("orderPhotos", { count: photos.length })}
           </h2>
           <OrderPhotosGallery photos={photos} />
         </div>
       )}
 
-      {/* Reception item count check if order arrived at house */}
+      {/* Reception item count check if order arrived at house (AC 10) */}
       {order.status === "received" && (
         <ReceptionCountForm orderId={order.id} houseId={houseId} items={items} />
       )}

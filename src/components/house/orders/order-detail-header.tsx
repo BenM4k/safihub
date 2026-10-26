@@ -1,6 +1,8 @@
-import { Shield, MapPin, User, Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, MapPin, Shield, User } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { Badge } from "@/components/ui/badge";
 import type { HouseOrderDetailRecord } from "@/dal";
+import { formatAmount, formatDateTime, getOrderStatusConfig } from "@/lib/order-formatters";
 import { AcceptanceTimer } from "../dashboard/acceptance-timer";
 import { OrderActions } from "./order-actions";
 
@@ -10,6 +12,7 @@ export async function OrderDetailHeader({
   order: HouseOrderDetailRecord;
 }) {
   const t = await getTranslations("house.orders");
+  const statusCfg = getOrderStatusConfig(order.status);
 
   return (
     <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-xs space-y-4">
@@ -19,15 +22,16 @@ export async function OrderDetailHeader({
             <h1 className="text-xl sm:text-2xl font-black text-heading font-mono tracking-tight">
               {order.code}
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-soft text-primary">
-              {order.status}
-            </span>
+            <Badge variant="outline" className={`gap-1.5 font-bold ${statusCfg.badgeClass}`}>
+              <span className={`size-1.5 rounded-full ${statusCfg.dotClass}`} />
+              <span>{statusCfg.label}</span>
+            </Badge>
             {order.status === "created" && (
               <AcceptanceTimer deadline={order.acceptanceDeadlineAt} />
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Créée le {new Date(order.createdAt).toLocaleDateString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+            {formatDateTime(order.createdAt)}
           </p>
         </div>
 
@@ -37,7 +41,7 @@ export async function OrderDetailHeader({
       </div>
 
       {/* AC 15 Privacy Shield Notice */}
-      <div className="p-3 bg-surface rounded-xl border border-border flex items-start gap-2.5">
+      <div className="p-3 bg-muted/40 rounded-xl border border-border flex items-start gap-2.5">
         <Shield className="size-4 text-primary shrink-0 mt-0.5" />
         <div className="text-xs text-foreground">
           <strong className="text-heading font-semibold">{t("privacyBadge")} :</strong>{" "}
@@ -45,10 +49,10 @@ export async function OrderDetailHeader({
         </div>
       </div>
 
-      {/* Customer summary (Restricted projection) */}
+      {/* Customer summary (AC 15 Restricted projection) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs">
-        <div className="p-3 bg-surface rounded-xl">
-          <span className="text-muted-foreground block mb-0.5 flex items-center gap-1">
+        <div className="p-3 bg-muted/40 rounded-xl border border-border/50">
+          <span className="text-muted-foreground mb-0.5 flex items-center gap-1">
             <User className="size-3" /> {t("customerPseudonym")}
           </span>
           <strong className="text-heading font-bold text-sm">
@@ -56,8 +60,8 @@ export async function OrderDetailHeader({
           </strong>
         </div>
 
-        <div className="p-3 bg-surface rounded-xl">
-          <span className="text-muted-foreground block mb-0.5 flex items-center gap-1">
+        <div className="p-3 bg-muted/40 rounded-xl border border-border/50">
+          <span className="text-muted-foreground mb-0.5 flex items-center gap-1">
             <MapPin className="size-3" /> {t("neighborhood")}
           </span>
           <strong className="text-heading font-bold text-sm">
@@ -65,22 +69,27 @@ export async function OrderDetailHeader({
           </strong>
         </div>
 
-        <div className="p-3 bg-surface rounded-xl">
-          <span className="text-muted-foreground block mb-0.5 flex items-center gap-1">
+        <div className="p-3 bg-muted/40 rounded-xl border border-border/50">
+          <span className="text-muted-foreground mb-0.5 flex items-center gap-1">
             <Calendar className="size-3" /> {t("pickupSlot")}
           </span>
           <strong className="text-heading font-semibold">
-            {new Date(order.pickupSlotStart).toLocaleDateString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+            {formatDateTime(order.pickupSlotStart)}
           </strong>
         </div>
 
-        <div className="p-3 bg-surface rounded-xl">
-          <span className="text-muted-foreground block mb-0.5 flex items-center gap-1">
+        <div className="p-3 bg-muted/40 rounded-xl border border-border/50">
+          <span className="text-muted-foreground mb-0.5 flex items-center gap-1">
             <Clock className="size-3" /> {t("amount")}
           </span>
-          <strong className="text-success font-bold text-sm">
-            {order.totalDue.toLocaleString()} {order.currency}
+          <strong className="text-primary font-bold text-sm block">
+            {formatAmount(order.totalDue, order.currency)}
           </strong>
+          {order.deliveryFee !== null && order.deliveryFee > 0 && (
+            <span className="text-[10px] text-muted-foreground block pt-0.5">
+              {t("financialTransportFee")}: {formatAmount(order.deliveryFee, order.currency)}
+            </span>
+          )}
         </div>
       </div>
     </div>

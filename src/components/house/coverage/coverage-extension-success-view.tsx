@@ -43,7 +43,7 @@ export function CoverageExtensionSuccessView({
       </div>
 
       {/* Ticket Reference with Copy */}
-      <div className="p-3 bg-surface rounded-xl border border-border inline-flex items-center gap-2.5">
+      <div className="p-3 bg-muted/30 rounded-xl border border-border inline-flex items-center gap-2.5">
         <div className="text-left">
           <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">
             {t("ticketRefLabel")}
@@ -52,10 +52,12 @@ export function CoverageExtensionSuccessView({
             {ticketRef}
           </span>
         </div>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={handleCopy}
-          className="p-1.5 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-heading transition inline-flex items-center gap-1 text-[11px] font-semibold"
+          className="h-7 px-2 text-[11px] font-semibold gap-1 text-muted-foreground hover:text-heading"
           aria-label={t("ticketCopyRef")}
         >
           {copied ? (
@@ -69,7 +71,7 @@ export function CoverageExtensionSuccessView({
               <span>{t("ticketCopyRef")}</span>
             </>
           )}
-        </button>
+        </Button>
       </div>
 
       <div className="p-3.5 bg-primary-soft/50 rounded-xl border border-primary/20 text-xs text-muted-foreground text-left leading-relaxed">

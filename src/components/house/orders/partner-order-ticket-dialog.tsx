@@ -1,12 +1,19 @@
 "use client";
 
 import { useRef } from "react";
-import { Printer, QrCode, X } from "lucide-react";
+import { Printer, QrCode } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { PartnerOrderListItemDTO } from "@/dal/partner-order.dal";
 import { formatAmount, formatDateTime } from "@/lib/order-formatters";
-import { useAccessibleDialog } from "./use-accessible-dialog";
 
 interface PartnerOrderTicketDialogProps {
   order: PartnerOrderListItemDTO | null;
@@ -21,49 +28,27 @@ export function PartnerOrderTicketDialog({
 }: PartnerOrderTicketDialogProps) {
   const t = useTranslations("house.orders");
   const ticketRef = useRef<HTMLDivElement>(null);
-  const printButtonRef = useRef<HTMLButtonElement>(null);
 
-  const containerRef = useAccessibleDialog<HTMLDivElement>({
-    isOpen,
-    onClose,
-    initialFocusRef: printButtonRef,
-    trapTab: true,
-  });
-
-  if (!isOpen || !order) return null;
+  if (!order) return null;
 
   function handlePrint() {
     window.print();
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="ticket-dialog-title"
-      className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
-    >
-      <div
-        ref={containerRef}
-        tabIndex={-1}
-        className="bg-card rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-border space-y-4 font-sans outline-none"
-      >
-        <div className="flex items-center justify-between border-b border-border pb-3">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
           <div className="flex items-center gap-2">
             <Printer className="size-4 text-primary" />
-            <h3 id="ticket-dialog-title" className="text-sm font-bold text-heading">
+            <DialogTitle className="text-sm font-bold text-heading">
               {t("ticketTitle")}
-            </h3>
+            </DialogTitle>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t("close")}
-            className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
+          <DialogDescription className="text-xs text-muted-foreground">
+            {t("orderCodeLabel", { code: order.shortReference })}
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Printable Ticket Area */}
         <div
@@ -85,10 +70,9 @@ export function PartnerOrderTicketDialog({
             <span className="text-[9px] text-slate-500 mt-1 uppercase">{t("ticketScanNote")}</span>
           </div>
 
-          {/* Customer & Location */}
+          {/* Customer & Location (AC 15 Customer Privacy Firewall: No Phone) */}
           <div className="border-t border-dashed border-slate-300 pt-2 space-y-1 text-[11px]">
             <div><strong>{t("customer")} :</strong> {order.customerDisplayName}</div>
-            {order.customerPhone && <div><strong>{t("phone")} :</strong> {order.customerPhone}</div>}
             <div><strong>{t("neighborhood")} :</strong> {order.neighborhoodName}</div>
           </div>
 
@@ -108,8 +92,7 @@ export function PartnerOrderTicketDialog({
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+        <DialogFooter className="gap-2 sm:gap-0 pt-2">
           <Button
             type="button"
             variant="ghost"
@@ -120,7 +103,6 @@ export function PartnerOrderTicketDialog({
             {t("close")}
           </Button>
           <Button
-            ref={printButtonRef}
             type="button"
             size="sm"
             onClick={handlePrint}
@@ -129,8 +111,8 @@ export function PartnerOrderTicketDialog({
             <Printer className="size-3.5 mr-1.5" />
             <span>{t("ticketPrintBtn")}</span>
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

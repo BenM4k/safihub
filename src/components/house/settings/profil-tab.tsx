@@ -4,6 +4,8 @@ import { useState, useEffect, useTransition } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { updateHouseGeneralSettingsAction } from "@/actions/house.actions";
 import { StickySaveBar } from "@/components/house/catalogue/sticky-save-bar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 import { IdentityCard } from "./profil/identity-card";
 import { PhotoCard } from "./profil/photo-card";
 import { ContactLocationCard } from "./profil/contact-location-card";
@@ -66,23 +68,25 @@ export function ProfilTab({ house, onDirtyChange }: ProfilTabProps) {
   return (
     <div className="space-y-6">
       {errorMsg && (
-        <div className="p-4 bg-destructive-soft border border-destructive/30 rounded-xl text-xs text-destructive font-semibold flex items-center gap-2">
-          <AlertCircle className="size-4 shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
+        </Alert>
       )}
       {successMsg && (
-        <div className="p-4 bg-success-soft border border-success/30 rounded-xl text-xs text-success font-semibold flex items-center gap-2">
-          <CheckCircle2 className="size-4 shrink-0" />
-          <span>{successMsg}</span>
-        </div>
+        <Alert className="border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300">
+          <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+          <AlertDescription className="text-xs font-semibold">{successMsg}</AlertDescription>
+        </Alert>
       )}
 
       {/* 1. Identity & Public Link */}
       <IdentityCard house={house} />
+      <Separator />
 
       {/* 2. Photo de vitrine */}
       <PhotoCard />
+      <Separator />
 
       {/* 3. Contact & Localisation */}
       <ContactLocationCard

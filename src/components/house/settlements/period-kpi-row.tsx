@@ -1,105 +1,109 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ArrowDownRight, ArrowUpRight, CircleDollarSign, Minus, Percent, Receipt, Wallet } from "lucide-react";
 import { formatMoney } from "@/lib/cash-formatters";
 import type { PartnerSettlementKpiData } from "@/types/partner-settlements";
-import { KpiCard } from "@/components/shared";
+import { Separator } from "@/components/ui/separator";
 
 interface PeriodKpiRowProps {
   kpis: PartnerSettlementKpiData;
 }
 
-function renderTrend(diff: number | null, percent: number | null) {
-  if (diff === null || diff === 0) {
+export function PeriodKpiRow({ kpis }: PeriodKpiRowProps) {
+  const t = useTranslations("house.settlements");
+
+  function renderTrend(diff: number | null, percent: number | null) {
+    if (diff === null || diff === 0) {
+      return (
+        <span className="flex items-center gap-1 text-2xs text-muted-foreground">
+          <Minus className="size-3" aria-hidden="true" />
+          <span>{t("stableVsPrevious")}</span>
+        </span>
+      );
+    }
+
+    const isUp = diff > 0;
+    const Arrow = isUp ? ArrowUpRight : ArrowDownRight;
+    const color = isUp ? "text-emerald-600 dark:text-emerald-400" : "text-destructive";
+    const sign = isUp ? "+" : "";
+
     return (
-      <span className="flex items-center gap-1 text-2xs text-muted-foreground">
-        <Minus className="size-3" aria-hidden="true" />
-        <span>Stable vs période préc.</span>
+      <span className={`flex items-center gap-1 text-2xs font-semibold ${color}`}>
+        <Arrow className="size-3.5" aria-hidden="true" />
+        <span>
+          {sign}{formatMoney(diff, "CDF")} {percent !== null ? `(${sign}${percent}%)` : ""}{" "}
+          <span className="text-muted-foreground font-normal">{t("vsPrevious")}</span>
+        </span>
       </span>
     );
   }
 
-  const isUp = diff > 0;
-  const Arrow = isUp ? ArrowUpRight : ArrowDownRight;
-  const color = isUp ? "text-success-base" : "text-destructive-base";
-  const sign = isUp ? "+" : "";
-
   return (
-    <span className={`flex items-center gap-1 text-2xs font-semibold ${color}`}>
-      <Arrow className="size-3.5" aria-hidden="true" />
-      <span>
-        {sign}{formatMoney(diff, "CDF")} {percent !== null ? `(${sign}${percent}%)` : ""}{" "}
-        <span className="text-muted-foreground font-normal">vs préc.</span>
-      </span>
-    </span>
-  );
-}
-
-export function PeriodKpiRow({ kpis }: PeriodKpiRowProps) {
-  return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-4 py-2">
+      {/* Seamless KPI row with vertical separators on lg screens */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-0 lg:divide-x lg:divide-border/60">
         {/* 1. Chiffre d'affaires brut */}
-        <KpiCard
-          label="Chiffre d'affaires brut"
-          value={formatMoney(kpis.grossRevenueCDF, "CDF")}
-          icon={CircleDollarSign}
-          tooltip="Total des montants facturés pour les articles de pressing sur les commandes livrées de la période (hors frais de livraison)."
-          formula="Articles livrés"
-          secondary={renderTrend(kpis.grossTrendDiffCDF, kpis.grossTrendPercent)}
-        />
+        <div className="space-y-1.5 lg:px-6 first:lg:pl-0">
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <CircleDollarSign className="size-4 text-primary shrink-0" aria-hidden="true" />
+            <span>{t("grossRevenue")}</span>
+          </div>
+          <div className="text-2xl font-black font-mono tracking-tight text-foreground tabular-nums">
+            {formatMoney(kpis.grossRevenueCDF, "CDF")}
+          </div>
+          <div className="pt-0.5">{renderTrend(kpis.grossTrendDiffCDF, kpis.grossTrendPercent)}</div>
+        </div>
 
-        {/* 2. Commissions prélevées */}
-        <KpiCard
-          label={`Commissions SafiHub (${kpis.commissionRatePercent}%)`}
-          value={`-${formatMoney(kpis.commissionCDF, "CDF")}`}
-          icon={Percent}
-          tooltip={`Montant de commission prélevé par la plateforme SafiHub sur les articles livrés (taux fixé à ${kpis.commissionRatePercent}%).`}
-          formula={`Taux : ${kpis.commissionRatePercent}%`}
-          secondary={
-            <span className="text-2xs text-muted-foreground">
-              Déduit automatiquement à la source
-            </span>
-          }
-        />
+        {/* 2. Commissions SafiHub */}
+        <div className="space-y-1.5 lg:px-6">
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <Percent className="size-4 text-muted-foreground shrink-0" aria-hidden="true" />
+            <span>{t("commissionsPlatform", { rate: kpis.commissionRatePercent })}</span>
+          </div>
+          <div className="text-2xl font-black font-mono tracking-tight text-muted-foreground tabular-nums">
+            -{formatMoney(kpis.commissionCDF, "CDF")}
+          </div>
+          <div className="text-2xs text-muted-foreground pt-0.5">{t("automaticDeduction")}</div>
+        </div>
 
         {/* 3. Net à percevoir */}
-        <KpiCard
-          label="Net à percevoir"
-          value={formatMoney(kpis.netReceivableCDF, "CDF")}
-          icon={Wallet}
-          variant="success"
-          tooltip="Votre revenu net généré sur la période (Brut − Commissions). Ce montant vous revient intégralement."
-          formula="Brut − Commission = Net"
-          secondary={renderTrend(kpis.netTrendDiffCDF, kpis.netTrendPercent)}
-        />
+        <div className="space-y-1.5 lg:px-6">
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <Wallet className="size-4 text-primary shrink-0" aria-hidden="true" />
+            <span>{t("netReceivable")}</span>
+          </div>
+          <div className="text-2xl font-black font-mono tracking-tight text-primary tabular-nums">
+            {formatMoney(kpis.netReceivableCDF, "CDF")}
+          </div>
+          <div className="pt-0.5">{renderTrend(kpis.netTrendDiffCDF, kpis.netTrendPercent)}</div>
+        </div>
 
         {/* 4. Total versé */}
-        <KpiCard
-          label="Total versé"
-          value={formatMoney(kpis.totalSettledCDF, "CDF")}
-          icon={Receipt}
-          tooltip="Somme des versements effectifs décaissés et reçus sur votre compte durant cette période."
-          formula="Versements effectués"
-          secondary={
-            <span className="text-2xs text-muted-foreground">
-              Versements reçus sur la période
-            </span>
-          }
-        />
+        <div className="space-y-1.5 lg:px-6 last:lg:pr-0">
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <Receipt className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+            <span>{t("totalSettledLabel")}</span>
+          </div>
+          <div className="text-2xl font-black font-mono tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
+            {formatMoney(kpis.totalSettledCDF, "CDF")}
+          </div>
+          <div className="text-2xs text-muted-foreground pt-0.5">{t("payoutsReceivedPeriod")}</div>
+        </div>
       </div>
 
-      {/* Adjustments note if any difference between brut - commission and net */}
+      {/* Adjustments note if any */}
       {kpis.adjustmentsCDF !== 0 && (
-        <div className="text-2xs text-ink-600 bg-surface px-3 py-1.5 rounded-lg border border-border flex items-center justify-between">
+        <div className="text-2xs text-muted-foreground py-2 px-3 rounded-lg bg-muted/40 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <span>
-            * Un ajustement de {formatMoney(kpis.adjustmentsCDF, "CDF")} est appliqué sur la période suite à des régularisations exceptionnelles.
+            * Ajustement de {formatMoney(kpis.adjustmentsCDF, "CDF")} appliqué sur la période suite à des régularisations exceptionnelles.
           </span>
-          <span className="font-mono font-bold">
-            Brut ({formatMoney(kpis.grossRevenueCDF)}) − Commission ({formatMoney(kpis.commissionCDF)}) + Ajustement ({formatMoney(kpis.adjustmentsCDF)}) = Net ({formatMoney(kpis.netReceivableCDF)})
+          <span className="font-mono font-bold text-foreground">
+            {formatMoney(kpis.grossRevenueCDF)} − {formatMoney(kpis.commissionCDF)} + {formatMoney(kpis.adjustmentsCDF)} = {formatMoney(kpis.netReceivableCDF)}
           </span>
         </div>
       )}
+      <Separator />
     </div>
   );
 }

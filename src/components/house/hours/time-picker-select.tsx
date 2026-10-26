@@ -2,6 +2,14 @@
 
 import { useId } from "react";
 import { generateTimeOptions } from "@/lib/hours-utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface TimePickerSelectProps {
   value: string;
@@ -32,28 +40,24 @@ export function TimePickerSelect({
     : [...options, value].sort();
 
   return (
-    <div className="relative inline-flex items-center">
-      <label htmlFor={selectId} className="sr-only">
-        {label}
-      </label>
-      <select
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger
         id={selectId}
-        value={value}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
         aria-label={label}
-        className={`h-11 sm:h-9 px-3 rounded-lg border font-mono text-xs sm:text-sm font-semibold transition-colors bg-card text-foreground cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 focus:outline-hidden focus:ring-2 focus:ring-primary/20 ${
-          error
-            ? "border-destructive focus:border-destructive text-destructive"
-            : "border-border hover:border-border-strong focus:border-primary"
-        }`}
+        className={cn(
+          "h-9 px-3 font-mono text-xs sm:text-sm font-semibold w-24 sm:w-28",
+          error && "border-destructive text-destructive"
+        )}
       >
+        <SelectValue placeholder={value} />
+      </SelectTrigger>
+      <SelectContent className="max-h-56">
         {selectOptions.map((opt) => (
-          <option key={opt} value={opt}>
+          <SelectItem key={opt} value={opt} className="font-mono text-xs sm:text-sm">
             {opt}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-    </div>
+      </SelectContent>
+    </Select>
   );
 }

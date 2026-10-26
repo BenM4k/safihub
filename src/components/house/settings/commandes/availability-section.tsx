@@ -1,6 +1,8 @@
 "use client";
 
 import { Info, PauseCircle, PlayCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface AvailabilitySectionProps {
   isPaused: boolean;
@@ -16,19 +18,19 @@ export function AvailabilitySection({
   onTogglePause,
 }: AvailabilitySectionProps) {
   return (
-    <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+    <section className="py-2 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-sm font-bold text-heading flex items-center gap-2">
+          <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
             <span>Disponibilité des commandes</span>
             {isPaused ? (
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-warning-soft text-warning border border-warning/30">
+              <Badge variant="outline" className="border-amber-500/30 text-amber-800 dark:text-amber-300 text-[11px] font-bold">
                 En pause
-              </span>
+              </Badge>
             ) : (
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-success-soft text-success border border-success/30">
+              <Badge variant="outline" className="border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold">
                 Commandes acceptées
-              </span>
+              </Badge>
             )}
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -36,13 +38,13 @@ export function AvailabilitySection({
           </p>
         </div>
 
-        <button
+        <Button
           type="button"
           onClick={onTogglePause}
-          className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 ${
-            isPaused
-              ? "bg-warning text-primary-foreground shadow-xs hover:bg-warning/90"
-              : "bg-surface text-foreground border border-border hover:bg-secondary"
+          variant={isPaused ? "default" : "outline"}
+          size="sm"
+          className={`min-h-[40px] px-4 text-xs font-bold gap-2 shrink-0 ${
+            isPaused ? "bg-amber-600 hover:bg-amber-700 text-white" : ""
           }`}
         >
           {isPaused ? (
@@ -52,16 +54,16 @@ export function AvailabilitySection({
             </>
           ) : (
             <>
-              <PlayCircle className="size-4 text-success shrink-0" />
+              <PlayCircle className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>Mettre en pause</span>
             </>
           )}
-        </button>
+        </Button>
       </div>
 
       {isPaused && (
-        <div className="p-3.5 bg-warning-soft/50 border border-warning/20 rounded-xl text-xs space-y-1">
-          <div className="font-semibold text-warning flex items-center gap-1.5">
+        <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs space-y-1">
+          <div className="font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
             <Info className="size-3.5" />
             <span>Pressing actuellement en pause</span>
           </div>

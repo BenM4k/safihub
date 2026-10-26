@@ -25,12 +25,12 @@ export function ActiveFiltersChips({
         {t("activeFilters")}
       </span>
       {filters.search && (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-border text-xs text-heading">
+        <span className="inline-flex items-center gap-1 text-xs text-primary font-medium">
           « {filters.search} »
           <button
             type="button"
             onClick={() => onFilterChange({ ...filters, search: "" })}
-            className="hover:text-destructive"
+            className="hover:text-destructive text-primary/70 hover:text-primary"
             aria-label={t("removeSearchFilter")}
           >
             <X className="size-3" />
@@ -38,12 +38,12 @@ export function ActiveFiltersChips({
         </span>
       )}
       {filters.category !== "all" && (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-border text-xs text-heading">
+        <span className="inline-flex items-center gap-1 text-xs text-primary font-medium">
           {selectedCategoryLabel || filters.category}
           <button
             type="button"
             onClick={() => onFilterChange({ ...filters, category: "all" })}
-            className="hover:text-destructive"
+            className="hover:text-destructive text-primary/70 hover:text-primary"
             aria-label={t("removeCategoryFilter")}
           >
             <X className="size-3" />
@@ -51,7 +51,7 @@ export function ActiveFiltersChips({
         </span>
       )}
       {filters.status !== "all" && (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-border text-xs text-heading">
+        <span className="inline-flex items-center gap-1 text-xs text-primary font-medium">
           {filters.status === "offered"
             ? t("filterOffered")
             : filters.status === "not_offered"
@@ -60,7 +60,7 @@ export function ActiveFiltersChips({
           <button
             type="button"
             onClick={() => onFilterChange({ ...filters, status: "all" })}
-            className="hover:text-destructive"
+            className="hover:text-destructive text-primary/70 hover:text-primary"
             aria-label={t("removeStatusFilter")}
           >
             <X className="size-3" />

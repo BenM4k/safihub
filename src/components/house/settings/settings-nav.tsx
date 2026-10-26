@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import type { SettingsSection } from "./types";
+import { Badge } from "@/components/ui/badge";
 
 interface SettingsNavProps {
   activeSection: SettingsSection;
@@ -28,54 +29,14 @@ export const SECTIONS_CONFIG: Array<{
   descriptionKey: string;
   icon: typeof Store;
 }> = [
-  {
-    id: "profil",
-    labelKey: "tabProfil",
-    descriptionKey: "descProfil",
-    icon: Store,
-  },
-  {
-    id: "commandes",
-    labelKey: "tabCommandes",
-    descriptionKey: "descCommandes",
-    icon: ShoppingBag,
-  },
-  {
-    id: "exclusions",
-    labelKey: "tabExclusions",
-    descriptionKey: "descExclusions",
-    icon: Ban,
-  },
-  {
-    id: "paiement",
-    labelKey: "tabPaiement",
-    descriptionKey: "descPaiement",
-    icon: Wallet,
-  },
-  {
-    id: "notifications",
-    labelKey: "tabNotifications",
-    descriptionKey: "descNotifications",
-    icon: Bell,
-  },
-  {
-    id: "equipe",
-    labelKey: "tabEquipe",
-    descriptionKey: "descEquipe",
-    icon: Users,
-  },
-  {
-    id: "securite",
-    labelKey: "tabSecurite",
-    descriptionKey: "descSecurite",
-    icon: KeyRound,
-  },
-  {
-    id: "preferences",
-    labelKey: "tabPreferences",
-    descriptionKey: "descPreferences",
-    icon: Globe,
-  },
+  { id: "profil", labelKey: "tabProfil", descriptionKey: "descProfil", icon: Store },
+  { id: "commandes", labelKey: "tabCommandes", descriptionKey: "descCommandes", icon: ShoppingBag },
+  { id: "exclusions", labelKey: "tabExclusions", descriptionKey: "descExclusions", icon: Ban },
+  { id: "paiement", labelKey: "tabPaiement", descriptionKey: "descPaiement", icon: Wallet },
+  { id: "notifications", labelKey: "tabNotifications", descriptionKey: "descNotifications", icon: Bell },
+  { id: "equipe", labelKey: "tabEquipe", descriptionKey: "descEquipe", icon: Users },
+  { id: "securite", labelKey: "tabSecurite", descriptionKey: "descSecurite", icon: KeyRound },
+  { id: "preferences", labelKey: "tabPreferences", descriptionKey: "descPreferences", icon: Globe },
 ];
 
 export function SettingsDesktopTabs({
@@ -89,7 +50,7 @@ export function SettingsDesktopTabs({
   return (
     <nav
       aria-label={t("navAria")}
-      className="hidden md:flex items-center gap-1.5 p-1 bg-surface border border-border rounded-2xl overflow-x-auto"
+      className="hidden md:flex items-center gap-1 border-b border-border/60 pb-2 overflow-x-auto scrollbar-none"
     >
       {SECTIONS_CONFIG.map((sec) => {
         const Icon = sec.icon;
@@ -100,10 +61,10 @@ export function SettingsDesktopTabs({
             key={sec.id}
             type="button"
             onClick={() => onSelectSection(sec.id)}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap min-h-[40px] ${
+            className={`flex items-center gap-2 px-3 py-2 text-xs transition whitespace-nowrap min-h-[40px] cursor-pointer bg-transparent border-0 shadow-none ${
               isActive
-                ? "bg-heading text-background shadow-xs"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
+                ? "text-primary font-bold"
+                : "text-muted-foreground hover:text-foreground font-medium"
             }`}
           >
             <Icon className="size-3.5 shrink-0" aria-hidden="true" />
@@ -111,16 +72,12 @@ export function SettingsDesktopTabs({
 
             {/* Badges */}
             {sec.id === "commandes" && isPaused && (
-              <span className="size-2 rounded-full bg-warning animate-pulse" />
+              <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
             )}
             {sec.id === "exclusions" && exclusionsCount > 0 && (
-              <span
-                className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                  isActive ? "bg-background/20 text-background" : "bg-secondary text-foreground"
-                }`}
-              >
+              <Badge variant={isActive ? "default" : "secondary"} className="px-1.5 py-0 text-[10px]">
                 {exclusionsCount}
-              </span>
+              </Badge>
             )}
           </button>
         );
@@ -138,7 +95,7 @@ export function SettingsMobileList({
   const t = useTranslations("house.settings");
 
   return (
-    <div className="md:hidden space-y-2">
+    <div className="md:hidden divide-y divide-border/60 border-y border-border/60">
       {SECTIONS_CONFIG.map((sec) => {
         const Icon = sec.icon;
 
@@ -147,29 +104,29 @@ export function SettingsMobileList({
             key={sec.id}
             type="button"
             onClick={() => onSelectSection(sec.id)}
-            className="w-full p-4 rounded-2xl bg-card border border-border shadow-2xs hover:bg-surface flex items-center justify-between gap-3 text-left transition min-h-[56px]"
+            className="w-full py-3.5 px-2 flex items-center justify-between gap-3 text-left transition hover:bg-muted/40 min-h-[52px]"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="size-10 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shrink-0">
-                <Icon className="size-5" />
+              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <Icon className="size-4" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-heading text-sm">{t(sec.labelKey)}</span>
+                  <span className="font-bold text-foreground text-sm">{t(sec.labelKey)}</span>
                   {sec.id === "commandes" && isPaused && (
-                    <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-warning-soft text-warning border border-warning/30">
+                    <Badge variant="outline" className="border-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-bold">
                       {t("inPause")}
-                    </span>
+                    </Badge>
                   )}
                   {sec.id === "exclusions" && exclusionsCount > 0 && (
-                    <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-secondary text-muted-foreground">
+                    <Badge variant="secondary" className="text-[10px] font-bold">
                       {exclusionsCount}
-                    </span>
+                    </Badge>
                   )}
                   {sec.id === "equipe" && (
-                    <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-secondary text-muted-foreground">
+                    <Badge variant="secondary" className="text-[10px] font-bold">
                       {t("staffCountBadge", { count: staffCount })}
-                    </span>
+                    </Badge>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground truncate mt-0.5">
@@ -178,7 +135,7 @@ export function SettingsMobileList({
               </div>
             </div>
 
-            <ChevronRight className="size-5 text-muted-foreground shrink-0" />
+            <ChevronRight className="size-4 text-muted-foreground shrink-0" />
           </button>
         );
       })}

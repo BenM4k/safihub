@@ -330,3 +330,22 @@ export function bulkToggleOffered(
 
   return next;
 }
+
+export function getTargetCatalogueCells(
+  items: HouseCatalogueItemRecord[],
+  activeServiceId: string,
+  selectedArticleIds: Set<string>,
+  filteredCategoryGroups: CatalogueCategoryGroup[]
+): HouseCatalogueItemRecord[] {
+  const activeItems = items.filter((i) => i.serviceId === activeServiceId);
+  if (selectedArticleIds.size > 0) {
+    return activeItems.filter((i) => selectedArticleIds.has(i.itemId));
+  }
+  const visibleArticleIds = new Set<string>();
+  for (const group of filteredCategoryGroups) {
+    for (const article of group.articles) {
+      visibleArticleIds.add(article.id);
+    }
+  }
+  return activeItems.filter((i) => visibleArticleIds.has(i.itemId));
+}

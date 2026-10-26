@@ -1,9 +1,20 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, X, Crop, Check, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, Check, AlertCircle, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateBannerImageFile } from "@/lib/partner-dashboard";
+import { BannerCropEditor } from "./banner-crop-editor";
 
 interface BannerUploadModalProps {
   isOpen: boolean;
@@ -13,6 +24,9 @@ interface BannerUploadModalProps {
   onSavePhoto?: (photoUrl: string) => void;
 }
 
+/**
+ * Modal to upload and center 4:1 house cover photo using shadcn Dialog primitives.
+ */
 export function BannerUploadModal({
   isOpen,
   onClose,
@@ -20,6 +34,7 @@ export function BannerUploadModal({
   initialPreviewUrl = null,
   onSavePhoto,
 }: BannerUploadModalProps) {
+  const t = useTranslations("house.bannerModal");
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialPreviewUrl);
   const [prevInitialPreviewUrl, setPrevInitialPreviewUrl] = useState<string | null>(initialPreviewUrl);
   const [focalPoint, setFocalPoint] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
@@ -34,8 +49,6 @@ export function BannerUploadModal({
       setPreviewUrl(initialPreviewUrl);
     }
   }
-
-  if (!isOpen) return null;
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     setError(null);
@@ -56,7 +69,6 @@ export function BannerUploadModal({
     setIsSubmitting(true);
     setError(null);
 
-    // Save and optimize
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSuccess(true);
@@ -70,36 +82,22 @@ export function BannerUploadModal({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="banner-upload-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-xs font-sans"
-    >
-      <div className="w-full max-w-lg bg-card rounded-3xl shadow-2xl border border-border p-5 sm:p-6 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-border">
-          <div>
-            <h3 id="banner-upload-title" className="font-display font-black text-lg text-heading">
-              Photo de couverture
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Format paysage 4:1 · Visible sur votre profil public {houseName}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="size-8 rounded-full bg-secondary text-muted-foreground flex items-center justify-center hover:bg-secondary/80 hover:text-heading transition cursor-pointer"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg rounded-3xl bg-card border-border p-5 sm:p-6 space-y-4">
+        <DialogHeader className="pb-3 border-b border-border space-y-1">
+          <DialogTitle className="font-display font-black text-lg text-heading">
+            {t("title")}
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            {t("subtitle", { houseName })}
+          </DialogDescription>
+        </DialogHeader>
 
         {error && (
-          <div className="p-3 bg-destructive-soft border border-destructive/20 rounded-xl text-xs text-destructive flex items-center gap-2">
-            <AlertCircle className="size-4 shrink-0" />
-            <span>{error}</span>
-          </div>
+          <Alert variant="destructive" className="py-2.5">
+            <AlertCircle className="size-4" />
+            <AlertDescription className="text-xs">{error}</AlertDescription>
+          </Alert>
         )}
 
         {!previewUrl ? (
@@ -112,79 +110,38 @@ export function BannerUploadModal({
             </div>
             <div>
               <p className="text-xs font-bold text-heading">
-                Cliquez pour choisir une photo
+                {t("clickToChoose")}
               </p>
               <p className="text-[11px] text-muted-foreground mt-1">
-                JPG, PNG ou WebP · Max 5 Mo
+                {t("fileFormats")}
               </p>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={handleFileChange}
-            />
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="relative aspect-[4/1] w-full rounded-xl overflow-hidden border border-border bg-secondary">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={previewUrl}
-                alt="Aperçu 4:1"
-                className="w-full h-full object-cover"
-                style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}
-              />
-              <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-heading/80 text-background text-[10px] font-bold">
-                Ratio 4:1
-              </div>
-            </div>
-
-            {/* Focal point slider */}
-            <div className="p-3 bg-surface rounded-xl border border-border space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-foreground flex items-center gap-1.5">
-                  <Crop className="size-3.5 text-primary" />
-                  Centrage vertical (point focal)
-                </span>
-                <span className="text-[11px] font-mono text-muted-foreground">{focalPoint.y}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={focalPoint.y}
-                onChange={(e) => setFocalPoint({ x: 50, y: Number(e.target.value) })}
-                className="w-full accent-primary cursor-pointer"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-xs text-primary hover:underline font-semibold inline-block cursor-pointer"
-            >
-              Choisir un autre fichier
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </div>
+          <BannerCropEditor
+            previewUrl={previewUrl}
+            focalPoint={focalPoint}
+            onFocalPointChange={setFocalPoint}
+            onChooseAnother={() => fileInputRef.current?.click()}
+          />
         )}
 
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
+        <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-border sm:space-x-0">
           <Button
             type="button"
             variant="ghost"
             onClick={onClose}
-            className="text-xs font-semibold"
+            className="text-xs font-semibold cursor-pointer"
           >
-            Annuler
+            {t("cancel")}
           </Button>
 
           {previewUrl && (
@@ -192,25 +149,25 @@ export function BannerUploadModal({
               type="button"
               disabled={isSubmitting || isSuccess}
               onClick={handleSave}
-              className="text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground min-w-[120px]"
+              className="text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground min-w-[120px] cursor-pointer"
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="size-3.5 mr-2 animate-spin" />
-                  Enregistrement...
+                  {t("saving")}
                 </>
               ) : isSuccess ? (
                 <>
                   <Check className="size-3.5 mr-1 text-success" />
-                  Photo enregistrée
+                  {t("saved")}
                 </>
               ) : (
-                "Valider la photo"
+                t("validate")
               )}
             </Button>
           )}
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

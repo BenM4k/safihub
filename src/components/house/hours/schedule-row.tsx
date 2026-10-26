@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { TimePickerSelect } from "./time-picker-select";
 import { validateDayRanges, type DaySchedule } from "@/lib/hours-utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 interface ScheduleRowProps {
   day: DaySchedule;
@@ -28,21 +30,16 @@ export function ScheduleRow({
   const errorId = `error-day-${day.weekday}`;
 
   return (
-    <div className="p-3.5 sm:p-4 transition-colors hover:bg-surface/50 border-b border-border last:border-b-0">
+    <div className="p-3 sm:p-3.5 transition-colors hover:bg-muted/30 border-b border-border/60 last:border-b-0">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Day identity and open switch */}
         <div className="flex items-center gap-3 min-w-40">
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={day.isOpen}
-              disabled={disabled}
-              onChange={() => onToggleOpen(day.weekday)}
-              aria-label={`Ouvert le ${day.name.toLowerCase()}`}
-              className="sr-only peer"
-            />
-            <div className="w-11 h-6 bg-secondary peer-focus:outline-hidden peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-2xs" />
-          </label>
+          <Switch
+            checked={day.isOpen}
+            disabled={disabled}
+            onCheckedChange={() => onToggleOpen(day.weekday)}
+            aria-label={t("openDayLabel", { day: day.name.toLowerCase() })}
+          />
           <span className="font-bold text-xs sm:text-sm text-heading font-display">
             {day.name}
           </span>
@@ -61,7 +58,7 @@ export function ScheduleRow({
                   <TimePickerSelect
                     value={range.opensAt}
                     onChange={(val) => onUpdateRange(day.weekday, idx, "opensAt", val)}
-                    label={`Heure d'ouverture, ${day.name.toLowerCase()}${day.ranges.length > 1 ? ` (plage ${idx + 1})` : ""}`}
+                    label={t("openingTimeLabel", { day: day.name.toLowerCase() })}
                     disabled={disabled}
                     error={Boolean(validationError)}
                   />
@@ -71,7 +68,7 @@ export function ScheduleRow({
                   <TimePickerSelect
                     value={range.closesAt}
                     onChange={(val) => onUpdateRange(day.weekday, idx, "closesAt", val)}
-                    label={`Heure de fermeture, ${day.name.toLowerCase()}${day.ranges.length > 1 ? ` (plage ${idx + 1})` : ""}`}
+                    label={t("closingTimeLabel", { day: day.name.toLowerCase() })}
                     disabled={disabled}
                     error={Boolean(validationError)}
                   />
@@ -85,8 +82,8 @@ export function ScheduleRow({
                     size="sm"
                     onClick={() => onRemoveRange(day.weekday, idx)}
                     disabled={disabled}
-                    aria-label={`Supprimer la 2ème plage de ${day.name}`}
-                    className="h-9 px-2 text-destructive hover:bg-destructive-soft hover:text-destructive shrink-0 cursor-pointer"
+                    aria-label={t("deleteSlotAria", { day: day.name })}
+                    className="h-8 px-2 text-destructive hover:bg-destructive-soft hover:text-destructive shrink-0 cursor-pointer"
                   >
                     <Trash2 className="size-4" aria-hidden="true" />
                   </Button>
@@ -99,8 +96,8 @@ export function ScheduleRow({
                     size="sm"
                     onClick={() => onAddRange(day.weekday)}
                     disabled={disabled}
-                    aria-label={`Ajouter une 2ème plage pour ${day.name}`}
-                    className="h-9 px-2.5 text-xs text-primary font-semibold hover:bg-primary-soft shrink-0 cursor-pointer"
+                    aria-label={t("addSlotAria", { day: day.name })}
+                    className="h-8 px-2.5 text-xs text-primary font-semibold hover:bg-primary-soft shrink-0 cursor-pointer"
                   >
                     <Plus className="size-3.5 mr-1" aria-hidden="true" />
                     <span>{t("addSlot")}</span>
@@ -111,9 +108,9 @@ export function ScheduleRow({
           </div>
         ) : (
           <div className="flex items-center">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-secondary text-muted-foreground border border-border">
+            <Badge variant="outline" className="px-2.5 py-0.5 text-xs font-bold text-muted-foreground">
               {t("closed")}
-            </span>
+            </Badge>
           </div>
         )}
       </div>

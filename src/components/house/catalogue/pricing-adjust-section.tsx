@@ -32,28 +32,28 @@ export function PricingAdjustSection({
   }
 
   return (
-    <>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-1">
       {/* Percentage adjustment */}
-      <div className="space-y-2.5 p-3.5 rounded-xl border border-border bg-card">
-        <div className="flex items-center gap-2 text-xs font-bold text-heading font-display">
-          <Percent className="size-4 text-primary" />
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-heading">
+          <Percent className="size-3.5 text-primary" />
           <span>{t("bulkAdjustPercent")}</span>
         </div>
         <p className="text-[11px] text-muted-foreground">{t("enterPercentage")}</p>
-        <div className="flex items-center gap-2 pt-1">
+        <div className="flex items-center gap-2 pt-0.5">
           <Input
             type="number"
             value={percentValue}
             onChange={(e) => setPercentValue(e.target.value)}
-            placeholder="ex: 10 ou -10"
-            className="h-8 text-xs bg-card flex-1 font-mono"
+            placeholder={t("percentPlaceholder")}
+            className="h-9 text-xs flex-1 font-mono"
           />
           <Button
             type="button"
             size="sm"
             disabled={!percentValue}
             onClick={handleApplyPercent}
-            className="h-8 text-xs font-semibold rounded-lg bg-primary text-primary-foreground"
+            className="h-9 text-xs font-semibold px-3 shrink-0"
           >
             {t("apply")}
           </Button>
@@ -61,32 +61,32 @@ export function PricingAdjustSection({
       </div>
 
       {/* Set fixed price */}
-      <div className="space-y-2.5 p-3.5 rounded-xl border border-border bg-card">
-        <div className="flex items-center gap-2 text-xs font-bold text-heading font-display">
-          <DollarSign className="size-4 text-primary" />
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-heading">
+          <DollarSign className="size-3.5 text-primary" />
           <span>{t("bulkSetPrice")}</span>
         </div>
         <p className="text-[11px] text-muted-foreground">{t("enterFixedPrice")}</p>
-        <div className="flex items-center gap-2 pt-1">
+        <div className="flex items-center gap-2 pt-0.5">
           <Input
             type="number"
             step={100}
             value={fixedPriceValue}
             onChange={(e) => setFixedPriceValue(e.target.value)}
-            placeholder="ex: 3500"
-            className="h-8 text-xs bg-card flex-1 font-mono"
+            placeholder={t("fixedPricePlaceholder")}
+            className="h-9 text-xs flex-1 font-mono"
           />
           <Button
             type="button"
             size="sm"
             disabled={!fixedPriceValue}
             onClick={handleApplyFixedPrice}
-            className="h-8 text-xs font-semibold rounded-lg bg-primary text-primary-foreground"
+            className="h-9 text-xs font-semibold px-3 shrink-0"
           >
             {t("apply")}
           </Button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

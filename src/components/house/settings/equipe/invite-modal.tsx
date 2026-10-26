@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { UserPlus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field, FieldLabel } from "@/components/ui/field";
 
 interface InviteModalProps {
   isOpen: boolean;
@@ -14,8 +23,6 @@ export function InviteModal({ isOpen, onClose, onInvite }: InviteModalProps) {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"manager" | "operator">("operator");
 
-  if (!isOpen) return null;
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
@@ -25,48 +32,46 @@ export function InviteModal({ isOpen, onClose, onInvite }: InviteModalProps) {
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
-    >
-      <div className="w-full max-w-md bg-card rounded-2xl shadow-2xl border border-border p-5 space-y-4">
-        <div className="flex items-center gap-2 text-primary font-bold text-sm">
-          <UserPlus className="size-4" />
-          <span>Inviter un nouveau collaborateur</span>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="w-full max-w-md p-6">
+        <DialogHeader className="gap-1.5 pb-2">
+          <DialogTitle className="flex items-center gap-2 text-primary text-base font-bold">
+            <UserPlus className="size-4" />
+            <span>Inviter un nouveau collaborateur</span>
+          </DialogTitle>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-          <div>
-            <label className="font-semibold text-foreground block mb-1">
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <Field className="space-y-1.5">
+            <FieldLabel className="font-semibold text-foreground">
               Adresse e-mail
-            </label>
-            <input
+            </FieldLabel>
+            <Input
               type="email"
               placeholder="collaborateur@gmail.com"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="text-xs h-10 min-h-[40px]"
               required
               autoFocus
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="font-semibold text-foreground block mb-1">
+          <Field className="space-y-1.5">
+            <FieldLabel className="font-semibold text-foreground">
               Rôle attribué
-            </label>
+            </FieldLabel>
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as "manager" | "operator")}
-              className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border text-xs bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="w-full h-10 min-h-[40px] px-3 rounded-lg border border-border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             >
               <option value="operator">Opérateur (Atelier & Commandes)</option>
               <option value="manager">Gérant (Catalogue & Horaires)</option>
             </select>
-          </div>
+          </Field>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+          <DialogFooter className="pt-2 gap-2">
             <Button
               type="button"
               variant="outline"
@@ -83,9 +88,9 @@ export function InviteModal({ isOpen, onClose, onInvite }: InviteModalProps) {
             >
               Envoyer l&apos;invitation
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

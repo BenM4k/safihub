@@ -4,6 +4,13 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { CatalogueServiceTab } from "./types";
 
 interface CopyServiceSectionProps {
@@ -29,34 +36,36 @@ export function CopyServiceSection({
   }
 
   return (
-    <div className="space-y-2.5 p-3.5 rounded-xl border border-border bg-card">
-      <div className="flex items-center gap-2 text-xs font-bold text-heading font-display">
+    <div className="space-y-2 py-1">
+      <div className="flex items-center gap-2 text-xs font-bold text-heading">
         <Copy className="size-4 text-primary" />
         <span>{t("copyFromService")}</span>
       </div>
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-[11px] text-muted-foreground leading-relaxed">
         {t("copyServiceDesc", { targetService: currentService?.nameFr ?? "" })}
       </p>
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
-        <select
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-0.5">
+        <Select
           value={selectedSourceService}
-          onChange={(e) => setSelectedSourceService(e.target.value)}
-          className="flex-1 h-8 px-2.5 rounded-lg border border-border bg-card text-xs text-heading font-medium"
-          aria-label={t("sourceServiceLabel")}
+          onValueChange={setSelectedSourceService}
         >
-          <option value="">{t("selectSourceServicePrompt")}</option>
-          {otherServices.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nameFr} ({t("pricesConfiguredCount", { count: s.configuredCount })})
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="flex-1 h-9 text-xs" aria-label={t("sourceServiceLabel")}>
+            <SelectValue placeholder={t("selectSourceServicePrompt")} />
+          </SelectTrigger>
+          <SelectContent className="font-sans">
+            {otherServices.map((s) => (
+              <SelectItem key={s.id} value={s.id} className="text-xs">
+                {s.nameFr} ({t("pricesConfiguredCount", { count: s.configuredCount })})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button
           type="button"
           size="sm"
           disabled={!selectedSourceService}
           onClick={handleCopy}
-          className="h-8 text-xs font-semibold rounded-lg bg-primary text-primary-foreground"
+          className="h-9 text-xs font-semibold px-4 shrink-0"
         >
           {t("apply")}
         </Button>

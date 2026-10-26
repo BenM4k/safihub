@@ -60,6 +60,7 @@ export interface PartnerOrderListItemDTO {
   isAtRisk: boolean;
   totalDue: number;
   itemsTotal: number;
+  deliveryFee: number;
   commissionAmount: number;
   commissionBps: number;
   netPartnerShare: number;
@@ -154,6 +155,7 @@ export async function getPartnerOrdersRestricted(
       totalDue: schema.orders.totalDue,
       itemsTotal: schema.orders.itemsTotal,
       adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+      deliveryFee: schema.orders.deliveryFee,
       commissionAmount: schema.orders.commissionAmount,
       commissionBps: schema.orders.commissionBps,
       currency: schema.orders.currency,
@@ -282,7 +284,8 @@ export async function getPartnerOrdersRestricted(
       acceptanceDeadlineAt: r.acceptanceDeadlineAt,
       isAtRisk,
       totalDue: r.totalDue,
-      itemsTotal: r.itemsTotal,
+      itemsTotal: r.adjustedItemsTotal ?? r.itemsTotal,
+      deliveryFee: r.deliveryFee ?? 0,
       commissionAmount: r.commissionAmount,
       commissionBps: r.commissionBps,
       netPartnerShare,

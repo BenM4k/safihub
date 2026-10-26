@@ -1,3 +1,5 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 /**
  * Skeleton placeholder matching the partner catalogue page (/partner/[houseSlug]/catalogue).
  */
@@ -7,24 +9,23 @@ export function PartnerCatalogueSkeleton() {
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label="Chargement de votre catalogue et de vos tarifs"
-      className="space-y-6 animate-pulse"
+      className="space-y-6"
     >
       {/* Header Skeleton */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1.5">
-          <div className="h-7 w-48 bg-surface rounded-lg" />
-          <div className="h-4 w-72 bg-surface rounded-lg" />
+          <Skeleton className="h-7 w-48 rounded-lg" />
+          <Skeleton className="h-4 w-72 rounded-lg" />
         </div>
-        <div className="h-10 w-44 bg-surface rounded-xl" />
+        <Skeleton className="h-10 w-44 rounded-xl" />
       </div>
 
       {/* Toolbar Skeleton */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="h-10 w-full sm:max-w-xs bg-surface rounded-xl border border-border" />
+        <Skeleton className="h-10 w-full sm:max-w-xs rounded-xl" />
         <div className="flex gap-2">
-          <div className="h-10 w-28 bg-surface rounded-xl border border-border" />
-          <div className="h-10 w-28 bg-surface rounded-xl border border-border" />
+          <Skeleton className="h-10 w-28 rounded-xl" />
+          <Skeleton className="h-10 w-28 rounded-xl" />
         </div>
       </div>
 
@@ -37,20 +38,20 @@ export function PartnerCatalogueSkeleton() {
           >
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <div className="h-4 w-32 bg-surface rounded" />
-                <div className="h-3 w-20 bg-surface rounded" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
               </div>
-              <div className="h-6 w-12 bg-surface rounded-full" />
+              <Skeleton className="h-6 w-12 rounded-full" />
             </div>
 
             <div className="space-y-2 pt-2 border-t border-border">
               <div className="flex justify-between items-center">
-                <div className="h-3.5 w-20 bg-surface rounded" />
-                <div className="h-5 w-24 bg-surface rounded" />
+                <Skeleton className="h-3.5 w-20" />
+                <Skeleton className="h-5 w-24" />
               </div>
               <div className="flex justify-between items-center">
-                <div className="h-3.5 w-24 bg-surface rounded" />
-                <div className="h-4 w-16 bg-surface rounded" />
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-4 w-16" />
               </div>
             </div>
           </div>

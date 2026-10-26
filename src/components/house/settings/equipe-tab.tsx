@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 import { ConfirmDialog } from "@/components/shared";
 import { normalizeStaffRole, validateMemberActionGuardrails } from "@/services/auth/house-permissions";
 import { MembersListCard } from "./equipe/members-list-card";
@@ -53,14 +55,18 @@ export function EquipeTab({ staff, currentUserId, currentUserRole }: EquipeTabPr
   return (
     <div className="space-y-6">
       {guardrailError && (
-        <div className="p-4 bg-destructive-soft border border-destructive/30 rounded-xl text-xs text-destructive font-semibold flex items-center gap-2">
-          <AlertCircle className="size-4 shrink-0" />
-          <span>{guardrailError}</span>
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs font-semibold">
+            {guardrailError}
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* 1. Header and Staff List */}
       <MembersListCard staff={staff} onRemoveClick={handleRemoveMemberClick} />
+
+      <Separator />
 
       {/* 2. Matrice des rôles & permissions */}
       <PermissionsCard />

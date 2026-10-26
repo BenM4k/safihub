@@ -1,11 +1,20 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { AlertCircle, Loader2, X } from "lucide-react";
+import { useState } from "react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { PartnerOrderListItemDTO } from "@/dal/partner-order.dal";
-import { useAccessibleDialog } from "./use-accessible-dialog";
 
 interface PartnerOrderIssueDialogProps {
   order: PartnerOrderListItemDTO | null;
@@ -14,6 +23,14 @@ interface PartnerOrderIssueDialogProps {
   onConfirm: (orderId: string, reason: string, note?: string) => Promise<void>;
 }
 
+const PRESET_REASONS = [
+  "Tache indélébile pré-existante constatée",
+  "Vêtement déchiré ou boutons manquants à la réception",
+  "Article absent du sac de collecte",
+  "Décompte physique incompatible avec la déclaration",
+  "Autre incident survenu à l'atelier",
+] as const;
+
 export function PartnerOrderIssueDialog({
   order,
   isOpen,
@@ -21,52 +38,36 @@ export function PartnerOrderIssueDialog({
   onConfirm,
 }: PartnerOrderIssueDialogProps) {
   const t = useTranslations("house.orders");
-  const [selectedReason, setSelectedReason] = useState("Tache indélébile pré-existante constatée");
+  const [selectedReason, setSelectedReason] = useState<string>(PRESET_REASONS[0]);
   const [details, setDetails] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const initialRadioRef = useRef<HTMLInputElement>(null);
-
   const [prevOrderId, setPrevOrderId] = useState(order?.id);
   if (order?.id !== prevOrderId) {
     setPrevOrderId(order?.id);
-    setSelectedReason("Tache indélébile pré-existante constatée");
+    setSelectedReason(PRESET_REASONS[0]);
     setDetails("");
     setErrorMsg(null);
   }
 
-  function handleClose() {
-    setSelectedReason("Tache indélébile pré-existante constatée");
-    setDetails("");
-    setErrorMsg(null);
-    onClose();
+  function handleOpenChange(open: boolean) {
+    if (!open) {
+      setSelectedReason(PRESET_REASONS[0]);
+      setDetails("");
+      setErrorMsg(null);
+      onClose();
+    }
   }
-
-  const containerRef = useAccessibleDialog<HTMLDivElement>({
-    isOpen,
-    onClose: handleClose,
-    initialFocusRef: initialRadioRef,
-    trapTab: true,
-  });
-
-  if (!isOpen || !order) return null;
-
-  const presetReasons = [
-    "Tache indélébile pré-existante constatée",
-    "Vêtement déchiré ou boutons manquants à la réception",
-    "Article absent du sac de collecte",
-    "Décompte physique incompatible avec la déclaration",
-    "Autre incident survenu à l'atelier",
-  ];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!order) return;
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      await onConfirm(order!.id, selectedReason, details.trim() || undefined);
-      onClose();
+      await onConfirm(order.id, selectedReason, details.trim() || undefined);
+      handleOpenChange(false);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Erreur lors de la transmission du signalement.");
     } finally {
@@ -74,61 +75,45 @@ export function PartnerOrderIssueDialog({
     }
   }
 
+  if (!order) return null;
+
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="issue-dialog-title"
-      className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
-    >
-      <div
-        ref={containerRef}
-        tabIndex={-1}
-        className="bg-card rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-border space-y-4 font-sans outline-none"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <AlertCircle className="size-5" />
             </div>
             <div>
-              <h3 id="issue-dialog-title" className="text-base font-bold text-heading font-display">
+              <DialogTitle className="text-base font-bold text-heading">
                 {t("issueModalTitle")}
-              </h3>
-              <p className="text-xs text-muted-foreground">
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
                 {t("orderCodeLabel", { code: order.shortReference })}
-              </p>
+              </DialogDescription>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t("close")}
-            className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-3.5">
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-1.5">
+        <form onSubmit={handleSubmit} className="space-y-4 py-1">
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-foreground">
               {t("issueReasonLabel")}
-            </label>
+            </Label>
             <div className="space-y-1.5">
-              {presetReasons.map((reason, idx) => (
+              {PRESET_REASONS.map((reason) => (
                 <label
                   key={reason}
-                  className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-surface text-xs font-medium cursor-pointer"
+                  className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-muted/40 text-xs font-medium cursor-pointer transition-colors"
                 >
                   <input
-                    ref={idx === 0 ? initialRadioRef : undefined}
                     type="radio"
                     name="issueReason"
                     value={reason}
                     checked={selectedReason === reason}
                     onChange={(e) => setSelectedReason(e.target.value)}
-                    className="text-primary focus:ring-primary"
+                    className="text-primary focus:ring-primary h-4 w-4"
                   />
                   <span>{reason}</span>
                 </label>
@@ -136,16 +121,17 @@ export function PartnerOrderIssueDialog({
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+          <div className="space-y-1.5">
+            <Label htmlFor="issue-details" className="text-xs font-semibold text-foreground">
               {t("issueDetailsLabel")}
-            </label>
-            <textarea
+            </Label>
+            <Textarea
+              id="issue-details"
               rows={2}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder={t("issueDetailsPlaceholder")}
-              className="w-full text-xs rounded-xl border border-border bg-surface text-foreground p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="text-xs resize-none"
             />
           </div>
 
@@ -153,12 +139,12 @@ export function PartnerOrderIssueDialog({
             <p className="text-xs text-destructive font-medium">{errorMsg}</p>
           )}
 
-          <div className="flex items-center justify-end gap-2 pt-2">
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              onClick={onClose}
+              onClick={() => handleOpenChange(false)}
               disabled={isSubmitting}
               className="text-xs min-h-[44px] sm:min-h-[36px]"
             >
@@ -168,14 +154,14 @@ export function PartnerOrderIssueDialog({
               type="submit"
               size="sm"
               disabled={isSubmitting}
-              className="bg-amber-600 hover:bg-amber-700 text-primary-foreground font-bold text-xs min-h-[44px] sm:min-h-[36px]"
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs min-h-[44px] sm:min-h-[36px]"
             >
               {isSubmitting && <Loader2 className="size-3.5 animate-spin mr-1.5" />}
               <span>{t("confirmIssue")}</span>
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

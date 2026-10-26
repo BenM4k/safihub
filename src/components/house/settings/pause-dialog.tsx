@@ -1,9 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, PauseCircle, X } from "lucide-react";
+import { AlertCircle, PauseCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAccessibleDialog } from "@/components/house/orders/use-accessible-dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { fromBukavuDateTime } from "@/services/availability/bukavu-time";
 import {
   REASON_PRESETS,
@@ -23,10 +30,6 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
   const [presetDurationHours, setPresetDurationHours] = useState<number>(4);
   const [customDateTime, setCustomDateTime] = useState<string>("");
   const [dateError, setDateError] = useState<string | null>(null);
-
-  const containerRef = useAccessibleDialog<HTMLDivElement>({ isOpen, onClose });
-
-  if (!isOpen) return null;
 
   function handleConfirm(e: React.FormEvent) {
     e.preventDefault();
@@ -61,37 +64,31 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="pause-dialog-title"
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
     >
-      <div
-        ref={containerRef}
-        className="w-full max-w-lg bg-card rounded-2xl shadow-2xl border border-border overflow-hidden"
-      >
-        <div className="p-4 border-b border-border flex items-center justify-between bg-surface">
+      <DialogContent className="max-w-lg p-0 overflow-hidden">
+        <DialogHeader className="p-4 sm:p-5 border-b border-border bg-surface text-left">
           <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-lg bg-warning-soft text-warning border border-warning/30 flex items-center justify-center">
+            <div className="size-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <PauseCircle className="size-4" aria-hidden="true" />
             </div>
-            <h2 id="pause-dialog-title" className="text-sm font-bold text-heading">
-              Mettre le pressing en pause
-            </h2>
+            <div>
+              <DialogTitle className="text-sm font-bold text-foreground">
+                Mettre le pressing en pause
+              </DialogTitle>
+              <DialogDescription className="text-2xs text-muted-foreground">
+                Suspension temporaire de la réception de nouvelles commandes
+              </DialogDescription>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition"
-            aria-label="Fermer"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
+        </DialogHeader>
 
         <form onSubmit={handleConfirm} className="p-5 space-y-4 text-xs">
-          <div className="p-3 bg-secondary/70 border border-border rounded-xl flex items-start gap-2.5">
+          <div className="p-3 bg-muted/40 rounded-xl flex items-start gap-2.5">
             <AlertCircle className="size-4 text-primary shrink-0 mt-0.5" />
             <div className="text-muted-foreground leading-relaxed text-[11px]">
               <strong className="text-foreground block">Effet sur les commandes en cours :</strong>
@@ -99,24 +96,23 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="font-semibold text-foreground block">
-              Motif de la pause <span className="text-destructive">*</span>
+          <div>
+            <label className="font-semibold text-foreground block mb-1">
+              Motif de la mise en pause
             </label>
-            <div className="grid grid-cols-1 gap-1.5">
+            <div className="space-y-1.5">
               {REASON_PRESETS.map((preset) => (
                 <label
                   key={preset}
-                  className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition text-xs ${
+                  className={`flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition text-xs ${
                     selectedPreset === preset
-                      ? "bg-primary/5 border-primary text-foreground font-medium"
-                      : "bg-surface border-border hover:bg-secondary text-muted-foreground"
+                      ? "bg-primary/10 text-primary font-bold"
+                      : "text-muted-foreground hover:bg-muted/40"
                   }`}
                 >
                   <input
                     type="radio"
-                    name="pauseReason"
-                    value={preset}
+                    name="reasonPreset"
                     checked={selectedPreset === preset}
                     onChange={() => setSelectedPreset(preset)}
                     className="accent-primary"
@@ -127,13 +123,13 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
             </div>
 
             {selectedPreset === "Autre motif" && (
-              <textarea
+              <Input
+                type="text"
+                placeholder="Préciser le motif de pause..."
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
-                placeholder="Précisez la raison de la mise en pause..."
-                rows={2}
-                className="w-full p-2.5 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary mt-1"
-                required
+                className="mt-2 text-xs"
+                autoFocus
               />
             )}
           </div>
@@ -142,33 +138,37 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
             durationMode={durationMode}
             presetDurationHours={presetDurationHours}
             customDateTime={customDateTime}
-            onSetDurationMode={(m) => {
-              setDateError(null);
-              setDurationMode(m);
-            }}
+            onSetDurationMode={setDurationMode}
             onSetPresetHours={setPresetDurationHours}
-            onSetCustomDateTime={(val) => {
-              setDateError(null);
-              setCustomDateTime(val);
-            }}
+            onSetCustomDateTime={setCustomDateTime}
           />
 
           {dateError && (
-            <p className="text-destructive text-[11px] font-medium" role="alert">
+            <div className="p-2.5 rounded-lg bg-destructive/10 text-destructive text-xs font-semibold">
               {dateError}
-            </p>
+            </div>
           )}
 
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
-            <Button type="button" variant="outline" size="sm" onClick={onClose} className="text-xs font-semibold">
+          <div className="flex justify-end gap-2 pt-3 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="text-xs min-h-[38px]"
+            >
               Annuler
             </Button>
-            <Button type="submit" size="sm" className="bg-warning text-primary-foreground hover:bg-warning/90 font-bold text-xs">
-              Mettre en pause
+            <Button
+              type="submit"
+              size="sm"
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs min-h-[38px]"
+            >
+              Confirmer la pause
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

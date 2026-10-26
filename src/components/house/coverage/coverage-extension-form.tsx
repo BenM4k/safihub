@@ -5,6 +5,15 @@ import { useTranslations } from "next-intl";
 import { AlertCircle, Loader2, Send } from "lucide-react";
 import { requestCoverageExtensionAction } from "@/actions/house.actions";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DISTANCE_LEVEL_DEFINITIONS } from "./types";
 
 interface CoverageExtensionFormProps {
@@ -57,15 +66,12 @@ export function CoverageExtensionForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
+    <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4">
       {errorMsg && (
-        <div
-          role="alert"
-          className="p-3 bg-destructive-soft text-destructive text-xs font-semibold rounded-xl border border-destructive/20 flex items-center gap-2"
-        >
-          <AlertCircle className="size-4 shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
+        <Alert variant="destructive" className="py-2.5">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
+        </Alert>
       )}
 
       {/* Target Level Choice */}
@@ -82,7 +88,7 @@ export function CoverageExtensionForm({
                 onClick={() => setTargetLevel(lvl)}
                 className={`p-3 rounded-xl border text-left text-xs transition cursor-pointer ${
                   isSelected
-                    ? "bg-primary-soft/60 border-primary text-primary font-bold shadow-xs"
+                    ? "bg-primary-soft/60 border-primary text-primary font-bold shadow-2xs"
                     : "bg-surface border-border text-foreground hover:bg-muted"
                 }`}
               >
@@ -96,25 +102,25 @@ export function CoverageExtensionForm({
         </div>
       </div>
 
-      {/* Category Dropdown */}
+      {/* Category Dropdown with shadcn Select */}
       <div className="space-y-1.5">
         <label htmlFor={`${formId}-cat`} className="text-xs font-bold text-heading">
           {t("reasonCategoryLabel")}
         </label>
-        <select
-          id={`${formId}-cat`}
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-xs text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/20"
-        >
-          <option value="Demande client">{t("catCustomerDemand")}</option>
-          <option value="Capacité logistique">{t("catCapacity")}</option>
-          <option value="Partenariat local">{t("catPartnership")}</option>
-          <option value="Autre motif">{t("catOther")}</option>
-        </select>
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger id={`${formId}-cat`} className="h-10 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Demande client" className="text-xs">{t("catCustomerDemand")}</SelectItem>
+            <SelectItem value="Capacité logistique" className="text-xs">{t("catCapacity")}</SelectItem>
+            <SelectItem value="Partenariat local" className="text-xs">{t("catPartnership")}</SelectItem>
+            <SelectItem value="Autre motif" className="text-xs">{t("catOther")}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Motivation Textarea */}
+      {/* Motivation Textarea with shadcn Textarea */}
       <div className="space-y-1.5">
         <div className="flex justify-between items-center text-xs">
           <label htmlFor={`${formId}-note`} className="font-bold text-heading">
@@ -125,21 +131,21 @@ export function CoverageExtensionForm({
               note.length < 5 ? "text-muted-foreground" : "text-success font-semibold"
             }`}
           >
-            {note.length} car.
+            {t("charactersCount", { count: note.length })}
           </span>
         </div>
-        <textarea
+        <Textarea
           id={`${formId}-note`}
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={t("reasonNotePlaceholder")}
-          className="w-full p-3 rounded-xl border border-border bg-surface text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/20 resize-none leading-relaxed"
+          className="text-xs resize-none"
         />
       </div>
 
       {/* Internal Processing Notice */}
-      <div className="p-3 bg-muted/60 rounded-xl border border-border text-[11px] text-muted-foreground leading-snug">
+      <div className="p-3 bg-muted/40 rounded-xl border border-border text-[11px] text-muted-foreground leading-snug">
         {t("ticketNotice")}
       </div>
 
@@ -150,14 +156,14 @@ export function CoverageExtensionForm({
           variant="outline"
           disabled={isPending}
           onClick={onCancel}
-          className="w-full sm:w-auto min-h-[44px] text-xs font-bold"
+          className="w-full sm:w-auto min-h-[40px] text-xs font-semibold"
         >
           {t("cancelChanges")}
         </Button>
         <Button
           type="submit"
           disabled={isPending || note.trim().length < 5}
-          className="w-full sm:w-auto min-h-[44px] text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground flex items-center justify-center gap-2"
+          className="w-full sm:w-auto min-h-[40px] text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground flex items-center justify-center gap-2"
         >
           {isPending ? (
             <>

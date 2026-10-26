@@ -1,5 +1,6 @@
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { Badge } from "@/components/ui/badge";
 
 export async function ItemRequestsList({
   requests,
@@ -24,25 +25,28 @@ export async function ItemRequestsList({
     );
   }
 
-  function getStatusBadge(status: string) {
+  function renderStatusBadge(status: string) {
     switch (status) {
       case "approved":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-success-soft text-success border border-success/20">
-            <CheckCircle2 className="size-3" /> {t("statusApproved")}
-          </span>
+          <Badge variant="outline" className="gap-1 font-semibold bg-success-soft text-success border-success/30">
+            <CheckCircle2 className="size-3" />
+            <span>{t("statusApproved")}</span>
+          </Badge>
         );
       case "rejected":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-destructive-soft text-destructive border border-destructive/20">
-            <XCircle className="size-3" /> {t("statusRejected")}
-          </span>
+          <Badge variant="outline" className="gap-1 font-semibold bg-destructive-soft text-destructive border-destructive/30">
+            <XCircle className="size-3" />
+            <span>{t("statusRejected")}</span>
+          </Badge>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-warning-soft text-warning border border-warning/20">
-            <Clock className="size-3" /> {t("statusPending")}
-          </span>
+          <Badge variant="outline" className="gap-1 font-semibold bg-warning-soft text-warning border-warning/30">
+            <Clock className="size-3" />
+            <span>{t("statusPending")}</span>
+          </Badge>
         );
     }
   }
@@ -66,11 +70,11 @@ export async function ItemRequestsList({
               {req.note && <p className="text-muted-foreground text-[11px]">{req.note}</p>}
               {req.adminNote && (
                 <p className="text-primary font-medium text-[11px]">
-                  Réponse admin: {req.adminNote}
+                  {t("adminResponse", { note: req.adminNote })}
                 </p>
               )}
             </div>
-            <div className="shrink-0">{getStatusBadge(req.status)}</div>
+            <div className="shrink-0">{renderStatusBadge(req.status)}</div>
           </div>
         ))}
       </div>

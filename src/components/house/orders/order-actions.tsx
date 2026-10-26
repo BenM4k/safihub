@@ -1,10 +1,20 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, X, Loader2 } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { acceptOrderAction, rejectOrderAction } from "@/actions/house.actions";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export function OrderActions({
   orderId,
@@ -55,9 +65,12 @@ export function OrderActions({
         setErrorMsg(res.error);
       } else {
         setIsRejectOpen(false);
+        setRejectReason("");
       }
     });
   }
+
+  const btnSize = compact ? "sm" : "default";
 
   return (
     <div className="flex items-center gap-2">
@@ -66,13 +79,15 @@ export function OrderActions({
       )}
 
       <Button
-        size={compact ? "sm" : "default"}
+        type="button"
+        size={btnSize}
+        variant="ghost"
         onClick={handleAccept}
         disabled={isPending}
-        className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs shadow-xs"
+        className="text-primary hover:bg-primary/10 font-bold text-xs"
       >
         {isPending ? (
-          <Loader2 className="size-3.5 animate-spin" />
+          <Loader2 className="size-3.5 animate-spin mr-1" />
         ) : (
           <Check className="size-3.5 mr-1" />
         )}
@@ -80,81 +95,75 @@ export function OrderActions({
       </Button>
 
       <Button
-        size={compact ? "sm" : "default"}
-        variant="outline"
-        onClick={() => setIsRejectOpen(true)}
+        type="button"
+        size={btnSize}
+        variant="ghost"
+        onClick={() => {
+          setErrorMsg(null);
+          setIsRejectOpen(true);
+        }}
         disabled={isPending}
-        className="text-destructive hover:text-destructive hover:bg-destructive-soft border-destructive/30 text-xs font-semibold"
+        className="text-destructive hover:bg-destructive/10 font-bold text-xs"
       >
         <X className="size-3.5 mr-1" />
         <span>{t("reject")}</span>
       </Button>
 
-      {/* Reject Modal */}
-      {isRejectOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-card rounded-2xl max-w-md w-full p-6 shadow-card border border-border space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="text-base font-bold text-heading">
-                  {t("rejectModalTitle")}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t("rejectModalDesc")}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsRejectOpen(false)}
-                className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
-              >
-                <X className="size-4" />
-              </button>
+      {/* Reject Modal using shadcn Dialog */}
+      <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-heading">
+              {t("rejectModalTitle")}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {t("rejectModalDesc")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleRejectSubmit} className="space-y-4 py-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="reject-reason" className="text-xs font-semibold text-foreground">
+                {t("rejectReasonLabel")}
+              </Label>
+              <Textarea
+                id="reject-reason"
+                required
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder={t("rejectReasonPlaceholder")}
+                className="text-xs resize-none"
+              />
             </div>
 
-            <form onSubmit={handleRejectSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  {t("rejectReasonLabel")}
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder={t("rejectReasonPlaceholder")}
-                  className="w-full text-xs rounded-xl border border-border bg-card text-foreground p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-              </div>
+            {errorMsg && (
+              <p className="text-xs text-destructive font-medium">{errorMsg}</p>
+            )}
 
-              {errorMsg && (
-                <p className="text-xs text-destructive font-medium">{errorMsg}</p>
-              )}
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsRejectOpen(false)}
-                  disabled={isPending}
-                >
-                  {t("cancel")}
-                </Button>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={isPending || !rejectReason.trim()}
-                  className="bg-destructive hover:bg-destructive/90 text-primary-foreground font-semibold text-xs"
-                >
-                  {isPending && <Loader2 className="size-3.5 animate-spin mr-1" />}
-                  <span>{t("confirmReject")}</span>
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <DialogFooter className="gap-2 sm:gap-0 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsRejectOpen(false)}
+                disabled={isPending}
+              >
+                {t("cancel")}
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isPending || !rejectReason.trim()}
+                className="bg-destructive hover:bg-destructive/90 text-primary-foreground font-semibold text-xs"
+              >
+                {isPending && <Loader2 className="size-3.5 animate-spin mr-1" />}
+                <span>{t("confirmReject")}</span>
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

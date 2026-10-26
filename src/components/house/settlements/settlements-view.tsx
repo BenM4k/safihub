@@ -8,6 +8,7 @@ import type {
   PartnerPayoutDTO,
   PartnerSettlementsPageData,
 } from "@/types/partner-settlements";
+import { Badge } from "@/components/ui/badge";
 import { HeroBalanceCard } from "./hero-balance-card";
 import { SettlementAlerts } from "./settlement-alerts";
 import { PeriodKpiRow } from "./period-kpi-row";
@@ -102,14 +103,14 @@ export function SettlementsView({ data }: SettlementsViewProps) {
             className={`pb-3 px-4 text-sm font-bold transition flex items-center gap-2 border-b-2 cursor-pointer min-h-[44px] ${
               activeTab === "orders"
                 ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-heading"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             <PackageCheck className="size-4" />
             <span>{t("tabDeliveredOrders")}</span>
-            <span className="px-2 py-0.5 rounded-full text-2xs font-semibold bg-surface border border-border">
+            <Badge variant="secondary" className="px-2 py-0 text-2xs font-semibold">
               {data.orders.length}
-            </span>
+            </Badge>
           </button>
 
           <button
@@ -120,14 +121,14 @@ export function SettlementsView({ data }: SettlementsViewProps) {
             className={`pb-3 px-4 text-sm font-bold transition flex items-center gap-2 border-b-2 cursor-pointer min-h-[44px] ${
               activeTab === "payouts"
                 ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-heading"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             <Receipt className="size-4" />
             <span>{t("tabPayoutsReceived")}</span>
-            <span className="px-2 py-0.5 rounded-full text-2xs font-semibold bg-surface border border-border">
+            <Badge variant="secondary" className="px-2 py-0 text-2xs font-semibold">
               {data.payouts.length}
-            </span>
+            </Badge>
           </button>
         </div>
 

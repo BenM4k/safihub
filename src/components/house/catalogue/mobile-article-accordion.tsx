@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight, Copy, CheckSquare, Square } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type {
   CatalogueCategoryGroup,
   CatalogueMaterial,
@@ -49,15 +50,15 @@ export function MobileArticleAccordion({
   }
 
   return (
-    <div className="block md:hidden space-y-4">
+    <div className="block md:hidden space-y-4 font-sans">
       {categories.map((cat) => (
-        <div key={cat.key} className="space-y-2">
+        <div key={cat.key} className="space-y-1">
           {/* Category Header */}
-          <div className="text-xs font-bold font-display uppercase tracking-wider text-muted-foreground px-1">
+          <div className="text-xs font-bold font-display uppercase tracking-wider text-muted-foreground px-2 py-1">
             {cat.label} ({cat.articles.length})
           </div>
 
-          <div className="space-y-2">
+          <div className="divide-y divide-border border-y border-border bg-card">
             {cat.articles.map((article) => {
               const isExpanded = expandedArticles.has(article.id);
               const isSelected = selectedArticleIds.has(article.id);
@@ -77,18 +78,16 @@ export function MobileArticleAccordion({
               return (
                 <div
                   key={article.id}
-                  className={`bg-card rounded-2xl border transition shadow-xs overflow-hidden ${
-                    isSelected ? "border-primary ring-1 ring-primary/20" : "border-border"
-                  }`}
+                  className={`transition ${isSelected ? "bg-primary/5" : ""}`}
                 >
-                  {/* Article Accordion Header (44px target) */}
+                  {/* Article Row Header (44px target) */}
                   <div className="p-3.5 flex items-center justify-between gap-3 min-h-[44px]">
                     <div className="flex items-center gap-2.5 flex-1 min-w-0">
                       <button
                         type="button"
                         onClick={() => onToggleArticleSelect(article.id)}
-                        className="text-muted-foreground hover:text-primary p-1 rounded-lg"
-                        aria-label={`Sélectionner ${article.nameFr}`}
+                        className="text-muted-foreground hover:text-primary p-1 rounded-lg cursor-pointer shrink-0"
+                        aria-label={t("selectArticleAria", { name: article.nameFr })}
                       >
                         {isSelected ? (
                           <CheckSquare className="size-4 text-primary" />
@@ -99,22 +98,22 @@ export function MobileArticleAccordion({
                       <button
                         type="button"
                         onClick={() => toggleArticle(article.id)}
-                        className="flex-1 text-left min-w-0 flex items-center justify-between gap-2"
+                        className="flex-1 text-left min-w-0 flex items-center justify-between gap-2 cursor-pointer"
                       >
                         <span className="font-bold text-xs text-heading truncate">
                           {article.nameFr}
                         </span>
-                        <span className="text-[11px] font-medium text-muted-foreground bg-surface px-2 py-0.5 rounded-full shrink-0">
+                        <Badge variant="secondary" className="text-[10px] px-2 py-0.5 rounded-full shrink-0 font-mono">
                           {offeredCount}/{materials.length} {t("offered").toLowerCase()}
-                        </span>
+                        </Badge>
                       </button>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => toggleArticle(article.id)}
-                      className="size-8 rounded-lg flex items-center justify-center hover:bg-surface text-muted-foreground"
-                      aria-label="Ouvrir le détail des matières"
+                      className="size-8 rounded-lg flex items-center justify-center hover:bg-muted/40 text-muted-foreground cursor-pointer shrink-0"
+                      aria-label={t("expandArticleMaterialsAria", { name: article.nameFr })}
                     >
                       {isExpanded ? (
                         <ChevronDown className="size-4" />
@@ -126,12 +125,12 @@ export function MobileArticleAccordion({
 
                   {/* Expanded Material Rows */}
                   {isExpanded && (
-                    <div className="border-t border-border bg-surface/30 p-3 space-y-3">
+                    <div className="border-t border-border bg-muted/20 p-3 space-y-3">
                       <div className="flex justify-end">
                         <button
                           type="button"
                           onClick={() => onApplyPriceToAllFabrics(article)}
-                          className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1.5"
+                          className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1.5 cursor-pointer"
                         >
                           <Copy className="size-3.5" aria-hidden="true" />
                           <span>{t("applyAllFabrics")}</span>

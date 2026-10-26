@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Bell, CheckCircle2, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 import { MatrixTable, type NotificationMatrixRow } from "./notifications/matrix-table";
 import { QuietHoursCard } from "./notifications/quiet-hours-card";
 
@@ -110,17 +112,17 @@ export function NotificationsTab() {
   return (
     <div className="space-y-6">
       {testNotice && (
-        <div className="p-4 bg-success-soft border border-success/30 rounded-xl text-xs text-success font-semibold flex items-center gap-2">
-          <CheckCircle2 className="size-4 shrink-0" />
-          <span>{testNotice}</span>
-        </div>
+        <Alert className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+          <CheckCircle2 className="size-4 text-emerald-600" />
+          <AlertDescription className="text-xs font-semibold">{testNotice}</AlertDescription>
+        </Alert>
       )}
 
       {/* Header and Test action */}
-      <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+      <section className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h2 className="text-sm font-bold text-heading flex items-center gap-2">
+            <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
               <Bell className="size-4 text-primary" />
               <span>Matrice des notifications d&apos;urgence</span>
             </h2>
@@ -131,11 +133,12 @@ export function NotificationsTab() {
 
           <Button
             type="button"
+            variant="outline"
             size="sm"
             onClick={handleTestSound}
-            className="min-h-[44px] bg-secondary hover:bg-secondary/80 text-foreground border border-border font-bold text-xs"
+            className="min-h-[40px] font-semibold text-xs gap-1.5"
           >
-            <Volume2 className="size-3.5 mr-1.5 text-primary" />
+            <Volume2 className="size-3.5 text-primary" />
             <span>Tester la notification sonore</span>
           </Button>
         </div>
@@ -147,6 +150,8 @@ export function NotificationsTab() {
           Règle : Au moins un canal reste obligatoirement actif pour la notification de <em>Nouvelle commande reçue</em> afin de garantir la réactivité opérationnelle du pressing.
         </p>
       </section>
+
+      <Separator />
 
       {/* Quiet hours & Proposals */}
       <QuietHoursCard />

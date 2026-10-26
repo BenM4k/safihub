@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CheckCircle2, FileText } from "lucide-react";
 import { formatMoney } from "@/lib/cash-formatters";
 import type { PartnerPayoutDTO } from "@/types/partner-settlements";
 import { EmptyState } from "@/components/shared";
+import { Badge } from "@/components/ui/badge";
 
 interface PayoutsMobileListProps {
   payouts: PartnerPayoutDTO[];
@@ -20,12 +22,14 @@ export function PayoutsMobileList({
   onOpenReportDialog,
   onOpenReceiptModal,
 }: PayoutsMobileListProps) {
+  const t = useTranslations("house.settlements");
+
   if (payouts.length === 0) {
     return (
       <div className="md:hidden">
         <EmptyState
-          title="Aucun versement"
-          description="Aucun versement enregistré pour cette période."
+          title={t("noPayouts")}
+          description={t("noDeliveredOrdersDesc")}
         />
       </div>
     );
@@ -45,7 +49,7 @@ export function PayoutsMobileList({
               onSelectPayout(p);
             }
           }}
-          className="p-4 rounded-xl bg-surface border border-border shadow-2xs space-y-2.5 cursor-pointer active:scale-[0.99] transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
+          className="p-4 rounded-xl bg-surface border border-border/80 space-y-2.5 cursor-pointer active:scale-[0.99] transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
         >
           <div className="flex items-center justify-between gap-2">
             <span className="font-mono text-xs text-muted-foreground">
@@ -56,10 +60,10 @@ export function PayoutsMobileList({
               }).format(new Date(p.date))}
             </span>
 
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-success-light text-success-base text-2xs font-semibold border border-success-base/30">
+            <Badge variant="outline" className="gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-2xs font-semibold">
               <CheckCircle2 className="size-3" />
-              Payé
-            </span>
+              <span>{t("statusPaid")}</span>
+            </Badge>
           </div>
 
           <div className="flex items-baseline justify-between">
@@ -68,19 +72,19 @@ export function PayoutsMobileList({
                 {methodLabels[p.method] || p.method}
               </span>
               {p.reference && (
-                <span className="font-mono text-2xs text-heading font-semibold">
+                <span className="font-mono text-2xs text-foreground font-semibold">
                   {p.reference}
                 </span>
               )}
             </div>
 
-            <div className="font-mono font-bold text-lg text-success-base tabular-nums">
+            <div className="font-mono font-bold text-lg text-emerald-600 dark:text-emerald-400 tabular-nums">
               +{formatMoney(p.amount, "CDF")}
             </div>
           </div>
 
           <div className="pt-2 border-t border-border flex items-center justify-between text-2xs text-muted-foreground">
-            <span>{p.ordersCount} commande(s) incluse(s)</span>
+            <span>{t("ordersIncluded", { count: p.ordersCount })}</span>
 
             <div className="flex items-center gap-2">
               <button
@@ -101,9 +105,9 @@ export function PayoutsMobileList({
                   e.stopPropagation();
                   onOpenReportDialog(p);
                 }}
-                className="text-muted-foreground hover:text-destructive-base underline p-1 min-h-[44px] flex items-center"
+                className="text-muted-foreground hover:text-destructive underline p-1 min-h-[44px] flex items-center"
               >
-                Signaler
+                {t("report")}
               </button>
             </div>
           </div>

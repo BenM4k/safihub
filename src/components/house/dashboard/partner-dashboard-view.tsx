@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { WifiOff } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PartnerBanner } from "./partner-banner";
 import { PartnerAlertStrip } from "./partner-alert-strip";
 import { AcceptanceQueue } from "./acceptance-queue";
@@ -11,33 +13,12 @@ import { PartnerPipeline } from "./partner-pipeline";
 import { PartnerAnalytics } from "./partner-analytics";
 import { PartnerTables } from "./partner-tables";
 import { PartnerContextualActions } from "./partner-contextual-actions";
+import { usePartnerSound } from "../use-partner-sound";
 import type { HouseDashboardMetrics } from "@/dal";
 
 interface PartnerDashboardViewProps {
   initialMetrics: HouseDashboardMetrics;
   houseSlug: string;
-}
-
-function subscribeSound(callback: () => void) {
-  window.addEventListener("storage", callback);
-  window.addEventListener("safihub-sound-toggled", callback);
-  return () => {
-    window.removeEventListener("storage", callback);
-    window.removeEventListener("safihub-sound-toggled", callback);
-  };
-}
-
-function getSoundSnapshot() {
-  try {
-    const stored = localStorage.getItem("safihub_sound_enabled");
-    return stored !== "false";
-  } catch {
-    return true;
-  }
-}
-
-function getServerSoundSnapshot() {
-  return true;
 }
 
 function subscribeOnline(callback: () => void) {
@@ -57,30 +38,30 @@ function getServerOnlineSnapshot() {
   return true;
 }
 
+/**
+ * Clean dashboard composition orchestrating hero banner, KPI row, acceptance queue, and analytics.
+ */
 export function PartnerDashboardView({
   initialMetrics,
   houseSlug,
 }: PartnerDashboardViewProps) {
   const router = useRouter();
+  const t = useTranslations("house.dashboard");
   const [lastUpdated, setLastUpdated] = useState(() => new Date());
   const prevWaitingCountRef = useRef(initialMetrics.waitingAcceptanceCount);
   const [isPaused, setIsPaused] = useState(initialMetrics.house.isPaused);
   const [isPauseDialogOpen, setIsPauseDialogOpen] = useState(false);
   const metrics = initialMetrics;
 
-  const soundEnabled = useSyncExternalStore(
-    subscribeSound,
-    getSoundSnapshot,
-    getServerSoundSnapshot,
-  );
+  const { soundEnabled } = usePartnerSound();
 
   const isOnline = useSyncExternalStore(
     subscribeOnline,
     getOnlineSnapshot,
-    getServerOnlineSnapshot,
+    getServerOnlineSnapshot
   );
 
-  // Play chime if new order arrived and sound enabled (side effect only, no setState)
+  // Play chime if new order arrived and sound enabled
   useEffect(() => {
     if (
       soundEnabled &&
@@ -112,18 +93,25 @@ export function PartnerDashboardView({
     <div className="space-y-6 sm:space-y-8 font-sans">
       {/* Offline Indicator */}
       {!isOnline && (
-        <div
-          role="status"
-          className="p-3 bg-amber-100 border border-amber-300 rounded-2xl text-xs text-amber-900 font-bold flex items-center justify-between shadow-2xs"
+        <Alert
+          variant="destructive"
+          className="border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200 py-3"
         >
-          <div className="flex items-center gap-2">
-            <WifiOff className="size-4 shrink-0 text-amber-700" />
-            <span>Mode hors-ligne · Données mises à jour le {lastUpdated.toLocaleTimeString("fr-FR")}</span>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <WifiOff className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <AlertDescription className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                {t("offlineTitle")} ·{" "}
+                {t("offlineUpdated", {
+                  time: lastUpdated.toLocaleTimeString(),
+                })}
+              </AlertDescription>
+            </div>
+            <span className="text-[11px] font-normal text-amber-700 dark:text-amber-300 hidden sm:inline">
+              {t("offlineReconnecting")}
+            </span>
           </div>
-          <span className="text-[11px] font-normal text-amber-800">
-            Reconnexion automatique...
-          </span>
-        </div>
+        </Alert>
       )}
 
       {/* 1. Identity Banner Header */}

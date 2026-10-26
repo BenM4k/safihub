@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+
 export interface NotificationMatrixRow {
   eventKey: string;
   label: string;
@@ -17,63 +27,63 @@ interface MatrixTableProps {
 
 export function MatrixTable({ rows, onToggleChannel }: MatrixTableProps) {
   return (
-    <div className="border border-border rounded-xl overflow-x-auto">
-      <table className="w-full text-left text-xs min-w-[500px]">
-        <thead className="bg-surface border-b border-border text-[11px] font-bold text-muted-foreground uppercase">
-          <tr>
-            <th className="p-3">Événement</th>
-            <th className="p-3 text-center">Son dans l&apos;app</th>
-            <th className="p-3 text-center">Push navigateur</th>
-            <th className="p-3 text-center opacity-50">SMS</th>
-            <th className="p-3 text-center opacity-50">WhatsApp</th>
-            <th className="p-3 text-center opacity-50">E-mail</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
+    <div className="rounded-xl border border-border/60 overflow-hidden bg-background">
+      <Table className="text-xs min-w-[500px]">
+        <TableHeader>
+          <TableRow className="border-b border-border/60 hover:bg-transparent">
+            <TableHead className="p-3 font-semibold text-muted-foreground">Événement</TableHead>
+            <TableHead className="p-3 text-center font-semibold text-muted-foreground">Son dans l&apos;app</TableHead>
+            <TableHead className="p-3 text-center font-semibold text-muted-foreground">Push navigateur</TableHead>
+            <TableHead className="p-3 text-center font-semibold text-muted-foreground/50">SMS</TableHead>
+            <TableHead className="p-3 text-center font-semibold text-muted-foreground/50">WhatsApp</TableHead>
+            <TableHead className="p-3 text-center font-semibold text-muted-foreground/50">E-mail</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((row, index) => (
-            <tr key={row.eventKey} className="hover:bg-surface/50">
-              <td className="p-3 font-semibold text-heading">{row.label}</td>
+            <TableRow key={row.eventKey} className="border-b border-border/60 last:border-b-0 hover:bg-muted/30">
+              <TableCell className="p-3 font-semibold text-foreground">{row.label}</TableCell>
 
               {/* App Sound */}
-              <td className="p-3 text-center">
-                <input
-                  type="checkbox"
-                  checked={row.appSound}
-                  onChange={() => onToggleChannel(index, "appSound")}
-                  className="size-4 rounded-sm border-border text-primary focus:ring-primary accent-primary cursor-pointer"
-                  aria-label={`Son dans l'app pour ${row.label}`}
-                />
-              </td>
+              <TableCell className="p-3 text-center">
+                <div className="flex justify-center">
+                  <Checkbox
+                    checked={row.appSound}
+                    onCheckedChange={() => onToggleChannel(index, "appSound")}
+                    aria-label={`Son dans l'app pour ${row.label}`}
+                  />
+                </div>
+              </TableCell>
 
               {/* Push */}
-              <td className="p-3 text-center">
-                <input
-                  type="checkbox"
-                  checked={row.push}
-                  onChange={() => onToggleChannel(index, "push")}
-                  className="size-4 rounded-sm border-border text-primary focus:ring-primary accent-primary cursor-pointer"
-                  aria-label={`Push navigateur pour ${row.label}`}
-                />
-              </td>
+              <TableCell className="p-3 text-center">
+                <div className="flex justify-center">
+                  <Checkbox
+                    checked={row.push}
+                    onCheckedChange={() => onToggleChannel(index, "push")}
+                    aria-label={`Push navigateur pour ${row.label}`}
+                  />
+                </div>
+              </TableCell>
 
               {/* Proposed SMS */}
-              <td className="p-3 text-center text-muted-foreground/50 text-[10px]">
+              <TableCell className="p-3 text-center text-muted-foreground/50 text-[10px]">
                 —
-              </td>
+              </TableCell>
 
               {/* Proposed WhatsApp */}
-              <td className="p-3 text-center text-muted-foreground/50 text-[10px]">
+              <TableCell className="p-3 text-center text-muted-foreground/50 text-[10px]">
                 —
-              </td>
+              </TableCell>
 
               {/* Proposed Email */}
-              <td className="p-3 text-center text-muted-foreground/50 text-[10px]">
+              <TableCell className="p-3 text-center text-muted-foreground/50 text-[10px]">
                 —
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

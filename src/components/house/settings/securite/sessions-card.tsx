@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { AlertCircle, CheckCircle2, Laptop, LogOut, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/shared";
 import { revokeOtherSessionsAction } from "@/actions/house.actions";
 import type { UserSessionDTO } from "@/dal";
@@ -35,10 +37,10 @@ export function SessionsCard({ sessions, currentSessionId }: SessionsCardProps) 
   }
 
   return (
-    <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+    <section className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-sm font-bold text-heading">Sessions actives</h2>
+          <h2 className="text-sm font-bold text-foreground">Sessions actives</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             Appareils actuellement connectés à votre compte pressing.
           </p>
@@ -50,7 +52,7 @@ export function SessionsCard({ sessions, currentSessionId }: SessionsCardProps) 
             variant="outline"
             size="sm"
             onClick={() => setIsRevokeDialogOpen(true)}
-            className="text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive-soft min-h-[40px]"
+            className="text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 min-h-[40px]"
           >
             <LogOut className="size-3.5 mr-1.5" />
             <span>Déconnecter les autres appareils</span>
@@ -59,19 +61,19 @@ export function SessionsCard({ sessions, currentSessionId }: SessionsCardProps) 
       </div>
 
       {sessionSuccess && (
-        <div className="p-3 bg-success-soft border border-success/30 rounded-xl text-xs text-success font-semibold flex items-center gap-2">
-          <CheckCircle2 className="size-4 shrink-0" />
-          <span>{sessionSuccess}</span>
-        </div>
+        <Alert className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+          <CheckCircle2 className="size-4 text-emerald-600" />
+          <AlertDescription className="text-xs font-semibold">{sessionSuccess}</AlertDescription>
+        </Alert>
       )}
       {sessionError && (
-        <div className="p-3 bg-destructive-soft border border-destructive/30 rounded-xl text-xs text-destructive font-semibold flex items-center gap-2">
-          <AlertCircle className="size-4 shrink-0" />
-          <span>{sessionError}</span>
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs font-semibold">{sessionError}</AlertDescription>
+        </Alert>
       )}
 
-      <div className="divide-y divide-border border border-border rounded-xl overflow-hidden">
+      <div className="divide-y divide-border/60 rounded-xl border border-border/60 overflow-hidden bg-background">
         {sessions.map((sess) => {
           const isCurrent = sess.id === currentSessionId;
           const isMobile = sess.userAgent?.toLowerCase().includes("mobile");
@@ -79,21 +81,24 @@ export function SessionsCard({ sessions, currentSessionId }: SessionsCardProps) 
           return (
             <div
               key={sess.id}
-              className="p-4 flex items-center justify-between gap-3 text-xs hover:bg-surface transition"
+              className="p-4 flex items-center justify-between gap-3 text-xs hover:bg-muted/30 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="size-8 rounded-lg bg-surface border border-border flex items-center justify-center text-muted-foreground">
+                <div className="size-8 rounded-lg bg-muted/40 border border-border/60 flex items-center justify-center text-muted-foreground">
                   {isMobile ? <Smartphone className="size-4" /> : <Laptop className="size-4" />}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-heading">
+                    <span className="font-bold text-foreground">
                       {isMobile ? "Navigateur mobile" : "Ordinateur de bureau"}
                     </span>
                     {isCurrent && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-success-soft text-success border border-success/30">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-bold text-emerald-600 border-emerald-500/30 bg-emerald-500/10"
+                      >
                         Cette session
-                      </span>
+                      </Badge>
                     )}
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">

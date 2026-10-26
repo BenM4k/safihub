@@ -57,9 +57,10 @@ export function PartnerOrderPrimaryAction({
     return (
       <Button
         type="button"
+        variant="ghost"
         disabled={isPending}
         onClick={() => onAccept(order.id)}
-        className={`bg-primary hover:bg-primary-hover text-primary-foreground font-bold shadow-xs cursor-pointer ${btnHeight}`}
+        className={`text-primary hover:bg-primary/10 font-bold cursor-pointer ${btnHeight}`}
       >
         {isPending ? (
           <Loader2 className="size-3.5 mr-1.5 animate-spin" />

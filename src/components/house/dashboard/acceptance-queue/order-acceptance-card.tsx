@@ -1,6 +1,5 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   Clock,
@@ -10,13 +9,16 @@ import {
   ArrowRight,
   Loader2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   computeOrderAcceptanceCountdown,
   computeNetRevenue,
 } from "@/lib/partner-dashboard";
 import type { HouseOrderListItemRecord } from "@/dal";
 import { OrderAcceptanceDetails } from "./order-acceptance-details";
+import { useCountdownTimestamp } from "../use-countdown-timer";
 
 interface OrderAcceptanceCardProps {
   order: HouseOrderListItemRecord;
@@ -27,40 +29,9 @@ interface OrderAcceptanceCardProps {
   onOpenReject: (order: HouseOrderListItemRecord) => void;
 }
 
-// Module-level ticker for 1-second countdowns to ensure stable primitive snapshots
-let currentTimestamp = 0;
-const subscribers = new Set<() => void>();
-let timerId: ReturnType<typeof setInterval> | null = null;
-
-function subscribeToTimer(callback: () => void) {
-  subscribers.add(callback);
-  if (!timerId && typeof window !== "undefined") {
-    currentTimestamp = Date.now();
-    timerId = setInterval(() => {
-      currentTimestamp = Date.now();
-      subscribers.forEach((cb) => cb());
-    }, 1000);
-  }
-  return () => {
-    subscribers.delete(callback);
-    if (subscribers.size === 0 && timerId) {
-      clearInterval(timerId);
-      timerId = null;
-    }
-  };
-}
-
-function getTimerSnapshot() {
-  if (currentTimestamp === 0 && typeof window !== "undefined") {
-    currentTimestamp = Date.now();
-  }
-  return currentTimestamp;
-}
-
-function getServerTimerSnapshot() {
-  return 0;
-}
-
+/**
+ * Order card in acceptance queue with live 45-min timer and one-click actions.
+ */
 export function OrderAcceptanceCard({
   order,
   houseSlug,
@@ -69,12 +40,9 @@ export function OrderAcceptanceCard({
   onAccept,
   onOpenReject,
 }: OrderAcceptanceCardProps) {
-  const timestamp = useSyncExternalStore(
-    subscribeToTimer,
-    getTimerSnapshot,
-    getServerTimerSnapshot,
-  );
-  const now = timestamp > 0 ? new Date(timestamp) : null;
+  const tOrders = useTranslations("house.orders");
+  const tDashboard = useTranslations("house.dashboard");
+  const now = useCountdownTimestamp();
 
   const countdown = now
     ? computeOrderAcceptanceCountdown(order.acceptanceDeadlineAt, now)
@@ -90,20 +58,18 @@ export function OrderAcceptanceCard({
     : `#${order.code}`;
   const netEarnings = computeNetRevenue(
     order.adjustedItemsTotal ?? order.itemsTotal,
-    order.commissionAmount ?? 0,
+    order.commissionAmount ?? 0
   );
 
-  const countdownBadgeStyle =
-    countdown.urgency === "expired"
-      ? "bg-destructive-soft text-destructive border-destructive/30 font-bold"
-      : countdown.urgency === "critical"
-        ? "bg-destructive-soft text-destructive border-destructive/30 animate-pulse font-black"
-        : countdown.urgency === "warning"
-          ? "bg-warning-soft text-warning border-warning/30 font-bold"
-          : "bg-secondary text-foreground border-border font-semibold";
+  const countdownBadgeVariant =
+    countdown.urgency === "expired" || countdown.urgency === "critical"
+      ? "destructive"
+      : countdown.urgency === "warning"
+      ? "warning"
+      : "secondary";
 
   return (
-    <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-card hover:border-primary/40 transition-all space-y-4">
+    <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs hover:border-primary/40 transition-all space-y-4">
       {/* Card Header */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-border">
         <div className="flex items-center gap-2 min-w-0">
@@ -117,29 +83,31 @@ export function OrderAcceptanceCard({
             ({order.code})
           </span>
 
-          {/* Privacy badge */}
-          <div
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary-soft text-primary border border-primary/20"
-            title="Pare-feu de confidentialité client (AC 15) : Téléphone et adresse exacte masqués"
+          <Badge
+            variant="info"
+            className="gap-1 px-2 py-0.5 text-[10px] font-semibold"
+            title={tOrders("privacyNotice")}
           >
             <Shield className="size-3 text-primary" />
-            <span>AC 15 Protégé</span>
-          </div>
+            <span>{tOrders("privacyBadge")}</span>
+          </Badge>
         </div>
 
         {/* Live Countdown Badge */}
         {now && (
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border ${countdownBadgeStyle}`}
+          <Badge
+            variant={countdownBadgeVariant}
+            className={`gap-1.5 px-3 py-1 text-xs font-bold ${
+              countdown.urgency === "critical" ? "animate-pulse" : ""
+            }`}
             aria-live="polite"
           >
             <Clock className="size-3.5 shrink-0" />
             <span>{countdown.label}</span>
-          </div>
+          </Badge>
         )}
       </div>
 
-      {/* Customer and details summary */}
       <OrderAcceptanceDetails order={order} netEarnings={netEarnings} />
 
       {/* Actions */}
@@ -148,43 +116,44 @@ export function OrderAcceptanceCard({
           href={`/partner/${houseSlug}/orders/${order.id}`}
           className="text-xs font-semibold text-foreground hover:text-primary inline-flex items-center gap-1 py-1"
         >
-          <span>Consulter le détail</span>
+          <span>{tOrders("actionViewDetails")}</span>
           <ArrowRight className="size-3" />
         </Link>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {countdown.isExpired ? (
             <div className="w-full sm:w-auto p-2 rounded-xl bg-destructive-soft border border-destructive/30 text-xs font-bold text-destructive text-center">
-              Délai dépassé — Commande expirée (non acceptée à temps)
+              {tDashboard("orderExpiredNotice")}
             </div>
           ) : (
             <>
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 disabled={isAccepting || isRejecting}
                 onClick={() => onOpenReject(order)}
-                className="flex-1 sm:flex-initial text-xs font-bold text-destructive hover:text-destructive hover:bg-destructive-soft border-destructive/30 min-h-[44px] sm:min-h-[38px]"
+                className="flex-1 sm:flex-initial text-xs font-bold text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[40px] sm:min-h-[36px] cursor-pointer"
               >
                 <XCircle className="size-4 mr-1.5" />
-                Refuser
+                {tOrders("reject")}
               </Button>
 
               <Button
                 type="button"
+                variant="ghost"
                 disabled={isAccepting || isRejecting}
                 onClick={() => onAccept(order.id)}
-                className="flex-1 sm:flex-initial text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground min-h-[44px] sm:min-h-[38px] shadow-xs"
+                className="flex-1 sm:flex-initial text-xs font-bold text-primary hover:text-primary hover:bg-primary/10 min-h-[40px] sm:min-h-[36px] cursor-pointer"
               >
                 {isAccepting ? (
                   <>
                     <Loader2 className="size-4 mr-1.5 animate-spin" />
-                    Acceptation...
+                    {tDashboard("orderAccepting")}
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="size-4 mr-1.5" />
-                    Accepter
+                    {tOrders("actionAccept")}
                   </>
                 )}
               </Button>

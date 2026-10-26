@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useSyncExternalStore, useTransition } from "react";
+import { useState, useRef, useTransition } from "react";
 import { toggleHousePauseAction } from "@/actions/house.actions";
 import { validateBannerImageFile } from "@/lib/partner-dashboard";
 import { BannerUploadModal } from "./banner-upload-modal";
@@ -9,6 +9,7 @@ import { PartnerBannerCover } from "./partner-banner-cover";
 import { PartnerBannerPhotoNudge } from "./partner-banner-nudge";
 import { PartnerBannerActions } from "./partner-banner-actions";
 import { PartnerBannerIdentity } from "./partner-banner-identity";
+import { usePartnerBannerCover } from "./use-partner-banner-cover";
 
 interface PartnerBannerProps {
   house: {
@@ -34,18 +35,9 @@ interface PartnerBannerProps {
   onPauseChanged?: (paused: boolean) => void;
 }
 
-function getStoredCover(houseId: string): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const val = localStorage.getItem(`safihub_house_cover_${houseId}`);
-    return val && !val.startsWith("blob:") ? val : null;
-  } catch {
-    return null;
-  }
-}
-
-const noopSubscribe = () => () => {};
-
+/**
+ * Partner identity banner with 4:1 cover, status badge, and action triggers.
+ */
 export function PartnerBanner({
   house,
   isPaused: liftedIsPaused,
@@ -54,13 +46,10 @@ export function PartnerBanner({
   onClosePauseDialog,
   onPauseChanged,
 }: PartnerBannerProps) {
-  const [uploadedCoverUrl, setUploadedCoverUrl] = useState<string | null>(null);
-  const storedCover = useSyncExternalStore(
-    noopSubscribe,
-    () => getStoredCover(house.id),
-    () => null
+  const { coverImageUrl, saveCover } = usePartnerBannerCover(
+    house.id,
+    house.coverImageUrl
   );
-  const coverImageUrl = uploadedCoverUrl ?? house.coverImageUrl ?? storedCover;
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [stagedPreviewUrl, setStagedPreviewUrl] = useState<string | null>(null);
@@ -90,17 +79,6 @@ export function PartnerBanner({
     const previewUrl = URL.createObjectURL(file);
     setStagedPreviewUrl(previewUrl);
     setIsUploadOpen(true);
-  }
-
-  function handleSaveCover(newUrl: string) {
-    setUploadedCoverUrl(newUrl);
-    if (!newUrl.startsWith("blob:")) {
-      try {
-        localStorage.setItem(`safihub_house_cover_${house.id}`, newUrl);
-      } catch {
-        // ignore
-      }
-    }
   }
 
   function handleTogglePause(targetPause: boolean) {
@@ -135,7 +113,6 @@ export function PartnerBanner({
 
   return (
     <>
-      {/* Hidden file input for direct upload triggers */}
       <input
         ref={fileInputRef}
         type="file"
@@ -152,7 +129,6 @@ export function PartnerBanner({
           onOpenUpload={handleTriggerUpload}
         />
 
-        {/* Identity content section */}
         <div className="px-4 sm:px-6 pb-5 pt-0">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-10 sm:-mt-12 relative z-10">
             <PartnerBannerIdentity
@@ -167,18 +143,18 @@ export function PartnerBanner({
             <PartnerBannerActions
               slug={house.slug}
               isPaused={isPausedState}
-              onOpenPauseDialog={onOpenPauseDialog ?? (() => setInternalPauseDialogOpen(true))}
+              onOpenPauseDialog={
+                onOpenPauseDialog ?? (() => setInternalPauseDialogOpen(true))
+              }
             />
           </div>
 
-          {/* Photo nudge if missing */}
           {!coverImageUrl && (
             <PartnerBannerPhotoNudge onOpenUpload={handleTriggerUpload} />
           )}
         </div>
       </div>
 
-      {/* Upload modal */}
       <BannerUploadModal
         isOpen={isUploadOpen}
         onClose={() => {
@@ -187,13 +163,14 @@ export function PartnerBanner({
         }}
         houseName={house.name}
         initialPreviewUrl={stagedPreviewUrl}
-        onSavePhoto={handleSaveCover}
+        onSavePhoto={saveCover}
       />
 
-      {/* Confirmation dialog for pause toggle */}
       <PartnerPauseDialog
         isOpen={isPauseDialogOpen}
-        onClose={onClosePauseDialog ?? (() => setInternalPauseDialogOpen(false))}
+        onClose={
+          onClosePauseDialog ?? (() => setInternalPauseDialogOpen(false))
+        }
         isPaused={isPausedState}
         onConfirm={() => handleTogglePause(!isPausedState)}
         isPending={isPending}

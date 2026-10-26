@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { AlertCircle, Check, RotateCcw } from "lucide-react";
 import type { HouseCoverageWithLimitsData } from "@/dal";
 import { EmptyState } from "@/components/admin/shared/empty-state";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { CoverageHeader } from "./coverage-header";
 import { DeliveryPerimeterCard } from "./delivery-perimeter-card";
 import { CoverageFilterBar } from "./coverage-filter-bar";
@@ -76,39 +78,35 @@ export function CoverageManager({ coverageData }: CoverageManagerProps) {
 
       {/* Success Banner */}
       {saveSuccessMsg && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="p-3.5 bg-success-soft text-success text-xs font-bold rounded-xl border border-success/30 flex items-center gap-2 animate-in fade-in duration-150"
-        >
-          <Check className="size-4 shrink-0 text-success" aria-hidden="true" />
-          <span>{saveSuccessMsg}</span>
-        </div>
+        <Alert className="bg-success-soft text-success border-success/30 py-2.5">
+          <Check className="size-4 text-success" />
+          <AlertDescription className="text-xs font-bold text-success">
+            {saveSuccessMsg}
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Error Banner with Retry */}
       {errorMsg && (
-        <div
-          role="alert"
-          aria-live="assertive"
-          className="p-3.5 bg-destructive-soft text-destructive text-xs font-semibold rounded-xl border border-destructive/20 flex items-center justify-between gap-2 animate-in fade-in duration-150"
-        >
+        <Alert variant="destructive" className="py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
-            <span>{errorMsg}</span>
+            <AlertCircle className="size-4 text-destructive" />
+            <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
           </div>
           {diffs.length > 0 && (
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant="destructive"
               disabled={isSaving}
               onClick={() => triggerSave()}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-destructive text-white text-xs font-bold hover:bg-destructive/90 transition shadow-xs"
+              className="h-7 text-xs font-bold gap-1 px-2.5"
             >
               <RotateCcw className="size-3" aria-hidden="true" />
-              <span>Réessayer</span>
-            </button>
+              <span>{t("retry")}</span>
+            </Button>
           )}
-        </div>
+        </Alert>
       )}
 
       {/* 3. Filter Bar */}
@@ -130,7 +128,7 @@ export function CoverageManager({ coverageData }: CoverageManagerProps) {
         />
       ) : groupedZones.length === 0 ? (
         <EmptyState
-          title="Aucun résultat"
+          title={t("noResultsTitle")}
           description={t("noFilterResults")}
         />
       ) : (

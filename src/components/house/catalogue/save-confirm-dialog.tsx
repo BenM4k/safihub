@@ -2,8 +2,17 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowRight, ShieldCheck, AlertTriangle, ChevronDown, ChevronRight, X } from "lucide-react";
+import { ArrowRight, ShieldCheck, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatMoney } from "@/lib/cash-formatters";
 import type { CellDiff } from "./types";
 
@@ -25,8 +34,6 @@ export function SaveConfirmDialog({
   const t = useTranslations("house.catalogue");
   const [isListExpanded, setIsListExpanded] = useState(false);
 
-  if (!isOpen) return null;
-
   const hasOutliers = diffs.some((d) => d.isOutlier);
 
   // Group diffs by service name for clean readability
@@ -39,63 +46,51 @@ export function SaveConfirmDialog({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="save-dialog-title"
-      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
-    >
-      <div className="bg-card w-full max-w-lg rounded-2xl border border-border p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 id="save-dialog-title" className="text-base font-bold text-heading font-display">
-              {t("confirmSaveTitle")}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {t("confirmSaveDesc")}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSaving}
-            className="text-muted-foreground hover:text-heading p-1 rounded-lg"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !isSaving && onClose()}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col font-sans">
+        <DialogHeader>
+          <DialogTitle className="text-base font-bold text-heading font-display">
+            {t("confirmSaveTitle")}
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            {t("confirmSaveDesc")}
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Freeze rule notice */}
-        <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 flex items-start gap-2.5 text-xs text-heading">
-          <ShieldCheck className="size-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
-          <div>
-            <strong className="font-bold text-heading">{t("freezeNoticeTitle")} : </strong>
-            <span className="text-muted-foreground">{t("confirmSaveNotice")}</span>
-          </div>
-        </div>
+        <Alert className="bg-primary/5 border-primary/20 text-xs py-2.5">
+          <ShieldCheck className="size-4 text-primary" />
+          <AlertDescription className="text-xs text-muted-foreground">
+            <strong className="font-bold text-heading mr-1">{t("freezeNoticeTitle")} :</strong>
+            <span>{t("confirmSaveNotice")}</span>
+          </AlertDescription>
+        </Alert>
 
         {/* Outlier Warning banner */}
         {hasOutliers && (
-          <div className="p-3 bg-warning-light text-warning-base rounded-xl border border-warning-base/20 flex items-start gap-2 text-xs">
-            <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden="true" />
-            <span className="font-medium">{t("outlierWarning")}</span>
-          </div>
+          <Alert variant="destructive" className="bg-warning-soft text-warning border-warning/30 text-xs py-2.5">
+            <AlertTriangle className="size-4 text-warning" />
+            <AlertDescription className="text-xs font-medium text-warning">
+              {t("outlierWarning")}
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Changes summary (scrollable) */}
-        <div className="flex-1 overflow-y-auto space-y-2 pr-1 border border-border/60 rounded-xl p-3 bg-surface/40 text-xs">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1 border border-border/60 rounded-xl p-3 bg-muted/30 text-xs max-h-60">
           <div className="flex items-center justify-between text-xs font-semibold text-heading pb-1 border-b border-border/40">
             <span>{t("diffCount", { count: diffs.length })} :</span>
             {diffs.length > 5 && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsListExpanded(!isListExpanded)}
-                className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                className="text-[11px] text-primary hover:bg-primary/10 h-6 px-1.5 gap-1"
               >
-                {isListExpanded ? t("collapse") : t("expandAll")}
+                <span>{isListExpanded ? t("collapse") : t("expandAll")}</span>
                 {isListExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-              </button>
+              </Button>
             )}
           </div>
 
@@ -151,8 +146,7 @@ export function SaveConfirmDialog({
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
+        <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border">
           <Button
             type="button"
             variant="outline"
@@ -173,8 +167,8 @@ export function SaveConfirmDialog({
           >
             {isSaving ? t("saving") : t("confirmButton")}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

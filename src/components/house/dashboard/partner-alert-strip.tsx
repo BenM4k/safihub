@@ -4,12 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, AlertTriangle, ArrowRight, Info, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import type { HouseDashboardAlert } from "@/dal";
 
 interface PartnerAlertStripProps {
   alerts: HouseDashboardAlert[];
 }
 
+/**
+ * Priority alert notification strip using shadcn Alert and Button primitives.
+ */
 export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
   const t = useTranslations("house.alerts");
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
@@ -33,65 +38,70 @@ export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
       {activeAlerts.map((alert) => {
         const isCritical = alert.severity === "critical";
         const isWarning = alert.severity === "warning";
+        const variant = isCritical ? "destructive" : "default";
 
-        const bgClass = isCritical
-          ? "bg-destructive-soft border-destructive/20 text-destructive"
+        const Icon = isCritical
+          ? AlertCircle
           : isWarning
-          ? "bg-warning-soft border-warning/20 text-warning"
-          : "bg-surface border-border text-heading";
-
-        const iconColor = isCritical
-          ? "text-destructive"
-          : isWarning
-          ? "text-warning"
-          : "text-primary";
-
-        const Icon = isCritical ? AlertCircle : isWarning ? AlertTriangle : Info;
+          ? AlertTriangle
+          : Info;
 
         type AlertKey = Parameters<typeof t>[0];
-        const title = alert.titleKey ? t(alert.titleKey as AlertKey) : alert.title;
+        const title = alert.titleKey
+          ? t(alert.titleKey as AlertKey)
+          : alert.title;
         const message = alert.messageKey
           ? t(alert.messageKey as AlertKey, alert.messageParams ?? {})
           : alert.message;
 
         return (
-          <div
+          <Alert
             key={alert.id}
-            role="alert"
-            className={`p-3.5 sm:p-4 rounded-2xl border ${bgClass} flex items-start justify-between gap-3 shadow-xs transition-all`}
+            variant={variant}
+            className={`p-3.5 sm:p-4 rounded-2xl flex items-start justify-between gap-3 shadow-xs ${
+              isWarning
+                ? "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200"
+                : ""
+            }`}
           >
             <div className="flex items-start gap-3 min-w-0">
-              <Icon className={`size-5 shrink-0 mt-0.5 ${iconColor}`} />
+              <Icon className="size-5 shrink-0 mt-0.5" />
               <div className="space-y-0.5 min-w-0">
-                <p className="text-xs sm:text-sm font-bold leading-tight">
+                <AlertTitle className="text-xs sm:text-sm font-bold leading-tight">
                   {title}
-                </p>
-                <p className="text-xs opacity-90 leading-relaxed">
+                </AlertTitle>
+                <AlertDescription className="text-xs opacity-90 leading-relaxed">
                   {message}
-                </p>
+                </AlertDescription>
               </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0 self-center">
               {alert.link && (
-                <Link
-                  href={alert.link}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-card hover:bg-surface text-heading shadow-xs border border-border transition"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="h-8 px-3 rounded-xl text-xs font-bold bg-card hover:bg-secondary text-heading shadow-2xs border-border"
                 >
-                  <span>{t("manage")}</span>
-                  <ArrowRight className="size-3" />
-                </Link>
+                  <Link href={alert.link}>
+                    <span>{t("manage")}</span>
+                    <ArrowRight className="size-3" />
+                  </Link>
+                </Button>
               )}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => handleDismiss(alert.id)}
                 aria-label={t("dismissAria")}
-                className="size-7 rounded-lg text-muted-foreground hover:text-heading hover:bg-black/5 flex items-center justify-center transition cursor-pointer"
+                className="size-7 rounded-lg text-muted-foreground hover:text-heading cursor-pointer"
               >
                 <X className="size-4" />
-              </button>
+              </Button>
             </div>
-          </div>
+          </Alert>
         );
       })}
     </div>

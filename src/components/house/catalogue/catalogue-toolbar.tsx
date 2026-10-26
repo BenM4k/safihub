@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type {
   CatalogueFilterState,
   CatalogueCategoryGroup,
@@ -57,7 +58,7 @@ export function CatalogueToolbar({
               onFilterChange({ ...filters, search: e.target.value })
             }
             placeholder={t("searchPlaceholder")}
-            className="pl-9 h-9 text-xs bg-card rounded-xl border-border"
+            className="pl-9 h-9 text-xs bg-transparent rounded-lg border-input focus-visible:border-primary"
             aria-label={t("searchPlaceholder")}
           />
           {filters.search && (
@@ -65,7 +66,7 @@ export function CatalogueToolbar({
               type="button"
               onClick={() => onFilterChange({ ...filters, search: "" })}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-heading p-0.5"
-              aria-label="Effacer la recherche"
+              aria-label={t("clearSearch")}
             >
               <X className="size-3.5" />
             </button>
@@ -73,7 +74,7 @@ export function CatalogueToolbar({
         </div>
 
         {/* Status filter buttons & Bulk Actions */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
           {(
             [
               { id: "all", label: t("filterAll") },
@@ -91,10 +92,10 @@ export function CatalogueToolbar({
                   status: st.id as CatalogueStatusFilter,
                 })
               }
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition border ${
+              className={`px-2.5 py-1 text-xs whitespace-nowrap transition cursor-pointer bg-transparent border-0 ${
                 filters.status === st.id
-                  ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                  : "bg-card text-muted-foreground border-border hover:bg-surface"
+                  ? "text-primary font-bold"
+                  : "text-muted-foreground hover:text-heading font-medium"
               }`}
             >
               {st.label}
@@ -104,31 +105,31 @@ export function CatalogueToolbar({
           {/* Bulk Tools trigger */}
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={onOpenBulkTools}
-            className="h-8 text-xs font-semibold rounded-lg ml-auto shrink-0 border-border text-heading hover:bg-surface"
+            className="h-8 text-xs font-semibold rounded-lg ml-auto shrink-0 text-heading hover:text-primary hover:bg-transparent"
           >
             <SlidersHorizontal className="size-3.5 mr-1.5 text-primary" aria-hidden="true" />
             <span>{t("bulkTools")}</span>
             {selectedArticlesCount > 0 && (
-              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-primary text-primary-foreground font-mono text-[10px]">
+              <Badge className="ml-1 px-1.5 py-0 h-4 bg-primary text-primary-foreground font-mono text-[10px]">
                 {selectedArticlesCount}
-              </span>
+              </Badge>
             )}
           </Button>
         </div>
       </div>
 
-      {/* Category chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+      {/* Category filters */}
+      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-0.5">
         <button
           type="button"
           onClick={() => onFilterChange({ ...filters, category: "all" })}
-          className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition ${
+          className={`px-2.5 py-1 text-xs whitespace-nowrap transition cursor-pointer bg-transparent border-0 ${
             filters.category === "all"
-              ? "bg-heading text-background font-bold shadow-xs"
-              : "bg-surface text-muted-foreground hover:bg-surface/80 border border-border"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-heading font-medium"
           }`}
         >
           {t("allCategories")}
@@ -138,10 +139,10 @@ export function CatalogueToolbar({
             key={c.key}
             type="button"
             onClick={() => onFilterChange({ ...filters, category: c.key })}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition ${
+            className={`px-2.5 py-1 text-xs whitespace-nowrap transition cursor-pointer bg-transparent border-0 ${
               filters.category === c.key
-                ? "bg-heading text-background font-bold shadow-xs"
-                : "bg-surface text-muted-foreground hover:bg-surface/80 border border-border"
+                ? "text-primary font-bold"
+                : "text-muted-foreground hover:text-heading font-medium"
             }`}
           >
             {c.label} ({c.articles.length})

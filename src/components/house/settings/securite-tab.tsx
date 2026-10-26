@@ -1,5 +1,6 @@
 "use client";
 
+import { Separator } from "@/components/ui/separator";
 import { PasswordCard } from "./securite/password-card";
 import { TwoFactorCard } from "./securite/two-factor-card";
 import { SessionsCard } from "./securite/sessions-card";
@@ -16,8 +17,12 @@ export function SecuriteTab({ sessions, currentSessionId }: SecuriteTabProps) {
       {/* 1. Change Password */}
       <PasswordCard />
 
+      <Separator />
+
       {/* 2. Two-Factor Authentication Status */}
       <TwoFactorCard />
+
+      <Separator />
 
       {/* 3. Active Sessions */}
       <SessionsCard sessions={sessions} currentSessionId={currentSessionId} />

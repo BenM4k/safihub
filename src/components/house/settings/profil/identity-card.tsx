@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Check, Copy, ExternalLink, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import type { HouseRecord } from "@/dal";
 
 interface IdentityCardProps {
@@ -25,10 +27,10 @@ export function IdentityCard({
   }
 
   return (
-    <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+    <section className="py-2 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-sm font-bold text-heading">Identité du pressing</h2>
+          <h2 className="text-sm font-bold text-foreground">Identité du pressing</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             Raison sociale et visibilité publique sur SafiHub.
           </p>
@@ -40,11 +42,11 @@ export function IdentityCard({
             variant="outline"
             size="sm"
             onClick={handleCopyPublicLink}
-            className="text-xs font-semibold min-h-[40px] px-3"
+            className="text-xs font-semibold min-h-[38px] px-3"
           >
             {copiedLink ? (
               <>
-                <Check className="size-3.5 text-success mr-1.5" />
+                <Check className="size-3.5 text-emerald-600 dark:text-emerald-400 mr-1.5" />
                 <span>Lien copié</span>
               </>
             ) : (
@@ -54,15 +56,12 @@ export function IdentityCard({
               </>
             )}
           </Button>
-          <a
-            href={`/houses/${house.slug}`}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-secondary text-foreground hover:bg-secondary/80 min-h-[40px] border border-border"
-          >
-            <span>Voir</span>
-            <ExternalLink className="size-3.5" />
-          </a>
+          <Button asChild variant="outline" size="sm" className="min-h-[38px] px-3 text-xs font-semibold gap-1.5">
+            <a href={`/houses/${house.slug}`} target="_blank" rel="noreferrer">
+              <span>Voir</span>
+              <ExternalLink className="size-3.5" />
+            </a>
+          </Button>
         </div>
       </div>
 
@@ -71,11 +70,11 @@ export function IdentityCard({
           <label className="font-semibold text-foreground block mb-1.5">
             Nom officiel du pressing
           </label>
-          <input
+          <Input
             type="text"
             value={house.name}
             disabled
-            className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border bg-secondary/60 text-muted-foreground text-xs font-medium cursor-not-allowed"
+            className="min-h-[38px] text-xs font-medium bg-muted/50 cursor-not-allowed"
           />
           <span className="text-[10px] text-muted-foreground mt-1 block">
             Pour modifier le nom officiel ou les informations légales, contactez l&apos;administration SafiHub.
@@ -86,11 +85,11 @@ export function IdentityCard({
           <label className="font-semibold text-foreground block mb-1.5">
             Quartier d&apos;implantation
           </label>
-          <input
+          <Input
             type="text"
             value={house.neighborhoodName || "Bukavu"}
             disabled
-            className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border bg-secondary/60 text-muted-foreground text-xs font-medium cursor-not-allowed"
+            className="min-h-[38px] text-xs font-medium bg-muted/50 cursor-not-allowed"
           />
         </div>
       </div>
@@ -99,12 +98,12 @@ export function IdentityCard({
         <label className="font-semibold text-foreground block mb-1.5">
           Description courte (Vitrine client)
         </label>
-        <textarea
+        <Textarea
           value={description}
           readOnly
           disabled
           rows={2}
-          className="w-full p-3 rounded-xl border border-border bg-secondary/60 text-muted-foreground text-xs cursor-not-allowed"
+          className="text-xs bg-muted/50 cursor-not-allowed resize-none"
         />
         <span className="text-[10px] text-muted-foreground block text-right mt-0.5">
           Géré par l&apos;administration SafiHub
@@ -112,9 +111,9 @@ export function IdentityCard({
       </div>
 
       {/* Spécialités et langues */}
-      <div className="p-3 bg-surface rounded-xl border border-border flex items-center justify-between text-xs">
+      <div className="p-3 bg-muted/40 rounded-xl flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
-          <Sparkles className="size-3.5 text-primary" />
+          <Sparkles className="size-3.5 text-primary shrink-0" />
           <span className="font-semibold text-foreground">Langues & Spécialités :</span>
           <span className="text-muted-foreground">Français, Kiswahili • Lavage délicat, Repassage vapeur</span>
         </div>

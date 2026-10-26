@@ -2,11 +2,22 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Check, CheckCircle2, Clock, Inbox, ArrowRight, AlertTriangle } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  Inbox,
+  ArrowRight,
+  AlertTriangle,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
-import { acceptPartnerOrderAction, rejectPartnerOrderAction } from "@/actions/partner-orders.actions";
+import {
+  acceptPartnerOrderAction,
+  rejectPartnerOrderAction,
+} from "@/actions/partner-orders.actions";
 import { OrderAcceptanceCard } from "./order-acceptance-card";
 import { OrderRejectDialog } from "./order-reject-dialog";
+import { MissedOrdersList } from "./missed-orders-list";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { HouseOrderListItemRecord } from "@/dal";
 
 interface AcceptanceQueueProps {
@@ -16,6 +27,9 @@ interface AcceptanceQueueProps {
   waitingAcceptanceCount?: number;
 }
 
+/**
+ * Priority order acceptance queue with 45-min live timers and quick actions.
+ */
 export function AcceptanceQueue({
   orders,
   missedOrders = [],
@@ -23,8 +37,11 @@ export function AcceptanceQueue({
   waitingAcceptanceCount,
 }: AcceptanceQueueProps) {
   const t = useTranslations("house.dashboard");
-  const [handledOrderIds, setHandledOrderIds] = useState<Set<string>>(new Set());
-  const [rejectingOrder, setRejectingOrder] = useState<HouseOrderListItemRecord | null>(null);
+  const [handledOrderIds, setHandledOrderIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [rejectingOrder, setRejectingOrder] =
+    useState<HouseOrderListItemRecord | null>(null);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
@@ -35,8 +52,12 @@ export function AcceptanceQueue({
 
   // Sort orders by nearest deadline
   const sortedOrders = [...activeOrders].sort((a, b) => {
-    const aTime = a.acceptanceDeadlineAt ? new Date(a.acceptanceDeadlineAt).getTime() : Infinity;
-    const bTime = b.acceptanceDeadlineAt ? new Date(b.acceptanceDeadlineAt).getTime() : Infinity;
+    const aTime = a.acceptanceDeadlineAt
+      ? new Date(a.acceptanceDeadlineAt).getTime()
+      : Infinity;
+    const bTime = b.acceptanceDeadlineAt
+      ? new Date(b.acceptanceDeadlineAt).getTime()
+      : Infinity;
     return aTime - bTime;
   });
 
@@ -62,7 +83,11 @@ export function AcceptanceQueue({
     setErrorNotice(null);
 
     startTransition(async () => {
-      const res = await rejectPartnerOrderAction({ houseSlug, orderId, reason });
+      const res = await rejectPartnerOrderAction({
+        houseSlug,
+        orderId,
+        reason,
+      });
       setRejectingOrder(null);
       if (res.ok) {
         setHandledOrderIds((prev) => new Set(prev).add(orderId));
@@ -103,24 +128,22 @@ export function AcceptanceQueue({
 
       {/* Success banner */}
       {successNotice && (
-        <div
-          role="status"
-          className="p-3.5 rounded-2xl bg-success-soft border border-success/30 text-xs text-success font-medium flex items-center gap-2 animate-in fade-in"
-        >
-          <CheckCircle2 className="size-4.5 text-success shrink-0" />
-          <span>{successNotice}</span>
-        </div>
+        <Alert variant="success" className="py-2.5">
+          <CheckCircle2 className="size-4.5" />
+          <AlertDescription className="text-xs font-medium">
+            {successNotice}
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Error notice */}
       {errorNotice && (
-        <div
-          role="alert"
-          className="p-3.5 rounded-2xl bg-destructive-soft border border-destructive/30 text-xs text-destructive font-medium flex items-center gap-2 animate-in fade-in"
-        >
-          <AlertTriangle className="size-4.5 text-destructive shrink-0" />
-          <span>{errorNotice}</span>
-        </div>
+        <Alert variant="destructive" className="py-2.5">
+          <AlertTriangle className="size-4.5" />
+          <AlertDescription className="text-xs font-medium">
+            {errorNotice}
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Active waiting queue */}
@@ -152,47 +175,8 @@ export function AcceptanceQueue({
         </div>
       )}
 
-      {/* Missed / Expired Section for Transparency */}
-      {missedOrders.length > 0 && (
-        <div className="pt-3 border-t border-border space-y-2">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-              <Clock className="size-3 text-destructive" />
-              <span>{t("missedRecent", { count: missedOrders.length })}</span>
-            </h3>
-            <span className="text-[11px] text-muted-foreground">
-              {t("missedRecentDesc")}
-            </span>
-          </div>
-
-          <div className="grid gap-2 opacity-85">
-            {missedOrders.slice(0, 3).map((order) => (
-              <div
-                key={order.id}
-                className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between gap-3 text-xs"
-              >
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-heading">{order.code}</span>
-                    <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-destructive-soft text-destructive">
-                      {t("expiredBadge")}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    {order.customerFirstName} · {order.neighborhoodName} · {order.itemsSummary || "Articles"}
-                  </p>
-                </div>
-                <Link
-                  href={`/partner/${houseSlug}/orders/${order.id}`}
-                  className="text-xs font-semibold text-foreground hover:text-primary"
-                >
-                  {t("view")}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Missed / Expired Section */}
+      <MissedOrdersList missedOrders={missedOrders} houseSlug={houseSlug} />
 
       {/* Reject confirmation dialog */}
       <OrderRejectDialog

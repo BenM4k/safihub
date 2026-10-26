@@ -1,10 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import { formatMoney } from "@/lib/cash-formatters";
 import type { PartnerDeliveredOrderDTO } from "@/types/partner-settlements";
 import { EmptyState } from "@/components/shared";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { DeliveredOrdersMobileList } from "./delivered-orders-mobile-list";
 import { DeliveredOrderTableRow } from "./delivered-order-table-row";
 
@@ -19,6 +30,7 @@ export function DeliveredOrdersTable({
   houseSlug,
   onOpenReportDialog,
 }: DeliveredOrdersTableProps) {
+  const t = useTranslations("house.settlements");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "settled" | "disputed">("all");
 
@@ -48,72 +60,81 @@ export function DeliveredOrdersTable({
     );
   }, [filteredOrders]);
 
+  const filterTabs = [
+    { key: "all", label: t("statusAll") },
+    { key: "pending", label: t("statusPending") },
+    { key: "settled", label: t("statusSettled") },
+    { key: "disputed", label: t("statusDisputed") },
+  ];
+
   return (
-    <div className="bg-card rounded-2xl border border-border shadow-xs overflow-hidden space-y-4 p-4 sm:p-5">
+    <div className="space-y-4 py-2">
       {/* Table filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
+          <Input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher code, client, virement..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-surface text-xs focus:ring-2 focus:ring-primary focus:outline-hidden min-h-[44px]"
-            aria-label="Rechercher une commande livrée"
+            placeholder={t("searchDeliveredOrders")}
+            className="pl-9 min-h-[38px] text-xs"
+            aria-label={t("searchDeliveredOrdersAria")}
           />
         </div>
 
-        {/* Status filter tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0" role="group" aria-label="Filtrer par statut de règlement">
-          {[
-            { key: "all", label: "Toutes" },
-            { key: "pending", label: "En attente" },
-            { key: "settled", label: "Incluses" },
-            { key: "disputed", label: "Litiges" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setStatusFilter(tab.key as "all" | "pending" | "settled" | "disputed")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[44px] sm:min-h-0 flex items-center ${
-                statusFilter === tab.key
-                  ? "bg-heading text-white shadow-xs"
-                  : "bg-surface text-muted-foreground hover:bg-surface-hover border border-border"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Status filter tabs: text-primary, no bg */}
+        <div
+          className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0"
+          role="group"
+          aria-label={t("filterSettlementStatusAria")}
+        >
+          {filterTabs.map((tab) => {
+            const isSelected = statusFilter === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setStatusFilter(tab.key as "all" | "pending" | "settled" | "disputed")}
+                className={`px-3 py-1.5 text-xs transition cursor-pointer min-h-[38px] flex items-center bg-transparent border-0 shadow-none ${
+                  isSelected
+                    ? "text-primary font-bold"
+                    : "text-muted-foreground hover:text-foreground font-medium"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block overflow-x-auto rounded-xl border border-border">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="border-b border-border bg-surface text-muted-foreground font-semibold">
-              <th className="py-3 px-4">Référence</th>
-              <th className="py-3 px-4">Client</th>
-              <th className="py-3 px-4">Livraison</th>
-              <th className="py-3 px-4 text-right">Montant articles</th>
-              <th className="py-3 px-4 text-right">Commission</th>
-              <th className="py-3 px-4 text-right">Net à percevoir</th>
-              <th className="py-3 px-4 text-center">Statut règlement</th>
-              <th className="py-3 px-4">Versement</th>
-              <th className="py-3 px-4 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
+      <div className="hidden md:block rounded-xl border border-border/80 overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[120px]">{t("orderCode")}</TableHead>
+              <TableHead>{t("client")}</TableHead>
+              <TableHead>{t("deliveryDate")}</TableHead>
+              <TableHead className="text-right">{t("itemsAmount")}</TableHead>
+              <TableHead className="text-right">{t("commissionCol")}</TableHead>
+              <TableHead className="text-right">{t("netReceivableCol")}</TableHead>
+              <TableHead className="text-center">{t("settlementStatusCol")}</TableHead>
+              <TableHead>{t("payoutCol")}</TableHead>
+              <TableHead className="text-right">{t("actionCol")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {filteredOrders.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="py-8">
+              <TableRow>
+                <TableCell colSpan={9} className="py-8">
                   <EmptyState
-                    title="Aucune commande livrée trouvée"
-                    description="Aucune commande ne correspond aux filtres ou à la période sélectionnée."
+                    title={t("noDeliveredOrdersFound")}
+                    description={t("noDeliveredOrdersDesc")}
                   />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               filteredOrders.map((o) => (
                 <DeliveredOrderTableRow
@@ -124,28 +145,28 @@ export function DeliveredOrdersTable({
                 />
               ))
             )}
-          </tbody>
+          </TableBody>
 
           {filteredOrders.length > 0 && (
-            <tfoot>
-              <tr className="bg-surface border-t-2 border-border font-bold text-heading">
-                <td colSpan={3} className="py-3 px-4 text-xs font-bold">
-                  Total filtré ({filteredOrders.length} commandes)
-                </td>
-                <td className="py-3 px-4 text-right font-mono tabular-nums">
+            <TableFooter>
+              <TableRow className="font-bold text-foreground">
+                <TableCell colSpan={3} className="text-xs font-bold">
+                  {t("totalFiltered", { count: filteredOrders.length })}
+                </TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
                   {formatMoney(totals.itemsTotal, "CDF")}
-                </td>
-                <td className="py-3 px-4 text-right font-mono tabular-nums text-muted-foreground">
+                </TableCell>
+                <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
                   -{formatMoney(totals.commission, "CDF")}
-                </td>
-                <td className="py-3 px-4 text-right font-mono tabular-nums text-primary text-sm font-black">
+                </TableCell>
+                <TableCell className="text-right font-mono tabular-nums text-primary text-sm font-black">
                   {formatMoney(totals.net, "CDF")}
-                </td>
-                <td colSpan={3} />
-              </tr>
-            </tfoot>
+                </TableCell>
+                <TableCell colSpan={3} />
+              </TableRow>
+            </TableFooter>
           )}
-        </table>
+        </Table>
       </div>
 
       {/* Mobile Stacked Card List */}

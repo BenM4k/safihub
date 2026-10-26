@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { AlertCircle, Ban, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 import { ConfirmDialog } from "@/components/shared";
 import { deleteHouseExclusionAction } from "@/actions/house.actions";
 import { ExclusionSheet } from "./exclusion-sheet";
@@ -76,14 +78,14 @@ export function ExclusionsTab({
   return (
     <div className="space-y-6">
       {errorMsg && (
-        <div className="p-4 bg-destructive-soft border border-destructive/30 rounded-xl text-xs text-destructive font-semibold flex items-center gap-2">
-          <AlertCircle className="size-4 shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
+        </Alert>
       )}
 
       {/* Difference Explanation Banner */}
-      <section className="bg-surface rounded-2xl border border-border p-4 text-xs text-muted-foreground flex items-start gap-3">
+      <div className="p-4 rounded-xl bg-muted/40 text-xs text-muted-foreground flex items-start gap-3">
         <Ban className="size-4 text-primary shrink-0 mt-0.5" />
         <div className="leading-relaxed">
           <strong className="text-foreground block">
@@ -91,13 +93,13 @@ export function ExclusionsTab({
           </strong>
           Le catalogue définit vos tarifs et active/désactive des prestations. Une <em>exclusion</em> est un refus formel (matière délicate, cuir...) affiché avec avertissement au client avant commande.
         </div>
-      </section>
+      </div>
 
       {/* Exclusions Header & List */}
-      <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+      <section className="py-2 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h2 className="text-sm font-bold text-heading">
+            <h2 className="text-sm font-bold text-foreground">
               Règles d&apos;exclusion actives ({exclusions.length})
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -109,19 +111,19 @@ export function ExclusionsTab({
             type="button"
             size="sm"
             onClick={handleOpenAdd}
-            className="min-h-[44px] bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs"
+            className="min-h-[38px] text-xs font-bold gap-1.5"
           >
-            <PlusCircle className="size-3.5 mr-1.5" />
+            <PlusCircle className="size-3.5" />
             <span>Ajouter une exclusion</span>
           </Button>
         </div>
 
         {exclusions.length === 0 ? (
-          <div className="p-8 text-center text-xs text-muted-foreground border border-dashed border-border rounded-xl">
+          <div className="p-8 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-xl">
             Aucune exclusion configurée. Votre pressing accepte tous les articles et matières actifs de votre catalogue.
           </div>
         ) : (
-          <div className="divide-y divide-border border border-border rounded-xl overflow-hidden">
+          <div className="divide-y divide-border/60 border border-border/80 rounded-xl overflow-hidden">
             {exclusions.map((ex) => (
               <ExclusionItemCard
                 key={ex.id}
@@ -135,6 +137,7 @@ export function ExclusionsTab({
           </div>
         )}
       </section>
+      <Separator />
 
       {/* Customer Preview Card */}
       <CustomerPreviewCard exclusions={exclusions} />

@@ -4,6 +4,13 @@ import { useState } from "react";
 import { Copy, Sparkles, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { WEEKDAY_DEFS } from "@/lib/hours-utils";
 
 interface SchedulePresetsProps {
@@ -48,7 +55,7 @@ export function SchedulePresets({
           size="sm"
           disabled={disabled}
           onClick={onApplyPresetStandard}
-          className="h-8 text-xs font-semibold bg-surface border-border hover:bg-card hover:border-border-strong text-foreground cursor-pointer"
+          className="h-8 text-xs font-semibold border-border hover:bg-muted/40 text-foreground"
         >
           <Sparkles className="size-3 text-primary mr-1.5" aria-hidden="true" />
           <span>{t("presetStandard")}</span>
@@ -60,7 +67,7 @@ export function SchedulePresets({
           size="sm"
           disabled={disabled}
           onClick={onApplyToAllWeekdays}
-          className="h-8 text-xs font-semibold bg-surface border-border hover:bg-card hover:border-border-strong text-foreground cursor-pointer"
+          className="h-8 text-xs font-semibold border-border hover:bg-muted/40 text-foreground"
         >
           <span>{t("applyWeekdays")}</span>
         </Button>
@@ -71,7 +78,7 @@ export function SchedulePresets({
           size="sm"
           disabled={disabled}
           onClick={() => setIsCopyOpen((prev) => !prev)}
-          className="h-8 text-xs font-semibold bg-surface border-border hover:bg-card hover:border-border-strong text-foreground cursor-pointer"
+          className="h-8 text-xs font-semibold border-border hover:bg-muted/40 text-foreground"
         >
           <Copy className="size-3 text-muted-foreground mr-1.5" aria-hidden="true" />
           <span>{t("copyTo")}</span>
@@ -80,25 +87,29 @@ export function SchedulePresets({
 
       {/* Expandable Copy Panel */}
       {isCopyOpen && (
-        <div className="p-3 rounded-xl bg-surface border border-border space-y-3 text-xs animate-in fade-in duration-150">
+        <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-3 text-xs animate-in fade-in duration-150">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-heading">Copier les horaires de :</span>
-            <select
-              value={copySourceDay}
-              onChange={(e) => {
-                const src = Number(e.target.value);
+            <span className="font-semibold text-heading">{t("copySourcePrompt")}</span>
+            <Select
+              value={String(copySourceDay)}
+              onValueChange={(val) => {
+                const src = Number(val);
                 setCopySourceDay(src);
                 setSelectedTargets(WEEKDAY_DEFS.map((w) => w.weekday).filter((w) => w !== src));
               }}
-              className="h-8 px-2 rounded-lg border border-border bg-card text-xs font-semibold focus:ring-2 focus:ring-primary/20"
             >
-              {WEEKDAY_DEFS.map((w) => (
-                <option key={w.weekday} value={w.weekday}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
-            <span className="font-semibold text-heading">vers :</span>
+              <SelectTrigger className="h-8 w-32 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {WEEKDAY_DEFS.map((w) => (
+                  <SelectItem key={w.weekday} value={String(w.weekday)} className="text-xs">
+                    {w.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="font-semibold text-heading">{t("copyTargetPrompt")}</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
@@ -111,11 +122,11 @@ export function SchedulePresets({
                   onClick={() => handleToggleTarget(w.weekday)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer flex items-center gap-1 ${
                     isSelected
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card text-foreground border-border hover:bg-surface"
+                      ? "text-primary font-bold border-primary/40 bg-primary-soft/30"
+                      : "text-muted-foreground hover:text-foreground border-border bg-transparent"
                   }`}
                 >
-                  {isSelected && <Check className="size-3" />}
+                  {isSelected && <Check className="size-3 text-primary" />}
                   <span>{w.shortName}</span>
                 </button>
               );
@@ -130,7 +141,7 @@ export function SchedulePresets({
               disabled={selectedTargets.length === 0}
               className="h-8 px-3 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs cursor-pointer"
             >
-              Appliquer la copie
+              {t("applyCopy")}
             </Button>
             <Button
               type="button"
@@ -139,7 +150,7 @@ export function SchedulePresets({
               onClick={() => setIsCopyOpen(false)}
               className="h-8 px-2.5 text-xs text-muted-foreground cursor-pointer"
             >
-              Annuler
+              {t("cancel")}
             </Button>
           </div>
         </div>

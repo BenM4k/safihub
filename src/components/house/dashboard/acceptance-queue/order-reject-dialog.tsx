@@ -3,8 +3,18 @@
 import { useState } from "react";
 import { AlertCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useAccessibleDialog } from "@/components/house/orders/use-accessible-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface OrderRejectDialogProps {
   isOpen: boolean;
@@ -21,6 +31,9 @@ const PRESET_REASONS = [
   "Autre motif",
 ];
 
+/**
+ * Order rejection modal dialog using shadcn Dialog, Textarea, and Button primitives.
+ */
 export function OrderRejectDialog({
   isOpen,
   orderCode,
@@ -45,13 +58,6 @@ export function OrderRejectDialog({
     onClose();
   }
 
-  const containerRef = useAccessibleDialog<HTMLDivElement>({
-    isOpen,
-    onClose: handleClose,
-  });
-
-  if (!isOpen) return null;
-
   function handleConfirm() {
     const finalReason =
       selectedPreset === "Autre motif" && customText.trim()
@@ -61,44 +67,35 @@ export function OrderRejectDialog({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="reject-dialog-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-xs animate-in fade-in font-sans"
-    >
-      <div
-        ref={containerRef}
-        tabIndex={-1}
-        className="w-full max-w-md bg-card rounded-3xl p-6 space-y-4 shadow-2xl border border-border outline-none"
-      >
-        <div className="flex items-center gap-3">
-          <div className="size-11 rounded-2xl bg-destructive-soft text-destructive flex items-center justify-center shrink-0">
-            <AlertTriangle className="size-5" />
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="sm:max-w-md rounded-3xl bg-card border-border p-6 space-y-4">
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="size-11 rounded-2xl bg-destructive-soft text-destructive flex items-center justify-center shrink-0">
+              <AlertTriangle className="size-5" />
+            </div>
+            <div>
+              <DialogTitle className="font-display font-black text-base text-heading text-left">
+                {t("rejectModalTitle")} ({orderCode})
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground text-left">
+                {t("rejectModalDesc")}
+              </DialogDescription>
+            </div>
           </div>
-          <div>
-            <h3 id="reject-dialog-title" className="font-display font-black text-base text-heading">
-              {t("rejectModalTitle")} ({orderCode})
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              {t("rejectModalDesc")}
-            </p>
-          </div>
-        </div>
+        </DialogHeader>
 
-        {/* Warning note regarding acceptance rate */}
-        <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200/80 text-xs text-amber-900 dark:bg-amber-950/40 dark:border-amber-900 dark:text-amber-200 flex items-start gap-2">
-          <AlertCircle className="size-4 shrink-0 text-amber-600 mt-0.5" />
-          <p className="leading-relaxed">
+        <Alert className="py-2.5 bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200">
+          <AlertCircle className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
+          <AlertDescription className="text-xs leading-relaxed">
             {t("rejectWarningRate")}
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
 
-        {/* Reason choices */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-heading block">
+          <Label className="text-xs font-bold text-heading block">
             {t("rejectReasonLabel")}
-          </label>
+          </Label>
           <div className="grid gap-2">
             {PRESET_REASONS.map((reason) => (
               <label
@@ -123,43 +120,46 @@ export function OrderRejectDialog({
           </div>
 
           {selectedPreset === "Autre motif" && (
-            <textarea
+            <Textarea
               value={customText}
               onChange={(e) => setCustomText(e.target.value)}
               placeholder={t("rejectReasonPlaceholder")}
               rows={2}
-              className="w-full mt-2 p-2.5 rounded-xl border border-border-strong text-xs text-foreground placeholder:text-muted-foreground focus:outline-primary"
+              className="w-full mt-2 text-xs"
             />
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+        <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-border sm:space-x-0">
           <Button
             type="button"
             variant="ghost"
             disabled={isPending}
-            onClick={onClose}
-            className="text-xs font-semibold"
+            onClick={handleClose}
+            className="text-xs font-semibold cursor-pointer"
           >
             {t("cancel")}
           </Button>
           <Button
             type="button"
-            disabled={isPending || (selectedPreset === "Autre motif" && !customText.trim())}
+            disabled={
+              isPending ||
+              (selectedPreset === "Autre motif" && !customText.trim())
+            }
             onClick={handleConfirm}
-            className="text-xs font-bold bg-destructive hover:bg-destructive/90 text-primary-foreground min-w-[120px]"
+            className="text-xs font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground min-w-[120px] cursor-pointer"
           >
             {isPending ? (
               <>
                 <Loader2 className="size-3.5 mr-1.5 animate-spin" />
-                Refus en cours...
+                Refus...
               </>
             ) : (
               t("confirmReject")
             )}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

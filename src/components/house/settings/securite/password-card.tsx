@@ -1,8 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, KeyRound, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/services/auth/auth-client";
 
 export function PasswordCard() {
@@ -54,13 +59,13 @@ export function PasswordCard() {
   }
 
   return (
-    <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+    <section className="space-y-4">
       <div className="flex items-center gap-2.5">
-        <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+        <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
           <KeyRound className="size-4" />
         </div>
         <div>
-          <h2 className="text-sm font-bold text-heading">Modifier le mot de passe</h2>
+          <h2 className="text-sm font-bold text-foreground">Modifier le mot de passe</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             Utilisez un mot de passe robuste d&apos;au moins 8 caractères.
           </p>
@@ -68,74 +73,75 @@ export function PasswordCard() {
       </div>
 
       {passwordError && (
-        <div className="p-3 bg-destructive-soft border border-destructive/30 rounded-xl text-xs text-destructive font-semibold flex items-center gap-2">
-          <AlertCircle className="size-4 shrink-0" />
-          <span>{passwordError}</span>
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs font-semibold">{passwordError}</AlertDescription>
+        </Alert>
       )}
       {passwordSuccess && (
-        <div className="p-3 bg-success-soft border border-success/30 rounded-xl text-xs text-success font-semibold flex items-center gap-2">
-          <CheckCircle2 className="size-4 shrink-0" />
-          <span>{passwordSuccess}</span>
-        </div>
+        <Alert className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+          <CheckCircle2 className="size-4 text-emerald-600" />
+          <AlertDescription className="text-xs font-semibold">{passwordSuccess}</AlertDescription>
+        </Alert>
       )}
 
       <form onSubmit={handlePasswordSubmit} className="space-y-3.5 max-w-md text-xs">
-        <div>
-          <label className="font-semibold text-foreground block mb-1.5">Mot de passe actuel</label>
-          <input
+        <Field className="space-y-1.5">
+          <FieldLabel className="font-semibold text-foreground">Mot de passe actuel</FieldLabel>
+          <Input
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             required
-            className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="text-xs h-10 min-h-[40px]"
           />
-        </div>
+        </Field>
 
-        <div>
-          <label className="font-semibold text-foreground block mb-1.5">Nouveau mot de passe</label>
-          <input
+        <Field className="space-y-1.5">
+          <FieldLabel className="font-semibold text-foreground">Nouveau mot de passe</FieldLabel>
+          <Input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
             minLength={8}
-            className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="text-xs h-10 min-h-[40px]"
           />
-        </div>
+        </Field>
 
-        <div>
-          <label className="font-semibold text-foreground block mb-1.5">
+        <Field className="space-y-1.5">
+          <FieldLabel className="font-semibold text-foreground">
             Confirmer le nouveau mot de passe
-          </label>
-          <input
+          </FieldLabel>
+          <Input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={8}
-            className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="text-xs h-10 min-h-[40px]"
           />
-        </div>
+        </Field>
 
-        <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer pt-1">
-          <input
-            type="checkbox"
+        <div className="flex items-center gap-2 pt-1">
+          <Checkbox
+            id="revokeOthers"
             checked={revokeOthers}
-            onChange={(e) => setRevokeOthers(e.target.checked)}
-            className="rounded-sm border-border text-primary focus:ring-primary"
+            onCheckedChange={(checked) => setRevokeOthers(Boolean(checked))}
           />
-          <span>Déconnecter tous les autres appareils connectés</span>
-        </label>
+          <label htmlFor="revokeOthers" className="text-xs text-foreground cursor-pointer select-none">
+            Déconnecter tous les autres appareils connectés
+          </label>
+        </div>
 
         <Button
           type="submit"
           disabled={isChangingPassword}
-          className="min-h-[44px] px-4 bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs"
+          className="min-h-[40px] px-4 bg-primary text-primary-foreground font-bold text-xs"
         >
           {isChangingPassword ? (
             <>
-              <Loader2 className="size-3.5 animate-spin mr-1.5" />
+              <Spinner className="size-3.5 text-current mr-1.5" />
               <span>Modification...</span>
             </>
           ) : (

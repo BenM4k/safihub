@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import type { HouseCoverageWithLimitsItem } from "@/dal";
 import { formatMoney } from "@/lib/cash-formatters";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { QuartierRowItem } from "./quartier-row-item";
 import { getDistanceLevelShortLabel, type TriState } from "./types";
 
@@ -72,23 +74,25 @@ export function CommuneGroupCard({
     : `Commune de ${zoneName}`;
 
   return (
-    <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-xs">
+    <div className="border-b border-border py-2">
       {/* Group Header */}
-      <div className="p-3.5 sm:p-4 bg-surface border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <button
+      <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
             aria-expanded={isExpanded}
-            aria-label={`${isExpanded ? "Replier" : "Déplier"} ${displayName}`}
-            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-heading transition"
+            aria-label={t(isExpanded ? "collapseZoneAria" : "expandZoneAria", { zone: displayName })}
+            className="size-7 p-0 text-muted-foreground hover:text-heading"
           >
             {isExpanded ? (
               <ChevronUp className="size-4" aria-hidden="true" />
             ) : (
               <ChevronDown className="size-4" aria-hidden="true" />
             )}
-          </button>
+          </Button>
 
           <div className="space-y-0.5 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -99,22 +103,26 @@ export function CommuneGroupCard({
 
               {/* Constant distance level badge */}
               {constantDistanceLevel != null && (
-                <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary-soft text-primary border border-primary/20">
+                <Badge variant="outline" className="text-[11px] font-semibold bg-primary-soft text-primary border-primary/20">
                   {getDistanceLevelShortLabel(constantDistanceLevel)}
-                </span>
+                </Badge>
               )}
 
               {/* Delivery Fee badge */}
               {deliveryFee && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-success-soft text-success border border-success/30">
+                <Badge variant="outline" className="inline-flex items-center gap-1 text-[11px] font-semibold bg-success-soft text-success border-success/30">
                   <Coins className="size-3" aria-hidden="true" />
                   <span>{t("deliveryFeeLabel", { fee: deliveryFee })}</span>
-                </span>
+                </Badge>
               )}
             </div>
 
             <p className="text-xs text-muted-foreground">
-              {coveredCount} / {items.length} desservis ({eligibleItems.length} éligibles)
+              {t("coveredStats", {
+                covered: coveredCount,
+                total: items.length,
+                eligible: eligibleItems.length,
+              })}
             </p>
           </div>
         </div>
@@ -122,37 +130,39 @@ export function CommuneGroupCard({
         {/* Bulk Action: Tri-state select/deselect */}
         {eligibleItems.length > 0 && (
           <div className="shrink-0 flex items-center gap-2 self-start sm:self-auto">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               disabled={disabled}
               onClick={() => onToggleGroup(items)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border border-border bg-card hover:bg-muted text-heading min-h-[38px] shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-8 text-xs font-semibold rounded-lg text-heading hover:text-primary hover:bg-transparent"
               title={triState === "all" ? t("deselectAll") : t("selectAll")}
             >
               {triState === "all" ? (
                 <>
-                  <CheckSquare2 className="size-4 text-primary" aria-hidden="true" />
+                  <CheckSquare2 className="size-4 mr-1.5 text-primary" aria-hidden="true" />
                   <span>{t("deselectAll")}</span>
                 </>
               ) : triState === "some" ? (
                 <>
-                  <MinusSquare className="size-4 text-primary" aria-hidden="true" />
+                  <MinusSquare className="size-4 mr-1.5 text-primary" aria-hidden="true" />
                   <span>{t("selectAll")}</span>
                 </>
               ) : (
                 <>
-                  <Square className="size-4 text-muted-foreground" aria-hidden="true" />
+                  <Square className="size-4 mr-1.5 text-muted-foreground" aria-hidden="true" />
                   <span>{t("selectAll")}</span>
                 </>
               )}
-            </button>
+            </Button>
           </div>
         )}
       </div>
 
       {/* Quartiers list */}
       {isExpanded && (
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-border/60 pl-2 sm:pl-4">
           {items.map((item) => (
             <QuartierRowItem
               key={item.neighborhoodId}

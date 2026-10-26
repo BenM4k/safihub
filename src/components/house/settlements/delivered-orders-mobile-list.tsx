@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { CheckCircle2, Clock, ShieldAlert } from "lucide-react";
 import { formatMoney } from "@/lib/cash-formatters";
 import type { PartnerDeliveredOrderDTO } from "@/types/partner-settlements";
 import { EmptyState } from "@/components/shared";
+import { Badge } from "@/components/ui/badge";
 
 interface DeliveredOrdersMobileListProps {
   orders: PartnerDeliveredOrderDTO[];
@@ -19,12 +21,14 @@ export function DeliveredOrdersMobileList({
   totals,
   onOpenReportDialog,
 }: DeliveredOrdersMobileListProps) {
+  const t = useTranslations("house.settlements");
+
   if (orders.length === 0) {
     return (
       <div className="md:hidden">
         <EmptyState
-          title="Aucune commande livrée"
-          description="Aucune commande livrée trouvée pour cette période."
+          title={t("noOrders")}
+          description={t("noDeliveredOrdersDesc")}
         />
       </div>
     );
@@ -35,36 +39,36 @@ export function DeliveredOrdersMobileList({
       {orders.map((o) => (
         <div
           key={o.id}
-          className="p-4 rounded-xl bg-surface border border-border shadow-2xs space-y-2.5"
+          className="p-4 rounded-xl bg-surface border border-border/80 space-y-2.5"
         >
           <div className="flex items-center justify-between gap-2">
             <Link
               href={`/partner/${houseSlug}/orders?search=${o.code}`}
-              className="font-mono font-bold text-sm text-heading hover:text-primary transition min-h-[44px] flex items-center"
+              className="font-mono font-bold text-sm text-foreground hover:text-primary transition min-h-[44px] flex items-center"
             >
               {o.shortReference}
             </Link>
 
             {o.settlementStatus === "settled" ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-success-light text-success-base text-2xs font-semibold border border-success-base/30">
+              <Badge variant="outline" className="gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-2xs font-semibold">
                 <CheckCircle2 className="size-3" />
-                Inclus
-              </span>
+                <span>{t("statusSettled")}</span>
+              </Badge>
             ) : o.settlementStatus === "disputed" ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-destructive-light text-destructive-base text-2xs font-bold border border-destructive-base/30">
+              <Badge variant="destructive" className="gap-1 text-2xs font-bold">
                 <ShieldAlert className="size-3" />
-                Litige
-              </span>
+                <span>{t("statusDisputed")}</span>
+              </Badge>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-800 text-2xs font-medium border border-amber-500/20">
+              <Badge variant="outline" className="gap-1 border-amber-500/30 text-amber-800 dark:text-amber-300 text-2xs font-medium">
                 <Clock className="size-3" />
-                En attente
-              </span>
+                <span>{t("statusPending")}</span>
+              </Badge>
             )}
           </div>
 
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Client : {o.customerDisplayName}</span>
+            <span>{t("client")} : {o.customerDisplayName}</span>
             <span className="font-mono text-2xs">
               {o.deliveredAt
                 ? new Intl.DateTimeFormat("fr-FR", {
@@ -89,35 +93,35 @@ export function DeliveredOrdersMobileList({
           <div className="flex items-center justify-between pt-1 text-2xs">
             {o.settlementReference ? (
               <span className="text-muted-foreground">
-                Versement : <strong className="text-heading font-mono">{o.settlementReference}</strong>
+                {t("payoutCol")} : <strong className="text-foreground font-mono">{o.settlementReference}</strong>
               </span>
             ) : (
-              <span className="text-muted-foreground">Règlement à venir</span>
+              <span className="text-muted-foreground">{t("upcomingSettlement")}</span>
             )}
 
             <button
               type="button"
               onClick={() => onOpenReportDialog(o)}
-              className="text-muted-foreground hover:text-destructive-base transition underline cursor-pointer p-1 min-h-[44px] flex items-center"
+              className="text-muted-foreground hover:text-destructive transition underline cursor-pointer p-1 min-h-[44px] flex items-center"
             >
-              Signaler un problème
+              {t("reportIssue")}
             </button>
           </div>
         </div>
       ))}
 
-      {/* Mobile Totals Card */}
-      <div className="p-4 rounded-xl bg-surface border-2 border-primary/20 space-y-1 text-xs">
+      {/* Mobile Totals Summary */}
+      <div className="p-4 rounded-xl bg-muted/40 space-y-1.5 text-xs">
         <div className="flex justify-between text-muted-foreground">
-          <span>Articles brut ({orders.length} cmd) :</span>
-          <span className="font-mono font-bold text-heading">{formatMoney(totals.itemsTotal)}</span>
+          <span>{t("itemsAmount")} ({orders.length} cmd) :</span>
+          <span className="font-mono font-bold text-foreground">{formatMoney(totals.itemsTotal)}</span>
         </div>
         <div className="flex justify-between text-muted-foreground">
-          <span>Commissions SafiHub :</span>
-          <span className="font-mono text-destructive-base">-{formatMoney(totals.commission)}</span>
+          <span>{t("commissionCol")} :</span>
+          <span className="font-mono text-destructive">-{formatMoney(totals.commission)}</span>
         </div>
-        <div className="flex justify-between pt-2 border-t border-border font-bold text-heading">
-          <span>Net total à percevoir :</span>
+        <div className="flex justify-between pt-2 border-t border-border font-bold text-foreground">
+          <span>{t("netReceivableCol")} :</span>
           <span className="font-mono text-primary text-base font-black">{formatMoney(totals.net)}</span>
         </div>
       </div>

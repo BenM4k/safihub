@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Calendar, ArrowUpDown, Volume2, VolumeX, RefreshCw } from "lucide-react";
+import { Search, Calendar, Volume2, VolumeX, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 interface PartnerOrdersFilterBarProps {
   search: string;
@@ -17,6 +25,9 @@ interface PartnerOrdersFilterBarProps {
   isRefreshing: boolean;
 }
 
+/**
+ * Filter bar with search, date filter, shadcn Select sort, sound toggle, and refresh.
+ */
 export function PartnerOrdersFilterBar({
   search,
   onSearchChange,
@@ -48,7 +59,7 @@ export function PartnerOrdersFilterBar({
   }, [localSearch, search, onSearchChange]);
 
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 p-3 rounded-2xl bg-card border border-border">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 p-3 rounded-2xl bg-card border border-border shadow-xs font-sans">
       {/* Search Bar */}
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
@@ -63,7 +74,7 @@ export function PartnerOrdersFilterBar({
           }}
           placeholder={t("filterSearchPlaceholder")}
           aria-label={t("filterSearchPlaceholder")}
-          className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[44px] sm:min-h-[38px]"
+          className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[40px] sm:min-h-[36px]"
         />
       </div>
 
@@ -76,34 +87,49 @@ export function PartnerOrdersFilterBar({
             value={date}
             onChange={(e) => onDateChange(e.target.value)}
             aria-label={t("filterDateLabel")}
-            className="pl-8 pr-2 py-2 text-xs rounded-xl border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[44px] sm:min-h-[38px] w-full sm:w-auto"
+            className="pl-8 pr-2 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[40px] sm:min-h-[36px] w-full sm:w-auto"
           />
         </div>
 
-        <div className="relative flex-1 sm:flex-initial">
-          <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-          <select
-            value={sort}
-            onChange={(e) => onSortChange(e.target.value as "deadline" | "promised" | "recent")}
+        <Select
+          value={sort}
+          onValueChange={(val) =>
+            onSortChange(val as "deadline" | "promised" | "recent")
+          }
+        >
+          <SelectTrigger
             aria-label={t("sortBy")}
-            className="pl-8 pr-8 py-2 text-xs rounded-xl border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[44px] sm:min-h-[38px] w-full sm:w-auto cursor-pointer"
+            className="min-h-[40px] sm:min-h-[36px] h-auto text-xs rounded-xl border-border bg-background px-3"
           >
-            <option value="promised">{t("sortPromised")}</option>
-            <option value="deadline">{t("sortDeadline")}</option>
-            <option value="recent">{t("sortRecent")}</option>
-          </select>
-        </div>
+            <SelectValue placeholder={t("sortBy")} />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl bg-card border-border shadow-lift">
+            <SelectItem value="promised" className="text-xs cursor-pointer">
+              {t("sortPromised")}
+            </SelectItem>
+            <SelectItem value="deadline" className="text-xs cursor-pointer">
+              {t("sortDeadline")}
+            </SelectItem>
+            <SelectItem value="recent" className="text-xs cursor-pointer">
+              {t("sortRecent")}
+            </SelectItem>
+          </SelectContent>
+        </Select>
 
         {/* Audio chime toggle */}
-        <button
+        <Button
           type="button"
+          variant={soundEnabled ? "secondary" : "outline"}
+          size="icon"
           onClick={onToggleSound}
-          title={soundEnabled ? t("soundEnabledTitle") : t("soundDisabledTitle")}
+          title={
+            soundEnabled ? t("soundEnabledTitle") : t("soundDisabledTitle")
+          }
           aria-label={t("soundToggle")}
-          className={`inline-flex items-center justify-center p-2 rounded-xl border min-w-[44px] min-h-[44px] sm:min-w-[38px] sm:min-h-[38px] transition-colors cursor-pointer ${
+          className={`size-9 rounded-xl border cursor-pointer ${
             soundEnabled
               ? "bg-primary-soft text-primary border-primary/30"
-              : "bg-surface text-muted-foreground border-border hover:text-foreground"
+              : "border-border text-muted-foreground"
           }`}
         >
           {soundEnabled ? (
@@ -111,18 +137,24 @@ export function PartnerOrdersFilterBar({
           ) : (
             <VolumeX className="size-4" aria-hidden="true" />
           )}
-        </button>
+        </Button>
 
         {/* Refresh button */}
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="icon"
           onClick={onRefresh}
           disabled={isRefreshing}
           aria-label={t("refreshOrdersAria")}
-          className="inline-flex items-center justify-center p-2 rounded-xl border border-border bg-surface hover:bg-card text-muted-foreground hover:text-foreground min-w-[44px] min-h-[44px] sm:min-w-[38px] sm:min-h-[38px] transition-colors cursor-pointer"
+          className="size-9 rounded-xl border-border bg-background hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer"
         >
-          <RefreshCw className={`size-4 ${isRefreshing ? "animate-spin text-primary" : ""}`} />
-        </button>
+          <RefreshCw
+            className={`size-4 ${
+              isRefreshing ? "animate-spin text-primary" : ""
+            }`}
+          />
+        </Button>
       </div>
     </div>
   );

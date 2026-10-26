@@ -28,14 +28,14 @@ export function MarkReadyButton({
   }
 
   return (
-    <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-5 shadow-xs space-y-3">
+    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5 shadow-xs space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-0.5">
-          <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-1.5">
-            <CheckCircle2 className="size-4 text-emerald-600" />
-            <span>Linge nettoyé et repassé ?</span>
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+            <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+            <span>{t("markReadyTitle")}</span>
           </h3>
-          <p className="text-xs text-emerald-800">
+          <p className="text-xs text-muted-foreground">
             {t("markReadyDesc")}
           </p>
         </div>
@@ -43,7 +43,7 @@ export function MarkReadyButton({
         <Button
           onClick={handleMarkReady}
           disabled={isPending}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs px-4 py-2 shrink-0"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs px-4 py-2 shrink-0 min-h-[44px] sm:min-h-[36px]"
         >
           {isPending ? (
             <Loader2 className="size-3.5 animate-spin mr-1.5" />
@@ -55,7 +55,7 @@ export function MarkReadyButton({
       </div>
 
       {errorMsg && (
-        <p className="text-xs text-rose-600 font-semibold">{errorMsg}</p>
+        <p className="text-xs text-destructive font-semibold">{errorMsg}</p>
       )}
     </div>
   );

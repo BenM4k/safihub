@@ -1,5 +1,8 @@
 import { ExternalLink, MapPin } from "lucide-react";
 import { formatPhone } from "@/lib/order-formatters";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 
 interface ContactLocationCardProps {
   contactPhone: string;
@@ -20,9 +23,9 @@ export function ContactLocationCard({
   const longitude = "28.8617";
 
   return (
-    <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+    <section className="py-2 space-y-4">
       <div>
-        <h2 className="text-sm font-bold text-heading">Contact & Localisation</h2>
+        <h2 className="text-sm font-bold text-foreground">Contact & Localisation</h2>
         <p className="text-xs text-muted-foreground mt-0.5">
           Informations utilisées pour les opérations logistiques et la coordination des coursiers.
         </p>
@@ -36,12 +39,12 @@ export function ContactLocationCard({
               Visible coursiers & plateforme
             </span>
           </label>
-          <input
+          <Input
             type="tel"
             value={contactPhone}
             onChange={(e) => onChangeContactPhone(e.target.value)}
             placeholder="+243 99 912 3456"
-            className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
+            className="text-xs font-mono min-h-[38px]"
           />
           {contactPhone && (
             <span className="text-[10px] text-muted-foreground mt-1 block">
@@ -57,12 +60,12 @@ export function ContactLocationCard({
               Bientôt disponible
             </span>
           </label>
-          <input
+          <Input
             type="tel"
             value={whatsAppPhone || ""}
             disabled
             placeholder="+243..."
-            className="w-full h-10 min-h-[44px] px-3 rounded-xl border border-border bg-secondary/60 text-muted-foreground text-xs font-mono cursor-not-allowed"
+            className="text-xs font-mono min-h-[38px] bg-muted/50 cursor-not-allowed"
           />
         </div>
       </div>
@@ -73,17 +76,17 @@ export function ContactLocationCard({
             <MapPin className="size-3.5 text-primary" />
             <span>Repère d&apos;accès pour les coursiers</span>
           </span>
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+          <Badge variant="outline" className="border-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-bold">
             Confidentiel coursiers
-          </span>
+          </Badge>
         </label>
-        <textarea
+        <Textarea
           value={addressNote}
           onChange={(e) => onChangeAddressNote(e.target.value)}
           placeholder="Ex. Avenue Patrice Lumumba, à côté de la pharmacie du Lac, portail vert métallique..."
           maxLength={250}
           rows={2}
-          className="w-full p-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          className="text-xs resize-none"
         />
         <span className="text-[10px] text-muted-foreground block text-right mt-0.5">
           {addressNote.length} / 250 caractères
@@ -97,19 +100,19 @@ export function ContactLocationCard({
             Coordonnées GPS (Latitude, Longitude)
           </label>
           <div className="flex gap-2">
-            <input
+            <Input
               type="text"
               value={latitude}
               disabled
               placeholder="Lat"
-              className="w-1/2 h-9 px-2.5 rounded-lg border border-border bg-secondary/60 text-muted-foreground text-xs font-mono cursor-not-allowed"
+              className="w-1/2 text-xs font-mono bg-muted/50 cursor-not-allowed min-h-[36px]"
             />
-            <input
+            <Input
               type="text"
               value={longitude}
               disabled
               placeholder="Lng"
-              className="w-1/2 h-9 px-2.5 rounded-lg border border-border bg-secondary/60 text-muted-foreground text-xs font-mono cursor-not-allowed"
+              className="w-1/2 text-xs font-mono bg-muted/50 cursor-not-allowed min-h-[36px]"
             />
           </div>
         </div>

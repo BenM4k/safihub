@@ -1,8 +1,20 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PartnerOrdersPaginationProps {
   currentPage: number;
@@ -12,6 +24,9 @@ interface PartnerOrdersPaginationProps {
   onPageSizeChange: (size: number) => void;
 }
 
+/**
+ * Accessible orders pagination using shadcn Pagination and Select primitives.
+ */
 export function PartnerOrdersPagination({
   currentPage,
   pageSize,
@@ -28,10 +43,7 @@ export function PartnerOrdersPagination({
   const to = Math.min(totalItems, currentPage * pageSize);
 
   return (
-    <nav
-      aria-label={t("paginationAria")}
-      className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border text-xs text-muted-foreground font-sans"
-    >
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border text-xs text-muted-foreground font-sans">
       {/* Range and page size */}
       <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
         <span className="font-medium text-foreground">
@@ -39,54 +51,66 @@ export function PartnerOrdersPagination({
         </span>
 
         <div className="flex items-center gap-1.5">
-          <label htmlFor="partnerPageSizeSelect" className="text-[11px] text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground">
             {t("rowsPerPage")}
-          </label>
-          <select
-            id="partnerPageSizeSelect"
-            value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="h-8 rounded-lg border border-border bg-card shadow-xs px-2 text-xs text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
+          </span>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(val) => onPageSizeChange(Number(val))}
           >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
+            <SelectTrigger
+              aria-label={t("rowsPerPage")}
+              className="h-8 w-[70px] text-xs font-semibold rounded-lg border-border bg-card"
+            >
+              <SelectValue placeholder={String(pageSize)} />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl bg-card border-border shadow-lift">
+              <SelectItem value="10" className="text-xs cursor-pointer">
+                10
+              </SelectItem>
+              <SelectItem value="20" className="text-xs cursor-pointer">
+                20
+              </SelectItem>
+              <SelectItem value="50" className="text-xs cursor-pointer">
+                50
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       {/* Navigation buttons */}
-      <div className="flex items-center gap-2 self-end sm:self-auto">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={currentPage <= 1}
-          onClick={() => onPageChange(currentPage - 1)}
-          aria-label={t("previousPage")}
-          className="min-h-[44px] sm:min-h-[36px] px-3 text-xs font-semibold border-border bg-card hover:bg-surface text-foreground gap-1 cursor-pointer disabled:opacity-40"
-        >
-          <ChevronLeft className="size-4" />
-          <span className="hidden sm:inline">{t("previous")}</span>
-        </Button>
+      <Pagination className="w-auto mx-0 self-end sm:self-auto">
+        <PaginationContent className="gap-1.5">
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => {
+                if (currentPage > 1) onPageChange(currentPage - 1);
+              }}
+              className={`min-h-[36px] px-3 text-xs font-semibold cursor-pointer ${
+                currentPage <= 1 ? "pointer-events-none opacity-40" : ""
+              }`}
+            />
+          </PaginationItem>
 
-        <span className="px-2 font-mono text-xs font-bold text-heading">
-          {currentPage} / {totalPages}
-        </span>
+          <PaginationItem>
+            <span className="px-2 font-mono text-xs font-bold text-heading">
+              {currentPage} / {totalPages}
+            </span>
+          </PaginationItem>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={currentPage >= totalPages}
-          onClick={() => onPageChange(currentPage + 1)}
-          aria-label={t("nextPage")}
-          className="min-h-[44px] sm:min-h-[36px] px-3 text-xs font-semibold border-border bg-card hover:bg-surface text-foreground gap-1 cursor-pointer disabled:opacity-40"
-        >
-          <span className="hidden sm:inline">{t("next")}</span>
-          <ChevronRight className="size-4" />
-        </Button>
-      </div>
-    </nav>
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => {
+                if (currentPage < totalPages) onPageChange(currentPage + 1);
+              }}
+              className={`min-h-[36px] px-3 text-xs font-semibold cursor-pointer ${
+                currentPage >= totalPages ? "pointer-events-none opacity-40" : ""
+              }`}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    </div>
   );
 }

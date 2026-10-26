@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslations } from "next-intl";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import { ClosureCard } from "./closure-card";
 import type { ClosureItem } from "@/lib/hours-utils";
 
@@ -25,35 +30,38 @@ export function PastClosuresCollapsible({
   if (pastClosures.length === 0) return null;
 
   return (
-    <div className="border-t border-border bg-surface/30">
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-surface transition-colors cursor-pointer"
-      >
-        <span>
-          {isOpen ? t("hidePastClosures") : t("pastClosures")} ({pastClosures.length})
-        </span>
-        {isOpen ? (
-          <ChevronUp className="size-4" aria-hidden="true" />
-        ) : (
-          <ChevronDown className="size-4" aria-hidden="true" />
-        )}
-      </button>
+    <Collapsible
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      className="border-t border-border/80 pt-1"
+    >
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className="w-full px-3 py-2 flex items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        >
+          <span>
+            {isOpen ? t("hidePastClosures") : t("pastClosures")} ({pastClosures.length})
+          </span>
+          {isOpen ? (
+            <ChevronUp className="size-4" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="size-4" aria-hidden="true" />
+          )}
+        </button>
+      </CollapsibleTrigger>
 
-      {isOpen && (
-        <div className="divide-y divide-border border-t border-border bg-card">
-          {pastClosures.map((c) => (
-            <ClosureCard
-              key={c.id}
-              closure={c}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              disabled={disabled}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+      <CollapsibleContent className="divide-y divide-border/60">
+        {pastClosures.map((c) => (
+          <ClosureCard
+            key={c.id}
+            closure={c}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            disabled={disabled}
+          />
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

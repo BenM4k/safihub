@@ -1,4 +1,6 @@
 import { Headphones, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { maskPhoneNumber } from "@/lib/phone-utils";
 import type { HouseRecord } from "@/dal";
 
@@ -11,40 +13,46 @@ export function PayoutMethodCard({ house }: PayoutMethodCardProps) {
   const maskedPhone = maskPhoneNumber(house.contactPhone);
 
   return (
-    <section className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-4">
+    <section className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-sm font-bold text-heading">Moyen de réception des fonds</h2>
+          <h2 className="text-sm font-bold text-foreground">Moyen de réception des fonds</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             Compte Mobile Money ou bancaire où sont transférés vos gains nets.
           </p>
         </div>
 
-        <a
-          href="https://wa.me/243999999999"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-secondary text-foreground hover:bg-secondary/80 min-h-[40px] border border-border self-start sm:self-auto"
+        <Button
+          variant="outline"
+          size="sm"
+          asChild
+          className="min-h-[40px] text-xs font-semibold self-start sm:self-auto gap-1.5"
         >
-          <Headphones className="size-3.5 text-primary" />
-          <span>Contacter le support</span>
-        </a>
+          <a
+            href="https://wa.me/243999999999"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Headphones className="size-3.5 text-primary" />
+            <span>Contacter le support</span>
+          </a>
+        </Button>
       </div>
 
-      <div className="p-4 bg-surface rounded-xl border border-border text-xs space-y-2">
+      <div className="p-4 rounded-xl border border-border/60 bg-muted/20 text-xs space-y-2">
         <div className="flex items-center justify-between">
-          <span className="font-bold text-heading text-sm">
+          <span className="font-bold text-foreground text-sm">
             {isConfigured ? "Mobile Money" : "Non configuré"}
           </span>
           {isConfigured ? (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-success-soft text-success border border-success/30 flex items-center gap-1">
+            <Badge variant="outline" className="text-[10px] font-bold text-emerald-600 border-emerald-500/30 bg-emerald-500/10 gap-1">
               <ShieldCheck className="size-3" />
               <span>Vérifié</span>
-            </span>
+            </Badge>
           ) : (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-muted-foreground border border-border">
+            <Badge variant="secondary" className="text-[10px] font-bold">
               Non configuré
-            </span>
+            </Badge>
           )}
         </div>
         {isConfigured ? (

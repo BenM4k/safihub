@@ -2,6 +2,7 @@
 
 import { Clock, Globe, Info, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Badge } from "@/components/ui/badge";
 import {
   TIMEZONE_CONFIG,
   computeLiveStatus,
@@ -34,7 +35,7 @@ export function HoursHeader({ schedule, closures, isPaused = false }: HoursHeade
     .sort((a, b) => a.startsOn.localeCompare(b.startsOn))[0];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5 pb-2">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-heading tracking-tight font-display">
@@ -45,17 +46,17 @@ export function HoursHeader({ schedule, closures, isPaused = false }: HoursHeade
           </p>
         </div>
 
-        {/* Timezone pill */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-surface border border-border text-foreground shrink-0 self-start sm:self-auto shadow-2xs">
+        {/* Timezone badge */}
+        <Badge variant="outline" className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold shrink-0 self-start sm:self-auto">
           <Globe className="size-3.5 text-primary" aria-hidden="true" />
           <span>{TIMEZONE_CONFIG.label}</span>
-        </div>
+        </Badge>
       </div>
 
       {/* Status Bar */}
-      <div className="flex flex-wrap items-center gap-2.5 p-3 sm:p-4 rounded-xl bg-card border border-border shadow-xs text-xs">
+      <div className="flex flex-wrap items-center gap-2.5 py-2 text-xs">
         <span
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border shadow-xs ${liveStatus.badgeClass}`}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${liveStatus.badgeClass}`}
         >
           <span className="size-2 rounded-full bg-current animate-pulse" />
           <span>{liveStatus.text}</span>
@@ -72,7 +73,7 @@ export function HoursHeader({ schedule, closures, isPaused = false }: HoursHeade
       </div>
 
       {/* Computed timer real example */}
-      <div className="p-3.5 rounded-xl bg-surface border border-border flex items-start gap-2.5 text-xs text-foreground leading-relaxed">
+      <div className="p-3 rounded-lg bg-muted/20 border border-border flex items-start gap-2.5 text-xs text-foreground leading-relaxed">
         <Info className="size-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
         <div className="space-y-1">
           <p className="font-semibold text-heading">{timerExample}</p>
@@ -80,16 +81,19 @@ export function HoursHeader({ schedule, closures, isPaused = false }: HoursHeade
       </div>
 
       {/* Customer preview */}
-      <div className="p-3 rounded-xl bg-primary-soft/50 border border-primary/20 flex items-center justify-between gap-3 text-xs">
+      <div className="p-3 rounded-lg bg-primary-soft/40 border border-primary/20 flex items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2">
           <Sparkles className="size-4 text-primary shrink-0" aria-hidden="true" />
           <div>
             <span className="font-bold text-heading mr-1.5">{t("customerPreview")} :</span>
             <span className="text-foreground">
-              Les clients voient &laquo;&nbsp;{liveStatus.text} {liveStatus.nextInfo}&nbsp;&raquo;
+              {t("customerSee", { status: liveStatus.text, nextInfo: liveStatus.nextInfo })}
               {upcomingClosure && (
                 <span className="text-muted-foreground ml-1.5">
-                  · Prochaine fermeture affichée : du {formatDateFr(upcomingClosure.startsOn)} au {formatDateFr(upcomingClosure.endsOn)}
+                  · {t("nextClosureDisplay", {
+                    starts: formatDateFr(upcomingClosure.startsOn),
+                    ends: formatDateFr(upcomingClosure.endsOn),
+                  })}
                   {upcomingClosure.reason ? ` (${upcomingClosure.reason})` : ""}
                 </span>
               )}

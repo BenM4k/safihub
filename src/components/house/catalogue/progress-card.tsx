@@ -2,6 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { CatalogueServiceTab } from "./types";
 
 interface ProgressCardProps {
@@ -24,11 +27,11 @@ export function ProgressCard({
   const hasNoPrices = totalConfigured === 0;
 
   return (
-    <div className="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-xs space-y-3.5">
+    <div className="space-y-3 py-1">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {percent === 100 ? (
-            <CheckCircle2 className="size-4 text-success-base shrink-0" aria-hidden="true" />
+            <CheckCircle2 className="size-4 text-success shrink-0" aria-hidden="true" />
           ) : (
             <div className="size-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
           )}
@@ -44,21 +47,7 @@ export function ProgressCard({
       </div>
 
       {/* Progress bar */}
-      <div
-        className="w-full h-2 bg-surface rounded-full overflow-hidden border border-border/40"
-        role="progressbar"
-        aria-valuenow={percent}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={t("progressTitle")}
-      >
-        <div
-          className={`h-full transition-all duration-500 rounded-full ${
-            percent === 100 ? "bg-success-base" : "bg-primary"
-          }`}
-          style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
-        />
-      </div>
+      <Progress value={percent} className="h-2" />
 
       {/* Per-service pills */}
       <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
@@ -70,32 +59,33 @@ export function ProgressCard({
               key={srv.id}
               type="button"
               onClick={() => onSelectService(srv.id)}
-              className={`text-xs px-2.5 py-1 rounded-lg font-medium transition flex items-center gap-1.5 border ${
+              className={`text-xs px-2.5 py-1 font-medium transition flex items-center gap-1.5 cursor-pointer bg-transparent border-0 ${
                 isSelected
-                  ? "bg-primary/10 text-primary border-primary/30 font-semibold"
-                  : "bg-surface text-muted-foreground border-border hover:bg-surface/80"
+                  ? "text-primary font-bold"
+                  : "text-muted-foreground hover:text-heading"
               }`}
             >
               <span>{srv.nameFr}</span>
-              <span
-                className={`font-mono text-[11px] px-1.5 py-0.2 rounded ${
-                  isComplete
-                    ? "bg-success-light text-success-base font-bold"
-                    : "bg-surface-elevated text-heading"
+              <Badge
+                variant={isSelected ? "default" : isComplete ? "success" : "outline"}
+                className={`font-mono text-[10px] px-1.5 py-0 h-4 ${
+                  isSelected ? "bg-primary text-primary-foreground" : "border-0 bg-transparent text-muted-foreground"
                 }`}
               >
                 {srv.configuredCount}/{srv.totalCount}
-              </span>
+              </Badge>
             </button>
           );
         })}
       </div>
 
       {hasNoPrices && (
-        <div className="p-3 bg-warning-light text-warning-base rounded-xl border border-warning-base/20 text-xs flex items-center gap-2">
-          <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
-          <span className="font-medium">{t("noPriceWarning")}</span>
-        </div>
+        <Alert variant="destructive" className="bg-warning-soft text-warning border-warning/30 text-xs py-2.5">
+          <AlertCircle className="size-4 text-warning" />
+          <AlertDescription className="text-xs font-medium text-warning">
+            {t("noPriceWarning")}
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );

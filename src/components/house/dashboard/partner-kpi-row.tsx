@@ -9,8 +9,11 @@ import {
   Timer,
   ArrowUpRight,
   ArrowDownRight,
+  ChevronRight,
 } from "lucide-react";
 import { formatAmount } from "@/lib/order-formatters";
+import { Separator } from "@/components/ui/separator";
+import { PartnerKpiCell } from "./partner-kpi-cell";
 import type { HouseDashboardMetrics } from "@/dal";
 
 interface PartnerKpiRowProps {
@@ -18,6 +21,9 @@ interface PartnerKpiRowProps {
   houseSlug: string;
 }
 
+/**
+ * Borderless partner KPI summary row separated by vertical dividers.
+ */
 export function PartnerKpiRow({ metrics, houseSlug }: PartnerKpiRowProps) {
   const [revenuePeriod, setRevenuePeriod] = useState<"day" | "week">("day");
 
@@ -37,46 +43,38 @@ export function PartnerKpiRow({ metrics, houseSlug }: PartnerKpiRowProps) {
       : null;
 
   return (
-    <div className="space-y-3 font-sans">
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+    <div className="rounded-2xl border border-border bg-card p-2 sm:p-3 shadow-xs font-sans">
+      <div className="flex flex-col lg:flex-row lg:items-center">
         {/* 1. Commandes du jour */}
-        <Link
+        <PartnerKpiCell
+          label="Commandes du jour"
+          value={metrics.todayOrdersCount}
+          subtext={
+            metrics.dailyCapacity
+              ? `Sur ${metrics.dailyCapacity} max`
+              : "Volume du jour"
+          }
+          icon={ShoppingBag}
           href={`/partner/${houseSlug}/orders`}
-          className="p-4 rounded-2xl bg-card border border-border shadow-xs hover:border-border-strong hover:shadow-sm transition group flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold text-muted-foreground truncate">
-              Commandes du jour
-            </span>
-            <div className="size-8 rounded-xl bg-primary-soft text-primary flex items-center justify-center shrink-0 group-hover:bg-primary-soft/80 transition">
-              <ShoppingBag className="size-4" />
-            </div>
-          </div>
-          <div className="mt-2 space-y-1">
-            <div className="text-xl sm:text-2xl font-black text-heading font-display">
-              {metrics.todayOrdersCount}
-            </div>
-            <p className="text-[11px] text-muted-foreground font-medium">
-              {metrics.dailyCapacity ? `Sur ${metrics.dailyCapacity} max` : "Volume du jour"}
-            </p>
-          </div>
-        </Link>
+        />
 
-        {/* 2. Revenu net (Jour / Semaine switch) */}
-        <div className="p-4 rounded-2xl bg-card border border-border shadow-xs hover:border-border-strong hover:shadow-sm transition flex flex-col justify-between col-span-2 sm:col-span-1">
+        <Separator orientation="vertical" className="hidden lg:block h-12 mx-1 shrink-0" />
+        <Separator orientation="horizontal" className="lg:hidden my-1" />
+
+        {/* 2. Revenu net (Day/Week switch) */}
+        <div className="flex-1 p-3 text-left space-y-1 transition-colors rounded-xl hover:bg-muted/30 group">
           <div className="flex items-center justify-between gap-1">
-            <span className="text-xs font-bold text-muted-foreground truncate">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
               Revenu net
             </span>
-            {/* Inline day/week toggle */}
-            <div className="inline-flex rounded-lg bg-secondary p-0.5 text-[10px] font-bold">
+            <div className="inline-flex rounded-md bg-secondary p-0.5 text-[10px] font-bold">
               <button
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   setRevenuePeriod("day");
                 }}
-                className={`px-1.5 py-0.5 rounded-md transition cursor-pointer ${
+                className={`px-1.5 py-0.5 rounded transition cursor-pointer ${
                   revenuePeriod === "day"
                     ? "bg-card text-heading shadow-xs"
                     : "text-muted-foreground hover:text-heading"
@@ -90,7 +88,7 @@ export function PartnerKpiRow({ metrics, houseSlug }: PartnerKpiRowProps) {
                   e.preventDefault();
                   setRevenuePeriod("week");
                 }}
-                className={`px-1.5 py-0.5 rounded-md transition cursor-pointer ${
+                className={`px-1.5 py-0.5 rounded transition cursor-pointer ${
                   revenuePeriod === "week"
                     ? "bg-card text-heading shadow-xs"
                     : "text-muted-foreground hover:text-heading"
@@ -100,16 +98,23 @@ export function PartnerKpiRow({ metrics, houseSlug }: PartnerKpiRowProps) {
               </button>
             </div>
           </div>
-
-          <Link href={`/partner/${houseSlug}/settlements`} className="mt-2 space-y-1 block group">
-            <div className="text-xl sm:text-2xl font-black text-success font-display truncate">
-              {formatAmount(netRevenue)}
+          <Link
+            href={`/partner/${houseSlug}/settlements`}
+            className="block cursor-pointer"
+          >
+            <div className="flex items-baseline justify-between gap-2 mt-1">
+              <span className="text-xl sm:text-2xl font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 truncate">
+                {formatAmount(netRevenue)}
+              </span>
+              <ChevronRight className="size-3.5 text-muted-foreground/40 group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
             </div>
-            <div className="flex items-center gap-1 text-[11px]">
+            <div className="flex items-center gap-1 text-[11px] truncate mt-0.5">
               {revenueTrendPercent !== null ? (
                 <span
                   className={`inline-flex items-center gap-0.5 font-bold ${
-                    revenueTrendPercent >= 0 ? "text-success" : "text-destructive"
+                    revenueTrendPercent >= 0
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-destructive"
                   }`}
                 >
                   {revenueTrendPercent >= 0 ? (
@@ -127,82 +132,60 @@ export function PartnerKpiRow({ metrics, houseSlug }: PartnerKpiRowProps) {
           </Link>
         </div>
 
+        <Separator orientation="vertical" className="hidden lg:block h-12 mx-1 shrink-0" />
+        <Separator orientation="horizontal" className="lg:hidden my-1" />
+
         {/* 3. Solde à recevoir */}
-        <Link
+        <PartnerKpiCell
+          label="Solde à recevoir"
+          value={formatAmount(metrics.balanceOwedCDF)}
+          subtext={`Règlement : ${metrics.nextSettlementDate}`}
+          icon={Wallet}
           href={`/partner/${houseSlug}/settlements`}
-          className="p-4 rounded-2xl bg-card border border-border shadow-xs hover:border-border-strong hover:shadow-sm transition group flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold text-muted-foreground truncate">
-              Solde à recevoir
-            </span>
-            <div className="size-8 rounded-xl bg-success-soft text-success flex items-center justify-center shrink-0 group-hover:bg-success-soft/80 transition">
-              <Wallet className="size-4" />
-            </div>
-          </div>
-          <div className="mt-2 space-y-1">
-            <div className="text-xl sm:text-2xl font-black text-heading font-display truncate">
-              {formatAmount(metrics.balanceOwedCDF)}
-            </div>
-            <p className="text-[11px] text-muted-foreground font-medium truncate">
-              Règlement : {metrics.nextSettlementDate}
-            </p>
-          </div>
-        </Link>
+          iconBgClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+        />
+
+        <Separator orientation="vertical" className="hidden lg:block h-12 mx-1 shrink-0" />
+        <Separator orientation="horizontal" className="lg:hidden my-1" />
 
         {/* 4. Taux d'acceptation (30 j) */}
-        <Link
+        <PartnerKpiCell
+          label="Taux acceptation (30 j)"
+          value={
+            metrics.acceptanceRate30d !== null
+              ? `${metrics.acceptanceRate30d}%`
+              : "—"
+          }
+          subtext={
+            metrics.acceptanceRateTrend !== null ? (
+              <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                <ArrowUpRight className="size-3" />
+                <span>+{metrics.acceptanceRateTrend}% vs m-1</span>
+              </span>
+            ) : (
+              "Objectif ≥ 85%"
+            )
+          }
+          icon={CheckCircle}
           href={`/partner/${houseSlug}/orders`}
-          className="p-4 rounded-2xl bg-card border border-border shadow-xs hover:border-border-strong hover:shadow-sm transition group flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold text-muted-foreground truncate">
-              Taux acceptation (30 j)
-            </span>
-            <div className="size-8 rounded-xl bg-warning-soft text-warning flex items-center justify-center shrink-0 group-hover:bg-warning-soft/80 transition">
-              <CheckCircle className="size-4" />
-            </div>
-          </div>
-          <div className="mt-2 space-y-1">
-            <div className="text-xl sm:text-2xl font-black text-heading font-display">
-              {metrics.acceptanceRate30d !== null ? `${metrics.acceptanceRate30d}%` : "—"}
-            </div>
-            <div className="flex items-center gap-1 text-[11px]">
-              {metrics.acceptanceRateTrend !== null ? (
-                <span className="inline-flex items-center gap-0.5 text-success font-bold">
-                  <ArrowUpRight className="size-3" />
-                  <span>+{metrics.acceptanceRateTrend}%</span>
-                  <span className="text-muted-foreground font-normal">vs m-1</span>
-                </span>
-              ) : (
-                <span className="text-muted-foreground">Objectif ≥ 85%</span>
-              )}
-            </div>
-          </div>
-        </Link>
+          iconBgClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+        />
+
+        <Separator orientation="vertical" className="hidden lg:block h-12 mx-1 shrink-0" />
+        <Separator orientation="horizontal" className="lg:hidden my-1" />
 
         {/* 5. Délai moyen d'acceptation */}
-        <Link
+        <PartnerKpiCell
+          label="Délai acceptation"
+          value={
+            metrics.avgAcceptanceMinutes
+              ? `${metrics.avgAcceptanceMinutes} min`
+              : "—"
+          }
+          subtext="Limite max : 45 min"
+          icon={Timer}
           href={`/partner/${houseSlug}/orders`}
-          className="p-4 rounded-2xl bg-card border border-border shadow-xs hover:border-border-strong hover:shadow-sm transition group flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold text-muted-foreground truncate">
-              Délai moyen acceptation
-            </span>
-            <div className="size-8 rounded-xl bg-primary-soft text-primary flex items-center justify-center shrink-0 group-hover:bg-primary-soft/80 transition">
-              <Timer className="size-4" />
-            </div>
-          </div>
-          <div className="mt-2 space-y-1">
-            <div className="text-xl sm:text-2xl font-black text-heading font-display">
-              {metrics.avgAcceptanceMinutes ? `${metrics.avgAcceptanceMinutes} min` : "—"}
-            </div>
-            <p className="text-[11px] text-muted-foreground font-medium">
-              Limite max : 45 min
-            </p>
-          </div>
-        </Link>
+        />
       </div>
     </div>
   );
