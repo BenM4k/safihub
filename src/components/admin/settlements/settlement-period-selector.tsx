@@ -61,7 +61,7 @@ export function SettlementPeriodSelector({
   const nextSettlementDate = getNextSettlementDateFormatted();
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-2 rounded-xl border border-border-strong shadow-2xs">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-2 rounded-xl border border-border shadow-2xs">
       <div className="flex items-center gap-1.5 flex-wrap">
         <Button
           type="button"
@@ -69,16 +69,16 @@ export function SettlementPeriodSelector({
           size="sm"
           onClick={() => shiftWeek(-1)}
           disabled={isPending}
-          className="size-10 p-0 min-h-[40px] hover:bg-surface text-ink-700 focus-visible:ring-2 focus-visible:ring-primary rounded-lg border border-border-strong"
+          className="size-10 p-0 hover:bg-muted text-foreground rounded-lg border border-border"
           title="Semaine précédente"
           aria-label="Semaine précédente"
         >
           <ChevronLeft className="size-4.5" />
         </Button>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-surface rounded-lg border border-border-strong min-h-[40px]">
-          <Calendar className="size-4 text-ink-500 shrink-0" aria-hidden="true" />
-          <span className="font-mono text-xs font-bold text-heading tabular-nums">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 rounded-lg border border-border min-h-[40px]">
+          <Calendar className="size-4 text-muted-foreground shrink-0" aria-hidden="true" />
+          <span className="font-mono text-xs font-bold text-foreground tabular-nums">
             {activeBounds.weekString} · {formatWeekRange(activeBounds.start, activeBounds.end)}
           </span>
         </div>
@@ -89,7 +89,7 @@ export function SettlementPeriodSelector({
           size="sm"
           onClick={() => shiftWeek(1)}
           disabled={isPending}
-          className="size-10 p-0 min-h-[40px] hover:bg-surface text-ink-700 focus-visible:ring-2 focus-visible:ring-primary rounded-lg border border-border-strong"
+          className="size-10 p-0 hover:bg-muted text-foreground rounded-lg border border-border"
           title="Semaine suivante"
           aria-label="Semaine suivante"
         >
@@ -103,17 +103,17 @@ export function SettlementPeriodSelector({
             size="sm"
             onClick={() => navigateToWeek(currentBounds.weekString)}
             disabled={isPending}
-            className="h-10 px-3 text-xs font-semibold bg-white hover:bg-surface text-primary border-primary/40 min-h-[40px] focus-visible:ring-2 focus-visible:ring-primary rounded-lg shadow-2xs"
+            className="h-10 px-3 text-xs font-semibold text-primary border-primary/40 rounded-lg shadow-2xs"
           >
             Semaine actuelle
           </Button>
         )}
       </div>
 
-      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-border-strong rounded-lg text-xs text-ink-700 font-medium">
+      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/40 border border-border rounded-lg text-xs text-foreground font-medium">
         <CalendarClock className="size-4 text-primary shrink-0" aria-hidden="true" />
-        <span>Prochain règlement :</span>
-        <span className="font-bold text-heading capitalize">{nextSettlementDate}</span>
+        <span className="text-muted-foreground">Prochain règlement :</span>
+        <span className="font-bold text-foreground capitalize">{nextSettlementDate}</span>
       </div>
     </div>
   );

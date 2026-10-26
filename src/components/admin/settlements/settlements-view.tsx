@@ -83,8 +83,8 @@ export function SettlementsView({
       {showHouses && (
         <section id="pressings-section" className="space-y-3 scroll-mt-20">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-heading flex items-center gap-2">
-              <Building2 className="size-4 text-violet-600" />
+            <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <Building2 className="size-4 text-violet-600 dark:text-violet-400" />
               <span>Pressings ({houses.length})</span>
             </h2>
           </div>
@@ -102,8 +102,8 @@ export function SettlementsView({
       {showCouriers && (
         <section id="coursiers-section" className="space-y-3 scroll-mt-20">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-heading flex items-center gap-2">
-              <Bike className="size-4 text-emerald-600" />
+            <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <Bike className="size-4 text-emerald-600 dark:text-emerald-400" />
               <span>Coursiers ({couriers.length})</span>
             </h2>
           </div>

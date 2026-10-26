@@ -19,10 +19,11 @@ export default async function AdminPage() {
       <DashboardHero userName={authCtx.user?.name} />
 
       {!metricsResult.ok ? (
-        <div className="p-5 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-700 shadow-sm">
+        <div className="p-5 bg-destructive/10 border border-destructive/30 rounded-xl text-xs text-destructive shadow-xs">
           {t("metricsError", { error: metricsResult.error })}
         </div>
       ) : (
+
         <>
           {/* 2. Urgent Attention Section (Dominant Awaiting Acceptance Card + Stat Chips) */}
           <OperationalAlerts metrics={metricsResult.value} />

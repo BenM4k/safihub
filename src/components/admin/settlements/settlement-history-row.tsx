@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Undo2, Building2, Bike } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TableRow, TableCell } from "@/components/ui/table";
 import { StatusPill } from "@/components/admin/shared/status-pill";
 import { MoneyCell } from "@/components/admin/shared/money-cell";
 import { PhoneCell } from "@/components/admin/shared/phone-cell";
@@ -47,50 +48,50 @@ export function SettlementHistoryRowItem({ log }: SettlementHistoryRowProps) {
 
   return (
     <>
-      <tr className={`hover:bg-surface/60 transition-colors ${log.isReversed ? "bg-surface/30 opacity-70" : ""}`}>
-        <td className="py-3 px-3 font-mono font-bold text-heading whitespace-nowrap">
+      <TableRow className={`hover:bg-muted/40 transition-colors ${log.isReversed ? "bg-muted/20 opacity-70" : ""}`}>
+        <TableCell className="py-3 px-3 font-mono font-bold text-foreground whitespace-nowrap">
           {formatFrenchDate(log.createdAt)}
-        </td>
-        <td className="py-3 px-3">
-          <div className="font-bold text-heading text-xs">{log.payeeName}</div>
+        </TableCell>
+        <TableCell className="py-3 px-3">
+          <div className="font-bold text-foreground text-xs">{log.payeeName}</div>
           {log.payeeNeighborhood && (
-            <div className="text-2xs text-ink-500">{log.payeeNeighborhood}</div>
+            <div className="text-2xs text-muted-foreground">{log.payeeNeighborhood}</div>
           )}
           {log.payeePhone && <PhoneCell phone={log.payeePhone} />}
-        </td>
-        <td className="py-3 px-2 text-center">
+        </TableCell>
+        <TableCell className="py-3 px-2 text-center">
           <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border ${
               isHouse
-                ? "bg-violet-50 text-violet-700 border-violet-200"
-                : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                ? "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20"
+                : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
             }`}
           >
             {isHouse ? <Building2 className="size-3" /> : <Bike className="size-3" />}
             <span>{isHouse ? "Pressing" : "Coursier"}</span>
           </span>
-        </td>
-        <td className="py-3 px-2 font-mono text-2xs text-ink-600 hidden sm:table-cell">
+        </TableCell>
+        <TableCell className="py-3 px-2 font-mono text-2xs text-muted-foreground hidden sm:table-cell">
           {log.period || "—"}
-        </td>
-        <td className="py-3 px-3 text-right">
+        </TableCell>
+        <TableCell className="py-3 px-3 text-right">
           <MoneyCell amount={log.amount} currency={log.currency} isCancelled={log.isReversed} />
-        </td>
-        <td className="py-3 px-2 text-ink-700 font-medium text-xs hidden md:table-cell">
+        </TableCell>
+        <TableCell className="py-3 px-2 text-foreground font-medium text-xs hidden md:table-cell">
           {methodLabels[log.method] || log.method}
-        </td>
-        <td className="py-3 px-2 font-mono text-2xs text-ink-600 hidden lg:table-cell">
+        </TableCell>
+        <TableCell className="py-3 px-2 font-mono text-2xs text-muted-foreground hidden lg:table-cell">
           {log.reference || "—"}
-        </td>
-        <td className="py-3 px-2 text-ink-700 text-xs hidden md:table-cell">
+        </TableCell>
+        <TableCell className="py-3 px-2 text-foreground text-xs hidden md:table-cell">
           {log.operatorName || "Opérateur"}
-        </td>
-        <td className="py-3 px-3 text-center">
+        </TableCell>
+        <TableCell className="py-3 px-3 text-center">
           {log.isReversed ? (
             <div className="flex flex-col items-center gap-0.5">
               <StatusPill status="cancelled" />
               {log.reversalReason && (
-                <span className="text-3xs text-ink-500 italic max-w-xs truncate" title={log.reversalReason}>
+                <span className="text-3xs text-muted-foreground italic max-w-xs truncate" title={log.reversalReason}>
                   {log.reversalReason}
                 </span>
               )}
@@ -98,25 +99,25 @@ export function SettlementHistoryRowItem({ log }: SettlementHistoryRowProps) {
           ) : (
             <StatusPill status="settled" customLabel="Validé" />
           )}
-        </td>
-        <td className="py-3 px-3 text-right whitespace-nowrap">
+        </TableCell>
+        <TableCell className="py-3 px-3 text-right whitespace-nowrap">
           {log.isReversed ? (
-            <span className="text-2xs text-ink-400 italic">Annulée</span>
+            <span className="text-2xs text-muted-foreground italic">Annulée</span>
           ) : (
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => setIsConfirmOpen(true)}
-              className="min-h-[40px] h-10 px-2.5 text-xs text-destructive hover:text-destructive hover:bg-destructive-light/60 gap-1 rounded-lg"
+              className="h-9 px-2.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 gap-1 rounded-lg"
               title="Annuler ce règlement"
             >
               <Undo2 className="size-3.5" />
               <span>Annuler</span>
             </Button>
           )}
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
 
       {isConfirmOpen && (
         <ConfirmDialog
@@ -128,10 +129,10 @@ export function SettlementHistoryRowItem({ log }: SettlementHistoryRowProps) {
             <div className="space-y-2 text-xs">
               <p>
                 Vous êtes sur le point d&apos;annuler le règlement de{" "}
-                <span className="font-bold text-heading">{log.payeeName}</span> d&apos;un montant de{" "}
-                <span className="font-bold text-heading">{log.amount.toLocaleString()} CDF</span>.
+                <span className="font-bold text-foreground">{log.payeeName}</span> d&apos;un montant de{" "}
+                <span className="font-bold text-foreground">{log.amount.toLocaleString()} CDF</span>.
               </p>
-              <p className="p-2.5 bg-destructive-light text-destructive-base rounded-lg border border-destructive-base/20 font-medium">
+              <p className="p-2.5 bg-destructive/10 text-destructive rounded-lg border border-destructive/20 font-medium">
                 Conséquence comptable : Une contre-passation compensatoire sera inscrite dans le grand livre. Le solde restant dû du bénéficiaire sera automatiquement réaugmenté.
               </p>
             </div>
@@ -139,8 +140,8 @@ export function SettlementHistoryRowItem({ log }: SettlementHistoryRowProps) {
           confirmLabel="Confirmer l'annulation"
           variant="destructive"
           requireReason={true}
-          reasonLabel="Motif obligatoire de l'annulation"
-          reasonPlaceholder="Ex. Erreur de compte bancaire, doublon de saisie..."
+          reasonLabel="Motif de l'annulation"
+          reasonPlaceholder="Préciser la raison..."
         />
       )}
     </>

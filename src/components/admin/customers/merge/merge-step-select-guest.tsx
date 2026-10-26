@@ -2,7 +2,11 @@
 
 import { useTranslations } from "next-intl";
 import { Check, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { formatCustomerName } from "@/lib/customer-formatters";
 import type { CustomerRow } from "../types";
 
@@ -25,32 +29,34 @@ export function MergeStepSelectGuest({
 
   return (
     <div className="space-y-3">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-ink-400" />
-        <Input
+      <InputGroup className="h-9">
+        <InputGroupAddon>
+          <Search className="size-4 text-muted-foreground" />
+        </InputGroupAddon>
+        <InputGroupInput
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={t("searchGuestPlaceholder")}
-          className="pl-9 h-10 text-xs border-2 border-border-strong rounded-lg"
+          className="text-xs"
         />
-      </div>
+      </InputGroup>
 
-      <div className="divide-y divide-border-strong border-2 border-border-strong rounded-xl max-h-60 overflow-y-auto">
+      <div className="divide-y divide-border border border-border rounded-lg max-h-60 overflow-y-auto">
         {candidates.length === 0 ? (
-          <div className="p-4 text-center text-xs text-ink-400">{t("noGuestsFound")}</div>
+          <div className="p-4 text-center text-xs text-muted-foreground">{t("noGuestsFound")}</div>
         ) : (
           candidates.map((g) => (
             <button
               type="button"
               key={g.id}
               onClick={() => onSelect(g)}
-              className={`w-full text-left p-3 text-xs flex items-center justify-between cursor-pointer hover:bg-surface ${
-                selectedGuest?.id === g.id ? "bg-primary-soft font-bold text-primary" : ""
+              className={`w-full text-left p-3 text-xs flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors ${
+                selectedGuest?.id === g.id ? "bg-primary/10 font-bold text-primary" : ""
               }`}
             >
               <div>
-                <div className="font-semibold text-heading">{formatCustomerName(g.name, g.contactPhone)}</div>
-                <div className="text-2xs text-ink-500">
+                <div className="font-semibold text-foreground">{formatCustomerName(g.name, g.contactPhone)}</div>
+                <div className="text-2xs text-muted-foreground">
                   {g.contactPhone || t("noPhone")} · {t("ordersCount", { count: g.ordersCount })}
                 </div>
               </div>

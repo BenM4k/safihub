@@ -13,21 +13,22 @@ export async function DashboardOperationsSection() {
 
   if (!ordersRes.ok) {
     return (
-      <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+      <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
         <p className="font-semibold">{t("operationsLoadError")}</p>
-        <p className="text-xs text-rose-600 mt-1">{ordersRes.error}</p>
+        <p className="text-xs opacity-90 mt-1">{ordersRes.error}</p>
       </div>
     );
   }
 
   if (!couriersRes.ok) {
     return (
-      <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+      <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
         <p className="font-semibold">{t("operationsLoadError")}</p>
-        <p className="text-xs text-rose-600 mt-1">{couriersRes.error}</p>
+        <p className="text-xs opacity-90 mt-1">{couriersRes.error}</p>
       </div>
     );
   }
+
 
   const rawOrders = ordersRes.value;
   const rawCouriers = couriersRes.value;

@@ -2,10 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Ban, X } from "lucide-react";
+import { AlertCircle, AlertTriangle, Ban } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { blockUserAction } from "@/actions/admin-user.actions";
 import type { UserRow } from "../types";
 
@@ -50,7 +59,7 @@ export function UserBlockDialog({
     }
   }, [isOpen]);
 
-  if (!isOpen || !user) return null;
+  if (!user) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,56 +98,39 @@ export function UserBlockDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-      <div
-        className="w-full max-w-md bg-card rounded-2xl border-2 border-border-strong shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="block-dialog-title"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b-2 border-border-strong bg-destructive-light/40">
-          <div className="flex items-center gap-2 text-destructive font-bold text-sm">
-            <Ban className="size-5" />
-            <span id="block-dialog-title">{t("blockConfirm")}</span>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md p-0 overflow-hidden rounded-xl border border-border shadow-lg bg-card gap-0">
+        <DialogHeader className="p-4 border-b border-border bg-destructive/10 flex flex-row items-center gap-2.5 space-y-0">
+          <div className="size-8 rounded-lg flex items-center justify-center border border-destructive/20 bg-destructive/10 text-destructive shrink-0">
+            <Ban className="size-4" />
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-ink-400 hover:text-ink-800 p-1 rounded-lg focus:outline-none"
-            aria-label={t("cancel")}
-          >
-            <X className="size-5" />
-          </button>
-        </div>
+          <DialogTitle className="text-sm font-bold text-destructive">
+            {t("blockConfirm")}
+          </DialogTitle>
+        </DialogHeader>
 
-        {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="space-y-1">
-            <p className="text-xs text-ink-700 leading-relaxed">
-              {t("blockConfirmQuestion", { name: user.name })}
-            </p>
-            <p className="text-2xs text-ink-500">
+        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
+          <div className="flex flex-col gap-1 text-xs text-muted-foreground leading-relaxed">
+            <p>{t("blockConfirmQuestion", { name: user.name })}</p>
+            <p className="text-2xs text-muted-foreground/80">
               {t("blockSessionsRevokedNotice")}
             </p>
           </div>
 
           {/* Self Action Warning */}
           {isSelf && (
-            <div className="p-3 bg-amber-50 border-2 border-amber-300 rounded-xl space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
-                <AlertTriangle className="size-4 text-amber-600" />
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex flex-col gap-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="size-4 shrink-0" />
                 <span>{t("selfBlockAlertTitle")}</span>
               </div>
-              <p className="text-2xs text-amber-800 leading-relaxed">
+              <p className="text-2xs text-muted-foreground leading-relaxed">
                 {t("selfBlockAlertDesc")}
               </p>
-              <label className="flex items-center gap-2 pt-1 text-xs font-semibold text-amber-900 cursor-pointer">
-                <input
-                  type="checkbox"
+              <label className="flex items-center gap-2 pt-1 text-xs font-semibold text-foreground cursor-pointer">
+                <Checkbox
                   checked={selfConfirmed}
-                  onChange={(e) => setSelfConfirmed(e.target.checked)}
-                  className="rounded border-amber-400 text-amber-700 focus:ring-amber-500"
+                  onCheckedChange={(checked) => setSelfConfirmed(Boolean(checked))}
                 />
                 <span>{t("selfBlockCheck")}</span>
               </label>
@@ -146,10 +138,10 @@ export function UserBlockDialog({
           )}
 
           {/* Mandatory Reason */}
-          <div className="space-y-1.5">
-            <Label htmlFor="block-reason" className="text-xs font-bold text-heading">
+          <Field className="gap-2">
+            <FieldLabel htmlFor="block-reason" className="text-xs sm:text-sm font-semibold">
               {t("blockReasonLabel")} <span className="text-destructive">*</span>
-            </Label>
+            </FieldLabel>
             <Input
               id="block-reason"
               ref={inputRef}
@@ -157,38 +149,38 @@ export function UserBlockDialog({
               onChange={(e) => setReason(e.target.value)}
               placeholder={t("blockReasonPlaceholder")}
               required
-              className="min-h-[40px] text-xs bg-surface border-2 border-border-strong rounded-xl text-heading"
+              disabled={loading}
             />
-          </div>
+          </Field>
 
           {error && (
-            <div className="p-2.5 bg-destructive-light border border-destructive-base/30 rounded-xl text-xs font-semibold text-destructive flex items-center gap-2">
-              <AlertTriangle className="size-4 shrink-0" />
-              <span>{error}</span>
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border-strong/60">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={loading}
-              className="min-h-[40px] px-4 text-xs font-semibold border-2 border-border-strong bg-surface hover:bg-muted text-ink-800 rounded-xl"
             >
               {t("cancel")}
             </Button>
             <Button
               type="submit"
+              variant="destructive"
               disabled={loading || !reason.trim() || (isSelf && !selfConfirmed)}
-              className="min-h-[40px] px-4 text-xs font-bold bg-destructive hover:bg-destructive/90 text-white rounded-xl shadow-xs"
             >
+              {loading && <Spinner className="size-3.5 mr-1.5" />}
               {loading ? t("blocking") : t("blockUser")}
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

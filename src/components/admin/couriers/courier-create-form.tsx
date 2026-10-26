@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import { createCourierAction } from "@/actions/admin-courier.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export function CourierCreateForm() {
   const t = useTranslations("admin.couriers");
@@ -28,44 +30,61 @@ export function CourierCreateForm() {
     <form
       id="courier-form-el"
       action={handleCreate}
-      className="p-5 bg-white rounded-xl border border-border shadow-xs space-y-4"
+      className="p-5 bg-card rounded-lg border border-border shadow-xs space-y-4"
     >
-      <div className="font-bold text-sm text-heading">{t("addCourier")}</div>
-      {error && <div className="text-xs text-destructive">{error}</div>}
+      <div className="font-bold text-sm text-foreground">{t("addCourier")}</div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="crName" className="text-xs">Nom du coursier</Label>
+        <Field className="space-y-1">
+          <FieldLabel htmlFor="crName" className="text-xs font-semibold text-foreground">
+            Nom du coursier
+          </FieldLabel>
           <Input id="crName" name="name" required placeholder="ex: Patrick Baraka" className="h-9 text-xs" />
-        </div>
+        </Field>
 
-        <div className="space-y-1">
-          <Label htmlFor="crEmail" className="text-xs">Email</Label>
+        <Field className="space-y-1">
+          <FieldLabel htmlFor="crEmail" className="text-xs font-semibold text-foreground">
+            Email
+          </FieldLabel>
           <Input id="crEmail" name="email" type="email" required placeholder="coursier@safihub.cd" className="h-9 text-xs" />
-        </div>
+        </Field>
 
-        <div className="space-y-1">
-          <Label htmlFor="crPhone" className="text-xs">Téléphone contact</Label>
+        <Field className="space-y-1">
+          <FieldLabel htmlFor="crPhone" className="text-xs font-semibold text-foreground">
+            Téléphone contact
+          </FieldLabel>
           <Input id="crPhone" name="phone" required placeholder="+243..." className="h-9 text-xs" />
-        </div>
+        </Field>
 
-        <div className="space-y-1">
-          <Label htmlFor="crPass" className="text-xs">Mot de passe initial</Label>
+        <Field className="space-y-1">
+          <FieldLabel htmlFor="crPass" className="text-xs font-semibold text-foreground">
+            Mot de passe initial
+          </FieldLabel>
           <Input id="crPass" name="password" type="password" placeholder="Min. 8 caractères" className="h-9 text-xs" />
-        </div>
+        </Field>
 
-        <div className="space-y-1">
-          <Label htmlFor="crCeil" className="text-xs">{t("cashCeiling")}</Label>
+        <Field className="space-y-1">
+          <FieldLabel htmlFor="crCeil" className="text-xs font-semibold text-foreground">
+            {t("cashCeiling")}
+          </FieldLabel>
           <Input id="crCeil" name="cashCeiling" type="number" defaultValue="140000" className="h-9 text-xs" />
-        </div>
+        </Field>
 
-        <div className="space-y-1">
-          <Label htmlFor="crDep" className="text-xs">{t("securityDeposit")}</Label>
+        <Field className="space-y-1">
+          <FieldLabel htmlFor="crDep" className="text-xs font-semibold text-foreground">
+            {t("securityDeposit")}
+          </FieldLabel>
           <Input id="crDep" name="securityDeposit" type="number" defaultValue="25000" className="h-9 text-xs" />
-        </div>
+        </Field>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pt-2">
         <Button type="submit" disabled={loading} size="sm" className="h-9">
           {loading ? "..." : t("addCourier")}
         </Button>

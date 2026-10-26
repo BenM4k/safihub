@@ -6,6 +6,8 @@ import { createNeighborhoodAction } from "@/actions/admin-coverage.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import type { ZoneRecord } from "@/dal";
 
 interface NeighborhoodFormProps {
@@ -40,13 +42,18 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
     <form
       id="neigh-form-el"
       action={handleSubmit}
-      className="p-4 bg-slate-50/80 rounded-lg border border-border space-y-3"
+      className="p-4 bg-muted/20 rounded-lg border border-border space-y-3"
     >
-      <div className="font-bold text-xs text-heading">{t("addNeighborhood")}</div>
-      {error && <div className="text-xs text-destructive">{error}</div>}
+      <div className="font-bold text-xs text-foreground">{t("addNeighborhood")}</div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <div className="space-y-1 sm:col-span-2">
-          <Label htmlFor="neighName" className="text-xs">
+          <Label htmlFor="neighName" className="text-xs font-semibold text-foreground">
             {t("neighborhoodName")}
           </Label>
           <Input
@@ -59,14 +66,14 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="neighZone" className="text-xs">
+          <Label htmlFor="neighZone" className="text-xs font-semibold text-foreground">
             {t("selectZone")}
           </Label>
           <select
             id="neighZone"
             name="zoneId"
             required
-            className="h-9 w-full rounded-md border border-input bg-white px-3 text-xs text-heading"
+            className="h-9 w-full rounded-md border border-input bg-card px-3 text-xs text-foreground"
           >
             {zones.map((z) => (
               <option key={z.id} value={z.id}>
@@ -77,7 +84,7 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="neighStatus" className="text-xs">
+          <Label htmlFor="neighStatus" className="text-xs font-semibold text-foreground">
             {t("status")}
           </Label>
           <select
@@ -85,7 +92,7 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
             name="status"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="h-9 w-full rounded-md border border-input bg-white px-3 text-xs text-heading"
+            className="h-9 w-full rounded-md border border-input bg-card px-3 text-xs text-foreground"
           >
             <option value="served">{t("served")}</option>
             <option value="paused">{t("paused")}</option>
@@ -95,7 +102,7 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
 
         {status === "paused" && (
           <div className="space-y-1 sm:col-span-4">
-            <Label htmlFor="neighPauseReason" className="text-xs">
+            <Label htmlFor="neighPauseReason" className="text-xs font-semibold text-foreground">
               {t("pauseReason")} (obligatoire si suspendu - AC 19)
             </Label>
             <Input
@@ -109,7 +116,7 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
         )}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pt-1">
         <Button type="submit" disabled={loading} size="sm" className="h-9">
           {loading ? "..." : t("save")}
         </Button>

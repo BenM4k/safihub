@@ -1,8 +1,16 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ArrowUpDown, Users, RotateCcw } from "lucide-react";
+import { ArrowUpDown, RotateCcw, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { UsersTablePagination } from "./users-table-pagination";
 import { UsersTableRow } from "./users-table-row";
 import type { SortableUserField, UserRow, UserSortState } from "./types";
@@ -61,64 +69,64 @@ export function UsersTable({
       : undefined;
 
     return (
-      <th
+      <TableHead
         scope="col"
         aria-sort={ariaSort}
-        className="px-4 py-3 text-left text-xs font-bold text-ink-700 select-none"
+        className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground select-none"
       >
         <button
           type="button"
           onClick={() => onSortChange(field)}
-          className="inline-flex items-center gap-1.5 hover:text-primary transition-colors focus:outline-none focus-visible:underline cursor-pointer"
+          className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors focus:outline-none focus-visible:underline cursor-pointer"
         >
           <span>{label}</span>
           <ArrowUpDown
             className={`size-3 transition-colors ${
-              isSorted ? "text-primary" : "text-ink-400"
+              isSorted ? "text-primary" : "text-muted-foreground/60"
             }`}
           />
         </button>
-      </th>
+      </TableHead>
     );
   };
 
   return (
-    <div className="bg-card rounded-2xl border-2 border-border-strong shadow-2xs overflow-hidden">
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="overflow-x-auto max-h-[70vh]">
-        <table className="w-full text-left text-xs border-collapse">
-          <thead className="bg-surface border-b-2 border-border-strong sticky top-0 z-10">
-            <tr>
+        <Table className="w-full text-left text-xs border-collapse">
+          <TableHeader className="bg-muted/30 border-b border-border sticky top-0 z-10">
+            <TableRow className="hover:bg-transparent border-b border-border">
               {renderSortableHeader(t("colName"), "name")}
-              <th scope="col" className="px-4 py-3 text-left text-xs font-bold text-ink-700">
+              <TableHead scope="col" className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
                 {t("colEmail")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-bold text-ink-700">
+              </TableHead>
+              <TableHead scope="col" className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
                 {t("colPhone")}
-              </th>
+              </TableHead>
               {renderSortableHeader(t("colRole"), "role")}
-              <th scope="col" className="px-4 py-3 text-left text-xs font-bold text-ink-700">
+              <TableHead scope="col" className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
                 {t("colHouse")}
-              </th>
+              </TableHead>
               {renderSortableHeader(t("colLastLogin"), "lastLoginAt")}
               {renderSortableHeader(t("colStatus"), "status")}
-              <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-ink-700">
+              <TableHead scope="col" className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">
                 {t("colActions")}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y-2 divide-border-strong/70 bg-card">
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-border bg-card">
             {users.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-6 py-16 text-center">
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={8} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center justify-center space-y-3">
-                    <div className="size-12 rounded-2xl bg-surface border-2 border-border-strong flex items-center justify-center text-ink-400">
+                    <div className="size-12 rounded-xl bg-muted/50 border border-border flex items-center justify-center text-muted-foreground">
                       <Users className="size-6" />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-bold text-heading">
+                      <p className="text-sm font-semibold text-foreground">
                         {t("emptyTitle")}
                       </p>
-                      <p className="text-xs text-ink-500 max-w-sm">
+                      <p className="text-xs text-muted-foreground max-w-sm">
                         {t("emptySubtitle")}
                       </p>
                     </div>
@@ -126,14 +134,14 @@ export function UsersTable({
                       variant="outline"
                       size="sm"
                       onClick={onResetFilters}
-                      className="min-h-[40px] px-4 text-xs font-semibold border-2 border-border-strong bg-surface hover:bg-muted gap-2 rounded-xl mt-2"
+                      className="gap-2 mt-2"
                     >
                       <RotateCcw className="size-3.5" />
                       <span>{t("resetFilters")}</span>
                     </Button>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               users.map((u) => (
                 <UsersTableRow
@@ -152,8 +160,8 @@ export function UsersTable({
                 />
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Pagination Footer */}

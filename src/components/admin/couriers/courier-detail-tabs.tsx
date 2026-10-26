@@ -22,42 +22,84 @@ export function CourierDetailTabs({ data }: CourierDetailTabsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 border-b border-border pb-2 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-6 overflow-x-auto scrollbar-none">
         <button
+          type="button"
           onClick={() => setTab("houses")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition cursor-pointer",
-            tab === "houses" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "py-2 text-xs transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer",
+            tab === "houses"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           )}
         >
-          {t("housesTab")} ({servedHousesCount})
+          <span>{t("housesTab")}</span>
+          <span
+            className={cn(
+              "px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none",
+              tab === "houses"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            {servedHousesCount}
+          </span>
         </button>
         <button
+          type="button"
           onClick={() => setTab("profile")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition cursor-pointer",
-            tab === "profile" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "py-2 text-xs transition-colors whitespace-nowrap cursor-pointer",
+            tab === "profile"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           )}
         >
           {t("profileTab")}
         </button>
         <button
+          type="button"
           onClick={() => setTab("shifts")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition cursor-pointer",
-            tab === "shifts" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "py-2 text-xs transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer",
+            tab === "shifts"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           )}
         >
-          {t("shiftsTab")} ({data.shifts.length})
+          <span>{t("shiftsTab")}</span>
+          <span
+            className={cn(
+              "px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none",
+              tab === "shifts"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            {data.shifts.length}
+          </span>
         </button>
         <button
+          type="button"
           onClick={() => setTab("zones")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition cursor-pointer",
-            tab === "zones" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "py-2 text-xs transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer",
+            tab === "zones"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           )}
         >
-          {t("zonesTab")} ({data.zones.length})
+          <span>{t("zonesTab")}</span>
+          <span
+            className={cn(
+              "px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none",
+              tab === "zones"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            {data.zones.length}
+          </span>
         </button>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Calendar, DollarSign, Mail, Phone, ShoppingBag, Sparkles } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { PhoneCell } from "@/components/admin/shared/phone-cell";
 import { StatusPill } from "@/components/admin/shared/status-pill";
 import { formatCustomerEmail, formatCustomerName, isTestCustomer } from "@/lib/customer-formatters";
@@ -24,17 +25,17 @@ export function CustomerTabProfile({ profile }: CustomerTabProfileProps) {
 
   return (
     <div className="space-y-4 text-xs">
-      {/* Identity card */}
-      <div className="p-4 rounded-xl border-2 border-border-strong bg-card space-y-3 shadow-2xs">
+      {/* Identity info */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="font-bold text-sm text-heading font-display">{displayName}</div>
+          <div className="font-bold text-sm text-foreground">{displayName}</div>
           <div className="flex items-center gap-1.5">
             {isGuest ? (
-              <span className="px-2 py-0.5 rounded-md text-2xs font-bold bg-amber-50 text-amber-700 border border-amber-300">
+              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400">
                 {t("badgeGuest")}
               </span>
             ) : (
-              <span className="px-2 py-0.5 rounded-md text-2xs font-bold bg-primary-soft text-primary border border-primary/20">
+              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                 {t("badgeRegistered")}
               </span>
             )}
@@ -47,71 +48,76 @@ export function CustomerTabProfile({ profile }: CustomerTabProfileProps) {
         </div>
 
         {isTest && (
-          <div className="p-2 rounded-lg bg-slate-100 border border-slate-300 text-2xs text-slate-700 font-semibold flex items-center gap-1.5">
-            <Sparkles className="size-3 text-amber-600" />
+          <div className="p-2 rounded-md bg-muted text-2xs text-muted-foreground font-semibold flex items-center gap-1.5">
+            <Sparkles className="size-3 text-amber-600 dark:text-amber-400" />
             <span>{t("badgeTestAccount")}</span>
           </div>
         )}
 
-        <div className="divide-y divide-border-strong/70 text-ink-700">
-          <div className="py-2 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-ink-500">
+        <div className="divide-y divide-border text-foreground">
+          <div className="py-2.5 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
               <Phone className="size-3.5" />
               <span>{t("contactPhone")}</span>
             </span>
             <PhoneCell phone={customer.contactPhone} showCopy={true} />
           </div>
 
-          <div className="py-2 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-ink-500">
+          <div className="py-2.5 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
               <Mail className="size-3.5" />
               <span>{t("emailAddress")}</span>
             </span>
-            <span className="font-medium text-heading">{displayEmail}</span>
+            <span className="font-medium text-foreground">{displayEmail}</span>
           </div>
 
-          <div className="py-2 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-ink-500">
+          <div className="py-2.5 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
               <Sparkles className="size-3.5" />
               <span>{t("acquisitionChannel")}</span>
             </span>
-            <span className="font-semibold text-primary px-2 py-0.5 rounded-md bg-primary-soft border border-primary/20 text-2xs">
+            <span className="font-medium text-primary px-2 py-0.5 rounded-full bg-primary/10 text-2xs">
               {sourceConfig.label}
             </span>
           </div>
 
-          <div className="py-2 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-ink-500">
+          <div className="py-2.5 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
               <Calendar className="size-3.5" />
               <span>{t("registrationDate")}</span>
             </span>
-            <span className="font-mono text-heading">{formatDateTime(customer.createdAt)}</span>
+            <span className="font-mono text-foreground">{formatDateTime(customer.createdAt)}</span>
           </div>
         </div>
       </div>
 
+      <Separator />
+
       {/* KPI Stats summary */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="p-3.5 rounded-xl border-2 border-border-strong bg-slate-50 space-y-1">
-          <div className="flex items-center gap-1.5 text-2xs text-ink-500 font-semibold">
+      <div className="flex flex-col sm:flex-row sm:items-center py-1">
+        <div className="flex-1 space-y-1 p-2">
+          <div className="flex items-center gap-1.5 text-2xs text-muted-foreground font-semibold">
             <ShoppingBag className="size-3.5 text-primary" />
             <span>{t("kpiTotalOrders")}</span>
           </div>
-          <div className="text-lg font-black font-mono text-heading">{customer.ordersCount}</div>
-          <div className="text-2xs text-ink-500">
+          <div className="text-lg font-bold font-mono text-foreground">{customer.ordersCount}</div>
+          <div className="text-2xs text-muted-foreground">
             {customer.hasActiveOrders ? t("activeOrdersPresent") : t("noActiveOrders")}
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl border-2 border-border-strong bg-slate-50 space-y-1">
-          <div className="flex items-center gap-1.5 text-2xs text-ink-500 font-semibold">
-            <DollarSign className="size-3.5 text-emerald-600" />
+        <Separator orientation="vertical" className="hidden sm:block h-10 mx-3 shrink-0" />
+        <Separator orientation="horizontal" className="sm:hidden my-2" />
+
+        <div className="flex-1 space-y-1 p-2">
+          <div className="flex items-center gap-1.5 text-2xs text-muted-foreground font-semibold">
+            <DollarSign className="size-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>{t("kpiTotalSpent")}</span>
           </div>
-          <div className="text-lg font-black font-mono text-heading">
+          <div className="text-lg font-bold font-mono text-foreground">
             {formatAmount(customer.totalSpentCDF, "CDF")}
           </div>
-          <div className="text-2xs text-ink-500">
+          <div className="text-2xs text-muted-foreground">
             {customer.lastOrderAt ? t("lastOrderRelative", { time: formatRelativeTime(customer.lastOrderAt) }) : t("neverOrdered")}
           </div>
         </div>

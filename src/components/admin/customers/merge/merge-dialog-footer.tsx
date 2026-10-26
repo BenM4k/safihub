@@ -27,14 +27,14 @@ export function MergeDialogFooter({
   const isFirstStep = step === 1 || (step === 2 && preselectedGuest);
 
   return (
-    <div className="p-4 border-t-2 border-border-strong flex items-center justify-between bg-surface">
+    <div className="p-4 border-t border-border flex items-center justify-between bg-muted/20">
       <Button
         type="button"
         variant="outline"
         size="sm"
         onClick={onBackOrCancel}
         disabled={loading}
-        className="min-h-[40px] px-4 text-xs font-semibold border-2 border-border-strong"
+        className="min-h-[38px] px-4 text-xs font-semibold"
       >
         {isFirstStep ? t("cancelBtn") : t("backBtn")}
       </Button>

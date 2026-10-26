@@ -15,7 +15,7 @@ export async function ApplicationLocationCard({
   const t = await getTranslations("admin.applications");
 
   return (
-    <div className="bg-white rounded-xl border border-border p-5 shadow-xs stack gap-4">
+    <div className="bg-card rounded-lg border border-border p-5 shadow-xs stack gap-4">
       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
         <MapPin className="size-4 text-primary" />
         <span>{t("location")}</span>
@@ -23,13 +23,13 @@ export async function ApplicationLocationCard({
       <div className="space-y-2 text-xs">
         <div>
           <span className="text-muted-foreground block">{t("neighborhood")} :</span>
-          <span className="font-semibold text-heading">
+          <span className="font-semibold text-foreground">
             {neighborhoodName || neighborhoodText || t("notProvided")}
           </span>
         </div>
         <div>
           <span className="text-muted-foreground block">{t("landmark")} :</span>
-          <span className="text-heading">{addressNote || "—"}</span>
+          <span className="text-foreground">{addressNote || "—"}</span>
         </div>
       </div>
     </div>

@@ -42,42 +42,42 @@ export function DispatchPressingGroupCard({
 
   const urgencyStyle =
     group.urgencyLevel === "critical"
-      ? "bg-destructive-soft text-destructive border-destructive/20"
+      ? "bg-destructive/10 text-destructive"
       : group.urgencyLevel === "warning"
-      ? "bg-warning-soft text-warning border-warning/20"
-      : "bg-secondary text-secondary-foreground border-border";
+      ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+      : "bg-muted text-foreground";
 
   return (
-    <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden transition-all duration-150 hover:border-border-strong">
+    <div className="rounded-lg border border-border bg-background overflow-hidden transition-colors">
       {/* Group Card Header */}
       <div
         onClick={onToggleExpand}
-        className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-card hover:bg-muted/50 cursor-pointer transition-colors"
+        className="p-3.5 sm:px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-muted/20 hover:bg-muted/40 cursor-pointer transition-colors"
       >
         <div className="space-y-1.5 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-bold text-heading tracking-tight font-display">
+            <h3 className="text-sm font-bold text-foreground tracking-tight font-display">
               {group.houseName}
             </h3>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary-soft text-primary-soft-foreground">
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
               {group.pendingCount} {group.pendingCount > 1 ? "commandes" : "commande"}
             </span>
 
             {/* Oldest waiting time */}
-            <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md font-semibold border ${urgencyStyle}`}>
+            <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold ${urgencyStyle}`}>
               {group.urgencyLevel === "critical" ? (
-                <AlertCircle className="w-3.5 h-3.5" />
+                <AlertCircle className="size-3" />
               ) : group.urgencyLevel === "warning" ? (
-                <AlertTriangle className="w-3.5 h-3.5" />
+                <AlertTriangle className="size-3" />
               ) : (
-                <Clock className="w-3.5 h-3.5" />
+                <Clock className="size-3" />
               )}
               <span>Plus ancienne : {group.formattedOldestElapsed}</span>
             </span>
 
             {/* Subtle duplicate chase warning */}
             {group.isRecentlyRelanced && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-soft text-warning border border-warning/30">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400">
                 Déjà relancé il y a {group.recentRelanceMinutes} min
               </span>
             )}
@@ -86,30 +86,30 @@ export function DispatchPressingGroupCard({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {phone ? (
               <span className="flex items-center gap-1 font-medium text-foreground">
-                <Phone className="w-3.5 h-3.5 text-ink-400" />
-                {phone}
+                <Phone className="size-3 text-muted-foreground" />
+                <span>{phone}</span>
               </span>
             ) : (
-              <span className="text-warning italic">Téléphone non renseigné</span>
+              <span className="text-amber-600 dark:text-amber-400 italic">Téléphone non renseigné</span>
             )}
 
             {group.relanceCount > 0 ? (
               <span className="text-muted-foreground">
                 Relancé {group.relanceCount}× · dernière il y a {group.recentRelanceMinutes ?? 0} min par{" "}
-                <strong className="text-heading font-semibold">{group.lastRelanceBy || "Opérateur"}</strong>
+                <strong className="text-foreground font-semibold">{group.lastRelanceBy || "Opérateur"}</strong>
                 {group.lastOutcome && (
                   <span className="ml-1 text-muted-foreground">({group.lastOutcome})</span>
                 )}
               </span>
             ) : (
-              <span className="text-ink-400 italic">Jamais relancé</span>
+              <span className="text-muted-foreground italic">Jamais relancé</span>
             )}
           </div>
         </div>
 
         {/* Group Actions */}
         <div
-          className="flex flex-wrap items-center gap-2 self-start md:self-center shrink-0"
+          className="flex flex-wrap items-center gap-1.5 self-start md:self-center shrink-0"
           onClick={(e) => e.stopPropagation()}
         >
           {cleanPhone && (
@@ -117,21 +117,21 @@ export function DispatchPressingGroupCard({
               <Button
                 asChild
                 size="sm"
-                className="text-xs min-h-[40px] px-3.5 bg-primary hover:bg-primary-hover text-white font-medium shadow-xs"
+                className="text-xs h-8 px-2.5 gap-1"
               >
                 <a
                   href={`tel:${phone}`}
                   onClick={() => onOpenGroupOutcomeModal(group, "call")}
                 >
-                  <PhoneCall className="w-3.5 h-3.5 mr-1" />
-                  Appeler
+                  <PhoneCall className="size-3" />
+                  <span>Appeler</span>
                 </a>
               </Button>
               <Button
                 asChild
                 size="sm"
                 variant="outline"
-                className="text-xs min-h-[40px] px-3.5 border-success text-success hover:bg-success-soft font-medium"
+                className="text-xs h-8 px-2.5 gap-1"
               >
                 <a
                   href={`https://wa.me/${cleanPhone}?text=${waMsg}`}
@@ -139,8 +139,8 @@ export function DispatchPressingGroupCard({
                   rel="noreferrer"
                   onClick={() => onOpenGroupOutcomeModal(group, "whatsapp")}
                 >
-                  <MessageSquare className="w-3.5 h-3.5 mr-1 text-success" />
-                  WhatsApp
+                  <MessageSquare className="size-3 text-emerald-600 dark:text-emerald-400" />
+                  <span>WhatsApp</span>
                 </a>
               </Button>
             </>
@@ -151,27 +151,29 @@ export function DispatchPressingGroupCard({
               size="sm"
               variant="outline"
               onClick={() => onOpenGroupOutcomeModal(group, "call")}
-              className="text-xs min-h-[40px] px-3 border-border-strong text-foreground hover:bg-muted font-medium"
+              className="text-xs h-8 px-2.5 gap-1"
             >
-              <Send className="w-3.5 h-3.5 mr-1 text-ink-400" />
-              Relancer tous
+              <Send className="size-3 text-muted-foreground" />
+              <span>Relancer tous</span>
             </Button>
           )}
 
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={onToggleExpand}
-            className="p-2 rounded-lg text-muted-foreground hover:text-heading hover:bg-muted transition-colors cursor-pointer"
+            className="h-8 w-8 p-0"
             aria-label={isExpanded ? "Réduire le groupe" : "Développer le groupe"}
           >
-            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
+            {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          </Button>
         </div>
       </div>
 
       {/* Accordion Orders List */}
       {isExpanded && (
-        <div className="border-t border-border bg-surface/50 divide-y divide-border">
+        <div className="border-t border-border divide-y divide-border">
           {group.orders.map((order) => (
             <DispatchOrderRow
               key={order.id}

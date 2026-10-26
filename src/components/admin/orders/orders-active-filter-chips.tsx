@@ -1,7 +1,8 @@
 "use client";
 
-import { RotateCcw, X } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { FilterChip } from "@/components/admin/shared/filter-chip";
 import type { FilterState } from "./orders-filter-bar";
 
 interface OrdersActiveFilterChipsProps {
@@ -33,84 +34,59 @@ export function OrdersActiveFilterChips({
   return (
     <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
       <span className="text-muted-foreground font-medium text-[11px] mr-1">
-        Filtres actifs :
+        {t("activeFiltersLabel")}
       </span>
 
       {filters.search.trim() && (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-border-strong shadow-2xs text-heading">
-          <span>Recherche : &ldquo;{filters.search}&rdquo;</span>
-          <button
-            type="button"
-            onClick={() => onFilterChange({ search: "" })}
-            className="hover:text-destructive cursor-pointer"
-            aria-label="Retirer le filtre recherche"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </span>
+        <FilterChip
+          onRemove={() => onFilterChange({ search: "" })}
+          removeAriaLabel={t("chipSearch", { search: filters.search })}
+        >
+          {t("chipSearch", { search: filters.search })}
+        </FilterChip>
       )}
 
       {filters.tab !== "all" && tabLabel && (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-border text-heading capitalize">
-          <span>Onglet : {tabLabel}</span>
-          <button
-            type="button"
-            onClick={() => onFilterChange({ tab: "all" })}
-            className="hover:text-destructive cursor-pointer"
-            aria-label="Retirer le filtre d'onglet"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </span>
+        <FilterChip
+          onRemove={() => onFilterChange({ tab: "all" })}
+          removeAriaLabel={t("chipTab", { tab: tabLabel })}
+        >
+          {t("chipTab", { tab: tabLabel })}
+        </FilterChip>
       )}
 
       {filters.dateRange !== "30d" && (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-border-strong shadow-2xs text-heading">
-          <span>
-            Période :{" "}
-            {filters.dateRange === "today"
-              ? t("dateRangeToday")
-              : filters.dateRange === "7d"
-              ? t("dateRange7d")
-              : t("dateRangeAll")}
-          </span>
-          <button
-            type="button"
-            onClick={() => onFilterChange({ dateRange: "30d" })}
-            className="hover:text-destructive cursor-pointer"
-            aria-label="Réinitialiser la période"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </span>
+        <FilterChip
+          onRemove={() => onFilterChange({ dateRange: "30d" })}
+          removeAriaLabel="Reset period"
+        >
+          {t("chipPeriod", {
+            period:
+              filters.dateRange === "today"
+                ? t("dateRangeToday")
+                : filters.dateRange === "7d"
+                ? t("dateRange7d")
+                : t("dateRangeAll"),
+          })}
+        </FilterChip>
       )}
 
       {houseName && (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-border-strong shadow-2xs text-heading">
-          <span>Pressing : {houseName}</span>
-          <button
-            type="button"
-            onClick={() => onFilterChange({ houseId: "" })}
-            className="hover:text-destructive cursor-pointer"
-            aria-label="Retirer le filtre pressing"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </span>
+        <FilterChip
+          onRemove={() => onFilterChange({ houseId: "" })}
+          removeAriaLabel={t("chipPressing", { house: houseName })}
+        >
+          {t("chipPressing", { house: houseName })}
+        </FilterChip>
       )}
 
       {filters.source && (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-border-strong shadow-2xs text-heading capitalize">
-          <span>Canal : {filters.source}</span>
-          <button
-            type="button"
-            onClick={() => onFilterChange({ source: "" })}
-            className="hover:text-destructive cursor-pointer"
-            aria-label="Retirer le filtre canal"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </span>
+        <FilterChip
+          onRemove={() => onFilterChange({ source: "" })}
+          removeAriaLabel={t("chipChannel", { channel: filters.source })}
+        >
+          {t("chipChannel", { channel: filters.source })}
+        </FilterChip>
       )}
 
       <button
@@ -118,7 +94,7 @@ export function OrdersActiveFilterChips({
         onClick={onResetFilters}
         className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:text-primary-hover hover:underline ml-1 cursor-pointer"
       >
-        <RotateCcw className="w-3 h-3" />
+        <RotateCcw className="size-3" />
         <span>{t("resetFilters")}</span>
       </button>
     </div>

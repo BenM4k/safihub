@@ -15,7 +15,7 @@ export async function ApplicationApplicantCard({
   const t = await getTranslations("admin.applications");
 
   return (
-    <div className="bg-white rounded-xl border border-border p-5 shadow-xs stack gap-4">
+    <div className="bg-card rounded-lg border border-border p-5 shadow-xs stack gap-4">
       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
         <User className="size-4 text-primary" />
         <span>{t("applicant")}</span>
@@ -23,15 +23,15 @@ export async function ApplicationApplicantCard({
       <div className="space-y-2 text-xs">
         <div>
           <span className="text-muted-foreground block">{t("name")} :</span>
-          <span className="font-semibold text-heading text-sm">{contactName}</span>
+          <span className="font-semibold text-foreground text-sm">{contactName}</span>
         </div>
         <div>
           <span className="text-muted-foreground block">{t("phone")} :</span>
-          <span className="font-mono font-medium text-heading">{phone}</span>
+          <span className="font-mono font-medium text-foreground">{phone}</span>
         </div>
         <div>
           <span className="text-muted-foreground block">{t("email")} :</span>
-          <span className="text-heading font-mono select-all">{email}</span>
+          <span className="text-foreground font-mono select-all">{email}</span>
         </div>
       </div>
     </div>

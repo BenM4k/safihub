@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { confirmDailyReconciliationAction } from "@/actions/admin-cash.actions";
 import { getDiscrepancyInfo } from "@/lib/cash-formatters";
-import { X, Scale, AlertCircle } from "lucide-react";
+import { Scale, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ReconcileConfirmationStep } from "./reconcile-confirmation-step";
 import { ReconcileFormBody } from "./reconcile-form-body";
 import type { ReconcileOrder } from "./reconcile-order-breakdown";
@@ -42,20 +50,6 @@ export function ReconcileCourierDialog({
   const [isReviewStep, setIsReviewStep] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !loading && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, loading, onClose]);
-
-  if (!isOpen) return null;
 
   const orders = courier.orders ?? [];
   const hasNoDeliveries = courier.expectedCashCDF === 0 && orders.length === 0;
@@ -108,48 +102,30 @@ export function ReconcileCourierDialog({
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="reconcile-dialog-title"
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
-    >
-      <div
-        ref={dialogRef}
-        className="w-full max-w-lg bg-card rounded-2xl shadow-2xl border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-6"
-      >
-        {/* Header */}
-        <div className="p-4 border-b border-border flex items-center justify-between bg-surface">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !loading && onClose()}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
           <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-lg bg-primary-soft text-primary border border-primary/20 flex items-center justify-center">
+            <div className="size-8 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center">
               <Scale className="size-4.5" aria-hidden="true" />
             </div>
             <div>
-              <h2 id="reconcile-dialog-title" className="text-sm font-bold text-heading font-display">
+              <DialogTitle className="text-sm font-bold font-display">
                 {isReviewStep ? t("reconcileConfirmationTitle") : t("reconcileDialogTitle")}
-              </h2>
-              <p className="text-2xs text-muted-foreground">
+              </DialogTitle>
+              <DialogDescription className="text-2xs text-muted-foreground">
                 {courier.name ?? courier.courierId} · {businessDate}
-              </p>
+              </DialogDescription>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="p-1.5 text-ink-400 hover:text-ink-700 rounded-lg hover:bg-surface-hover transition-colors"
-            aria-label="Fermer"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        <div className="p-5">
+        <div className="space-y-4 pt-1">
           {errorMsg && (
-            <div role="alert" className="p-3 mb-4 bg-destructive-light border border-destructive-base/30 rounded-xl text-xs text-destructive-base font-medium flex items-start gap-2">
-              <AlertCircle className="size-4 shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertDescription className="text-xs">{errorMsg}</AlertDescription>
+            </Alert>
           )}
 
           {isReviewStep ? (
@@ -165,11 +141,11 @@ export function ReconcileCourierDialog({
               onConfirm={handleFinalConfirm}
             />
           ) : hasNoDeliveries ? (
-            <div className="p-4 bg-surface rounded-xl border border-border text-center space-y-3">
+            <div className="p-4 bg-muted/40 rounded-xl border border-border text-center space-y-3">
               <p className="text-xs font-semibold text-muted-foreground">
                 {t("noOrdersToday")}
               </p>
-              <Button type="button" variant="outline" size="sm" onClick={onClose} className="min-h-[40px]">
+              <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-9">
                 Fermer
               </Button>
             </div>
@@ -192,7 +168,7 @@ export function ReconcileCourierDialog({
             />
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

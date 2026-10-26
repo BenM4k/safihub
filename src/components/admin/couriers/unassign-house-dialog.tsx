@@ -3,6 +3,14 @@
 import { AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import type { CourierAssignedHouse } from "@/services/admin";
 
 interface UnassignHouseDialogProps {
@@ -24,45 +32,45 @@ export function UnassignHouseDialog({
 }: UnassignHouseDialogProps) {
   const t = useTranslations("admin.couriers");
 
-  if (!isOpen || !house) return null;
+  if (!house) return null;
 
   const siblingNames = siblingHouses.map((s) => s.name).join(", ");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in-50">
-      <div className="bg-card rounded-2xl p-6 max-w-md w-full border border-border shadow-2xl relative space-y-4 animate-in zoom-in-95">
-        <div className="size-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-          <AlertTriangle className="size-5" />
-        </div>
-
-        <div>
-          <h4 className="text-base font-black text-heading">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader className="space-y-2">
+          <div className="size-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <AlertTriangle className="size-5" />
+          </div>
+          <DialogTitle className="text-base font-bold text-foreground">
             {t("removeHouseConfirmTitle")}
-          </h4>
-          <p className="text-xs text-muted-foreground mt-1">
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
             {siblingHouses.length > 0
               ? t("removeHouseConfirmDesc", {
                   zoneName: house.zoneName,
                   siblings: siblingNames,
                 })
               : t("removeHouseNoSiblingsDesc", { zoneName: house.zoneName })}
-          </p>
-        </div>
+          </DialogDescription>
+        </DialogHeader>
 
         <div className="p-3 rounded-lg bg-muted/40 border border-border text-xs">
-          <span className="font-semibold text-heading">{house.name}</span>
+          <span className="font-semibold text-foreground">{house.name}</span>
           <span className="text-muted-foreground ml-1.5">
             ({house.neighborhoodName} • {house.zoneName})
           </span>
         </div>
 
-        <div className="flex gap-2 justify-end pt-2">
+        <DialogFooter className="gap-2 sm:gap-0">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={onCancel}
             disabled={isPending}
+            className="text-xs h-9"
           >
             {t("cancel")}
           </Button>
@@ -72,12 +80,12 @@ export function UnassignHouseDialog({
             size="sm"
             onClick={onConfirm}
             disabled={isPending}
-            className="font-bold"
+            className="text-xs font-bold h-9"
           >
             {isPending ? t("unassignPending") : t("confirmUnassign")}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

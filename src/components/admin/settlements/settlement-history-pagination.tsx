@@ -23,11 +23,11 @@ export function SettlementHistoryPagination({
   if (totalItems <= pageSize && currentPage === 1) return null;
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-surface border-t-2 border-border-strong text-xs">
-      <span className="text-ink-600 font-medium">
-        Affichage de <span className="font-bold text-heading">{startItem}</span> à{" "}
-        <span className="font-bold text-heading">{endItem}</span> sur{" "}
-        <span className="font-bold text-heading">{totalItems}</span> écritures
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-muted/20 border-t border-border text-xs">
+      <span className="text-muted-foreground font-medium">
+        Affichage de <span className="font-bold text-foreground">{startItem}</span> à{" "}
+        <span className="font-bold text-foreground">{endItem}</span> sur{" "}
+        <span className="font-bold text-foreground">{totalItems}</span> écritures
       </span>
 
       <div className="flex items-center gap-1.5">
@@ -37,12 +37,12 @@ export function SettlementHistoryPagination({
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
-          className="min-h-[40px] px-3 font-semibold text-xs border-border-strong text-ink-700 gap-1"
+          className="h-9 px-3 font-semibold text-xs border-border gap-1"
         >
           <ChevronLeft className="size-4" />
           <span>Précédent</span>
         </Button>
-        <span className="px-2 font-mono font-bold text-heading text-xs">
+        <span className="px-2 font-mono font-bold text-foreground text-xs">
           {currentPage} / {totalPages}
         </span>
         <Button
@@ -51,7 +51,7 @@ export function SettlementHistoryPagination({
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          className="min-h-[40px] px-3 font-semibold text-xs border-border-strong text-ink-700 gap-1"
+          className="h-9 px-3 font-semibold text-xs border-border gap-1"
         >
           <span>Suivant</span>
           <ChevronRight className="size-4" />

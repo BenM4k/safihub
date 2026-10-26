@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 interface MergeStepConfirmProps {
@@ -22,37 +24,35 @@ export function MergeStepConfirm({
 
   return (
     <div className="space-y-4">
-      <div className="p-4 rounded-xl bg-destructive-light border-2 border-destructive-base/40 text-xs space-y-2 text-destructive font-medium">
-        <div className="flex items-center gap-2 font-bold text-sm">
-          <AlertTriangle className="size-4 shrink-0" />
-          <span>{t("irreversibleTitle")}</span>
-        </div>
-        <p className="text-2xs leading-relaxed text-ink-700">
+      <Alert variant="destructive">
+        <AlertTriangle className="size-4 shrink-0" />
+        <AlertTitle>{t("irreversibleTitle")}</AlertTitle>
+        <AlertDescription className="text-2xs leading-relaxed">
           {t("irreversibleDesc")}
-        </p>
-      </div>
+        </AlertDescription>
+      </Alert>
 
-      <label className="flex items-start gap-2.5 p-3 rounded-lg border-2 border-border-strong cursor-pointer hover:bg-surface text-xs font-semibold text-heading">
+      <label className="flex items-start gap-2.5 p-3 rounded-lg border border-border cursor-pointer hover:bg-muted/50 text-xs font-semibold text-foreground transition-colors">
         <input
           type="checkbox"
           checked={confirmedCheck}
           onChange={(e) => onCheckChange(e.target.checked)}
-          className="mt-0.5 rounded-sm size-4 text-destructive border-border-strong focus:ring-destructive"
+          className="mt-0.5 rounded-sm size-4 accent-destructive"
         />
         <span>{t("confirmCheckboxLabel")}</span>
       </label>
 
-      <div className="space-y-1.5">
-        <label className="text-2xs font-bold text-ink-700">
+      <Field>
+        <FieldLabel className="text-2xs font-bold text-foreground">
           {t("typeToConfirm", { keyword: confirmKeyword })}
-        </label>
+        </FieldLabel>
         <Input
           value={typedConfirm}
           onChange={(e) => onTypedChange(e.target.value.toUpperCase())}
           placeholder={confirmKeyword}
-          className="h-10 text-xs font-mono font-bold tracking-widest border-2 border-border-strong"
+          className="h-10 text-xs font-mono font-bold tracking-widest border border-border"
         />
-      </div>
+      </Field>
     </div>
   );
 }

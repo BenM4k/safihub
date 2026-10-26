@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { RegisterHeader } from "./register-header";
 import { NameFields } from "./name-fields";
 import { ContactFields } from "./contact-fields";
@@ -95,15 +97,13 @@ export function RegisterForm() {
       <RegisterHeader />
 
       {serverError && (
-        <div
-          role="alert"
-          className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs sm:text-sm font-medium"
-        >
-          {serverError}
-        </div>
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{serverError}</AlertDescription>
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
         {/* First & Last name grid */}
         <NameFields register={register} errors={errors} />
 
@@ -125,8 +125,7 @@ export function RegisterForm() {
 
         {/* Mandatory legal consent and photo consent */}
         <ConsentField
-          registration={register("consent")}
-          photoRegistration={register("photoConsent")}
+          control={control}
           error={errors.consent?.message}
         />
 

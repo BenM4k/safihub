@@ -22,14 +22,14 @@ export function CourierHouseRow({
   const t = useTranslations("admin.couriers");
 
   return (
-    <div className="p-3.5 rounded-xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs hover:border-border-strong transition">
+    <div className="p-3.5 rounded-lg border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs hover:border-primary/40 transition">
       <div className="flex items-start gap-3">
         <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
           <Store className="size-4" />
         </div>
         <div className="space-y-0.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-xs sm:text-sm text-heading">
+            <span className="font-bold text-xs sm:text-sm text-foreground">
               {house.name}
             </span>
             <span className="text-xs text-muted-foreground">
@@ -41,7 +41,7 @@ export function CourierHouseRow({
             {house.serviceStatus === "full" && (
               <Badge
                 variant="outline"
-                className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 text-2xs py-0.5 gap-1 font-semibold"
+                className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 text-[10px] py-0.5 gap-1 font-semibold"
               >
                 <CheckCircle2 className="size-3" />
                 <span>{t("statusFull")}</span>
@@ -51,7 +51,7 @@ export function CourierHouseRow({
             {house.serviceStatus === "partial" && (
               <Badge
                 variant="outline"
-                className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 text-2xs py-0.5 gap-1 font-semibold"
+                className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 text-[10px] py-0.5 gap-1 font-semibold"
               >
                 <AlertCircle className="size-3" />
                 <span>
@@ -63,7 +63,7 @@ export function CourierHouseRow({
             {house.serviceStatus === "none" && (
               <Badge
                 variant="outline"
-                className="bg-muted text-muted-foreground border-border text-2xs py-0.5 gap-1 font-normal"
+                className="bg-muted text-muted-foreground border-border text-[10px] py-0.5 gap-1 font-normal"
               >
                 <CircleDashed className="size-3" />
                 <span>{t("statusNone")}</span>
@@ -77,11 +77,10 @@ export function CourierHouseRow({
         {(house.serviceStatus === "none" || house.serviceStatus === "partial") && (
           <Button
             type="button"
-            variant="primary"
             size="sm"
             disabled={isPending}
             onClick={() => onAssign(house.id)}
-            className="text-xs font-bold"
+            className="text-xs font-semibold h-8"
           >
             {t("assignHouse")}
           </Button>
@@ -93,7 +92,7 @@ export function CourierHouseRow({
             size="sm"
             disabled={isPending}
             onClick={() => onRequestUnassign(house)}
-            className="text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border-border"
+            className="text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border-border h-8"
           >
             {t("unassignHouse")}
           </Button>

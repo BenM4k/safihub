@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { HelpCircle } from "lucide-react";
 import { ScorecardStatusBadge, type MetricStatus } from "./scorecard-status-badge";
+import { TableRow, TableCell } from "@/components/ui/table";
 
 export interface ScorecardRowData {
   id: string;
@@ -33,11 +34,11 @@ export function ScorecardRow({
   const tooltipId = `tooltip-formula-${data.id}`;
 
   return (
-    <tr className="hover:bg-slate-50/50 transition-colors">
+    <TableRow>
       {/* Metric Name + Formula Tooltip */}
-      <td className="py-3.5 px-5 sm:px-6">
+      <TableCell className="py-3.5 px-5 sm:px-6">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-slate-900">{data.metric}</span>
+          <span className="font-medium text-foreground">{data.metric}</span>
           <div className="relative">
             <button
               type="button"
@@ -45,40 +46,40 @@ export function ScorecardRow({
               onMouseLeave={() => setShowTooltip(false)}
               onFocus={() => setShowTooltip(true)}
               onBlur={() => setShowTooltip(false)}
-              className="text-slate-400 hover:text-slate-600 cursor-help"
+              className="text-muted-foreground hover:text-foreground cursor-help"
               aria-label={t("definitionAriaLabel", { metric: data.metric })}
               aria-describedby={tooltipId}
             >
-              <HelpCircle className="w-3.5 h-3.5" />
+              <HelpCircle className="size-3.5" />
             </button>
             {showTooltip && (
               <div
                 id={tooltipId}
                 role="tooltip"
-                className="absolute left-6 top-1/2 -translate-y-1/2 z-20 w-64 p-2.5 bg-slate-900 text-white text-xs rounded-lg shadow-lg pointer-events-none leading-relaxed"
+                className="absolute left-6 top-1/2 -translate-y-1/2 z-20 w-64 p-2.5 bg-popover text-popover-foreground border border-border text-xs rounded-lg shadow-lg pointer-events-none leading-relaxed"
               >
                 {data.formula}
               </div>
             )}
           </div>
         </div>
-      </td>
+      </TableCell>
 
       {/* Current Value */}
-      <td className="py-3.5 px-4 font-semibold text-slate-900">
+      <TableCell className="py-3.5 px-4 font-semibold text-foreground">
         {data.currentDisplay}
-      </td>
+      </TableCell>
 
       {/* Target Value */}
-      <td className="py-3.5 px-4 text-xs text-slate-500 font-medium">
+      <TableCell className="py-3.5 px-4 text-xs text-muted-foreground font-medium">
         {data.targetDisplay}
-      </td>
+      </TableCell>
 
       {/* Progress Bar */}
-      <td className="py-3.5 px-4">
+      <TableCell className="py-3.5 px-4">
         {data.progressPercent !== null ? (
           <div className="w-32 flex items-center gap-2">
-            <div className="flex-1 h-2 bg-slate-100 border border-slate-300 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-muted border border-border rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full ${
                   data.status === "met"
@@ -90,19 +91,20 @@ export function ScorecardRow({
                 style={{ width: `${Math.min(data.progressPercent, 100)}%` }}
               />
             </div>
-            <span className="text-xs font-mono text-slate-500 w-8">
+            <span className="text-xs font-mono text-muted-foreground w-8">
               {Math.round(data.progressPercent)}%
             </span>
           </div>
         ) : (
-          <span className="text-xs text-slate-400">—</span>
+          <span className="text-xs text-muted-foreground/60">—</span>
         )}
-      </td>
+      </TableCell>
 
       {/* Status Badge */}
-      <td className="py-3.5 px-5 sm:px-6 text-right">
+      <TableCell className="py-3.5 px-5 sm:px-6 text-right">
         <ScorecardStatusBadge status={data.status} labels={labels} />
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }
+

@@ -1,3 +1,5 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 /**
  * Skeleton placeholder matching the exact layout and dimensions of ForgotPasswordForm.
  */
@@ -7,32 +9,31 @@ export function ForgotPasswordSkeleton() {
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label="Chargement de la réinitialisation de mot de passe"
-      className="w-full max-w-sm sm:max-w-md mx-auto animate-pulse"
+      className="w-full max-w-sm sm:max-w-md mx-auto"
     >
       {/* Header */}
-      <div className="text-left mb-6 space-y-2">
-        <div className="h-8 w-56 bg-ink-200 dark:bg-ink-800 rounded-lg" />
-        <div className="h-4 w-72 bg-ink-100 dark:bg-ink-800/60 rounded-md" />
+      <div className="text-left mb-6 flex flex-col gap-2">
+        <Skeleton className="h-8 w-56 rounded-lg" />
+        <Skeleton className="h-4 w-72 rounded-md" />
       </div>
 
       {/* Form Fields */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {/* Email field */}
-        <div className="space-y-1.5">
-          <div className="h-4 w-24 bg-ink-200 dark:bg-ink-800 rounded" />
-          <div className="h-12 w-full bg-ink-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl" />
+        <div className="flex flex-col gap-1.5">
+          <Skeleton className="h-4 w-24 rounded" />
+          <Skeleton className="h-12 w-full rounded-xl" />
         </div>
 
         {/* Submit button */}
         <div className="pt-2">
-          <div className="h-12 w-full bg-brand-200 dark:bg-brand-900/60 rounded-full" />
+          <Skeleton className="h-12 w-full rounded-full" />
         </div>
       </div>
 
       {/* Back to login link */}
       <div className="mt-8 flex justify-center">
-        <div className="h-4 w-36 bg-ink-100 dark:bg-ink-800/60 rounded" />
+        <Skeleton className="h-4 w-36 rounded" />
       </div>
     </div>
   );

@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { updateHouseHoursAction } from "@/actions/admin-house.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Check } from "lucide-react";
 import type { HouseHourRecord } from "@/dal";
 
 interface HouseHoursFormProps {
@@ -60,14 +62,19 @@ export function HouseHoursForm({ houseId, hours }: HouseHoursFormProps) {
   }
 
   return (
-    <div className="p-5 bg-white rounded-xl border border-border shadow-xs space-y-4">
-      <div className="font-bold text-sm text-heading">{t("hoursTab")}</div>
-      {msg && <div className="text-xs text-primary font-semibold">{msg}</div>}
+    <div className="space-y-4">
+      <div className="font-bold text-sm text-foreground">{t("hoursTab")}</div>
+      {msg && (
+        <Alert className="border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10">
+          <Check className="size-4" />
+          <AlertDescription className="font-semibold">{msg}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="space-y-3">
         {schedule.map((item, idx) => (
-          <div key={item.weekday} className="flex items-center gap-4 text-xs py-1 border-b border-border/60">
-            <label className="w-28 flex items-center gap-2 font-semibold text-heading cursor-pointer">
+          <div key={item.weekday} className="flex items-center gap-4 text-xs py-2 border-b border-border">
+            <label className="w-28 flex items-center gap-2 font-semibold text-foreground cursor-pointer">
               <input
                 type="checkbox"
                 checked={item.enabled}
@@ -112,7 +119,7 @@ export function HouseHoursForm({ houseId, hours }: HouseHoursFormProps) {
         ))}
       </div>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end pt-3">
         <Button onClick={handleSave} disabled={loading} size="sm" className="h-9">
           {loading ? "..." : "Enregistrer les horaires"}
         </Button>

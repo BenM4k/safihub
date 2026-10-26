@@ -22,22 +22,22 @@ export function CustomerTabOrders({ profile }: CustomerTabOrdersProps) {
 
   if (orders.length === 0) {
     return (
-      <div className="p-8 text-center text-xs text-ink-500 border-2 border-border-strong rounded-xl bg-card">
-        <ShoppingBag className="size-8 text-ink-400 mx-auto mb-2" />
-        <div className="font-semibold text-heading">{t("noOrdersTitle")}</div>
-        <div className="text-2xs text-ink-500 mt-0.5">{t("noOrdersDesc")}</div>
+      <div className="p-8 text-center text-xs text-muted-foreground border border-border rounded-lg bg-muted/20">
+        <ShoppingBag className="size-8 text-muted-foreground/60 mx-auto mb-2" />
+        <div className="font-semibold text-foreground">{t("noOrdersTitle")}</div>
+        <div className="text-2xs text-muted-foreground mt-0.5">{t("noOrdersDesc")}</div>
       </div>
     );
   }
 
   return (
     <div className="space-y-3 text-xs">
-      <div className="flex items-center justify-between text-2xs text-ink-500 font-semibold px-1">
+      <div className="flex items-center justify-between text-2xs text-muted-foreground font-semibold px-1">
         <span>{t("ordersCountTotal", { count: orders.length })}</span>
         <span>{t("sortedByDateDesc")}</span>
       </div>
 
-      <div className="divide-y divide-border-strong border-2 border-border-strong rounded-xl bg-card overflow-hidden">
+      <div className="divide-y divide-border border border-border rounded-lg bg-muted/10 overflow-hidden">
         {orders.map((o) => {
           const isCancelled = o.status === "cancelled";
           const pillStatus = isCancelled ? "cancelled" : "pending";
@@ -46,22 +46,22 @@ export function CustomerTabOrders({ profile }: CustomerTabOrdersProps) {
           return (
             <div
               key={o.id}
-              className="p-3.5 hover:bg-surface transition-colors flex items-center justify-between gap-3"
+              className="p-3.5 hover:bg-muted/30 transition-colors flex items-center justify-between gap-3"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-heading">
+                  <span className="font-mono font-bold text-foreground">
                     {formatOrderReference(o.code, o.id)}
                   </span>
-                  <span className="text-2xs text-ink-500">· {o.houseName}</span>
+                  <span className="text-2xs text-muted-foreground">· {o.houseName}</span>
                 </div>
-                <div className="text-2xs text-ink-500 font-mono">
+                <div className="text-2xs text-muted-foreground font-mono">
                   {formatDateTime(o.createdAt)}
                 </div>
               </div>
 
               <div className="text-right space-y-1">
-                <div className="font-mono font-bold text-heading">
+                <div className="font-mono font-bold text-foreground">
                   {formatAmount(o.totalDue, o.currency || "CDF")}
                 </div>
                 <div>

@@ -25,7 +25,7 @@ export function UserTabActivity({ user }: UserTabActivityProps) {
   return (
     <div className="space-y-4 text-xs">
       {/* Account Audit and Timestamps */}
-      <div className="p-4 rounded-xl border-2 border-border-strong bg-card space-y-3 shadow-2xs">
+      <div className="rounded-xl bg-card space-y-3">
         <div className="font-bold text-heading flex items-center gap-1.5">
           <History className="size-4 text-primary" />
           <span>{t("historyTitle")}</span>

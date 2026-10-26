@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { TableRow, TableCell } from "@/components/ui/table";
 import { PhoneCell } from "@/components/admin/shared/phone-cell";
 import { MoneyCell } from "@/components/admin/shared/money-cell";
 import { HouseStatusPill } from "./house-status-pill";
@@ -36,11 +37,10 @@ export function HousesTableRow({
   );
 
   return (
-    <tr
+    <TableRow
       onClick={() => onSelectHouse(house)}
-      className="cursor-pointer border-b border-border-strong/70 hover:bg-surface-hover/80 transition-colors group"
+      className="cursor-pointer border-b border-border hover:bg-muted/50 transition-colors group"
       tabIndex={0}
-      role="row"
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -49,111 +49,95 @@ export function HousesTableRow({
       }}
       aria-label={t("houseRowAria", { name: house.name })}
     >
-      {/* 1. Pressing info with visible picture thumbnail */}
-      <td className="py-3 px-4">
+      {/* 1. Pressing info */}
+      <TableCell className="py-3 px-4">
         <div className="flex items-center gap-3">
-          <div className="size-11 shrink-0 rounded-lg border-2 border-border-strong overflow-hidden bg-surface relative shadow-2xs">
+          <div className="size-10 shrink-0 rounded-lg border border-border overflow-hidden bg-muted/40 relative">
             {!imageError && house.imageUrl ? (
               <Image
                 src={house.imageUrl}
                 alt={house.name}
                 fill
-                sizes="44px"
+                sizes="40px"
                 className="object-cover"
                 onError={() => setImageError(true)}
               />
             ) : (
-              <div className="size-full flex items-center justify-center bg-primary-soft text-primary font-bold text-xs">
+              <div className="size-full flex items-center justify-center bg-primary/10 text-primary font-bold text-xs">
                 {house.name.slice(0, 2).toUpperCase()}
               </div>
             )}
           </div>
           <div className="min-w-0">
-            <span className="font-bold text-heading text-sm group-hover:text-primary transition-colors block truncate">
+            <span className="font-bold text-foreground text-sm group-hover:text-primary transition-colors block truncate">
               {house.name}
             </span>
-            <span className="text-[11px] text-ink-600 block truncate">
+            <span className="text-[11px] text-muted-foreground block truncate">
               {house.addressNote || `/${house.slug}`}
             </span>
           </div>
         </div>
-      </td>
+      </TableCell>
 
       {/* 2. Quartier */}
-      <td className="py-3 px-4 text-xs font-medium text-ink-700 whitespace-nowrap">
+      <TableCell className="py-3 px-4 text-xs font-medium text-muted-foreground whitespace-nowrap">
         {house.neighborhoodName || "—"}
-      </td>
+      </TableCell>
 
       {/* 3. Téléphone */}
-      <td className="py-3 px-4 whitespace-nowrap">
+      <TableCell className="py-3 px-4 whitespace-nowrap">
         <PhoneCell phone={house.contactPhone} showIcon />
-      </td>
+      </TableCell>
 
       {/* 4. Commission */}
-      <td className="py-3 px-4 text-xs font-semibold text-ink-800 whitespace-nowrap">
+      <TableCell className="py-3 px-4 text-xs font-semibold whitespace-nowrap">
         <span
-          className={`inline-block px-2 py-0.5 rounded-md border text-xs ${
+          className={`inline-block px-2 py-0.5 rounded-full text-xs ${
             house.commissionBps === null
-              ? "bg-surface border-border-strong text-ink-600"
-              : "bg-primary-soft/60 border-primary/20 text-primary font-bold"
+              ? "bg-muted text-muted-foreground"
+              : "bg-primary/10 text-primary font-bold"
           }`}
         >
           {commissionText}
         </span>
-      </td>
+      </TableCell>
 
       {/* 5. Montant minimum */}
-      <td className="py-3 px-4 text-right whitespace-nowrap">
+      <TableCell className="py-3 px-4 text-right whitespace-nowrap">
         <MoneyCell amount={house.minimumOrderAmount} />
-      </td>
+      </TableCell>
 
       {/* 6. Délai */}
-      <td className="py-3 px-4 text-xs font-medium text-ink-700 whitespace-nowrap">
+      <TableCell className="py-3 px-4 text-xs font-medium text-foreground whitespace-nowrap">
         {house.turnaroundHours} h
-      </td>
+      </TableCell>
 
-      {/* 7. Horaires / Ouvert maintenant */}
-      <td className="py-3 px-4 whitespace-nowrap">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`size-2 rounded-full ${
-                house.isOpenNow ? "bg-success-base" : "bg-ink-400"
-              }`}
-            />
-            <span className="text-xs font-bold text-heading">
-              {house.isOpenNow ? t("openNow") : t("closedNow")}
-            </span>
-          </div>
-          <span className="text-[11px] text-ink-500">
-            {house.todayHoursText}
-          </span>
-        </div>
-      </td>
-
-      {/* 8. Commandes en cours */}
-      <td className="py-3 px-4 text-center whitespace-nowrap">
+      {/* 7. Commandes en cours */}
+      <TableCell className="py-3 px-4 text-center whitespace-nowrap">
         {house.activeOrdersCount > 0 ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-primary-soft text-primary border border-primary/20">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary">
             {house.activeOrdersCount}
           </span>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
-      </td>
+      </TableCell>
 
-      {/* 9. Solde à régler */}
-      <td className="py-3 px-4 text-right whitespace-nowrap">
+      {/* 8. Solde à régler */}
+      <TableCell className="py-3 px-4 text-right whitespace-nowrap">
         <MoneyCell amount={house.balanceOwedCDF} />
-      </td>
+      </TableCell>
 
-      {/* 10. Statut */}
-      <td className="py-3 px-4 whitespace-nowrap">
+      {/* 9. Statut */}
+      <TableCell className="py-3 px-4 whitespace-nowrap">
         <HouseStatusPill status={house.status} />
-      </td>
+      </TableCell>
 
-      {/* 11. Actions */}
-      <td className="py-3 px-4 text-right whitespace-nowrap relative">
+      {/* 10. Actions */}
+      <TableCell
+        className="py-3 px-4 text-right whitespace-nowrap"
+        onClick={(e) => e.stopPropagation()}
+      >
         <HouseRowActionsMenu
           house={house}
           onSelectHouse={onSelectHouse}
@@ -161,7 +145,7 @@ export function HousesTableRow({
           onViewOrders={onViewOrders}
           onViewSettlements={onViewSettlements}
         />
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }

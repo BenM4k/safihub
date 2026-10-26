@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { ShieldCheck } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
 
 interface CreateStaffRoleFieldsProps {
   role: string;
@@ -35,33 +35,33 @@ export function CreateStaffRoleFields({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {/* Role Selector */}
-      <div className="space-y-1.5">
-        <Label htmlFor="staff-role" className="text-xs font-bold text-heading">
+      <Field className="gap-2">
+        <FieldLabel htmlFor="staff-role" className="text-xs sm:text-sm font-semibold">
           {t("colRole")} <span className="text-destructive">*</span>
-        </Label>
+        </FieldLabel>
         <select
           id="staff-role"
           value={role}
           onChange={(e) => onRoleChange(e.target.value)}
           required
-          className="w-full min-h-[40px] px-3 rounded-xl border-2 border-border-strong bg-surface text-xs font-semibold text-heading focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+          className="flex w-full min-h-12 rounded-xl border border-border-strong bg-card px-4 py-2.5 text-base text-foreground transition-all duration-150 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 cursor-pointer"
         >
           <option value="">{t("chooseRole")}</option>
           <option value="house">{t("roleHouse")}</option>
           <option value="admin">{t("roleAdmin")}</option>
         </select>
-      </div>
+      </Field>
 
       {/* Role Description Banner */}
       {role && (
-        <div className="p-3 bg-surface border-2 border-border-strong/80 rounded-xl space-y-1 animate-in fade-in duration-100">
-          <div className="flex items-center gap-1.5 text-2xs font-bold text-primary">
-            <ShieldCheck className="size-3.5" />
+        <div className="p-3 bg-muted/40 border border-border rounded-lg space-y-1 animate-in fade-in duration-100">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+            <ShieldCheck className="size-4" />
             <span>{t("permissionsScope")}</span>
           </div>
-          <p className="text-xs text-ink-700 leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             {getRoleDescription(role)}
           </p>
         </div>
@@ -69,16 +69,16 @@ export function CreateStaffRoleFields({
 
       {/* Pressing select if house role */}
       {role === "house" && (
-        <div className="space-y-1.5 animate-in fade-in duration-100">
-          <Label htmlFor="staff-house" className="text-xs font-bold text-heading">
+        <Field className="gap-2 animate-in fade-in duration-100">
+          <FieldLabel htmlFor="staff-house" className="text-xs sm:text-sm font-semibold">
             {t("assignedHouse")} <span className="text-destructive">*</span>
-          </Label>
+          </FieldLabel>
           <select
             id="staff-house"
             value={houseId}
             onChange={(e) => onHouseChange(e.target.value)}
             required
-            className="w-full min-h-[40px] px-3 rounded-xl border-2 border-border-strong bg-surface text-xs font-semibold text-heading focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+            className="flex w-full min-h-12 rounded-xl border border-border-strong bg-card px-4 py-2.5 text-base text-foreground transition-all duration-150 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 cursor-pointer"
           >
             <option value="">{t("selectHouse")}</option>
             {houses.map((h) => (
@@ -87,7 +87,7 @@ export function CreateStaffRoleFields({
               </option>
             ))}
           </select>
-        </div>
+        </Field>
       )}
     </div>
   );

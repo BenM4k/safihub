@@ -5,9 +5,12 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 import { ForgotPasswordHeader } from "./forgot-password-header";
 import { forgotPasswordAction } from "@/actions/auth.actions";
 import {
@@ -64,13 +67,14 @@ export function ForgotPasswordForm() {
       <ForgotPasswordHeader />
 
       {isSuccess ? (
-        <div className="space-y-4">
-          <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300">
-            <h3 className="text-sm font-semibold">{t("resetLinkSentTitle")}</h3>
-            <p className="mt-1 text-xs sm:text-sm text-emerald-700 dark:text-emerald-300">
+        <div className="flex flex-col gap-4">
+          <Alert variant="success">
+            <CheckCircle2 className="size-4" />
+            <AlertTitle>{t("resetLinkSentTitle")}</AlertTitle>
+            <AlertDescription>
               {t("resetLinkSentDesc")}
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
 
           <div className="text-center pt-2">
             <Link
@@ -82,35 +86,33 @@ export function ForgotPasswordForm() {
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
           {serverError && (
-            <div
-              role="alert"
-              className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs sm:text-sm font-medium"
-            >
-              {serverError}
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertDescription>{serverError}</AlertDescription>
+            </Alert>
           )}
 
-          <div className="space-y-1.5">
-            <Label htmlFor="reset-email" className="text-xs sm:text-sm font-semibold">
-              {t("emailLabel")} <span className="text-red-500">*</span>
-            </Label>
+          <Field data-invalid={Boolean(errors.email)}>
+            <FieldLabel htmlFor="reset-email" className="text-xs sm:text-sm font-semibold">
+              {t("emailLabel")} <span className="text-destructive">*</span>
+            </FieldLabel>
             <Input
               id="reset-email"
               type="email"
               autoComplete="email"
               placeholder={t("emailPlaceholder")}
-              hasError={Boolean(errors.email)}
+              aria-invalid={Boolean(errors.email)}
               aria-describedby={errors.email ? "email-error" : undefined}
               {...register("email")}
             />
             {errors.email?.message && (
-              <p id="email-error" className="text-xs font-medium text-red-500 dark:text-red-400 mt-1">
+              <FieldError id="email-error">
                 {errors.email.message}
-              </p>
+              </FieldError>
             )}
-          </div>
+          </Field>
 
           <div className="pt-2">
             <Button
@@ -120,7 +122,14 @@ export function ForgotPasswordForm() {
               disabled={isPending}
               className="w-full text-base font-semibold shadow-xs transition-transform"
             >
-              {isPending ? t("sendingResetLink") : t("sendResetLink")}
+              {isPending ? (
+                <>
+                  <Spinner className="mr-2" data-icon="inline-start" />
+                  {t("sendingResetLink")}
+                </>
+              ) : (
+                t("sendResetLink")
+              )}
             </Button>
           </div>
 

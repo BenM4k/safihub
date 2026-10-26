@@ -24,18 +24,18 @@ export function OrdersBulkActions({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 p-3 px-4 rounded-xl bg-ink-900 text-white shadow-2xl ring-1 ring-white/10 border border-ink-800 animate-in fade-in slide-in-from-bottom-2 duration-150">
+    <div className="flex flex-wrap items-center justify-between gap-3 p-3 px-4 rounded-lg bg-foreground text-background shadow-lg border border-border animate-in fade-in slide-in-from-bottom-2 duration-150">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold bg-white/10 px-2.5 py-1 rounded-full">
+        <span className="text-xs font-semibold bg-background/20 text-background px-2.5 py-1 rounded-full">
           {t("bulkSelected", { count: selectedCount })}
         </span>
         <button
           type="button"
           onClick={onClearSelection}
-          className="text-white/70 hover:text-white p-1 rounded-md transition-colors"
-          aria-label="Désélectionner tout"
+          className="text-background/70 hover:text-background p-1 rounded-md transition-colors cursor-pointer"
+          aria-label={t("deselectAll")}
         >
-          <X className="w-3.5 h-3.5" />
+          <X className="size-3.5" />
         </button>
       </div>
 
@@ -43,10 +43,11 @@ export function OrdersBulkActions({
         <Button
           type="button"
           size="sm"
+          variant="secondary"
           onClick={onExportSelected}
-          className="h-8 bg-white/15 hover:bg-white/25 text-white border-none text-xs gap-1.5 cursor-pointer"
+          className="h-8 text-xs gap-1.5"
         >
-          <Download className="w-3.5 h-3.5" />
+          <Download className="size-3.5" />
           <span>{t("bulkExport")}</span>
         </Button>
 
@@ -54,10 +55,11 @@ export function OrdersBulkActions({
           <Button
             type="button"
             size="sm"
+            variant="secondary"
             onClick={onReassignSelected}
-            className="h-8 bg-white/15 hover:bg-white/25 text-white border-none text-xs gap-1.5 cursor-pointer"
+            className="h-8 text-xs gap-1.5"
           >
-            <ArrowRightLeft className="w-3.5 h-3.5" />
+            <ArrowRightLeft className="size-3.5" />
             <span>{t("bulkReassign")}</span>
           </Button>
         )}
@@ -66,10 +68,11 @@ export function OrdersBulkActions({
           <Button
             type="button"
             size="sm"
+            variant="destructive"
             onClick={onCancelSelected}
-            className="h-8 bg-destructive hover:bg-destructive/90 text-white border-none text-xs gap-1.5 cursor-pointer"
+            className="h-8 text-xs gap-1.5"
           >
-            <XCircle className="w-3.5 h-3.5" />
+            <XCircle className="size-3.5" />
             <span>{t("bulkCancel")}</span>
           </Button>
         )}

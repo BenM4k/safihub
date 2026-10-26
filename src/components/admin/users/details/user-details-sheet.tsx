@@ -1,23 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Activity, Shield, User } from "lucide-react";
 import {
-  Activity,
-  Ban,
-  CheckCircle,
-  KeyRound,
-  Shield,
-  User,
-  UserCog,
-  X,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { isLastAdmin } from "@/lib/user-guardrails";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getRoleBadgeInfo, getUserInitials } from "@/lib/user-formatters";
 import { UserTabProfile } from "./user-tab-profile";
 import { UserTabPermissions } from "./user-tab-permissions";
 import { UserTabActivity } from "./user-tab-activity";
+import { UserDetailsFooter } from "./user-details-footer";
 import type { UserDetailsTab, UserRow } from "../types";
 
 interface UserDetailsSheetProps {
@@ -39,7 +36,6 @@ export function UserDetailsSheet({
   currentUserId,
   isAdmin,
   activeAdminsCount,
-  hasOverlay = false,
   onClose,
   onChangeRole,
   onResetPassword,
@@ -54,172 +50,108 @@ export function UserDetailsSheet({
     setTab(initialTab);
   }
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !hasOverlay) onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, hasOverlay]);
-
   if (!user) return null;
 
   const roleInfo = getRoleBadgeInfo(user.role);
-  const isBlocked = user.banned || user.status === "blocked";
-  const isTargetLastAdmin = isLastAdmin(user.role, activeAdminsCount);
   const isSelf = Boolean(currentUserId && currentUserId === user.id);
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-end bg-black/50 backdrop-blur-xs">
-      <div
-        className="w-full max-w-lg h-full bg-card border-l-2 border-border-strong shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="user-details-title"
+    <Sheet open={Boolean(user)} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-lg h-full p-0 flex flex-col border-l border-border bg-background"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b-2 border-border-strong bg-surface shrink-0">
-          <div className="flex items-center gap-3">
-            {user.image ? (
-              <img
-                src={user.image}
-                alt={user.name}
-                className="size-10 rounded-full object-cover border-2 border-border-strong shrink-0 shadow-xs"
-              />
-            ) : (
-              <div className="size-10 rounded-full bg-primary/10 border-2 border-border-strong text-primary font-bold text-sm flex items-center justify-center shrink-0 shadow-xs">
-                {getUserInitials(user.name)}
-              </div>
-            )}
-            <div>
-              <h2 id="user-details-title" className="text-sm font-bold text-heading flex items-center gap-1.5">
-                <span>{user.name}</span>
-                {isSelf && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
-                    {t("selfBadge")}
-                  </span>
-                )}
-              </h2>
+        <SheetHeader className="flex flex-row items-center gap-3.5 px-6 py-4 border-b border-border bg-muted/20 shrink-0 space-y-0 text-left">
+          {user.image ? (
+            <img
+              src={user.image}
+              alt={user.name}
+              className="size-12 rounded-full object-cover border border-border shrink-0"
+            />
+          ) : (
+            <div className="size-12 rounded-full bg-primary/10 border border-primary/20 text-primary font-bold text-base flex items-center justify-center shrink-0">
+              {getUserInitials(user.name)}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <SheetTitle className="text-lg font-bold text-foreground flex items-center gap-2 truncate leading-tight">
+              <span className="truncate">{user.name}</span>
+              {isSelf && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
+                  {t("selfBadge")}
+                </span>
+              )}
+            </SheetTitle>
+            <div className="mt-1">
               <span
-                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-2xs font-semibold mt-0.5 ${roleInfo.badgeClass}`}
+                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${roleInfo.badgeClass}`}
               >
-                <span className={`size-1 rounded-full ${roleInfo.dotClass}`} />
+                <span className={`size-1.5 rounded-full ${roleInfo.dotClass}`} />
                 <span>{roleInfo.label}</span>
               </span>
             </div>
           </div>
+        </SheetHeader>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-ink-400 hover:text-ink-800 p-1.5 rounded-xl border-2 border-border-strong bg-card hover:bg-surface focus:outline-none transition-colors"
-            aria-label={t("closePanel")}
-          >
-            <X className="size-5" />
-          </button>
-        </div>
+        {/* Tabs & Content */}
+        <Tabs
+          value={tab}
+          onValueChange={(val) => setTab(val as UserDetailsTab)}
+          className="flex-1 flex flex-col min-h-0 gap-0"
+        >
+          <div className="px-6 pt-3 pb-0 shrink-0">
+            <TabsList className="h-auto p-0 gap-6 bg-transparent border-0 rounded-none justify-start">
+              <TabsTrigger
+                value="profile"
+                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-[state=active]:!text-primary data-[state=active]:!bg-transparent data-[state=active]:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
+              >
+                <User className="size-3.5" />
+                <span>{t("tabProfile")}</span>
+              </TabsTrigger>
 
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-1 px-6 border-b-2 border-border-strong bg-card shrink-0">
-          <button
-            type="button"
-            onClick={() => setTab("profile")}
-            className={`py-3 px-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
-              tab === "profile"
-                ? "border-primary text-primary"
-                : "border-transparent text-ink-500 hover:text-heading"
-            }`}
-          >
-            <User className="size-3.5" />
-            <span>{t("tabProfile")}</span>
-          </button>
+              <TabsTrigger
+                value="permissions"
+                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-[state=active]:!text-primary data-[state=active]:!bg-transparent data-[state=active]:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
+              >
+                <Shield className="size-3.5" />
+                <span>{t("tabPermissions")}</span>
+              </TabsTrigger>
 
-          <button
-            type="button"
-            onClick={() => setTab("permissions")}
-            className={`py-3 px-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
-              tab === "permissions"
-                ? "border-primary text-primary"
-                : "border-transparent text-ink-500 hover:text-heading"
-            }`}
-          >
-            <Shield className="size-3.5" />
-            <span>{t("tabPermissions")}</span>
-          </button>
+              <TabsTrigger
+                value="activity"
+                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-[state=active]:!text-primary data-[state=active]:!bg-transparent data-[state=active]:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
+              >
+                <Activity className="size-3.5" />
+                <span>{t("tabActivity")}</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => setTab("activity")}
-            className={`py-3 px-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
-              tab === "activity"
-                ? "border-primary text-primary"
-                : "border-transparent text-ink-500 hover:text-heading"
-            }`}
-          >
-            <Activity className="size-3.5" />
-            <span>{t("tabActivity")}</span>
-          </button>
-        </div>
-
-        {/* Scrollable Tab Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {tab === "profile" && <UserTabProfile user={user} />}
-          {tab === "permissions" && <UserTabPermissions user={user} />}
-          {tab === "activity" && <UserTabActivity user={user} />}
-        </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <TabsContent value="profile" className="mt-0">
+              <UserTabProfile user={user} />
+            </TabsContent>
+            <TabsContent value="permissions" className="mt-0">
+              <UserTabPermissions user={user} />
+            </TabsContent>
+            <TabsContent value="activity" className="mt-0">
+              <UserTabActivity user={user} />
+            </TabsContent>
+          </div>
+        </Tabs>
 
         {/* Quick Actions Footer */}
         {isAdmin && (
-          <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-3.5 border-t-2 border-border-strong bg-surface shrink-0">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isTargetLastAdmin}
-                onClick={() => onChangeRole(user)}
-                className="h-9 text-xs font-semibold border-2 border-border-strong bg-card hover:bg-muted gap-1.5 rounded-xl disabled:opacity-50"
-              >
-                <UserCog className="size-3.5 text-primary" />
-                <span>{t("changeRole")}</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onResetPassword(user)}
-                className="h-9 text-xs font-semibold border-2 border-border-strong bg-card hover:bg-muted gap-1.5 rounded-xl"
-              >
-                <KeyRound className="size-3.5 text-ink-500" />
-                <span>{t("resetPassword")}</span>
-              </Button>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!isBlocked && isTargetLastAdmin}
-              onClick={() => onToggleBlock(user)}
-              className={`h-9 text-xs font-semibold border-2 rounded-xl gap-1.5 disabled:opacity-50 ${
-                isBlocked
-                  ? "border-emerald-300 text-emerald-800 bg-emerald-50 hover:bg-emerald-100"
-                  : "border-destructive-base/30 text-destructive bg-destructive-light/60 hover:bg-destructive-light"
-              }`}
-            >
-              {isBlocked ? (
-                <>
-                  <CheckCircle className="size-3.5" />
-                  <span>{t("unblockUser")}</span>
-                </>
-              ) : (
-                <>
-                  <Ban className="size-3.5" />
-                  <span>{t("blockUser")}</span>
-                </>
-              )}
-            </Button>
-          </div>
+          <UserDetailsFooter
+            user={user}
+            activeAdminsCount={activeAdminsCount}
+            onChangeRole={onChangeRole}
+            onResetPassword={onResetPassword}
+            onToggleBlock={onToggleBlock}
+          />
         )}
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

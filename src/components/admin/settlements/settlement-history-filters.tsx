@@ -25,22 +25,22 @@ export function SettlementHistoryFilters({
   onExportCsv,
 }: SettlementHistoryFiltersProps) {
   return (
-    <div className="p-3 border-b-2 border-border-strong bg-surface flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+    <div className="p-3 border-b border-border bg-muted/20 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
       {/* Search */}
       <div className="relative flex-1 max-w-sm">
-        <Search className="size-4 text-ink-400 absolute left-2.5 top-2.5 pointer-events-none" />
+        <Search className="size-4 text-muted-foreground absolute left-2.5 top-2.5 pointer-events-none" />
         <Input
           value={filters.search}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
           placeholder="Rechercher bénéficiaire, réf, note..."
-          className="pl-8 h-9 text-xs border-border-strong bg-card"
+          className="pl-8 h-9 text-xs border-border bg-card"
         />
       </div>
 
       {/* Filter select groups */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* Type Filter */}
-        <div className="flex items-center bg-card rounded-lg border border-border-strong p-0.5">
+        <div className="flex items-center bg-card rounded-lg border border-border p-0.5">
           {(
             [
               { id: "all", label: "Tous" },
@@ -52,10 +52,10 @@ export function SettlementHistoryFilters({
               key={t.id}
               type="button"
               onClick={() => onChange({ ...filters, payeeType: t.id })}
-              className={`px-2 py-1 rounded-md text-2xs font-semibold transition-colors ${
+              className={`px-2 py-1 rounded-md text-2xs font-semibold transition-colors cursor-pointer ${
                 filters.payeeType === t.id
                   ? "bg-primary text-primary-foreground shadow-2xs"
-                  : "text-ink-600 hover:text-heading"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {t.label}
@@ -64,7 +64,7 @@ export function SettlementHistoryFilters({
         </div>
 
         {/* Status Filter */}
-        <div className="flex items-center bg-card rounded-lg border border-border-strong p-0.5">
+        <div className="flex items-center bg-card rounded-lg border border-border p-0.5">
           {(
             [
               { id: "all", label: "Tous statuts" },
@@ -76,10 +76,10 @@ export function SettlementHistoryFilters({
               key={s.id}
               type="button"
               onClick={() => onChange({ ...filters, status: s.id })}
-              className={`px-2 py-1 rounded-md text-2xs font-semibold transition-colors ${
+              className={`px-2 py-1 rounded-md text-2xs font-semibold transition-colors cursor-pointer ${
                 filters.status === s.id
                   ? "bg-primary text-primary-foreground shadow-2xs"
-                  : "text-ink-600 hover:text-heading"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {s.label}
@@ -96,7 +96,7 @@ export function SettlementHistoryFilters({
               period: e.target.value as SettlementHistoryFiltersState["period"],
             })
           }
-          className="h-8 px-2 rounded-lg border border-border-strong bg-card text-ink-700 text-xs font-medium"
+          className="h-8 px-2 rounded-lg border border-border bg-card text-foreground text-xs font-medium"
           aria-label="Filtrer par période"
         >
           <option value="7_days">7 derniers jours</option>
@@ -114,7 +114,7 @@ export function SettlementHistoryFilters({
             variant="ghost"
             size="sm"
             onClick={onReset}
-            className="h-8 px-2 text-xs text-ink-600 hover:text-heading gap-1"
+            className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
             title="Réinitialiser les filtres"
           >
             <RotateCcw className="size-3.5" />
@@ -128,7 +128,7 @@ export function SettlementHistoryFilters({
           variant="outline"
           size="sm"
           onClick={onExportCsv}
-          className="h-8 px-2.5 text-xs font-semibold border-border-strong text-ink-700 gap-1.5"
+          className="h-8 px-2.5 text-xs font-semibold border-border gap-1.5"
           title="Exporter l'historique filtré en CSV"
         >
           <Download className="size-3.5" />

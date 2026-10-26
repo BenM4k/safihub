@@ -6,13 +6,22 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   holdCourierDepositAction,
   releaseCourierDepositAction,
   issueCourierFloatAction,
   returnCourierFloatAction,
 } from "@/actions/admin-cash.actions";
-import { Coins, X, AlertCircle } from "lucide-react";
+import { Coins, AlertCircle } from "lucide-react";
 
 interface DepositFloatDialogProps {
   isOpen: boolean;
@@ -34,8 +43,6 @@ export function DepositFloatDialog({ isOpen, onClose, courier }: DepositFloatDia
   const [note, setNote] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,60 +74,46 @@ export function DepositFloatDialog({ isOpen, onClose, courier }: DepositFloatDia
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="deposit-float-dialog-title"
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
-    >
-      <div className="w-full max-w-md bg-card rounded-2xl shadow-2xl border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="p-4 border-b border-border flex items-center justify-between bg-surface">
-          <div className="flex items-center gap-2 text-heading font-bold text-sm">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-2 text-foreground font-bold text-sm">
             <Coins className="size-4.5 text-primary" aria-hidden="true" />
-            <span id="deposit-float-dialog-title">{t("depositFloatDialogTitle")}</span>
+            <DialogTitle>{t("depositFloatDialogTitle")}</DialogTitle>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-ink-400 hover:text-ink-700 rounded-lg hover:bg-surface-hover transition-colors"
-            aria-label="Fermer"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
+          <DialogDescription className="text-xs text-muted-foreground">
             {t("depositFloatDialogDesc")} ({courier.name ?? courier.courierId})
-          </p>
+          </DialogDescription>
+        </DialogHeader>
 
+        <form onSubmit={handleSubmit} className="space-y-4">
           {errorMsg && (
-            <div role="alert" className="p-3 bg-destructive-light border border-destructive-base/30 rounded-xl text-xs text-destructive-base font-medium flex items-start gap-2">
-              <AlertCircle className="size-4 shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertDescription className="text-xs">{errorMsg}</AlertDescription>
+            </Alert>
           )}
 
-          <div className="p-3 bg-surface rounded-xl text-xs space-y-1.5 border border-border">
+          <div className="p-3 bg-muted/40 rounded-xl text-xs space-y-1.5 border border-border">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("deposit")} :</span>
-              <span className="font-bold font-mono text-heading">{courier.securityDeposit.toLocaleString("fr-FR")} CDF</span>
+              <span className="font-bold font-mono text-foreground">{courier.securityDeposit.toLocaleString("fr-FR")} CDF</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("float")} :</span>
-              <span className="font-bold font-mono text-heading">{courier.changeFloat.toLocaleString("fr-FR")} CDF</span>
+              <span className="font-bold font-mono text-foreground">{courier.changeFloat.toLocaleString("fr-FR")} CDF</span>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="operation-type-select" className="text-xs font-semibold text-heading">
+            <Label htmlFor="operation-type-select" className="text-xs font-semibold text-foreground">
               {t("operationType")}
             </Label>
             <select
               id="operation-type-select"
               value={operation}
               onChange={(e) => setOperation(e.target.value as "hold_deposit" | "release_deposit" | "issue_float" | "return_float")}
-              className="w-full h-10 min-h-[40px] px-3 text-xs rounded-xl border border-input bg-card font-medium focus:outline-hidden focus:ring-2 focus:ring-primary/20 text-heading"
+              className="w-full h-10 px-3 text-xs rounded-xl border border-input bg-card font-medium focus:outline-hidden focus:ring-2 focus:ring-primary/20 text-foreground"
             >
               <option value="issue_float">{t("opIssueFloat")}</option>
               <option value="return_float">{t("opReturnFloat")}</option>
@@ -130,7 +123,7 @@ export function DepositFloatDialog({ isOpen, onClose, courier }: DepositFloatDia
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="deposit-amount-input" className="text-xs font-semibold text-heading">
+            <Label htmlFor="deposit-amount-input" className="text-xs font-semibold text-foreground">
               {t("amountLabel")} (CDF)
             </Label>
             <Input
@@ -140,12 +133,12 @@ export function DepositFloatDialog({ isOpen, onClose, courier }: DepositFloatDia
               required
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
-              className="text-sm font-semibold h-10 min-h-[40px] font-mono"
+              className="text-sm font-semibold h-10 font-mono"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="deposit-note-input" className="text-xs font-semibold text-heading">
+            <Label htmlFor="deposit-note-input" className="text-xs font-semibold text-foreground">
               {t("noteLabel")}
             </Label>
             <Input
@@ -153,18 +146,18 @@ export function DepositFloatDialog({ isOpen, onClose, courier }: DepositFloatDia
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={t("notePlaceholder")}
-              className="text-xs h-10 min-h-[40px]"
+              className="text-xs h-10"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+          <DialogFooter className="gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={onClose}
               disabled={loading}
-              className="min-h-[40px] px-4 text-xs font-semibold"
+              className="h-10 px-4 text-xs font-semibold"
             >
               {t("cancelBtn")}
             </Button>
@@ -172,13 +165,13 @@ export function DepositFloatDialog({ isOpen, onClose, courier }: DepositFloatDia
               type="submit"
               size="sm"
               disabled={loading}
-              className="min-h-[40px] px-4 text-xs font-semibold bg-primary hover:bg-primary-hover text-white"
+              className="h-10 px-4 text-xs font-semibold"
             >
               {loading ? "Enregistrement..." : t("submitBtn")}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -3,8 +3,13 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Eye, EyeOff, Sparkles } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   evaluatePasswordStrength,
   generateSecurePassword,
@@ -31,53 +36,60 @@ export function CreateStaffPasswordField({
   };
 
   return (
-    <div className="p-4 bg-surface border-2 border-border-strong rounded-xl space-y-3">
+    <Field className="gap-2">
       <div className="flex items-center justify-between">
-        <Label htmlFor="create-pass" className="text-xs font-bold text-heading">
+        <FieldLabel htmlFor="create-pass" className="text-xs sm:text-sm font-semibold">
           {t("password")} <span className="text-destructive">*</span>
-        </Label>
+        </FieldLabel>
         <button
           type="button"
           onClick={handleGenerate}
-          className="text-2xs font-bold text-primary hover:text-primary-hover inline-flex items-center gap-1 focus:outline-none"
+          className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 focus:outline-none"
         >
-          <Sparkles className="size-3" />
+          <Sparkles className="size-3.5" />
           <span>{t("generatePassword")}</span>
         </button>
       </div>
 
-      <div className="relative">
-        <Input
+      <InputGroup>
+        <InputGroupInput
           id="create-pass"
           type={showPassword ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Mot de passe initial…"
+          placeholder={t("newPasswordPlaceholder")}
           required
           minLength={8}
-          className="min-h-[40px] pr-10 text-xs bg-card border-2 border-border-strong rounded-xl text-heading font-mono"
+          className="font-mono text-sm"
         />
-        <button
-          type="button"
-          onClick={() => setShowPassword((p) => !p)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-800 focus:outline-none"
-          aria-label={showPassword ? t("hidePassword") : t("showPassword")}
-        >
-          {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-        </button>
-      </div>
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setShowPassword((p) => !p)}
+            aria-label={t(showPassword ? "hidePassword" : "showPassword")}
+          >
+            {showPassword ? (
+              <EyeOff className="size-4" />
+            ) : (
+              <Eye className="size-4" />
+            )}
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
 
       {value && (
         <div className="space-y-2 pt-1">
-          <div className="flex items-center justify-between text-2xs font-semibold">
-            <span className="text-ink-500">Robustesse :</span>
+          <div className="flex items-center justify-between text-xs font-medium">
+            <span className="text-muted-foreground">{t("passwordStrengthLabel")}</span>
             <span
               className={
                 strength.score === 3
-                  ? "text-emerald-700 font-bold"
+                  ? "text-emerald-700 font-semibold"
                   : strength.score === 2
-                    ? "text-blue-700 font-bold"
-                    : "text-amber-700 font-bold"
+                    ? "text-blue-700 font-semibold"
+                    : "text-amber-700 font-semibold"
               }
             >
               {t(strength.labelKey)}
@@ -85,43 +97,43 @@ export function CreateStaffPasswordField({
           </div>
           <div className="grid grid-cols-3 gap-1.5 h-1.5">
             <div
-              className={`rounded-full ${
-                strength.score >= 1 ? "bg-amber-500" : "bg-border-strong"
+              className={`rounded-full transition-colors ${
+                strength.score >= 1 ? "bg-amber-500" : "bg-muted"
               }`}
             />
             <div
-              className={`rounded-full ${
-                strength.score >= 2 ? "bg-blue-500" : "bg-border-strong"
+              className={`rounded-full transition-colors ${
+                strength.score >= 2 ? "bg-blue-500" : "bg-muted"
               }`}
             />
             <div
-              className={`rounded-full ${
-                strength.score >= 3 ? "bg-emerald-600" : "bg-border-strong"
+              className={`rounded-full transition-colors ${
+                strength.score >= 3 ? "bg-emerald-600" : "bg-muted"
               }`}
             />
           </div>
 
-          <div className="pt-1 text-2xs space-y-1 text-ink-600">
+          <div className="pt-1 text-xs space-y-1 text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Check
-                className={`size-3 ${
-                  strength.hasMinLength ? "text-emerald-600" : "text-ink-400"
+                className={`size-3.5 ${
+                  strength.hasMinLength ? "text-emerald-600" : "text-muted-foreground/50"
                 }`}
               />
               <span>{t("passwordRuleMin")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Check
-                className={`size-3 ${
-                  strength.hasNumber ? "text-emerald-600" : "text-ink-400"
+                className={`size-3.5 ${
+                  strength.hasNumber ? "text-emerald-600" : "text-muted-foreground/50"
                 }`}
               />
               <span>{t("passwordRuleNumber")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Check
-                className={`size-3 ${
-                  strength.hasSpecial ? "text-emerald-600" : "text-ink-400"
+                className={`size-3.5 ${
+                  strength.hasSpecial ? "text-emerald-600" : "text-muted-foreground/50"
                 }`}
               />
               <span>{t("passwordRuleSpecial")}</span>
@@ -129,6 +141,6 @@ export function CreateStaffPasswordField({
           </div>
         </div>
       )}
-    </div>
+    </Field>
   );
 }

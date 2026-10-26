@@ -3,7 +3,18 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { CheckCircle2, Clock, PhoneCall, XCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import { logPressingRelanceAction } from "@/actions/admin-dispatch.actions";
 import type { FollowUpOutcome } from "@/lib/dispatch-grouping";
 
@@ -39,8 +50,6 @@ export function DispatchCallOutcomeModal({
     onClose();
   }
 
-  if (!isOpen) return null;
-
   async function handleSubmit(outcomeToSave?: FollowUpOutcome) {
     const outcome = outcomeToSave || selectedOutcome || "pending";
     setIsSubmitting(true);
@@ -68,128 +77,119 @@ export function DispatchCallOutcomeModal({
     id: FollowUpOutcome;
     label: string;
     icon: React.ReactNode;
-    colorClasses: string;
+    activeClass: string;
   }> = [
     {
       id: "no_answer",
       label: t("outcomeNoAnswer"),
-      icon: <PhoneCall className="w-4 h-4 text-ink-400" />,
-      colorClasses: "border-border-strong hover:border-heading text-foreground bg-card",
+      icon: <PhoneCall className="size-3.5" />,
+      activeClass: "bg-muted text-foreground border-border",
     },
     {
       id: "will_accept",
       label: t("outcomeWillAccept"),
-      icon: <CheckCircle2 className="w-4 h-4 text-success" />,
-      colorClasses: "border-success/30 hover:border-success text-success bg-success-soft",
+      icon: <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />,
+      activeClass: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
     },
     {
       id: "refused",
       label: t("outcomeRefused"),
-      icon: <XCircle className="w-4 h-4 text-destructive" />,
-      colorClasses: "border-destructive/30 hover:border-destructive text-destructive bg-destructive-soft",
+      icon: <XCircle className="size-3.5 text-destructive" />,
+      activeClass: "bg-destructive/10 text-destructive border-destructive/30",
     },
     {
       id: "call_back_later",
       label: t("outcomeCallBackLater"),
-      icon: <Clock className="w-4 h-4 text-warning" />,
-      colorClasses: "border-warning/30 hover:border-warning text-warning bg-warning-soft",
+      icon: <Clock className="size-3.5 text-amber-600 dark:text-amber-400" />,
+      activeClass: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
     },
   ];
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="outcome-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/40 backdrop-blur-xs animate-in fade-in font-sans"
-    >
-      <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
-        <div className="p-5 border-b border-border bg-surface">
-          <h3 id="outcome-modal-title" className="text-base font-bold text-heading font-display">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-5 pb-3">
+          <DialogTitle className="text-base font-bold text-foreground font-display">
             Résultat de la relance
-          </h3>
-          <p className="text-xs text-muted-foreground mt-1">
-            {pressingName} • {orderIds.length} commande(s) concernée(s)
-          </p>
-        </div>
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            {pressingName} · {orderIds.length} commande(s) concernée(s)
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="p-5 space-y-4">
+        <div className="px-6 py-3 space-y-4">
           {error && (
-            <div className="p-3 text-xs bg-destructive-soft border border-destructive/20 text-destructive rounded-lg">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription className="text-xs">{error}</AlertDescription>
+            </Alert>
           )}
 
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+          <Field>
+            <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Statut de la relance
-            </label>
-            <div className="grid grid-cols-2 gap-2">
+            </FieldLabel>
+            <div className="grid grid-cols-2 gap-2 mt-1.5">
               {outcomes.map((item) => {
                 const isSelected = selectedOutcome === item.id;
                 return (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => {
-                      setSelectedOutcome(item.id);
-                    }}
-                    className={`flex items-center gap-2 p-3 text-xs font-semibold rounded-xl border text-left transition-all cursor-pointer ${
-                      item.colorClasses
-                    } ${
+                    onClick={() => setSelectedOutcome(item.id)}
+                    className={`flex items-center gap-2 p-2.5 text-xs font-semibold rounded-lg border text-left transition-colors cursor-pointer ${
                       isSelected
-                        ? "ring-2 ring-primary border-primary bg-primary-soft text-primary-soft-foreground"
-                        : ""
+                        ? item.activeClass
+                        : "border-border hover:bg-muted/50 text-muted-foreground"
                     }`}
                   >
                     {item.icon}
-                    <span>{item.label}</span>
+                    <span className="truncate">{item.label}</span>
                   </button>
                 );
               })}
             </div>
-          </div>
+          </Field>
 
-          <div>
-            <label
+          <Field>
+            <FieldLabel
               htmlFor="relance-note"
-              className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-wide"
             >
               Note optionnelle
-            </label>
-            <textarea
+            </FieldLabel>
+            <Textarea
               id="relance-note"
               rows={2}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Ex: Demande de rappeler à 14h30, responsable absent..."
-              className="w-full text-xs p-3 rounded-lg border border-border-strong bg-card focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-heading placeholder:text-ink-400"
+              placeholder="Ex: Le gérant promet d'accepter d'ici 10 minutes..."
+              className="mt-1 text-xs resize-none"
             />
-          </div>
+          </Field>
         </div>
 
-        <div className="p-4 bg-surface border-t border-border flex items-center justify-end gap-2">
+        <DialogFooter className="px-6 py-4 bg-muted/20 border-t border-border flex items-center justify-between sm:justify-between">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={handleClose}
-            disabled={isSubmitting}
-            className="text-xs min-h-[40px] px-4 border-border-strong hover:bg-muted text-foreground font-display"
+            className="text-xs"
           >
-            Fermer
+            Fermer sans enregistrer
           </Button>
+
           <Button
             type="button"
             size="sm"
-            disabled={isSubmitting || !selectedOutcome}
             onClick={() => handleSubmit()}
-            className="text-xs min-h-[40px] px-5 bg-primary text-primary-foreground hover:bg-primary-hover font-display"
+            disabled={!selectedOutcome || isSubmitting}
+            className="text-xs"
           >
-            {isSubmitting ? "Enregistrement..." : "Enregistrer le suivi"}
+            {isSubmitting ? "Enregistrement..." : "Enregistrer"}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -25,9 +25,9 @@ export function UsersTablePagination({
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-card border-t-2 border-border-strong text-xs text-ink-700">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-card border-t border-border text-xs text-muted-foreground">
       {/* Range and total counter */}
-      <div className="font-medium">
+      <div className="font-medium text-heading">
         {t("paginationRange", {
           start: startItem,
           end: endItem,
@@ -38,11 +38,11 @@ export function UsersTablePagination({
       {/* Page size & Navigation */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
-          <span className="text-ink-500">{t("perPage")}</span>
+          <span className="text-muted-foreground">{t("perPage")}</span>
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="h-8 px-2 rounded-lg border-2 border-border-strong bg-surface text-xs font-semibold text-heading focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+            className="h-8 px-2 rounded-lg border border-border bg-background text-xs font-semibold text-heading focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
             aria-label={t("pageSizeLabel")}
           >
             <option value={10}>10</option>
@@ -58,7 +58,7 @@ export function UsersTablePagination({
             size="sm"
             onClick={() => onPageChange(1)}
             disabled={currentPage <= 1}
-            className="size-8 p-0 border-2 border-border-strong bg-surface rounded-lg"
+            className="size-8 p-0 border border-border rounded-lg"
             aria-label={t("firstPage")}
           >
             <ChevronsLeft className="size-4" />
@@ -69,13 +69,13 @@ export function UsersTablePagination({
             size="sm"
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage <= 1}
-            className="size-8 p-0 border-2 border-border-strong bg-surface rounded-lg"
+            className="size-8 p-0 border border-border rounded-lg"
             aria-label={t("previousPage")}
           >
             <ChevronLeft className="size-4" />
           </Button>
 
-          <span className="px-2 font-semibold text-heading">
+          <span className="px-2 font-mono font-medium text-heading">
             {currentPage} / {totalPages}
           </span>
 
@@ -84,7 +84,7 @@ export function UsersTablePagination({
             size="sm"
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
-            className="size-8 p-0 border-2 border-border-strong bg-surface rounded-lg"
+            className="size-8 p-0 border border-border rounded-lg"
             aria-label={t("nextPage")}
           >
             <ChevronRight className="size-4" />
@@ -95,7 +95,7 @@ export function UsersTablePagination({
             size="sm"
             onClick={() => onPageChange(totalPages)}
             disabled={currentPage >= totalPages}
-            className="size-8 p-0 border-2 border-border-strong bg-surface rounded-lg"
+            className="size-8 p-0 border border-border rounded-lg"
             aria-label={t("lastPage")}
           >
             <ChevronsRight className="size-4" />
@@ -105,3 +105,4 @@ export function UsersTablePagination({
     </div>
   );
 }
+

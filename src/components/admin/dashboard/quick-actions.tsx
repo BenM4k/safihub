@@ -60,7 +60,7 @@ export async function QuickActions() {
 
   return (
     <section aria-labelledby="shortcuts-heading" className="space-y-3">
-      <h2 id="shortcuts-heading" className="text-lg font-semibold leading-6 text-slate-900">
+      <h2 id="shortcuts-heading" className="text-base font-semibold leading-6 text-foreground">
         {t("quickShortcuts")}
       </h2>
 
@@ -71,20 +71,20 @@ export async function QuickActions() {
             <Link
               key={act.id}
               href={act.href}
-              className="p-5 rounded-xl bg-white border border-slate-300 shadow-sm hover:border-slate-400 hover:shadow-md transition-all group flex items-start gap-4 cursor-pointer"
+              className="p-5 rounded-xl bg-card border border-border shadow-xs hover:bg-muted/40 transition-colors group flex items-start gap-4 cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors shadow-2xs">
-                <Icon className="w-5 h-5" strokeWidth={1.75} />
+              <div className="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors shadow-2xs">
+                <Icon className="size-5" strokeWidth={1.75} />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                  <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
                     {act.title}
                   </h3>
-                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="size-4 text-muted-foreground/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                 </div>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">
                   {act.desc}
                 </p>
               </div>
@@ -95,3 +95,4 @@ export async function QuickActions() {
     </section>
   );
 }
+

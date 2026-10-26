@@ -3,11 +3,11 @@
 import { useState, useTransition } from "react";
 import { Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/admin/shared/confirm-dialog";
 import { updateHouseProfileAction } from "@/actions/admin-house.actions";
 import { bpsToPercentString } from "@/lib/commission-conversion";
+import { HouseTabSettingsFields } from "./house-tab-settings-fields";
 import type { AdminHouseRow } from "../types";
 
 interface HouseTabSettingsProps {
@@ -81,151 +81,50 @@ export function HouseTabSettings({
   return (
     <div className="space-y-4 text-xs">
       {error && (
-        <div role="alert" className="p-3 rounded-xl bg-destructive-light border border-destructive-base/30 text-destructive-base flex items-start gap-2">
-          <AlertCircle className="size-4 shrink-0 mt-0.5" />
-          <span>{error}</span>
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {success && (
-        <div role="status" className="p-3 rounded-xl bg-success-light border border-success-base/30 text-success-base flex items-center gap-2 font-bold">
+        <Alert className="border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10">
           <Check className="size-4" />
-          <span>{success}</span>
-        </div>
+          <AlertDescription className="font-semibold">{success}</AlertDescription>
+        </Alert>
       )}
 
       <form onSubmit={handleFormSubmit} className="space-y-4">
-        {/* Name */}
-        <div className="space-y-1.5">
-          <Label htmlFor="tab-name" className="text-xs font-semibold text-heading">
-            Nom du pressing
-          </Label>
-          <Input
-            id="tab-name"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="h-10 text-xs border-2 border-border-strong"
-          />
-        </div>
+        <HouseTabSettingsFields
+          name={name}
+          setName={setName}
+          commissionPercent={commissionPercent}
+          setCommissionPercent={setCommissionPercent}
+          defaultPercentStr={defaultPercentStr}
+          minimumOrderAmount={minimumOrderAmount}
+          setMinimumOrderAmount={setMinimumOrderAmount}
+          turnaroundHours={turnaroundHours}
+          setTurnaroundHours={setTurnaroundHours}
+          cutoffMinutes={cutoffMinutes}
+          setCutoffMinutes={setCutoffMinutes}
+          dailyCapacity={dailyCapacity}
+          setDailyCapacity={setDailyCapacity}
+          addressNote={addressNote}
+          setAddressNote={setAddressNote}
+        />
 
-        {/* Commission & Min order in 2 cols */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="tab-comm" className="text-xs font-semibold text-heading">
-              Commission (%)
-            </Label>
-            <div className="relative">
-              <Input
-                id="tab-comm"
-                value={commissionPercent}
-                onChange={(e) => setCommissionPercent(e.target.value)}
-                placeholder={defaultPercentStr}
-                className="h-10 text-xs border-2 border-border-strong pr-7"
-              />
-              <span className="absolute right-2.5 top-2.5 text-xs font-bold text-ink-500 pointer-events-none">%</span>
-            </div>
-            <p className="text-[10px] text-ink-500">Vide = défaut ({defaultPercentStr} %)</p>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="tab-min" className="text-xs font-semibold text-heading">
-              Montant min. (CDF)
-            </Label>
-            <div className="relative">
-              <Input
-                id="tab-min"
-                type="number"
-                min="0"
-                step="500"
-                value={minimumOrderAmount}
-                onChange={(e) => setMinimumOrderAmount(e.target.value)}
-                className="h-10 text-xs border-2 border-border-strong pr-10"
-              />
-              <span className="absolute right-2.5 top-2.5 text-[11px] font-bold text-ink-500 pointer-events-none">CDF</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Turnaround & Cutoff */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="tab-turn" className="text-xs font-semibold text-heading">
-              Délai de traitement
-            </Label>
-            <div className="relative">
-              <Input
-                id="tab-turn"
-                type="number"
-                min="1"
-                max="720"
-                value={turnaroundHours}
-                onChange={(e) => setTurnaroundHours(e.target.value)}
-                className="h-10 text-xs border-2 border-border-strong pr-7"
-              />
-              <span className="absolute right-2.5 top-2.5 text-xs font-bold text-ink-500 pointer-events-none">h</span>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="tab-cut" className="text-xs font-semibold text-heading">
-              Délai avant fermeture
-            </Label>
-            <div className="relative">
-              <Input
-                id="tab-cut"
-                type="number"
-                min="0"
-                value={cutoffMinutes}
-                onChange={(e) => setCutoffMinutes(e.target.value)}
-                className="h-10 text-xs border-2 border-border-strong pr-10"
-              />
-              <span className="absolute right-2.5 top-2.5 text-[11px] font-bold text-ink-500 pointer-events-none">min</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Daily Capacity & Address */}
-        <div className="space-y-1.5">
-          <Label htmlFor="tab-cap" className="text-xs font-semibold text-heading">
-            Capacité journalière (commandes / jour)
-          </Label>
-          <Input
-            id="tab-cap"
-            type="number"
-            min="1"
-            placeholder="Illimitée"
-            value={dailyCapacity}
-            onChange={(e) => setDailyCapacity(e.target.value)}
-            className="h-10 text-xs border-2 border-border-strong"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="tab-addr" className="text-xs font-semibold text-heading">
-            Adresse précise / repère coursiers
-          </Label>
-          <Input
-            id="tab-addr"
-            value={addressNote}
-            onChange={(e) => setAddressNote(e.target.value)}
-            className="h-10 text-xs border-2 border-border-strong"
-          />
-        </div>
-
-        {/* Submit */}
-        <div className="pt-3 border-t-2 border-border-strong flex justify-end">
+        <div className="pt-3 border-t border-border flex justify-end">
           <Button
             type="submit"
             disabled={isPending}
-            className="min-h-[40px] px-5 text-xs font-semibold bg-primary hover:bg-primary-hover text-white shadow-2xs"
+            size="sm"
+            className="h-9 px-5 text-xs font-semibold"
           >
             {isPending ? "Enregistrement..." : "Enregistrer"}
           </Button>
         </div>
       </form>
 
-      {/* Confirmation modal for pricing/commission changes */}
       <ConfirmDialog
         isOpen={confirmPriceModalOpen}
         onClose={() => setConfirmPriceModalOpen(false)}
@@ -239,26 +138,26 @@ export function HouseTabSettings({
         cancelLabel="Annuler"
         description={
           <div className="space-y-3">
-            <p className="font-semibold text-heading">
+            <p className="font-semibold text-foreground">
               Vous êtes sur le point de modifier les conditions commerciales de {house.name} :
             </p>
-            <ul className="list-disc pl-5 space-y-1">
+            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
               {isCommissionChanged && (
                 <li>
-                  Commission : <span className="font-bold">{initialCommStr || `Défaut (${defaultPercentStr})`} %</span> →{" "}
+                  Commission : <span className="font-bold text-foreground">{initialCommStr || `Défaut (${defaultPercentStr})`} %</span> →{" "}
                   <span className="font-bold text-primary">{commissionPercent || `Défaut (${defaultPercentStr})`} %</span>
                 </li>
               )}
               {isMinOrderChanged && (
                 <li>
-                  Montant minimum : <span className="font-bold">{house.minimumOrderAmount.toLocaleString()} CDF</span> →{" "}
+                  Montant minimum : <span className="font-bold text-foreground">{house.minimumOrderAmount.toLocaleString()} CDF</span> →{" "}
                   <span className="font-bold text-primary">{Number(minimumOrderAmount).toLocaleString()} CDF</span>
                 </li>
               )}
             </ul>
-            <div className="p-3 bg-surface rounded-xl border border-border space-y-1">
-              <p className="font-bold text-heading">Date d&apos;effet : Immédiate</p>
-              <p className="text-[11px] text-ink-600">
+            <div className="p-3 bg-muted/40 rounded-lg border border-border space-y-1">
+              <p className="font-bold text-foreground">Date d&apos;effet : Immédiate</p>
+              <p className="text-[11px] text-muted-foreground">
                 Cette modification s&apos;appliquera exclusivement aux nouvelles commandes. Les commandes existantes ou en cours conservent les tarifs et commissions enregistrés lors de leur création.
               </p>
             </div>

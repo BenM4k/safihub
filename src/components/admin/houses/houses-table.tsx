@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/admin/shared/empty-state";
 import { HousesTableToolbar } from "./houses-table-toolbar";
+import { HousesTableHeader } from "./houses-table-header";
 import { HousesTableRow } from "./houses-table-row";
 import type { NeighborhoodRecord } from "@/dal";
 import type { AdminHouseRow, HouseFiltersState } from "./types";
@@ -103,34 +105,8 @@ export function HousesTable({
       });
   }, [houses, filters, defaultCommissionBps]);
 
-  const renderSortHeader = (
-    label: string,
-    field: HouseFiltersState["sortBy"],
-    align: "left" | "right" | "center" = "left"
-  ) => {
-    const isCurrent = filters.sortBy === field;
-    const Icon = isCurrent
-      ? filters.sortOrder === "asc"
-        ? ArrowUp
-        : ArrowDown
-      : ArrowUpDown;
-
-    return (
-      <button
-        type="button"
-        onClick={() => handleSortToggle(field)}
-        className={`inline-flex items-center gap-1 font-bold text-ink-700 hover:text-heading transition-colors ${
-          align === "right" ? "justify-end w-full" : align === "center" ? "justify-center w-full" : ""
-        }`}
-      >
-        <span>{label}</span>
-        <Icon className={`size-3 shrink-0 ${isCurrent ? "text-primary" : "text-ink-400"}`} />
-      </button>
-    );
-  };
-
   return (
-    <div className="bg-card rounded-2xl border-2 border-border-strong shadow-xs overflow-hidden flex flex-col">
+    <div className="rounded-xl border border-border bg-background overflow-hidden">
       <HousesTableToolbar
         filters={filters}
         onFiltersChange={handleFiltersChange}
@@ -138,39 +114,17 @@ export function HousesTable({
         totalFilteredCount={filteredAndSortedHouses.length}
       />
 
-      <div className="overflow-x-auto relative">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="border-b-2 border-border-strong bg-surface text-ink-800 font-bold sticky top-0 z-10 select-none">
-              <th scope="col" className="py-3 px-4 min-w-[220px]">
-                {renderSortHeader(t("colHouse"), "name")}
-              </th>
-              <th scope="col" className="py-3 px-4 min-w-[120px]">{t("colNeighborhood")}</th>
-              <th scope="col" className="py-3 px-4 min-w-[140px]">{t("colPhone")}</th>
-              <th scope="col" className="py-3 px-4 min-w-[110px]">
-                {renderSortHeader(t("colCommission"), "commission")}
-              </th>
-              <th scope="col" className="py-3 px-4 text-right min-w-[120px]">
-                {renderSortHeader(t("colMinOrder"), "minOrder", "right")}
-              </th>
-              <th scope="col" className="py-3 px-4 min-w-[90px]">
-                {renderSortHeader(t("colTurnaround"), "turnaround")}
-              </th>
-              <th scope="col" className="py-3 px-4 min-w-[140px]">{t("colHours")}</th>
-              <th scope="col" className="py-3 px-4 text-center min-w-[90px]">
-                {renderSortHeader(t("colOrders"), "orders", "center")}
-              </th>
-              <th scope="col" className="py-3 px-4 text-right min-w-[120px]">
-                {renderSortHeader(t("colBalance"), "balance", "right")}
-              </th>
-              <th scope="col" className="py-3 px-4 min-w-[120px]">{t("colStatus")}</th>
-              <th scope="col" className="py-3 px-4 text-right min-w-[70px]">{t("colActions")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border-strong/80">
+      <div className="overflow-x-auto">
+        <Table>
+          <HousesTableHeader
+            sortBy={filters.sortBy}
+            sortOrder={filters.sortOrder}
+            onSortToggle={handleSortToggle}
+          />
+          <TableBody className="divide-y divide-border">
             {filteredAndSortedHouses.length === 0 ? (
-              <tr>
-                <td colSpan={11} className="py-12 px-4 text-center">
+              <TableRow>
+                <TableCell colSpan={10} className="py-12 px-4 text-center">
                   <EmptyState
                     title={houses.length === 0 ? t("emptyTitle") : t("emptyFilteredTitle")}
                     description={
@@ -179,21 +133,23 @@ export function HousesTable({
                         : t("emptyFilteredDesc")
                     }
                     action={
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={
                           houses.length === 0
                             ? onOpenCreateDrawer
                             : () => handleFiltersChange({ search: "", status: "all", neighborhoodId: "" })
                         }
-                        className="px-4 py-2 rounded-xl text-xs font-bold border-2 border-border-strong bg-card hover:bg-surface text-heading transition-colors"
+                        className="text-xs h-8 px-3"
                       >
                         {houses.length === 0 ? t("addHouse") : t("clearFilters")}
-                      </button>
+                      </Button>
                     }
                   />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               filteredAndSortedHouses.map((house) => (
                 <HousesTableRow
@@ -207,8 +163,8 @@ export function HousesTable({
                 />
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

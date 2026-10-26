@@ -27,9 +27,9 @@ export function CustomersTablePagination({
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
   return (
-    <div className="p-3 border-t-2 border-border-strong bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ink-600">
+    <div className="p-3 border-t border-border bg-muted/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
       <div className="flex items-center gap-3">
-        <span className="font-medium">
+        <span className="font-medium text-foreground">
           {t("paginationRange", {
             start: startItem,
             end: endItem,
@@ -42,7 +42,7 @@ export function CustomersTablePagination({
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="h-8 rounded-md border-2 border-border-strong bg-white px-2 font-bold text-heading"
+            className="h-8 rounded-md border border-border bg-background px-2 font-semibold text-foreground"
             aria-label={t("pageSizeLabel")}
           >
             <option value={10}>10</option>
@@ -60,13 +60,13 @@ export function CustomersTablePagination({
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1 || isLoading}
-          className="h-9 min-h-[36px] px-2.5 text-xs font-semibold border-2 border-border-strong bg-white hover:bg-surface disabled:opacity-40"
+          className="h-8 px-2 text-xs"
           aria-label={t("previousPage")}
         >
           <ChevronLeft className="size-4" />
         </Button>
 
-        <span className="font-mono font-bold px-2 text-xs text-heading">
+        <span className="font-mono font-medium px-2 text-xs text-foreground">
           {currentPage} / {totalPages}
         </span>
 
@@ -76,7 +76,7 @@ export function CustomersTablePagination({
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages || isLoading}
-          className="h-9 min-h-[36px] px-2.5 text-xs font-semibold border-2 border-border-strong bg-white hover:bg-surface disabled:opacity-40"
+          className="h-8 px-2 text-xs"
           aria-label={t("nextPage")}
         >
           <ChevronRight className="size-4" />

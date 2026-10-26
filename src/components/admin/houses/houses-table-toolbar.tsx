@@ -2,7 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { Search, Filter, RotateCcw } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Button } from "@/components/ui/button";
 import type { NeighborhoodRecord } from "@/dal";
 import type { HouseFiltersState, HouseOperationalStatus } from "./types";
 
@@ -26,24 +27,28 @@ export function HousesTableToolbar({
     filters.neighborhoodId !== "";
 
   return (
-    <div className="p-4 border-b-2 border-border-strong bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="p-4 border-b border-border bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       {/* Search Bar */}
       <div className="relative flex-1 max-w-sm">
-        <Search className="size-4 text-ink-500 absolute left-3 top-3 pointer-events-none" />
-        <Input
-          value={filters.search}
-          onChange={(e) => onFiltersChange({ search: e.target.value })}
-          placeholder={t("searchPlaceholder")}
-          className="pl-9 h-10 text-xs border-2 border-border-strong rounded-xl bg-card focus-visible:ring-2 focus-visible:ring-primary"
-          aria-label={t("searchPlaceholder")}
-        />
+        <InputGroup className="h-9 min-h-0 bg-background border-border">
+          <InputGroupAddon align="inline-start">
+            <Search className="size-3.5 text-muted-foreground" />
+          </InputGroupAddon>
+          <InputGroupInput
+            value={filters.search}
+            onChange={(e) => onFiltersChange({ search: e.target.value })}
+            placeholder={t("searchPlaceholder")}
+            className="text-xs"
+            aria-label={t("searchPlaceholder")}
+          />
+        </InputGroup>
       </div>
 
       {/* Filter Dropdowns and Actions */}
-      <div className="flex items-center gap-2.5 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap">
         {/* Status Filter */}
         <div className="flex items-center gap-1.5">
-          <Filter className="size-3.5 text-ink-500" aria-hidden="true" />
+          <Filter className="size-3.5 text-muted-foreground hidden sm:block" aria-hidden="true" />
           <select
             value={filters.status}
             onChange={(e) =>
@@ -51,7 +56,7 @@ export function HousesTableToolbar({
                 status: e.target.value as "all" | HouseOperationalStatus,
               })
             }
-            className="h-10 rounded-xl border-2 border-border-strong bg-card px-3 text-xs font-semibold text-heading hover:bg-surface focus-visible:ring-2 focus-visible:ring-primary"
+            className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             aria-label={t("status")}
           >
             <option value="all">{t("allStatuses")}</option>
@@ -66,7 +71,7 @@ export function HousesTableToolbar({
         <select
           value={filters.neighborhoodId}
           onChange={(e) => onFiltersChange({ neighborhoodId: e.target.value })}
-          className="h-10 rounded-xl border-2 border-border-strong bg-card px-3 text-xs font-semibold text-heading hover:bg-surface focus-visible:ring-2 focus-visible:ring-primary max-w-[180px] truncate"
+          className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary max-w-[180px] truncate"
           aria-label={t("district")}
         >
           <option value="">{t("allNeighborhoods")}</option>
@@ -79,21 +84,23 @@ export function HousesTableToolbar({
 
         {/* Reset button */}
         {hasActiveFilters && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() =>
               onFiltersChange({ search: "", status: "all", neighborhoodId: "" })
             }
-            className="h-10 px-3 rounded-xl border border-border-strong bg-card hover:bg-surface text-ink-600 hover:text-ink-900 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+            className="h-9 px-2.5 text-xs gap-1.5"
             title={t("resetFilters")}
           >
             <RotateCcw className="size-3.5" />
             <span className="hidden sm:inline">{t("resetFilters")}</span>
-          </button>
+          </Button>
         )}
 
         {/* Count badge */}
-        <span className="text-xs font-bold text-ink-700 bg-surface px-3 py-2 rounded-xl border border-border-strong whitespace-nowrap">
+        <span className="text-xs font-semibold text-muted-foreground px-2.5 py-1 rounded-full bg-muted whitespace-nowrap">
           {t("kpiHousesBadge", { count: totalFilteredCount })}
         </span>
       </div>

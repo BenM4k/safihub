@@ -1,5 +1,6 @@
 "use client";
 
+import { TableRow, TableCell } from "@/components/ui/table";
 import { StatusPill } from "@/components/admin/shared/status-pill";
 import { MoneyCell } from "@/components/admin/shared/money-cell";
 import { PhoneCell } from "@/components/admin/shared/phone-cell";
@@ -21,33 +22,33 @@ export function HistoryTableRow({
   const isCancelled = log.note?.includes("[ANNULÉE") || false;
 
   return (
-    <tr
-      className={`hover:bg-surface/60 transition-colors ${
-        isCancelled ? "bg-surface/30 opacity-75" : ""
+    <TableRow
+      className={`hover:bg-muted/40 transition-colors ${
+        isCancelled ? "bg-muted/20 opacity-75" : ""
       }`}
     >
-      <td className="py-3 px-4 font-mono font-bold text-heading">
+      <TableCell className="py-3 px-4 font-mono font-bold text-foreground">
         {formatFrenchDate(log.businessDate)}
-      </td>
-      <td className="py-3 px-4 font-semibold text-heading">
+      </TableCell>
+      <TableCell className="py-3 px-4 font-semibold text-foreground">
         <div>{log.courierName ?? log.courierId}</div>
         <PhoneCell phone={log.courierPhone} />
-      </td>
-      <td className="py-3 px-4">
+      </TableCell>
+      <TableCell className="py-3 px-4">
         <MoneyCell amount={log.expectedAmount} currency={log.currency} isCancelled={isCancelled} />
-      </td>
-      <td className="py-3 px-4">
+      </TableCell>
+      <TableCell className="py-3 px-4">
         <MoneyCell amount={log.receivedAmount} currency={log.currency} isCancelled={isCancelled} />
-      </td>
-      <td className="py-3 px-4">
+      </TableCell>
+      <TableCell className="py-3 px-4">
         <MoneyCell
           amount={log.difference}
           currency={log.currency}
           isDiscrepancy={!isCancelled}
           isCancelled={isCancelled}
         />
-      </td>
-      <td className="py-3 px-4 text-center">
+      </TableCell>
+      <TableCell className="py-3 px-4 text-center">
         {isCancelled ? (
           <StatusPill status="cancelled" />
         ) : log.difference === 0 ? (
@@ -57,19 +58,19 @@ export function HistoryTableRow({
         ) : (
           <StatusPill status="surplus" />
         )}
-      </td>
-      <td className="py-3 px-4 text-heading font-medium hidden md:table-cell">
+      </TableCell>
+      <TableCell className="py-3 px-4 text-foreground font-medium hidden md:table-cell">
         {log.reconcilerName || (log.reconciledBy ? `Opérateur (${log.reconciledBy.slice(0, 6)})` : "—")}
-      </td>
-      <td className="py-3 px-4 text-xs text-muted-foreground font-mono hidden lg:table-cell">
+      </TableCell>
+      <TableCell className="py-3 px-4 text-xs text-muted-foreground font-mono hidden lg:table-cell">
         {formatFrenchDateTime(log.createdAt)}
-      </td>
-      <td className="py-3 px-4 text-muted-foreground max-w-xs hidden sm:table-cell">
+      </TableCell>
+      <TableCell className="py-3 px-4 text-muted-foreground max-w-xs hidden sm:table-cell">
         {log.note ? (
           <div>
             <p
               onClick={() => onToggleNote(log.id)}
-              className={`cursor-pointer hover:text-heading ${
+              className={`cursor-pointer hover:text-foreground ${
                 isExpanded ? "break-words" : "truncate"
               }`}
               title="Cliquer pour afficher la note complète"
@@ -80,15 +81,15 @@ export function HistoryTableRow({
         ) : (
           "—"
         )}
-      </td>
-      <td className="py-3 px-4 text-right whitespace-nowrap">
+      </TableCell>
+      <TableCell className="py-3 px-4 text-right whitespace-nowrap">
         <HistoryRowActions
           reconciliationId={log.id}
           courierName={log.courierName || log.courierId}
           businessDate={log.businessDate}
           isCancelled={isCancelled}
         />
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }

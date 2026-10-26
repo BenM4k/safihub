@@ -1,10 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { useTranslations } from "next-intl";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -26,48 +36,46 @@ export function ConfirmDialog({
   onConfirm,
   title,
   description,
-  confirmLabel = "Confirmer",
-  cancelLabel = "Annuler",
+  confirmLabel,
+  cancelLabel,
   variant = "destructive",
   requireReason = false,
-  reasonLabel = "Motif obligatoire",
-  reasonPlaceholder = "Précisez la raison de cette opération...",
+  reasonLabel,
+  reasonPlaceholder,
 }: ConfirmDialogProps) {
+  const t = useTranslations("admin.shared");
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
   const reasonInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!isOpen) return;
+  const isDestructive = variant === "destructive";
+  const finalConfirmLabel = confirmLabel ?? t("confirm");
+  const finalCancelLabel = cancelLabel ?? t("cancel");
+  const finalReasonLabel = reasonLabel ?? t("reasonRequired");
+  const finalReasonPlaceholder = reasonPlaceholder ?? t("reasonPlaceholder");
 
-    // Auto-focus input or first focusable element
+  const handleClose = () => {
+    if (loading) return;
+    setReason("");
+    setErrorMessage(null);
+    onClose();
+  };
+
+  useEffect(() => {
+    if (!isOpen || !requireReason) return;
+
     const timer = setTimeout(() => {
-      if (requireReason && reasonInputRef.current) {
-        reasonInputRef.current.focus();
-      }
+      reasonInputRef.current?.focus();
     }, 50);
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !loading) {
-        onClose();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen, requireReason, loading, onClose]);
-
-  if (!isOpen) return null;
+    return () => clearTimeout(timer);
+  }, [isOpen, requireReason]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (requireReason && !reason.trim()) {
-      setErrorMessage("Veuillez renseigner un motif pour continuer.");
+      setErrorMessage(t("reasonRequiredError"));
       return;
     }
 
@@ -77,90 +85,68 @@ export function ConfirmDialog({
     try {
       const res = await onConfirm(reason.trim());
       if (res && !res.ok) {
-        setErrorMessage(res.error || "Une erreur est survenue lors de l'opération.");
+        setErrorMessage(res.error || t("operationError"));
         setLoading(false);
         return;
       }
-      onClose();
+      handleClose();
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Erreur inattendue");
+      setErrorMessage(err instanceof Error ? err.message : t("unexpectedError"));
     } finally {
       setLoading(false);
     }
   };
 
-  const isDestructive = variant === "destructive";
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-dialog-title"
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
-    >
-      <div
-        ref={dialogRef}
-        className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
+      <DialogContent
+        className="w-full max-w-md p-0 overflow-hidden rounded-2xl border border-border shadow-xl bg-card gap-0"
+        showCloseButton={!loading}
       >
-        <div className="p-4 border-b border-border flex items-center justify-between bg-surface">
-          <div className="flex items-center gap-2.5">
-            <div
-              className={`size-8 rounded-lg flex items-center justify-center border ${
-                isDestructive
-                  ? "bg-destructive-light text-destructive-base border-destructive-base/30"
-                  : "bg-primary-soft text-primary border-primary/20"
-              }`}
-            >
-              <AlertTriangle className="size-4" aria-hidden="true" />
-            </div>
-            <h2
-              id="confirm-dialog-title"
-              className="text-sm font-bold text-heading font-display"
-            >
-              {title}
-            </h2>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="p-1.5 text-ink-400 hover:text-ink-700 rounded-lg hover:bg-surface-hover transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
-            aria-label="Fermer la boîte de dialogue"
+        <DialogHeader className="p-4 border-b border-border bg-surface flex flex-row items-center gap-2.5 space-y-0">
+          <div
+            className={cn(
+              "size-8 rounded-lg flex items-center justify-center border shrink-0",
+              isDestructive
+                ? "bg-destructive-light text-destructive-base border-destructive-base/30"
+                : "bg-primary-soft text-primary border-primary/20"
+            )}
           >
-            <X className="size-4" />
-          </button>
-        </div>
+            <AlertTriangle className="size-4" aria-hidden="true" />
+          </div>
+          <DialogTitle className="text-sm font-bold text-heading font-display">
+            {title}
+          </DialogTitle>
+        </DialogHeader>
 
-        <form onSubmit={handleFormSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleFormSubmit} className="p-5 flex flex-col gap-4">
           <div className="text-xs text-muted-foreground leading-relaxed">
             {description}
           </div>
 
           {errorMessage && (
-            <div
-              role="alert"
-              className="p-3 bg-destructive-light border border-destructive-base/30 rounded-lg text-xs text-destructive-base font-medium"
-            >
-              {errorMessage}
-            </div>
+            <Alert variant="destructive" className="py-2.5 px-3">
+              <AlertDescription className="text-xs font-medium">
+                {errorMessage}
+              </AlertDescription>
+            </Alert>
           )}
 
           {requireReason && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-heading">
-                {reasonLabel} <span className="text-destructive-base">*</span>
-              </Label>
+            <Field className="gap-1.5">
+              <FieldLabel className="text-xs font-semibold text-heading">
+                {finalReasonLabel} <span className="text-destructive-base">*</span>
+              </FieldLabel>
               <Input
                 ref={reasonInputRef}
                 required
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder={reasonPlaceholder}
+                placeholder={finalReasonPlaceholder}
                 className="text-xs h-10 min-h-[40px]"
                 disabled={loading}
               />
-            </div>
+            </Field>
           )}
 
           <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
@@ -168,27 +154,25 @@ export function ConfirmDialog({
               type="button"
               variant="outline"
               size="sm"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={loading}
               className="min-h-[40px] px-4 text-xs font-semibold"
             >
-              {cancelLabel}
+              {finalCancelLabel}
             </Button>
             <Button
               type="submit"
+              variant={isDestructive ? "destructive" : "default"}
               size="sm"
               disabled={loading || (requireReason && !reason.trim())}
-              className={`min-h-[40px] px-4 text-xs font-semibold ${
-                isDestructive
-                  ? "bg-destructive-base hover:bg-destructive-base/90 text-white"
-                  : "bg-primary hover:bg-primary-hover text-white"
-              }`}
+              className="min-h-[40px] px-4 text-xs font-semibold"
             >
-              {loading ? "Traitement..." : confirmLabel}
+              {loading && <Spinner className="size-3.5 text-current mr-1.5" />}
+              {loading ? t("processing") : finalConfirmLabel}
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

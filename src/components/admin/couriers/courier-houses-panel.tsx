@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { AlertCircle, Search } from "lucide-react";
+import { AlertCircle, Search, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   assignCourierHousesAction,
@@ -10,8 +10,9 @@ import {
 import { CourierHouseRow } from "./courier-house-row";
 import { UnassignHouseDialog } from "./unassign-house-dialog";
 import type { CourierAssignedHouse } from "@/services/admin";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CourierHousesPanelProps {
   courierId: string;
@@ -101,19 +102,16 @@ export function CourierHousesPanel({
       />
 
       {!hasShifts && (
-        <div
-          role="alert"
-          className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2.5"
-        >
-          <AlertCircle className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-          <p>{t("noShiftsWarning")}</p>
-        </div>
+        <Alert className="border-amber-500/30 text-amber-800 dark:text-amber-300 bg-amber-500/10">
+          <AlertCircle className="size-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-xs">{t("noShiftsWarning")}</AlertDescription>
+        </Alert>
       )}
 
-      <div className="p-4 bg-card rounded-xl border border-border shadow-xs space-y-3">
+      <div className="p-4 bg-muted/20 rounded-lg border border-border space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 className="font-bold text-sm text-heading">{t("housesTab")}</h3>
+            <h3 className="font-bold text-sm text-foreground">{t("housesTab")}</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
               {t("assignHousesDesc")}
             </p>
@@ -122,7 +120,7 @@ export function CourierHousesPanel({
           <div className="flex items-center gap-1.5 self-start sm:self-auto">
             <Button
               type="button"
-              variant={filter === "all" ? "primary" : "outline"}
+              variant={filter === "all" ? "default" : "outline"}
               size="sm"
               onClick={() => setFilter("all")}
               className="text-xs h-8 px-2.5"
@@ -131,7 +129,7 @@ export function CourierHousesPanel({
             </Button>
             <Button
               type="button"
-              variant={filter === "assigned" ? "primary" : "outline"}
+              variant={filter === "assigned" ? "default" : "outline"}
               size="sm"
               onClick={() => setFilter("assigned")}
               className="text-xs h-8 px-2.5"
@@ -140,7 +138,7 @@ export function CourierHousesPanel({
             </Button>
             <Button
               type="button"
-              variant={filter === "unassigned" ? "primary" : "outline"}
+              variant={filter === "unassigned" ? "default" : "outline"}
               size="sm"
               onClick={() => setFilter("unassigned")}
               className="text-xs h-8 px-2.5"
@@ -150,24 +148,30 @@ export function CourierHousesPanel({
           </div>
         </div>
 
-        <div className="relative">
-          <Search className="size-3.5 absolute left-3 top-2.5 text-muted-foreground" />
-          <Input
+        <InputGroup className="h-9 min-h-0 bg-background border-border">
+          <InputGroupAddon align="inline-start">
+            <Search className="size-3.5 text-muted-foreground" />
+          </InputGroupAddon>
+          <InputGroupInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("searchHouses")}
-            className="pl-8 text-xs h-8"
+            className="text-xs"
           />
-        </div>
+        </InputGroup>
 
         {msg && (
-          <div
-            className={`text-xs font-semibold ${
-              msg.type === "error" ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
-            }`}
+          <Alert
+            variant={msg.type === "error" ? "destructive" : "default"}
+            className={
+              msg.type === "success"
+                ? "border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10"
+                : ""
+            }
           >
-            {msg.text}
-          </div>
+            {msg.type === "success" ? <Check className="size-4" /> : <AlertCircle className="size-4" />}
+            <AlertDescription className="text-xs font-semibold">{msg.text}</AlertDescription>
+          </Alert>
         )}
       </div>
 

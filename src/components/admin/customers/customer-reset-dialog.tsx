@@ -2,10 +2,22 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Copy, KeyRound, RefreshCw, X } from "lucide-react";
+import { Check, CheckCircle2, Copy, KeyRound, RefreshCw } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { resetCustomerPasswordAction } from "@/actions/admin-customer.actions";
 import { formatCustomerName } from "@/lib/customer-formatters";
 import { generateSecurePassword } from "@/lib/user-guardrails";
@@ -31,7 +43,7 @@ export function CustomerResetDialog({
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  if (!isOpen || !customer) return null;
+  if (!customer) return null;
 
   const displayName = formatCustomerName(customer.name, customer.contactPhone);
 
@@ -67,112 +79,103 @@ export function CustomerResetDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border-2 border-border-strong overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="p-4 border-b-2 border-border-strong flex items-center justify-between bg-surface">
-          <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-lg flex items-center justify-center bg-primary-soft text-primary border border-primary/20">
-              <KeyRound className="size-4" />
-            </div>
-            <h2 className="text-sm font-bold text-heading font-display">
-              {t("title")}
-            </h2>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md p-0 overflow-hidden rounded-xl border border-border shadow-lg bg-card gap-0">
+        <DialogHeader className="p-4 border-b border-border bg-muted/20 flex flex-row items-center gap-2.5 space-y-0">
+          <div className="size-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary border border-primary/20 shrink-0">
+            <KeyRound className="size-4" />
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-ink-400 hover:text-heading rounded-lg hover:bg-surface-hover"
-            aria-label={t("close")}
-          >
-            <X className="size-4" />
-          </button>
-        </div>
+          <DialogTitle className="text-sm font-bold text-foreground">
+            {t("title")}
+          </DialogTitle>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div className="text-xs text-ink-700 leading-relaxed space-y-1">
+        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
+          <div className="text-xs text-muted-foreground leading-relaxed flex flex-col gap-1">
             <p>
               {t("description", { name: displayName, email: customer.email })}
             </p>
-            <p className="text-2xs text-ink-500">
+            <p className="text-2xs text-muted-foreground/80">
               {t("hint")}
             </p>
           </div>
 
           {error && (
-            <div className="p-3 bg-destructive-light border border-destructive-base/30 rounded-lg text-xs text-destructive font-medium">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription className="text-xs font-medium">
+                {error}
+              </AlertDescription>
+            </Alert>
           )}
 
           {successMsg && (
-            <div className="p-3 bg-success-light border border-success-base/30 rounded-lg text-xs text-success-base font-semibold">
-              {successMsg}
-            </div>
+            <Alert variant="success">
+              <CheckCircle2 className="size-4" />
+              <AlertDescription className="text-xs font-medium">
+                {successMsg}
+              </AlertDescription>
+            </Alert>
           )}
 
-          <div className="space-y-1.5">
-            <Label htmlFor="newPasswordInput" className="text-xs font-semibold text-heading">
+          <Field className="gap-2">
+            <FieldLabel htmlFor="newPasswordInput" className="text-xs sm:text-sm font-semibold">
               {t("tempPasswordLabel")}
-            </Label>
-            <div className="flex items-center gap-2">
-              <Input
+            </FieldLabel>
+            <InputGroup>
+              <InputGroupInput
                 id="newPasswordInput"
                 type="text"
                 required
                 minLength={8}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="h-10 text-xs font-mono font-bold tracking-wider border-2 border-border-strong rounded-lg bg-white"
+                className="font-mono text-sm tracking-wider"
                 disabled={loading}
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setNewPassword(generateSecurePassword())}
-                className="h-10 px-2.5 border-2 border-border-strong text-ink-600 hover:text-heading"
-                title={t("generateTooltip")}
-              >
-                <RefreshCw className="size-3.5" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCopy}
-                className="h-10 px-3 border-2 border-border-strong text-ink-600 hover:text-heading"
-                title={t("copyTooltip")}
-              >
-                {copied ? <Check className="size-3.5 text-success-base" /> : <Copy className="size-3.5" />}
-              </Button>
-            </div>
-            {copied && <span className="text-2xs text-success-base font-bold">{t("copiedNotification")}</span>}
-          </div>
+              <InputGroupAddon align="inline-end" className="gap-1 pr-1.5">
+                <InputGroupButton
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setNewPassword(generateSecurePassword())}
+                  title={t("generateTooltip")}
+                >
+                  <RefreshCw className="size-3.5" />
+                </InputGroupButton>
+                <InputGroupButton
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={handleCopy}
+                  title={t("copyTooltip")}
+                >
+                  {copied ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+                </InputGroupButton>
+              </InputGroupAddon>
+            </InputGroup>
+            {copied && <span className="text-2xs text-emerald-700 font-semibold">{t("copiedNotification")}</span>}
+          </Field>
 
-          <div className="flex items-center justify-end gap-2.5 pt-2 border-t-2 border-border-strong">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
             <Button
               type="button"
               variant="outline"
-              size="sm"
               onClick={onClose}
               disabled={loading}
-              className="min-h-[40px] px-4 text-xs font-semibold border-2 border-border-strong"
             >
               {successMsg ? t("closeBtn") : t("cancelBtn")}
             </Button>
             {!successMsg && (
               <Button
                 type="submit"
-                size="sm"
                 disabled={loading || !newPassword}
-                className="min-h-[40px] px-4 text-xs font-bold bg-primary text-white hover:bg-primary-hover"
               >
                 {loading ? t("savingBtn") : t("applyBtn")}
               </Button>
             )}
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -9,7 +9,16 @@ import { ApplicationApplicantCard } from "@/components/admin/applications/detail
 import { ApplicationLocationCard } from "@/components/admin/applications/detail/application-location-card";
 import { ApplicationEquipmentCard } from "@/components/admin/applications/detail/application-equipment-card";
 import { ApplicationApprovedCard } from "@/components/admin/applications/detail/application-approved-card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/admin/shared/status-badge";
+import { Button } from "@/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface PageProps {
   params: Promise<{
@@ -32,12 +41,12 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
 
   const app = appRes.value;
 
-  const statusVariant =
+  const statusTone =
     app.status === "approved"
-      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      ? ("success" as const)
       : app.status === "rejected"
-        ? "bg-rose-50 text-rose-700 border-rose-200"
-        : "bg-amber-50 text-amber-700 border-amber-200";
+        ? ("destructive" as const)
+        : ("warning" as const);
 
   const statusLabel =
     app.status === "approved"
@@ -47,26 +56,39 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
         : t("pending");
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/admin/applications"
-          className="size-8 rounded-lg border border-border flex items-center justify-center hover:bg-slate-100 transition text-muted-foreground"
-        >
-          <ArrowLeft className="size-4" />
-        </Link>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-heading">{app.houseName}</h1>
-            <Badge variant="outline" className={statusVariant}>
-              {statusLabel}
-            </Badge>
+    <div className="flex flex-col gap-6 max-w-4xl">
+      <div className="flex flex-col gap-3">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/admin/applications">{t("title")}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{app.houseName}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        <div className="flex items-center gap-3">
+          <Button asChild variant="outline" size="icon" className="size-8">
+            <Link href="/admin/applications" aria-label={t("title")}>
+              <ArrowLeft className="size-4" />
+            </Link>
+          </Button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-heading">{app.houseName}</h1>
+              <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t("submittedOn", {
+                date: new Date(app.createdAt).toLocaleDateString("fr-FR"),
+              })}
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {t("submittedOn", {
-              date: new Date(app.createdAt).toLocaleDateString("fr-FR"),
-            })}
-          </p>
         </div>
       </div>
 

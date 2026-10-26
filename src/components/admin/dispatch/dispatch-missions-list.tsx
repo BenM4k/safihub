@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { AlertCircle, Package } from "lucide-react";
 import { assignMissionAction } from "@/actions/admin-dispatch.actions";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { MissionWithEligibleCouriers } from "@/services/admin";
 
 interface DispatchMissionsListProps {
@@ -39,9 +41,9 @@ export function DispatchMissionsList({ missions }: DispatchMissionsListProps) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden font-sans">
-      <div className="p-4 border-b border-border">
-        <h2 className="text-base font-bold text-heading font-display">
+    <div className="rounded-xl border border-border bg-background overflow-hidden font-sans">
+      <div className="p-4 border-b border-border bg-muted/20">
+        <h2 className="text-base font-bold text-foreground font-display">
           {t("missionsTitle")} ({missions.length})
         </h2>
         <p className="text-xs text-muted-foreground mt-0.5">
@@ -50,18 +52,20 @@ export function DispatchMissionsList({ missions }: DispatchMissionsListProps) {
       </div>
 
       {error && (
-        <div className="p-3 bg-destructive-soft border-b border-destructive/20 text-xs text-destructive font-medium">
-          {error}
+        <div className="p-4">
+          <Alert variant="destructive">
+            <AlertDescription className="text-xs">{error}</AlertDescription>
+          </Alert>
         </div>
       )}
 
       <div className="divide-y divide-border">
         {missions.length === 0 ? (
           <div className="p-12 text-center space-y-2">
-            <div className="w-12 h-12 mx-auto rounded-full bg-secondary text-muted-foreground flex items-center justify-center text-xl">
-              📦
+            <div className="size-12 mx-auto rounded-full bg-muted text-muted-foreground flex items-center justify-center">
+              <Package className="size-6" />
             </div>
-            <p className="text-sm font-bold text-heading font-display">
+            <p className="text-sm font-bold text-foreground font-display">
               {t("emptyMissions")}
             </p>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
@@ -80,29 +84,29 @@ export function DispatchMissionsList({ missions }: DispatchMissionsListProps) {
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-xs uppercase px-2 py-0.5 rounded bg-primary-soft text-primary-soft-foreground">
-                      {mission.type === "pickup" ? "📦 Collecte" : "🚀 Livraison"}
+                    <span className="font-semibold text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                      {mission.type === "pickup" ? "Collecte" : "Livraison"}
                     </span>
-                    <span className="font-mono text-xs font-semibold text-heading">
+                    <span className="font-mono text-xs font-bold text-foreground">
                       #{mission.orderCode || mission.orderId.slice(0, 8)}
                     </span>
                   </div>
 
                   <p className="text-xs text-foreground">
                     Trajet:{" "}
-                    <span className="font-medium text-heading">
+                    <span className="font-medium">
                       Zone Client ({mission.customerZoneName || "N/A"})
                     </span>{" "}
                     ↔{" "}
-                    <span className="font-medium text-heading">
+                    <span className="font-medium">
                       Zone Pressing ({mission.houseZoneName || "N/A"})
                     </span>
                   </p>
 
                   <p className="text-xs text-muted-foreground">
                     Créneau: {new Date(mission.slotStart).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{" "}
-                    - {new Date(mission.slotEnd).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    {mission.landmark && ` • Repère: ${mission.landmark}`}
+                    – {new Date(mission.slotEnd).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    {mission.landmark && ` · Repère: ${mission.landmark}`}
                   </p>
                 </div>
 
@@ -117,9 +121,9 @@ export function DispatchMissionsList({ missions }: DispatchMissionsListProps) {
                             [mission.id]: e.target.value,
                           }))
                         }
-                        className="h-9 px-3 rounded-md border border-border-strong bg-card text-xs text-heading focus:outline-none focus:ring-1 focus:ring-primary flex-1"
+                        className="h-8 px-3 rounded-lg border border-border bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary flex-1"
                       >
-                        <option value="">Sélectionner un coursier éligible ({mission.eligibleCouriers.length})</option>
+                        <option value="">Sélectionner un coursier ({mission.eligibleCouriers.length})</option>
                         {mission.eligibleCouriers.map((c) => (
                           <option key={c.userId} value={c.userId}>
                             {c.name} {c.contactPhone ? `(${c.contactPhone})` : ""}
@@ -130,14 +134,14 @@ export function DispatchMissionsList({ missions }: DispatchMissionsListProps) {
                         size="sm"
                         disabled={!currentSelected || loadingMissionId === mission.id}
                         onClick={() => handleAssign(mission)}
-                        className="text-xs bg-primary hover:bg-primary-hover text-primary-foreground font-display shrink-0 min-h-[36px]"
+                        className="text-xs h-8 px-3 shrink-0"
                       >
                         {loadingMissionId === mission.id ? "Assignation..." : t("assignCourier")}
                       </Button>
                     </>
                   ) : (
-                    <div className="p-2 rounded bg-destructive-soft border border-destructive/20 text-[11px] text-destructive flex items-center gap-1.5">
-                      <span>⚠️</span>
+                    <div className="p-2 rounded-lg bg-destructive/10 text-destructive text-[11px] flex items-center gap-1.5 font-medium">
+                      <AlertCircle className="size-3.5 shrink-0" />
                       <span>{t("noEligibleCouriers")}</span>
                     </div>
                   )}

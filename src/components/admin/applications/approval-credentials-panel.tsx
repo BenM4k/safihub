@@ -64,15 +64,15 @@ export function ApprovalCredentialsPanel({
   };
 
   return (
-    <div className="bg-emerald-50/70 border-2 border-emerald-300 rounded-2xl p-5 sm:p-6 shadow-sm stack gap-4 animate-in fade-in zoom-in-95 duration-200">
-      <div className="flex items-center gap-2.5 text-emerald-900">
+    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-5 shadow-xs stack gap-4 animate-in fade-in zoom-in-95 duration-200">
+      <div className="flex items-center gap-2.5 text-emerald-950 dark:text-emerald-100">
         <div className="size-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
           <KeyRound className="size-4" />
         </div>
         <div>
-          <h4 className="text-sm font-bold text-heading">{t("credentialsTitle")}</h4>
+          <h4 className="text-sm font-bold text-foreground">{t("credentialsTitle")}</h4>
           {!isNewAccount && (
-            <p className="text-2xs text-emerald-800 mt-0.5">
+            <p className="text-[11px] text-emerald-800 dark:text-emerald-300 mt-0.5">
               {passwordApplied === false
                 ? t("existingAccountKeptPasswordNote")
                 : t("existingAccountNote")}
@@ -81,30 +81,30 @@ export function ApprovalCredentialsPanel({
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-emerald-200 p-4 space-y-3">
+      <div className="bg-card rounded-lg border border-border p-4 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div>
-            <span className="text-muted-foreground block text-2xs uppercase tracking-wider font-semibold">
+            <span className="text-muted-foreground block text-[10px] uppercase tracking-wider font-semibold">
               {t("email")}
             </span>
-            <span className="font-mono font-medium text-heading text-xs truncate block select-all">
+            <span className="font-mono font-medium text-foreground text-xs truncate block select-all">
               {email}
             </span>
           </div>
 
           <div>
-            <span className="text-muted-foreground block text-2xs uppercase tracking-wider font-semibold">
+            <span className="text-muted-foreground block text-[10px] uppercase tracking-wider font-semibold">
               {t("temporaryPassword")}
             </span>
             {temporaryPassword ? (
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="font-mono font-bold text-heading text-xs bg-slate-100 px-2 py-1 rounded select-all">
+                <span className="font-mono font-bold text-foreground text-xs bg-muted px-2 py-1 rounded select-all">
                   {showPassword ? temporaryPassword : "••••••••••••"}
                 </span>
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="p-1 text-muted-foreground hover:text-heading"
+                  className="p-1 text-muted-foreground hover:text-foreground"
                   title={showPassword ? t("hidePassword") : t("showPassword")}
                 >
                   {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
@@ -114,11 +114,11 @@ export function ApprovalCredentialsPanel({
                   variant="outline"
                   size="sm"
                   onClick={handleCopyPassword}
-                  className="h-7 px-2 text-2xs gap-1 border-emerald-200"
+                  className="h-7 px-2 text-[10px] gap-1"
                 >
                   {copiedPassword ? (
                     <>
-                      <Check className="size-3 text-emerald-600" />
+                      <Check className="size-3 text-emerald-600 dark:text-emerald-400" />
                       <span>{t("copied")}</span>
                     </>
                   ) : (
@@ -137,14 +137,13 @@ export function ApprovalCredentialsPanel({
           </div>
         </div>
 
-        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+        <div className="pt-2 border-t border-border flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant="outline"
               size="sm"
               onClick={handleCopyWhatsapp}
-              className="h-8 text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white border-transparent gap-1.5 shadow-xs"
+              className="h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white border-transparent gap-1.5 shadow-xs"
             >
               {copiedWhatsapp ? (
                 <>
@@ -165,7 +164,7 @@ export function ApprovalCredentialsPanel({
                 variant="outline"
                 size="sm"
                 onClick={onDismiss}
-                className="h-8 text-xs font-semibold border-emerald-300 text-emerald-800 hover:bg-emerald-100"
+                className="h-8 text-xs font-semibold"
               >
                 {t("dismissCredentials")}
               </Button>

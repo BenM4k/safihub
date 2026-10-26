@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { MasterFabricRecord } from "@/dal";
 
 interface FabricsTabProps {
@@ -56,51 +66,63 @@ export function FabricsTab({ fabrics }: FabricsTabProps) {
       <form
         id="fabric-form-el"
         action={handleCreate}
-        className="p-4 bg-slate-50/80 rounded-lg border border-border space-y-3"
+        className="p-4 bg-muted/20 rounded-lg border border-border space-y-3"
       >
-        <div className="font-bold text-xs text-heading">{t("addFabric")}</div>
-        {error && <div className="text-xs text-destructive">{error}</div>}
+        <div className="font-bold text-xs text-foreground">{t("addFabric")}</div>
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertDescription className="text-xs">{error}</AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label htmlFor="fabricNameFr" className="text-xs">{t("nameFr")}</Label>
+            <Label htmlFor="fabricNameFr" className="text-xs font-semibold text-foreground">{t("nameFr")}</Label>
             <Input id="fabricNameFr" name="nameFr" required placeholder="Coton, Soie, Laine..." className="h-9 text-xs" />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="fabricNameSw" className="text-xs">{t("nameSw")}</Label>
+            <Label htmlFor="fabricNameSw" className="text-xs font-semibold text-foreground">{t("nameSw")}</Label>
             <Input id="fabricNameSw" name="nameSw" required placeholder="Pamba, Hariri..." className="h-9 text-xs" />
           </div>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-1">
           <Button type="submit" disabled={loading} size="sm" className="h-9">
             {loading ? "..." : t("addFabric")}
           </Button>
         </div>
       </form>
 
-      <div className="bg-white rounded-xl border border-border shadow-xs overflow-hidden">
+      <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-border text-muted-foreground font-semibold">
-              <tr>
-                <th className="px-4 py-3">{t("nameFr")}</th>
-                <th className="px-4 py-3">{t("nameSw")}</th>
-                <th className="px-4 py-3">{t("status")}</th>
-                <th className="px-4 py-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
+          <Table className="text-xs">
+            <TableHeader>
+              <TableRow className="border-b border-border bg-muted/40 font-semibold text-foreground hover:bg-muted/40">
+                <TableHead className="px-4 py-3 font-semibold text-foreground">{t("nameFr")}</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-foreground">{t("nameSw")}</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-foreground">{t("status")}</TableHead>
+                <TableHead className="px-4 py-3 text-right font-semibold text-foreground">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {fabrics.map((fabric) => (
-                <tr key={fabric.id} className="hover:bg-slate-50/60 transition">
-                  <td className="px-4 py-3 font-semibold text-heading">{fabric.nameFr}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{fabric.nameSw}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant="outline" className={fabric.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}>
+                <TableRow key={fabric.id} className="hover:bg-muted/40 transition">
+                  <TableCell className="px-4 py-3 font-semibold text-foreground">{fabric.nameFr}</TableCell>
+                  <TableCell className="px-4 py-3 text-muted-foreground">{fabric.nameSw}</TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Badge
+                      variant="outline"
+                      className={
+                        fabric.isActive
+                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
+                          : "bg-muted text-muted-foreground border-border"
+                      }
+                    >
                       {fabric.isActive ? t("active") : t("inactive")}
                     </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-right">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -110,11 +132,11 @@ export function FabricsTab({ fabrics }: FabricsTabProps) {
                     >
                       {togglingId === fabric.id ? "..." : fabric.isActive ? "Désactiver" : "Activer"}
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>

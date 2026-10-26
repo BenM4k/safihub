@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { ItemRequestRecord } from "@/dal";
 
 interface RequestsTabProps {
@@ -46,84 +56,89 @@ export function RequestsTab({ requests }: RequestsTabProps) {
 
   return (
     <div className="space-y-4">
-      {error && <div className="p-3 bg-red-50 text-xs text-destructive rounded-lg border border-red-200">{error}</div>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
 
-      <div className="bg-white rounded-xl border border-border shadow-xs overflow-hidden">
+      <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-border text-muted-foreground font-semibold">
-              <tr>
-                <th className="px-4 py-3">Pressing</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Nom demandé</th>
-                <th className="px-4 py-3">Note</th>
-                <th className="px-4 py-3">{t("status")}</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
+          <Table className="text-xs">
+            <TableHeader>
+              <TableRow className="border-b border-border bg-muted/40 font-semibold text-foreground hover:bg-muted/40">
+                <TableHead className="px-4 py-3 font-semibold text-foreground">Pressing</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-foreground">Type</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-foreground">Nom demandé</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-foreground">Note</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-foreground">{t("status")}</TableHead>
+                <TableHead className="px-4 py-3 text-right font-semibold text-foreground">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {requests.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                     Aucune demande d&apos;article ou tissu en attente.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 requests.map((req) => {
                   if (approvingId === req.id) {
                     return (
-                      <tr key={req.id} className="bg-emerald-50/40">
-                        <td colSpan={6} className="p-4">
+                      <TableRow key={req.id} className="bg-emerald-500/10 hover:bg-emerald-500/10">
+                        <TableCell colSpan={6} className="p-4">
                           <form action={handleApprove} className="space-y-3">
                             <input type="hidden" name="requestId" value={req.id} />
                             <input type="hidden" name="kind" value={req.kind} />
-                            <div className="font-bold text-xs text-heading">
+                            <div className="font-bold text-xs text-foreground">
                               Approuver l&apos;ajout au catalogue : {req.name} ({req.kind})
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                              <div>
-                                <Label htmlFor="apprNameFr" className="text-xs">{t("nameFr")}</Label>
-                                <Input id="apprNameFr" name="nameFr" defaultValue={req.name} required className="h-8 text-xs bg-white" />
+                              <div className="space-y-1">
+                                <Label htmlFor="apprNameFr" className="text-xs font-semibold text-foreground">{t("nameFr")}</Label>
+                                <Input id="apprNameFr" name="nameFr" defaultValue={req.name} required className="h-8 text-xs bg-card" />
                               </div>
-                              <div>
-                                <Label htmlFor="apprNameSw" className="text-xs">{t("nameSw")}</Label>
-                                <Input id="apprNameSw" name="nameSw" required placeholder="Traduction swahili..." className="h-8 text-xs bg-white" />
+                              <div className="space-y-1">
+                                <Label htmlFor="apprNameSw" className="text-xs font-semibold text-foreground">{t("nameSw")}</Label>
+                                <Input id="apprNameSw" name="nameSw" required placeholder="Traduction swahili..." className="h-8 text-xs bg-card" />
                               </div>
                               {req.kind === "item" && (
-                                <div>
-                                  <Label htmlFor="apprCategory" className="text-xs">{t("category")}</Label>
-                                  <Input id="apprCategory" name="category" placeholder="ex: tops, bottoms..." className="h-8 text-xs bg-white" />
+                                <div className="space-y-1">
+                                  <Label htmlFor="apprCategory" className="text-xs font-semibold text-foreground">{t("category")}</Label>
+                                  <Input id="apprCategory" name="category" placeholder="ex: tops, bottoms..." className="h-8 text-xs bg-card" />
                                 </div>
                               )}
                             </div>
-                            <div className="flex gap-2 justify-end">
+                            <div className="flex gap-2 justify-end pt-1">
                               <Button type="button" variant="outline" size="sm" onClick={() => setApprovingId(null)} className="h-8 text-xs">
                                 Annuler
                               </Button>
-                              <Button type="submit" disabled={loading} size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
+                              <Button type="submit" disabled={loading} size="sm" className="h-8 text-xs">
                                 {loading ? "..." : t("approve")}
                               </Button>
                             </div>
                           </form>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   }
 
                   if (rejectingId === req.id) {
                     return (
-                      <tr key={req.id} className="bg-red-50/40">
-                        <td colSpan={6} className="p-4">
+                      <TableRow key={req.id} className="bg-destructive/10 hover:bg-destructive/10">
+                        <TableCell colSpan={6} className="p-4">
                           <form action={handleReject} className="space-y-3">
                             <input type="hidden" name="requestId" value={req.id} />
-                            <div className="font-bold text-xs text-heading">
+                            <div className="font-bold text-xs text-foreground">
                               Rejeter la demande : {req.name}
                             </div>
-                            <div>
-                              <Label htmlFor="rejNote" className="text-xs">{t("rejectReason")}</Label>
-                              <Input id="rejNote" name="adminNote" required placeholder="Motif du refus..." className="h-8 text-xs bg-white" />
+                            <div className="space-y-1">
+                              <Label htmlFor="rejNote" className="text-xs font-semibold text-foreground">{t("rejectReason")}</Label>
+                              <Input id="rejNote" name="adminNote" required placeholder="Motif du refus..." className="h-8 text-xs bg-card" />
                             </div>
-                            <div className="flex gap-2 justify-end">
+                            <div className="flex gap-2 justify-end pt-1">
                               <Button type="button" variant="outline" size="sm" onClick={() => setRejectingId(null)} className="h-8 text-xs">
                                 Annuler
                               </Button>
@@ -132,58 +147,65 @@ export function RequestsTab({ requests }: RequestsTabProps) {
                               </Button>
                             </div>
                           </form>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   }
 
                   return (
-                    <tr key={req.id} className="hover:bg-slate-50/60 transition">
-                      <td className="px-4 py-3 font-semibold text-heading">{req.houseName || "—"}</td>
-                      <td className="px-4 py-3 capitalize font-mono text-[11px]">{req.kind}</td>
-                      <td className="px-4 py-3 font-semibold text-heading">{req.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground italic">{req.note || "—"}</td>
-                      <td className="px-4 py-3">
+                    <TableRow key={req.id} className="hover:bg-muted/40 transition">
+                      <TableCell className="px-4 py-3 font-semibold text-foreground">{req.houseName || "—"}</TableCell>
+                      <TableCell className="px-4 py-3 capitalize font-mono text-[11px]">{req.kind}</TableCell>
+                      <TableCell className="px-4 py-3 font-semibold text-foreground">{req.name}</TableCell>
+                      <TableCell className="px-4 py-3 text-muted-foreground italic">{req.note || "—"}</TableCell>
+                      <TableCell className="px-4 py-3">
                         <Badge
                           variant="outline"
                           className={
                             req.status === "approved"
-                              ? "bg-emerald-50 text-emerald-700"
+                              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
                               : req.status === "rejected"
-                              ? "bg-red-50 text-destructive"
-                              : "bg-amber-50 text-amber-700"
+                              ? "bg-destructive/10 text-destructive border-destructive/20"
+                              : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
                           }
                         >
                           {req.status}
                         </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-right">
                         {req.status === "pending" && (
-                          <div className="inline-flex items-center gap-1.5">
+                          <div className="inline-flex gap-2">
                             <Button
+                              variant="outline"
                               size="sm"
-                              onClick={() => setApprovingId(req.id)}
-                              className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                              onClick={() => {
+                                setApprovingId(req.id);
+                                setRejectingId(null);
+                              }}
+                              className="h-7 text-xs text-primary font-semibold"
                             >
                               {t("approve")}
                             </Button>
                             <Button
+                              variant="ghost"
                               size="sm"
-                              variant="outline"
-                              onClick={() => setRejectingId(req.id)}
-                              className="h-7 text-xs text-destructive hover:bg-red-50"
+                              onClick={() => {
+                                setRejectingId(req.id);
+                                setApprovingId(null);
+                              }}
+                              className="h-7 text-xs text-destructive font-semibold hover:bg-destructive/10"
                             >
                               {t("reject")}
                             </Button>
                           </div>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>

@@ -21,12 +21,12 @@ export async function ApplicationApprovedCard({
   const t = await getTranslations("admin.applications");
 
   return (
-    <div className="bg-white rounded-xl border border-border p-5 shadow-xs stack gap-4 text-xs">
-      <div className="flex items-center gap-2 font-bold text-heading">
+    <div className="bg-card rounded-lg border border-border p-5 shadow-xs stack gap-4 text-xs">
+      <div className="flex items-center gap-2 font-bold text-foreground">
         {status === "approved" ? (
-          <CheckCircle2 className="size-4 text-emerald-600" />
+          <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
         ) : (
-          <XCircle className="size-4 text-rose-600" />
+          <XCircle className="size-4 text-rose-600 dark:text-rose-400" />
         )}
         <span>
           {t("statusLabel")} : {statusLabel}
@@ -36,7 +36,7 @@ export async function ApplicationApprovedCard({
       {adminNote && (
         <div>
           <span className="text-muted-foreground block font-semibold">{t("reviewNotes")} :</span>
-          <p className="mt-1 text-heading bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+          <p className="mt-1 text-foreground bg-muted/40 p-2.5 rounded-md border border-border">
             {adminNote}
           </p>
         </div>
@@ -54,7 +54,7 @@ export async function ApplicationApprovedCard({
 
           <Link
             href={`/admin/users?search=${encodeURIComponent(email)}`}
-            className="text-xs font-semibold text-ink-600 hover:text-heading hover:underline inline-flex items-center gap-1.5"
+            className="text-xs font-semibold text-muted-foreground hover:text-foreground hover:underline inline-flex items-center gap-1.5"
           >
             <User className="size-3.5" />
             <span>{t("viewUser")}</span>
@@ -62,9 +62,9 @@ export async function ApplicationApprovedCard({
 
           <Link
             href={`/admin/users?search=${encodeURIComponent(email)}`}
-            className="text-xs font-semibold text-amber-700 hover:underline inline-flex items-center gap-1.5"
+            className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:underline inline-flex items-center gap-1.5"
           >
-            <KeyRound className="size-3.5 text-amber-600" />
+            <KeyRound className="size-3.5 text-amber-600 dark:text-amber-400" />
             <span>{t("resetPassword")}</span>
           </Link>
         </div>

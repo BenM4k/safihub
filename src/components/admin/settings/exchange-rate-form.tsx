@@ -6,6 +6,8 @@ import { recordDailyExchangeRateAction } from "@/actions/admin-settings.actions"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 export function ExchangeRateForm() {
   const t = useTranslations("admin.settings");
@@ -43,21 +45,31 @@ export function ExchangeRateForm() {
   }
 
   return (
-    <div className="rounded-xl border border-[#EAECF0] bg-white p-5 shadow-sm space-y-4">
+    <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-[#101828]">{t("exchangeRateTitle")}</h2>
-        <p className="text-xs text-[#667085]">
+        <h2 className="text-base font-semibold text-foreground">{t("exchangeRateTitle")}</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Enregistre le taux officiel du jour. Toute nouvelle commande en USD fige ce taux.
         </p>
       </div>
 
-      {error && <div className="p-3 bg-[#FEF3F2] border border-[#FECDCA] rounded text-xs text-[#B42318]">{error}</div>}
-      {success && <div className="p-3 bg-[#ECFDF3] border border-[#D1FADF] rounded text-xs text-[#027A48]">Taux de change enregistré avec succès.</div>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
+      {success && (
+        <Alert className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+          <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+          <AlertDescription className="text-xs font-semibold">Taux de change enregistré avec succès.</AlertDescription>
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="dailyRate" className="text-xs text-[#344054]">
+            <Label htmlFor="dailyRate" className="text-xs font-semibold text-foreground">
               {t("dailyExchangeRate")}
             </Label>
             <div className="relative">
@@ -71,14 +83,14 @@ export function ExchangeRateForm() {
                 required
                 className="text-xs pr-12 font-mono font-medium"
               />
-              <span className="absolute right-3 top-2.5 text-xs text-[#667085] font-semibold">
+              <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-semibold">
                 CDF
               </span>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="effectiveDate" className="text-xs text-[#344054]">
+            <Label htmlFor="effectiveDate" className="text-xs font-semibold text-foreground">
               {t("effectiveDate")}
             </Label>
             <Input
@@ -96,12 +108,13 @@ export function ExchangeRateForm() {
           <Button
             type="submit"
             disabled={loading}
-            className="text-xs bg-[#2824D5] hover:bg-[#1E1B9E] text-white"
+            className="text-xs"
           >
             {loading ? "Enregistrement..." : t("saveRate")}
           </Button>
         </div>
       </form>
+
     </div>
   );
 }

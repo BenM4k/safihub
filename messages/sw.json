@@ -323,6 +323,26 @@
     "welcome": "Karibu"
   },
   "admin": {
+    "shared": {
+      "loadingData": "Inapakia data...",
+      "noData": "Hakuna data inayopatikana",
+      "paginationRange": "Inaonyesha {start} hadi {end} kati ya maingizo {total}",
+      "prevPage": "Ukurasa uliopita",
+      "nextPage": "Ukurasa unaofuata",
+      "processing": "Inashughulikia...",
+      "cancel": "Ghairi",
+      "confirm": "Thibitisha",
+      "actions": "Vitendo",
+      "close": "Funga",
+      "removeFilter": "Ondoa kichujio",
+      "reasonRequiredError": "Tafadhali weka sababu ili kuendelea.",
+      "unexpectedError": "Hitilafu isiyotarajiwa",
+      "operationError": "Hitilafu imetokea wakati wa operesheni.",
+      "reasonRequired": "Sababu inahitajika",
+      "reasonPlaceholder": "Bainisha sababu ya shughuli hii...",
+      "copyNumber": "Nakili nambari",
+      "numberCopied": "Nambari imenakiliwa"
+    },
     "nav": {
       "title": "Dashibodi ya Operesheni",
       "groupOperations": "Uendeshaji",
@@ -497,7 +517,8 @@
       "deliveryFee": "Gharama ya Usafirishaji (CDF)",
       "distanceLevel": "Kiwango cha Umbali",
       "savePair": "Hifadhi Bei",
-      "currency": "Sarafu"
+      "currency": "Sarafu",
+      "save": "Hifadhi"
     },
     "coverage": {
       "title": "Usimamizi wa Ufikiaji",
@@ -537,6 +558,7 @@
     "houses": {
       "title": "Madobi Washirika",
       "subtitle": "Mipangilio ya washirika, kamisheni, saa za kazi na uwezo",
+      "openDelegatedView": "Fungua mtazamo wa uwakilishi",
       "addHouse": "Ongeza dobi",
       "save": "Hifadhi",
       "cancel": "Ghairi",
@@ -662,7 +684,19 @@
       "assignSuccess": "Dobi limepewa kazi kwa mafanikio.",
       "unassignSuccess": "Dobi limeondolewa kwa mafanikio.",
       "removeHouseNoSiblingsDesc": "Kitendo hiki kitaondoa eneo la {zoneName} kwa dereva.",
-      "unassignPending": "Inaondoa..."
+      "unassignPending": "Inaondoa...",
+      "colName": "Jina",
+      "colPhone": "Simu",
+      "colCashCeiling": "Kiwango cha juu cha pesa",
+      "colSecurityDeposit": "Amana ya usalama",
+      "colShiftsZones": "Muda wa kazi / Maeneo",
+      "colStatus": "Hali",
+      "colActions": "Kitendo",
+      "statusActive": "Inayofanya kazi",
+      "statusInactive": "Haifanyi kazi",
+      "manage": "Simamia",
+      "courierCount": "Msafirishaji {count}",
+      "defaultCeiling": "Chaguo-msingi"
     },
     "users": {
       "title": "Usimamizi wa Akaunti za Watumiaji",
@@ -820,7 +854,8 @@
       "lastUpdatedDate": "Ilisasishwa mara ya mwisho: {date}",
       "errorTitle": "Hitilafu imetokea wakati wa kupakia watumiaji",
       "errorDescription": "Haikuweza kupata akaunti za watumiaji. Tafadhali angalia muunganisho wako au jaribu tena.",
-      "retry": "Jaribu tena"
+      "retry": "Jaribu tena",
+      "noReasonSpecified": "Hakuna sababu iliyotajwa"
     },
     "customers": {
       "title": "Wateja",
@@ -928,7 +963,8 @@
         "cancelBtn": "Ghairi",
         "processingBtn": "Inashughulikia...",
         "confirmUnblockBtn": "Thibitisha kuondoa kizuizi",
-        "confirmBlockBtn": "Thibitisha kuzuia"
+        "confirmBlockBtn": "Thibitisha kuzuia",
+        "genericError": "Hitilafu ilitokea wakati wa operesheni."
       },
       "mergeDialog": {
         "stepTitle": "Kuunganisha Akaunti za Wateja · Hatua {step}/4",
@@ -1047,11 +1083,25 @@
         "phone": "Nambari ya Simu ya Mawasiliano",
         "notesTitle": "Maelezo & Mapendeleo",
         "noNotes": "Hakuna maelezo maalum kwa wasifu huu."
-      }
+      },
+      "retry": "Jaribu tena"
     },
     "orders": {
       "title": "Usimamizi wa Maagizo",
       "subtitle": "Usimamizi wa maagizo, historia kamili na vitendo kwa niaba ya mteja",
+      "backToOrders": "Rudi kwenye maagizo",
+      "orderNumber": "Agizo #{code}",
+      "channel": "Njia",
+      "trackingToken": "Ishara ya ufuatiliaji",
+      "clientTrackingView": "Ufuatiliaji wa mteja",
+      "financialsTitle": "Fedha na Bei",
+      "itemsTotal": "Vitu",
+      "deliveryConfirmationCode": "Nambari ya utoaji",
+      "commission": "Tume ({rate}%)",
+      "frozenRate": "Kiwango kilichogandishwa: 1 USD = {rate} CDF",
+      "unspecified": "Haijabainishwa",
+      "guestCustomer": "Mteja mgeni",
+      "landmark": "Alama ya eneo",
       "newOrderBtn": "Agizo jipya",
       "filterAll": "Yote",
       "onBehalfTitle": "Hatua kwa Niaba ya Dobi",
@@ -1133,7 +1183,102 @@
       "cancelConfirm": "Thibitisha kufuta",
       "cancelReasonPlaceholder": "Sababu ya kufuta...",
       "loadErrorTitle": "Hitilafu wakati wa kupakia maagizo",
-      "retryButton": "Jaribu tena"
+      "retryButton": "Jaribu tena",
+      "cancelAuditNotice": "Kitendo hiki kitaghairi agizo kabisa na kurekodi tukio la ukaguzi kwa niaba ya mhudumu.",
+      "cancelReasonLabel": "Sababu ya kughairi",
+      "cancelReasonRequired": "Sababu ya kughairi inahitajika kwa ajili ya ukaguzi.",
+      "cancelling": "Inaghairi...",
+      "cancelFailed": "Kughairi agizo kumeshindikana",
+      "close": "Funga",
+      "orderLabel": "Agizo",
+      "currentHouse": "Dobi wa sasa",
+      "newHouse": "Dobi mpya mshirika",
+      "selectHousePlaceholder": "Chagua dobi...",
+      "reassignReasonLabel": "Sababu ya kuhamisha (si lazima)",
+      "reassignReasonPlaceholder": "Mfano: Uwezo hautoshi, muda umepita...",
+      "reassignHouseRequired": "Tafadhali chagua dobi mpya.",
+      "reassignFailed": "Kuhamisha kumeshindikana",
+      "reassigning": "Inahamisha...",
+      "cancel": "Ghairi",
+      "confirm": "Thibitisha",
+      "fullPage": "Ukurasa kamili",
+      "clientTracking": "Ufuatiliaji wa mteja",
+      "systemUuid": "Kitambulisho cha mfumo (UUID)",
+      "orderedItems": "Bidhaa zilizoagizwa",
+      "itemsCount": "Bidhaa ({count})",
+      "noItemsFound": "Hakuna bidhaa zilizopatikana.",
+      "itemStandardService": "Huduma ya kawaida",
+      "itemCustomLabel": "Kipengee maalum",
+      "itemStatusAccepted": "Imekubaliwa",
+      "itemStatusReturned": "Imerudishwa",
+      "itemFlagged": "Imewekwa alama",
+      "itemDeclared": "Iliyotangazwa",
+      "itemCollected": "Iliyochukuliwa",
+      "itemReceived": "Iliyopokelewa",
+      "itemUnitPrice": "Bei ya kipengee",
+      "itemFabric": "Kitambaa",
+      "itemAndService": "Kipengee & Huduma",
+      "addOperationalNote": "Ongeza maelezo ya uendeshaji",
+      "notePlaceholder": "Mfano: Uthibitisho umepokelewa kwa simu saa 8:30 mchana...",
+      "addingNote": "Inahifadhi...",
+      "saveNote": "Hifadhi maelezo",
+      "addNoteBtn": "Ongeza maelezo",
+      "noAuditEvents": "Hakuna matukio ya ukaguzi yaliyorekodiwa.",
+      "loadingAudit": "Inapakia historia ya ukaguzi...",
+      "auditActionOnBehalf": "Kitendo kwa niaba ya dobi ({house})",
+      "onBehalfIntervention": "Uingiliaji wa kiutawala kwa niaba ya: {house}",
+      "onBehalfConfirmAccept": "Thibitisha kukubali kwa niaba ya dobi",
+      "onBehalfConfirmReject": "Thibitisha kukataa kwa niaba ya dobi",
+      "onBehalfRejectReasonRequired": "Sababu ya kukataa inahitajika",
+      "acceptOnBehalfBtn": "Kubali kwa niaba ya dobi",
+      "rejectOnBehalfBtn": "Kataa kwa niaba ya dobi",
+      "activeFiltersLabel": "Vichujio vinavyotumika:",
+      "chipSearch": "Utafutaji: \"{search}\"",
+      "chipTab": "Kichupo: {tab}",
+      "chipPeriod": "Kipindi: {period}",
+      "chipPressing": "Dobi: {house}",
+      "chipChannel": "Njia: {channel}",
+      "paginationPrev": "Iliyopita",
+      "paginationNext": "Inayofuata",
+      "selectAll": "Chagua maagizo yote",
+      "selectOrder": "Chagua agizo {code}",
+      "deselectAll": "Ondoa uteuzi wote",
+      "actionsForOrder": "Vitendo kwa ajili ya agizo {code}",
+      "manualForm": {
+        "channelAndContact": "1. Njia na Mawasiliano ya Mteja",
+        "source": "Njia",
+        "sourceWhatsapp": "WhatsApp",
+        "sourcePhone": "Simu",
+        "phone": "Nambari ya simu",
+        "phoneRequired": "Inahitajika",
+        "customerName": "Jina la mteja (si lazima)",
+        "customerNamePlaceholder": "Jina (au acha wazi)",
+        "locationAndHouse": "2. Eneo & Dobi",
+        "neighborhood": "Mtaa wa mteja",
+        "landmark": "Alama maalum",
+        "landmarkPlaceholder": "Av. Maniema, n° 12...",
+        "house": "Dobi mshirika",
+        "slotStart": "Mwanzo wa nafasi (si lazima)",
+        "slotEnd": "Mwisho wa nafasi (si lazima)",
+        "cartItems": "3. Bidhaa za kikapu",
+        "addLine": "Ongeza mstari",
+        "service": "Huduma",
+        "item": "Kipengee",
+        "fabric": "Kitambaa",
+        "quantity": "Kiasi",
+        "submit": "Thibitisha na unda agizo",
+        "submitting": "Inathibitisha kikapu...",
+        "successTitle": "Agizo limeundwa kwa mafanikio!",
+        "orderCode": "Msimbo",
+        "trackingToken": "Tokeni",
+        "trackLink": "Kiungo cha ufuatiliaji wa mteja →",
+        "newOrder": "Ingizo jipya",
+        "invalidSlotStart": "Tarehe ya kuanza nafasi si sahihi",
+        "invalidSlotEnd": "Tarehe ya mwisho ya nafasi si sahihi",
+        "unexpectedError": "Hitilafu isiyotarajiwa wakati wa kuunda"
+      },
+      "errorLoadingOrders": "Hitilafu wakati wa kupakia maagizo",
+      "retryOrders": "Jaribu tena"
     },
     "dispatch": {
       "title": "Dashibodi ya Ugawaji wa Kazi",
@@ -1234,7 +1379,8 @@
       "exportLedgerDesc": "Maingizo ya uhasibu yasiyobadilika: makusanyo, kamisheni na malipo.",
       "exportCustomersName": "Wateja Waliosajiliwa",
       "exportCustomersDesc": "Orodha ya wateja yenye mawasiliano, hali na tarehe ya usajili.",
-      "exportError": "Hitilafu wakati wa kupakua faili ya data."
+      "exportError": "Hitilafu wakati wa kupakua faili ya data.",
+      "saveExchangeRate": "Hifadhi Kiwango"
     },
     "cash": {
       "title": "Udhibiti wa Fedha Taslimu na Upatanisho wa Kila Siku",
@@ -1484,7 +1630,8 @@
       "reverseReasonPlaceholder": "Mf. Kosa la nambari ya kumbukumbu...",
       "noPendingHouses": "Hakuna salio la kulipwa kwa madobi katika kipindi hiki",
       "noPendingCouriers": "Hakuna salio la kulipwa kwa madereva katika kipindi hiki",
-      "noHistory": "Hakuna kumbukumbu za malipo zilizopatikana"
+      "noHistory": "Hakuna kumbukumbu za malipo zilizopatikana",
+      "totalPaid": "Jumla Iliyolipwa"
     },
     "applications": {
       "title": "Maombi ya Washirika wa Dobi",
@@ -2785,4 +2932,3 @@
     "createFailed": "Hitilafu imetokea wakati wa kuhifadhi maombi yako."
   }
 }
-

@@ -41,7 +41,7 @@ export function OrdersPagination({
             id="pageSizeSelect"
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="h-8 rounded-md border border-border-strong bg-card shadow-xs px-2 text-xs text-heading font-medium hover:border-ink-400 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+            className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
           >
             <option value={10}>10</option>
             <option value={25}>25</option>
@@ -59,14 +59,14 @@ export function OrdersPagination({
           size="sm"
           disabled={currentPage <= 1}
           onClick={() => onPageChange(currentPage - 1)}
-          className="h-8 px-2.5 text-xs font-semibold border-border-strong bg-card shadow-xs hover:shadow-sm hover:bg-surface text-heading gap-1 cursor-pointer disabled:opacity-50"
-          aria-label="Page précédente"
+          className="h-8 px-2.5 text-xs font-semibold gap-1 cursor-pointer"
+          aria-label={t("paginationPrev")}
         >
-          <ChevronLeft className="w-3.5 h-3.5" />
-          <span>Précédent</span>
+          <ChevronLeft className="size-3.5" />
+          <span>{t("paginationPrev")}</span>
         </Button>
 
-        <span className="px-2 font-mono text-xs text-heading">
+        <span className="px-2 font-mono text-xs text-foreground">
           {currentPage} / {totalPages}
         </span>
 
@@ -76,11 +76,11 @@ export function OrdersPagination({
           size="sm"
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(currentPage + 1)}
-          className="h-8 px-2.5 text-xs font-semibold border-border-strong bg-card shadow-xs hover:shadow-sm hover:bg-surface text-heading gap-1 cursor-pointer disabled:opacity-50"
-          aria-label="Page suivante"
+          className="h-8 px-2.5 text-xs font-semibold gap-1 cursor-pointer"
+          aria-label={t("paginationNext")}
         >
-          <span>Suivant</span>
-          <ChevronRight className="w-3.5 h-3.5" />
+          <span>{t("paginationNext")}</span>
+          <ChevronRight className="size-3.5" />
         </Button>
       </div>
     </div>

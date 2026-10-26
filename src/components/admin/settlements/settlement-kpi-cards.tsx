@@ -2,8 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { Building2, Bike } from "lucide-react";
-import { KpiCard } from "@/components/admin/shared/kpi-card";
+import { Separator } from "@/components/ui/separator";
 import { formatMoney } from "@/lib/cash-formatters";
+import { cn } from "@/lib/utils";
 
 interface SettlementKpiCardsProps {
   housesTotalOwedCDF: number;
@@ -63,28 +64,55 @@ export function SettlementKpiCards({
       : "Tous les coursiers sont à jour";
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <KpiCard
-        label={t("kpiHousesLabel")}
-        value={formatMoney(housesTotalOwedCDF, "CDF")}
-        icon={Building2}
-        tooltip={t("balanceOwed")}
-        secondary={<span className="font-medium text-ink-700">{houseSecondary}</span>}
-        variant={housesWithBalanceCount > 0 ? "warning" : "default"}
-        isSelected={activeFilter === "houses"}
+    <div className="flex flex-col sm:flex-row sm:items-center py-1">
+      {/* 1. Pressings */}
+      <button
+        type="button"
         onClick={handleHouseClick}
-      />
+        className={cn(
+          "flex-1 p-3 text-left space-y-1 transition-colors rounded-lg",
+          activeFilter === "houses" ? "bg-muted/60" : "hover:bg-muted/30"
+        )}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
+            {t("kpiHousesLabel")}
+          </p>
+          <Building2 className="size-3.5 text-violet-600 dark:text-violet-400 shrink-0" />
+        </div>
+        <p className="text-2xl font-bold font-mono tabular-nums text-foreground mt-1.5">
+          {formatMoney(housesTotalOwedCDF, "CDF")}
+        </p>
+        <p className="text-[11px] text-muted-foreground mt-1 truncate">
+          {houseSecondary}
+        </p>
+      </button>
 
-      <KpiCard
-        label={t("kpiCouriersLabel")}
-        value={formatMoney(couriersTotalOwedCDF, "CDF")}
-        icon={Bike}
-        tooltip={t("balanceOwed")}
-        secondary={<span className="font-medium text-ink-700">{courierSecondary}</span>}
-        variant={couriersWithBalanceCount > 0 ? "warning" : "default"}
-        isSelected={activeFilter === "couriers"}
+      <Separator orientation="vertical" className="hidden sm:block h-12 mx-4 shrink-0" />
+      <Separator orientation="horizontal" className="sm:hidden my-2" />
+
+      {/* 2. Coursiers */}
+      <button
+        type="button"
         onClick={handleCourierClick}
-      />
+        className={cn(
+          "flex-1 p-3 text-left space-y-1 transition-colors rounded-lg",
+          activeFilter === "couriers" ? "bg-muted/60" : "hover:bg-muted/30"
+        )}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
+            {t("kpiCouriersLabel")}
+          </p>
+          <Bike className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+        </div>
+        <p className="text-2xl font-bold font-mono tabular-nums text-foreground mt-1.5">
+          {formatMoney(couriersTotalOwedCDF, "CDF")}
+        </p>
+        <p className="text-[11px] text-muted-foreground mt-1 truncate">
+          {courierSecondary}
+        </p>
+      </button>
     </div>
   );
 }

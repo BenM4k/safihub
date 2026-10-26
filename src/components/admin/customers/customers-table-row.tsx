@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { TableCell, TableRow } from "@/components/ui/table";
 import { PhoneCell } from "@/components/admin/shared/phone-cell";
 import { StatusPill } from "@/components/admin/shared/status-pill";
 import { formatCustomerEmail, formatCustomerName } from "@/lib/customer-formatters";
@@ -40,91 +41,91 @@ export function CustomersTableRow({
   const isBlocked = customer.banned || customer.status === "blocked";
 
   return (
-    <tr
+    <TableRow
       onClick={() => onSelect(customer)}
-      className="hover:bg-surface/70 cursor-pointer transition-colors border-b border-border-strong/80 h-[52px]"
+      className="cursor-pointer transition-colors h-12"
     >
-      {/* 1. Client (Line 1: Name + Tag, Line 2: Phone with tap-to-call & copy) */}
-      <td className="py-2.5 px-3">
+      {/* 1. Client */}
+      <TableCell className="py-2 px-3">
         <div className="flex flex-col">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-bold text-xs text-heading hover:text-primary transition-colors">
+            <span className="font-semibold text-xs text-foreground hover:text-primary transition-colors">
               {displayName}
             </span>
             {customer.isGuest && (
-              <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-300">
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
                 {t("typeGuest")}
               </span>
             )}
           </div>
-          <div className="text-2xs text-ink-500 sm:hidden mt-0.5">
+          <div className="text-2xs text-muted-foreground sm:hidden mt-0.5">
             <PhoneCell phone={customer.contactPhone} showCopy={true} />
           </div>
         </div>
-      </td>
+      </TableCell>
 
       {/* 2. Téléphone */}
-      <td className="py-2.5 px-3 hidden sm:table-cell">
+      <TableCell className="py-2 px-3 hidden sm:table-cell">
         <PhoneCell phone={customer.contactPhone} showCopy={true} />
-      </td>
+      </TableCell>
 
       {/* 3. E-mail */}
-      <td className="py-2.5 px-3 hidden md:table-cell max-w-[180px]">
+      <TableCell className="py-2 px-3 hidden md:table-cell max-w-[180px]">
         {displayEmail !== "—" ? (
           <span
-            className="text-xs text-ink-600 truncate block font-normal"
+            className="text-xs text-muted-foreground truncate block font-normal"
             title={displayEmail}
           >
             {displayEmail}
           </span>
         ) : (
-          <span className="text-xs text-ink-400 italic">{t("noEmail")}</span>
+          <span className="text-xs text-muted-foreground/60 italic">{t("noEmail")}</span>
         )}
-      </td>
+      </TableCell>
 
       {/* 4. Type */}
-      <td className="py-2.5 px-2 hidden lg:table-cell text-center">
+      <TableCell className="py-2 px-2 hidden lg:table-cell text-center">
         {customer.isGuest ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-2xs font-bold bg-amber-50 text-amber-700 border border-amber-300 shadow-2xs">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
             {t("typeGuest")}
           </span>
         ) : (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-2xs font-bold bg-primary-soft text-primary border border-primary/20 shadow-2xs">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-medium bg-primary/10 text-primary border border-primary/20">
             {t("typeRegistered")}
           </span>
         )}
-      </td>
+      </TableCell>
 
       {/* 5. Commandes */}
-      <td className="py-2.5 px-3 hidden sm:table-cell text-center">
-        <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-full text-xs font-mono font-bold bg-surface border border-border-strong text-ink-800">
+      <TableCell className="py-2 px-3 hidden sm:table-cell text-center">
+        <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-full text-xs font-mono font-medium bg-muted text-foreground">
           {customer.ordersCount}
         </span>
-      </td>
+      </TableCell>
 
       {/* 6. Total dépensé */}
-      <td className="py-2.5 px-3 hidden md:table-cell text-right font-mono text-xs font-semibold text-heading">
+      <TableCell className="py-2 px-3 hidden md:table-cell text-right font-mono text-xs font-semibold text-foreground">
         {formatAmount(customer.totalSpentCDF, "CDF")}
-      </td>
+      </TableCell>
 
       {/* 7. Dernière commande */}
-      <td className="py-2.5 px-3 hidden lg:table-cell text-xs text-ink-600">
+      <TableCell className="py-2 px-3 hidden lg:table-cell text-xs text-muted-foreground">
         {customer.lastOrderAt ? (
           <span title={formatDateTime(customer.lastOrderAt)} className="cursor-help">
             {formatRelativeTime(customer.lastOrderAt)}
           </span>
         ) : (
-          <span className="text-ink-400">—</span>
+          <span className="text-muted-foreground/60">—</span>
         )}
-      </td>
+      </TableCell>
 
       {/* 8. Inscrit le */}
-      <td className="py-2.5 px-3 hidden xl:table-cell text-xs text-ink-600 font-mono">
+      <TableCell className="py-2 px-3 hidden xl:table-cell text-xs text-muted-foreground font-mono">
         {formatDateTime(customer.createdAt).split(" ")[0]}
-      </td>
+      </TableCell>
 
       {/* 9. Statut */}
-      <td className="py-2.5 px-3">
+      <TableCell className="py-2 px-3">
         {isBlocked ? (
           <StatusPill
             status="blocked"
@@ -134,11 +135,11 @@ export function CustomersTableRow({
         ) : (
           <StatusPill status="active" customLabel={t("statusActive")} />
         )}
-      </td>
+      </TableCell>
 
       {/* 10. Actions */}
-      <td
-        className="py-2.5 px-3 text-right"
+      <TableCell
+        className="py-2 px-3 text-right"
         onClick={(e) => e.stopPropagation()}
       >
         <CustomersRowActionsMenu
@@ -150,7 +151,7 @@ export function CustomersTableRow({
           onMergeGuest={onMergeGuest}
           onToggleBlock={onToggleBlock}
         />
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }

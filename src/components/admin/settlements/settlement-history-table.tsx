@@ -3,6 +3,14 @@
 import { useState, useMemo } from "react";
 import { History } from "lucide-react";
 import { EmptyState } from "@/components/admin/shared/empty-state";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { SettlementHistoryFilters, type SettlementHistoryFiltersState } from "./settlement-history-filters";
 import { SettlementHistoryRowItem } from "./settlement-history-row";
 import { SettlementHistoryPagination } from "./settlement-history-pagination";
@@ -64,13 +72,13 @@ export function SettlementHistoryTable({ logs }: SettlementHistoryTableProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold text-heading flex items-center gap-2">
+        <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
           <History className="size-4 text-primary" />
           <span>Historique des règlements ({filteredLogs.length})</span>
         </h2>
       </div>
 
-      <div className="bg-card rounded-xl border-2 border-border-strong shadow-xs overflow-hidden">
+      <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
         <SettlementHistoryFilters
           filters={filters}
           onChange={(next) => {
@@ -85,37 +93,37 @@ export function SettlementHistoryTable({ logs }: SettlementHistoryTableProps) {
         />
 
         <div className="overflow-x-auto max-h-[500px]">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead className="sticky top-0 z-10">
-              <tr className="border-b-2 border-border-strong bg-slate-50 text-ink-700 font-bold uppercase tracking-wider text-2xs shadow-2xs">
-                <th className="py-2.5 px-3">Date</th>
-                <th className="py-2.5 px-3">Bénéficiaire</th>
-                <th className="py-2.5 px-2 text-center">Type</th>
-                <th className="py-2.5 px-2 hidden sm:table-cell">Période</th>
-                <th className="py-2.5 px-3 text-right">Montant</th>
-                <th className="py-2.5 px-2 hidden md:table-cell">Mode</th>
-                <th className="py-2.5 px-2 hidden lg:table-cell">Référence</th>
-                <th className="py-2.5 px-2 hidden md:table-cell">Opérateur</th>
-                <th className="py-2.5 px-3 text-center">Statut</th>
-                <th className="py-2.5 px-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-strong">
+          <Table className="text-xs">
+            <TableHeader className="sticky top-0 z-10">
+              <TableRow className="border-b border-border bg-muted/40 font-semibold text-foreground text-2xs uppercase tracking-wider hover:bg-muted/40 shadow-2xs">
+                <TableHead className="py-2.5 px-3 font-semibold text-foreground">Date</TableHead>
+                <TableHead className="py-2.5 px-3 font-semibold text-foreground">Bénéficiaire</TableHead>
+                <TableHead className="py-2.5 px-2 text-center font-semibold text-foreground">Type</TableHead>
+                <TableHead className="py-2.5 px-2 hidden sm:table-cell font-semibold text-foreground">Période</TableHead>
+                <TableHead className="py-2.5 px-3 text-right font-semibold text-foreground">Montant</TableHead>
+                <TableHead className="py-2.5 px-2 hidden md:table-cell font-semibold text-foreground">Mode</TableHead>
+                <TableHead className="py-2.5 px-2 hidden lg:table-cell font-semibold text-foreground">Référence</TableHead>
+                <TableHead className="py-2.5 px-2 hidden md:table-cell font-semibold text-foreground">Opérateur</TableHead>
+                <TableHead className="py-2.5 px-3 text-center font-semibold text-foreground">Statut</TableHead>
+                <TableHead className="py-2.5 px-3 text-right font-semibold text-foreground">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {pagedLogs.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="p-6">
+                <TableRow>
+                  <TableCell colSpan={10} className="p-6">
                     <EmptyState
                       icon={History}
                       title="Aucun règlement trouvé"
                       description="Aucun règlement n'a été enregistré pour les filtres sélectionnés."
                     />
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 pagedLogs.map((log) => <SettlementHistoryRowItem key={log.id} log={log} />)
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         <SettlementHistoryPagination

@@ -5,6 +5,7 @@ import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { OrderEventRecord } from "@/dal";
 import { addOrderTimelineNoteAction } from "@/actions/admin-order.actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/order-formatters";
@@ -43,10 +44,10 @@ export function OrderDetailsTimeline({
         setNoteText("");
         onEventAdded();
       } else {
-        setError(res.error || "Échec de l'ajout de la note");
+        setError(res.error || t("screeningError"));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("screeningError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -60,24 +61,24 @@ export function OrderDetailsTimeline({
 
       {isLoading ? (
         <div className="py-6 text-center text-xs text-muted-foreground animate-pulse">
-          Chargement de l&apos;historique d&apos;audit...
+          {t("loadingAudit")}
         </div>
       ) : events.length === 0 ? (
-        <p className="text-xs text-muted-foreground italic bg-surface p-3 rounded-lg border border-border">
-          Aucun événement d&apos;audit enregistré.
+        <p className="text-xs text-muted-foreground italic bg-muted/20 p-3 rounded-lg border border-border">
+          {t("noAuditEvents")}
         </p>
       ) : (
         <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
           {events.map((ev) => (
             <div
               key={ev.id}
-              className="p-2.5 rounded-lg bg-surface border border-border-strong shadow-2xs text-xs space-y-1"
+              className="p-2.5 rounded-lg bg-muted/20 border border-border text-xs space-y-1"
             >
               <div className="flex items-center justify-between text-[11px]">
-                <span className="font-bold text-heading uppercase tracking-wide">
+                <span className="font-bold text-foreground uppercase tracking-wide">
                   {ev.type}
                 </span>
-                <span className="text-muted-foreground">
+                <span className="text-muted-foreground font-mono">
                   {formatDateTime(ev.createdAt)}
                 </span>
               </div>
@@ -85,18 +86,18 @@ export function OrderDetailsTimeline({
               {ev.fromStatus && ev.toStatus && (
                 <p className="text-foreground">
                   <span className="text-muted-foreground">{ev.fromStatus}</span> →{" "}
-                  <span className="font-semibold text-heading">{ev.toStatus}</span>
+                  <span className="font-semibold text-foreground">{ev.toStatus}</span>
                 </p>
               )}
 
               {ev.onBehalfOfHouseId && (
-                <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-warning-light text-warning-base border border-warning-base/20">
-                  Action au nom du pressing ({ev.onBehalfOfHouseName || "Pressing"})
+                <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                  {t("auditActionOnBehalf", { house: ev.onBehalfOfHouseName || "Pressing" })}
                 </span>
               )}
 
               {ev.note && (
-                <p className="text-ink-700 bg-card p-1.5 rounded border border-border-strong shadow-2xs text-[11px] whitespace-pre-wrap">
+                <p className="text-foreground bg-background p-1.5 rounded-md border border-border text-[11px] whitespace-pre-wrap">
                   {ev.note}
                 </p>
               )}
@@ -108,25 +109,25 @@ export function OrderDetailsTimeline({
       {/* Note form */}
       <form onSubmit={handleAddNote} className="space-y-2 pt-2">
         {error && (
-          <div className="p-2 text-xs bg-destructive-light border border-destructive/20 text-destructive rounded-lg">
-            {error}
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription className="text-xs">{error}</AlertDescription>
+          </Alert>
         )}
         <Textarea
           value={noteText}
           onChange={(e) => setNoteText(e.target.value)}
-          placeholder="Ajouter une note opérationnelle..."
+          placeholder={t("notePlaceholder")}
           rows={2}
-          className="text-xs resize-none bg-card border-border-strong shadow-xs"
+          className="text-xs resize-none"
         />
         <Button
           type="submit"
           size="sm"
           disabled={isSubmitting || !noteText.trim()}
-          className="h-7 text-xs font-semibold bg-primary hover:bg-primary-hover text-white shadow-xs hover:shadow-sm gap-1 cursor-pointer"
+          className="h-8 text-xs font-semibold gap-1.5"
         >
-          <Send className="w-3 h-3" />
-          <span>Enregistrer la note</span>
+          <Send className="size-3" />
+          <span>{isSubmitting ? t("addingNote") : t("saveNote")}</span>
         </Button>
       </form>
     </div>

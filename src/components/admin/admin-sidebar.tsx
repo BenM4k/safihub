@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import { logoutAction } from "@/actions/auth.actions";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/admin/shared/status-badge";
 
 interface NavItem {
   href: string;
@@ -92,11 +93,11 @@ export function AdminSidebar({
   return (
     <aside
       className={cn(
-        "w-64 bg-white border-r border-slate-200/90 flex flex-col justify-between shrink-0 h-full",
+        "w-64 bg-card border-r border-border flex flex-col justify-between shrink-0 h-full",
         className
       )}
     >
-      <div className="flex flex-col flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="flex flex-col flex-1 overflow-y-auto p-4 gap-6">
         {/* Brand header */}
         <div className="flex items-center gap-2.5 px-2 py-1">
           <div className="size-8 rounded-xl bg-primary text-white flex items-center justify-center font-black text-sm shadow-xs">
@@ -106,21 +107,26 @@ export function AdminSidebar({
             <span className="font-display font-black text-base tracking-tight text-heading block leading-none">
               SafiHub
             </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success-light text-[#027A48] border border-[#A6F4C5] mt-1 w-fit">
-              <ShieldCheck className="size-3 shrink-0" />
-              <span>{t("adminClearance")}</span>
-            </span>
+            <div className="mt-1">
+              <StatusBadge
+                tone="success"
+                icon={<ShieldCheck className="size-3 shrink-0" />}
+                className="text-[10px] py-0 px-1.5"
+              >
+                {t("adminClearance")}
+              </StatusBadge>
+            </div>
           </div>
         </div>
 
         {/* Grouped navigation */}
-        <nav className="space-y-5 flex-1">
+        <nav className="flex flex-col gap-5 flex-1">
           {GROUPS.map((group) => (
-            <div key={group.groupKey} className="space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2.5 block mb-1">
+            <div key={group.groupKey} className="flex flex-col gap-1">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2.5 block mb-1">
                 {t(group.groupKey)}
               </span>
-              <div className="space-y-0.5">
+              <div className="flex flex-col gap-0.5">
                 {group.items.map((item) => {
                   const isActive =
                     item.href === "/admin"
@@ -141,7 +147,7 @@ export function AdminSidebar({
                         "flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all",
                         isActive
                           ? "bg-primary text-white font-bold shadow-xs"
-                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                          : "text-ink-600 hover:text-heading hover:bg-surface"
                       )}
                     >
                       <Icon className="size-4 shrink-0" />
@@ -156,20 +162,20 @@ export function AdminSidebar({
       </div>
 
       {/* Footer actions */}
-      <div className="p-4 border-t border-slate-100 space-y-2">
+      <div className="p-4 border-t border-border flex flex-col gap-2">
         <Link
           href="/"
-          className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
+          className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-ink-600 hover:text-heading hover:bg-surface transition"
         >
           <span>{t("clientView")}</span>
-          <ExternalLink className="size-3.5 text-slate-400" />
+          <ExternalLink className="size-3.5 text-muted-foreground" />
         </Link>
         <form action={logoutAction} className="w-full">
           <Button
             type="submit"
             variant="ghost"
             size="sm"
-            className="w-full justify-start text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3"
+            className="w-full justify-start text-xs font-semibold text-destructive hover:bg-destructive-soft hover:text-destructive px-3"
           >
             <LogOut className="size-3.5 mr-2" />
             <span>{tAuth("logout")}</span>

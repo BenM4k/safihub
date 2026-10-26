@@ -3,6 +3,7 @@
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 interface LoginSubmitButtonProps {
   isPending?: boolean;
@@ -21,7 +22,14 @@ export function LoginSubmitButton({ isPending }: LoginSubmitButtonProps) {
       disabled={pending}
       className="w-full text-base font-semibold shadow-xs transition-transform"
     >
-      {pending ? t("signingIn") : t("continueWithEmail")}
+      {pending ? (
+        <>
+          <Spinner className="mr-2" data-icon="inline-start" />
+          {t("signingIn")}
+        </>
+      ) : (
+        t("continueWithEmail")
+      )}
     </Button>
   );
 }

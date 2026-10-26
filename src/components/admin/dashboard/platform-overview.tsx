@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ShoppingBag, Wallet, Building2, Truck, TrendingUp, ChevronRight } from "lucide-react";
+import { ShoppingBag, Wallet, Building2, Truck, ChevronRight } from "lucide-react";
 import type { AdminDashboardMetrics } from "@/dal";
-import { Sparkline } from "./sparkline";
+import { Separator } from "@/components/ui/separator";
 
 interface PlatformOverviewProps {
   metrics: AdminDashboardMetrics;
@@ -11,117 +11,79 @@ interface PlatformOverviewProps {
 export async function PlatformOverview({ metrics }: PlatformOverviewProps) {
   const t = await getTranslations("admin.dashboard");
 
-  // Sample historical trend sparklines matching current live value
-  const totalOrdersValue = metrics.totalOrders;
-  const cashCollectedValue = metrics.totalCashCollectedCDF;
-  const activeHousesValue = metrics.activeHousesCount;
-  const activeCouriersValue = metrics.activeCouriersCount;
-
-  interface MetricCard {
-    id: string;
-    label: string;
-    value: string;
-    icon: typeof ShoppingBag;
-    href: string;
-    change?: string;
-    isPositive?: boolean;
-    trendLabel?: string;
-    sparkline?: number[];
-  }
-
-  const cards: MetricCard[] = [
+  const cards = [
     {
       id: "total_orders",
       label: t("totalOrders"),
-      value: totalOrdersValue.toLocaleString("en-US"),
+      value: metrics.totalOrders.toLocaleString("en-US"),
       icon: ShoppingBag,
       href: "/admin/orders",
     },
     {
       id: "cash_collected",
       label: t("cashCollected"),
-      value: `CDF ${cashCollectedValue.toLocaleString("en-US")}`,
+      value: `CDF ${metrics.totalCashCollectedCDF.toLocaleString("en-US")}`,
       icon: Wallet,
       href: "/admin/cash",
     },
     {
       id: "active_houses",
       label: t("activeHouses"),
-      value: activeHousesValue.toLocaleString("en-US"),
+      value: metrics.activeHousesCount.toLocaleString("en-US"),
       icon: Building2,
       href: "/admin/houses",
     },
     {
       id: "active_couriers",
       label: t("activeCouriers"),
-      value: activeCouriersValue.toLocaleString("en-US"),
+      value: metrics.activeCouriersCount.toLocaleString("en-US"),
       icon: Truck,
       href: "/admin/couriers",
     },
   ];
 
   return (
-    <section aria-labelledby="kpi-heading" className="space-y-3">
-      <h2 id="kpi-heading" className="text-lg font-semibold leading-6 text-slate-900">
+    <section aria-labelledby="kpi-heading" className="space-y-2">
+      <h2 id="kpi-heading" className="text-base font-semibold leading-6 text-foreground">
         {t("platformOverviewTitle")}
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {cards.map((c) => {
+      <div className="flex flex-col sm:flex-row sm:items-center py-1">
+        {cards.map((c, index) => {
           const Icon = c.icon;
           return (
-            <Link
-              key={c.id}
-              href={c.href}
-              className="bg-white border border-slate-300 rounded-xl p-5 shadow-sm hover:border-slate-400 hover:shadow-md transition-all group flex flex-col justify-between cursor-pointer"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-500">{c.label}</span>
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors shadow-2xs">
-                    <Icon className="w-4 h-4" strokeWidth={1.75} />
+            <div key={c.id} className="contents">
+              {index > 0 && (
+                <>
+                  <Separator orientation="vertical" className="hidden sm:block h-12 mx-3 shrink-0" />
+                  <Separator orientation="horizontal" className="sm:hidden my-2" />
+                </>
+              )}
+              <Link
+                href={c.href}
+                className="flex-1 p-3 text-left space-y-1 transition-colors rounded-lg hover:bg-muted/30 group cursor-pointer"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
+                    {c.label}
+                  </span>
+                  <div className="size-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Icon className="size-3.5" />
                   </div>
                 </div>
 
-                <div className="mt-2">
-                  <span className="text-3xl font-semibold leading-9 text-slate-900 tracking-tight">
+                <div className="flex items-baseline justify-between gap-2 mt-1.5">
+                  <span className="text-2xl font-bold font-mono tabular-nums text-foreground">
                     {c.value}
                   </span>
+                  <ChevronRight className="size-3.5 text-muted-foreground/50 group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
                 </div>
-              </div>
-
-              {c.change && c.sparkline && c.sparkline.length > 0 ? (
-                <div className="mt-4 pt-3 border-t border-slate-300 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`inline-flex items-center gap-0.5 text-xs font-semibold ${
-                        c.isPositive ? "text-emerald-600" : "text-rose-600"
-                      }`}
-                    >
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      {c.change}
-                    </span>
-                    {c.trendLabel && (
-                      <span className="text-[11px] text-slate-400 hidden xl:inline">
-                        {c.trendLabel}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Sparkline data={c.sparkline} isPositive={c.isPositive} />
-                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-600 group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end">
-                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-600 group-hover:translate-x-0.5 transition-all" />
-                </div>
-              )}
-            </Link>
+              </Link>
+            </div>
           );
         })}
       </div>
     </section>
   );
 }
+

@@ -24,6 +24,7 @@ export function AdminErrorView({
   description,
 }: AdminErrorViewProps) {
   const tErrors = useTranslations("errors");
+  const tNav = useTranslations("admin.nav");
 
   useEffect(() => {
     Sentry.captureException(error);
@@ -38,13 +39,13 @@ export function AdminErrorView({
     <div
       role="alert"
       aria-live="assertive"
-      className="p-6 sm:p-8 my-6 bg-card rounded-2xl border border-destructive-base/30 shadow-xs max-w-xl mx-auto space-y-4 text-center"
+      className="p-6 sm:p-8 my-6 bg-card rounded-2xl border border-destructive/30 shadow-xs max-w-xl mx-auto flex flex-col gap-4 text-center"
     >
-      <div className="size-12 rounded-xl bg-destructive-light text-destructive-base border border-destructive-base/30 flex items-center justify-center mx-auto shadow-2xs">
+      <div className="size-12 rounded-xl bg-destructive-soft text-destructive border border-destructive/30 flex items-center justify-center mx-auto shadow-2xs">
         <AlertCircle className="size-6" />
       </div>
 
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <h2 className="text-base sm:text-lg font-bold text-heading font-display">
           {displayTitle}
         </h2>
@@ -76,7 +77,7 @@ export function AdminErrorView({
         >
           <Link href="/admin">
             <LayoutDashboard className="size-4" />
-            <span>Tableau de bord</span>
+            <span>{tNav("dashboard")}</span>
           </Link>
         </Button>
       </div>

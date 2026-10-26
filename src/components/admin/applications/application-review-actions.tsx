@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, AlertCircle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   approveApplicationAction,
   rejectApplicationAction,
@@ -108,19 +109,21 @@ export function ApplicationReviewActions({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-border p-6 shadow-xs stack gap-5">
-      <h3 className="text-sm font-bold text-heading">{t("actions")}</h3>
+    <div className="bg-card rounded-lg border border-border p-5 shadow-xs stack gap-5">
+      <h3 className="text-sm font-bold text-foreground">{t("actions")}</h3>
 
       {error && (
-        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {success && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-lg">
-          {success}
-        </div>
+        <Alert className="border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10">
+          <Check className="size-4" />
+          <AlertDescription className="font-semibold">{success}</AlertDescription>
+        </Alert>
       )}
 
       {approvedCredentials && (
@@ -169,7 +172,7 @@ export function ApplicationReviewActions({
               variant="outline"
               onClick={handleReject}
               disabled={isPending}
-              className="w-full sm:w-auto text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 text-xs h-9"
+              className="w-full sm:w-auto text-rose-600 dark:text-rose-400 hover:text-rose-700 hover:bg-rose-500/10 border-rose-500/30 text-xs h-9"
             >
               {isPending ? (
                 <Loader2 className="size-3.5 animate-spin mr-1.5" />

@@ -6,6 +6,14 @@ import { MessageCircle, CheckCircle2 } from "lucide-react";
 import { notifyCoverageRequestsAction } from "@/actions/admin-coverage.actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { CoverageDemandSummary } from "@/dal";
 
 interface CoverageDemandTableProps {
@@ -28,9 +36,9 @@ export function CoverageDemandTable({ demand }: CoverageDemandTableProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-border shadow-xs overflow-hidden">
+    <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
       <div className="p-4 border-b border-border flex items-center justify-between">
-        <h2 className="text-sm font-bold text-heading">
+        <h2 className="text-sm font-bold text-foreground">
           {t("coverageRequestsTitle")}
         </h2>
         <span className="text-xs text-muted-foreground font-semibold">
@@ -39,16 +47,16 @@ export function CoverageDemandTable({ demand }: CoverageDemandTableProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 border-b border-border text-muted-foreground font-semibold">
-            <tr>
-              <th className="px-4 py-3">{t("demandRanked")}</th>
-              <th className="px-4 py-3">{t("requestsCount")}</th>
-              <th className="px-4 py-3">En attente notification</th>
-              <th className="px-4 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
+        <Table className="text-xs">
+          <TableHeader>
+            <TableRow className="border-b border-border bg-muted/40 font-semibold text-foreground hover:bg-muted/40">
+              <TableHead className="px-4 py-3 font-semibold text-foreground">{t("demandRanked")}</TableHead>
+              <TableHead className="px-4 py-3 font-semibold text-foreground">{t("requestsCount")}</TableHead>
+              <TableHead className="px-4 py-3 font-semibold text-foreground">En attente notification</TableHead>
+              <TableHead className="px-4 py-3 text-right font-semibold text-foreground">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {demand.map((d, idx) => {
               const samplePhone = d.samplePhones[0];
               const cleanPhone = samplePhone?.replace(/\D/g, "");
@@ -59,28 +67,28 @@ export function CoverageDemandTable({ demand }: CoverageDemandTableProps) {
                 : null;
 
               return (
-                <tr key={idx} className="hover:bg-slate-50/60 transition">
-                  <td className="px-4 py-3 font-semibold text-heading">
+                <TableRow key={idx} className="hover:bg-muted/40 transition">
+                  <TableCell className="px-4 py-3 font-semibold text-foreground">
                     {d.neighborhoodName}
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-bold">
                       {d.requestCount} demande(s)
                     </Badge>
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     {d.pendingNotificationCount > 0 ? (
-                      <span className="text-amber-700 font-semibold">
+                      <span className="text-amber-700 dark:text-amber-400 font-semibold">
                         {d.pendingNotificationCount} {t("pendingBadge")}
                       </span>
                     ) : (
-                      <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                      <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
                         <CheckCircle2 className="size-3.5" />
                         {t("notifiedBadge")}
                       </span>
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-2">
                       {waUrl && (
                         <a
@@ -114,12 +122,12 @@ export function CoverageDemandTable({ demand }: CoverageDemandTableProps) {
                         </Button>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

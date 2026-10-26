@@ -71,20 +71,20 @@ export function HouseSuspendDialog({
               </p>
 
               {house.activeOrdersCount > 0 && (
-                <div className="p-3 bg-amber-50 rounded-xl border border-amber-300 text-amber-900 flex items-start gap-2.5">
-                  <AlertTriangle className="size-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20 text-amber-700 dark:text-amber-400 flex items-start gap-2.5">
+                  <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                   <div className="text-xs">
                     <p className="font-bold">
                       {t("suspendActiveOrdersWarning", { count: house.activeOrdersCount })}
                     </p>
-                    <p className="text-[11px] text-amber-800 mt-0.5">
+                    <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-0.5">
                       {t("suspendActiveOrdersDesc")}
                     </p>
                   </div>
                 </div>
               )}
 
-              <p className="text-[11px] text-ink-600">
+              <p className="text-[11px] text-muted-foreground">
                 {t("suspendAuditDesc")}
               </p>
             </>

@@ -6,6 +6,8 @@ import { createZoneAction } from "@/actions/admin-coverage.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export function ZoneForm() {
   const t = useTranslations("admin.neighborhoods");
@@ -28,13 +30,18 @@ export function ZoneForm() {
     <form
       id="zone-form-el"
       action={handleSubmit}
-      className="p-4 bg-slate-50/80 rounded-lg border border-border space-y-3"
+      className="p-4 bg-muted/20 rounded-lg border border-border space-y-3"
     >
-      <div className="font-bold text-xs text-heading">{t("addZone")}</div>
-      {error && <div className="text-xs text-destructive">{error}</div>}
+      <div className="font-bold text-xs text-foreground">{t("addZone")}</div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1 space-y-1">
-          <Label htmlFor="zoneName" className="text-xs">
+          <Label htmlFor="zoneName" className="text-xs font-semibold text-foreground">
             {t("zoneName")}
           </Label>
           <Input
@@ -46,7 +53,7 @@ export function ZoneForm() {
           />
         </div>
         <div className="w-24 space-y-1">
-          <Label htmlFor="sortOrder" className="text-xs">
+          <Label htmlFor="sortOrder" className="text-xs font-semibold text-foreground">
             {t("sortOrder")}
           </Label>
           <Input

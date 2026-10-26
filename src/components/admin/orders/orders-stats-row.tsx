@@ -1,7 +1,9 @@
 "use client";
 
+import { Fragment } from "react";
 import { AlertCircle, CheckCircle2, Clock, Package, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Separator } from "@/components/ui/separator";
 
 interface OrdersStatsRowProps {
   stats: {
@@ -24,16 +26,16 @@ export function OrdersStatsRow({ stats, activeTab, onSelectTab }: OrdersStatsRow
       label: t("statsToday"),
       count: stats.today,
       icon: Clock,
-      colorClass: "text-heading",
-      badgeClass: "bg-surface text-foreground border-border",
+      colorClass: "text-foreground",
+      badgeClass: "bg-muted text-foreground",
     },
     {
       id: "awaiting",
       label: t("statsAwaiting"),
       count: stats.awaiting,
       icon: AlertCircle,
-      colorClass: "text-warning-base",
-      badgeClass: "bg-warning-light text-warning-base border-warning-base/20",
+      colorClass: "text-amber-600 dark:text-amber-400",
+      badgeClass: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
     },
     {
       id: "in_progress",
@@ -41,58 +43,81 @@ export function OrdersStatsRow({ stats, activeTab, onSelectTab }: OrdersStatsRow
       count: stats.inProgress,
       icon: Package,
       colorClass: "text-primary",
-      badgeClass: "bg-primary-soft text-primary-soft-foreground border-primary/20",
+      badgeClass: "bg-primary/10 text-primary",
     },
     {
       id: "delivered",
       label: t("statsDelivered"),
       count: stats.delivered,
       icon: CheckCircle2,
-      colorClass: "text-success-base",
-      badgeClass: "bg-success-light text-success-base border-success-base/20",
+      colorClass: "text-emerald-600 dark:text-emerald-400",
+      badgeClass: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
     },
     {
       id: "cancelled",
       label: t("statsCancelled"),
       count: stats.cancelled,
       icon: XCircle,
-      colorClass: "text-destructive-base",
-      badgeClass: "bg-destructive-light text-destructive-base border-destructive-base/20",
+      colorClass: "text-destructive",
+      badgeClass: "bg-destructive/10 text-destructive",
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      {cards.map((c) => {
+    <div className="flex flex-col sm:flex-row sm:items-center py-1">
+      {cards.map((c, idx) => {
         const Icon = c.icon;
         const isSelected = activeTab === c.id;
         return (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => onSelectTab(isSelected ? "all" : c.id)}
-            className={`text-left p-3.5 rounded-xl border transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-              isSelected
-                ? "border-primary bg-card ring-2 ring-primary/25 shadow-md"
-                : "border-border-strong bg-card shadow-sm hover:shadow-md hover:border-ink-400"
-            }`}
-            aria-label={`${c.label}: ${c.count}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
-                {c.label}
-              </span>
-              <Icon className="w-3.5 h-3.5 text-ink-400 shrink-0" />
-            </div>
-            <div className="flex items-baseline gap-2 mt-2">
-              <span className={`text-2xl font-bold font-mono tabular-nums ${c.colorClass}`}>
-                {c.count}
-              </span>
-              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${c.badgeClass}`}>
-                {c.id === "today" ? "24h" : c.label.split(" ")[0]}
-              </span>
-            </div>
-          </button>
+          <Fragment key={c.id}>
+            {idx > 0 && (
+              <>
+                <Separator orientation="vertical" className="hidden sm:block h-10 mx-3 shrink-0" />
+                <Separator orientation="horizontal" className="sm:hidden my-2" />
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => onSelectTab(isSelected ? "all" : c.id)}
+              className={`flex-1 text-left p-2.5 rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary ${
+                isSelected
+                  ? "bg-primary/10 text-primary"
+                  : "hover:bg-muted/50"
+              }`}
+              aria-label={`${c.label}: ${c.count}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className={`text-[11px] font-semibold uppercase tracking-wider truncate ${
+                    isSelected ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  {c.label}
+                </span>
+                <Icon
+                  className={`size-3.5 shrink-0 ${
+                    isSelected ? "text-primary" : "text-muted-foreground"
+                  }`}
+                />
+              </div>
+              <div className="flex items-baseline gap-2 mt-1.5">
+                <span
+                  className={`text-2xl font-bold font-mono tabular-nums ${
+                    isSelected ? "text-primary" : c.colorClass
+                  }`}
+                >
+                  {c.count}
+                </span>
+                <span
+                  className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                    isSelected ? "bg-primary/20 text-primary" : c.badgeClass
+                  }`}
+                >
+                  {c.id === "today" ? "24h" : c.label.split(" ")[0]}
+                </span>
+              </div>
+            </button>
+          </Fragment>
         );
       })}
     </div>

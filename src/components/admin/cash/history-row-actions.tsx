@@ -58,7 +58,7 @@ export function HistoryRowActions({
         variant="ghost"
         size="sm"
         onClick={() => setIsConfirmOpen(true)}
-        className="min-h-[40px] h-10 px-3 text-xs text-destructive hover:text-destructive hover:bg-destructive-light/60 gap-1.5 focus-visible:ring-2 focus-visible:ring-destructive rounded-lg"
+        className="h-9 px-3 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 rounded-lg"
         title={t("reversalDialogTitle")}
       >
         <Undo2 className="size-3.5" />
@@ -72,11 +72,11 @@ export function HistoryRowActions({
           onConfirm={handleConfirmReversal}
           title={t("reversalDialogTitle")}
           description={
-            <div className="space-y-2">
+            <div className="space-y-2 text-xs">
               <p>
                 {t("reversalDescription", { name: courierName, date: businessDate })}
               </p>
-              <p className="p-2.5 bg-destructive-light text-destructive-base rounded-lg border border-destructive-base/20 font-medium">
+              <p className="p-2.5 bg-destructive/10 text-destructive rounded-lg border border-destructive/20 font-medium">
                 {t("reversalConsequence")}
               </p>
             </div>

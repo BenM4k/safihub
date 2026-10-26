@@ -6,8 +6,10 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 import { LoginHeader } from "./login-header";
 import { LoginSubmitButton } from "./login-submit-button";
 import { LoginSwitch } from "./login-switch";
@@ -28,10 +30,13 @@ function LoginSuccessBanner() {
   if (!isRegistered && !isReset) return null;
 
   return (
-    <div className="mb-4 p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm font-medium">
-      {isRegistered && t("registeredSuccess")}
-      {isReset && t("resetSuccess")}
-    </div>
+    <Alert variant="success" className="mb-4">
+      <CheckCircle2 className="size-4" />
+      <AlertDescription>
+        {isRegistered && t("registeredSuccess")}
+        {isReset && t("resetSuccess")}
+      </AlertDescription>
+    </Alert>
   );
 }
 
@@ -87,42 +92,40 @@ export function LoginForm() {
       </Suspense>
 
       {serverError && (
-        <div
-          role="alert"
-          className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs sm:text-sm font-medium"
-        >
-          {serverError}
-        </div>
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{serverError}</AlertDescription>
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
         {/* Email field */}
-        <div className="space-y-1.5">
-          <Label htmlFor="login-email" className="text-xs sm:text-sm font-semibold">
-            {t("emailLabel")} <span className="text-red-500">*</span>
-          </Label>
+        <Field data-invalid={Boolean(errors.email)}>
+          <FieldLabel htmlFor="login-email" className="text-xs sm:text-sm font-semibold">
+            {t("emailLabel")} <span className="text-destructive">*</span>
+          </FieldLabel>
           <Input
             id="login-email"
             type="email"
             autoComplete="email"
             placeholder={t("emailPlaceholder")}
-            hasError={Boolean(errors.email)}
+            aria-invalid={Boolean(errors.email)}
             aria-describedby={errors.email ? "email-error" : undefined}
             {...register("email")}
           />
           {errors.email?.message && (
-            <p id="email-error" className="text-xs font-medium text-red-500 dark:text-red-400 mt-1">
+            <FieldError id="email-error">
               {errors.email.message}
-            </p>
+            </FieldError>
           )}
-        </div>
+        </Field>
 
         {/* Password field */}
-        <div className="space-y-1.5">
+        <Field data-invalid={Boolean(errors.password)}>
           <div className="flex items-center justify-between">
-            <Label htmlFor="login-password" className="text-xs sm:text-sm font-semibold">
-              {t("passwordLabel")} <span className="text-red-500">*</span>
-            </Label>
+            <FieldLabel htmlFor="login-password" className="text-xs sm:text-sm font-semibold">
+              {t("passwordLabel")} <span className="text-destructive">*</span>
+            </FieldLabel>
             <Link
               href="/forgot-password"
               className="text-xs font-medium text-primary hover:underline underline-offset-4"
@@ -135,16 +138,16 @@ export function LoginForm() {
             type="password"
             autoComplete="current-password"
             placeholder={t("passwordPlaceholder")}
-            hasError={Boolean(errors.password)}
+            aria-invalid={Boolean(errors.password)}
             aria-describedby={errors.password ? "password-error" : undefined}
             {...register("password")}
           />
           {errors.password?.message && (
-            <p id="password-error" className="text-xs font-medium text-red-500 dark:text-red-400 mt-1">
+            <FieldError id="password-error">
               {errors.password.message}
-            </p>
+            </FieldError>
           )}
-        </div>
+        </Field>
 
         {/* Primary CTA */}
         <div className="pt-2">

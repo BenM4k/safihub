@@ -4,7 +4,12 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Download, Search, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { UsersFilterChips } from "./users-filter-chips";
 import type { UserFiltersState } from "./types";
 
@@ -26,28 +31,35 @@ export function UsersTableToolbar({
   const t = useTranslations("admin.users");
 
   return (
-    <div className="p-4 bg-card rounded-2xl border-2 border-border-strong space-y-3 shadow-2xs">
+    <div className="flex flex-col gap-3 py-1">
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        {/* Search input with search and clear icon */}
-        <div className="relative flex-1 min-w-[260px]">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-ink-400 pointer-events-none" />
-          <Input
-            value={filters.search}
-            onChange={(e) => onChange({ ...filters, search: e.target.value })}
-            placeholder={t("searchPlaceholder")}
-            className="pl-10 pr-9 min-h-[40px] text-xs bg-surface border-2 border-border-strong text-ink-900 placeholder:text-ink-400 focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary rounded-xl"
-            aria-label={t("searchPlaceholder")}
-          />
-          {filters.search && (
-            <button
-              type="button"
-              onClick={() => onChange({ ...filters, search: "" })}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-800 focus:outline-none"
-              aria-label={t("clearSearch")}
-            >
-              <X className="size-4" />
-            </button>
-          )}
+        {/* Search input with input-group matching auth style */}
+        <div className="flex-1 min-w-[260px]">
+          <InputGroup className="min-h-11">
+            <InputGroupAddon align="inline-start">
+              <Search className="size-4 text-muted-foreground" />
+            </InputGroupAddon>
+            <InputGroupInput
+              value={filters.search}
+              onChange={(e) => onChange({ ...filters, search: e.target.value })}
+              placeholder={t("searchPlaceholder")}
+              className="text-sm"
+              aria-label={t("searchPlaceholder")}
+            />
+            {filters.search && (
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => onChange({ ...filters, search: "" })}
+                  aria-label={t("clearSearch")}
+                >
+                  <X className="size-3.5" />
+                </InputGroupButton>
+              </InputGroupAddon>
+            )}
+          </InputGroup>
         </div>
 
         {/* Filter dropdowns */}
@@ -56,7 +68,7 @@ export function UsersTableToolbar({
           <select
             value={filters.role}
             onChange={(e) => onChange({ ...filters, role: e.target.value })}
-            className="min-h-[40px] px-3 rounded-xl border-2 border-border-strong bg-surface text-xs font-semibold text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+            className="h-11 px-3 rounded-xl border border-border-strong bg-card text-xs font-medium text-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 outline-none cursor-pointer"
             aria-label={t("filterRole")}
           >
             <option value="all">{t("roleAll")}</option>
@@ -68,7 +80,7 @@ export function UsersTableToolbar({
           <select
             value={filters.status}
             onChange={(e) => onChange({ ...filters, status: e.target.value })}
-            className="min-h-[40px] px-3 rounded-xl border-2 border-border-strong bg-surface text-xs font-semibold text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+            className="h-11 px-3 rounded-xl border border-border-strong bg-card text-xs font-medium text-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 outline-none cursor-pointer"
             aria-label={t("filterStatus")}
           >
             <option value="all">{t("statusAll")}</option>
@@ -78,14 +90,16 @@ export function UsersTableToolbar({
           </select>
 
           {/* Link to Customers screen */}
-          <Link
-            href="/admin/customers"
-            className="min-h-[40px] px-3 rounded-xl border-2 border-border-strong bg-surface hover:bg-muted text-xs font-semibold text-ink-800 inline-flex items-center gap-1.5 transition"
-            title={t("customersScreenTitle")}
+          <Button
+            asChild
+            variant="outline"
+            className="h-11 px-3 text-xs font-medium gap-1.5"
           >
-            <Users className="size-4 text-primary" />
-            <span className="hidden sm:inline">{t("customersScreenLink")}</span>
-          </Link>
+            <Link href="/admin/customers" title={t("customersScreenTitle")}>
+              <Users className="size-4 text-primary" />
+              <span className="hidden sm:inline">{t("customersScreenLink")}</span>
+            </Link>
+          </Button>
 
           {/* Export CSV button */}
           <Button
@@ -93,7 +107,7 @@ export function UsersTableToolbar({
             variant="outline"
             onClick={onExport}
             disabled={totalFiltered === 0}
-            className="min-h-[40px] px-3 text-xs font-semibold border-2 border-border-strong bg-surface hover:bg-muted text-ink-800 inline-flex items-center gap-1.5 rounded-xl"
+            className="h-11 px-3 text-xs font-medium gap-1.5"
             aria-label={t("export")}
           >
             <Download className="size-4" />

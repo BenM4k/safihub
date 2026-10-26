@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import { addHouseExclusionAction, removeHouseExclusionAction } from "@/actions/admin-house.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import type { HouseExclusionRecord, MasterFabricRecord, MasterItemRecord } from "@/dal";
 
 interface HouseExclusionsFormProps {
@@ -39,35 +41,56 @@ export function HouseExclusionsForm({
   }
 
   return (
-    <div className="p-5 bg-white rounded-xl border border-border shadow-xs space-y-4">
-      <div className="font-bold text-sm text-heading">{t("exclusionsTab")}</div>
-      {error && <div className="text-xs text-destructive">{error}</div>}
+    <div className="space-y-4">
+      <div className="font-bold text-sm text-foreground">{t("exclusionsTab")}</div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-      <form id="excl-form-el" action={handleAdd} className="p-3 bg-slate-50/80 rounded-lg border border-border space-y-3">
-        <div className="font-bold text-xs text-heading">{t("addExclusion")}</div>
+      <form id="excl-form-el" action={handleAdd} className="p-3 bg-muted/20 rounded-lg border border-border space-y-3">
+        <div className="font-semibold text-xs text-foreground">{t("addExclusion")}</div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="exItem" className="text-xs">Article exclu (optionnel)</Label>
-            <select id="exItem" name="itemId" className="h-8 w-full rounded border border-input bg-white px-2 text-xs">
+          <Field className="space-y-1">
+            <FieldLabel htmlFor="exItem" className="text-xs font-semibold text-foreground">
+              Article exclu (optionnel)
+            </FieldLabel>
+            <select
+              id="exItem"
+              name="itemId"
+              className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs text-foreground ring-offset-background"
+            >
               <option value="">-- Aucun --</option>
               {masterItems.map((it) => (
                 <option key={it.id} value={it.id}>{it.nameFr}</option>
               ))}
             </select>
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="exFabric" className="text-xs">Tissu exclu (optionnel)</Label>
-            <select id="exFabric" name="fabricId" className="h-8 w-full rounded border border-input bg-white px-2 text-xs">
+          </Field>
+
+          <Field className="space-y-1">
+            <FieldLabel htmlFor="exFabric" className="text-xs font-semibold text-foreground">
+              Tissu exclu (optionnel)
+            </FieldLabel>
+            <select
+              id="exFabric"
+              name="fabricId"
+              className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs text-foreground ring-offset-background"
+            >
               <option value="">-- Aucun --</option>
               {masterFabrics.map((f) => (
                 <option key={f.id} value={f.id}>{f.nameFr}</option>
               ))}
             </select>
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="exNote" className="text-xs">Remarque pour le client</Label>
+          </Field>
+
+          <Field className="space-y-1">
+            <FieldLabel htmlFor="exNote" className="text-xs font-semibold text-foreground">
+              Remarque pour le client
+            </FieldLabel>
             <Input id="exNote" name="note" placeholder="ex: Risque de décoloration..." className="h-8 text-xs" />
-          </div>
+          </Field>
         </div>
         <div className="flex justify-end">
           <Button type="submit" disabled={loading} size="sm" className="h-8 text-xs">
@@ -83,7 +106,7 @@ export function HouseExclusionsForm({
           exclusions.map((ex) => (
             <div key={ex.id} className="py-2.5 flex items-center justify-between text-xs">
               <div>
-                <span className="font-semibold text-heading">
+                <span className="font-semibold text-foreground">
                   {ex.itemNameFr || ex.fabricNameFr || "Exclusion"}
                 </span>
                 {ex.note && <span className="text-muted-foreground ml-2">({ex.note})</span>}
@@ -92,7 +115,7 @@ export function HouseExclusionsForm({
                 variant="ghost"
                 size="sm"
                 onClick={() => removeHouseExclusionAction(ex.id, houseId)}
-                className="h-7 text-xs text-destructive hover:bg-red-50"
+                className="h-7 text-xs text-destructive hover:bg-destructive/10"
               >
                 Supprimer
               </Button>

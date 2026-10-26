@@ -1,7 +1,23 @@
 "use client";
 
-import { X, PackageCheck, AlertCircle } from "lucide-react";
+import { PackageCheck, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { formatMoney, formatFrenchDate } from "@/lib/cash-formatters";
 import type { DeliveredOrderBreakdown } from "./types";
 
@@ -20,116 +36,98 @@ export function OrdersBreakdownDialog({
   payeeType,
   orders,
 }: OrdersBreakdownDialogProps) {
-  if (!isOpen) return null;
-
   const isHouse = payeeType === "house";
   const title = isHouse ? "Commandes livrées" : "Missions livrées";
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="orders-dialog-title"
-    >
-      <div className="w-full max-w-2xl bg-card rounded-2xl shadow-2xl border-2 border-border-strong overflow-hidden flex flex-col max-h-[85vh]">
-        {/* Header */}
-        <div className="p-4 border-b-2 border-border-strong flex items-center justify-between bg-surface">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
           <div className="flex items-center gap-2">
-            <div className="size-9 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+            <div className="size-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
               <PackageCheck className="size-5" />
             </div>
             <div>
-              <h2 id="orders-dialog-title" className="text-sm font-bold text-heading">
+              <DialogTitle className="text-sm font-bold text-foreground">
                 {title} · {payeeName}
-              </h2>
-              <p className="text-xs text-muted-foreground">
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
                 Détail des {orders.length} {orders.length > 1 ? "commandes constituant" : "commande constituant"} le solde
-              </p>
+              </DialogDescription>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-ink-500 hover:text-ink-800 rounded-lg hover:bg-ink-100 transition-colors"
-            aria-label="Fermer"
-          >
-            <X className="size-4.5" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        {/* Content Table */}
-        <div className="overflow-y-auto p-4 flex-1">
+        <div className="overflow-y-auto flex-1 pt-1">
           {orders.length === 0 ? (
-            <div className="py-8 text-center text-ink-600 text-xs flex flex-col items-center gap-2">
-              <AlertCircle className="size-5 text-ink-400" />
+            <div className="py-8 text-center text-muted-foreground text-xs flex flex-col items-center gap-2">
+              <AlertCircle className="size-5 text-muted-foreground" />
               <span>Aucune commande détaillée trouvée pour cette période.</span>
             </div>
           ) : (
-            <div className="border-2 border-border-strong rounded-xl overflow-hidden shadow-2xs">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b-2 border-border-strong bg-surface text-ink-700 font-semibold">
-                    <th className="py-2.5 px-3">Code</th>
-                    <th className="py-2.5 px-3">Date</th>
+            <div className="border border-border rounded-xl overflow-hidden shadow-2xs">
+              <Table className="text-xs">
+                <TableHeader>
+                  <TableRow className="border-b border-border bg-muted/40 text-foreground font-semibold hover:bg-muted/40">
+                    <TableHead className="py-2.5 px-3 font-semibold text-foreground">Code</TableHead>
+                    <TableHead className="py-2.5 px-3 font-semibold text-foreground">Date</TableHead>
                     {isHouse ? (
                       <>
-                        <th className="py-2.5 px-3 text-right">Brut</th>
-                        <th className="py-2.5 px-3 text-right">Commission</th>
-                        <th className="py-2.5 px-3 text-right">Net dû</th>
+                        <TableHead className="py-2.5 px-3 text-right font-semibold text-foreground">Brut</TableHead>
+                        <TableHead className="py-2.5 px-3 text-right font-semibold text-foreground">Commission</TableHead>
+                        <TableHead className="py-2.5 px-3 text-right font-semibold text-foreground">Net dû</TableHead>
                       </>
                     ) : (
-                      <th className="py-2.5 px-3 text-right">Rémunération</th>
+                      <TableHead className="py-2.5 px-3 text-right font-semibold text-foreground">Rémunération</TableHead>
                     )}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-strong">
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-surface/60 transition-colors">
-                      <td className="py-2.5 px-3 font-mono font-bold text-heading">
+                    <TableRow key={order.id} className="hover:bg-muted/40 transition-colors">
+                      <TableCell className="py-2.5 px-3 font-mono font-bold text-foreground">
                         {order.code}
-                      </td>
-                      <td className="py-2.5 px-3 text-ink-600 font-mono">
+                      </TableCell>
+                      <TableCell className="py-2.5 px-3 text-muted-foreground font-mono">
                         {formatFrenchDate(order.deliveredAt || order.createdAt)}
-                      </td>
+                      </TableCell>
                       {isHouse ? (
                         <>
-                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-ink-700">
+                          <TableCell className="py-2.5 px-3 text-right font-mono tabular-nums text-foreground">
                             {formatMoney(order.itemsTotal ?? 0, "CDF")}
-                          </td>
-                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-ink-500">
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-right font-mono tabular-nums text-muted-foreground">
                             -{formatMoney(order.commissionAmount ?? 0, "CDF")}
-                          </td>
-                          <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-heading">
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-foreground">
                             {formatMoney(order.owedToHouse ?? 0, "CDF")}
-                          </td>
+                          </TableCell>
                         </>
                       ) : (
-                        <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-emerald-700">
+                        <TableCell className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-emerald-600 dark:text-emerald-400">
                           {formatMoney(order.amount ?? 0, "CDF")}
-                        </td>
+                        </TableCell>
                       )}
-                    </tr>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-3 border-t-2 border-border-strong bg-surface flex justify-end">
+        <DialogFooter className="pt-2">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={onClose}
-            className="min-h-[40px] px-4 font-semibold text-xs border-border-strong text-ink-700"
+            className="h-9 px-4 font-semibold text-xs"
           >
             Fermer
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

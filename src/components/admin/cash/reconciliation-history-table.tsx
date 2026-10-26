@@ -3,6 +3,14 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { EmptyState } from "@/components/admin/shared/empty-state";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { HistoryFilters, type HistoryFilterState } from "./history-filters";
 import { HistoryTableRow } from "./history-table-row";
 import { HistoryPagination } from "./history-pagination";
@@ -99,10 +107,10 @@ export function ReconciliationHistoryTable({ logs }: ReconciliationHistoryTableP
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border-strong shadow-xs overflow-hidden flex flex-col">
-      <div className="p-4 border-b border-border-strong flex items-center justify-between">
+    <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden flex flex-col">
+      <div className="p-4 border-b border-border flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-bold text-heading font-display">
+          <h2 className="text-sm font-bold text-foreground font-display">
             {t("historyTitle")}
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -123,32 +131,32 @@ export function ReconciliationHistoryTable({ logs }: ReconciliationHistoryTableP
       />
 
       <div className="overflow-x-auto relative">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="border-b border-border-strong bg-surface/95 backdrop-blur-xs text-ink-700 font-semibold sticky top-0 z-10">
-              <th scope="col" className="py-3 px-4">{t("accountingDate")}</th>
-              <th scope="col" className="py-3 px-4">{t("courier")}</th>
-              <th scope="col" className="py-3 px-4 text-right">{t("expected")}</th>
-              <th scope="col" className="py-3 px-4 text-right">{t("received")}</th>
-              <th scope="col" className="py-3 px-4 text-right">{t("difference")}</th>
-              <th scope="col" className="py-3 px-4 text-center">{t("status")}</th>
-              <th scope="col" className="py-3 px-4 hidden md:table-cell">{t("reconciledBy")}</th>
-              <th scope="col" className="py-3 px-4 hidden lg:table-cell">{t("dateTime")}</th>
-              <th scope="col" className="py-3 px-4 min-w-[180px] hidden sm:table-cell">{t("noteLabel")}</th>
-              <th scope="col" className="py-3 px-4 text-right">{t("actions")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border-strong/80">
+        <Table className="text-xs">
+          <TableHeader>
+            <TableRow className="border-b border-border bg-muted/40 font-semibold sticky top-0 z-10 hover:bg-muted/40">
+              <TableHead className="py-3 px-4 font-semibold text-foreground">{t("accountingDate")}</TableHead>
+              <TableHead className="py-3 px-4 font-semibold text-foreground">{t("courier")}</TableHead>
+              <TableHead className="py-3 px-4 text-right font-semibold text-foreground">{t("expected")}</TableHead>
+              <TableHead className="py-3 px-4 text-right font-semibold text-foreground">{t("received")}</TableHead>
+              <TableHead className="py-3 px-4 text-right font-semibold text-foreground">{t("difference")}</TableHead>
+              <TableHead className="py-3 px-4 text-center font-semibold text-foreground">{t("status")}</TableHead>
+              <TableHead className="py-3 px-4 hidden md:table-cell font-semibold text-foreground">{t("reconciledBy")}</TableHead>
+              <TableHead className="py-3 px-4 hidden lg:table-cell font-semibold text-foreground">{t("dateTime")}</TableHead>
+              <TableHead className="py-3 px-4 min-w-[180px] hidden sm:table-cell font-semibold text-foreground">{t("noteLabel")}</TableHead>
+              <TableHead className="py-3 px-4 text-right font-semibold text-foreground">{t("actions")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {currentPageLogs.length === 0 ? (
-              <tr>
-                <td colSpan={10} className="py-8">
+              <TableRow>
+                <TableCell colSpan={10} className="py-8">
                   <EmptyState
                     icon={FileText}
                     title={t("noHistory")}
                     description={t("historyEmptyFiltered")}
                   />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               currentPageLogs.map((log) => (
                 <HistoryTableRow
@@ -159,14 +167,14 @@ export function ReconciliationHistoryTable({ logs }: ReconciliationHistoryTableP
                 />
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       <HistoryPagination
         page={page}
-        pageSize={PAGE_SIZE}
         totalItems={filteredLogs.length}
+        pageSize={PAGE_SIZE}
         onPageChange={setPage}
       />
     </div>

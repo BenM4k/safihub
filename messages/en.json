@@ -323,6 +323,26 @@
     "welcome": "Welcome"
   },
   "admin": {
+    "shared": {
+      "loadingData": "Loading data...",
+      "noData": "No data available",
+      "paginationRange": "Showing {start} to {end} of {total} entries",
+      "prevPage": "Previous page",
+      "nextPage": "Next page",
+      "processing": "Processing...",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "actions": "Actions",
+      "close": "Close",
+      "removeFilter": "Remove filter",
+      "reasonRequiredError": "Please provide a reason to continue.",
+      "unexpectedError": "Unexpected error",
+      "operationError": "An error occurred during the operation.",
+      "reasonRequired": "Reason required",
+      "reasonPlaceholder": "Specify the reason for this operation...",
+      "copyNumber": "Copy number",
+      "numberCopied": "Number copied"
+    },
     "nav": {
       "title": "Operations Console",
       "groupOperations": "Operations",
@@ -497,7 +517,8 @@
       "deliveryFee": "Delivery Fee (CDF)",
       "distanceLevel": "Distance Level",
       "savePair": "Save Rate",
-      "currency": "Currency"
+      "currency": "Currency",
+      "save": "Save"
     },
     "coverage": {
       "title": "Coverage Management",
@@ -537,6 +558,7 @@
     "houses": {
       "title": "Partner Laundry Houses",
       "subtitle": "Partner settings, commissions, operating hours, and capacities",
+      "openDelegatedView": "Open delegated view",
       "addHouse": "Add a pressing",
       "save": "Save",
       "cancel": "Cancel",
@@ -662,7 +684,19 @@
       "assignSuccess": "Laundry house assigned successfully.",
       "unassignSuccess": "Laundry house unassigned successfully.",
       "removeHouseNoSiblingsDesc": "This action will remove zone {zoneName} from the courier.",
-      "unassignPending": "Removing..."
+      "unassignPending": "Removing...",
+      "colName": "Name",
+      "colPhone": "Phone",
+      "colCashCeiling": "Cash ceiling",
+      "colSecurityDeposit": "Security deposit",
+      "colShiftsZones": "Shifts / Zones",
+      "colStatus": "Status",
+      "colActions": "Action",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "manage": "Manage",
+      "courierCount": "{count} courier(s)",
+      "defaultCeiling": "Default"
     },
     "users": {
       "title": "User Accounts Management",
@@ -820,7 +854,8 @@
       "lastUpdatedDate": "Last updated: {date}",
       "errorTitle": "An error occurred while loading users",
       "errorDescription": "Unable to load user accounts. Please check your connection or try again.",
-      "retry": "Retry"
+      "retry": "Retry",
+      "noReasonSpecified": "No reason specified"
     },
     "customers": {
       "title": "Customers",
@@ -928,7 +963,8 @@
         "cancelBtn": "Cancel",
         "processingBtn": "Processing...",
         "confirmUnblockBtn": "Confirm unblock",
-        "confirmBlockBtn": "Confirm block"
+        "confirmBlockBtn": "Confirm block",
+        "genericError": "An error occurred during the operation."
       },
       "mergeDialog": {
         "stepTitle": "Merge Customer Accounts · Step {step}/4",
@@ -1047,11 +1083,25 @@
         "phone": "Contact Phone",
         "notesTitle": "Notes & Preferences",
         "noNotes": "No special notes for this profile."
-      }
+      },
+      "retry": "Retry"
     },
     "orders": {
       "title": "Order Management",
       "subtitle": "Order supervision, full audit timeline, and on-behalf actions",
+      "backToOrders": "Back to orders",
+      "orderNumber": "Order #{code}",
+      "channel": "Channel",
+      "trackingToken": "Tracking token",
+      "clientTrackingView": "Client tracking",
+      "financialsTitle": "Financials & Pricing",
+      "itemsTotal": "Items",
+      "deliveryConfirmationCode": "Delivery code",
+      "commission": "Commission ({rate}%)",
+      "frozenRate": "Frozen rate: 1 USD = {rate} CDF",
+      "unspecified": "Not specified",
+      "guestCustomer": "Guest customer",
+      "landmark": "Landmark",
       "newOrderBtn": "New order",
       "filterAll": "All",
       "onBehalfTitle": "Action on Behalf of House",
@@ -1133,7 +1183,102 @@
       "cancelConfirm": "Confirm cancellation",
       "cancelReasonPlaceholder": "Cancellation reason...",
       "loadErrorTitle": "Error loading orders",
-      "retryButton": "Retry"
+      "retryButton": "Retry",
+      "cancelAuditNotice": "This action will permanently cancel the order and record an audit event on behalf of the operator.",
+      "cancelReasonLabel": "Cancellation reason",
+      "cancelReasonRequired": "A cancellation reason is required for audit traceability.",
+      "cancelling": "Cancelling...",
+      "cancelFailed": "Failed to cancel order",
+      "close": "Close",
+      "orderLabel": "Order",
+      "currentHouse": "Current laundry house",
+      "newHouse": "New partner laundry house",
+      "selectHousePlaceholder": "Select a laundry house...",
+      "reassignReasonLabel": "Reassignment reason (optional)",
+      "reassignReasonPlaceholder": "E.g. Insufficient capacity, SLA exceeded...",
+      "reassignHouseRequired": "Please select a new laundry house.",
+      "reassignFailed": "Reassignment failed",
+      "reassigning": "Reassigning...",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "fullPage": "Full page",
+      "clientTracking": "Customer tracking",
+      "systemUuid": "System Identifier (UUID)",
+      "orderedItems": "Ordered items",
+      "itemsCount": "Items ({count})",
+      "noItemsFound": "No items found.",
+      "itemStandardService": "Standard service",
+      "itemCustomLabel": "Custom item",
+      "itemStatusAccepted": "Accepted",
+      "itemStatusReturned": "Returned",
+      "itemFlagged": "Flagged",
+      "itemDeclared": "Declared",
+      "itemCollected": "Collected",
+      "itemReceived": "Received",
+      "itemUnitPrice": "Unit price",
+      "itemFabric": "Fabric",
+      "itemAndService": "Item & Service",
+      "addOperationalNote": "Add operational note",
+      "notePlaceholder": "E.g. Confirmation received via direct phone call at 2:30 PM...",
+      "addingNote": "Saving...",
+      "saveNote": "Save note",
+      "addNoteBtn": "Add note",
+      "noAuditEvents": "No audit events recorded.",
+      "loadingAudit": "Loading audit history...",
+      "auditActionOnBehalf": "Action on behalf of laundry house ({house})",
+      "onBehalfIntervention": "Administrative intervention on behalf of: {house}",
+      "onBehalfConfirmAccept": "Confirm acceptance on behalf of laundry house",
+      "onBehalfConfirmReject": "Confirm rejection on behalf of laundry house",
+      "onBehalfRejectReasonRequired": "A rejection reason is required",
+      "acceptOnBehalfBtn": "Accept for house",
+      "rejectOnBehalfBtn": "Reject for house",
+      "activeFiltersLabel": "Active filters:",
+      "chipSearch": "Search: \"{search}\"",
+      "chipTab": "Tab: {tab}",
+      "chipPeriod": "Period: {period}",
+      "chipPressing": "House: {house}",
+      "chipChannel": "Channel: {channel}",
+      "paginationPrev": "Previous",
+      "paginationNext": "Next",
+      "selectAll": "Select all orders",
+      "selectOrder": "Select order {code}",
+      "deselectAll": "Deselect all",
+      "actionsForOrder": "Actions for order {code}",
+      "manualForm": {
+        "channelAndContact": "1. Channel and Customer Contact",
+        "source": "Channel",
+        "sourceWhatsapp": "WhatsApp",
+        "sourcePhone": "Phone Call",
+        "phone": "Phone number",
+        "phoneRequired": "Required",
+        "customerName": "Customer name (optional)",
+        "customerNamePlaceholder": "Name (or leave empty)",
+        "locationAndHouse": "2. Location & Laundry House",
+        "neighborhood": "Customer neighborhood",
+        "landmark": "Precise landmark",
+        "landmarkPlaceholder": "Av. Maniema, n° 12...",
+        "house": "Partner laundry house",
+        "slotStart": "Slot start (optional)",
+        "slotEnd": "Slot end (optional)",
+        "cartItems": "3. Cart items",
+        "addLine": "Add line",
+        "service": "Service",
+        "item": "Item",
+        "fabric": "Fabric",
+        "quantity": "Quantity",
+        "submit": "Validate and create order",
+        "submitting": "Validating cart...",
+        "successTitle": "Order created successfully!",
+        "orderCode": "Code",
+        "trackingToken": "Token",
+        "trackLink": "Customer tracking link →",
+        "newOrder": "New entry",
+        "invalidSlotStart": "Invalid slot start date",
+        "invalidSlotEnd": "Invalid slot end date",
+        "unexpectedError": "Unexpected error during creation"
+      },
+      "errorLoadingOrders": "Error loading orders",
+      "retryOrders": "Retry"
     },
     "dispatch": {
       "title": "Operational Dispatch",
@@ -1234,7 +1379,8 @@
       "exportLedgerDesc": "Append-only accounting entries: collections, commissions, and settlements.",
       "exportCustomersName": "Registered Customers",
       "exportCustomersDesc": "Customer list with contact information, status, and registration date.",
-      "exportError": "Failed to download export file."
+      "exportError": "Failed to download export file.",
+      "saveExchangeRate": "Save Rate"
     },
     "cash": {
       "title": "Cash Controls & Daily Reconciliation",
@@ -1484,7 +1630,8 @@
       "reverseReasonPlaceholder": "E.g. Reference entry error, duplicate bank transfer...",
       "noPendingHouses": "No pending balance for pressings in this period",
       "noPendingCouriers": "No pending balance for couriers in this period",
-      "noHistory": "No settlement records found in history"
+      "noHistory": "No settlement records found in history",
+      "totalPaid": "Total Paid"
     },
     "applications": {
       "title": "Partner Laundry Applications",
@@ -2785,4 +2932,3 @@
     "createFailed": "An error occurred while saving your application."
   }
 }
-

@@ -1,14 +1,12 @@
 "use client";
 
-// Admin review controls for orders in `awaiting_confirmation` (first-order screening).
-// Decomposition: ScreeningConfirmForm + ScreeningRejectForm, each driven by useActionState.
-
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { confirmFirstOrderAction, rejectFirstOrderAction } from "@/actions/admin-order.actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 type FormState = { error: string | null };
 const initialState: FormState = { error: null };
@@ -21,9 +19,9 @@ export function FirstOrderScreeningActions({ orderId }: ScreeningProps) {
   const t = useTranslations("admin.orders");
 
   return (
-    <div className="p-5 bg-white rounded-xl border border-border shadow-xs space-y-4">
+    <div className="p-5 bg-background rounded-lg border border-border space-y-4">
       <div>
-        <h2 className="text-sm font-bold text-heading">{t("screeningTitle")}</h2>
+        <h2 className="text-sm font-bold text-foreground">{t("screeningTitle")}</h2>
         <p className="text-xs text-muted-foreground mt-0.5">{t("screeningDescription")}</p>
       </div>
       <ScreeningConfirmForm orderId={orderId} />
@@ -48,12 +46,16 @@ function ScreeningConfirmForm({ orderId }: ScreeningProps) {
   );
 
   return (
-    <form action={formAction} className="p-4 bg-emerald-50/50 rounded-lg border border-emerald-200 space-y-3">
-      <div className="space-y-1">
-        <Label htmlFor="screening-note" className="text-xs">{t("screeningNote")}</Label>
-        <Input id="screening-note" name="note" className="h-8 text-xs bg-white" />
-      </div>
-      {state.error && <p className="text-xs text-destructive">{state.error}</p>}
+    <form action={formAction} className="p-4 bg-emerald-500/5 rounded-lg border border-emerald-500/20 space-y-3">
+      <Field>
+        <FieldLabel htmlFor="screening-note" className="text-xs font-semibold">{t("screeningNote")}</FieldLabel>
+        <Input id="screening-note" name="note" className="h-8 text-xs" />
+      </Field>
+      {state.error && (
+        <Alert variant="destructive">
+          <AlertDescription className="text-xs">{state.error}</AlertDescription>
+        </Alert>
+      )}
       <div className="flex justify-end">
         <Button
           id="screening-confirm-btn"
@@ -86,12 +88,16 @@ function ScreeningRejectForm({ orderId }: ScreeningProps) {
   );
 
   return (
-    <form action={formAction} className="p-4 bg-red-50/50 rounded-lg border border-red-200 space-y-3">
-      <div className="space-y-1">
-        <Label htmlFor="screening-reason" className="text-xs">{t("screeningRejectReason")}</Label>
-        <Input id="screening-reason" name="reason" required className="h-8 text-xs bg-white" />
-      </div>
-      {state.error && <p className="text-xs text-destructive">{state.error}</p>}
+    <form action={formAction} className="p-4 bg-destructive/5 rounded-lg border border-destructive/20 space-y-3">
+      <Field>
+        <FieldLabel htmlFor="screening-reason" className="text-xs font-semibold">{t("screeningRejectReason")}</FieldLabel>
+        <Input id="screening-reason" name="reason" required className="h-8 text-xs" />
+      </Field>
+      {state.error && (
+        <Alert variant="destructive">
+          <AlertDescription className="text-xs">{state.error}</AlertDescription>
+        </Alert>
+      )}
       <div className="flex justify-end">
         <Button
           id="screening-reject-btn"

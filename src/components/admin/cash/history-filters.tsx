@@ -30,17 +30,17 @@ export function HistoryFilters({
   const t = useTranslations("admin.cash");
 
   return (
-    <div className="p-4 border-b border-border-strong bg-surface/50 flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
+    <div className="p-4 border-b border-border bg-muted/20 flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
       {/* Search and Dropdowns */}
       <div className="flex items-center gap-2.5 flex-1 flex-wrap">
         {/* Search */}
         <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
-          <Search className="size-4 text-ink-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <Input
             value={filters.search}
             onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
             placeholder={t("searchPlaceholder")}
-            className="pl-9 h-10 min-h-[40px] text-xs border-border-strong"
+            className="pl-9 h-10 text-xs border-border"
             aria-label={t("searchPlaceholder")}
           />
         </div>
@@ -54,7 +54,7 @@ export function HistoryFilters({
               status: e.target.value as HistoryFilterState["status"],
             })
           }
-          className="h-10 min-h-[40px] px-3 text-xs rounded-xl border border-border-strong bg-card font-medium focus:ring-2 focus:ring-primary/20 text-heading"
+          className="h-10 px-3 text-xs rounded-xl border border-border bg-card font-medium focus:ring-2 focus:ring-primary/20 text-foreground"
           aria-label={t("filterStatus")}
         >
           <option value="all">{t("filterStatusAll")}</option>
@@ -70,7 +70,7 @@ export function HistoryFilters({
             onChange={(e) =>
               onFilterChange({ ...filters, courierId: e.target.value })
             }
-            className="h-10 min-h-[40px] px-3 text-xs rounded-xl border border-border-strong bg-card font-medium focus:ring-2 focus:ring-primary/20 max-w-[170px] truncate text-heading"
+            className="h-10 px-3 text-xs rounded-xl border border-border bg-card font-medium focus:ring-2 focus:ring-primary/20 max-w-[170px] truncate text-foreground"
             aria-label={t("filterCourier")}
           >
             <option value="all">{t("allCouriers")}</option>
@@ -91,7 +91,7 @@ export function HistoryFilters({
               period: e.target.value as HistoryFilterState["period"],
             })
           }
-          className="h-10 min-h-[40px] px-3 text-xs rounded-xl border border-border-strong bg-card font-medium focus:ring-2 focus:ring-primary/20 text-heading"
+          className="h-10 px-3 text-xs rounded-xl border border-border bg-card font-medium focus:ring-2 focus:ring-primary/20 text-foreground"
           aria-label={t("filterPeriod")}
         >
           <option value="30_days">{t("filterPeriod30Days")}</option>
@@ -110,7 +110,7 @@ export function HistoryFilters({
           variant="outline"
           size="sm"
           onClick={onExportCsv}
-          className="h-10 min-h-[40px] px-3.5 text-xs font-semibold gap-1.5 border-border-strong hover:bg-surface focus-visible:ring-2 focus-visible:ring-primary"
+          className="h-10 px-3.5 text-xs font-semibold gap-1.5 border-border hover:bg-muted/40"
           title={t("exportCsv")}
         >
           <Download className="size-3.5" />

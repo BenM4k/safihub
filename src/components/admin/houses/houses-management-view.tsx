@@ -58,7 +58,7 @@ export function HousesManagementView({
           <Button
             type="button"
             onClick={() => setCreateDrawerOpen(true)}
-            className="min-h-[40px] px-4 text-xs font-bold bg-primary hover:bg-primary-hover text-white shadow-xs inline-flex items-center gap-2 border-2 border-primary"
+            className="h-9 px-3.5 text-xs font-semibold gap-1.5"
             aria-label={t("addHouse")}
           >
             <Plus className="size-4" />
@@ -67,17 +67,17 @@ export function HousesManagementView({
         }
       >
         {/* Quick KPI badges */}
-        <div className="flex items-center gap-2 pt-2 flex-wrap text-xs font-semibold">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700">
+        <div className="flex items-center gap-2 pt-2 flex-wrap text-xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-muted text-foreground font-medium">
             <Store className="size-3.5 text-primary" />
             <span>{t("kpiHousesBadge", { count: totalHousesCount })}</span>
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-success-light border-2 border-success-base/30 text-success-base">
-            <span className="size-2 rounded-full bg-success-base" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium">
+            <span className="size-1.5 rounded-full bg-emerald-500" />
             <span>{t("kpiActiveBadge", { count: activeHousesCount })}</span>
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700">
-            <Landmark className="size-3.5 text-emerald-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-muted text-foreground font-medium">
+            <Landmark className="size-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>{t("kpiBalanceOwedBadge", { amount: formatMoney(totalBalanceOwedCDF, "CDF") })}</span>
           </span>
         </div>

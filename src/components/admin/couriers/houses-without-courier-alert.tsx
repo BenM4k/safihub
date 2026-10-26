@@ -13,7 +13,7 @@ export async function HousesWithoutCourierAlert() {
   return (
     <div
       role="alert"
-      className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 space-y-2.5 animate-in fade-in-50"
+      className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 space-y-2.5 animate-in fade-in-50"
     >
       <div className="flex items-start gap-2.5">
         <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
@@ -30,7 +30,7 @@ export async function HousesWithoutCourierAlert() {
           <Badge
             key={h.id}
             variant="outline"
-            className="bg-card text-heading border-border text-xs py-1 px-2.5 gap-1.5 shadow-2xs"
+            className="bg-card text-foreground border-border text-xs py-1 px-2.5 gap-1.5 shadow-2xs"
           >
             <Store className="size-3 text-muted-foreground" />
             <span className="font-semibold">{h.name}</span>

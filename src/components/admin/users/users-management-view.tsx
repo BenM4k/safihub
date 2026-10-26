@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Shield, ShieldAlert, UserCheck, UserPlus, Users } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/admin/shared/page-header";
 import { UsersDialogsContainer } from "./users-dialogs-container";
 import { useUsersFilter } from "./hooks/use-users-filter";
 import { exportUsersCsv } from "./users-export";
+import { UsersKpiBadges } from "./users-kpi-badges";
 import { UsersTable } from "./users-table";
 import { UsersTableToolbar } from "./users-table-toolbar";
 import type { UserDetailsTab, UserFiltersState, UserRow } from "./types";
@@ -81,7 +82,7 @@ export function UsersManagementView({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Page Header with primary action & KPI badges */}
       <PageHeader
         title={t("title")}
@@ -91,7 +92,7 @@ export function UsersManagementView({
             type="button"
             disabled={!isAdmin}
             onClick={() => setCreateSheetOpen(true)}
-            className="min-h-[40px] px-4 text-xs font-bold bg-primary hover:bg-primary-hover text-white shadow-xs inline-flex items-center gap-2 border-2 border-primary rounded-xl"
+            className="gap-2"
             aria-label={t("addMember")}
           >
             <UserPlus className="size-4" />
@@ -99,26 +100,12 @@ export function UsersManagementView({
           </Button>
         }
       >
-        <div className="flex items-center gap-2 pt-2 flex-wrap text-xs font-semibold">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700 shadow-2xs">
-            <Users className="size-3.5 text-primary" />
-            <span>{t("kpiTotalBadge", { count: initialUsers.length })}</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700 shadow-2xs">
-            <Shield className="size-3.5 text-purple-600" />
-            <span>{t("kpiStaffBadge", { count: staffCount })}</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700 shadow-2xs">
-            <UserCheck className="size-3.5 text-emerald-600" />
-            <span>{t("kpiActiveBadge", { count: activeCount })}</span>
-          </span>
-          {blockedCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-red-50 border-2 border-red-200 text-destructive shadow-2xs">
-              <ShieldAlert className="size-3.5" />
-              <span>{t("kpiBlockedBadge", { count: blockedCount })}</span>
-            </span>
-          )}
-        </div>
+        <UsersKpiBadges
+          totalCount={initialUsers.length}
+          staffCount={staffCount}
+          activeCount={activeCount}
+          blockedCount={blockedCount}
+        />
       </PageHeader>
 
       {/* Filter and Search Toolbar */}

@@ -2,13 +2,21 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { X, Building2, AlertCircle } from "lucide-react";
+import { Building2 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { createHouseAction } from "@/actions/admin-house.actions";
 import { isValidDrcPhone, normalizeDrcPhone } from "@/lib/phone-utils";
 import { bpsToPercentString } from "@/lib/commission-conversion";
+import { HouseCreateIdentityFields } from "./create/house-create-identity-fields";
+import { HouseCreateCommercialFields } from "./create/house-create-commercial-fields";
 import type { NeighborhoodRecord } from "@/dal";
 import type { AdminHouseRow } from "./types";
 
@@ -42,11 +50,8 @@ export function HouseCreateDrawer({
   const [addressNote, setAddressNote] = useState("");
   const [dailyCapacity, setDailyCapacity] = useState("");
 
-  if (!isOpen) return null;
-
   const defaultPercentStr = bpsToPercentString(defaultCommissionBps) ?? "20";
 
-  // Real-time validations
   const isDuplicateName = existingHouses.some(
     (h) => h.name.trim().toLowerCase() === name.trim().toLowerCase()
   );
@@ -112,206 +117,72 @@ export function HouseCreateDrawer({
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="create-drawer-title"
-      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex justify-end"
-    >
-      <div className="w-full max-w-md bg-card h-full shadow-2xl border-l-2 border-border-strong flex flex-col animate-in slide-in-from-right duration-200">
-        {/* Header */}
-        <div className="p-4 border-b-2 border-border-strong bg-surface flex items-center justify-between">
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md h-full p-0 flex flex-col border-l border-border bg-background"
+      >
+        <SheetHeader className="px-6 py-4 border-b border-border bg-muted/20 shrink-0 space-y-0 text-left">
           <div className="flex items-center gap-2.5">
-            <div className="size-9 rounded-xl bg-primary-soft text-primary flex items-center justify-center border border-primary/20">
-              <Building2 className="size-5" />
+            <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Building2 className="size-4" />
             </div>
             <div>
-              <h2 id="create-drawer-title" className="text-sm font-bold text-heading">
+              <SheetTitle className="text-base font-bold text-foreground font-display">
                 {t("drawerTitle")}
-              </h2>
-              <p className="text-[11px] text-ink-600">{t("drawerSubtitle")}</p>
+              </SheetTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {t("drawerSubtitle")}
+              </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-ink-500 hover:text-ink-800 hover:bg-surface-hover transition-colors"
-            aria-label={t("drawerCloseAria")}
-          >
-            <X className="size-4" />
-          </button>
-        </div>
+        </SheetHeader>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5 text-xs">
           {error && (
-            <div role="alert" className="p-3 rounded-xl bg-destructive-light border border-destructive-base/30 text-destructive-base flex items-start gap-2">
-              <AlertCircle className="size-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription className="text-xs">{error}</AlertDescription>
+            </Alert>
           )}
 
-          {/* Name */}
-          <div className="space-y-1.5">
-            <Label htmlFor="create-name" className="text-xs font-semibold text-heading">
-              Nom du pressing <span className="text-destructive-base">*</span>
-            </Label>
-            <Input
-              id="create-name"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="ex: Pressing du Lac"
-              className={`h-10 text-xs border-2 ${isDuplicateName ? "border-destructive-base" : "border-border-strong"}`}
-            />
-            {isDuplicateName && (
-              <p className="text-[11px] text-destructive-base font-medium">Un pressing porte déjà ce nom.</p>
-            )}
-          </div>
+          <HouseCreateIdentityFields
+            name={name}
+            onNameChange={setName}
+            isDuplicateName={isDuplicateName}
+            neighborhoodId={neighborhoodId}
+            onNeighborhoodChange={setNeighborhoodId}
+            neighborhoods={neighborhoods}
+            contactPhone={contactPhone}
+            onPhoneChange={setContactPhone}
+          />
 
-          {/* Neighborhood */}
-          <div className="space-y-1.5">
-            <Label htmlFor="create-neigh" className="text-xs font-semibold text-heading">
-              Quartier <span className="text-destructive-base">*</span>
-            </Label>
-            <select
-              id="create-neigh"
-              required
-              value={neighborhoodId}
-              onChange={(e) => setNeighborhoodId(e.target.value)}
-              className="h-10 w-full rounded-xl border-2 border-border-strong bg-card px-3 text-xs font-semibold text-heading"
-            >
-              <option value="">-- Choisir un quartier --</option>
-              {neighborhoods.map((n) => (
-                <option key={n.id} value={n.id}>{n.name} ({n.zoneName})</option>
-              ))}
-            </select>
-          </div>
+          <Separator />
 
-          {/* Contact Phone */}
-          <div className="space-y-1.5">
-            <Label htmlFor="create-phone" className="text-xs font-semibold text-heading">
-              Téléphone de contact
-            </Label>
-            <Input
-              id="create-phone"
-              value={contactPhone}
-              onChange={(e) => setContactPhone(e.target.value)}
-              placeholder="+243 90 000 0001"
-              className="h-10 text-xs border-2 border-border-strong"
-            />
-            <p className="text-[11px] text-ink-500">Format RDC : +243 XX XXX XXXX (ex: 090 000 0001)</p>
-          </div>
+          <HouseCreateCommercialFields
+            commissionPercent={commissionPercent}
+            onCommissionChange={setCommissionPercent}
+            defaultPercentStr={defaultPercentStr}
+            minimumOrderAmount={minimumOrderAmount}
+            onMinOrderChange={setMinimumOrderAmount}
+            turnaroundHours={turnaroundHours}
+            onTurnaroundChange={setTurnaroundHours}
+            dailyCapacity={dailyCapacity}
+            onDailyCapacityChange={setDailyCapacity}
+            addressNote={addressNote}
+            onAddressNoteChange={setAddressNote}
+          />
 
-          {/* Commission & Min order in 2 cols */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="create-comm" className="text-xs font-semibold text-heading">
-                Commission (%)
-              </Label>
-              <div className="relative">
-                <Input
-                  id="create-comm"
-                  value={commissionPercent}
-                  onChange={(e) => setCommissionPercent(e.target.value)}
-                  placeholder={defaultPercentStr}
-                  className="h-10 text-xs border-2 border-border-strong pr-7"
-                />
-                <span className="absolute right-2.5 top-2.5 text-xs font-bold text-ink-500 pointer-events-none">%</span>
-              </div>
-              <p className="text-[10px] text-ink-500">Vide = défaut ({defaultPercentStr} %)</p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="create-min" className="text-xs font-semibold text-heading">
-                Montant min. (CDF)
-              </Label>
-              <div className="relative">
-                <Input
-                  id="create-min"
-                  type="number"
-                  min="0"
-                  step="500"
-                  value={minimumOrderAmount}
-                  onChange={(e) => setMinimumOrderAmount(e.target.value)}
-                  className="h-10 text-xs border-2 border-border-strong pr-10"
-                />
-                <span className="absolute right-2.5 top-2.5 text-[11px] font-bold text-ink-500 pointer-events-none">CDF</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Turnaround & Capacity */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="create-turn" className="text-xs font-semibold text-heading">
-                Délai de traitement
-              </Label>
-              <div className="relative">
-                <Input
-                  id="create-turn"
-                  type="number"
-                  min="1"
-                  max="720"
-                  value={turnaroundHours}
-                  onChange={(e) => setTurnaroundHours(e.target.value)}
-                  className="h-10 text-xs border-2 border-border-strong pr-7"
-                />
-                <span className="absolute right-2.5 top-2.5 text-xs font-bold text-ink-500 pointer-events-none">h</span>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="create-cap" className="text-xs font-semibold text-heading">
-                Capacité journalière
-              </Label>
-              <Input
-                id="create-cap"
-                type="number"
-                min="1"
-                placeholder="Illimitée"
-                value={dailyCapacity}
-                onChange={(e) => setDailyCapacity(e.target.value)}
-                className="h-10 text-xs border-2 border-border-strong"
-              />
-            </div>
-          </div>
-
-          {/* Address Note */}
-          <div className="space-y-1.5">
-            <Label htmlFor="create-addr" className="text-xs font-semibold text-heading">
-              Adresse précise / repère
-            </Label>
-            <Input
-              id="create-addr"
-              value={addressNote}
-              onChange={(e) => setAddressNote(e.target.value)}
-              placeholder="ex: En face de la cathédrale, porte rouge"
-              className="h-10 text-xs border-2 border-border-strong"
-            />
-          </div>
-
-          {/* Footer buttons */}
-          <div className="pt-4 border-t-2 border-border-strong flex items-center justify-end gap-2.5">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isPending}
-              className="min-h-[40px] px-4 text-xs font-semibold border-2 border-border-strong"
-            >
-              {t("cancel")}
-            </Button>
+          <div className="pt-2">
             <Button
               type="submit"
               disabled={!isFormValid || isPending}
-              className="min-h-[40px] px-4 text-xs font-semibold bg-primary hover:bg-primary-hover text-white shadow-2xs"
+              className="w-full h-9 text-xs font-semibold"
             >
-              {isPending ? t("save") : t("addHouse")}
+              {isPending ? "Création en cours..." : "Créer le pressing partenaire"}
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

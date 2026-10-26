@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { HouseDetailsHeader } from "./house-details-header";
 import { HouseTabInfo } from "./house-tab-info";
 import { HouseTabSettings } from "./house-tab-settings";
 import { HouseTabOrders } from "./house-tab-orders";
 import { HouseTabSettlements } from "./house-tab-settlements";
 import { HouseTabHistory } from "./house-tab-history";
+import { cn } from "@/lib/utils";
 import type { AdminHouseRow } from "../types";
 
 export type HouseDetailsTab = "info" | "settings" | "orders" | "settlements" | "history";
@@ -19,6 +21,14 @@ interface HouseDetailsSheetProps {
   onRefresh: () => void;
   initialTab?: HouseDetailsTab;
 }
+
+const TABS: { id: HouseDetailsTab; label: string }[] = [
+  { id: "info", label: "Informations" },
+  { id: "settings", label: "Paramètres" },
+  { id: "orders", label: "Commandes" },
+  { id: "settlements", label: "Règlements" },
+  { id: "history", label: "Historique" },
+];
 
 export function HouseDetailsSheet({
   house,
@@ -33,86 +43,46 @@ export function HouseDetailsSheet({
   if (!house) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="house-sheet-title"
-      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex justify-end"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-lg bg-card h-full shadow-2xl border-l-2 border-border-strong flex flex-col animate-in slide-in-from-right duration-200">
+    <Sheet open={!!house} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-lg p-0 flex flex-col gap-0 border-l border-border bg-background"
+      >
+        <SheetTitle className="sr-only">{house.name}</SheetTitle>
         <HouseDetailsHeader house={house} onClose={onClose} />
 
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-1 border-b-2 border-border-strong bg-surface px-4 py-2 overflow-x-auto scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setActiveTab("info")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
-              activeTab === "info"
-                ? "bg-primary text-white shadow-2xs"
-                : "text-ink-600 hover:text-heading hover:bg-surface-hover"
-            }`}
-          >
-            Informations
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("settings")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
-              activeTab === "settings"
-                ? "bg-primary text-white shadow-2xs"
-                : "text-ink-600 hover:text-heading hover:bg-surface-hover"
-            }`}
-          >
-            Paramètres
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("orders")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === "orders"
-                ? "bg-primary text-white shadow-2xs"
-                : "text-ink-600 hover:text-heading hover:bg-surface-hover"
-            }`}
-          >
-            <span>Commandes</span>
-            {house.activeOrdersCount > 0 && (
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                activeTab === "orders" ? "bg-white text-primary" : "bg-primary-soft text-primary"
-              }`}>
-                {house.activeOrdersCount}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("settlements")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
-              activeTab === "settlements"
-                ? "bg-primary text-white shadow-2xs"
-                : "text-ink-600 hover:text-heading hover:bg-surface-hover"
-            }`}
-          >
-            Règlements
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("history")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
-              activeTab === "history"
-                ? "bg-primary text-white shadow-2xs"
-                : "text-ink-600 hover:text-heading hover:bg-surface-hover"
-            }`}
-          >
-            Historique
-          </button>
+        {/* Navigation Tabs - Borderless, text-primary active tab */}
+        <div className="flex items-center gap-4 px-5 pt-3 overflow-x-auto scrollbar-none">
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "py-2 text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-1.5",
+                  isActive
+                    ? "text-primary font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span>{tab.label}</span>
+                {tab.id === "orders" && house.activeOrdersCount > 0 && (
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none",
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {house.activeOrdersCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Tab Content Body */}
@@ -138,7 +108,7 @@ export function HouseDetailsSheet({
 
           {activeTab === "history" && <HouseTabHistory house={house} />}
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import { addHouseClosureAction, removeHouseClosureAction } from "@/actions/admin-house.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import type { HouseClosureRecord } from "@/dal";
 
 interface HouseClosuresFormProps {
@@ -32,25 +34,36 @@ export function HouseClosuresForm({ houseId, closures }: HouseClosuresFormProps)
   }
 
   return (
-    <div className="p-5 bg-white rounded-xl border border-border shadow-xs space-y-4">
-      <div className="font-bold text-sm text-heading">{t("closuresTab")}</div>
-      {error && <div className="text-xs text-destructive">{error}</div>}
+    <div className="space-y-4">
+      <div className="font-bold text-sm text-foreground">{t("closuresTab")}</div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-      <form id="closure-form-el" action={handleAdd} className="p-3 bg-slate-50/80 rounded-lg border border-border space-y-3">
-        <div className="font-bold text-xs text-heading">{t("addClosure")}</div>
+      <form id="closure-form-el" action={handleAdd} className="p-3 bg-muted/20 rounded-lg border border-border space-y-3">
+        <div className="font-semibold text-xs text-foreground">{t("addClosure")}</div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="clStart" className="text-xs">Date de début</Label>
+          <Field className="space-y-1">
+            <FieldLabel htmlFor="clStart" className="text-xs font-semibold text-foreground">
+              Date de début
+            </FieldLabel>
             <Input id="clStart" name="startsOn" type="date" required className="h-8 text-xs" />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="clEnd" className="text-xs">Date de fin</Label>
+          </Field>
+          <Field className="space-y-1">
+            <FieldLabel htmlFor="clEnd" className="text-xs font-semibold text-foreground">
+              Date de fin
+            </FieldLabel>
             <Input id="clEnd" name="endsOn" type="date" required className="h-8 text-xs" />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="clReason" className="text-xs">Motif (férié, maintenance...)</Label>
+          </Field>
+          <Field className="space-y-1">
+            <FieldLabel htmlFor="clReason" className="text-xs font-semibold text-foreground">
+              Motif (férié, maintenance...)
+            </FieldLabel>
             <Input id="clReason" name="reason" placeholder="ex: Travaux..." className="h-8 text-xs" />
-          </div>
+          </Field>
         </div>
         <div className="flex justify-end">
           <Button type="submit" disabled={loading} size="sm" className="h-8 text-xs">
@@ -66,15 +79,15 @@ export function HouseClosuresForm({ houseId, closures }: HouseClosuresFormProps)
           closures.map((cl) => (
             <div key={cl.id} className="py-2.5 flex items-center justify-between text-xs">
               <div>
-                <span className="font-semibold text-heading">{cl.startsOn}</span> au{" "}
-                <span className="font-semibold text-heading">{cl.endsOn}</span>
+                <span className="font-semibold text-foreground">{cl.startsOn}</span> au{" "}
+                <span className="font-semibold text-foreground">{cl.endsOn}</span>
                 {cl.reason && <span className="text-muted-foreground ml-2">({cl.reason})</span>}
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => removeHouseClosureAction(cl.id, houseId)}
-                className="h-7 text-xs text-destructive hover:bg-red-50"
+                className="h-7 text-xs text-destructive hover:bg-destructive/10"
               >
                 Supprimer
               </Button>

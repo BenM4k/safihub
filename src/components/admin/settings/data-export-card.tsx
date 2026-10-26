@@ -52,62 +52,63 @@ export function DataExportCard() {
   ];
 
   return (
-    <div className="rounded-xl border border-[#EAECF0] bg-white p-6 shadow-sm space-y-4">
+    <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
       <div>
         <div className="flex items-center gap-2">
-          <Download className="size-5 text-sky-600" />
-          <h2 className="text-base font-semibold text-[#101828]">
+          <Download className="size-5 text-primary" />
+          <h2 className="text-base font-semibold text-foreground">
             {t("exportTitle")}
           </h2>
         </div>
-        <p className="text-xs text-[#667085] mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           {t("exportDesc")}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-          {datasets.map((d) => (
-            <div
-              key={d.id}
-              className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between space-y-3"
-            >
-              <div>
-                <h4 className="font-semibold text-sm text-slate-900">{d.name}</h4>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">{d.description}</p>
-              </div>
-              <div className="flex items-center gap-2 pt-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 text-xs gap-1.5"
-                  disabled={downloading !== null}
-                  onClick={() => handleDownload(d.id, "csv")}
-                >
-                  {downloading === `${d.id}-csv` ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <FileSpreadsheet className="size-3.5 text-emerald-600" />
-                  )}
-                  CSV
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 text-xs gap-1.5"
-                  disabled={downloading !== null}
-                  onClick={() => handleDownload(d.id, "json")}
-                >
-                  {downloading === `${d.id}-json` ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <FileJson className="size-3.5 text-sky-600" />
-                  )}
-                  JSON
-                </Button>
-              </div>
+        {datasets.map((d) => (
+          <div
+            key={d.id}
+            className="p-4 rounded-xl border border-border bg-muted/30 flex flex-col justify-between space-y-3"
+          >
+            <div>
+              <h4 className="font-semibold text-sm text-foreground">{d.name}</h4>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{d.description}</p>
             </div>
-          ))}
-        </div>
+            <div className="flex items-center gap-2 pt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 text-xs gap-1.5"
+                disabled={downloading !== null}
+                onClick={() => handleDownload(d.id, "csv")}
+              >
+                {downloading === `${d.id}-csv` ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <FileSpreadsheet className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                )}
+                CSV
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 text-xs gap-1.5"
+                disabled={downloading !== null}
+                onClick={() => handleDownload(d.id, "json")}
+              >
+                {downloading === `${d.id}-json` ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <FileJson className="size-3.5 text-sky-600 dark:text-sky-400" />
+                )}
+                JSON
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
+

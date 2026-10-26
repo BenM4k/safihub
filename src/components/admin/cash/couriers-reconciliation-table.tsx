@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Info } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ReconcileCourierDialog, type ReconcileCourierData } from "./reconcile-courier-dialog";
 import { DepositFloatDialog } from "./deposit-float-dialog";
 import { CourierReconciliationRowItem } from "./courier-reconciliation-row-item";
@@ -43,59 +51,59 @@ export function CouriersReconciliationTable({
   const [selectedForDeposit, setSelectedForDeposit] = useState<CourierReconciliationRow | null>(null);
 
   return (
-    <div className="bg-card rounded-xl border border-border-strong shadow-xs overflow-hidden">
+    <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
       <div className="overflow-x-auto relative">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="border-b border-border-strong bg-surface/95 backdrop-blur-xs text-ink-700 font-semibold sticky top-0 z-10">
-              <th scope="col" className="py-3 px-4">
+        <Table className="text-xs">
+          <TableHeader>
+            <TableRow className="border-b border-border bg-muted/40 font-semibold sticky top-0 z-10 hover:bg-muted/40">
+              <TableHead className="py-3 px-4 font-semibold text-foreground">
                 <span className="flex items-center gap-1">{t("courier")}</span>
-              </th>
-              <th scope="col" className="py-3 px-4 text-right">
+              </TableHead>
+              <TableHead className="py-3 px-4 text-right font-semibold text-foreground">
                 <span className="inline-flex items-center gap-1 justify-end cursor-help" title={t("expectedTooltip")}>
                   {t("expected")}
-                  <Info className="size-3 text-ink-500" />
+                  <Info className="size-3 text-muted-foreground" />
                 </span>
-              </th>
-              <th scope="col" className="py-3 px-4 text-right">
+              </TableHead>
+              <TableHead className="py-3 px-4 text-right font-semibold text-foreground">
                 <span className="inline-flex items-center gap-1 justify-end cursor-help" title={t("receivedTooltip")}>
                   {t("received")}
-                  <Info className="size-3 text-ink-500" />
+                  <Info className="size-3 text-muted-foreground" />
                 </span>
-              </th>
-              <th scope="col" className="py-3 px-4 text-right">
+              </TableHead>
+              <TableHead className="py-3 px-4 text-right font-semibold text-foreground">
                 <span className="inline-flex items-center gap-1 justify-end cursor-help" title={`${t("formulaTooltip")} · ${t("difference")}`}>
                   {t("difference")}
-                  <Info className="size-3 text-ink-500" />
+                  <Info className="size-3 text-muted-foreground" />
                 </span>
-              </th>
-              <th scope="col" className="py-3 px-4 text-right hidden lg:table-cell">
+              </TableHead>
+              <TableHead className="py-3 px-4 text-right hidden lg:table-cell font-semibold text-foreground">
                 <span className="inline-flex items-center gap-1 justify-end cursor-help" title={t("heldCashTooltip")}>
                   {t("heldCash")}
-                  <Info className="size-3 text-ink-500" />
+                  <Info className="size-3 text-muted-foreground" />
                 </span>
-              </th>
-              <th scope="col" className="py-3 px-4 text-right hidden md:table-cell">
+              </TableHead>
+              <TableHead className="py-3 px-4 text-right hidden md:table-cell font-semibold text-foreground">
                 <span className="inline-flex items-center gap-1 justify-end cursor-help" title={t("depositAndFloatTooltip")}>
                   {t("depositAndFloat")}
-                  <Info className="size-3 text-ink-500" />
+                  <Info className="size-3 text-muted-foreground" />
                 </span>
-              </th>
-              <th scope="col" className="py-3 px-4 text-center">
+              </TableHead>
+              <TableHead className="py-3 px-4 text-center font-semibold text-foreground">
                 {t("status")}
-              </th>
-              <th scope="col" className="py-3 px-4 text-right">
+              </TableHead>
+              <TableHead className="py-3 px-4 text-right font-semibold text-foreground">
                 {t("actions")}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border-strong/80">
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {couriers.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="py-8 text-center text-muted-foreground">
+              <TableRow>
+                <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
                   {t("noActiveCouriers")}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               couriers.map((c) => (
                 <CourierReconciliationRowItem
@@ -106,8 +114,8 @@ export function CouriersReconciliationTable({
                 />
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {selectedForRecon && (

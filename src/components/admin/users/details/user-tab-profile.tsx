@@ -49,28 +49,32 @@ export function UserTabProfile({ user }: UserTabProfileProps) {
         </div>
       )}
 
-      {/* Main Profile Identity Card */}
-      <div className="p-4 rounded-xl border-2 border-border-strong bg-card space-y-4 shadow-2xs">
+      {/* Main Profile Identity */}
+      <div className="rounded-xl bg-card space-y-4">
         <div className="flex items-center gap-3">
           {user.image ? (
             <img
               src={user.image}
               alt={user.name}
-              className="size-14 rounded-full object-cover border-2 border-border-strong shrink-0 shadow-xs"
+              className="size-14 rounded-full object-cover border border-border shrink-0"
             />
           ) : (
-            <div className="size-14 rounded-full bg-primary/10 border-2 border-border-strong text-primary font-bold text-lg flex items-center justify-center shrink-0 shadow-xs">
+            <div className="size-14 rounded-full bg-primary/10 border border-primary/20 text-primary font-bold text-lg flex items-center justify-center shrink-0">
               {getUserInitials(user.name)}
             </div>
           )}
 
           <div className="min-w-0 flex-1">
-            <h3 className="font-bold text-heading text-base truncate">{user.name}</h3>
+            <h3 className="font-bold text-heading text-base truncate">
+              {user.name}
+            </h3>
             <div className="flex items-center gap-2 mt-1">
               <span
                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-semibold ${roleInfo.badgeClass}`}
               >
-                <span className={`size-1.5 rounded-full ${roleInfo.dotClass}`} />
+                <span
+                  className={`size-1.5 rounded-full ${roleInfo.dotClass}`}
+                />
                 <span>{roleInfo.label}</span>
               </span>
               {user.isGuest && (

@@ -2,92 +2,101 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import type { UseFormRegisterReturn } from "react-hook-form";
+import { Controller, type Control } from "react-hook-form";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { RegisterFormValues } from "@/lib/validations/auth.schema";
 
 interface ConsentFieldProps {
+  control: Control<RegisterFormValues>;
   error?: string;
-  registration: UseFormRegisterReturn;
-  photoRegistration?: UseFormRegisterReturn;
 }
 
 export function ConsentField({
+  control,
   error,
-  registration,
-  photoRegistration,
 }: ConsentFieldProps) {
   const t = useTranslations("auth");
 
   return (
-    <div className="space-y-3 pt-1">
+    <div className="flex flex-col gap-3 pt-1">
       {/* Mandatory Terms & Privacy Consent */}
-      <div className="space-y-1">
-        <div className="flex items-start gap-2.5">
-          <input
-            id="register-consent"
-            type="checkbox"
-            className="mt-1 size-4 rounded border-slate-300 dark:border-slate-700 dark:bg-card text-primary focus:ring-primary cursor-pointer accent-sky-600"
-            aria-describedby={error ? "consent-error" : undefined}
-            {...registration}
-          />
-          <label
-            htmlFor="register-consent"
-            className="text-xs sm:text-sm text-muted-foreground leading-normal cursor-pointer select-none"
-          >
-            {t("consentLabel")}{" "}
-            <Link
-              href="/terms"
-              target="_blank"
-              className="font-medium text-primary hover:underline underline-offset-4"
+      <Controller
+        name="consent"
+        control={control}
+        render={({ field }) => (
+          <Field orientation="horizontal" data-invalid={Boolean(error)}>
+            <Checkbox
+              id="register-consent"
+              name={field.name}
+              checked={Boolean(field.value)}
+              onCheckedChange={field.onChange}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "consent-error" : undefined}
+              className="mt-0.5"
+            />
+            <FieldLabel
+              htmlFor="register-consent"
+              className="text-xs sm:text-sm text-muted-foreground leading-normal cursor-pointer select-none font-normal"
             >
-              {t("termsLink")}
-            </Link>{" "}
-            {t("and")}{" "}
-            <Link
-              href="/privacy"
-              target="_blank"
-              className="font-medium text-primary hover:underline underline-offset-4"
-            >
-              {t("privacyLink")}
-            </Link>
-            . <span className="text-red-500">*</span>
-          </label>
-        </div>
+              {t("consentLabel")}{" "}
+              <Link
+                href="/terms"
+                target="_blank"
+                className="font-medium text-primary hover:underline underline-offset-4"
+              >
+                {t("termsLink")}
+              </Link>{" "}
+              {t("and")}{" "}
+              <Link
+                href="/privacy"
+                target="_blank"
+                className="font-medium text-primary hover:underline underline-offset-4"
+              >
+                {t("privacyLink")}
+              </Link>
+              . <span className="text-destructive">*</span>
+            </FieldLabel>
 
-        {error && (
-          <p
-            id="consent-error"
-            className="text-xs font-medium text-red-500 dark:text-red-400 pl-6.5"
-          >
-            {error}
-          </p>
+            {error && (
+              <FieldError id="consent-error" className="pl-6.5">
+                {error}
+              </FieldError>
+            )}
+          </Field>
         )}
-      </div>
+      />
 
       {/* Recommended Photo Consent (CLOTHES ONLY) */}
-      {photoRegistration && (
-        <div className="flex items-start gap-2.5 pt-0.5">
-          <input
-            id="register-photo-consent"
-            type="checkbox"
-            className="mt-1 size-4 rounded border-slate-300 dark:border-slate-700 dark:bg-card text-primary focus:ring-primary cursor-pointer accent-sky-600"
-            {...photoRegistration}
-          />
-          <label
-            htmlFor="register-photo-consent"
-            className="text-xs sm:text-sm text-muted-foreground leading-normal cursor-pointer select-none"
-          >
-            {t("photoConsentLabel")}{" "}
-            <Link
-              href="/consent"
-              target="_blank"
-              className="font-medium text-primary hover:underline underline-offset-4"
+      <Controller
+        name="photoConsent"
+        control={control}
+        render={({ field }) => (
+          <Field orientation="horizontal">
+            <Checkbox
+              id="register-photo-consent"
+              name={field.name}
+              checked={field.value ?? true}
+              onCheckedChange={field.onChange}
+              className="mt-0.5"
+            />
+            <FieldLabel
+              htmlFor="register-photo-consent"
+              className="text-xs sm:text-sm text-muted-foreground leading-normal cursor-pointer select-none font-normal"
             >
-              {t("photoConsentLink")}
-            </Link>
-            .
-          </label>
-        </div>
-      )}
+              {t("photoConsentLabel")}{" "}
+              <Link
+                href="/consent"
+                target="_blank"
+                className="font-medium text-primary hover:underline underline-offset-4"
+              >
+                {t("photoConsentLink")}
+              </Link>
+              .
+            </FieldLabel>
+          </Field>
+        )}
+      />
     </div>
   );
 }

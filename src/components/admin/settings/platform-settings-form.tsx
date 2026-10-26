@@ -6,6 +6,8 @@ import { updatePlatformSettingsAction } from "@/actions/admin-settings.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import type { SettingsRecord } from "@/dal";
 
 interface PlatformSettingsFormProps {
@@ -59,21 +61,31 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
   }
 
   return (
-    <div className="rounded-xl border border-[#EAECF0] bg-white p-5 shadow-sm space-y-4">
+    <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-[#101828]">{t("platformConfigTitle")}</h2>
-        <p className="text-xs text-[#667085]">
+        <h2 className="text-base font-semibold text-foreground">{t("platformConfigTitle")}</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Les nouvelles valeurs s&apos;appliquent immédiatement aux prochaines commandes. Les commandes existantes conservent leurs valeurs gelées.
         </p>
       </div>
 
-      {error && <div className="p-3 bg-[#FEF3F2] border border-[#FECDCA] rounded text-xs text-[#B42318]">{error}</div>}
-      {success && <div className="p-3 bg-[#ECFDF3] border border-[#D1FADF] rounded text-xs text-[#027A48]">Paramètres enregistrés avec succès.</div>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
+      {success && (
+        <Alert className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+          <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+          <AlertDescription className="text-xs font-semibold">Paramètres enregistrés avec succès.</AlertDescription>
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="comm" className="text-xs text-[#344054]">
+            <Label htmlFor="comm" className="text-xs font-semibold text-foreground">
               {t("defaultCommission")} (ex: 1500 = 15%)
             </Label>
             <Input
@@ -89,7 +101,7 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="accept" className="text-xs text-[#344054]">
+            <Label htmlFor="accept" className="text-xs font-semibold text-foreground">
               {t("acceptanceDelay")}
             </Label>
             <Input
@@ -104,7 +116,7 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="recep" className="text-xs text-[#344054]">
+            <Label htmlFor="recep" className="text-xs font-semibold text-foreground">
               {t("receptionWindow")}
             </Label>
             <Input
@@ -119,7 +131,7 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="slot" className="text-xs text-[#344054]">
+            <Label htmlFor="slot" className="text-xs font-semibold text-foreground">
               {t("slotLength")}
             </Label>
             <Input
@@ -134,7 +146,7 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="dist" className="text-xs text-[#344054]">
+            <Label htmlFor="dist" className="text-xs font-semibold text-foreground">
               {t("maxDistance")} (Niveau 1, 2 ou 3)
             </Label>
             <Input
@@ -150,7 +162,7 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="ceil" className="text-xs text-[#344054]">
+            <Label htmlFor="ceil" className="text-xs font-semibold text-foreground">
               Plafond d&apos;encaisse par défaut (CDF)
             </Label>
             <Input
@@ -164,7 +176,7 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="pay" className="text-xs text-[#344054]">
+            <Label htmlFor="pay" className="text-xs font-semibold text-foreground">
               Rémunération coursier par trajet (CDF)
             </Label>
             <Input
@@ -183,16 +195,16 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
               type="checkbox"
               checked={firstOrderScreening}
               onChange={(e) => setFirstOrderScreening(e.target.checked)}
-              className="h-4 w-4 rounded border-[#D0D5DD] text-[#2824D5] focus:ring-[#2824D5]"
+              className="size-4 rounded text-primary focus:ring-primary"
             />
-            <Label htmlFor="screening" className="text-xs text-[#344054] cursor-pointer">
+            <Label htmlFor="screening" className="text-xs font-medium text-foreground cursor-pointer">
               Filtrage / screening systématique des premières commandes
             </Label>
           </div>
         </div>
 
-        <div className="flex justify-end pt-3 border-t border-[#EAECF0]">
-          <Button type="submit" disabled={loading} className="text-xs bg-[#2824D5] hover:bg-[#1E1B9E] text-white">
+        <div className="flex justify-end pt-3 border-t border-border">
+          <Button type="submit" disabled={loading} className="text-xs">
             {loading ? "Enregistrement..." : t("saveConfig")}
           </Button>
         </div>

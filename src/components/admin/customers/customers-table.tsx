@@ -3,6 +3,14 @@
 import { useTranslations } from "next-intl";
 import { ArrowUpDown, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { EmptyState } from "@/components/admin/shared/empty-state";
 import { CustomersTableRow } from "./customers-table-row";
 import { CustomersTablePagination } from "./customers-table-pagination";
@@ -52,67 +60,66 @@ export function CustomersTable({
   const renderSortHeader = (label: string, field: SortableField, align: "left" | "right" | "center" = "left", className = "") => {
     const isSorted = sortState.field === field;
     return (
-      <th
-        scope="col"
-        className={`py-3 px-3 text-2xs font-bold uppercase tracking-wider text-ink-700 ${className} ${
+      <TableHead
+        className={`py-3 px-3 text-2xs font-semibold uppercase tracking-wider text-muted-foreground ${className} ${
           align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left"
         }`}
       >
         <button
           type="button"
           onClick={() => onSortChange(field)}
-          className="inline-flex items-center gap-1 hover:text-primary transition-colors focus-visible:outline-hidden"
+          className="inline-flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer"
         >
           <span>{label}</span>
-          <ArrowUpDown className={`size-3 ${isSorted ? "text-primary" : "text-ink-400"}`} />
+          <ArrowUpDown className={`size-3 ${isSorted ? "text-primary" : "text-muted-foreground/60"}`} />
         </button>
-      </th>
+      </TableHead>
     );
   };
 
   return (
-    <div className="bg-card rounded-xl border-2 border-border-strong shadow-xs overflow-hidden flex flex-col">
+    <div className="border border-border rounded-lg overflow-hidden flex flex-col">
       <div className="overflow-x-auto relative">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="border-b-2 border-border-strong bg-slate-50 sticky top-0 z-10 shadow-2xs">
+        <Table className="w-full text-left text-xs">
+          <TableHeader>
+            <TableRow className="border-b border-border bg-muted/40 hover:bg-muted/40">
               {renderSortHeader(t("colClient"), "name")}
-              <th scope="col" className="py-3 px-3 text-2xs font-bold uppercase tracking-wider text-ink-700 hidden sm:table-cell">
+              <TableHead className="py-3 px-3 text-2xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">
                 {t("colPhone")}
-              </th>
-              <th scope="col" className="py-3 px-3 text-2xs font-bold uppercase tracking-wider text-ink-700 hidden md:table-cell">
+              </TableHead>
+              <TableHead className="py-3 px-3 text-2xs font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">
                 {t("colEmail")}
-              </th>
-              <th scope="col" className="py-3 px-2 text-2xs font-bold uppercase tracking-wider text-ink-700 hidden lg:table-cell text-center">
+              </TableHead>
+              <TableHead className="py-3 px-2 text-2xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell text-center">
                 {t("colType")}
-              </th>
+              </TableHead>
               {renderSortHeader(t("colOrders"), "ordersCount", "center", "hidden sm:table-cell")}
               {renderSortHeader(t("colTotalSpent"), "totalSpentCDF", "right", "hidden md:table-cell")}
-              <th scope="col" className="py-3 px-3 text-2xs font-bold uppercase tracking-wider text-ink-700 hidden lg:table-cell">
+              <TableHead className="py-3 px-3 text-2xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">
                 {t("colLastOrder")}
-              </th>
+              </TableHead>
               {renderSortHeader(t("colRegisteredAt"), "createdAt", "left", "hidden xl:table-cell")}
-              <th scope="col" className="py-3 px-3 text-2xs font-bold uppercase tracking-wider text-ink-700">
+              <TableHead className="py-3 px-3 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("colStatus")}
-              </th>
-              <th scope="col" className="py-3 px-3 text-2xs font-bold uppercase tracking-wider text-ink-700 text-right">
+              </TableHead>
+              <TableHead className="py-3 px-3 text-2xs font-semibold uppercase tracking-wider text-muted-foreground text-right">
                 {t("colActions")}
-              </th>
-            </tr>
-          </thead>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
 
-          <tbody className="divide-y divide-border-strong">
+          <TableBody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={`skeleton-${i}`} className="h-[52px] animate-pulse">
-                  <td colSpan={10} className="py-3 px-4">
-                    <div className="h-4 bg-slate-200 rounded w-full" />
-                  </td>
-                </tr>
+                <TableRow key={`skeleton-${i}`} className="h-12 animate-pulse">
+                  <TableCell colSpan={10} className="py-3 px-4">
+                    <div className="h-4 bg-muted rounded w-full" />
+                  </TableCell>
+                </TableRow>
               ))
             ) : customers.length === 0 ? (
-              <tr>
-                <td colSpan={10} className="p-8">
+              <TableRow>
+                <TableCell colSpan={10} className="p-8">
                   <EmptyState
                     icon={Users}
                     title={t("emptyTitle")}
@@ -123,14 +130,14 @@ export function CustomersTable({
                         variant="outline"
                         size="sm"
                         onClick={onResetFilters}
-                        className="mt-2 text-xs font-bold border-2 border-border-strong"
+                        className="mt-2 text-xs font-semibold"
                       >
                         {t("resetFilters")}
                       </Button>
                     }
                   />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               customers.map((customer) => (
                 <CustomersTableRow
@@ -146,8 +153,8 @@ export function CustomersTable({
                 />
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       <CustomersTablePagination

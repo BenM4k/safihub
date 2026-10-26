@@ -20,22 +20,22 @@ const statusConfig: Record<
   active: {
     key: "statusActive",
     icon: CheckCircle2,
-    classes: "bg-success-light text-success-base border-success-base/40",
+    classes: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   },
   paused: {
     key: "statusPaused",
     icon: PauseCircle,
-    classes: "bg-warning-light text-warning-base border-warning-base/40",
+    classes: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   },
   closed_today: {
     key: "statusClosedToday",
     icon: Clock,
-    classes: "bg-ink-100 text-ink-700 border-ink-300",
+    classes: "bg-muted text-muted-foreground",
   },
   suspended: {
     key: "statusSuspended",
     icon: Ban,
-    classes: "bg-destructive-light text-destructive-base border-destructive-base/40 font-bold",
+    classes: "bg-destructive/10 text-destructive font-bold",
   },
 };
 
@@ -46,7 +46,7 @@ export function HouseStatusPill({ status, className = "" }: HouseStatusPillProps
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border shadow-2xs whitespace-nowrap transition-colors ${config.classes} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${config.classes} ${className}`}
     >
       <Icon className="size-3.5 shrink-0" aria-hidden="true" />
       <span>{t(config.key)}</span>

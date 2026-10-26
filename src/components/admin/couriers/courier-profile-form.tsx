@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import { updateCourierProfileAction } from "@/actions/admin-courier.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, Check } from "lucide-react";
 import type { CourierRecord } from "@/dal";
 
 interface CourierProfileFormProps {
@@ -32,41 +34,93 @@ export function CourierProfileForm({ courier }: CourierProfileFormProps) {
   }
 
   return (
-    <form action={handleUpdate} className="p-5 bg-white rounded-xl border border-border shadow-xs space-y-4">
-      <div className="font-bold text-sm text-heading">{t("profileTab")}</div>
-      {error && <div className="text-xs text-destructive">{error}</div>}
-      {success && <div className="text-xs text-emerald-600 font-semibold">{success}</div>}
+    <form action={handleUpdate} className="space-y-5">
+      <div className="font-bold text-sm text-foreground">{t("profileTab")}</div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {success && (
+        <Alert className="border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10">
+          <Check className="size-4" />
+          <AlertDescription className="font-semibold">{success}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="cpCeil" className="text-xs">{t("cashCeiling")}</Label>
-          <Input id="cpCeil" name="cashCeiling" type="number" defaultValue={courier.cashCeiling ?? ""} placeholder="Défaut" className="h-9 text-xs" />
-        </div>
+        <Field className="space-y-1">
+          <FieldLabel htmlFor="cpCeil" className="text-xs font-semibold text-foreground">
+            {t("cashCeiling")}
+          </FieldLabel>
+          <Input
+            id="cpCeil"
+            name="cashCeiling"
+            type="number"
+            defaultValue={courier.cashCeiling ?? ""}
+            placeholder="Défaut"
+            className="h-9 text-xs"
+          />
+        </Field>
 
-        <div className="space-y-1">
-          <Label htmlFor="cpDep" className="text-xs">{t("securityDeposit")}</Label>
-          <Input id="cpDep" name="securityDeposit" type="number" defaultValue={courier.securityDeposit} className="h-9 text-xs" />
-        </div>
+        <Field className="space-y-1">
+          <FieldLabel htmlFor="cpDep" className="text-xs font-semibold text-foreground">
+            {t("securityDeposit")}
+          </FieldLabel>
+          <Input
+            id="cpDep"
+            name="securityDeposit"
+            type="number"
+            defaultValue={courier.securityDeposit}
+            className="h-9 text-xs"
+          />
+        </Field>
 
-        <div className="space-y-1">
-          <Label htmlFor="cpFloat" className="text-xs">{t("changeFloat")}</Label>
-          <Input id="cpFloat" name="changeFloat" type="number" defaultValue={courier.changeFloat} className="h-9 text-xs" />
-        </div>
+        <Field className="space-y-1">
+          <FieldLabel htmlFor="cpFloat" className="text-xs font-semibold text-foreground">
+            {t("changeFloat")}
+          </FieldLabel>
+          <Input
+            id="cpFloat"
+            name="changeFloat"
+            type="number"
+            defaultValue={courier.changeFloat}
+            className="h-9 text-xs"
+          />
+        </Field>
 
-        <div className="space-y-1">
-          <Label htmlFor="cpPay" className="text-xs">{t("payPerLeg")}</Label>
-          <Input id="cpPay" name="payPerLeg" type="number" defaultValue={courier.payPerLeg ?? ""} placeholder="Défaut" className="h-9 text-xs" />
-        </div>
+        <Field className="space-y-1">
+          <FieldLabel htmlFor="cpPay" className="text-xs font-semibold text-foreground">
+            {t("payPerLeg")}
+          </FieldLabel>
+          <Input
+            id="cpPay"
+            name="payPerLeg"
+            type="number"
+            defaultValue={courier.payPerLeg ?? ""}
+            placeholder="Défaut"
+            className="h-9 text-xs"
+          />
+        </Field>
       </div>
 
       <div className="pt-2">
-        <label className="flex items-center gap-2 text-xs font-semibold text-heading cursor-pointer">
-          <input type="checkbox" name="isActive" defaultChecked={courier.isActive} value="true" className="rounded" />
+        <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
+          <input
+            type="checkbox"
+            name="isActive"
+            defaultChecked={courier.isActive}
+            value="true"
+            className="rounded"
+          />
           <span>Coursier actif pour les missions</span>
         </label>
       </div>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end pt-3 border-t border-border">
         <Button type="submit" disabled={loading} size="sm" className="h-9">
           {loading ? "..." : "Enregistrer les modifications"}
         </Button>

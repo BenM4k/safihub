@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -30,16 +30,16 @@ export function ApplicationReviewFormFields({
 
   return (
     <>
-      <div className="space-y-1.5">
-        <Label htmlFor="assignNeighborhood" className="text-xs font-semibold text-ink-600">
+      <Field className="space-y-1.5">
+        <FieldLabel htmlFor="assignNeighborhood" className="text-xs font-semibold text-foreground">
           {t("assignNeighborhood")}
-        </Label>
+        </FieldLabel>
         <select
           id="assignNeighborhood"
           value={selectedNeighborhoodId}
           onChange={(e) => onNeighborhoodChange(e.target.value)}
           disabled={isPending}
-          className="w-full h-9 px-3 rounded-md border border-input bg-background text-xs ring-offset-background"
+          className="w-full h-9 px-3 rounded-md border border-input bg-background text-xs text-foreground ring-offset-background"
         >
           {neighborhoods.map((n) => (
             <option key={n.id} value={n.id}>
@@ -47,12 +47,12 @@ export function ApplicationReviewFormFields({
             </option>
           ))}
         </select>
-      </div>
+      </Field>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="customPasswordInput" className="text-xs font-semibold text-ink-600">
+      <Field className="space-y-1.5">
+        <FieldLabel htmlFor="customPasswordInput" className="text-xs font-semibold text-foreground">
           {t("optionalCustomPassword")}
-        </Label>
+        </FieldLabel>
         <Input
           id="customPasswordInput"
           type="text"
@@ -63,13 +63,13 @@ export function ApplicationReviewFormFields({
           disabled={isPending}
           className="h-9 text-xs font-mono"
         />
-        <p className="text-2xs text-muted-foreground">{t("passwordHelp")}</p>
-      </div>
+        <p className="text-[11px] text-muted-foreground">{t("passwordHelp")}</p>
+      </Field>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="adminNote" className="text-xs font-semibold text-ink-600">
+      <Field className="space-y-1.5">
+        <FieldLabel htmlFor="adminNote" className="text-xs font-semibold text-foreground">
           {t("reviewNotes")}
-        </Label>
+        </FieldLabel>
         <Textarea
           id="adminNote"
           rows={3}
@@ -79,7 +79,7 @@ export function ApplicationReviewFormFields({
           disabled={isPending}
           className="text-xs"
         />
-      </div>
+      </Field>
     </>
   );
 }

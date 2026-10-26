@@ -1,32 +1,55 @@
-export function DispatchLoadingSkeleton() {
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+
+interface DispatchLoadingSkeletonProps {
+  label?: string;
+}
+
+export function DispatchLoadingSkeleton({ label }: DispatchLoadingSkeletonProps) {
   return (
-    <div className="space-y-6 animate-pulse font-sans">
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={label}
+      className="flex flex-col gap-6 font-sans"
+    >
+      {label && <span className="sr-only">{label}</span>}
       {/* Header skeleton */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-5">
-        <div className="space-y-2">
-          <div className="h-8 w-64 bg-secondary rounded-lg" />
-          <div className="h-4 w-96 bg-muted rounded-md" />
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-8 w-64 rounded-lg" />
+          <Skeleton className="h-4 w-96 rounded-md" />
         </div>
       </div>
 
       {/* KPI Cards skeleton */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center py-1">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="p-4 rounded-xl border border-border bg-card space-y-3">
-            <div className="h-3 w-32 bg-secondary rounded" />
-            <div className="h-8 w-16 bg-muted rounded" />
-            <div className="h-3 w-40 bg-muted rounded" />
+          <div key={i} className="contents">
+            {i > 1 && (
+              <>
+                <Separator orientation="vertical" className="hidden sm:block h-12 mx-4 shrink-0" />
+                <Separator orientation="horizontal" className="sm:hidden my-2" />
+              </>
+            )}
+            <div className="flex-1 p-3 space-y-2">
+              <Skeleton className="h-3 w-32 rounded" />
+              <Skeleton className="h-7 w-16 rounded" />
+              <Skeleton className="h-3 w-40 rounded" />
+            </div>
           </div>
         ))}
       </div>
 
       {/* List skeleton */}
-      <div className="rounded-xl border border-border bg-card p-4 space-y-4">
-        <div className="h-10 w-full bg-muted rounded-lg" />
+      <div className="p-4 flex flex-col gap-4">
+        <Skeleton className="h-10 w-full rounded-lg" />
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-16 w-full bg-surface border border-border rounded-xl" />
+          <Skeleton key={i} className="h-16 w-full rounded-md" />
         ))}
       </div>
     </div>
   );
 }
+

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertCircle, GitMerge, UserCheck, Users, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PageHeader } from "@/components/admin/shared/page-header";
 import { CustomerBlockDialog } from "./customer-block-dialog";
 import { CustomerDetailsSheet } from "./details/customer-details-sheet";
@@ -78,7 +79,8 @@ export function CustomersManagementView({
               setPreselectedGuest(null);
               setMergeDialogOpen(true);
             }}
-            className="min-h-[40px] px-4 text-xs font-bold bg-primary hover:bg-primary-hover text-white shadow-xs inline-flex items-center gap-2 border-2 border-primary"
+            size="sm"
+            className="text-xs font-semibold inline-flex items-center gap-2"
             aria-label={t("mergeAccounts")}
           >
             <GitMerge className="size-4" />
@@ -87,17 +89,17 @@ export function CustomersManagementView({
         }
       >
         {/* KPI Badges */}
-        <div className="flex items-center gap-2 pt-2 flex-wrap text-xs font-semibold">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700">
+        <div className="flex items-center gap-2 pt-2 flex-wrap text-xs font-medium">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-muted/60 border border-border text-foreground">
             <Users className="size-3.5 text-primary" />
             <span>{t("kpiTotalBadge", { count: totalCustomersCount })}</span>
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border-2 border-border-strong text-ink-700">
-            <UserCheck className="size-3.5 text-emerald-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-muted/60 border border-border text-foreground">
+            <UserCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>{t("kpiRegisteredBadge", { count: registeredCount })}</span>
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-50 border-2 border-amber-300 text-amber-800">
-            <UserX className="size-3.5 text-amber-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400">
+            <UserX className="size-3.5 text-amber-600 dark:text-amber-400" />
             <span>{t("kpiGuestBadge", { count: guestCount })}</span>
           </span>
         </div>
@@ -105,15 +107,15 @@ export function CustomersManagementView({
 
       {/* Truncation notice if loaded set is capped */}
       {totalCustomersCount > initialCustomers.length && (
-        <div className="p-3 bg-amber-50 border-2 border-amber-300 rounded-xl text-xs text-amber-900 flex items-center gap-2">
-          <AlertCircle className="size-4 shrink-0 text-amber-600" />
-          <span>
+        <Alert>
+          <AlertCircle className="size-4" />
+          <AlertDescription>
             {t("truncationNotice", {
               loaded: initialCustomers.length,
               total: totalCustomersCount,
             })}
-          </span>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Toolbar */}
@@ -138,19 +140,13 @@ export function CustomersManagementView({
         sortState={sortState}
         onSortChange={handleSortChange}
         onPageChange={setCurrentPage}
-        onPageSizeChange={(sz) => {
-          setPageSize(sz);
-          setCurrentPage(1);
-        }}
+        onPageSizeChange={(sz) => { setPageSize(sz); setCurrentPage(1); }}
         onResetFilters={handleResetFilters}
         onSelectCustomer={(c) => handleRowSelect(c, "profile")}
         onViewProfile={(c) => handleRowSelect(c, "profile")}
         onViewOrders={(c) => handleRowSelect(c, "orders")}
         onResetPassword={(c) => setCustomerToReset(c)}
-        onMergeGuest={(c) => {
-          setPreselectedGuest(c);
-          setMergeDialogOpen(true);
-        }}
+        onMergeGuest={(c) => { setPreselectedGuest(c); setMergeDialogOpen(true); }}
         onToggleBlock={(c) => setCustomerToBlock(c)}
       />
 
@@ -169,10 +165,7 @@ export function CustomersManagementView({
           isOpen={mergeDialogOpen}
           preselectedGuest={preselectedGuest}
           allCustomers={initialCustomers}
-          onClose={() => {
-            setMergeDialogOpen(false);
-            setPreselectedGuest(null);
-          }}
+          onClose={() => { setMergeDialogOpen(false); setPreselectedGuest(null); }}
           onSuccess={handleRefresh}
         />
       )}

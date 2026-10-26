@@ -2,7 +2,18 @@
 
 import { useState } from "react";
 import { ArrowRightLeft, Building2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { reassignOrderPressingAction } from "@/actions/admin-dispatch.actions";
 import { formatOrderRef } from "@/lib/dispatch-urgency";
 import type { AvailablePressingOption } from "@/services/admin";
@@ -40,8 +51,6 @@ export function DispatchReassignDialog({
     onClose();
   }
 
-  if (!isOpen) return null;
-
   const eligibleHouses = availablePressings.filter((h) => h.id !== currentHouseId);
 
   async function handleReassign() {
@@ -70,46 +79,43 @@ export function DispatchReassignDialog({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="reassign-dialog-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/40 backdrop-blur-xs animate-in fade-in font-sans"
-    >
-      <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
-        <div className="p-5 border-b border-border bg-surface flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-warning-soft text-warning">
-            <ArrowRightLeft className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 id="reassign-dialog-title" className="text-base font-bold text-heading font-display">
-              Réassigner à un autre pressing
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Commande {formatOrderRef(orderCode, orderId)} • Actuel: {currentHouseName || "N/A"}
-            </p>
-          </div>
-        </div>
-
-        <div className="p-5 space-y-4">
-          {error && (
-            <div className="p-3 text-xs bg-destructive-soft border border-destructive/20 text-destructive rounded-lg">
-              {error}
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-5 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400">
+              <ArrowRightLeft className="size-4" />
             </div>
+            <div>
+              <DialogTitle className="text-base font-bold text-foreground font-display">
+                Réassigner à un autre pressing
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                Commande {formatOrderRef(orderCode, orderId)} · Actuel: {currentHouseName || "N/A"}
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="px-6 py-3 space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription className="text-xs">{error}</AlertDescription>
+            </Alert>
           )}
 
-          <div>
-            <label
+          <Field>
+            <FieldLabel
               htmlFor="new-house-select"
-              className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-wide"
             >
               Nouveau pressing partenaire
-            </label>
+            </FieldLabel>
             <select
               id="new-house-select"
               value={selectedHouseId}
               onChange={(e) => setSelectedHouseId(e.target.value)}
-              className="w-full text-xs p-3 rounded-lg border border-border-strong bg-card focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-heading"
+              className="mt-1.5 w-full text-xs h-9 px-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="">Sélectionner un pressing disponible ({eligibleHouses.length})</option>
               {eligibleHouses.map((house) => (
@@ -120,31 +126,31 @@ export function DispatchReassignDialog({
               ))}
             </select>
             {eligibleHouses.length === 0 && (
-              <p className="text-[11px] text-warning mt-1 flex items-center gap-1">
-                <Building2 className="w-3.5 h-3.5" />
-                Aucun autre pressing partenaire actif n&apos;est disponible actuellement.
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                <Building2 className="size-3.5" />
+                <span>Aucun autre pressing partenaire actif n&apos;est disponible actuellement.</span>
               </p>
             )}
-          </div>
+          </Field>
 
-          <div>
-            <label
+          <Field>
+            <FieldLabel
               htmlFor="reassign-reason"
-              className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-wide"
             >
               Motif de la réassignation
-            </label>
-            <input
+            </FieldLabel>
+            <Input
               id="reassign-reason"
               type="text"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Ex: Refus explicite, injoignable après 2 relances..."
-              className="w-full text-xs p-3 rounded-lg border border-border-strong bg-card focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-heading placeholder:text-ink-400"
+              className="mt-1.5 text-xs h-9"
             />
-          </div>
+          </Field>
 
-          <div className="p-3 rounded-lg bg-surface border border-border text-[11px] text-muted-foreground space-y-1">
+          <div className="p-3 rounded-lg bg-muted/40 border border-border text-[11px] text-muted-foreground space-y-1">
             <p className="font-semibold text-foreground">Conséquences de la réassignation :</p>
             <ul className="list-disc pl-4 space-y-0.5">
               <li>Un nouveau délai d&apos;acceptation de 45 minutes sera initialisé.</li>
@@ -153,14 +159,14 @@ export function DispatchReassignDialog({
           </div>
         </div>
 
-        <div className="p-4 bg-surface border-t border-border flex items-center justify-end gap-2">
+        <DialogFooter className="px-6 py-4 bg-muted/20 border-t border-border flex items-center justify-end gap-2">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="text-xs min-h-[40px] px-4 border-border-strong hover:bg-muted text-foreground font-display"
+            className="text-xs h-8"
           >
             Annuler
           </Button>
@@ -169,12 +175,12 @@ export function DispatchReassignDialog({
             size="sm"
             disabled={isSubmitting || !selectedHouseId}
             onClick={handleReassign}
-            className="text-xs min-h-[40px] px-5 bg-primary text-primary-foreground hover:bg-primary-hover font-display"
+            className="text-xs h-8"
           >
-            {isSubmitting ? "Réassignation..." : "Confirmer la réassignation"}
+            {isSubmitting ? "Réassignation..." : "Confirmer"}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

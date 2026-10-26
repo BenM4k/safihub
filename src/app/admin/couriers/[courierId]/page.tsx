@@ -3,6 +3,14 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { getAdminCourierDetail } from "@/services/admin";
 import { CourierDetailTabs } from "@/components/admin/couriers/courier-detail-tabs";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 export default async function AdminCourierDetailPage({
   params,
@@ -20,16 +28,22 @@ export default async function AdminCourierDetailPage({
   const data = res.value;
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-            <Link href="/admin/couriers" className="hover:text-heading">
-              {t("title")}
-            </Link>
-            <span>/</span>
-            <span className="text-heading font-semibold">{data.courier.name}</span>
-          </div>
+        <div className="flex flex-col gap-1">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/admin/couriers">{t("title")}</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{data.courier.name}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
           <h1 className="text-2xl font-black text-heading tracking-tight">
             {data.courier.name}
           </h1>
@@ -43,3 +57,4 @@ export default async function AdminCourierDetailPage({
     </div>
   );
 }
+

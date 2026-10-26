@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import { linkHouseStaffAction, unlinkHouseStaffAction } from "@/actions/admin-house.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import type { HouseStaffMemberRecord } from "@/dal";
 
 interface HouseStaffFormProps {
@@ -32,15 +34,28 @@ export function HouseStaffForm({ houseId, staff }: HouseStaffFormProps) {
   }
 
   return (
-    <div className="p-5 bg-white rounded-xl border border-border shadow-xs space-y-4">
-      <div className="font-bold text-sm text-heading">{t("staffTab")}</div>
-      {error && <div className="text-xs text-destructive">{error}</div>}
+    <div className="space-y-4">
+      <div className="font-bold text-sm text-foreground">{t("staffTab")}</div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-      <form id="staff-link-form" action={handleLink} className="p-3 bg-slate-50/80 rounded-lg border border-border flex items-end gap-3">
-        <div className="flex-1 space-y-1">
-          <Label htmlFor="staffUserId" className="text-xs">{t("linkStaff")} (Identifiant utilisateur)</Label>
-          <Input id="staffUserId" name="userId" required placeholder="ex: usr_house_001 ou identifiant utilisateur..." className="h-8 text-xs bg-white" />
-        </div>
+      <form id="staff-link-form" action={handleLink} className="p-3 bg-muted/20 rounded-lg border border-border flex items-end gap-3">
+        <Field className="flex-1 space-y-1">
+          <FieldLabel htmlFor="staffUserId" className="text-xs font-semibold text-foreground">
+            {t("linkStaff")} (Identifiant utilisateur)
+          </FieldLabel>
+          <Input
+            id="staffUserId"
+            name="userId"
+            required
+            placeholder="ex: usr_house_001 ou identifiant..."
+            className="h-8 text-xs"
+          />
+        </Field>
         <Button type="submit" disabled={loading} size="sm" className="h-8 text-xs">
           {loading ? "..." : "Associer"}
         </Button>
@@ -53,14 +68,14 @@ export function HouseStaffForm({ houseId, staff }: HouseStaffFormProps) {
           staff.map((m) => (
             <div key={m.userId} className="py-2.5 flex items-center justify-between text-xs">
               <div>
-                <span className="font-semibold text-heading">{m.name}</span>
+                <span className="font-semibold text-foreground">{m.name}</span>
                 <span className="text-muted-foreground ml-2">({m.email})</span>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => unlinkHouseStaffAction(houseId, m.userId)}
-                className="h-7 text-xs text-destructive hover:bg-red-50"
+                className="h-7 text-xs text-destructive hover:bg-destructive/10"
               >
                 Retirer
               </Button>

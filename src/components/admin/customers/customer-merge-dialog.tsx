@@ -1,16 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { GitMerge, X } from "lucide-react";
-import { mergeCustomerAccountsAction, previewCustomerMergeAction } from "@/actions/admin-customer.actions";
-import type { CustomerMergePreview } from "@/services/admin";
+import { GitMerge } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { CustomerRow } from "./types";
 import { MergeStepSelectGuest } from "./merge/merge-step-select-guest";
 import { MergeStepSelectTarget } from "./merge/merge-step-select-target";
 import { MergeStepPreview } from "./merge/merge-step-preview";
 import { MergeStepConfirm } from "./merge/merge-step-confirm";
 import { MergeDialogFooter } from "./merge/merge-dialog-footer";
+import { useCustomerMerge } from "./merge/use-customer-merge";
 
 interface CustomerMergeDialogProps {
   isOpen: boolean;
@@ -28,109 +33,44 @@ export function CustomerMergeDialog({
   onSuccess,
 }: CustomerMergeDialogProps) {
   const t = useTranslations("admin.customers.mergeDialog");
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(preselectedGuest ? 2 : 1);
-  const [selectedGuest, setSelectedGuest] = useState<CustomerRow | null>(preselectedGuest);
-  const [selectedTarget, setSelectedTarget] = useState<CustomerRow | null>(null);
-  const [guestSearch, setGuestSearch] = useState("");
-  const [targetSearch, setTargetSearch] = useState("");
-  const [previewData, setPreviewData] = useState<CustomerMergePreview | null>(null);
-  const [confirmedCheck, setConfirmedCheck] = useState(false);
-  const [typedConfirm, setTypedConfirm] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const confirmKeyword = t("confirmKeyword");
-  const isConfirmMatch =
-    typedConfirm.trim().toUpperCase() === confirmKeyword.toUpperCase() ||
-    typedConfirm.trim().toUpperCase() === "FUSIONNER";
-
-  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
-  const [prevGuest, setPrevGuest] = useState(preselectedGuest);
-  if (isOpen !== prevIsOpen || preselectedGuest !== prevGuest) {
-    setPrevIsOpen(isOpen);
-    setPrevGuest(preselectedGuest);
-    if (isOpen) {
-      setStep(preselectedGuest ? 2 : 1);
-      setSelectedGuest(preselectedGuest);
-      setSelectedTarget(null);
-      setGuestSearch("");
-      setTargetSearch("");
-      setPreviewData(null);
-      setConfirmedCheck(false);
-      setTypedConfirm("");
-      setError(null);
-      setLoading(false);
-    }
-  }
-
-  if (!isOpen) return null;
-
-  const guestCandidates = allCustomers.filter((c) => {
-    if (!c.isGuest || c.status === "merged") return false;
-    if (!guestSearch.trim()) return true;
-    const q = guestSearch.toLowerCase();
-    return c.name.toLowerCase().includes(q) || (c.contactPhone || "").includes(q);
-  });
-
-  const targetCandidates = allCustomers.filter((c) => {
-    if (c.isGuest || c.banned || c.status === "blocked") return false;
-    if (selectedGuest && c.id === selectedGuest.id) return false;
-    if (!targetSearch.trim()) return true;
-    const q = targetSearch.toLowerCase();
-    return (
-      c.name.toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q) ||
-      (c.contactPhone || "").includes(q)
-    );
-  });
-
-  const handleFetchPreview = async () => {
-    if (!selectedGuest || !selectedTarget) return;
-    setLoading(true);
-    setError(null);
-    const res = await previewCustomerMergeAction(selectedGuest.id, selectedTarget.id);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      setPreviewData(res.value);
-      setStep(3);
-    }
-  };
-
-  const handleFinalMerge = async () => {
-    if (!selectedGuest || !selectedTarget || !confirmedCheck || !isConfirmMatch) {
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    const fd = new FormData();
-    fd.append("guestUserId", selectedGuest.id);
-    fd.append("targetUserId", selectedTarget.id);
-
-    const res = await mergeCustomerAccountsAction(fd);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      onSuccess();
-      onClose();
-    }
-  };
+  const {
+    step,
+    setStep,
+    selectedGuest,
+    setSelectedGuest,
+    selectedTarget,
+    setSelectedTarget,
+    guestSearch,
+    setGuestSearch,
+    targetSearch,
+    setTargetSearch,
+    previewData,
+    confirmedCheck,
+    setConfirmedCheck,
+    typedConfirm,
+    setTypedConfirm,
+    isConfirmMatch,
+    loading,
+    error,
+    guestCandidates,
+    targetCandidates,
+    handleFetchPreview,
+    handleFinalMerge,
+  } = useCustomerMerge(isOpen, preselectedGuest, allCustomers, onSuccess, onClose);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="w-full max-w-xl bg-card rounded-2xl shadow-xl border-2 border-border-strong overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
-        <div className="p-4 border-b-2 border-border-strong flex items-center justify-between bg-surface">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden flex flex-col max-h-[90vh]">
+        <DialogHeader className="p-4 border-b border-border bg-muted/20">
           <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-lg flex items-center justify-center bg-primary-soft text-primary border border-primary/20">
+            <div className="size-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary border border-primary/20">
               <GitMerge className="size-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-heading font-display">
+              <DialogTitle className="text-sm font-bold text-foreground">
                 {t("stepTitle", { step })}
-              </h2>
-              <p className="text-2xs text-ink-500">
+              </DialogTitle>
+              <p className="text-2xs text-muted-foreground mt-0.5">
                 {step === 1 && t("stepDesc1")}
                 {step === 2 && t("stepDesc2")}
                 {step === 3 && t("stepDesc3")}
@@ -138,19 +78,13 @@ export function CustomerMergeDialog({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-ink-400 hover:text-heading rounded-lg hover:bg-surface-hover cursor-pointer"
-            aria-label={t("close")}
-          >
-            <X className="size-4" />
-          </button>
-        </div>
+        </DialogHeader>
 
         {error && (
-          <div className="m-4 p-3 bg-destructive-light border border-destructive-base/30 rounded-lg text-xs text-destructive font-medium">
-            {error}
+          <div className="p-4 pb-0">
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           </div>
         )}
 
@@ -217,7 +151,7 @@ export function CustomerMergeDialog({
           }}
           onFinalSubmit={handleFinalMerge}
         />
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

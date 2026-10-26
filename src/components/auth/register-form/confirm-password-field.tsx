@@ -4,8 +4,13 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { UseFormRegisterReturn } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+  InputGroupButton,
+} from "@/components/ui/input-group";
 
 interface ConfirmPasswordFieldProps {
   error?: string;
@@ -20,44 +25,46 @@ export function ConfirmPasswordField({
   const t = useTranslations("auth");
 
   return (
-    <div className="space-y-1.5">
-      <Label
+    <Field data-invalid={Boolean(error)}>
+      <FieldLabel
         htmlFor="confirmPassword"
         className="text-xs sm:text-sm font-semibold"
       >
-        {t("confirmPasswordLabel")} <span className="text-red-500">*</span>
-      </Label>
+        {t("confirmPasswordLabel")} <span className="text-destructive">*</span>
+      </FieldLabel>
 
-      <div className="relative">
-        <Input
+      <InputGroup>
+        <InputGroupInput
           id="confirmPassword"
           type={showPassword ? "text" : "password"}
           placeholder={t("confirmPasswordPlaceholder")}
           autoComplete="new-password"
-          hasError={Boolean(error)}
-          className="pr-10"
+          aria-invalid={Boolean(error)}
           aria-describedby={error ? "confirm-error" : undefined}
           {...registration}
         />
-        <button
-          type="button"
-          onClick={() => setShowPassword((prev) => !prev)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
-          aria-label={showPassword ? "Hide password" : "Show password"}
-        >
-          {showPassword ? (
-            <EyeOff className="size-4" />
-          ) : (
-            <Eye className="size-4" />
-          )}
-        </button>
-      </div>
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setShowPassword((prev) => !prev)}
+            aria-label={t(showPassword ? "hidePassword" : "showPassword")}
+          >
+            {showPassword ? (
+              <EyeOff className="size-4" />
+            ) : (
+              <Eye className="size-4" />
+            )}
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
 
       {error && (
-        <p id="confirm-error" className="text-xs font-medium text-red-500 dark:text-red-400">
+        <FieldError id="confirm-error">
           {error}
-        </p>
+        </FieldError>
       )}
-    </div>
+    </Field>
   );
 }

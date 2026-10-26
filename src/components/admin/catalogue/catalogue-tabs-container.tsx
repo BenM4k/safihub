@@ -34,44 +34,56 @@ export function CatalogueTabsContainer({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 border-b border-border pb-2 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1 border-b border-border pb-1 overflow-x-auto scrollbar-none">
         <button
+          type="button"
           onClick={() => setTab("items")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition",
-            tab === "items" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "px-3 py-2 text-xs font-medium transition cursor-pointer relative",
+            tab === "items"
+              ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           {t("itemsTab")} ({items.length})
         </button>
         <button
+          type="button"
           onClick={() => setTab("fabrics")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition",
-            tab === "fabrics" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "px-3 py-2 text-xs font-medium transition cursor-pointer relative",
+            tab === "fabrics"
+              ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           {t("fabricsTab")} ({fabrics.length})
         </button>
         <button
+          type="button"
           onClick={() => setTab("services")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition",
-            tab === "services" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "px-3 py-2 text-xs font-medium transition cursor-pointer relative",
+            tab === "services"
+              ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           {t("servicesTab")} ({services.length})
         </button>
         <button
+          type="button"
           onClick={() => setTab("requests")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-1.5",
-            tab === "requests" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "px-3 py-2 text-xs font-medium transition cursor-pointer relative flex items-center gap-1.5",
+            tab === "requests"
+              ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           <span>{t("requestsTab")}</span>
           {pendingRequestsCount > 0 && (
-            <span className="size-5 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-black">
+            <span className="px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-500/20">
               {pendingRequestsCount}
             </span>
           )}

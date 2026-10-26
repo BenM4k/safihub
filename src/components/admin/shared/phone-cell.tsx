@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { formatPhone } from "@/lib/order-formatters";
+import { useTranslations } from "next-intl";
 import { Check, Copy, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { formatPhone } from "@/lib/order-formatters";
 
 interface PhoneCellProps {
   phone: string | null | undefined;
@@ -19,6 +21,7 @@ export function PhoneCell({
   showCopy = false,
   className = "",
 }: PhoneCellProps) {
+  const t = useTranslations("admin.shared");
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const formatted = formatPhone(phone);
@@ -70,19 +73,21 @@ export function PhoneCell({
       )}
 
       {showCopy && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={handleCopy}
-          className="p-1 rounded-sm text-ink-400 hover:text-heading hover:bg-surface transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary"
-          title={copied ? "Copié !" : "Copier le numéro"}
-          aria-label={copied ? "Numéro copié" : "Copier le numéro"}
+          className="size-6 p-0 rounded-sm text-ink-400 hover:text-heading hover:bg-surface transition-colors focus-visible:ring-1 focus-visible:ring-primary"
+          title={copied ? t("numberCopied") : t("copyNumber")}
+          aria-label={copied ? t("numberCopied") : t("copyNumber")}
         >
           {copied ? (
-            <Check className="size-3 text-success-base" aria-hidden="true" />
+            <Check className="size-3 text-success" aria-hidden="true" />
           ) : (
             <Copy className="size-3" aria-hidden="true" />
           )}
-        </button>
+        </Button>
       )}
     </span>
   );

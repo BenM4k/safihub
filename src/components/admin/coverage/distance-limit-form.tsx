@@ -6,6 +6,8 @@ import { updateGlobalDistanceLimitAction } from "@/actions/admin-coverage.action
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface DistanceLimitFormProps {
   currentLimit: number;
@@ -38,10 +40,10 @@ export function DistanceLimitForm({ currentLimit }: DistanceLimitFormProps) {
   return (
     <form
       action={handleSubmit}
-      className="p-5 bg-white rounded-xl border border-border shadow-xs space-y-3"
+      className="p-5 bg-card rounded-xl border border-border shadow-xs space-y-3"
     >
       <div>
-        <h2 className="text-sm font-bold text-heading">
+        <h2 className="text-sm font-bold text-foreground">
           {t("globalDistanceLimitTitle")}
         </h2>
         <p className="text-xs text-muted-foreground mt-0.5">
@@ -49,8 +51,18 @@ export function DistanceLimitForm({ currentLimit }: DistanceLimitFormProps) {
         </p>
       </div>
 
-      {error && <div className="text-xs text-destructive">{error}</div>}
-      {success && <div className="text-xs text-emerald-600 font-semibold">{success}</div>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
+      {success && (
+        <Alert className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+          <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+          <AlertDescription className="text-xs font-semibold">{success}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="flex items-center gap-3">
         <div className="w-32">

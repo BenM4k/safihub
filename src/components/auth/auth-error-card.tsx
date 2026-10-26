@@ -5,6 +5,14 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import * as Sentry from "@sentry/nextjs";
 import { AlertCircle, RotateCcw, ArrowLeft, Home } from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export interface AuthErrorCardProps {
@@ -17,7 +25,7 @@ export interface AuthErrorCardProps {
 
 /**
  * Reusable, high-fidelity error presentation for all authentication screens.
- * Aligns strictly with SafiHub design tokens: solid brand colors, clean card,
+ * Composes shadcn Card with SafiHub design tokens: solid brand colors, clean card,
  * accessible ARIA roles, responsive touch targets, and multilingual next-intl copy.
  */
 export function AuthErrorCard({
@@ -39,35 +47,39 @@ export function AuthErrorCard({
   const displayDescription = description ?? tAuth("errorDesc");
 
   return (
-    <div
+    <Card
       role="alert"
       aria-live="assertive"
-      className="w-full max-w-sm sm:max-w-md mx-auto p-6 sm:p-8 rounded-3xl bg-card border border-border shadow-xs text-center flex flex-col items-center"
+      className="w-full max-w-sm sm:max-w-md mx-auto rounded-3xl border-border shadow-xs text-center flex flex-col items-center p-6 sm:p-8"
     >
-      {/* Icon Badge */}
-      <div className="size-14 rounded-2xl bg-destructive-soft text-destructive border border-destructive/20 flex items-center justify-center mb-5 shadow-2xs">
-        <AlertCircle className="size-7" />
-      </div>
+      <CardHeader className="p-0 flex flex-col items-center">
+        {/* Icon Badge */}
+        <div className="size-14 rounded-2xl bg-destructive-soft text-destructive border border-destructive/20 flex items-center justify-center mb-5 shadow-2xs">
+          <AlertCircle className="size-7" />
+        </div>
 
-      {/* Heading */}
-      <h1 className="text-xl sm:text-2xl font-black text-heading tracking-tight font-display mb-2">
-        {displayTitle}
-      </h1>
+        {/* Heading */}
+        <CardTitle className="text-xl sm:text-2xl font-black text-heading tracking-tight font-display mb-2">
+          {displayTitle}
+        </CardTitle>
 
-      {/* Description */}
-      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto mb-5">
-        {displayDescription}
-      </p>
+        {/* Description */}
+        <CardDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
+          {displayDescription}
+        </CardDescription>
+      </CardHeader>
 
       {/* Optional Error Digest */}
       {error.digest && (
-        <div className="w-full mb-5 px-3 py-1.5 rounded-lg bg-muted border border-border text-[11px] font-mono text-muted-foreground select-all">
-          {tErrors("referenceCode")}: {error.digest}
-        </div>
+        <CardContent className="w-full p-0 mt-5">
+          <div className="w-full px-3 py-1.5 rounded-lg bg-muted border border-border text-[11px] font-mono text-muted-foreground select-all">
+            {tErrors("referenceCode")}: {error.digest}
+          </div>
+        </CardContent>
       )}
 
       {/* Action Buttons */}
-      <div className="w-full space-y-2.5">
+      <CardFooter className="w-full p-0 mt-6 flex flex-col gap-2.5">
         <Button
           type="button"
           variant="primary"
@@ -104,7 +116,7 @@ export function AuthErrorCard({
             </Link>
           </Button>
         )}
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 }

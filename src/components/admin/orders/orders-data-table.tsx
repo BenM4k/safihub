@@ -3,6 +3,13 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { OrderListItemRecord } from "@/dal";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { OrdersTableRow } from "./orders-table-row";
 import { OrdersTableSkeleton } from "./orders-table-skeleton";
 import { OrdersTableEmpty } from "./orders-table-empty";
@@ -48,24 +55,23 @@ export function OrdersDataTable({
 
   function renderSortIcon(field: SortField) {
     if (sortField !== field) {
-      return <ArrowUpDown className="w-3 h-3 text-ink-400 group-hover:text-heading" />;
+      return <ArrowUpDown className="size-3 text-muted-foreground/60" />;
     }
     return sortDirection === "asc" ? (
-      <ArrowUp className="w-3 h-3 text-primary" />
+      <ArrowUp className="size-3 text-primary" />
     ) : (
-      <ArrowDown className="w-3 h-3 text-primary" />
+      <ArrowDown className="size-3 text-primary" />
     );
   }
 
   return (
-    <div className="rounded-xl border border-border-strong bg-card shadow-md overflow-hidden">
+    <div className="rounded-lg border border-border bg-background overflow-hidden">
       <div className="overflow-x-auto max-h-[640px] relative">
-        <table className="w-full text-left text-xs border-collapse">
-          {/* Sticky Table Header */}
-          <thead className="sticky top-0 z-10 bg-slate-100/95 border-b-2 border-border-strong shadow-xs text-ink-700 font-bold uppercase tracking-wider text-[11px] backdrop-blur-xs">
-            <tr>
+        <Table className="w-full text-left text-xs">
+          <TableHeader className="sticky top-0 z-10 bg-muted/40 backdrop-blur-xs border-b border-border">
+            <TableRow className="border-b border-border hover:bg-muted/40">
               {/* Checkbox */}
-              <th className="w-10 px-3.5 py-3.5 text-center">
+              <TableHead className="w-10 px-3 py-2 text-center">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -73,101 +79,102 @@ export function OrdersDataTable({
                     if (el) el.indeterminate = isPartiallySelected;
                   }}
                   onChange={onToggleSelectAll}
-                  aria-label="Sélectionner toutes les commandes"
-                  className="rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                  aria-label={t("selectAll")}
+                  className="rounded-sm size-4 accent-primary cursor-pointer"
                 />
-              </th>
+              </TableHead>
 
               {/* Référence */}
-              <th className="px-3.5 py-3.5">
+              <TableHead className="px-3 py-2">
                 <button
                   type="button"
                   onClick={() => onSort("code")}
-                  className="group inline-flex items-center gap-1.5 hover:text-heading font-bold uppercase cursor-pointer"
+                  className="inline-flex items-center gap-1.5 hover:text-foreground font-semibold uppercase text-2xs cursor-pointer"
                 >
                   <span>{t("colReference")}</span>
                   {renderSortIcon("code")}
                 </button>
-              </th>
+              </TableHead>
 
               {/* Client */}
-              <th className="px-3.5 py-3.5">
+              <TableHead className="px-3 py-2">
                 <button
                   type="button"
                   onClick={() => onSort("customer")}
-                  className="group inline-flex items-center gap-1.5 hover:text-heading font-bold uppercase cursor-pointer"
+                  className="inline-flex items-center gap-1.5 hover:text-foreground font-semibold uppercase text-2xs cursor-pointer"
                 >
                   <span>{t("colCustomer")}</span>
                   {renderSortIcon("customer")}
                 </button>
-              </th>
+              </TableHead>
 
               {/* Pressing */}
-              <th className="px-3.5 py-3.5 hidden md:table-cell">
+              <TableHead className="px-3 py-2 hidden md:table-cell font-semibold uppercase text-2xs">
                 {t("colPressing")}
-              </th>
+              </TableHead>
 
               {/* Date de création */}
-              <th className="px-3.5 py-3.5 hidden sm:table-cell">
+              <TableHead className="px-3 py-2 hidden sm:table-cell">
                 <button
                   type="button"
                   onClick={() => onSort("date")}
-                  className="group inline-flex items-center gap-1.5 hover:text-heading font-bold uppercase cursor-pointer"
+                  className="inline-flex items-center gap-1.5 hover:text-foreground font-semibold uppercase text-2xs cursor-pointer"
                 >
                   <span>{t("colCreatedAt")}</span>
                   {renderSortIcon("date")}
                 </button>
-              </th>
+              </TableHead>
 
               {/* Canal */}
-              <th className="px-3.5 py-3.5 hidden lg:table-cell">
+              <TableHead className="px-3 py-2 hidden lg:table-cell font-semibold uppercase text-2xs">
                 {t("colChannel")}
-              </th>
+              </TableHead>
 
               {/* Paiement */}
               {showPaymentColumn && (
-                <th className="px-3.5 py-3.5 hidden xl:table-cell">
+                <TableHead className="px-3 py-2 hidden xl:table-cell font-semibold uppercase text-2xs">
                   {t("colPayment")}
-                </th>
+                </TableHead>
               )}
 
               {/* Montant */}
-              <th className="px-3.5 py-3.5 text-right">
+              <TableHead className="px-3 py-2 text-right">
                 <button
                   type="button"
                   onClick={() => onSort("amount")}
-                  className="group inline-flex items-center gap-1.5 hover:text-heading font-bold uppercase ml-auto cursor-pointer"
+                  className="inline-flex items-center gap-1.5 hover:text-foreground font-semibold uppercase text-2xs cursor-pointer ml-auto"
                 >
                   <span>{t("colAmount")}</span>
                   {renderSortIcon("amount")}
                 </button>
-              </th>
+              </TableHead>
 
               {/* Statut */}
-              <th className="px-3.5 py-3.5">{t("colStatus")}</th>
+              <TableHead className="px-3 py-2 font-semibold uppercase text-2xs">
+                {t("colStatus")}
+              </TableHead>
 
               {/* Actions */}
-              <th className="w-10 px-3 py-3.5 text-right">
-                <span className="sr-only">{t("colActions")}</span>
-              </th>
-            </tr>
-          </thead>
+              <TableHead className="w-10 px-2 py-2 text-right font-semibold uppercase text-2xs">
+                {t("colActions")}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
 
-          {/* Table Body with visible separators */}
-          <tbody className="divide-y divide-border-strong bg-card">
+          <TableBody>
             {isLoading ? (
               <OrdersTableSkeleton showPaymentColumn={showPaymentColumn} />
             ) : orders.length === 0 ? (
               <OrdersTableEmpty
-                colSpan={showPaymentColumn ? 10 : 9}
                 onResetFilters={onResetFilters}
+                colSpan={showPaymentColumn ? 10 : 9}
               />
             ) : (
-              orders.map((o) => (
+              orders.map((order) => (
                 <OrdersTableRow
-                  key={o.id}
-                  order={o}
-                  isSelected={selectedIds.includes(o.id)}
+                  key={order.id}
+                  order={order}
+                  isSelected={selectedIds.includes(order.id)}
                   onToggleSelect={onToggleSelect}
                   onOpenDetails={onOpenDetails}
                   onOpenReassign={onOpenReassign}
@@ -176,8 +183,8 @@ export function OrdersDataTable({
                 />
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

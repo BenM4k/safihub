@@ -20,51 +20,96 @@ export function HouseDetailTabs({ data }: HouseDetailTabsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 border-b border-border pb-2 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-6 overflow-x-auto scrollbar-none">
         <button
+          type="button"
           onClick={() => setTab("profile")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition",
-            tab === "profile" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "py-2 text-xs transition-colors whitespace-nowrap",
+            tab === "profile"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           )}
         >
           {t("profileTab")}
         </button>
         <button
+          type="button"
           onClick={() => setTab("hours")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition",
-            tab === "hours" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "py-2 text-xs transition-colors whitespace-nowrap",
+            tab === "hours"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           )}
         >
           {t("hoursTab")}
         </button>
         <button
+          type="button"
           onClick={() => setTab("closures")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition",
-            tab === "closures" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "py-2 text-xs transition-colors whitespace-nowrap flex items-center gap-1.5",
+            tab === "closures"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           )}
         >
-          {t("closuresTab")} ({data.closures.length})
+          <span>{t("closuresTab")}</span>
+          <span
+            className={cn(
+              "px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none",
+              tab === "closures"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            {data.closures.length}
+          </span>
         </button>
         <button
+          type="button"
           onClick={() => setTab("exclusions")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition",
-            tab === "exclusions" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "py-2 text-xs transition-colors whitespace-nowrap flex items-center gap-1.5",
+            tab === "exclusions"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           )}
         >
-          {t("exclusionsTab")} ({data.exclusions.length})
+          <span>{t("exclusionsTab")}</span>
+          <span
+            className={cn(
+              "px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none",
+              tab === "exclusions"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            {data.exclusions.length}
+          </span>
         </button>
         <button
+          type="button"
           onClick={() => setTab("staff")}
           className={cn(
-            "px-4 py-2 text-xs font-bold rounded-lg transition",
-            tab === "staff" ? "bg-primary text-white" : "text-ink-600 hover:bg-slate-100"
+            "py-2 text-xs transition-colors whitespace-nowrap flex items-center gap-1.5",
+            tab === "staff"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           )}
         >
-          {t("staffTab")} ({data.staff.length})
+          <span>{t("staffTab")}</span>
+          <span
+            className={cn(
+              "px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none",
+              tab === "staff"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            {data.staff.length}
+          </span>
         </button>
       </div>
 

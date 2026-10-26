@@ -1,21 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { Check, Copy } from "lucide-react";
 import {
-  Check,
-  Clock,
-  Copy,
-  ExternalLink,
-  MapPin,
-  Phone,
-  PhoneCall,
-  User,
-  X,
-} from "lucide-react";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { formatCDF, formatOrderRef } from "@/lib/dispatch-urgency";
+import { DispatchOrderSheetParties } from "./dispatch-order-sheet-parties";
+import { DispatchOrderSheetActions } from "./dispatch-order-sheet-actions";
 import type { EnrichedDispatchOrder } from "@/lib/dispatch-grouping";
 
 interface DispatchOrderDetailsSheetProps {
@@ -31,25 +28,9 @@ export function DispatchOrderDetailsSheet({
   onOpenOutcomeModal,
   onOpenReassignDialog,
 }: DispatchOrderDetailsSheetProps) {
-  const t = useTranslations("admin.dispatch");
   const [copied, setCopied] = useState(false);
 
   if (!order) return null;
-
-  const urgencyLabel =
-    order.urgency.isOverdue
-      ? t("urgencyOverdue", { minutes: order.urgency.overdueMinutes ?? 0 })
-      : order.urgency.level === "critical"
-      ? t("urgencyUrgent")
-      : order.urgency.level === "warning"
-      ? t("urgencyWarning")
-      : t("urgencyNormal");
-
-  const phone = order.housePhone || "";
-  const cleanPhone = phone.replace(/[^0-9]/g, "");
-  const waMsg = encodeURIComponent(
-    `Bonjour ${order.houseName || "Pressing"}, vous avez une nouvelle commande SafiHub #${order.code} en attente d'acceptation. Merci de confirmer rapidement votre disponibilité.`
-  );
 
   function copyId() {
     if (!order) return;
@@ -58,212 +39,93 @@ export function DispatchOrderDetailsSheet({
     setTimeout(() => setCopied(false), 2000);
   }
 
+  const orderRef = formatOrderRef(order.code, order.id);
+
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="order-details-title"
-      className="fixed inset-0 z-50 flex justify-end bg-ink-950/40 backdrop-blur-xs animate-in fade-in font-sans"
-    >
-      <div className="w-full max-w-lg bg-card h-full shadow-2xl flex flex-col border-l border-border overflow-hidden animate-in slide-in-from-right duration-200">
-        {/* Header */}
-        <div className="p-5 border-b border-border flex items-center justify-between bg-surface">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-base font-bold text-heading">
-                {formatOrderRef(order.code, order.id)}
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-secondary text-secondary-foreground capitalize">
-                Canal: {order.source}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Détails opérationnels et suivi de la relance</p>
+    <Sheet open={Boolean(order)} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-lg h-full p-0 flex flex-col border-l border-border bg-background"
+      >
+        {/* Header with prominent code and compact channel badge */}
+        <SheetHeader className="px-6 py-4 border-b border-border bg-muted/20 shrink-0 space-y-0 text-left">
+          <div className="flex items-center gap-2.5">
+            <SheetTitle className="font-mono text-lg font-bold text-foreground">
+              {orderRef}
+            </SheetTitle>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground capitalize">
+              Canal: {order.source}
+            </span>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-lg text-ink-400 hover:text-heading hover:bg-muted transition-colors cursor-pointer"
-            aria-label="Fermer le panneau"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Détails opérationnels et suivi de la relance
+          </p>
+        </SheetHeader>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        {/* Content body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           {/* UUID with copy */}
-          <div className="p-3 bg-surface rounded-xl border border-border flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Identifiant complet</p>
-              <p className="font-mono text-xs text-heading select-all">{order.id}</p>
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 mr-2">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Identifiant complet
+              </p>
+              <p className="font-mono text-xs text-foreground truncate select-all">
+                {order.id}
+              </p>
             </div>
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={copyId}
-              className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground transition-colors cursor-pointer"
-              aria-label="Copier l'identifiant"
+              className="h-8 px-2.5 text-xs font-semibold gap-1 shrink-0"
             >
-              {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4 text-ink-400" />}
-            </button>
+              {copied ? (
+                <>
+                  <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-emerald-600 dark:text-emerald-400">Copié</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="size-3.5 text-muted-foreground" />
+                  <span>Copier</span>
+                </>
+              )}
+            </Button>
           </div>
 
-          {/* Urgency and Time */}
-          <div className="p-4 rounded-xl border border-border bg-card space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Attente pressing</span>
-              <span className="text-xs font-bold text-heading flex items-center gap-1.5 font-mono">
-                <Clock className="w-3.5 h-3.5 text-ink-400" />
-                {order.urgency.formattedElapsed}
+          <Separator />
+
+          {/* Pressing and Customer */}
+          <DispatchOrderSheetParties order={order} />
+
+          <Separator />
+
+          {/* Financial summary */}
+          <div className="text-xs space-y-1.5 py-1">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Montant commande</span>
+              <span className="font-mono text-foreground font-semibold">
+                {formatCDF(order.totalDue)}
               </span>
             </div>
-            <div className="text-xs flex items-center justify-between text-muted-foreground">
-              <span>Statut d&apos;urgence:</span>
-              <span className="font-semibold text-heading">{urgencyLabel}</span>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Frais de livraison</span>
+              <span className="font-mono text-foreground">
+                {formatCDF(order.deliveryFee)}
+              </span>
             </div>
-            {order.acceptanceDeadlineAt && (
-              <div className="text-xs flex items-center justify-between text-destructive">
-                <span>Échéance SLA (45 min):</span>
-                <span className="font-semibold font-mono">
-                  {new Date(order.acceptanceDeadlineAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Pressing Details */}
-          <div className="p-4 rounded-xl border border-border bg-card space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Pressing partenaire</p>
-            <p className="text-sm font-bold text-heading font-display">{order.houseName || "Non assigné"}</p>
-            {phone ? (
-              <p className="text-xs text-foreground flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-ink-400" />
-                {phone}
-              </p>
-            ) : (
-              <p className="text-xs text-warning italic">Téléphone non renseigné</p>
-            )}
-          </div>
-
-          {/* Customer & Location (Only if present!) */}
-          <div className="p-4 rounded-xl border border-border bg-card space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Client & Localisation</p>
-            {order.customerName && (
-              <p className="text-sm font-medium text-heading flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-ink-400" />
-                {order.customerName}
-              </p>
-            )}
-            {order.neighborhoodName && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-ink-400" />
-                {order.neighborhoodName}
-              </p>
-            )}
-            <div className="pt-2 border-t border-border flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Montant total :</span>
-              <span className="font-bold text-heading font-mono">{formatCDF(order.totalDue)}</span>
-            </div>
-          </div>
-
-          {/* Follow-up / Relance History */}
-          <div className="p-4 rounded-xl border border-border bg-card space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Historique des relances ({order.relances.length})
-              </p>
-              {order.isRecentlyRelanced && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-warning-soft text-warning font-medium border border-warning/30">
-                  Déjà relancé il y a {order.recentRelanceMinutes} min
-                </span>
-              )}
-            </div>
-
-            {order.relances.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">Aucune relance effectuée pour le moment.</p>
-            ) : (
-              <div className="space-y-2">
-                {order.relances.map((rel) => (
-                  <div key={rel.id} className="p-2.5 rounded-lg bg-surface border border-border text-xs space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-heading">
-                        {rel.channel === "call" ? "📞 Appel" : "💬 WhatsApp"} par {rel.operatorName || "Opérateur"}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {new Date(rel.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
-                    {rel.outcome && (
-                      <p className="text-[11px] text-muted-foreground">
-                        Résultat : <strong className="text-heading">{rel.outcome}</strong>
-                      </p>
-                    )}
-                    {rel.note && <p className="text-[11px] text-muted-foreground italic">{rel.note}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 border-t border-border bg-surface flex flex-wrap items-center gap-2">
-          {cleanPhone && (
-            <>
-              <Button
-                asChild
-                size="sm"
-                className="flex-1 text-xs min-h-[40px] bg-primary hover:bg-primary-hover text-primary-foreground font-display"
-              >
-                <a
-                  href={`tel:${phone}`}
-                  onClick={() => onOpenOutcomeModal(order, "call")}
-                >
-                  <PhoneCall className="w-3.5 h-3.5 mr-1.5" />
-                  Appeler
-                </a>
-              </Button>
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                className="flex-1 text-xs min-h-[40px] border-success/40 text-success hover:bg-success-soft font-display"
-              >
-                <a
-                  href={`https://wa.me/${cleanPhone}?text=${waMsg}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => onOpenOutcomeModal(order, "whatsapp")}
-                >
-                  WhatsApp
-                </a>
-              </Button>
-            </>
-          )}
-
-          {order.canReassign && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onOpenReassignDialog(order)}
-              className="text-xs min-h-[40px] text-warning border-warning/30 hover:bg-warning-soft font-display"
-            >
-              Réassigner
-            </Button>
-          )}
-
-          <Button
-            asChild
-            size="sm"
-            variant="ghost"
-            className="shrink-0 text-xs min-h-[40px] text-muted-foreground hover:text-heading"
-          >
-            <Link href={`/admin/orders/${order.id}`}>
-              <ExternalLink className="w-4 h-4 mr-1" />
-              Page complète
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </div>
+        {/* Footer actions */}
+        <DispatchOrderSheetActions
+          order={order}
+          onOpenOutcomeModal={onOpenOutcomeModal}
+          onOpenReassignDialog={onOpenReassignDialog}
+        />
+      </SheetContent>
+    </Sheet>
   );
 }

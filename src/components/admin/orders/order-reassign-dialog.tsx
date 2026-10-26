@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRightLeft, X } from "lucide-react";
+import { ArrowRightLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { OrderListItemRecord } from "@/dal";
 import { reassignOrderPressingAction } from "@/actions/admin-dispatch.actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { formatOrderReference } from "@/lib/order-formatters";
 
@@ -29,15 +36,28 @@ export function OrderReassignDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!order) return null;
+  const [prevOrderId, setPrevOrderId] = useState<string | undefined>(order?.id);
+  if (order?.id !== prevOrderId) {
+    setPrevOrderId(order?.id);
+    setSelectedHouseId("");
+    setReason("");
+    setError(null);
+  }
 
-  const eligibleHouses = houses.filter((h) => h.id !== order.houseId);
-  const reference = formatOrderReference(order.code, order.id);
+  function handleClose() {
+    setSelectedHouseId("");
+    setReason("");
+    setError(null);
+    onClose();
+  }
+
+  const eligibleHouses = houses.filter((h) => h.id !== order?.houseId);
+  const reference = order ? formatOrderReference(order.code, order.id) : "";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedHouseId) {
-      setError("Veuillez sélectionner un nouveau pressing.");
+      setError(t("reassignHouseRequired"));
       return;
     }
     if (!order) return;
@@ -53,119 +73,106 @@ export function OrderReassignDialog({
       });
 
       if (!res.ok) {
-        setError(res.error || "Échec de la réassignation");
+        setError(res.error || t("reassignFailed"));
       } else {
+        handleClose();
         onSuccess();
-        onClose();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("screeningError"));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="reassign-dialog-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/40 backdrop-blur-xs animate-in fade-in"
-    >
-      <div className="w-full max-w-md bg-card rounded-2xl border border-border-strong shadow-lift overflow-hidden font-sans animate-in zoom-in-95 duration-150">
-        <div className="p-4 sm:p-5 border-b border-border-strong flex items-center justify-between bg-surface">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary-soft text-primary flex items-center justify-center">
-              <ArrowRightLeft className="w-4 h-4" />
+    <Dialog open={Boolean(order)} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden font-sans">
+        <DialogHeader className="p-4 sm:p-5 border-b border-border bg-muted/20">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <ArrowRightLeft className="size-4" />
             </div>
             <div>
-              <h2 id="reassign-dialog-title" className="text-sm font-bold text-heading">
+              <DialogTitle className="text-sm font-bold text-foreground">
                 {t("reassignTitle")}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Commande <span className="font-mono font-semibold text-heading">{reference}</span>
+              </DialogTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {t("orderLabel")}{" "}
+                <span className="font-mono font-semibold text-foreground">{reference}</span>
               </p>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-ink-400 hover:text-heading hover:bg-muted transition-colors cursor-pointer"
-            aria-label="Fermer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4">
           {error && (
-            <div className="p-2.5 rounded-lg bg-destructive-light border border-destructive-base/20 text-xs text-destructive-base">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription className="text-xs">{error}</AlertDescription>
+            </Alert>
           )}
 
-          <div className="text-xs text-muted-foreground bg-surface p-3 rounded-lg border border-border-strong shadow-2xs">
-            Pressing actuel : <span className="font-semibold text-heading">{order.houseName || "—"}</span>
+          <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg border border-border">
+            {t("currentHouse")} : <span className="font-semibold text-foreground">{order?.houseName || "—"}</span>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="targetHouse" className="text-xs font-semibold text-heading">
-              Nouveau pressing partenaire
-            </Label>
+          <Field>
+            <FieldLabel className="text-xs font-semibold text-foreground">
+              {t("newHouse")} <span className="text-destructive">*</span>
+            </FieldLabel>
             <select
               id="targetHouse"
               value={selectedHouseId}
               onChange={(e) => setSelectedHouseId(e.target.value)}
-              className="w-full h-9 rounded-lg border border-border-strong bg-card shadow-xs px-3 text-xs text-heading font-medium hover:border-ink-400 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+              className="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
               required
             >
-              <option value="">Sélectionner un pressing...</option>
+              <option value="">{t("selectHousePlaceholder")}</option>
               {eligibleHouses.map((h) => (
                 <option key={h.id} value={h.id}>
                   {h.name}
                 </option>
               ))}
             </select>
-          </div>
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="reassignReason" className="text-xs font-semibold text-heading">
-              Motif de réassignation (optionnel)
-            </Label>
+          <Field>
+            <FieldLabel className="text-xs font-semibold text-foreground">
+              {t("reassignReasonLabel")}
+            </FieldLabel>
             <Textarea
               id="reassignReason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Ex : Capacité insuffisante, délai non respecté..."
+              placeholder={t("reassignReasonPlaceholder")}
               rows={2}
-              className="text-xs bg-card border-border-strong shadow-xs resize-none"
+              className="text-xs resize-none"
             />
-          </div>
+          </Field>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-strong">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={loading}
-              className="text-xs h-8 font-semibold border-border-strong shadow-xs hover:shadow-sm cursor-pointer"
+              className="text-xs font-semibold"
             >
-              Annuler
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
               size="sm"
               disabled={loading || !selectedHouseId}
-              className="text-xs h-8 font-semibold bg-primary hover:bg-primary-hover text-white shadow-xs hover:shadow-sm gap-1.5 cursor-pointer"
+              className="text-xs font-semibold bg-primary hover:bg-primary-hover text-white gap-1.5"
             >
-              <ArrowRightLeft className="w-3.5 h-3.5" />
-              <span>{loading ? "Réassignation..." : "Confirmer"}</span>
+              <ArrowRightLeft className="size-3.5" />
+              <span>{loading ? t("reassigning") : t("confirm")}</span>
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

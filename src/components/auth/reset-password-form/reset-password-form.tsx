@@ -6,9 +6,13 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { AlertCircle } from "lucide-react";
 import { ResetPasswordHeader } from "./reset-password-header";
 import { resetPasswordAction } from "@/actions/auth.actions";
 import {
@@ -86,59 +90,57 @@ function ResetPasswordFormContent() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
       <input type="hidden" {...register("token")} value={token} />
 
       {serverError && (
-        <div
-          role="alert"
-          className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs sm:text-sm font-medium"
-        >
-          {serverError}
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{serverError}</AlertDescription>
+        </Alert>
       )}
 
       {/* New Password */}
-      <div className="space-y-1.5">
-        <Label htmlFor="new-password" className="text-xs sm:text-sm font-semibold">
-          {t("newPasswordLabel")} <span className="text-red-500">*</span>
-        </Label>
+      <Field data-invalid={Boolean(errors.password)}>
+        <FieldLabel htmlFor="new-password" className="text-xs sm:text-sm font-semibold">
+          {t("newPasswordLabel")} <span className="text-destructive">*</span>
+        </FieldLabel>
         <Input
           id="new-password"
           type="password"
           autoComplete="new-password"
           placeholder={t("passwordPlaceholder")}
-          hasError={Boolean(errors.password)}
+          aria-invalid={Boolean(errors.password)}
           aria-describedby={errors.password ? "pass-error" : undefined}
           {...register("password")}
         />
         {errors.password?.message && (
-          <p id="pass-error" className="text-xs font-medium text-red-500 dark:text-red-400 mt-1">
+          <FieldError id="pass-error">
             {errors.password.message}
-          </p>
+          </FieldError>
         )}
-      </div>
+      </Field>
 
       {/* Confirm Password */}
-      <div className="space-y-1.5">
-        <Label htmlFor="confirm-new-password" className="text-xs sm:text-sm font-semibold">
-          {t("confirmPasswordLabel")} <span className="text-red-500">*</span>
-        </Label>
+      <Field data-invalid={Boolean(errors.confirmPassword)}>
+        <FieldLabel htmlFor="confirm-new-password" className="text-xs sm:text-sm font-semibold">
+          {t("confirmPasswordLabel")} <span className="text-destructive">*</span>
+        </FieldLabel>
         <Input
           id="confirm-new-password"
           type="password"
           autoComplete="new-password"
           placeholder={t("confirmPasswordPlaceholder")}
-          hasError={Boolean(errors.confirmPassword)}
+          aria-invalid={Boolean(errors.confirmPassword)}
           aria-describedby={errors.confirmPassword ? "confirm-error" : undefined}
           {...register("confirmPassword")}
         />
         {errors.confirmPassword?.message && (
-          <p id="confirm-error" className="text-xs font-medium text-red-500 dark:text-red-400 mt-1">
+          <FieldError id="confirm-error">
             {errors.confirmPassword.message}
-          </p>
+          </FieldError>
         )}
-      </div>
+      </Field>
 
       <div className="pt-2">
         <Button
@@ -148,7 +150,14 @@ function ResetPasswordFormContent() {
           disabled={isPending}
           className="w-full text-base font-semibold shadow-xs transition-transform"
         >
-          {isPending ? t("resetting") : t("resetSubmit")}
+          {isPending ? (
+            <>
+              <Spinner className="mr-2" data-icon="inline-start" />
+              {t("resetting")}
+            </>
+          ) : (
+            t("resetSubmit")
+          )}
         </Button>
       </div>
 
@@ -168,7 +177,7 @@ export function ResetPasswordForm() {
   return (
     <div className="w-full max-w-sm sm:max-w-md mx-auto">
       <ResetPasswordHeader />
-      <Suspense fallback={<div className="h-48 animate-pulse bg-muted rounded-lg" />}>
+      <Suspense fallback={<Skeleton className="h-48 w-full rounded-xl" />}>
         <ResetPasswordFormContent />
       </Suspense>
     </div>

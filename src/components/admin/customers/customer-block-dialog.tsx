@@ -2,10 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Ban, X } from "lucide-react";
+import { AlertCircle, AlertTriangle, Ban, CheckCircle2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { blockCustomerAction, unblockCustomerAction } from "@/actions/admin-customer.actions";
 import { formatCustomerName } from "@/lib/customer-formatters";
 import type { CustomerRow } from "./types";
@@ -38,7 +45,7 @@ export function CustomerBlockDialog({
     }
   }, [isOpen]);
 
-  if (!isOpen || !customer) return null;
+  if (!customer) return null;
 
   const displayName = formatCustomerName(customer.name, customer.contactPhone);
 
@@ -68,76 +75,73 @@ export function CustomerBlockDialog({
         onClose();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue.");
+      setError(err instanceof Error ? err.message : t("genericError"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border-2 border-border-strong overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="p-4 border-b-2 border-border-strong flex items-center justify-between bg-surface">
-          <div className="flex items-center gap-2.5">
-            <div
-              className={`size-8 rounded-lg flex items-center justify-center border ${
-                isBlocked
-                  ? "bg-success-light text-success-base border-success-base/30"
-                  : "bg-destructive-light text-destructive border-destructive-base/30"
-              }`}
-            >
-              <Ban className="size-4" />
-            </div>
-            <h2 className="text-sm font-bold text-heading font-display">
-              {isBlocked ? t("titleUnblock") : t("titleBlock")}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-ink-400 hover:text-heading rounded-lg hover:bg-surface-hover"
-            aria-label={t("close")}
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md p-0 overflow-hidden rounded-xl border border-border shadow-lg bg-card gap-0">
+        <DialogHeader
+          className={`p-4 border-b border-border flex flex-row items-center gap-2.5 space-y-0 ${
+            isBlocked ? "bg-emerald-500/10" : "bg-destructive/10"
+          }`}
+        >
+          <div
+            className={`size-8 rounded-lg flex items-center justify-center border shrink-0 ${
+              isBlocked
+                ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/30"
+                : "bg-destructive/15 text-destructive border-destructive/30"
+            }`}
           >
-            <X className="size-4" />
-          </button>
-        </div>
+            {isBlocked ? <CheckCircle2 className="size-4" /> : <Ban className="size-4" />}
+          </div>
+          <DialogTitle
+            className={`text-sm font-bold ${
+              isBlocked ? "text-emerald-700 dark:text-emerald-400" : "text-destructive"
+            }`}
+          >
+            {isBlocked ? t("titleUnblock") : t("titleBlock")}
+          </DialogTitle>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div className="text-xs text-ink-700 leading-relaxed">
+        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
+          <div className="text-xs text-muted-foreground leading-relaxed">
             {isBlocked ? (
-              <p>
-                {t("confirmUnblockText", { name: displayName })}
-              </p>
+              <p>{t("confirmUnblockText", { name: displayName })}</p>
             ) : (
-              <p>
-                {t("confirmBlockText", { name: displayName })}
-              </p>
+              <p>{t("confirmBlockText", { name: displayName })}</p>
             )}
           </div>
 
           {!isBlocked && customer.hasActiveOrders && (
-            <div className="p-3 rounded-lg bg-amber-50 border-2 border-amber-300 text-xs text-amber-800 flex items-start gap-2">
-              <AlertTriangle className="size-4 shrink-0 text-amber-600 mt-0.5" />
-              <div>
+            <Alert className="border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:border-amber-700">
+              <AlertTriangle className="size-4 text-amber-600 shrink-0" />
+              <AlertDescription className="text-xs">
                 <span className="font-bold block">{t("activeOrdersWarning")}</span>
-                <span className="text-2xs text-amber-700">
+                <span className="text-2xs text-amber-800 dark:text-amber-300">
                   {t("activeOrdersDesc")}
                 </span>
-              </div>
-            </div>
+              </AlertDescription>
+            </Alert>
           )}
 
           {error && (
-            <div className="p-3 bg-destructive-light border border-destructive-base/30 rounded-lg text-xs text-destructive font-medium">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertDescription className="text-xs font-medium">
+                {error}
+              </AlertDescription>
+            </Alert>
           )}
 
           {!isBlocked && (
-            <div className="space-y-1.5">
-              <Label htmlFor="blockReasonInput" className="text-xs font-semibold text-heading">
+            <Field className="gap-2">
+              <FieldLabel htmlFor="blockReasonInput" className="text-xs sm:text-sm font-semibold">
                 {t("reasonLabel")} <span className="text-destructive">*</span>
-              </Label>
+              </FieldLabel>
               <Input
                 id="blockReasonInput"
                 ref={inputRef}
@@ -145,38 +149,31 @@ export function CustomerBlockDialog({
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder={t("reasonPlaceholder")}
-                className="h-10 text-xs border-2 border-border-strong rounded-lg"
                 disabled={loading}
               />
-            </div>
+            </Field>
           )}
 
-          <div className="flex items-center justify-end gap-2.5 pt-2 border-t-2 border-border-strong">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
             <Button
               type="button"
               variant="outline"
-              size="sm"
               onClick={onClose}
               disabled={loading}
-              className="min-h-[40px] px-4 text-xs font-semibold border-2 border-border-strong"
             >
               {t("cancelBtn")}
             </Button>
             <Button
               type="submit"
-              size="sm"
+              variant={isBlocked ? "default" : "destructive"}
               disabled={loading || (!isBlocked && !reason.trim())}
-              className={`min-h-[40px] px-4 text-xs font-bold text-white ${
-                isBlocked
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-destructive hover:bg-destructive/90"
-              }`}
+              className={isBlocked ? "bg-emerald-600 hover:bg-emerald-700 text-white" : undefined}
             >
               {loading ? t("processingBtn") : isBlocked ? t("confirmUnblockBtn") : t("confirmBlockBtn")}
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

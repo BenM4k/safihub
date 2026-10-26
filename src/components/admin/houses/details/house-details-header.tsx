@@ -17,20 +17,20 @@ export function HouseDetailsHeader({ house, onClose }: HouseDetailsHeaderProps) 
   const [imageError, setImageError] = useState(false);
 
   return (
-    <div className="border-b-2 border-border-strong bg-surface">
+    <div className="border-b border-border bg-muted/20">
       {/* Top Banner Picture */}
-      <div className="relative h-28 w-full bg-slate-900 overflow-hidden">
+      <div className="relative h-28 w-full bg-muted overflow-hidden">
         {!imageError && house.imageUrl ? (
           <Image
             src={house.imageUrl}
             alt={house.name}
             fill
             sizes="(max-width: 768px) 100vw, 450px"
-            className="object-cover opacity-85"
+            className="object-cover opacity-90"
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="size-full flex items-center justify-center bg-primary text-white font-bold text-2xl">
+          <div className="size-full flex items-center justify-center bg-primary text-primary-foreground font-bold text-2xl">
             {house.name.slice(0, 2).toUpperCase()}
           </div>
         )}
@@ -40,7 +40,7 @@ export function HouseDetailsHeader({ house, onClose }: HouseDetailsHeaderProps) 
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-3 right-3 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+          className="absolute top-3 right-3 p-1.5 rounded-full bg-background/80 hover:bg-background text-foreground backdrop-blur-xs transition-colors"
           aria-label="Fermer le panneau de détails"
         >
           <X className="size-4" />
@@ -56,10 +56,10 @@ export function HouseDetailsHeader({ house, onClose }: HouseDetailsHeaderProps) 
       <div className="p-4 space-y-1.5">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 id="house-sheet-title" className="text-base font-bold text-heading font-display">
+            <h2 id="house-sheet-title" className="text-base font-bold text-foreground">
               {house.name}
             </h2>
-            <p className="text-xs text-ink-600 font-medium">
+            <p className="text-xs text-muted-foreground font-medium">
               {house.neighborhoodName || "Quartier non assigné"}
               {house.addressNote ? ` · ${house.addressNote}` : ""}
             </p>

@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { performOnBehalfAction } from "@/actions/admin-order.actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { OrderDetailRecord } from "@/dal";
 
 interface OnBehalfActionsProps {
@@ -30,7 +31,7 @@ export function OnBehalfActions({ order }: OnBehalfActionsProps) {
       fd.append("orderId", order.id);
       fd.append("targetStatus", "accepted");
       fd.append("onBehalfOfHouseId", order.houseId);
-      fd.append("note", note || "Accepté par téléphone par l'administrateur");
+      fd.append("note", note || "Accepté par l'administrateur");
 
       const res = await performOnBehalfAction(fd);
       if (!res.ok) {
@@ -39,7 +40,7 @@ export function OnBehalfActions({ order }: OnBehalfActionsProps) {
         setActionType(null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("screeningError"));
     } finally {
       setLoading(false);
     }
@@ -48,7 +49,7 @@ export function OnBehalfActions({ order }: OnBehalfActionsProps) {
   async function handleReject(e: React.FormEvent) {
     e.preventDefault();
     if (!rejectReason.trim()) {
-      setError("Un motif de refus est obligatoire");
+      setError(t("onBehalfRejectReasonRequired"));
       return;
     }
     setError(null);
@@ -68,7 +69,7 @@ export function OnBehalfActions({ order }: OnBehalfActionsProps) {
         setActionType(null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("screeningError"));
     } finally {
       setLoading(false);
     }
@@ -77,96 +78,91 @@ export function OnBehalfActions({ order }: OnBehalfActionsProps) {
   const canAcceptOrReject = order.status === "created";
 
   return (
-    <div className="p-5 bg-white rounded-xl border border-border shadow-xs space-y-4">
+    <div className="p-5 bg-background rounded-lg border border-border space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-bold text-heading">{t("onBehalfTitle")}</h2>
+          <h2 className="text-sm font-bold text-foreground">{t("onBehalfTitle")}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Intervention administrative au nom de : <span className="font-semibold text-heading">{order.houseName}</span>
+            {t("onBehalfIntervention", { house: order.houseName || "—" })}
           </p>
         </div>
       </div>
 
-      {error && <div className="p-3 bg-red-50 text-xs text-destructive rounded-lg border border-red-200">{error}</div>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
 
       {canAcceptOrReject ? (
         <div className="space-y-3">
           {actionType === "accept" && (
-            <form onSubmit={handleAccept} className="p-4 bg-emerald-50/50 rounded-lg border border-emerald-200 space-y-3">
-              <div className="font-bold text-xs text-emerald-800">
-                Confirmer l&apos;acceptation au nom du pressing
+            <form onSubmit={handleAccept} className="p-4 bg-emerald-500/5 rounded-lg border border-emerald-500/20 space-y-3">
+              <div className="font-bold text-xs text-emerald-700 dark:text-emerald-400">
+                {t("onBehalfConfirmAccept")}
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="accNote" className="text-xs">{t("acceptNote")}</Label>
+              <Field>
+                <FieldLabel className="text-xs">{t("acceptNote")}</FieldLabel>
                 <Input
                   id="accNote"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="ex: Confirmé par téléphone avec le gérant..."
-                  className="h-8 text-xs bg-white"
+                  placeholder={t("notePlaceholder")}
+                  className="h-8 text-xs"
                 />
-              </div>
-              <div className="flex justify-end gap-2">
+              </Field>
+              <div className="flex gap-2 justify-end">
                 <Button type="button" variant="outline" size="sm" onClick={() => setActionType(null)} className="h-8 text-xs">
-                  Annuler
+                  {t("cancel")}
                 </Button>
-                <Button type="submit" disabled={loading} size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
-                  {loading ? "..." : t("onBehalfAccept")}
+                <Button type="submit" size="sm" disabled={loading} className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
+                  {loading ? t("addingNote") : t("confirm")}
                 </Button>
               </div>
             </form>
           )}
 
           {actionType === "reject" && (
-            <form onSubmit={handleReject} className="p-4 bg-red-50/50 rounded-lg border border-red-200 space-y-3">
+            <form onSubmit={handleReject} className="p-4 bg-destructive/5 rounded-lg border border-destructive/20 space-y-3">
               <div className="font-bold text-xs text-destructive">
-                Refuser la commande au nom du pressing
+                {t("onBehalfConfirmReject")}
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="rejR" className="text-xs">{t("rejectReason")} (obligatoire)</Label>
+              <Field>
+                <FieldLabel className="text-xs">{t("rejectReason")} *</FieldLabel>
                 <Input
-                  id="rejR"
+                  id="rejReason"
                   required
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="ex: Panne d'eau, surcharge de capacité..."
-                  className="h-8 text-xs bg-white"
+                  placeholder="Ex: Panne de courant..."
+                  className="h-8 text-xs"
                 />
-              </div>
-              <div className="flex justify-end gap-2">
+              </Field>
+              <div className="flex gap-2 justify-end">
                 <Button type="button" variant="outline" size="sm" onClick={() => setActionType(null)} className="h-8 text-xs">
-                  Annuler
+                  {t("cancel")}
                 </Button>
-                <Button type="submit" variant="destructive" disabled={loading} size="sm" className="h-8 text-xs">
-                  {loading ? "..." : t("onBehalfReject")}
+                <Button type="submit" variant="destructive" size="sm" disabled={loading} className="h-8 text-xs">
+                  {loading ? t("addingNote") : t("confirm")}
                 </Button>
               </div>
             </form>
           )}
 
           {!actionType && (
-            <div className="flex items-center gap-3">
-              <Button
-                size="sm"
-                onClick={() => setActionType("accept")}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9"
-              >
-                {t("onBehalfAccept")}
+            <div className="flex gap-2">
+              <Button type="button" size="sm" onClick={() => setActionType("accept")} className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
+                {t("acceptOnBehalfBtn")}
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setActionType("reject")}
-                className="text-destructive hover:bg-red-50 text-xs h-9"
-              >
-                {t("onBehalfReject")}
+              <Button type="button" variant="outline" size="sm" onClick={() => setActionType("reject")} className="h-8 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
+                {t("rejectOnBehalfBtn")}
               </Button>
             </div>
           )}
         </div>
       ) : (
         <p className="text-xs text-muted-foreground italic">
-          Cette commande est actuellement au statut &quot;{order.status}&quot; ; les actions d&apos;acceptation/refus ne sont plus applicables.
+          Cette commande a déjà dépassé le statut initial &apos;created&apos;.
         </p>
       )}
     </div>

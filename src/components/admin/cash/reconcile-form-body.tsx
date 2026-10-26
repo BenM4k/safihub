@@ -47,7 +47,7 @@ export function ReconcileFormBody({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {hasZeroExpectedWithOrders && (
-        <div className="p-3 bg-warning-light border border-warning-base/30 rounded-xl text-xs text-warning-base flex items-start gap-2">
+        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-700 dark:text-amber-400 flex items-start gap-2">
           <AlertCircle className="size-4 shrink-0 mt-0.5" />
           <span>{t("ordersExistZeroExpected")}</span>
         </div>
@@ -56,8 +56,8 @@ export function ReconcileFormBody({
       <ReconcileOrderBreakdown orders={orders} expectedCashCDF={expectedCashCDF} />
 
       <div className="space-y-1.5">
-        <Label htmlFor="received-amount-input" className="text-xs font-semibold text-heading">
-          {t("receivedInputLabel")} <span className="text-destructive-base">*</span>
+        <Label htmlFor="received-amount-input" className="text-xs font-semibold text-foreground">
+          {t("receivedInputLabel")} <span className="text-destructive">*</span>
         </Label>
         <Input
           id="received-amount-input"
@@ -67,7 +67,7 @@ export function ReconcileFormBody({
           required
           value={receivedAmount}
           onChange={(e) => onChangeReceivedAmount(Math.max(0, parseInt(e.target.value, 10) || 0))}
-          className="font-mono text-base font-bold h-11 min-h-[40px]"
+          className="font-mono text-base font-bold h-11"
         />
       </div>
 
@@ -75,11 +75,11 @@ export function ReconcileFormBody({
       <div className={`p-3 rounded-xl border flex items-center justify-between text-xs font-semibold ${diffInfo.bgClass} ${diffInfo.borderClass}`}>
         <div className="flex items-center gap-1.5">
           {diffInfo.isZero ? (
-            <CheckCircle2 className="size-4 text-success-base" />
+            <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
           ) : diffInfo.isShortage ? (
-            <ShieldAlert className="size-4 text-destructive-base" />
+            <ShieldAlert className="size-4 text-rose-600 dark:text-rose-400" />
           ) : (
-            <AlertCircle className="size-4 text-warning-base" />
+            <AlertCircle className="size-4 text-amber-600 dark:text-amber-400" />
           )}
           <span>Écart de versement :</span>
         </div>
@@ -89,14 +89,14 @@ export function ReconcileFormBody({
       </div>
 
       {diffInfo.isShortage && securityDeposit > 0 && (
-        <label className="flex items-start gap-2.5 p-3 bg-warning-light/40 border border-warning-base/30 rounded-xl cursor-pointer">
+        <label className="flex items-start gap-2.5 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl cursor-pointer">
           <input
             type="checkbox"
             checked={deductFromDeposit}
             onChange={(e) => onChangeDeductFromDeposit(e.target.checked)}
             className="mt-0.5 rounded text-primary focus:ring-primary size-4"
           />
-          <span className="text-xs text-ink-800 font-medium leading-tight">
+          <span className="text-xs text-foreground font-medium leading-tight">
             {t("deductShortfall")} (caution disponible : {formatMoney(securityDeposit)})
           </span>
         </label>
@@ -104,11 +104,11 @@ export function ReconcileFormBody({
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label htmlFor="reconcile-note-input" className="text-xs font-semibold text-heading">
-            {t("noteLabel")} {isDiscrepancy && <span className="text-destructive-base">*</span>}
+          <Label htmlFor="reconcile-note-input" className="text-xs font-semibold text-foreground">
+            {t("noteLabel")} {isDiscrepancy && <span className="text-destructive">*</span>}
           </Label>
           {isDiscrepancy && (
-            <span className="text-xs font-semibold text-destructive-base">Obligatoire si écart</span>
+            <span className="text-xs font-semibold text-destructive">Obligatoire si écart</span>
           )}
         </div>
         <Input
@@ -117,7 +117,7 @@ export function ReconcileFormBody({
           required={isDiscrepancy}
           onChange={(e) => onChangeNote(e.target.value)}
           placeholder={t("reconcileNotePlaceholder")}
-          className="text-xs h-10 min-h-[40px]"
+          className="text-xs h-10"
         />
       </div>
 
@@ -128,7 +128,7 @@ export function ReconcileFormBody({
           size="sm"
           onClick={onCancel}
           disabled={loading}
-          className="min-h-[40px] px-4 text-xs font-semibold"
+          className="h-10 px-4 text-xs font-semibold"
         >
           {t("cancelBtn")}
         </Button>
@@ -136,7 +136,7 @@ export function ReconcileFormBody({
           type="submit"
           size="sm"
           disabled={loading || (isDiscrepancy && !note.trim())}
-          className="min-h-[40px] px-4 text-xs font-semibold bg-primary hover:bg-primary-hover text-white"
+          className="h-10 px-4 text-xs font-semibold"
         >
           {t("confirmSubmit")}
         </Button>
