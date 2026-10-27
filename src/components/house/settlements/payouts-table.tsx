@@ -71,7 +71,7 @@ export function PayoutsTable({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("searchPayouts")}
-            className="pl-9 min-h-[38px] text-xs"
+            className="pl-9 h-10 sm:h-9 rounded-xl text-xs"
             aria-label={t("searchPayoutsAria")}
           />
         </div>
@@ -89,7 +89,7 @@ export function PayoutsTable({
                 key={tab.key}
                 type="button"
                 onClick={() => setMethodFilter(tab.key)}
-                className={`px-3 py-1.5 text-xs transition cursor-pointer min-h-[38px] flex items-center bg-transparent border-0 shadow-none ${
+                className={`px-3 py-1.5 text-xs transition cursor-pointer min-h-[40px] sm:min-h-[36px] flex items-center bg-transparent border-0 shadow-none ${
                   isSelected
                     ? "text-primary font-bold"
                     : "text-muted-foreground hover:text-foreground font-medium"

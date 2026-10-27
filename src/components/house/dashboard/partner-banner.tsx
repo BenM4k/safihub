@@ -121,7 +121,7 @@ export function PartnerBanner({
         onChange={handleDirectFileSelect}
       />
 
-      <div className="bg-card rounded-3xl border border-border shadow-xs overflow-hidden font-sans">
+      <div className="bg-card rounded-3xl overflow-hidden font-sans">
         <PartnerBannerCover
           coverImageUrl={coverImageUrl}
           houseName={house.name}
@@ -129,8 +129,8 @@ export function PartnerBanner({
           onOpenUpload={handleTriggerUpload}
         />
 
-        <div className="px-4 sm:px-6 pb-5 pt-0">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-10 sm:-mt-12 relative z-10">
+        <div className="px-3 sm:px-6 pb-4 sm:pb-5 pt-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 rounded-3xl bg-card/90 dark:bg-card/90 backdrop-blur-md border border-border/60 shadow-sm -mt-10 sm:-mt-12 relative z-10">
             <PartnerBannerIdentity
               name={house.name}
               initials={initials}
@@ -150,7 +150,9 @@ export function PartnerBanner({
           </div>
 
           {!coverImageUrl && (
-            <PartnerBannerPhotoNudge onOpenUpload={handleTriggerUpload} />
+            <div className="pt-3">
+              <PartnerBannerPhotoNudge onOpenUpload={handleTriggerUpload} />
+            </div>
           )}
         </div>
       </div>

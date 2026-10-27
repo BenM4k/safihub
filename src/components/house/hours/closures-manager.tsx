@@ -106,14 +106,14 @@ export function ClosuresManager({
           <p className="text-xs text-muted-foreground mt-0.5">{t("closuresSubtitle")}</p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+        <div className="flex items-center gap-2 self-stretch sm:self-auto flex-wrap sm:flex-nowrap">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => setIsHolidaysModalOpen(true)}
             disabled={isPending}
-            className="h-8 px-3 text-xs font-semibold border-primary text-primary hover:bg-primary/10 cursor-pointer"
+            className="h-10 sm:h-9 px-3.5 rounded-xl text-xs font-semibold border-primary text-primary hover:bg-primary/10 cursor-pointer flex-1 sm:flex-initial"
           >
             <Sparkles className="size-3.5 mr-1.5 text-primary" aria-hidden="true" />
             <span>{t("importHolidays")}</span>
@@ -127,7 +127,7 @@ export function ClosuresManager({
               setIsAddModalOpen(true);
             }}
             disabled={isPending}
-            className="h-8 px-3 bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer"
+            className="h-10 sm:h-9 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer flex-1 sm:flex-initial"
           >
             <PlusCircle className="size-3.5 mr-1.5" aria-hidden="true" />
             <span>{t("addClosure")}</span>

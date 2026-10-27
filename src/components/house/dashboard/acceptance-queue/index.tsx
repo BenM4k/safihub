@@ -148,7 +148,7 @@ export function AcceptanceQueue({
 
       {/* Active waiting queue */}
       {sortedOrders.length === 0 ? (
-        <div className="p-8 rounded-3xl bg-card border border-border text-center space-y-2 shadow-xs">
+        <div className="p-8 rounded-3xl bg-card text-center space-y-2">
           <div className="size-12 rounded-2xl bg-success-soft text-success flex items-center justify-center mx-auto shadow-xs">
             <Check className="size-6" />
           </div>

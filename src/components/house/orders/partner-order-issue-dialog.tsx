@@ -105,7 +105,11 @@ export function PartnerOrderIssueDialog({
               {PRESET_REASONS.map((reason) => (
                 <label
                   key={reason}
-                  className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-muted/40 text-xs font-medium cursor-pointer transition-colors"
+                  className={`flex items-center gap-2.5 p-2 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                    selectedReason === reason
+                      ? "bg-muted/60 text-heading font-semibold"
+                      : "text-foreground hover:bg-muted/40"
+                  }`}
                 >
                   <input
                     type="radio"
@@ -139,22 +143,20 @@ export function PartnerOrderIssueDialog({
             <p className="text-xs text-destructive font-medium">{errorMsg}</p>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0 pt-2">
+          <DialogFooter className="flex flex-row items-center justify-end gap-2.5 pt-3 border-t border-border sm:space-x-0">
             <Button
               type="button"
               variant="ghost"
-              size="sm"
               onClick={() => handleOpenChange(false)}
               disabled={isSubmitting}
-              className="text-xs min-h-[44px] sm:min-h-[36px]"
+              className="flex-1 sm:flex-initial text-xs font-semibold cursor-pointer h-10 sm:h-9"
             >
               {t("cancel")}
             </Button>
             <Button
               type="submit"
-              size="sm"
               disabled={isSubmitting}
-              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs min-h-[44px] sm:min-h-[36px]"
+              className="flex-1 sm:flex-initial bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs cursor-pointer h-10 sm:h-9"
             >
               {isSubmitting && <Loader2 className="size-3.5 animate-spin mr-1.5" />}
               <span>{t("confirmIssue")}</span>

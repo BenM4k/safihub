@@ -146,14 +146,14 @@ export function SaveConfirmDialog({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border">
+        <DialogFooter className="flex flex-row items-center justify-end gap-2.5 pt-3 border-t border-border sm:space-x-0">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={onClose}
             disabled={isSaving}
-            className="text-xs font-semibold rounded-xl"
+            className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-semibold rounded-xl"
           >
             {t("cancelChanges")}
           </Button>
@@ -163,7 +163,7 @@ export function SaveConfirmDialog({
             size="sm"
             onClick={onConfirm}
             disabled={isSaving}
-            className="text-xs font-bold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+            className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-bold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
           >
             {isSaving ? t("saving") : t("confirmButton")}
           </Button>

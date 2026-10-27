@@ -58,7 +58,7 @@ export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
           <Alert
             key={alert.id}
             variant={variant}
-            className={`p-3.5 sm:p-4 rounded-2xl flex items-start justify-between gap-3 shadow-xs ${
+            className={`p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs ${
               isWarning
                 ? "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200"
                 : ""
@@ -76,13 +76,13 @@ export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 self-center">
+            <div className="flex items-center justify-end gap-2 shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t border-border/30 sm:border-t-0">
               {alert.link && (
                 <Button
                   variant="outline"
                   size="sm"
                   asChild
-                  className="h-8 px-3 rounded-xl text-xs font-bold bg-card hover:bg-secondary text-heading shadow-2xs border-border"
+                  className="h-8 px-3 rounded-xl text-xs font-bold bg-card hover:bg-secondary text-heading shadow-2xs border-border flex-1 sm:flex-initial justify-center"
                 >
                   <Link href={alert.link}>
                     <span>{t("manage")}</span>
@@ -96,7 +96,7 @@ export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
                 size="icon"
                 onClick={() => handleDismiss(alert.id)}
                 aria-label={t("dismissAria")}
-                className="size-7 rounded-lg text-muted-foreground hover:text-heading cursor-pointer"
+                className="size-7 rounded-lg text-muted-foreground hover:text-heading cursor-pointer shrink-0"
               >
                 <X className="size-4" />
               </Button>

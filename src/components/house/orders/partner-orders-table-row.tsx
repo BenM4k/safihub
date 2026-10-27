@@ -123,9 +123,9 @@ export function PartnerOrdersTableRow({
       <TableCell className="py-3.5 px-4 text-right">
         <div className="space-y-0.5">
           <div className="text-[11px] text-muted-foreground">
-            {formatAmount(order.totalDue, order.currency)}
+            {formatAmount(order.itemsTotal, order.currency)}
           </div>
-          <div className="text-xs font-black text-primary font-mono">
+          <div className="text-xs font-black text-success font-mono">
             {formatAmount(order.netPartnerShare, order.currency)}
           </div>
         </div>

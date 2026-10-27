@@ -50,7 +50,7 @@ export function SettingsDesktopTabs({
   return (
     <nav
       aria-label={t("navAria")}
-      className="hidden md:flex items-center gap-1 border-b border-border/60 pb-2 overflow-x-auto scrollbar-none"
+      className="hidden md:flex items-center gap-1.5 p-1 rounded-2xl bg-muted/40 border border-border/60 overflow-x-auto scrollbar-none shadow-2xs"
     >
       {SECTIONS_CONFIG.map((sec) => {
         const Icon = sec.icon;
@@ -61,13 +61,13 @@ export function SettingsDesktopTabs({
             key={sec.id}
             type="button"
             onClick={() => onSelectSection(sec.id)}
-            className={`flex items-center gap-2 px-3 py-2 text-xs transition whitespace-nowrap min-h-[40px] cursor-pointer bg-transparent border-0 shadow-none ${
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs transition-all whitespace-nowrap rounded-xl min-h-[38px] cursor-pointer ${
               isActive
-                ? "text-primary font-bold"
-                : "text-muted-foreground hover:text-foreground font-medium"
+                ? "bg-card text-heading font-bold shadow-xs border border-border/60"
+                : "text-muted-foreground hover:text-heading hover:bg-muted/50 font-medium"
             }`}
           >
-            <Icon className="size-3.5 shrink-0" aria-hidden="true" />
+            <Icon className={`size-3.5 shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"}`} aria-hidden="true" />
             <span>{t(sec.labelKey)}</span>
 
             {/* Badges */}
@@ -75,7 +75,7 @@ export function SettingsDesktopTabs({
               <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
             )}
             {sec.id === "exclusions" && exclusionsCount > 0 && (
-              <Badge variant={isActive ? "default" : "secondary"} className="px-1.5 py-0 text-[10px]">
+              <Badge variant={isActive ? "default" : "secondary"} className="px-1.5 py-0 text-[10px] rounded-md">
                 {exclusionsCount}
               </Badge>
             )}
@@ -95,7 +95,7 @@ export function SettingsMobileList({
   const t = useTranslations("house.settings");
 
   return (
-    <div className="md:hidden divide-y divide-border/60 border-y border-border/60">
+    <div className="md:hidden rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
       {SECTIONS_CONFIG.map((sec) => {
         const Icon = sec.icon;
 
@@ -104,27 +104,27 @@ export function SettingsMobileList({
             key={sec.id}
             type="button"
             onClick={() => onSelectSection(sec.id)}
-            className="w-full py-3.5 px-2 flex items-center justify-between gap-3 text-left transition hover:bg-muted/40 min-h-[52px]"
+            className="w-full p-4 flex items-center justify-between gap-3 text-left transition hover:bg-muted/40 min-h-[56px] cursor-pointer"
           >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <Icon className="size-4" />
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="size-10 rounded-xl bg-primary-soft flex items-center justify-center text-primary shrink-0 border border-primary/20">
+                <Icon className="size-4.5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-foreground text-sm">{t(sec.labelKey)}</span>
+                  <span className="font-bold text-heading text-sm font-display">{t(sec.labelKey)}</span>
                   {sec.id === "commandes" && isPaused && (
-                    <Badge variant="outline" className="border-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-bold">
+                    <Badge variant="outline" className="border-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-bold rounded-md">
                       {t("inPause")}
                     </Badge>
                   )}
                   {sec.id === "exclusions" && exclusionsCount > 0 && (
-                    <Badge variant="secondary" className="text-[10px] font-bold">
+                    <Badge variant="secondary" className="text-[10px] font-bold rounded-md">
                       {exclusionsCount}
                     </Badge>
                   )}
                   {sec.id === "equipe" && (
-                    <Badge variant="secondary" className="text-[10px] font-bold">
+                    <Badge variant="secondary" className="text-[10px] font-bold rounded-md">
                       {t("staffCountBadge", { count: staffCount })}
                     </Badge>
                   )}

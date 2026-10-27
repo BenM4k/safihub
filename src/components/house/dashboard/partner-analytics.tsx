@@ -1,16 +1,20 @@
 "use client";
 
 import { BarChart3, AlertTriangle, Star } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { formatAmount } from "@/lib/order-formatters";
+import { cn } from "@/lib/utils";
 import type { HouseDashboardMetrics } from "@/dal";
 
 interface PartnerAnalyticsProps {
   metrics: HouseDashboardMetrics;
   houseSlug: string;
+  className?: string;
 }
 
-export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
-  const capacity = metrics.dailyCapacity ?? 30; // fallback to standard threshold if null
+export function PartnerAnalytics({ metrics, className }: PartnerAnalyticsProps) {
+  const t = useTranslations("house.dashboard");
+  const capacity = metrics.dailyCapacity ?? 30;
   const used = metrics.todayOrdersCount;
   const capacityPercent = Math.min(100, Math.round((used / capacity) * 100));
   const isHighCapacity = capacityPercent >= 80;
@@ -18,9 +22,9 @@ export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
   const maxRevenue = Math.max(...metrics.dailyChart.map((d) => d.revenueCDF ?? 0), 1000);
 
   return (
-    <div className="grid lg:grid-cols-3 gap-4 font-sans">
+    <div className={cn("grid lg:grid-cols-3 gap-4 font-sans", className)}>
       {/* 1. Accessible Bar Chart (7 derniers jours) */}
-      <div className="lg:col-span-2 p-5 rounded-3xl bg-card border border-border shadow-xs space-y-4">
+      <div className="lg:col-span-2 p-4 sm:p-5 rounded-3xl bg-surface dark:bg-card/75 border border-border/50 shadow-xs space-y-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className="size-8 rounded-xl bg-primary-soft text-primary flex items-center justify-center font-bold">
@@ -28,10 +32,10 @@ export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
             </div>
             <div>
               <h3 className="font-display font-bold text-sm sm:text-base text-heading">
-                Commandes & Revenus
+                {t("analyticsTitle")}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Évolution des volumes traités (7 derniers jours)
+                {t("analyticsSubtitle")}
               </p>
             </div>
           </div>
@@ -39,12 +43,20 @@ export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
 
         {/* CSS/SVG Bar Chart with Accessible Tooltips */}
         <div className="space-y-3 pt-2">
-          <div className="h-44 flex items-end justify-between gap-2 sm:gap-4 px-2 pt-4 border-b border-border">
-            {metrics.dailyChart.map((point) => {
+          <div className="h-44 flex items-end justify-between gap-2 sm:gap-4 px-2 pt-4 border-b border-border/60">
+            {metrics.dailyChart.map((point, index) => {
               const rev = point.revenueCDF ?? 0;
               const heightPercent = Math.max(8, Math.round((rev / maxRevenue) * 100));
               const revLabel = point.revenueCDF !== null ? formatAmount(point.revenueCDF) : "--";
               const countLabel = point.ordersCount !== null ? `${point.ordersCount} cmd(s)` : "--";
+
+              const isFirst = index === 0;
+              const isLast = index === metrics.dailyChart.length - 1;
+              const tooltipAlignClass = isFirst
+                ? "left-0 translate-x-0"
+                : isLast
+                ? "right-0 translate-x-0"
+                : "left-1/2 -translate-x-1/2";
 
               return (
                 <div
@@ -52,12 +64,12 @@ export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
                   className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative"
                 >
                   {/* Tooltip on hover/focus */}
-                  <div className="absolute -top-12 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity bg-heading text-background text-[10px] font-bold py-1 px-2 rounded-lg pointer-events-none whitespace-nowrap z-20 shadow-md">
+                  <div className={`absolute -top-12 ${tooltipAlignClass} opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity bg-heading text-background text-[10px] font-bold py-1 px-2 rounded-lg pointer-events-none whitespace-nowrap z-20 shadow-md`}>
                     <div>{revLabel}</div>
                     <div className="text-muted-foreground font-normal">{countLabel}</div>
                   </div>
 
-                  {/* Visual Bar with accessible aria-label - Solid Royal Indigo, strictly no gradients */}
+                  {/* Visual Bar */}
                   <div
                     tabIndex={0}
                     role="img"
@@ -67,7 +79,7 @@ export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
                   />
 
                   {/* Day label */}
-                  <span className="text-[11px] font-bold text-muted-foreground group-hover:text-heading">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-muted-foreground group-hover:text-heading truncate text-center max-w-full">
                     {point.label}
                   </span>
                 </div>
@@ -76,23 +88,23 @@ export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
           </div>
 
           <p className="text-[11px] text-muted-foreground text-center">
-            Barres proportionnelles au chiffre d&apos;affaires net journalier (CDF)
+            {t("analyticsLegend")}
           </p>
         </div>
       </div>
 
       {/* 2. Capacity & Performance Side Widgets */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
         {/* Capacity Widget */}
-        <div className="p-5 rounded-3xl bg-card border border-border shadow-xs space-y-3">
+        <div className="p-4 sm:p-5 rounded-3xl bg-surface dark:bg-card/75 border border-border/50 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-foreground">
-              Capacité journalière
+              {t("capacityTitle")}
             </span>
             {isHighCapacity && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning-soft px-2 py-0.5 rounded-full border border-warning/20">
                 <AlertTriangle className="size-3" />
-                Seuil 80%
+                {t("capacityThreshold80")}
               </span>
             )}
           </div>
@@ -120,31 +132,31 @@ export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
 
           <p className="text-[11px] text-muted-foreground leading-relaxed">
             {metrics.dailyCapacity
-              ? "Défini dans les paramètres de votre pressing. Une fois le seuil atteint, votre visibilité est automatiquement régulée."
-              : "Aucune limite configurée dans les paramètres."}
+              ? t("capacityConfiguredDesc")
+              : t("capacityUnconfiguredDesc")}
           </p>
         </div>
 
         {/* Performance Widget */}
-        <div className="p-5 rounded-3xl bg-card border border-border shadow-xs space-y-3">
+        <div className="p-4 sm:p-5 rounded-3xl bg-surface dark:bg-card/75 border border-border/50 shadow-xs space-y-3">
           <span className="text-xs font-bold text-foreground block">
-            Qualité & Ponctualité
+            {t("performanceTitle")}
           </span>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-2xl bg-surface border border-border">
+          <div className="grid grid-cols-2 divide-x divide-border/60 bg-card dark:bg-surface rounded-2xl p-1 border border-border/40">
+            <div className="p-2.5 sm:p-3">
               <span className="text-[10px] font-bold text-muted-foreground block uppercase">
-                Livraisons à temps
+                {t("onTimeRate")}
               </span>
               <span className="text-lg font-black text-success font-display block mt-1">
                 {metrics.onTimeDeliveryRate ? `${metrics.onTimeDeliveryRate}%` : "—"}
               </span>
-              <span className="text-[10px] text-muted-foreground">vs délai promis</span>
+              <span className="text-[10px] text-muted-foreground">{t("vsPromised")}</span>
             </div>
 
-            <div className="p-3 rounded-2xl bg-surface border border-border">
+            <div className="p-2.5 sm:p-3 pl-3 sm:pl-4">
               <span className="text-[10px] font-bold text-muted-foreground block uppercase">
-                Note moyenne
+                {t("averageRating")}
               </span>
               <div className="flex items-center gap-1 mt-1">
                 <span className="text-lg font-black text-heading font-display">
@@ -152,7 +164,7 @@ export function PartnerAnalytics({ metrics }: PartnerAnalyticsProps) {
                 </span>
                 {metrics.house.rating && <Star className="size-4 fill-amber-400 text-warning" />}
               </div>
-              <span className="text-[10px] text-muted-foreground">Avis clients</span>
+              <span className="text-[10px] text-muted-foreground">{t("customerReviews")}</span>
             </div>
           </div>
         </div>

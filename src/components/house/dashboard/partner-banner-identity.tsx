@@ -24,9 +24,10 @@ export function PartnerBannerIdentity({
   statusPill,
 }: PartnerBannerIdentityProps) {
   return (
-    <div className="flex items-end gap-3.5 min-w-0">
-      <div className="size-20 sm:size-24 rounded-2xl bg-card p-1 shadow-card border-2 border-card shrink-0 overflow-hidden">
-        <div className="size-full rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-black text-2xl font-display shadow-xs">
+    <div className="flex items-stretch gap-3 sm:gap-3.5 min-w-0 flex-1">
+      {/* 1. Logo container: matches the 3-row column height */}
+      <div className="aspect-square self-stretch shrink-0 min-w-[3.75rem] max-w-[5rem] rounded-2xl bg-card p-1 shadow-card border-2 border-card overflow-hidden flex items-center justify-center">
+        <div className="size-full rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-black text-xl sm:text-2xl font-display shadow-xs">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -40,21 +41,28 @@ export function PartnerBannerIdentity({
         </div>
       </div>
 
-      <div className="space-y-1 min-w-0 pb-1">
-        <h1 className="text-lg sm:text-2xl font-black text-heading tracking-tight font-display truncate">
+      {/* 2. Column: Name -> Address & Rating -> State */}
+      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5 space-y-1">
+        {/* Name */}
+        <h1 className="text-base sm:text-lg font-black text-heading tracking-tight font-display truncate leading-tight">
           {name}
         </h1>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">{locationText}</span>
+
+        {/* Address & Rating */}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate leading-none">
+          <span className="font-medium text-foreground truncate">{locationText}</span>
           {rating && (
-            <span className="inline-flex items-center gap-1 font-bold text-warning-foreground bg-highlight px-2 py-0.5 rounded-full border border-warning/30 text-[11px]">
-              <Star className="size-3 fill-amber-400 text-amber-500" />
+            <span className="inline-flex items-center gap-1 font-bold text-warning-foreground bg-highlight px-1.5 py-0.5 rounded-full border border-warning/30 text-[10px] shrink-0">
+              <Star className="size-2.5 fill-amber-400 text-amber-500" />
               {rating.toFixed(1)}
             </span>
           )}
-          {/* Status pill */}
+        </div>
+
+        {/* State / Status pill */}
+        <div className="flex items-center">
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border shadow-xs ${statusPill.badgeClass}`}
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-xs ${statusPill.badgeClass}`}
           >
             <span className="size-1.5 rounded-full bg-current animate-pulse" />
             <span>{statusPill.label}</span>

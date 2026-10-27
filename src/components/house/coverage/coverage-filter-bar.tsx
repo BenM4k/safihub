@@ -27,7 +27,7 @@ export function CoverageFilterBar({
   const t = useTranslations("house.coverage");
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-2 border-b border-border">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
       {/* Search Input */}
       <div className="relative flex-1 max-w-sm">
         <Search
@@ -39,7 +39,7 @@ export function CoverageFilterBar({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={t("searchPlaceholder")}
-          className="pl-9 h-9 text-xs bg-transparent rounded-lg border-input focus-visible:border-primary"
+          className="pl-9 h-10 sm:h-9 text-xs bg-card rounded-xl border-input focus-visible:border-primary shadow-2xs"
           aria-label={t("searchPlaceholder")}
         />
         {searchQuery && (
@@ -54,14 +54,14 @@ export function CoverageFilterBar({
         )}
       </div>
 
-      {/* Filter Tabs: text-primary, no bg */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 shrink-0">
+      {/* Filter Tabs: Sleek segmented pills */}
+      <div className="inline-flex items-center p-1 rounded-xl bg-muted/50 border border-border/50 gap-1 overflow-x-auto shrink-0 self-start sm:self-auto">
         <button
           type="button"
           onClick={() => onFilterStatusChange("all")}
-          className={`px-2.5 py-1 text-xs whitespace-nowrap transition cursor-pointer bg-transparent border-0 ${
+          className={`px-3 py-1.5 text-xs whitespace-nowrap rounded-lg transition-all cursor-pointer ${
             filterStatus === "all"
-              ? "text-primary font-bold"
+              ? "bg-card text-heading font-bold shadow-2xs border border-border/60"
               : "text-muted-foreground hover:text-heading font-medium"
           }`}
         >
@@ -71,9 +71,9 @@ export function CoverageFilterBar({
         <button
           type="button"
           onClick={() => onFilterStatusChange("served")}
-          className={`px-2.5 py-1 text-xs whitespace-nowrap transition cursor-pointer bg-transparent border-0 ${
+          className={`px-3 py-1.5 text-xs whitespace-nowrap rounded-lg transition-all cursor-pointer ${
             filterStatus === "served"
-              ? "text-primary font-bold"
+              ? "bg-card text-primary font-bold shadow-2xs border border-border/60"
               : "text-muted-foreground hover:text-heading font-medium"
           }`}
         >
@@ -83,9 +83,9 @@ export function CoverageFilterBar({
         <button
           type="button"
           onClick={() => onFilterStatusChange("not_served")}
-          className={`px-2.5 py-1 text-xs whitespace-nowrap transition cursor-pointer bg-transparent border-0 ${
+          className={`px-3 py-1.5 text-xs whitespace-nowrap rounded-lg transition-all cursor-pointer ${
             filterStatus === "not_served"
-              ? "text-primary font-bold"
+              ? "bg-card text-heading font-bold shadow-2xs border border-border/60"
               : "text-muted-foreground hover:text-heading font-medium"
           }`}
         >

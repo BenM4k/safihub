@@ -51,7 +51,7 @@ export function ExclusionItemCard({
           variant="ghost"
           onClick={() => onEdit(exclusion)}
           disabled={disabled}
-          className="text-muted-foreground hover:text-foreground min-h-[38px] px-2.5 text-xs"
+          className="text-muted-foreground hover:text-foreground h-9 px-3 rounded-xl text-xs cursor-pointer"
         >
           <Edit2 className="size-3.5 mr-1" />
           <span>Modifier</span>
@@ -61,7 +61,7 @@ export function ExclusionItemCard({
           variant="ghost"
           onClick={() => onDelete(exclusion)}
           disabled={disabled}
-          className="text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[38px] px-2.5 text-xs"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 px-3 rounded-xl text-xs cursor-pointer"
         >
           <Trash2 className="size-3.5 mr-1" />
           <span>Supprimer</span>

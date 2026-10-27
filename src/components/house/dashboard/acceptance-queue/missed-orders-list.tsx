@@ -37,7 +37,7 @@ export function MissedOrdersList({
         {missedOrders.slice(0, 3).map((order) => (
           <div
             key={order.id}
-            className="p-3 rounded-xl bg-card border border-border flex items-center justify-between gap-3 text-xs"
+            className="p-3 rounded-xl bg-card border border-border shadow-xs hover:shadow-sm transition-shadow flex items-center justify-between gap-3 text-xs"
           >
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">

@@ -32,7 +32,6 @@ export function OrderAcceptanceDetails({
     : null;
 
   const itemsTotal = order.adjustedItemsTotal ?? order.itemsTotal;
-  const deliveryFee = order.deliveryFee ?? 0;
   const commissionAmount = order.commissionAmount ?? 0;
   const commissionPct = order.commissionBps ? order.commissionBps / 100 : null;
 
@@ -83,42 +82,30 @@ export function OrderAcceptanceDetails({
         )}
       </div>
 
-      <div className="sm:border-l sm:border-border sm:pl-4 flex flex-col justify-between">
-        <div className="p-2.5 rounded-xl bg-surface border border-border space-y-1.5">
-          <div className="flex items-center justify-between text-muted-foreground font-semibold">
-            <span>{t("financialClientTotal")}</span>
+      <div className="sm:border-l sm:border-border/60 sm:pl-4 flex flex-col justify-between">
+        <div className="p-2.5 sm:p-3 rounded-xl bg-surface space-y-1.5">
+          <div className="flex items-center justify-between text-muted-foreground font-semibold text-xs">
+            <span>{t("financialLaundryAmount")}</span>
             <span className="font-bold text-foreground">
-              {formatAmount(order.totalDue, order.currency)}
+              {formatAmount(itemsTotal, order.currency)}
             </span>
           </div>
 
-          <div className="space-y-1 pt-1 border-t border-border/60 text-[11px] text-muted-foreground">
-            <div className="flex items-center justify-between">
-              <span>• {t("financialLaundryAmount")}</span>
-              <span className="font-medium text-foreground">
-                {formatAmount(itemsTotal, order.currency)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>• {t("financialDeliveryFee")}</span>
-              <span className="font-medium text-foreground">
-                {formatAmount(deliveryFee, order.currency)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>
-                • {t("financialCommission")}
-                {commissionPct ? ` (${commissionPct}%)` : ""}
-              </span>
-              <span className="text-destructive font-medium">
-                -{formatAmount(commissionAmount, order.currency)}
-              </span>
-            </div>
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/60">
+            <span>
+              {t("financialCommission")}
+              {commissionPct ? ` (${commissionPct}%)` : ""}
+            </span>
+            <span className="font-medium">
+              -{formatAmount(commissionAmount, order.currency)}
+            </span>
           </div>
 
-          <div className="flex items-center justify-between pt-1.5 border-t border-border font-bold text-xs">
-            <span className="text-primary">{t("financialPartnerNet")}</span>
-            <span className="text-primary font-black font-mono text-sm">
+          <div className="flex items-center justify-between pt-2 border-t border-border/60 font-bold text-xs bg-success-soft/30 -mx-1 px-2.5 py-1.5 rounded-lg border border-success/20">
+            <span className="text-success font-bold">
+              {t("financialPartnerNet")}
+            </span>
+            <span className="text-success font-black font-mono text-sm sm:text-base tabular-nums">
               {formatAmount(netEarnings, order.currency)}
             </span>
           </div>

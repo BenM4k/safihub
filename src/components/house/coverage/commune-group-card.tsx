@@ -74,10 +74,10 @@ export function CommuneGroupCard({
     : `Commune de ${zoneName}`;
 
   return (
-    <div className="border-b border-border py-2">
+    <div className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-xs divide-y divide-border/60">
       {/* Group Header */}
-      <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="p-3.5 sm:p-4 bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
           <Button
             type="button"
             variant="ghost"
@@ -85,7 +85,7 @@ export function CommuneGroupCard({
             onClick={() => setIsExpanded(!isExpanded)}
             aria-expanded={isExpanded}
             aria-label={t(isExpanded ? "collapseZoneAria" : "expandZoneAria", { zone: displayName })}
-            className="size-7 p-0 text-muted-foreground hover:text-heading"
+            className="size-8 rounded-lg p-0 text-muted-foreground hover:text-heading hover:bg-muted/40 transition shrink-0"
           >
             {isExpanded ? (
               <ChevronUp className="size-4" aria-hidden="true" />
@@ -136,7 +136,7 @@ export function CommuneGroupCard({
               size="sm"
               disabled={disabled}
               onClick={() => onToggleGroup(items)}
-              className="h-8 text-xs font-semibold rounded-lg text-heading hover:text-primary hover:bg-transparent"
+              className="h-9 px-3 text-xs font-semibold rounded-xl text-heading hover:text-primary hover:bg-muted/40 transition min-h-[36px] flex items-center cursor-pointer"
               title={triState === "all" ? t("deselectAll") : t("selectAll")}
             >
               {triState === "all" ? (
@@ -160,22 +160,28 @@ export function CommuneGroupCard({
         )}
       </div>
 
-      {/* Quartiers list */}
-      {isExpanded && (
-        <div className="divide-y divide-border/60 pl-2 sm:pl-4">
-          {items.map((item) => (
-            <QuartierRowItem
-              key={item.neighborhoodId}
-              item={item}
-              isCovered={Boolean(coveredMap[item.neighborhoodId])}
-              isDirty={dirtyIds.has(item.neighborhoodId)}
-              disabled={disabled}
-              effectiveMaxDistance={effectiveMaxDistance}
-              onToggle={onToggleQuartier}
-            />
-          ))}
+      {/* Quartiers list with smooth 300ms CSS grid accordion */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+          isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="divide-y divide-border/60">
+            {items.map((item) => (
+              <QuartierRowItem
+                key={item.neighborhoodId}
+                item={item}
+                isCovered={Boolean(coveredMap[item.neighborhoodId])}
+                isDirty={dirtyIds.has(item.neighborhoodId)}
+                disabled={disabled}
+                effectiveMaxDistance={effectiveMaxDistance}
+                onToggle={onToggleQuartier}
+              />
+            ))}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

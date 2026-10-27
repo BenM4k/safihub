@@ -104,44 +104,33 @@ export function PartnerOrderDetailSheet({
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 text-xs">
-          {/* Customer Privacy Banner */}
-          <div className="p-3 bg-surface rounded-xl border border-border flex items-start gap-2.5">
-            <Shield className="size-4 text-primary shrink-0 mt-0.5" />
-            <div className="text-muted-foreground">
-              {order.status === "created" ? (
-                <span>
-                  <strong>AC 15 :</strong> {t("privacyNoticeCreated")}
-                </span>
-              ) : (
-                <span>
-                  <strong>{t("actionAccept")} :</strong>{" "}
-                  {t("privacyNoticeAccepted")}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Customer Card (AC 15 Privacy: First name + neighborhood only) */}
-          <div className="p-3.5 bg-surface rounded-xl border border-border space-y-2">
+          {/* Customer & Privacy (Unified, no boxy card) */}
+          <div className="space-y-2 pb-4 border-b border-border/60">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-heading text-sm flex items-center gap-1.5">
-                <User className="size-3.5 text-primary" />
-                {order.customerDisplayName}
+              <span className="font-bold text-heading text-sm flex items-center gap-2">
+                <User className="size-4 text-primary" />
+                <span>{order.customerDisplayName}</span>
               </span>
-              <span className="text-muted-foreground flex items-center gap-1">
-                <MapPin className="size-3" />
-                {order.neighborhoodName}
+              <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                <MapPin className="size-3.5" />
+                <span>{order.neighborhoodName}</span>
               </span>
             </div>
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-0.5">
+              <Shield className="size-3.5 text-primary/70 shrink-0" />
+              <span>
+                {order.status === "created"
+                  ? t("privacyNoticeCreated")
+                  : t("privacyNoticeAccepted")}
+              </span>
+            </p>
           </div>
 
           {/* Financial Breakdown */}
           <OrderDetailFinancials
             order={order}
             title={t("financialTitle")}
-            totalClientLabel={t("financialTotalClient")}
             itemsTotalLabel={t("financialItemsTotal")}
-            transportLabel={t("financialTransportFee")}
             commissionLabel={t("financialCommission", {
               percent: order.commissionBps / 100,
             })}

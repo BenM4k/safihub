@@ -47,8 +47,8 @@ export function CatalogueToolbar({
     categories.find((c) => c.key === filters.category)?.label;
 
   return (
-    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xs py-3 border-b border-border space-y-2.5">
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xs py-4 border-b border-border space-y-3.5">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
         {/* Search */}
         <div className="relative flex-1 max-w-sm">
           <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
@@ -58,7 +58,7 @@ export function CatalogueToolbar({
               onFilterChange({ ...filters, search: e.target.value })
             }
             placeholder={t("searchPlaceholder")}
-            className="pl-9 h-9 text-xs bg-transparent rounded-lg border-input focus-visible:border-primary"
+            className="pl-9 h-10 sm:h-9 text-xs bg-transparent rounded-xl border-input focus-visible:border-primary"
             aria-label={t("searchPlaceholder")}
           />
           {filters.search && (
@@ -74,7 +74,7 @@ export function CatalogueToolbar({
         </div>
 
         {/* Status filter buttons & Bulk Actions */}
-        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
           {(
             [
               { id: "all", label: t("filterAll") },
@@ -92,10 +92,10 @@ export function CatalogueToolbar({
                   status: st.id as CatalogueStatusFilter,
                 })
               }
-              className={`px-2.5 py-1 text-xs whitespace-nowrap transition cursor-pointer bg-transparent border-0 ${
+              className={`px-3 py-1.5 text-xs whitespace-nowrap transition cursor-pointer rounded-xl border ${
                 filters.status === st.id
-                  ? "text-primary font-bold"
-                  : "text-muted-foreground hover:text-heading font-medium"
+                  ? "bg-primary-soft/80 border-primary/30 text-primary font-bold shadow-xs"
+                  : "border-transparent text-muted-foreground hover:text-heading hover:bg-muted/40 font-medium"
               }`}
             >
               {st.label}
@@ -108,7 +108,7 @@ export function CatalogueToolbar({
             variant="ghost"
             size="sm"
             onClick={onOpenBulkTools}
-            className="h-8 text-xs font-semibold rounded-lg ml-auto shrink-0 text-heading hover:text-primary hover:bg-transparent"
+            className="h-10 sm:h-8 text-xs font-semibold rounded-xl ml-auto shrink-0 text-heading hover:text-primary hover:bg-transparent"
           >
             <SlidersHorizontal className="size-3.5 mr-1.5 text-primary" aria-hidden="true" />
             <span>{t("bulkTools")}</span>
@@ -122,14 +122,14 @@ export function CatalogueToolbar({
       </div>
 
       {/* Category filters */}
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-0.5">
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1">
         <button
           type="button"
           onClick={() => onFilterChange({ ...filters, category: "all" })}
-          className={`px-2.5 py-1 text-xs whitespace-nowrap transition cursor-pointer bg-transparent border-0 ${
+          className={`px-3 py-1.5 text-xs whitespace-nowrap transition cursor-pointer rounded-xl border ${
             filters.category === "all"
-              ? "text-primary font-bold"
-              : "text-muted-foreground hover:text-heading font-medium"
+              ? "bg-primary-soft/80 border-primary/30 text-primary font-bold shadow-xs"
+              : "border-transparent text-muted-foreground hover:text-heading hover:bg-muted/40 font-medium"
           }`}
         >
           {t("allCategories")}
@@ -139,10 +139,10 @@ export function CatalogueToolbar({
             key={c.key}
             type="button"
             onClick={() => onFilterChange({ ...filters, category: c.key })}
-            className={`px-2.5 py-1 text-xs whitespace-nowrap transition cursor-pointer bg-transparent border-0 ${
+            className={`px-3 py-1.5 text-xs whitespace-nowrap transition cursor-pointer rounded-xl border ${
               filters.category === c.key
-                ? "text-primary font-bold"
-                : "text-muted-foreground hover:text-heading font-medium"
+                ? "bg-primary-soft/80 border-primary/30 text-primary font-bold shadow-xs"
+                : "border-transparent text-muted-foreground hover:text-heading hover:bg-muted/40 font-medium"
             }`}
           >
             {c.label} ({c.articles.length})

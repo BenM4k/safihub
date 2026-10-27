@@ -93,7 +93,7 @@ export function PasswordCard() {
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             required
-            className="text-xs h-10 min-h-[40px]"
+            className="text-xs h-10 min-h-[40px] rounded-xl"
           />
         </Field>
 
@@ -105,7 +105,7 @@ export function PasswordCard() {
             onChange={(e) => setNewPassword(e.target.value)}
             required
             minLength={8}
-            className="text-xs h-10 min-h-[40px]"
+            className="text-xs h-10 min-h-[40px] rounded-xl"
           />
         </Field>
 
@@ -119,7 +119,7 @@ export function PasswordCard() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={8}
-            className="text-xs h-10 min-h-[40px]"
+            className="text-xs h-10 min-h-[40px] rounded-xl"
           />
         </Field>
 
@@ -137,7 +137,7 @@ export function PasswordCard() {
         <Button
           type="submit"
           disabled={isChangingPassword}
-          className="min-h-[40px] px-4 bg-primary text-primary-foreground font-bold text-xs"
+          className="h-10 sm:h-9 px-4 bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs cursor-pointer w-full sm:w-auto"
         >
           {isChangingPassword ? (
             <>

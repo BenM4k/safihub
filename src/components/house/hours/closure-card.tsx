@@ -1,6 +1,13 @@
 "use client";
 
-import { Calendar, Clock, Edit2, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Edit2,
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +38,8 @@ export function ClosureCard({
   const statusConfig = {
     upcoming: {
       label: t("statusUpcoming"),
-      badgeClass: "bg-primary-soft text-primary-soft-foreground border-primary/20",
+      badgeClass:
+        "bg-primary-soft text-primary-soft-foreground border-primary/20",
       icon: Clock,
     },
     ongoing: {
@@ -49,7 +57,7 @@ export function ClosureCard({
   const StatusIcon = statusConfig.icon;
 
   return (
-    <div className="py-3 px-2 sm:px-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-muted/30 border-b border-border/60 last:border-b-0 transition-colors">
+    <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-muted/30 transition-colors">
       <div className="flex items-start sm:items-center gap-3 min-w-0">
         <div className="size-8 rounded-lg bg-muted/40 border border-border flex items-center justify-center text-primary shrink-0">
           <Calendar className="size-4" aria-hidden="true" />
@@ -64,14 +72,17 @@ export function ClosureCard({
             </span>
 
             {/* Duration pill */}
-            <Badge variant="outline" className="text-[11px] font-semibold text-muted-foreground">
+            <Badge
+              variant="outline"
+              className="text-[11px] font-semibold text-muted-foreground rounded-lg"
+            >
               {t("daysCount", { count: durationDays })}
             </Badge>
 
             {/* Status pill */}
             <Badge
               variant="outline"
-              className={`inline-flex items-center gap-1 text-[11px] font-bold border ${statusConfig.badgeClass}`}
+              className={`inline-flex items-center gap-1 text-[11px] font-bold border rounded-lg ${statusConfig.badgeClass}`}
             >
               <StatusIcon className="size-3" aria-hidden="true" />
               <span>{statusConfig.label}</span>
@@ -87,17 +98,22 @@ export function ClosureCard({
       </div>
 
       {/* Row action buttons */}
-      <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+      <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
         <Button
           type="button"
           size="sm"
-          variant="outline"
+          variant="ghost"
           disabled={disabled}
           onClick={() => onEdit(closure)}
-          aria-label={t("editClosureAria", { date: formatDateFr(closure.startsOn) })}
-          className="h-8 px-2.5 text-xs text-foreground cursor-pointer"
+          aria-label={t("editClosureAria", {
+            date: formatDateFr(closure.startsOn),
+          })}
+          className="h-9 sm:h-8.5 px-3 rounded-xl text-xs text-foreground cursor-pointer min-h-[38px] flex items-center"
         >
-          <Edit2 className="size-3.5 mr-1 text-muted-foreground" aria-hidden="true" />
+          <Edit2
+            className="size-3.5 mr-1 text-muted-foreground"
+            aria-hidden="true"
+          />
           <span>{t("edit")}</span>
         </Button>
 
@@ -107,8 +123,10 @@ export function ClosureCard({
           variant="ghost"
           disabled={disabled}
           onClick={() => onDelete(closure.id)}
-          aria-label={t("deleteClosureAria", { date: formatDateFr(closure.startsOn) })}
-          className="h-8 px-2.5 text-xs text-destructive hover:bg-destructive-soft hover:text-destructive cursor-pointer"
+          aria-label={t("deleteClosureAria", {
+            date: formatDateFr(closure.startsOn),
+          })}
+          className="h-9 sm:h-8.5 px-3 rounded-xl text-xs text-destructive hover:bg-destructive-soft hover:text-destructive cursor-pointer min-h-[38px] flex items-center"
         >
           <Trash2 className="size-3.5 mr-1" aria-hidden="true" />
           <span>{t("deleteClosure")}</span>

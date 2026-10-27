@@ -75,7 +75,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="text-xs font-semibold rounded-xl border-primary text-primary hover:bg-primary/10 hover:text-primary"
+          className="h-10 sm:h-9 w-full sm:w-auto text-xs font-semibold rounded-xl border-primary text-primary hover:bg-primary/10 hover:text-primary"
         >
           <PlusCircle className="size-3.5 mr-1.5 text-primary" />
           <span>{t("requestItem")}</span>
@@ -154,13 +154,14 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
             <p className="text-xs text-success font-medium">{successMsg}</p>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0 pt-2">
+          <DialogFooter className="flex flex-row items-center justify-end gap-2.5 pt-3 border-t border-border sm:space-x-0">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => handleOpenChange(false)}
               disabled={isPending}
+              className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-semibold rounded-xl"
             >
               {t("close")}
             </Button>
@@ -168,7 +169,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
               type="submit"
               size="sm"
               disabled={isPending || !name.trim()}
-              className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs"
+              className="flex-1 sm:flex-initial h-10 sm:h-9 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs rounded-xl shadow-xs"
             >
               {isPending ? (
                 <Loader2 className="size-3.5 animate-spin mr-1" />

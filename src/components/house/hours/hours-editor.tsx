@@ -78,8 +78,8 @@ export function HoursEditor({
       />
 
       <form onSubmit={handleInitiateSave} className="space-y-4">
-        <div className="border border-border/80 rounded-xl overflow-hidden divide-y divide-border/60">
-          <div className="hidden sm:flex items-center justify-between px-4 py-2.5 bg-muted/20 border-b border-border/80 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+        <div className="border border-border/60 rounded-2xl overflow-hidden divide-y divide-border/60 shadow-xs bg-card">
+          <div className="hidden sm:flex items-center justify-between px-4 py-2.5 bg-muted/20 border-b border-border/60 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
             <span className="min-w-40">{t("day")}</span>
             <div className="flex items-center gap-12 pr-6">
               <span>{t("opensAt")}</span>
@@ -101,7 +101,7 @@ export function HoursEditor({
         </div>
 
         {!hasAtLeastOneOpenDay && (
-          <Alert variant="destructive" className="py-2.5 bg-warning-soft text-warning border-warning/30">
+          <Alert variant="destructive" className="py-2.5 bg-warning-soft text-warning border-warning/30 rounded-xl">
             <AlertTriangle className="size-4 text-warning" />
             <AlertDescription className="text-xs font-semibold text-warning">
               {t("atLeastOneOpenDay")}
@@ -111,24 +111,24 @@ export function HoursEditor({
 
         <div aria-live="polite" className="space-y-2">
           {errorMsg && (
-            <Alert variant="destructive" className="py-2.5">
+            <Alert variant="destructive" className="py-2.5 rounded-xl">
               <AlertCircle className="size-4" />
               <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
             </Alert>
           )}
           {successMsg && (
-            <Alert className="py-2.5 bg-success-soft text-success border-success/30">
+            <Alert className="py-2.5 bg-success-soft text-success border-success/30 rounded-xl">
               <Check className="size-4 text-success" />
               <AlertDescription className="text-xs font-semibold text-success">{successMsg}</AlertDescription>
             </Alert>
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           <Button
             type="submit"
             disabled={isPending || !isValid || !isDirty}
-            className="h-10 px-5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer min-w-36 disabled:opacity-50"
+            className="h-11 sm:h-10 px-6 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer w-full sm:w-auto min-w-36 disabled:opacity-50"
           >
             {isPending ? (
               <Loader2 className="size-4 animate-spin mr-2" aria-hidden="true" />

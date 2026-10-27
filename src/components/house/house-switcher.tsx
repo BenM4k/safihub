@@ -41,7 +41,7 @@ export function HouseSwitcher({
           variant="outline"
           size="sm"
           aria-label={t("selectHouse")}
-          className="flex items-center gap-2 px-2.5 py-1.5 h-auto rounded-xl border-border bg-card hover:bg-secondary hover:border-border text-xs font-semibold text-foreground shadow-2xs max-w-[220px] sm:max-w-[280px]"
+          className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 h-auto rounded-xl border-border bg-card hover:bg-secondary hover:border-border text-xs font-semibold text-foreground shadow-2xs max-w-[150px] sm:max-w-[280px] min-w-0"
         >
           <Building2 className="size-3.5 text-primary shrink-0" />
           <span className="truncate">{houseName}</span>

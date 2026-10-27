@@ -35,83 +35,83 @@ export function DeliveredOrdersMobileList({
   }
 
   return (
-    <div className="md:hidden space-y-3">
-      {orders.map((o) => (
-        <div
-          key={o.id}
-          className="p-4 rounded-xl bg-surface border border-border/80 space-y-2.5"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <Link
-              href={`/partner/${houseSlug}/orders?search=${o.code}`}
-              className="font-mono font-bold text-sm text-foreground hover:text-primary transition min-h-[44px] flex items-center"
-            >
-              {o.shortReference}
-            </Link>
+    <div className="md:hidden space-y-4">
+      {/* Unified Orders List */}
+      <div className="rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
+        {orders.map((o) => (
+          <div key={o.id} className="p-4 space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <Link
+                href={`/partner/${houseSlug}/orders?search=${o.code}`}
+                className="font-mono font-bold text-sm text-foreground hover:text-primary transition min-h-[44px] flex items-center"
+              >
+                {o.shortReference}
+              </Link>
 
-            {o.settlementStatus === "settled" ? (
-              <Badge variant="outline" className="gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-2xs font-semibold">
-                <CheckCircle2 className="size-3" />
-                <span>{t("statusSettled")}</span>
-              </Badge>
-            ) : o.settlementStatus === "disputed" ? (
-              <Badge variant="destructive" className="gap-1 text-2xs font-bold">
-                <ShieldAlert className="size-3" />
-                <span>{t("statusDisputed")}</span>
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="gap-1 border-amber-500/30 text-amber-800 dark:text-amber-300 text-2xs font-medium">
-                <Clock className="size-3" />
-                <span>{t("statusPending")}</span>
-              </Badge>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{t("client")} : {o.customerDisplayName}</span>
-            <span className="font-mono text-2xs">
-              {o.deliveredAt
-                ? new Intl.DateTimeFormat("fr-FR", {
-                    day: "2-digit",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }).format(new Date(o.deliveredAt))
-                : "—"}
-            </span>
-          </div>
-
-          <div className="pt-2 border-t border-border/80 flex items-center justify-between">
-            <div className="text-2xs text-muted-foreground">
-              Brut: {formatMoney(o.itemsTotal)} · Com: -{formatMoney(o.commissionAmount)}
+              {o.settlementStatus === "settled" ? (
+                <Badge variant="outline" className="gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-2xs font-semibold">
+                  <CheckCircle2 className="size-3" />
+                  <span>{t("statusSettled")}</span>
+                </Badge>
+              ) : o.settlementStatus === "disputed" ? (
+                <Badge variant="destructive" className="gap-1 text-2xs font-bold">
+                  <ShieldAlert className="size-3" />
+                  <span>{t("statusDisputed")}</span>
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="gap-1 border-amber-500/30 text-amber-800 dark:text-amber-300 text-2xs font-medium">
+                  <Clock className="size-3" />
+                  <span>{t("statusPending")}</span>
+                </Badge>
+              )}
             </div>
-            <div className="font-mono font-bold text-sm text-primary tabular-nums">
-              {formatMoney(o.netReceivable, "CDF")}
-            </div>
-          </div>
 
-          <div className="flex items-center justify-between pt-1 text-2xs">
-            {o.settlementReference ? (
-              <span className="text-muted-foreground">
-                {t("payoutCol")} : <strong className="text-foreground font-mono">{o.settlementReference}</strong>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{t("client")} : {o.customerDisplayName}</span>
+              <span className="font-mono text-2xs">
+                {o.deliveredAt
+                  ? new Intl.DateTimeFormat("fr-FR", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(new Date(o.deliveredAt))
+                  : "—"}
               </span>
-            ) : (
-              <span className="text-muted-foreground">{t("upcomingSettlement")}</span>
-            )}
+            </div>
 
-            <button
-              type="button"
-              onClick={() => onOpenReportDialog(o)}
-              className="text-muted-foreground hover:text-destructive transition underline cursor-pointer p-1 min-h-[44px] flex items-center"
-            >
-              {t("reportIssue")}
-            </button>
+            <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+              <div className="text-2xs text-muted-foreground">
+                Brut: {formatMoney(o.itemsTotal)} · Com: -{formatMoney(o.commissionAmount)}
+              </div>
+              <div className="font-mono font-bold text-sm text-emerald-600 dark:text-emerald-400 tabular-nums">
+                {formatMoney(o.netReceivable, "CDF")}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1 text-2xs">
+              {o.settlementReference ? (
+                <span className="text-muted-foreground">
+                  {t("payoutCol")} : <strong className="text-foreground font-mono">{o.settlementReference}</strong>
+                </span>
+              ) : (
+                <span className="text-muted-foreground">{t("upcomingSettlement")}</span>
+              )}
+
+              <button
+                type="button"
+                onClick={() => onOpenReportDialog(o)}
+                className="text-muted-foreground hover:text-destructive transition underline cursor-pointer p-1 min-h-[44px] flex items-center"
+              >
+                {t("reportIssue")}
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       {/* Mobile Totals Summary */}
-      <div className="p-4 rounded-xl bg-muted/40 space-y-1.5 text-xs">
+      <div className="p-4 rounded-2xl border border-border/60 bg-muted/30 space-y-2 text-xs">
         <div className="flex justify-between text-muted-foreground">
           <span>{t("itemsAmount")} ({orders.length} cmd) :</span>
           <span className="font-mono font-bold text-foreground">{formatMoney(totals.itemsTotal)}</span>
@@ -120,9 +120,9 @@ export function DeliveredOrdersMobileList({
           <span>{t("commissionCol")} :</span>
           <span className="font-mono text-destructive">-{formatMoney(totals.commission)}</span>
         </div>
-        <div className="flex justify-between pt-2 border-t border-border font-bold text-foreground">
+        <div className="flex justify-between pt-2 border-t border-border/60 font-bold text-foreground">
           <span>{t("netReceivableCol")} :</span>
-          <span className="font-mono text-primary text-base font-black">{formatMoney(totals.net)}</span>
+          <span className="font-mono text-emerald-600 dark:text-emerald-400 text-base font-black">{formatMoney(totals.net)}</span>
         </div>
       </div>
     </div>

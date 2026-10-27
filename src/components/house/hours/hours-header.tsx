@@ -73,33 +73,32 @@ export function HoursHeader({ schedule, closures, isPaused = false }: HoursHeade
       </div>
 
       {/* Computed timer real example */}
-      <div className="p-3 rounded-lg bg-muted/20 border border-border flex items-start gap-2.5 text-xs text-foreground leading-relaxed">
-        <Info className="size-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
-        <div className="space-y-1">
-          <p className="font-semibold text-heading">{timerExample}</p>
+      <div className="border-l-2 border-primary/60 pl-3.5 py-1 text-xs text-foreground leading-relaxed space-y-0.5">
+        <div className="flex items-center gap-1.5 font-bold text-heading text-xs">
+          <Info className="size-3.5 text-primary shrink-0" aria-hidden="true" />
+          <span>Règle des minuteurs (45 min)</span>
         </div>
+        <p className="text-muted-foreground text-2xs sm:text-xs">{timerExample}</p>
       </div>
 
       {/* Customer preview */}
-      <div className="p-3 rounded-lg bg-primary-soft/40 border border-primary/20 flex items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2">
-          <Sparkles className="size-4 text-primary shrink-0" aria-hidden="true" />
-          <div>
-            <span className="font-bold text-heading mr-1.5">{t("customerPreview")} :</span>
-            <span className="text-foreground">
-              {t("customerSee", { status: liveStatus.text, nextInfo: liveStatus.nextInfo })}
-              {upcomingClosure && (
-                <span className="text-muted-foreground ml-1.5">
-                  · {t("nextClosureDisplay", {
-                    starts: formatDateFr(upcomingClosure.startsOn),
-                    ends: formatDateFr(upcomingClosure.endsOn),
-                  })}
-                  {upcomingClosure.reason ? ` (${upcomingClosure.reason})` : ""}
-                </span>
-              )}
-            </span>
-          </div>
+      <div className="border-l-2 border-emerald-500/60 pl-3.5 py-1 text-xs text-foreground leading-relaxed space-y-0.5">
+        <div className="flex items-center gap-1.5 font-bold text-heading text-xs">
+          <Sparkles className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+          <span>{t("customerPreview")}</span>
         </div>
+        <p className="text-muted-foreground text-2xs sm:text-xs">
+          {t("customerSee", { status: liveStatus.text, nextInfo: liveStatus.nextInfo })}
+          {upcomingClosure && (
+            <span className="text-muted-foreground ml-1.5 font-medium">
+              · {t("nextClosureDisplay", {
+                starts: formatDateFr(upcomingClosure.startsOn),
+                ends: formatDateFr(upcomingClosure.endsOn),
+              })}
+              {upcomingClosure.reason ? ` (${upcomingClosure.reason})` : ""}
+            </span>
+          )}
+        </p>
       </div>
     </div>
   );

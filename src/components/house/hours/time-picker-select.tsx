@@ -45,7 +45,7 @@ export function TimePickerSelect({
         id={selectId}
         aria-label={label}
         className={cn(
-          "h-9 px-3 font-mono text-xs sm:text-sm font-semibold w-24 sm:w-28",
+          "h-10 sm:h-9 px-3 font-mono text-xs sm:text-sm font-semibold w-26 sm:w-28 rounded-xl",
           error && "border-destructive text-destructive"
         )}
       >

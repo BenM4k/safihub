@@ -122,7 +122,7 @@ export function PeriodSelectorToolbar({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="min-h-[38px] px-3 text-xs font-semibold gap-1.5 cursor-pointer"
+                className="h-10 sm:h-9 px-3.5 text-xs font-semibold gap-1.5 cursor-pointer rounded-xl"
                 aria-label={t("exportAria")}
               >
                 <Download className="size-3.5" aria-hidden="true" />
@@ -167,7 +167,7 @@ export function PeriodSelectorToolbar({
             type="date"
             value={customFrom}
             onChange={(e) => setCustomFrom(e.target.value)}
-            className="w-auto min-h-[38px] text-xs font-mono"
+            className="w-auto h-10 sm:h-9 rounded-xl text-xs font-mono"
             required
             aria-label={t("startDateAria")}
           />
@@ -176,11 +176,11 @@ export function PeriodSelectorToolbar({
             type="date"
             value={customTo}
             onChange={(e) => setCustomTo(e.target.value)}
-            className="w-auto min-h-[38px] text-xs font-mono"
+            className="w-auto h-10 sm:h-9 rounded-xl text-xs font-mono"
             required
             aria-label={t("endDateAria")}
           />
-          <Button type="submit" size="sm" className="min-h-[38px] px-3.5 text-xs font-semibold">
+          <Button type="submit" size="sm" className="h-10 sm:h-9 px-4 text-xs font-semibold rounded-xl">
             {t("apply")}
           </Button>
         </form>

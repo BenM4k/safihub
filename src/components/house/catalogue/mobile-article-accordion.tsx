@@ -50,15 +50,15 @@ export function MobileArticleAccordion({
   }
 
   return (
-    <div className="block md:hidden space-y-4 font-sans">
+    <div className="block md:hidden space-y-6 font-sans">
       {categories.map((cat) => (
-        <div key={cat.key} className="space-y-1">
+        <div key={cat.key} className="space-y-2">
           {/* Category Header */}
-          <div className="text-xs font-bold font-display uppercase tracking-wider text-muted-foreground px-2 py-1">
+          <div className="text-xs font-bold font-display uppercase tracking-wider text-muted-foreground px-2 py-1.5">
             {cat.label} ({cat.articles.length})
           </div>
 
-          <div className="divide-y divide-border border-y border-border bg-card">
+          <div className="rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
             {cat.articles.map((article) => {
               const isExpanded = expandedArticles.has(article.id);
               const isSelected = selectedArticleIds.has(article.id);
@@ -80,8 +80,8 @@ export function MobileArticleAccordion({
                   key={article.id}
                   className={`transition ${isSelected ? "bg-primary/5" : ""}`}
                 >
-                  {/* Article Row Header (44px target) */}
-                  <div className="p-3.5 flex items-center justify-between gap-3 min-h-[44px]">
+                  {/* Article Row Header (50px touch target) */}
+                  <div className="py-3.5 px-4 flex items-center justify-between gap-3.5 min-h-[50px]">
                     <div className="flex items-center gap-2.5 flex-1 min-w-0">
                       <button
                         type="button"
@@ -125,7 +125,7 @@ export function MobileArticleAccordion({
 
                   {/* Expanded Material Rows */}
                   {isExpanded && (
-                    <div className="border-t border-border bg-muted/20 p-3 space-y-3">
+                    <div className="border-t border-border bg-muted/20 p-4 space-y-3.5">
                       <div className="flex justify-end">
                         <button
                           type="button"

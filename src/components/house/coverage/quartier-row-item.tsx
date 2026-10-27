@@ -30,11 +30,11 @@ export function QuartierRowItem({
 
   return (
     <div
-      className={`py-3 px-2 sm:px-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs transition rounded-lg ${
+      className={`p-3.5 sm:px-4 sm:py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition min-h-[48px] sm:min-h-[44px] ${
         !isAllowed
-          ? "opacity-50"
+          ? "opacity-50 bg-muted/5"
           : isDirty
-          ? "bg-primary-soft/30"
+          ? "bg-primary-soft/25"
           : "hover:bg-muted/30"
       }`}
     >
@@ -117,7 +117,7 @@ export function QuartierRowItem({
       </div>
 
       {/* Right: Switch with accessible toggle */}
-      <div className="shrink-0 flex items-center justify-between sm:justify-end gap-3 pt-1.5 sm:pt-0">
+      <div className="shrink-0 flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-border/30 sm:border-t-0">
         <span
           className={`text-xs font-semibold select-none ${
             isCovered ? "text-primary font-bold" : "text-muted-foreground"
@@ -131,6 +131,7 @@ export function QuartierRowItem({
           onCheckedChange={() => onToggle(item.neighborhoodId)}
           disabled={isSwitchDisabled}
           aria-label={t("switchLabel", { neighborhood: item.neighborhoodName })}
+          className="cursor-pointer"
         />
       </div>
     </div>

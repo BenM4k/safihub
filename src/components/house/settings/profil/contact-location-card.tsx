@@ -44,7 +44,7 @@ export function ContactLocationCard({
             value={contactPhone}
             onChange={(e) => onChangeContactPhone(e.target.value)}
             placeholder="+243 99 912 3456"
-            className="text-xs font-mono min-h-[38px]"
+            className="text-xs font-mono h-10 sm:h-9 rounded-xl"
           />
           {contactPhone && (
             <span className="text-[10px] text-muted-foreground mt-1 block">
@@ -65,7 +65,7 @@ export function ContactLocationCard({
             value={whatsAppPhone || ""}
             disabled
             placeholder="+243..."
-            className="text-xs font-mono min-h-[38px] bg-muted/50 cursor-not-allowed"
+            className="text-xs font-mono h-10 sm:h-9 rounded-xl bg-muted/50 cursor-not-allowed"
           />
         </div>
       </div>
@@ -76,7 +76,7 @@ export function ContactLocationCard({
             <MapPin className="size-3.5 text-primary" />
             <span>Repère d&apos;accès pour les coursiers</span>
           </span>
-          <Badge variant="outline" className="border-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-bold">
+          <Badge variant="outline" className="border-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-bold rounded-md">
             Confidentiel coursiers
           </Badge>
         </label>
@@ -86,7 +86,7 @@ export function ContactLocationCard({
           placeholder="Ex. Avenue Patrice Lumumba, à côté de la pharmacie du Lac, portail vert métallique..."
           maxLength={250}
           rows={2}
-          className="text-xs resize-none"
+          className="text-xs resize-none rounded-xl"
         />
         <span className="text-[10px] text-muted-foreground block text-right mt-0.5">
           {addressNote.length} / 250 caractères
@@ -105,14 +105,14 @@ export function ContactLocationCard({
               value={latitude}
               disabled
               placeholder="Lat"
-              className="w-1/2 text-xs font-mono bg-muted/50 cursor-not-allowed min-h-[36px]"
+              className="w-1/2 text-xs font-mono bg-muted/50 cursor-not-allowed h-10 sm:h-9 rounded-xl"
             />
             <Input
               type="text"
               value={longitude}
               disabled
               placeholder="Lng"
-              className="w-1/2 text-xs font-mono bg-muted/50 cursor-not-allowed min-h-[36px]"
+              className="w-1/2 text-xs font-mono bg-muted/50 cursor-not-allowed h-10 sm:h-9 rounded-xl"
             />
           </div>
         </div>
@@ -121,7 +121,7 @@ export function ContactLocationCard({
             href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-semibold h-9 py-2"
+            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-semibold h-10 sm:h-9 py-2"
           >
             <span>Vérifier le repère sur la carte</span>
             <ExternalLink className="size-3.5" />

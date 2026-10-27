@@ -26,14 +26,14 @@ export function CoverageSaveBar({
       role="region"
       aria-live="polite"
       aria-label={t("saveChanges")}
-      className="fixed bottom-20 md:bottom-4 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-xl bg-popover text-popover-foreground rounded-2xl p-3 sm:p-4 shadow-lift border border-border flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200"
+      className="fixed bottom-22 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] sm:w-[95%] max-w-xl bg-popover text-popover-foreground rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-lift border border-border/70 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200"
     >
       <div className="flex items-center gap-2.5 min-w-0">
         <span
           className="size-2 rounded-full bg-warning animate-pulse shrink-0"
           aria-hidden="true"
         />
-        <span className="text-xs sm:text-sm font-semibold truncate text-foreground">
+        <span className="text-xs sm:text-sm font-bold truncate text-heading font-display">
           {t("unsavedChanges", { count: dirtyCount })}
         </span>
       </div>
@@ -45,7 +45,7 @@ export function CoverageSaveBar({
           size="sm"
           onClick={onCancel}
           disabled={isSaving}
-          className="h-8 sm:h-9 text-xs font-semibold rounded-xl border-border hover:bg-muted/40 text-foreground"
+          className="h-10 sm:h-9 px-3.5 text-xs font-semibold rounded-xl border-border hover:bg-muted/40 text-foreground cursor-pointer"
         >
           <Undo2 className="size-3.5 mr-1" aria-hidden="true" />
           <span>{t("cancelChanges")}</span>
@@ -56,7 +56,7 @@ export function CoverageSaveBar({
           size="sm"
           onClick={onSave}
           disabled={isSaving}
-          className="h-8 sm:h-9 text-xs font-bold rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground shadow-xs transition"
+          className="h-10 sm:h-9 px-4 text-xs font-bold rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground shadow-xs transition cursor-pointer"
         >
           {isSaving ? (
             <>

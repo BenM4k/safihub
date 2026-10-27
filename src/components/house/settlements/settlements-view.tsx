@@ -73,7 +73,7 @@ export function SettlementsView({ data }: SettlementsViewProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 sm:space-y-10">
       {/* 1. Alerts row (only when relevant) */}
       <SettlementAlerts alerts={data.alerts} houseSlug={data.houseSlug} />
 

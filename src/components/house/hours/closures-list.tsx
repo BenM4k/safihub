@@ -40,7 +40,7 @@ export function ClosuresList({
             type="button"
             size="sm"
             onClick={onAddClosure}
-            className="bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold cursor-pointer"
+            className="h-10 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold cursor-pointer"
           >
             <PlusCircle className="size-3.5 mr-1.5" aria-hidden="true" />
             <span>{t("addClosure")}</span>
@@ -51,7 +51,7 @@ export function ClosuresList({
   }
 
   return (
-    <div className="border border-border/80 rounded-xl overflow-hidden divide-y divide-border/60">
+    <div className="border border-border/60 rounded-2xl overflow-hidden divide-y divide-border/60 shadow-xs bg-card">
       {activeAndUpcoming.length > 0 ? (
         <div className="divide-y divide-border/60">
           {activeAndUpcoming.map((c) => (

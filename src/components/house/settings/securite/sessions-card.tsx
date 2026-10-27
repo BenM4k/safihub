@@ -52,7 +52,7 @@ export function SessionsCard({ sessions, currentSessionId }: SessionsCardProps) 
             variant="outline"
             size="sm"
             onClick={() => setIsRevokeDialogOpen(true)}
-            className="text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 min-h-[40px]"
+            className="text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 h-10 sm:h-9 px-4 rounded-xl cursor-pointer"
           >
             <LogOut className="size-3.5 mr-1.5" />
             <span>Déconnecter les autres appareils</span>
@@ -73,7 +73,7 @@ export function SessionsCard({ sessions, currentSessionId }: SessionsCardProps) 
         </Alert>
       )}
 
-      <div className="divide-y divide-border/60 rounded-xl border border-border/60 overflow-hidden bg-background">
+      <div className="divide-y divide-border/60 rounded-2xl border border-border/60 overflow-hidden bg-card shadow-xs">
         {sessions.map((sess) => {
           const isCurrent = sess.id === currentSessionId;
           const isMobile = sess.userAgent?.toLowerCase().includes("mobile");

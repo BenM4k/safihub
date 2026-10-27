@@ -41,7 +41,7 @@ export function DesktopPricingRow({
       }`}
     >
       {/* Sticky first column: Article Details & Bulk checkbox */}
-      <TableCell className="sticky left-0 z-20 bg-card group-hover:bg-muted/50 py-3 px-4 border-r border-border min-w-[220px] max-w-[260px] align-top">
+      <TableCell className="sticky left-0 z-20 bg-card group-hover:bg-muted/50 py-3.5 px-5 border-r border-border min-w-[220px] max-w-[260px] align-top">
         <div className="flex items-start gap-2.5">
           <button
             type="button"
@@ -79,7 +79,7 @@ export function DesktopPricingRow({
           return (
             <TableCell
               key={mat.id}
-              className="py-3 px-3 text-center text-muted-foreground font-mono"
+              className="py-3.5 px-4 text-center text-muted-foreground font-mono"
             >
               —
             </TableCell>
@@ -91,7 +91,7 @@ export function DesktopPricingRow({
         return (
           <TableCell
             key={mat.id}
-            className="py-2.5 px-3 align-top min-w-[170px]"
+            className="py-3 px-4 align-top min-w-[170px]"
           >
             <PricingCell
               item={cell}

@@ -70,13 +70,13 @@ export function PartnerOrdersContainer({
           className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-xs font-bold shadow-2xl flex items-center gap-2 border animate-in fade-in slide-in-from-bottom-2 ${
             feedbackToast.type === "success"
               ? "bg-popover text-popover-foreground border-border"
-              : "bg-destructive text-destructive-foreground border-destructive"
+              : "bg-destructive text-white border-destructive"
           }`}
         >
           {feedbackToast.type === "success" ? (
             <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
           ) : (
-            <AlertCircle className="size-4 text-destructive-foreground shrink-0" />
+            <AlertCircle className="size-4 text-white shrink-0" />
           )}
           <span>{feedbackToast.message}</span>
         </div>

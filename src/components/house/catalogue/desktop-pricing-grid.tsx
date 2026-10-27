@@ -63,7 +63,7 @@ export function DesktopPricingGrid({
           <TableHeader className="sticky top-0 z-30 bg-muted/80 backdrop-blur-xs select-none">
             <TableRow className="border-b border-border">
               {/* Sticky first column header: Article name & bulk select */}
-              <TableHead className="sticky left-0 z-40 bg-muted py-3.5 px-4 min-w-[220px] max-w-[260px] border-r border-border font-bold text-heading">
+              <TableHead className="sticky left-0 z-40 bg-muted py-4 px-5 min-w-[220px] max-w-[260px] border-r border-border font-bold text-heading">
                 <div className="flex items-center gap-2">
                   <span>{t("itemCol")}</span>
                 </div>
@@ -73,7 +73,7 @@ export function DesktopPricingGrid({
               {materials.map((mat) => {
                 const isStandard = mat.nameFr.toLowerCase().includes("standard");
                 return (
-                  <TableHead key={mat.id} className="py-3.5 px-3 min-w-[170px] text-heading font-bold">
+                  <TableHead key={mat.id} className="py-4 px-4 min-w-[170px] text-heading font-bold">
                     <div className="flex items-center gap-1.5">
                       <span>{mat.nameFr}</span>
                       {isStandard && (
@@ -101,7 +101,7 @@ export function DesktopPricingGrid({
                   <TableRow className="bg-muted/40 hover:bg-muted/60 border-y border-border">
                     <TableCell
                       colSpan={materials.length + 1}
-                      className="py-2.5 px-4 font-bold text-xs text-heading cursor-pointer select-none"
+                      className="py-3 px-5 font-bold text-xs text-heading cursor-pointer select-none"
                       onClick={() => toggleCategory(cat.key)}
                     >
                       <div className="flex items-center gap-2">

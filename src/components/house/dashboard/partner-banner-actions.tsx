@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ExternalLink, Settings, PauseCircle, PlayCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface PartnerBannerActionsProps {
   slug: string;
@@ -14,8 +15,12 @@ export function PartnerBannerActions({
   isPaused,
   onOpenPauseDialog,
 }: PartnerBannerActionsProps) {
+  const tHeader = useTranslations("house.header");
+  const tDash = useTranslations("house.dashboard");
+  const tNav = useTranslations("house.nav");
+
   return (
-    <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0 shrink-0">
+    <div className="flex flex-wrap items-center gap-5 sm:gap-6 w-full sm:w-auto shrink-0 justify-center sm:justify-end mt-2.5 sm:mt-0">
       {/* Accept orders toggle */}
       <button
         type="button"
@@ -23,24 +28,24 @@ export function PartnerBannerActions({
         aria-pressed={!isPaused}
         aria-label={
           isPaused
-            ? "Reprendre les commandes"
-            : "Suspendre temporairement les commandes"
+            ? tHeader("resumeOrders")
+            : tHeader("pauseOrders")
         }
-        className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
+        className={`inline-flex items-center gap-1.5 text-xs font-bold transition cursor-pointer hover:underline ${
           !isPaused
-            ? "bg-success-soft text-success border-success/30 hover:bg-success-soft/80"
-            : "bg-warning-soft text-warning border-warning/30 hover:bg-warning-soft/80"
+            ? "text-success"
+            : "text-warning"
         }`}
       >
         {!isPaused ? (
           <>
-            <PlayCircle className="size-4 text-success" />
-            <span>Commandes actives</span>
+            <PlayCircle className="size-4 text-success shrink-0" />
+            <span>{tDash("houseActive")}</span>
           </>
         ) : (
           <>
-            <PauseCircle className="size-4 text-warning" />
-            <span>En pause</span>
+            <PauseCircle className="size-4 text-warning shrink-0" />
+            <span>{tDash("housePaused")}</span>
           </>
         )}
       </button>
@@ -49,19 +54,20 @@ export function PartnerBannerActions({
         href={`/houses/${slug}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-foreground bg-secondary hover:bg-secondary/80 border border-transparent transition"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition hover:underline"
       >
-        <span>Voir page publique</span>
-        <ExternalLink className="size-3.5 text-muted-foreground" />
+        <span>{tHeader("clientView")}</span>
+        <ExternalLink className="size-3.5 text-muted-foreground shrink-0" />
       </Link>
 
       <Link
         href={`/partner/${slug}/settings`}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-foreground bg-secondary hover:bg-secondary/80 border border-transparent transition"
-        title="Modifier le profil et les paramètres"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition hover:underline p-1 -m-1"
+        title={tHeader("settingsAria")}
+        aria-label={tNav("settings")}
       >
-        <Settings className="size-3.5 text-muted-foreground" />
-        <span className="hidden sm:inline">Paramètres</span>
+        <Settings className="size-4 sm:size-3.5 text-muted-foreground shrink-0" />
+        <span className="hidden sm:inline">{tNav("settings")}</span>
       </Link>
     </div>
   );

@@ -51,11 +51,11 @@ export function MembersListCard({ staff, onRemoveClick }: MembersListCardProps) 
       </div>
 
       {staff.length === 0 ? (
-        <div className="p-8 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-xl">
+        <div className="p-8 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-2xl">
           {t("noStaff")}
         </div>
       ) : (
-        <div className="divide-y divide-border/60 rounded-xl border border-border/60 overflow-hidden bg-background">
+        <div className="divide-y divide-border/60 rounded-2xl border border-border/60 overflow-hidden bg-card shadow-xs">
           {paginatedStaff.map((m) => {
             const isOwner = m.role === "admin" || m.role === "owner" || m.role === "house";
             const roleLabel = isOwner ? "Propriétaire" : m.role === "manager" ? "Gérant" : "Opérateur";

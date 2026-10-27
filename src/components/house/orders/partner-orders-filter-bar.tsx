@@ -79,15 +79,15 @@ export function PartnerOrdersFilterBar({
       </div>
 
       {/* Date filter & Sorting */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 sm:flex-initial">
+      <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+        <div className="relative flex-1 sm:flex-initial min-w-[130px]">
           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
           <input
             type="date"
             value={date}
             onChange={(e) => onDateChange(e.target.value)}
             aria-label={t("filterDateLabel")}
-            className="pl-8 pr-2 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[40px] sm:min-h-[36px] w-full sm:w-auto"
+            className="pl-8 pr-2 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[40px] sm:min-h-[36px] w-full sm:w-auto cursor-pointer"
           />
         </div>
 
@@ -99,7 +99,7 @@ export function PartnerOrdersFilterBar({
         >
           <SelectTrigger
             aria-label={t("sortBy")}
-            className="min-h-[40px] sm:min-h-[36px] h-auto text-xs rounded-xl border-border bg-background px-3"
+            className="min-h-[40px] sm:min-h-[36px] h-auto text-xs rounded-xl border-border bg-background px-3 flex-1 sm:flex-initial cursor-pointer"
           >
             <SelectValue placeholder={t("sortBy")} />
           </SelectTrigger>
@@ -116,45 +116,47 @@ export function PartnerOrdersFilterBar({
           </SelectContent>
         </Select>
 
-        {/* Audio chime toggle */}
-        <Button
-          type="button"
-          variant={soundEnabled ? "secondary" : "outline"}
-          size="icon"
-          onClick={onToggleSound}
-          title={
-            soundEnabled ? t("soundEnabledTitle") : t("soundDisabledTitle")
-          }
-          aria-label={t("soundToggle")}
-          className={`size-9 rounded-xl border cursor-pointer ${
-            soundEnabled
-              ? "bg-primary-soft text-primary border-primary/30"
-              : "border-border text-muted-foreground"
-          }`}
-        >
-          {soundEnabled ? (
-            <Volume2 className="size-4" aria-hidden="true" />
-          ) : (
-            <VolumeX className="size-4" aria-hidden="true" />
-          )}
-        </Button>
-
-        {/* Refresh button */}
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={onRefresh}
-          disabled={isRefreshing}
-          aria-label={t("refreshOrdersAria")}
-          className="size-9 rounded-xl border-border bg-background hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer"
-        >
-          <RefreshCw
-            className={`size-4 ${
-              isRefreshing ? "animate-spin text-primary" : ""
+        <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
+          {/* Audio chime toggle */}
+          <Button
+            type="button"
+            variant={soundEnabled ? "secondary" : "outline"}
+            size="icon"
+            onClick={onToggleSound}
+            title={
+              soundEnabled ? t("soundEnabledTitle") : t("soundDisabledTitle")
+            }
+            aria-label={t("soundToggle")}
+            className={`size-10 sm:size-9 rounded-xl border cursor-pointer ${
+              soundEnabled
+                ? "bg-primary-soft text-primary border-primary/30"
+                : "border-border text-muted-foreground"
             }`}
-          />
-        </Button>
+          >
+            {soundEnabled ? (
+              <Volume2 className="size-4" aria-hidden="true" />
+            ) : (
+              <VolumeX className="size-4" aria-hidden="true" />
+            )}
+          </Button>
+
+          {/* Refresh button */}
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            aria-label={t("refreshOrdersAria")}
+            className="size-10 sm:size-9 rounded-xl border-border bg-background hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer"
+          >
+            <RefreshCw
+              className={`size-4 ${
+                isRefreshing ? "animate-spin text-primary" : ""
+              }`}
+            />
+          </Button>
+        </div>
       </div>
     </div>
   );

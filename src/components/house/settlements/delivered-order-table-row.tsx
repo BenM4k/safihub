@@ -57,7 +57,7 @@ export function DeliveredOrderTableRow({
         -{formatMoney(o.commissionAmount, "CDF")}
       </TableCell>
 
-      <TableCell className="font-mono tabular-nums text-right font-bold text-primary">
+      <TableCell className="font-mono tabular-nums text-right font-bold text-emerald-600 dark:text-emerald-400">
         {formatMoney(o.netReceivable, "CDF")}
       </TableCell>
 

@@ -154,7 +154,7 @@ export function BulkToolsModal({
                 onToggleOffered(true);
                 onClose();
               }}
-              className="flex-1 text-xs font-semibold rounded-xl text-success hover:bg-success-soft border-success/30 gap-1.5 h-9"
+              className="flex-1 text-xs font-semibold rounded-xl text-success hover:bg-success-soft border-success/30 gap-1.5 h-10 sm:h-9"
             >
               <CheckCircle2 className="size-3.5" />
               <span>{t("bulkOffer")}</span>
@@ -168,7 +168,7 @@ export function BulkToolsModal({
                 onToggleOffered(false);
                 onClose();
               }}
-              className="flex-1 text-xs font-semibold rounded-xl text-destructive hover:bg-destructive-soft border-destructive/30 gap-1.5 h-9"
+              className="flex-1 text-xs font-semibold rounded-xl text-destructive hover:bg-destructive-soft border-destructive/30 gap-1.5 h-10 sm:h-9"
             >
               <EyeOff className="size-3.5" />
               <span>{t("bulkRetire")}</span>

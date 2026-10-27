@@ -22,10 +22,10 @@ export function HolidaysListItem({
   return (
     <label
       htmlFor={`holiday-${holiday.id}`}
-      className={`p-3 rounded-lg border flex items-center justify-between gap-3 text-xs transition cursor-pointer select-none ${
+      className={`p-3 rounded-xl flex items-center justify-between gap-3 text-xs transition cursor-pointer select-none ${
         isSelected
-          ? "bg-primary-soft/30 border-primary/40"
-          : "bg-muted/10 border-border hover:bg-muted/30"
+          ? "bg-primary-soft/40"
+          : "hover:bg-muted/40"
       }`}
     >
       <div className="flex items-center gap-3 min-w-0">

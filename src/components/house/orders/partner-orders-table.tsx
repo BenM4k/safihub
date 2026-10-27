@@ -42,7 +42,7 @@ export function PartnerOrdersTable({
   const t = useTranslations("house.orders");
 
   return (
-    <div className="hidden md:block rounded-2xl border border-border bg-card shadow-xs overflow-hidden font-sans">
+    <div className="hidden lg:block rounded-2xl border border-border bg-card shadow-xs overflow-hidden font-sans">
       <Table>
         <TableHeader className="bg-muted/40 font-semibold border-b border-border">
           <TableRow>

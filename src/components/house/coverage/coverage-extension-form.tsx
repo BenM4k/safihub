@@ -150,20 +150,20 @@ export function CoverageExtensionForm({
       </div>
 
       {/* Footer Buttons */}
-      <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-2.5">
+      <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
         <Button
           type="button"
           variant="outline"
           disabled={isPending}
           onClick={onCancel}
-          className="w-full sm:w-auto min-h-[40px] text-xs font-semibold"
+          className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 rounded-xl text-xs font-semibold cursor-pointer"
         >
           {t("cancelChanges")}
         </Button>
         <Button
           type="submit"
           disabled={isPending || note.trim().length < 5}
-          className="w-full sm:w-auto min-h-[40px] text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground flex items-center justify-center gap-2"
+          className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground flex items-center justify-center gap-2 cursor-pointer shadow-xs"
         >
           {isPending ? (
             <>

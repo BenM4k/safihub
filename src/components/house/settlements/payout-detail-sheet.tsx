@@ -62,8 +62,8 @@ export function PayoutDetailSheet({
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
-          {/* Main summary card */}
-          <div className="p-5 rounded-xl bg-surface border border-border/80 space-y-3">
+          {/* Main summary (card-free unified layout) */}
+          <div className="pb-5 border-b border-border/60 space-y-3">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">{t("payoutAmountLabel")}</span>
               <Badge variant="outline" className="gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-2xs font-semibold">
@@ -76,7 +76,7 @@ export function PayoutDetailSheet({
               +{formatMoney(payout.amount, "CDF")}
             </div>
 
-            <div className="pt-2 border-t border-border grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+            <div className="pt-2 border-t border-border/60 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
               <div>
                 <span className="block text-2xs text-muted-foreground">{t("payoutDateLabel")}</span>
                 <span className="font-mono text-foreground font-medium">
@@ -96,7 +96,7 @@ export function PayoutDetailSheet({
             </div>
 
             {payout.periodCovered && (
-              <div className="pt-2 border-t border-border text-xs">
+              <div className="pt-2 border-t border-border/60 text-xs">
                 <span className="text-2xs text-muted-foreground block">{t("periodCoveredLabel")}</span>
                 <span className="font-medium text-foreground">{payout.periodCovered}</span>
               </div>
@@ -115,11 +115,11 @@ export function PayoutDetailSheet({
             </div>
 
             {payout.includedOrders.length === 0 ? (
-              <div className="p-4 rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
+              <div className="p-4 rounded-xl border border-dashed border-border/60 text-center text-xs text-muted-foreground">
                 {t("noIncludedOrdersDirect")}
               </div>
             ) : (
-              <div className="divide-y divide-border rounded-xl border border-border overflow-hidden bg-surface">
+              <div className="divide-y divide-border/60 rounded-xl border border-border/60 overflow-hidden bg-card">
                 {payout.includedOrders.map((ord) => (
                   <div
                     key={ord.id}
@@ -154,13 +154,13 @@ export function PayoutDetailSheet({
         </div>
 
         {/* Footer Actions */}
-        <SheetFooter className="p-4 border-t border-border bg-surface flex flex-row items-center justify-between gap-3">
+        <SheetFooter className="p-4 border-t border-border bg-card flex flex-row items-center justify-between gap-3">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => onOpenReceiptModal(payout)}
-            className="flex-1 min-h-[40px] text-xs font-semibold gap-1.5"
+            className="flex-1 h-10 sm:h-9 text-xs font-semibold gap-1.5 rounded-xl"
           >
             <FileText className="size-3.5" />
             <span>{t("viewOfficialReceipt")}</span>
@@ -171,7 +171,7 @@ export function PayoutDetailSheet({
             variant="ghost"
             size="sm"
             onClick={() => onOpenReportDialog(payout)}
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive min-h-[40px] text-xs font-semibold"
+            className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-semibold text-destructive hover:bg-destructive-soft hover:text-destructive rounded-xl"
           >
             {t("reportIssue")}
           </Button>

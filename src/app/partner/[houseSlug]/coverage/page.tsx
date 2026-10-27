@@ -27,7 +27,7 @@ export default async function PartnerCoveragePage({ params }: PageProps) {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-8 sm:space-y-10 pb-24 sm:pb-28 max-w-6xl">
       <CoverageManager coverageData={coverageRes.value} />
     </div>
   );

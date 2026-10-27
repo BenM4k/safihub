@@ -31,7 +31,7 @@ export function PreferencesTab() {
             <Input
               disabled
               value="Français (RDC) — Géré via le widget en bas à droite"
-              className="text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed"
+              className="text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed rounded-xl"
             />
             <span className="text-[10px] text-muted-foreground mt-1 block">
               Utilisez le bouton flottant circulaire en bas à droite de l&apos;écran pour changer de langue (FR / EN / SW).
@@ -47,7 +47,7 @@ export function PreferencesTab() {
               type="text"
               value="Heure de Bukavu (UTC+2 / Africa/Lubumbashi)"
               disabled
-              className="text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed"
+              className="text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed rounded-xl"
             />
           </Field>
         </div>
@@ -69,7 +69,7 @@ export function PreferencesTab() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 space-y-4 divide-y divide-destructive/10">
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 sm:p-5 space-y-4 divide-y divide-destructive/10">
           {/* Export data */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
             <div>
@@ -83,7 +83,7 @@ export function PreferencesTab() {
               variant="outline"
               size="sm"
               disabled
-              className="min-h-[40px] px-3 text-xs font-semibold self-start sm:self-auto opacity-50 cursor-not-allowed gap-1.5"
+              className="h-10 sm:h-9 px-4 rounded-xl text-xs font-semibold self-start sm:self-auto opacity-50 cursor-not-allowed gap-1.5"
             >
               <Download className="size-3.5" />
               <span>Exporter les données (Bientôt disponible)</span>
@@ -102,7 +102,7 @@ export function PreferencesTab() {
               variant="outline"
               size="sm"
               asChild
-              className="min-h-[40px] text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 self-start sm:self-auto gap-1.5"
+              className="h-10 sm:h-9 px-4 rounded-xl text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 self-start sm:self-auto gap-1.5 cursor-pointer"
             >
               <a
                 href="https://wa.me/243999999999"

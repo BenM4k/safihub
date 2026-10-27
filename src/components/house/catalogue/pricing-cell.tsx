@@ -131,7 +131,7 @@ export function PricingCell({
           />
 
           {netPayout !== null && (
-            <div className="text-[10px] text-muted-foreground text-right font-medium font-mono">
+            <div className="text-[10.5px] text-success text-right font-bold font-mono tracking-tight">
               {t("youReceive", { amount: formatMoney(netPayout, "CDF") })}
             </div>
           )}

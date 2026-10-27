@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { AlertCircle } from "lucide-react";
 import {
   Dialog,
@@ -28,6 +29,7 @@ export function SupportTicketDialog({
   onClose,
   houseSlug,
 }: SupportTicketDialogProps) {
+  const t = useTranslations("house.settlements");
   const [createdTicketRef, setCreatedTicketRef] = useState<string | null>(null);
 
   function handleClose() {
@@ -53,10 +55,10 @@ export function SupportTicketDialog({
             </div>
             <div>
               <DialogTitle className="text-sm font-bold text-foreground">
-                Signaler un problème financier
+                {t("ticketModalTitle")}
               </DialogTitle>
               <DialogDescription className="text-2xs text-muted-foreground font-mono">
-                Réf : {target.reference}
+                {t("ticketModalRef", { ref: target.reference })}
               </DialogDescription>
             </div>
           </div>

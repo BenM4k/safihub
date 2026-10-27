@@ -149,20 +149,20 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
             </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-border">
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-3 border-t border-border">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={onClose}
-              className="text-xs min-h-[38px]"
+              className="flex-1 sm:flex-initial w-full sm:w-auto text-xs h-10 sm:h-9 px-4 rounded-xl cursor-pointer"
             >
               Annuler
             </Button>
             <Button
               type="submit"
               size="sm"
-              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs min-h-[38px]"
+              className="flex-1 sm:flex-initial w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-10 sm:h-9 px-4 rounded-xl shadow-xs cursor-pointer"
             >
               Confirmer la pause
             </Button>

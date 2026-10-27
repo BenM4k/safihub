@@ -61,7 +61,7 @@ export function SettingsContainer({
   }
 
   function handleSelectSection(sec: SettingsSection) {
-    if (sec === activeSection) return;
+    if (sec === activeSection && (isMobileDetailOpen || sectionParam === sec)) return;
     if (isSectionDirty) {
       setPendingSection(sec);
       return;
@@ -80,7 +80,7 @@ export function SettingsContainer({
     SECTIONS_CONFIG.find((s) => s.id === activeSection) ?? SECTIONS_CONFIG[0];
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-16">
+    <div className="space-y-8 sm:space-y-10 max-w-6xl mx-auto pb-24 sm:pb-28">
       {/* Page Title (Displayed once) */}
       <PageHeader
         title={t("title")}
@@ -99,17 +99,17 @@ export function SettingsContainer({
       {/* Mobile: View List of sections or active section with back button */}
       <div className="md:hidden">
         {isMobileDetailOpen ? (
-          <div className="mb-4">
+          <div className="mb-4 space-y-2">
             <button
               type="button"
               onClick={handleBackToSections}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground py-2 px-1 min-h-[44px]"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-heading py-2 px-3 rounded-xl bg-muted/40 hover:bg-muted/70 min-h-[40px] transition cursor-pointer"
             >
               <ChevronLeft className="size-4" />
               <span>{t("allSections")}</span>
             </button>
-            <div className="mt-1 flex items-center gap-2">
-              <h2 className="text-lg font-black text-heading">
+            <div className="flex items-center gap-2 pt-1">
+              <h2 className="text-xl font-black text-heading font-display">
                 {t(currentSectionConfig.labelKey)}
               </h2>
             </div>

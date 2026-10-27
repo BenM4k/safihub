@@ -55,7 +55,7 @@ export function SchedulePresets({
           size="sm"
           disabled={disabled}
           onClick={onApplyPresetStandard}
-          className="h-8 text-xs font-semibold border-border hover:bg-muted/40 text-foreground"
+          className="h-9 sm:h-8.5 px-3 rounded-xl text-xs font-semibold border-border hover:bg-muted/40 text-foreground cursor-pointer"
         >
           <Sparkles className="size-3 text-primary mr-1.5" aria-hidden="true" />
           <span>{t("presetStandard")}</span>
@@ -67,7 +67,7 @@ export function SchedulePresets({
           size="sm"
           disabled={disabled}
           onClick={onApplyToAllWeekdays}
-          className="h-8 text-xs font-semibold border-border hover:bg-muted/40 text-foreground"
+          className="h-9 sm:h-8.5 px-3 rounded-xl text-xs font-semibold border-border hover:bg-muted/40 text-foreground cursor-pointer"
         >
           <span>{t("applyWeekdays")}</span>
         </Button>
@@ -78,7 +78,7 @@ export function SchedulePresets({
           size="sm"
           disabled={disabled}
           onClick={() => setIsCopyOpen((prev) => !prev)}
-          className="h-8 text-xs font-semibold border-border hover:bg-muted/40 text-foreground"
+          className="h-9 sm:h-8.5 px-3 rounded-xl text-xs font-semibold border-border hover:bg-muted/40 text-foreground cursor-pointer"
         >
           <Copy className="size-3 text-muted-foreground mr-1.5" aria-hidden="true" />
           <span>{t("copyTo")}</span>
@@ -87,8 +87,8 @@ export function SchedulePresets({
 
       {/* Expandable Copy Panel */}
       {isCopyOpen && (
-        <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-3 text-xs animate-in fade-in duration-150">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="p-4 rounded-2xl bg-muted/30 border border-border/70 space-y-3.5 text-xs animate-in fade-in duration-150">
+          <div className="flex flex-wrap items-center gap-2.5">
             <span className="font-semibold text-heading">{t("copySourcePrompt")}</span>
             <Select
               value={String(copySourceDay)}
@@ -98,7 +98,7 @@ export function SchedulePresets({
                 setSelectedTargets(WEEKDAY_DEFS.map((w) => w.weekday).filter((w) => w !== src));
               }}
             >
-              <SelectTrigger className="h-8 w-32 text-xs">
+              <SelectTrigger className="h-9 sm:h-8.5 w-32 text-xs rounded-xl font-semibold">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -112,7 +112,7 @@ export function SchedulePresets({
             <span className="font-semibold text-heading">{t("copyTargetPrompt")}</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
             {WEEKDAY_DEFS.filter((w) => w.weekday !== copySourceDay).map((w) => {
               const isSelected = selectedTargets.includes(w.weekday);
               return (
@@ -120,13 +120,13 @@ export function SchedulePresets({
                   key={w.weekday}
                   type="button"
                   onClick={() => handleToggleTarget(w.weekday)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer flex items-center gap-1 ${
+                  className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer flex items-center gap-1.5 ${
                     isSelected
-                      ? "text-primary font-bold border-primary/40 bg-primary-soft/30"
-                      : "text-muted-foreground hover:text-foreground border-border bg-transparent"
+                      ? "text-primary font-bold border-primary/50 bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground border-border bg-card"
                   }`}
                 >
-                  {isSelected && <Check className="size-3 text-primary" />}
+                  {isSelected && <Check className="size-3.5 text-primary" />}
                   <span>{w.shortName}</span>
                 </button>
               );
@@ -139,7 +139,7 @@ export function SchedulePresets({
               size="sm"
               onClick={handleExecuteCopy}
               disabled={selectedTargets.length === 0}
-              className="h-8 px-3 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs cursor-pointer"
+              className="h-10 sm:h-9 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs cursor-pointer"
             >
               {t("applyCopy")}
             </Button>
@@ -148,7 +148,7 @@ export function SchedulePresets({
               variant="ghost"
               size="sm"
               onClick={() => setIsCopyOpen(false)}
-              className="h-8 px-2.5 text-xs text-muted-foreground cursor-pointer"
+              className="h-10 sm:h-9 px-3.5 rounded-xl text-xs text-muted-foreground cursor-pointer"
             >
               {t("cancel")}
             </Button>

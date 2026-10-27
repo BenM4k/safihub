@@ -87,26 +87,24 @@ export function PartnerOrderTicketDialog({
 
           {/* Amount */}
           <div className="border-t border-dashed border-slate-300 pt-2 text-right">
-            <div className="text-xs">{t("totalAmount")} : <strong>{formatAmount(order.totalDue, order.currency)}</strong></div>
+            <div className="text-xs">{t("financialItemsTotal")} : <strong>{formatAmount(order.itemsTotal, order.currency)}</strong></div>
             <div className="text-xs text-slate-700">{t("partnerShare")} : <strong>{formatAmount(order.netPartnerShare, order.currency)}</strong></div>
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0 pt-2">
+        <DialogFooter className="flex flex-row items-center justify-end gap-2.5 pt-3 border-t border-border sm:space-x-0">
           <Button
             type="button"
             variant="ghost"
-            size="sm"
             onClick={onClose}
-            className="text-xs min-h-[44px] sm:min-h-[36px]"
+            className="flex-1 sm:flex-initial text-xs font-semibold cursor-pointer h-10 sm:h-9"
           >
             {t("close")}
           </Button>
           <Button
             type="button"
-            size="sm"
             onClick={handlePrint}
-            className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs min-h-[44px] sm:min-h-[36px]"
+            className="flex-1 sm:flex-initial bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs cursor-pointer h-10 sm:h-9"
           >
             <Printer className="size-3.5 mr-1.5" />
             <span>{t("ticketPrintBtn")}</span>

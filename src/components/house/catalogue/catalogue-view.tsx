@@ -81,7 +81,7 @@ export function CatalogueView({
   }
 
   return (
-    <div className="space-y-6 pb-24 font-sans">
+    <div className="space-y-6 sm:space-y-8 font-sans">
       <CatalogueHeader
         houseSlug={houseSlug}
         totalConfigured={totalConfigured}

@@ -120,10 +120,10 @@ export function PartnerOrderRejectDialog({
               {PRESET_REASONS.map((reason) => (
                 <label
                   key={reason}
-                  className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs font-medium cursor-pointer transition ${
+                  className={`flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-medium cursor-pointer transition ${
                     selectedReason === reason
-                      ? "bg-primary-soft border-primary text-heading font-semibold"
-                      : "border-border text-foreground hover:bg-surface"
+                      ? "bg-primary-soft/60 text-heading font-semibold"
+                      : "text-foreground hover:bg-muted/40"
                   }`}
                 >
                   <input
@@ -148,25 +148,30 @@ export function PartnerOrderRejectDialog({
             />
           </div>
 
-          <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-border sm:space-x-0">
+          <DialogFooter className="flex flex-row items-center justify-end gap-2.5 pt-3 border-t border-border sm:space-x-0">
             <Button
               type="button"
               variant="ghost"
               disabled={isSubmitting}
               onClick={handleClose}
-              className="text-xs font-semibold cursor-pointer"
+              className="flex-1 sm:flex-initial text-xs font-semibold cursor-pointer h-10 sm:h-9"
             >
               {t("cancel")}
             </Button>
             <Button
               type="submit"
+              variant="destructive"
               disabled={isSubmitting}
-              className="text-xs font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground min-w-[120px] cursor-pointer"
+              className="flex-1 sm:flex-initial text-xs font-bold text-white min-w-[130px] cursor-pointer h-10 sm:h-9"
             >
-              {isSubmitting && (
-                <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                  {t("rejecting")}
+                </>
+              ) : (
+                t("confirmReject")
               )}
-              {t("confirmReject")}
             </Button>
           </DialogFooter>
         </form>

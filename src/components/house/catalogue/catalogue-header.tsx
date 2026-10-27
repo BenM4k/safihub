@@ -31,7 +31,7 @@ export function CatalogueHeader({
   const t = useTranslations("house.catalogue");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7 sm:space-y-8">
       {/* View as customer link */}
       <div className="flex justify-end">
         <a

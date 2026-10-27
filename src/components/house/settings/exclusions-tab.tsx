@@ -111,7 +111,7 @@ export function ExclusionsTab({
             type="button"
             size="sm"
             onClick={handleOpenAdd}
-            className="min-h-[38px] text-xs font-bold gap-1.5"
+            className="h-10 sm:h-9 px-4 rounded-xl text-xs font-bold gap-1.5 w-full sm:w-auto shadow-xs cursor-pointer"
           >
             <PlusCircle className="size-3.5" />
             <span>Ajouter une exclusion</span>
@@ -119,11 +119,11 @@ export function ExclusionsTab({
         </div>
 
         {exclusions.length === 0 ? (
-          <div className="p-8 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-xl">
+          <div className="p-8 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-2xl">
             Aucune exclusion configurée. Votre pressing accepte tous les articles et matières actifs de votre catalogue.
           </div>
         ) : (
-          <div className="divide-y divide-border/60 border border-border/80 rounded-xl overflow-hidden">
+          <div className="rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
             {exclusions.map((ex) => (
               <ExclusionItemCard
                 key={ex.id}

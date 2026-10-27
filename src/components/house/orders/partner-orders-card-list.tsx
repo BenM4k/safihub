@@ -31,7 +31,7 @@ export function PartnerOrdersCardList({
   onOpenReject,
 }: PartnerOrdersCardListProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 md:hidden">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 lg:hidden">
       {orders.map((order) => (
         <PartnerOrderCard
           key={order.id}

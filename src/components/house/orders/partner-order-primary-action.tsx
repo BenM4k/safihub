@@ -37,7 +37,9 @@ export function PartnerOrderPrimaryAction({
     return () => clearInterval(interval);
   }, [order.status, order.acceptanceDeadlineAt]);
 
-  const btnHeight = compact ? "min-h-[36px] text-xs px-3" : "min-h-[44px] sm:min-h-[38px] text-xs px-4";
+  const btnHeight = compact
+    ? "min-h-[36px] text-xs px-3"
+    : "min-h-[44px] sm:min-h-[38px] text-xs px-4 w-full sm:w-auto justify-center";
 
   if (order.status === "created") {
     const countdown = computeOrderAcceptanceCountdown(order.acceptanceDeadlineAt, now);
@@ -45,7 +47,9 @@ export function PartnerOrderPrimaryAction({
     if (countdown.isExpired) {
       return (
         <span
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-destructive-soft border border-destructive/30 text-destructive text-xs font-bold"
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-destructive-soft border border-destructive/30 text-destructive text-xs font-bold ${
+            compact ? "" : "w-full sm:w-auto justify-center"
+          }`}
           title={countdown.label}
         >
           <Clock className="size-3.5 shrink-0" aria-hidden="true" />

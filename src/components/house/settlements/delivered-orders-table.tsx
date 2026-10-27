@@ -78,7 +78,7 @@ export function DeliveredOrdersTable({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("searchDeliveredOrders")}
-            className="pl-9 min-h-[38px] text-xs"
+            className="pl-9 h-10 sm:h-9 rounded-xl text-xs"
             aria-label={t("searchDeliveredOrdersAria")}
           />
         </div>
@@ -96,7 +96,7 @@ export function DeliveredOrdersTable({
                 key={tab.key}
                 type="button"
                 onClick={() => setStatusFilter(tab.key as "all" | "pending" | "settled" | "disputed")}
-                className={`px-3 py-1.5 text-xs transition cursor-pointer min-h-[38px] flex items-center bg-transparent border-0 shadow-none ${
+                className={`px-3 py-1.5 text-xs transition cursor-pointer min-h-[40px] sm:min-h-[36px] flex items-center bg-transparent border-0 shadow-none ${
                   isSelected
                     ? "text-primary font-bold"
                     : "text-muted-foreground hover:text-foreground font-medium"
@@ -159,7 +159,7 @@ export function DeliveredOrdersTable({
                 <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
                   -{formatMoney(totals.commission, "CDF")}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums text-primary text-sm font-black">
+                <TableCell className="text-right font-mono tabular-nums text-emerald-600 dark:text-emerald-400 text-sm font-black">
                   {formatMoney(totals.net, "CDF")}
                 </TableCell>
                 <TableCell colSpan={3} />

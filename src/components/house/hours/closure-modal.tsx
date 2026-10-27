@@ -147,20 +147,20 @@ function ClosureModalContent({
             </Alert>
           )}
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+          <div className="flex flex-row items-center justify-end gap-2 pt-3 border-t border-border/60">
             <Button
               type="button"
               variant="outline"
               disabled={isPending}
               onClick={onClose}
-              className="h-9 text-xs font-semibold"
+              className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 rounded-xl text-xs font-semibold cursor-pointer"
             >
               {t("cancel")}
             </Button>
             <Button
               type="submit"
               disabled={isPending}
-              className="h-9 px-4 bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs"
+              className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer"
             >
               {isPending && <Loader2 className="size-3.5 animate-spin mr-1.5" aria-hidden="true" />}
               <span>{isEditing ? t("saveHours") : t("addClosure")}</span>

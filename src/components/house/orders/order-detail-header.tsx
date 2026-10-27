@@ -79,17 +79,19 @@ export async function OrderDetailHeader({
         </div>
 
         <div className="p-3 bg-muted/40 rounded-xl border border-border/50">
-          <span className="text-muted-foreground mb-0.5 flex items-center gap-1">
-            <Clock className="size-3" /> {t("amount")}
+          <span className="text-muted-foreground mb-0.5 flex items-center gap-1 text-[11px]">
+            <Clock className="size-3" /> {t("financialItemsTotal")}
           </span>
-          <strong className="text-primary font-bold text-sm block">
-            {formatAmount(order.totalDue, order.currency)}
+          <strong className="text-foreground font-bold text-sm block">
+            {formatAmount(order.adjustedItemsTotal ?? order.itemsTotal, order.currency)}
           </strong>
-          {order.deliveryFee !== null && order.deliveryFee > 0 && (
-            <span className="text-[10px] text-muted-foreground block pt-0.5">
-              {t("financialTransportFee")}: {formatAmount(order.deliveryFee, order.currency)}
-            </span>
-          )}
+          <span className="text-[11px] text-success font-black font-mono block pt-0.5">
+            {t("financialPartnerShare")}:{" "}
+            {formatAmount(
+              (order.adjustedItemsTotal ?? order.itemsTotal) - (order.commissionAmount ?? 0),
+              order.currency
+            )}
+          </span>
         </div>
       </div>
     </div>

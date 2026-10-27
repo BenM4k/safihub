@@ -62,7 +62,7 @@ export function CoverageManager({ coverageData }: CoverageManagerProps) {
   });
 
   return (
-    <div className="space-y-6 pb-28">
+    <div className="space-y-6">
       {/* 1. Header with live count */}
       <CoverageHeader
         coveredCount={totalCoveredCount}

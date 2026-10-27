@@ -62,13 +62,13 @@ export function PartnerPauseDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-border sm:space-x-0">
+        <DialogFooter className="flex flex-row items-center justify-end gap-2.5 pt-3 border-t border-border sm:space-x-0">
           <Button
             type="button"
             variant="ghost"
             disabled={isPending}
             onClick={onClose}
-            className="text-xs font-semibold cursor-pointer"
+            className="flex-1 sm:flex-initial text-xs font-semibold cursor-pointer h-10 sm:h-9"
           >
             {t("cancel")}
           </Button>
@@ -76,10 +76,10 @@ export function PartnerPauseDialog({
             type="button"
             disabled={isPending}
             onClick={onConfirm}
-            className={`text-xs font-bold cursor-pointer ${
+            className={`flex-1 sm:flex-initial text-xs font-bold cursor-pointer h-10 sm:h-9 text-white ${
               !isPaused
-                ? "bg-warning hover:bg-warning/90 text-warning-foreground"
-                : "bg-primary hover:bg-primary-hover text-primary-foreground"
+                ? "bg-warning hover:bg-warning/90"
+                : "bg-primary hover:bg-primary-hover"
             }`}
           >
             {isPending && <Loader2 className="size-3.5 mr-1.5 animate-spin" />}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { PhoneCall, Send } from "lucide-react";
 import { formatMoney } from "@/lib/cash-formatters";
 import { getSupportWhatsAppUrl } from "@/lib/support-config";
@@ -25,21 +26,23 @@ interface SupportTicketFormProps {
   onSuccess: (ticketRef: string) => void;
 }
 
-const CATEGORIES = [
-  "Montant net incorrect",
-  "Taux de commission contesté",
-  "Versement non reçu ou incomplet",
-  "Erreur d'affectation de commande",
-  "Autre réclamation financière",
-];
-
 export function SupportTicketForm({
   target,
   onClose,
   houseSlug,
   onSuccess,
 }: SupportTicketFormProps) {
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const t = useTranslations("house.settlements");
+
+  const categoryOptions = [
+    { key: "net_incorrect", label: t("ticketCategoryNetIncorrect") },
+    { key: "commission_disputed", label: t("ticketCategoryCommissionDisputed") },
+    { key: "payout_missing", label: t("ticketCategoryPayoutMissing") },
+    { key: "order_mistake", label: t("ticketCategoryOrderMistake") },
+    { key: "other", label: t("ticketCategoryOther") },
+  ];
+
+  const [category, setCategory] = useState(categoryOptions[0].label);
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -47,7 +50,7 @@ export function SupportTicketForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!message.trim() || message.trim().length < 5) {
-      setErrorMsg("Veuillez détailler votre réclamation (au moins 5 caractères).");
+      setErrorMsg(t("ticketMinLengthError"));
       return;
     }
 
@@ -76,17 +79,17 @@ export function SupportTicketForm({
   );
 
   return (
-    <form onSubmit={handleSubmit} className="p-5 space-y-4">
+    <form onSubmit={handleSubmit} className="p-5 space-y-4 font-sans">
       {/* Pre-filled info strip */}
       <div className="p-3.5 rounded-xl bg-muted/40 grid grid-cols-2 gap-2 text-xs">
         <div>
-          <span className="text-2xs text-muted-foreground block">Élément concerné :</span>
+          <span className="text-2xs text-muted-foreground block">{t("ticketTargetRef")}</span>
           <span className="font-semibold text-foreground">
-            {target.type === "order" ? "Commande" : "Versement"} {target.reference}
+            {target.type === "order" ? t("tabDeliveredOrders") : t("payoutCol")} {target.reference}
           </span>
         </div>
         <div className="text-right">
-          <span className="text-2xs text-muted-foreground block">Montant :</span>
+          <span className="text-2xs text-muted-foreground block">{t("ticketNetCalculated")}</span>
           <span className="font-mono font-bold text-primary">
             {formatMoney(target.amount, "CDF")}
           </span>
@@ -104,16 +107,16 @@ export function SupportTicketForm({
       {/* Category selection */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-foreground block">
-          Motif du signalement
+          {t("ticketReasonLabel")}
         </label>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           className="w-full px-3 py-2 rounded-xl border border-input bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-hidden min-h-[40px]"
         >
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
+          {categoryOptions.map((c) => (
+            <option key={c.key} value={c.label}>
+              {c.label}
             </option>
           ))}
         </select>
@@ -122,50 +125,50 @@ export function SupportTicketForm({
       {/* Message description */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-foreground block">
-          Explication détaillée <span className="text-destructive">*</span>
+          {t("ticketDetailsLabel")} <span className="text-destructive">*</span>
         </label>
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={4}
           required
-          placeholder="Décrivez l'écart constaté, le calcul attendu ou les détails du problème..."
+          placeholder={t("ticketDetailsPlaceholder")}
           className="resize-none text-xs"
         />
       </div>
 
       {/* Actions */}
-      <div className="pt-2 border-t border-border flex items-center justify-between gap-2.5">
+      <div className="pt-3 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <a
           href={waLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1.5 min-h-[40px]"
+          className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline flex items-center justify-center sm:justify-start gap-1.5 min-h-[40px] shrink-0"
         >
           <PhoneCall className="size-3.5" />
-          <span>Support WhatsApp</span>
+          <span>{t("ticketWhatsAppSupport")}</span>
         </a>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={onClose}
             disabled={isPending}
-            className="min-h-[40px] px-3.5 text-xs font-semibold"
+            className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 text-xs font-semibold rounded-xl"
           >
-            Annuler
+            {t("ticketCancel")}
           </Button>
 
           <Button
             type="submit"
             size="sm"
             disabled={isPending || message.trim().length < 5}
-            className="min-h-[40px] px-4 text-xs font-semibold gap-1.5"
+            className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 text-xs font-semibold gap-1.5 rounded-xl shadow-xs"
           >
             <Send className="size-3.5" />
-            <span>{isPending ? "Transmission..." : "Envoyer"}</span>
+            <span>{isPending ? t("ticketSubmitting") : t("ticketSubmit")}</span>
           </Button>
         </div>
       </div>

@@ -4,9 +4,12 @@ import Link from "next/link";
 import {
   CalendarX,
   PauseCircle,
+  PlayCircle,
   PlusCircle,
   PhoneCall,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Separator } from "@/components/ui/separator";
 
 interface PartnerContextualActionsProps {
   houseSlug: string;
@@ -19,87 +22,117 @@ export function PartnerContextualActions({
   onOpenPause,
   isPaused,
 }: PartnerContextualActionsProps) {
+  const t = useTranslations("house.dashboard");
+
+  const actions = [
+    {
+      id: "hours",
+      href: `/partner/${houseSlug}/hours`,
+      icon: CalendarX,
+      iconBg: "bg-destructive-soft text-destructive",
+      title: t("actionCloseToday"),
+      subtitle: t("actionCloseTodayDesc"),
+      type: "link" as const,
+    },
+    {
+      id: "pause",
+      onClick: onOpenPause,
+      icon: isPaused ? PlayCircle : PauseCircle,
+      iconBg: isPaused ? "bg-success-soft text-success" : "bg-warning-soft text-warning",
+      title: isPaused ? t("actionResume") : t("actionPause"),
+      subtitle: t("actionPauseDesc"),
+      type: "button" as const,
+    },
+    {
+      id: "catalogue",
+      href: `/partner/${houseSlug}/catalogue`,
+      icon: PlusCircle,
+      iconBg: "bg-primary-soft text-primary",
+      title: t("actionAddService"),
+      subtitle: t("actionAddServiceDesc"),
+      type: "link" as const,
+    },
+    {
+      id: "support",
+      href: "https://wa.me/243999000123?text=Bonjour%20SafiHub%20Support%2C%20j%27ai%20besoin%20d%27assistance%20concernant%20mon%20pressing.",
+      external: true,
+      icon: PhoneCall,
+      iconBg: "bg-success-soft text-success",
+      title: t("actionSupport"),
+      subtitle: t("actionSupportDesc"),
+      type: "link" as const,
+    },
+  ];
+
+  function renderActionItem(a: (typeof actions)[number], className?: string) {
+    const Icon = a.icon;
+    const content = (
+      <>
+        <div className={`size-9 sm:size-10 rounded-xl ${a.iconBg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-105`}>
+          <Icon className="size-4.5 sm:size-5" />
+        </div>
+        <div className="min-w-0 text-left">
+          <span className="text-xs font-bold text-heading group-hover:text-primary transition block truncate">
+            {a.title}
+          </span>
+          <span className="text-[11px] text-muted-foreground block truncate">
+            {a.subtitle}
+          </span>
+        </div>
+      </>
+    );
+
+    const baseClass = `flex-1 p-2.5 sm:p-3 rounded-xl hover:bg-muted/30 transition-colors group flex items-center gap-3 cursor-pointer min-h-[48px] touch ${className ?? ""}`;
+
+    if (a.type === "button") {
+      return (
+        <button key={a.id} type="button" onClick={a.onClick} className={baseClass}>
+          {content}
+        </button>
+      );
+    }
+
+    return (
+      <Link
+        key={a.id}
+        href={a.href!}
+        target={a.external ? "_blank" : undefined}
+        rel={a.external ? "noopener noreferrer" : undefined}
+        className={baseClass}
+      >
+        {content}
+      </Link>
+    );
+  }
+
   return (
-    <section className="space-y-3 font-sans" aria-label="Actions rapides contextuelles">
+    <section className="space-y-3 font-sans" aria-label={t("quickActionsTitle")}>
       <h3 className="font-display font-bold text-sm sm:text-base text-heading">
-        Actions rapides pressing
+        {t("quickActionsTitle")}
       </h3>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* 1. Fermer pour aujourd'hui */}
-        <Link
-          href={`/partner/${houseSlug}/hours`}
-          className="p-4 rounded-2xl bg-card border border-border shadow-xs hover:border-border-strong hover:shadow-sm transition group flex items-center gap-3.5"
-        >
-          <div className="size-10 rounded-xl bg-destructive-soft text-destructive flex items-center justify-center shrink-0 group-hover:bg-destructive-soft/80 transition">
-            <CalendarX className="size-5" />
-          </div>
-          <div>
-            <span className="text-xs font-bold text-heading group-hover:text-primary transition block">
-              Fermer aujourd&apos;hui
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              Déclarer fermeture
-            </span>
-          </div>
-        </Link>
+      <div className="bg-card rounded-3xl p-2 sm:p-3 font-sans">
+        {/* Desktop Layout (>=1024px): 1 continuous row with clean vertical separators */}
+        <div className="hidden lg:flex lg:items-stretch">
+          {actions.map((a, idx) => (
+            <div key={a.id} className="flex-1 flex items-stretch">
+              {idx > 0 && (
+                <Separator orientation="vertical" className="h-12 mx-1 my-auto shrink-0 bg-border/60" />
+              )}
+              {renderActionItem(a)}
+            </div>
+          ))}
+        </div>
 
-        {/* 2. Mettre en pause */}
-        <button
-          type="button"
-          onClick={onOpenPause}
-          className="p-4 rounded-2xl bg-card border border-border shadow-xs hover:border-border-strong hover:shadow-sm transition group flex items-center gap-3.5 text-left cursor-pointer"
-        >
-          <div className="size-10 rounded-xl bg-warning-soft text-warning flex items-center justify-center shrink-0 group-hover:bg-warning-soft/80 transition">
-            <PauseCircle className="size-5" />
-          </div>
-          <div>
-            <span className="text-xs font-bold text-heading group-hover:text-primary transition block">
-              {isPaused ? "Reprendre" : "Mettre en pause"}
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              Arrêter les flux
-            </span>
-          </div>
-        </button>
-
-        {/* 3. Ajouter un service */}
-        <Link
-          href={`/partner/${houseSlug}/catalogue`}
-          className="p-4 rounded-2xl bg-card border border-border shadow-xs hover:border-border-strong hover:shadow-sm transition group flex items-center gap-3.5"
-        >
-          <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center shrink-0 group-hover:bg-primary-soft/80 transition">
-            <PlusCircle className="size-5" />
-          </div>
-          <div>
-            <span className="text-xs font-bold text-heading group-hover:text-primary transition block">
-              Ajouter un service
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              Tarifs & catalogue
-            </span>
-          </div>
-        </Link>
-
-        {/* 4. Contacter le support Bukavu */}
-        <a
-          href="https://wa.me/243999000123?text=Bonjour%20SafiHub%20Support%2C%20j%27ai%20besoin%20d%27assistance%20concernant%20mon%20pressing."
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-4 rounded-2xl bg-card border border-border shadow-xs hover:border-border-strong hover:shadow-sm transition group flex items-center gap-3.5"
-        >
-          <div className="size-10 rounded-xl bg-success-soft text-success flex items-center justify-center shrink-0 group-hover:bg-success-soft/80 transition">
-            <PhoneCall className="size-5" />
-          </div>
-          <div>
-            <span className="text-xs font-bold text-heading group-hover:text-success transition block">
-              Support SafiHub
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              WhatsApp Bukavu
-            </span>
-          </div>
-        </a>
+        {/* Mobile & Tablet Layout (<1024px): clean list separated by clean horizontal lines */}
+        <div className="lg:hidden flex flex-col">
+          {actions.map((a, idx) => (
+            <div key={a.id}>
+              {idx > 0 && <Separator className="my-1 bg-border/60" />}
+              {renderActionItem(a)}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

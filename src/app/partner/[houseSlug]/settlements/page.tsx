@@ -51,7 +51,7 @@ export default async function PartnerSettlementsPage({
   const data = settlementsRes.value;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 sm:space-y-8 pb-24 sm:pb-28">
       <PageHeader
         title={t("title")}
         subtitle={`${t("subtitle")} — ${data.houseName}`}

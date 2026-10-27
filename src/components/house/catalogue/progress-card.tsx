@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { CatalogueServiceTab } from "./types";
+import { CatalogueSetupGuide } from "./catalogue-setup-guide";
 
 interface ProgressCardProps {
   totalConfigured: number;
@@ -27,8 +28,8 @@ export function ProgressCard({
   const hasNoPrices = totalConfigured === 0;
 
   return (
-    <div className="space-y-3 py-1">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+    <div className="space-y-4 sm:space-y-5 py-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-2">
           {percent === 100 ? (
             <CheckCircle2 className="size-4 text-success shrink-0" aria-hidden="true" />
@@ -47,10 +48,10 @@ export function ProgressCard({
       </div>
 
       {/* Progress bar */}
-      <Progress value={percent} className="h-2" />
+      <Progress value={percent} className="h-2.5" />
 
       {/* Per-service pills */}
-      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+      <div className="flex flex-wrap items-center gap-2 pt-1 pb-0.5">
         {services.map((srv) => {
           const isSelected = srv.id === activeServiceId;
           const isComplete = srv.configuredCount === srv.totalCount && srv.totalCount > 0;
@@ -59,17 +60,21 @@ export function ProgressCard({
               key={srv.id}
               type="button"
               onClick={() => onSelectService(srv.id)}
-              className={`text-xs px-2.5 py-1 font-medium transition flex items-center gap-1.5 cursor-pointer bg-transparent border-0 ${
+              className={`text-xs px-3 py-1.5 font-medium transition flex items-center gap-1.5 cursor-pointer rounded-xl border ${
                 isSelected
-                  ? "text-primary font-bold"
-                  : "text-muted-foreground hover:text-heading"
+                  ? "bg-primary-soft/80 border-primary/30 text-primary font-bold shadow-xs"
+                  : "border-transparent text-muted-foreground hover:text-heading hover:bg-muted/40"
               }`}
             >
               <span>{srv.nameFr}</span>
               <Badge
                 variant={isSelected ? "default" : isComplete ? "success" : "outline"}
                 className={`font-mono text-[10px] px-1.5 py-0 h-4 ${
-                  isSelected ? "bg-primary text-primary-foreground" : "border-0 bg-transparent text-muted-foreground"
+                  isSelected
+                    ? "bg-primary text-primary-foreground border-0"
+                    : isComplete
+                      ? "bg-success-soft text-success border-success/30"
+                      : "border-border/60 bg-muted/40 text-muted-foreground"
                 }`}
               >
                 {srv.configuredCount}/{srv.totalCount}
@@ -78,6 +83,9 @@ export function ProgressCard({
           );
         })}
       </div>
+
+      {/* Catalogue Setup Guidance for partners */}
+      <CatalogueSetupGuide defaultExpanded={percent < 100} />
 
       {hasNoPrices && (
         <Alert variant="destructive" className="bg-warning-soft text-warning border-warning/30 text-xs py-2.5">

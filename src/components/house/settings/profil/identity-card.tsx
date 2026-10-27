@@ -42,7 +42,7 @@ export function IdentityCard({
             variant="outline"
             size="sm"
             onClick={handleCopyPublicLink}
-            className="text-xs font-semibold min-h-[38px] px-3"
+            className="text-xs font-semibold h-10 sm:h-9 px-3.5 rounded-xl cursor-pointer"
           >
             {copiedLink ? (
               <>
@@ -56,7 +56,7 @@ export function IdentityCard({
               </>
             )}
           </Button>
-          <Button asChild variant="outline" size="sm" className="min-h-[38px] px-3 text-xs font-semibold gap-1.5">
+          <Button asChild variant="outline" size="sm" className="h-10 sm:h-9 px-3.5 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer">
             <a href={`/houses/${house.slug}`} target="_blank" rel="noreferrer">
               <span>Voir</span>
               <ExternalLink className="size-3.5" />
@@ -74,7 +74,7 @@ export function IdentityCard({
             type="text"
             value={house.name}
             disabled
-            className="min-h-[38px] text-xs font-medium bg-muted/50 cursor-not-allowed"
+            className="h-10 sm:h-9 rounded-xl text-xs font-medium bg-muted/50 cursor-not-allowed"
           />
           <span className="text-[10px] text-muted-foreground mt-1 block">
             Pour modifier le nom officiel ou les informations légales, contactez l&apos;administration SafiHub.
@@ -89,7 +89,7 @@ export function IdentityCard({
             type="text"
             value={house.neighborhoodName || "Bukavu"}
             disabled
-            className="min-h-[38px] text-xs font-medium bg-muted/50 cursor-not-allowed"
+            className="h-10 sm:h-9 rounded-xl text-xs font-medium bg-muted/50 cursor-not-allowed"
           />
         </div>
       </div>
@@ -103,7 +103,7 @@ export function IdentityCard({
           readOnly
           disabled
           rows={2}
-          className="text-xs bg-muted/50 cursor-not-allowed resize-none"
+          className="text-xs bg-muted/50 cursor-not-allowed resize-none rounded-xl"
         />
         <span className="text-[10px] text-muted-foreground block text-right mt-0.5">
           Géré par l&apos;administration SafiHub

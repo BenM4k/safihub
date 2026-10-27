@@ -118,10 +118,10 @@ export function HeroBalanceCard({ hero, houseSlug }: HeroBalanceCardProps) {
             </span>
             <span className="text-muted-foreground text-2xs font-sans">({t("alreadyPaid")})</span>
             <span className="font-bold">=</span>
-            <span className="text-primary font-bold">
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
               {formatMoney(hero.balanceOwedCDF, "CDF")}
             </span>
-            <span className="text-primary/80 text-2xs font-sans">({t("remainingDue")})</span>
+            <span className="text-emerald-600/80 dark:text-emerald-400/80 text-2xs font-sans">({t("remainingDue")})</span>
           </div>
 
           <span className="text-2xs text-muted-foreground">

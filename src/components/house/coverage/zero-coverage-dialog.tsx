@@ -53,18 +53,18 @@ export function ZeroCoverageDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <AlertDialogFooter className="pt-2">
+        <AlertDialogFooter className="pt-2 flex flex-row items-center justify-end gap-2">
           <AlertDialogCancel
             onClick={onCancel}
             disabled={isSaving}
-            className="text-xs font-semibold rounded-xl min-h-[40px] px-4 cursor-pointer"
+            className="flex-1 sm:flex-initial text-xs font-semibold rounded-xl h-10 sm:h-9 px-4 cursor-pointer mt-0"
           >
             {t("cancelChanges")}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isSaving}
-            className="text-xs font-bold rounded-xl min-h-[40px] px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-xs cursor-pointer"
+            className="flex-1 sm:flex-initial text-xs font-bold rounded-xl h-10 sm:h-9 px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-xs cursor-pointer"
           >
             {isSaving ? t("saving") : t("confirmZeroCoverageAction")}
           </AlertDialogAction>

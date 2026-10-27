@@ -33,28 +33,35 @@ export function ScheduleRow({
     <div className="p-3 sm:p-3.5 transition-colors hover:bg-muted/30 border-b border-border/60 last:border-b-0">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Day identity and open switch */}
-        <div className="flex items-center gap-3 min-w-40">
-          <Switch
-            checked={day.isOpen}
-            disabled={disabled}
-            onCheckedChange={() => onToggleOpen(day.weekday)}
-            aria-label={t("openDayLabel", { day: day.name.toLowerCase() })}
-          />
-          <span className="font-bold text-xs sm:text-sm text-heading font-display">
-            {day.name}
-          </span>
+        <div className="flex items-center justify-between sm:justify-start gap-3 min-w-40">
+          <div className="flex items-center gap-3">
+            <Switch
+              checked={day.isOpen}
+              disabled={disabled}
+              onCheckedChange={() => onToggleOpen(day.weekday)}
+              aria-label={t("openDayLabel", { day: day.name.toLowerCase() })}
+            />
+            <span className="font-bold text-xs sm:text-sm text-heading font-display">
+              {day.name}
+            </span>
+          </div>
+          {!day.isOpen && (
+            <Badge variant="outline" className="sm:hidden px-2 py-0.5 text-2xs font-bold text-muted-foreground">
+              {t("closed")}
+            </Badge>
+          )}
         </div>
 
         {/* Time ranges or Closed badge */}
         {day.isOpen ? (
-          <div className="flex-1 flex flex-col items-start sm:items-end gap-2">
+          <div className="flex-1 flex flex-col items-start sm:items-end gap-2.5">
             {day.ranges.map((range, idx) => (
               <div
                 key={idx}
                 className="flex flex-wrap items-center gap-2 w-full sm:w-auto"
                 aria-describedby={validationError ? errorId : undefined}
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-1 sm:flex-initial">
                   <TimePickerSelect
                     value={range.opensAt}
                     onChange={(val) => onUpdateRange(day.weekday, idx, "opensAt", val)}
@@ -83,7 +90,7 @@ export function ScheduleRow({
                     onClick={() => onRemoveRange(day.weekday, idx)}
                     disabled={disabled}
                     aria-label={t("deleteSlotAria", { day: day.name })}
-                    className="h-8 px-2 text-destructive hover:bg-destructive-soft hover:text-destructive shrink-0 cursor-pointer"
+                    className="h-10 w-10 sm:h-8 sm:w-8 p-0 text-destructive hover:bg-destructive-soft hover:text-destructive shrink-0 cursor-pointer rounded-xl"
                   >
                     <Trash2 className="size-4" aria-hidden="true" />
                   </Button>
@@ -97,7 +104,7 @@ export function ScheduleRow({
                     onClick={() => onAddRange(day.weekday)}
                     disabled={disabled}
                     aria-label={t("addSlotAria", { day: day.name })}
-                    className="h-8 px-2.5 text-xs text-primary font-semibold hover:bg-primary-soft shrink-0 cursor-pointer"
+                    className="h-10 sm:h-8 px-3 text-xs text-primary font-semibold hover:bg-primary-soft shrink-0 cursor-pointer rounded-xl"
                   >
                     <Plus className="size-3.5 mr-1" aria-hidden="true" />
                     <span>{t("addSlot")}</span>
@@ -107,7 +114,7 @@ export function ScheduleRow({
             ))}
           </div>
         ) : (
-          <div className="flex items-center">
+          <div className="hidden sm:flex items-center">
             <Badge variant="outline" className="px-2.5 py-0.5 text-xs font-bold text-muted-foreground">
               {t("closed")}
             </Badge>

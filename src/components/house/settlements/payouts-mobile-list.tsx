@@ -36,7 +36,7 @@ export function PayoutsMobileList({
   }
 
   return (
-    <div className="md:hidden space-y-3">
+    <div className="md:hidden rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
       {payouts.map((p) => (
         <div
           key={p.id}
@@ -49,7 +49,7 @@ export function PayoutsMobileList({
               onSelectPayout(p);
             }
           }}
-          className="p-4 rounded-xl bg-surface border border-border/80 space-y-2.5 cursor-pointer active:scale-[0.99] transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
+          className="p-4 space-y-2.5 cursor-pointer hover:bg-muted/30 active:bg-muted/50 transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
         >
           <div className="flex items-center justify-between gap-2">
             <span className="font-mono text-xs text-muted-foreground">
@@ -83,7 +83,7 @@ export function PayoutsMobileList({
             </div>
           </div>
 
-          <div className="pt-2 border-t border-border flex items-center justify-between text-2xs text-muted-foreground">
+          <div className="pt-2 border-t border-border/60 flex items-center justify-between text-2xs text-muted-foreground">
             <span>{t("ordersIncluded", { count: p.ordersCount })}</span>
 
             <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export function PayoutsMobileList({
                 className="text-primary font-semibold hover:underline flex items-center gap-1 p-1 min-h-[44px]"
               >
                 <FileText className="size-3.5" />
-                <span>Reçu</span>
+                <span>{t("receipt")}</span>
               </button>
 
               <button
