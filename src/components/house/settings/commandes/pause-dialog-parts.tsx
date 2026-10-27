@@ -87,7 +87,7 @@ export function DurationPicker({
           type="datetime-local"
           value={customDateTime}
           onChange={(e) => onSetCustomDateTime(e.target.value)}
-          className="w-full h-9 px-3 rounded-xl border border-border text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          className="w-full h-9 px-3 rounded-xl border border-border text-base sm:text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
         />
       )}
     </div>

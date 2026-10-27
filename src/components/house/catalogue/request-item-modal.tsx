@@ -129,7 +129,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t("namePlaceholder")}
-              className="text-xs"
+              className="text-base sm:text-xs rounded-xl"
             />
           </div>
 
@@ -143,7 +143,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={t("notePlaceholder")}
-              className="text-xs resize-none"
+              className="text-base sm:text-xs resize-none rounded-xl"
             />
           </div>
 

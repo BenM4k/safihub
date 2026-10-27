@@ -36,7 +36,7 @@ export function MinimumOrderSection({
             inputMode="numeric"
             value={formattedDisplay}
             onChange={handleRawChange}
-            className="pl-3 pr-14 text-xs font-bold font-mono h-10 sm:h-9 rounded-xl"
+            className="pl-3 pr-14 text-base sm:text-xs font-bold font-mono h-10 sm:h-9 rounded-xl"
             aria-label="Montant minimum en francs congolais"
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">

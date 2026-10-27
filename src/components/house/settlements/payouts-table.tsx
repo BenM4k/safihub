@@ -71,7 +71,7 @@ export function PayoutsTable({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("searchPayouts")}
-            className="pl-9 h-10 sm:h-9 rounded-xl text-xs"
+            className="pl-9 h-10 sm:h-9 rounded-xl text-base sm:text-xs"
             aria-label={t("searchPayoutsAria")}
           />
         </div>

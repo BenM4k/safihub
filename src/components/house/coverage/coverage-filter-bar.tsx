@@ -39,7 +39,7 @@ export function CoverageFilterBar({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={t("searchPlaceholder")}
-          className="pl-9 h-10 sm:h-9 text-xs bg-card rounded-xl border-input focus-visible:border-primary shadow-2xs"
+          className="pl-9 h-10 sm:h-9 text-base sm:text-xs bg-card rounded-xl border-input focus-visible:border-primary shadow-2xs"
           aria-label={t("searchPlaceholder")}
         />
         {searchQuery && (

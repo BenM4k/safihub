@@ -125,7 +125,7 @@ export function OrderRejectDialog({
               onChange={(e) => setCustomText(e.target.value)}
               placeholder={t("rejectReasonPlaceholder")}
               rows={2}
-              className="w-full mt-2 text-xs"
+              className="w-full mt-2 text-base sm:text-xs"
             />
           )}
         </div>

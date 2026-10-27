@@ -112,7 +112,7 @@ export function SupportTicketForm({
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full px-3 py-2 rounded-xl border border-input bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-hidden min-h-[40px]"
+          className="w-full px-3 py-2 rounded-xl border border-input bg-background text-base sm:text-xs focus:ring-2 focus:ring-primary focus:outline-hidden min-h-[40px]"
         >
           {categoryOptions.map((c) => (
             <option key={c.key} value={c.label}>
@@ -133,7 +133,7 @@ export function SupportTicketForm({
           rows={4}
           required
           placeholder={t("ticketDetailsPlaceholder")}
-          className="resize-none text-xs"
+          className="resize-none text-base sm:text-xs"
         />
       </div>
 

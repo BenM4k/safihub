@@ -70,7 +70,7 @@ export function CapacitySection({
             max={500}
             value={dailyCapacity ?? ""}
             onChange={(e) => onChangeCapacity(parseInt(e.target.value, 10) || 1)}
-            className="w-full sm:w-48 text-xs font-bold font-mono h-10 sm:h-9 rounded-xl"
+            className="w-full sm:w-48 text-base sm:text-xs font-bold font-mono h-10 sm:h-9 rounded-xl"
           />
         </div>
       )}

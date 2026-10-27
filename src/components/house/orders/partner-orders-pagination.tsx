@@ -60,7 +60,7 @@ export function PartnerOrdersPagination({
           >
             <SelectTrigger
               aria-label={t("rowsPerPage")}
-              className="h-8 w-[70px] text-xs font-semibold rounded-lg border-border bg-card"
+              className="h-8 w-[70px] text-base sm:text-xs font-semibold rounded-lg border-border bg-card"
             >
               <SelectValue placeholder={String(pageSize)} />
             </SelectTrigger>

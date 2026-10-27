@@ -108,7 +108,7 @@ export function CoverageExtensionForm({
           {t("reasonCategoryLabel")}
         </label>
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger id={`${formId}-cat`} className="h-10 text-xs">
+          <SelectTrigger id={`${formId}-cat`} className="h-10 text-base sm:text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -140,7 +140,7 @@ export function CoverageExtensionForm({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={t("reasonNotePlaceholder")}
-          className="text-xs resize-none"
+          className="text-base sm:text-xs resize-none"
         />
       </div>
 

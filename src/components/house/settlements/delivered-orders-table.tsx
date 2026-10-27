@@ -78,7 +78,7 @@ export function DeliveredOrdersTable({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("searchDeliveredOrders")}
-            className="pl-9 h-10 sm:h-9 rounded-xl text-xs"
+            className="pl-9 h-10 sm:h-9 rounded-xl text-base sm:text-xs"
             aria-label={t("searchDeliveredOrdersAria")}
           />
         </div>

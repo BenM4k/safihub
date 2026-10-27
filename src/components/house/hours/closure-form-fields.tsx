@@ -56,7 +56,7 @@ export function ClosureFormFields({
             min={isEditing ? undefined : todayIso}
             value={startsOn}
             onChange={(e) => onStartsOnChange(e.target.value)}
-            className="h-9 text-xs"
+            className="h-9 text-base sm:text-xs"
           />
           <span className="text-[11px] text-muted-foreground block">
             Format : {formatDateFr(startsOn) || "jj/mm/aaaa"}
@@ -74,7 +74,7 @@ export function ClosureFormFields({
             min={startsOn || todayIso}
             value={endsOn}
             onChange={(e) => onEndsOnChange(e.target.value)}
-            className="h-9 text-xs"
+            className="h-9 text-base sm:text-xs"
           />
           <span className="text-[11px] text-muted-foreground block">
             Format : {formatDateFr(endsOn) || "jj/mm/aaaa"}
@@ -117,7 +117,7 @@ export function ClosureFormFields({
           onChange={(e) => onReasonChange(e.target.value)}
           placeholder={t("reasonPlaceholder")}
           maxLength={100}
-          className="h-9 text-xs"
+          className="h-9 text-base sm:text-xs"
         />
       </div>
 

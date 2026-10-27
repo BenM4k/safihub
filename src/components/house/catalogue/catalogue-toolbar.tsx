@@ -58,7 +58,7 @@ export function CatalogueToolbar({
               onFilterChange({ ...filters, search: e.target.value })
             }
             placeholder={t("searchPlaceholder")}
-            className="pl-9 h-10 sm:h-9 text-xs bg-transparent rounded-xl border-input focus-visible:border-primary"
+            className="pl-9 h-10 sm:h-9 text-base sm:text-xs bg-transparent rounded-xl border-input focus-visible:border-primary"
             aria-label={t("searchPlaceholder")}
           />
           {filters.search && (

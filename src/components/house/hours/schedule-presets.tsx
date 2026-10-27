@@ -98,7 +98,7 @@ export function SchedulePresets({
                 setSelectedTargets(WEEKDAY_DEFS.map((w) => w.weekday).filter((w) => w !== src));
               }}
             >
-              <SelectTrigger className="h-9 sm:h-8.5 w-32 text-xs rounded-xl font-semibold">
+              <SelectTrigger className="h-9 sm:h-8.5 w-32 text-base sm:text-xs rounded-xl font-semibold">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

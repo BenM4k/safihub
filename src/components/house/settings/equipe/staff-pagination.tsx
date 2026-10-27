@@ -57,7 +57,7 @@ export function StaffPagination({
           >
             <SelectTrigger
               aria-label="Nombre par page"
-              className="h-8 w-[65px] text-xs font-semibold rounded-lg border-border bg-background"
+              className="h-8 w-[65px] text-base sm:text-xs font-semibold rounded-lg border-border bg-background"
             >
               <SelectValue placeholder={String(pageSize)} />
             </SelectTrigger>

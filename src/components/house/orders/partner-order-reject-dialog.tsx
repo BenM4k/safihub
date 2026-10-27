@@ -144,7 +144,7 @@ export function PartnerOrderRejectDialog({
               onChange={(e) => setCustomDetails(e.target.value)}
               placeholder={t("optionalDetailsPlaceholder")}
               rows={2}
-              className="w-full mt-2 text-xs"
+              className="w-full mt-2 text-base sm:text-xs"
             />
           </div>
 

@@ -49,7 +49,7 @@ export function CopyServiceSection({
           value={selectedSourceService}
           onValueChange={setSelectedSourceService}
         >
-          <SelectTrigger className="flex-1 h-9 text-xs" aria-label={t("sourceServiceLabel")}>
+          <SelectTrigger className="flex-1 h-10 sm:h-9 text-base sm:text-xs rounded-xl" aria-label={t("sourceServiceLabel")}>
             <SelectValue placeholder={t("selectSourceServicePrompt")} />
           </SelectTrigger>
           <SelectContent className="font-sans">

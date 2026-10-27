@@ -102,7 +102,7 @@ export function HolidaysImportModal({
                 setSelectedIds(getDrcHolidaysForYear(yr).filter((h) => !h.isPast).map((h) => h.id));
               }}
             >
-              <SelectTrigger className="h-8 sm:h-8 w-28 text-xs font-semibold rounded-xl">
+              <SelectTrigger className="h-8 sm:h-8 w-28 text-base sm:text-xs font-semibold rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

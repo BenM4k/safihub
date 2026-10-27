@@ -73,7 +73,7 @@ export function ReceptionItemRow({
             min={0}
             value={item.receivedQuantity}
             onChange={(e) => onQuantityChange(parseInt(e.target.value) || 0)}
-            className="w-16 h-8 text-center text-xs font-bold rounded-lg"
+            className="w-16 h-9 sm:h-8 text-center text-base sm:text-xs font-bold rounded-lg"
           />
         </div>
 

@@ -133,7 +133,7 @@ export function OrderActions({
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder={t("rejectReasonPlaceholder")}
-                className="text-xs resize-none"
+                className="text-base sm:text-xs resize-none"
               />
             </div>
 

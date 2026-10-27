@@ -74,7 +74,7 @@ export function PartnerOrdersFilterBar({
           }}
           placeholder={t("filterSearchPlaceholder")}
           aria-label={t("filterSearchPlaceholder")}
-          className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[40px] sm:min-h-[36px]"
+          className="w-full pl-9 pr-3 py-2 text-base sm:text-xs rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[40px] sm:min-h-[36px]"
         />
       </div>
 
@@ -87,7 +87,7 @@ export function PartnerOrdersFilterBar({
             value={date}
             onChange={(e) => onDateChange(e.target.value)}
             aria-label={t("filterDateLabel")}
-            className="pl-8 pr-2 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[40px] sm:min-h-[36px] w-full sm:w-auto cursor-pointer"
+            className="pl-8 pr-2 py-2 text-base sm:text-xs rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[40px] sm:min-h-[36px] w-full sm:w-auto cursor-pointer"
           />
         </div>
 
@@ -99,7 +99,7 @@ export function PartnerOrdersFilterBar({
         >
           <SelectTrigger
             aria-label={t("sortBy")}
-            className="min-h-[40px] sm:min-h-[36px] h-auto text-xs rounded-xl border-border bg-background px-3 flex-1 sm:flex-initial cursor-pointer"
+            className="min-h-[40px] sm:min-h-[36px] h-auto text-base sm:text-xs rounded-xl border-border bg-background px-3 flex-1 sm:flex-initial cursor-pointer"
           >
             <SelectValue placeholder={t("sortBy")} />
           </SelectTrigger>

@@ -95,7 +95,7 @@ export function ExclusionForm({
         <select
           value={selectedItemId}
           onChange={(e) => setSelectedItemId(e.target.value)}
-          className="w-full h-10 min-h-[40px] px-3 rounded-xl border border-input bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-hidden"
+          className="w-full h-10 min-h-[40px] px-3 rounded-xl border border-input bg-background text-base sm:text-xs focus:ring-2 focus:ring-primary focus:outline-hidden"
         >
           <option value="">Tous les articles</option>
           {masterItems.map((item) => (
@@ -109,7 +109,7 @@ export function ExclusionForm({
         <select
           value={selectedFabricId}
           onChange={(e) => setSelectedFabricId(e.target.value)}
-          className="w-full h-10 min-h-[40px] px-3 rounded-xl border border-input bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-hidden"
+          className="w-full h-10 min-h-[40px] px-3 rounded-xl border border-input bg-background text-base sm:text-xs focus:ring-2 focus:ring-primary focus:outline-hidden"
         >
           <option value="">Toutes les matières</option>
           {masterFabrics.map((fabric) => (
@@ -128,7 +128,7 @@ export function ExclusionForm({
           onChange={(e) => setNote(e.target.value)}
           placeholder="Ex. Risque de décoloration..."
           maxLength={120}
-          className="text-xs min-h-[38px]"
+          className="text-base sm:text-xs min-h-[38px]"
         />
         <span className="text-[10px] text-muted-foreground block text-right mt-1">
           {note.length} / 120 caractères

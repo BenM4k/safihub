@@ -74,7 +74,7 @@ export function IdentityCard({
             type="text"
             value={house.name}
             disabled
-            className="h-10 sm:h-9 rounded-xl text-xs font-medium bg-muted/50 cursor-not-allowed"
+            className="h-10 sm:h-9 rounded-xl text-base sm:text-xs font-medium bg-muted/50 cursor-not-allowed"
           />
           <span className="text-[10px] text-muted-foreground mt-1 block">
             Pour modifier le nom officiel ou les informations légales, contactez l&apos;administration SafiHub.
@@ -89,7 +89,7 @@ export function IdentityCard({
             type="text"
             value={house.neighborhoodName || "Bukavu"}
             disabled
-            className="h-10 sm:h-9 rounded-xl text-xs font-medium bg-muted/50 cursor-not-allowed"
+            className="h-10 sm:h-9 rounded-xl text-base sm:text-xs font-medium bg-muted/50 cursor-not-allowed"
           />
         </div>
       </div>
@@ -103,7 +103,7 @@ export function IdentityCard({
           readOnly
           disabled
           rows={2}
-          className="text-xs bg-muted/50 cursor-not-allowed resize-none rounded-xl"
+          className="text-base sm:text-xs bg-muted/50 cursor-not-allowed resize-none rounded-xl"
         />
         <span className="text-[10px] text-muted-foreground block text-right mt-0.5">
           Géré par l&apos;administration SafiHub

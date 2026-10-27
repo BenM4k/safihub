@@ -128,7 +128,7 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
                 placeholder="Préciser le motif de pause..."
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
-                className="mt-2 text-xs"
+                className="mt-2 text-base sm:text-xs"
                 autoFocus
               />
             )}

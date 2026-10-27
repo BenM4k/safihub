@@ -167,7 +167,7 @@ export function PeriodSelectorToolbar({
             type="date"
             value={customFrom}
             onChange={(e) => setCustomFrom(e.target.value)}
-            className="w-auto h-10 sm:h-9 rounded-xl text-xs font-mono"
+            className="w-auto h-10 sm:h-9 rounded-xl text-base sm:text-xs font-mono"
             required
             aria-label={t("startDateAria")}
           />
@@ -176,7 +176,7 @@ export function PeriodSelectorToolbar({
             type="date"
             value={customTo}
             onChange={(e) => setCustomTo(e.target.value)}
-            className="w-auto h-10 sm:h-9 rounded-xl text-xs font-mono"
+            className="w-auto h-10 sm:h-9 rounded-xl text-base sm:text-xs font-mono"
             required
             aria-label={t("endDateAria")}
           />

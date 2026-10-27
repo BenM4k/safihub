@@ -51,7 +51,7 @@ export function InviteModal({ isOpen, onClose, onInvite }: InviteModalProps) {
               placeholder="collaborateur@gmail.com"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              className="text-xs h-10 min-h-[40px]"
+              className="text-base sm:text-xs h-10 min-h-[40px]"
               required
               autoFocus
             />
@@ -64,7 +64,7 @@ export function InviteModal({ isOpen, onClose, onInvite }: InviteModalProps) {
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as "manager" | "operator")}
-              className="w-full h-10 min-h-[40px] px-3 rounded-lg border border-border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="w-full h-10 min-h-[40px] px-3 rounded-lg border border-border text-base sm:text-xs bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             >
               <option value="operator">Opérateur (Atelier & Commandes)</option>
               <option value="manager">Gérant (Catalogue & Horaires)</option>

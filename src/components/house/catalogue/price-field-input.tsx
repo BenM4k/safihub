@@ -86,7 +86,7 @@ export function PriceFieldInput({
         onKeyDown={handleKeyDown}
         placeholder="0"
         aria-label={ariaLabel}
-        className="w-full h-8 pl-2 pr-11 text-right font-mono font-bold text-xs bg-card rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-heading [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-full h-8 pl-2 pr-11 text-right font-mono font-bold text-base sm:text-xs bg-card rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-heading [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
       <span
         className="absolute right-2 text-[11px] text-muted-foreground font-semibold pointer-events-none select-none"

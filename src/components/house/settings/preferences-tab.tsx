@@ -31,7 +31,7 @@ export function PreferencesTab() {
             <Input
               disabled
               value="Français (RDC) — Géré via le widget en bas à droite"
-              className="text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed rounded-xl"
+              className="text-base sm:text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed rounded-xl"
             />
             <span className="text-[10px] text-muted-foreground mt-1 block">
               Utilisez le bouton flottant circulaire en bas à droite de l&apos;écran pour changer de langue (FR / EN / SW).
@@ -47,7 +47,7 @@ export function PreferencesTab() {
               type="text"
               value="Heure de Bukavu (UTC+2 / Africa/Lubumbashi)"
               disabled
-              className="text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed rounded-xl"
+              className="text-base sm:text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed rounded-xl"
             />
           </Field>
         </div>

@@ -135,7 +135,7 @@ export function PartnerOrderIssueDialog({
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder={t("issueDetailsPlaceholder")}
-              className="text-xs resize-none"
+              className="text-base sm:text-xs resize-none"
             />
           </div>
 
