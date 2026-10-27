@@ -1758,6 +1758,36 @@
       "saved": "Photo enregistrée",
       "validate": "Valider la photo"
     },
+    "logoModal": {
+      "title": "Logo du pressing",
+      "subtitle": "Format carré 1:1 · Visible sur la carte et votre profil public {houseName}",
+      "clickToChoose": "Cliquez pour choisir un logo",
+      "fileFormats": "JPG, PNG ou WebP · Max 5 Mo",
+      "chooseAnother": "Choisir un autre fichier",
+      "cancel": "Annuler",
+      "saving": "Enregistrement...",
+      "saved": "Logo enregistré",
+      "validate": "Valider le logo"
+    },
+    "settingsPhotos": {
+      "title": "Photos & Identité visuelle",
+      "subtitle": "Personnalisez la vitrine et le logo de votre pressing pour attirer plus de clients.",
+      "coverTitle": "Photo de couverture (Vitrine 4:1)",
+      "coverDesc": "Affichée en tête de votre fiche pressing et sur la carte client SafiHub.",
+      "logoTitle": "Logo officiel (Format carré 1:1)",
+      "logoDesc": "Affiché à côté du nom de votre atelier et sur les reçus de commande.",
+      "uploadCover": "Téléverser une couverture",
+      "changeCover": "Changer la couverture",
+      "uploadLogo": "Téléverser un logo",
+      "changeLogo": "Changer le logo",
+      "deletePhoto": "Supprimer",
+      "deleting": "Suppression...",
+      "uploading": "Téléversement...",
+      "successCover": "Photo de couverture mise à jour avec succès",
+      "successLogo": "Logo du pressing mis à jour avec succès",
+      "deleteCoverSuccess": "Photo de couverture supprimée",
+      "deleteLogoSuccess": "Logo supprimé"
+    },
     "pauseModal": {
       "pauseTitle": "Mettre les commandes en pause ?",
       "resumeTitle": "Reprendre la réception des commandes ?",

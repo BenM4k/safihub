@@ -1,6 +1,6 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { Star, Camera } from "lucide-react";
 
 interface PartnerBannerIdentityProps {
   name: string;
@@ -13,6 +13,7 @@ interface PartnerBannerIdentityProps {
     label: string;
     badgeClass: string;
   };
+  onOpenLogoUpload?: () => void;
 }
 
 export function PartnerBannerIdentity({
@@ -22,12 +23,13 @@ export function PartnerBannerIdentity({
   locationText,
   rating,
   statusPill,
+  onOpenLogoUpload,
 }: PartnerBannerIdentityProps) {
   return (
     <div className="flex items-stretch gap-3 sm:gap-3.5 min-w-0 flex-1">
       {/* 1. Logo container: matches the 3-row column height */}
-      <div className="aspect-square self-stretch shrink-0 min-w-[3.75rem] max-w-[5rem] rounded-2xl bg-card p-1 shadow-card border-2 border-card overflow-hidden flex items-center justify-center">
-        <div className="size-full rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-black text-xl sm:text-2xl font-display shadow-xs">
+      <div className="relative group aspect-square self-stretch shrink-0 min-w-[3.75rem] max-w-[5rem] rounded-2xl bg-card p-1 shadow-card border-2 border-card overflow-hidden flex items-center justify-center">
+        <div className="size-full rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-black text-xl sm:text-2xl font-display shadow-xs relative overflow-hidden">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -37,6 +39,19 @@ export function PartnerBannerIdentity({
             />
           ) : (
             <span>{initials}</span>
+          )}
+
+          {onOpenLogoUpload && (
+            <button
+              type="button"
+              onClick={onOpenLogoUpload}
+              title="Modifier le logo"
+              aria-label="Modifier le logo"
+              className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer"
+            >
+              <Camera className="size-4" />
+              <span className="text-[9px] font-bold mt-0.5">Logo</span>
+            </button>
           )}
         </div>
       </div>

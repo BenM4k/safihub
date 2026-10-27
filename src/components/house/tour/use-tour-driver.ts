@@ -36,6 +36,11 @@ export function useTourDriver({
   const driverRef = useRef<Driver | null>(null);
   const isNavigatingRef = useRef(false);
   const renderStepRef = useRef<((idx: number) => Promise<void>) | null>(null);
+  const onTourEndRef = useRef(onTourEnd);
+
+  useEffect(() => {
+    onTourEndRef.current = onTourEnd;
+  }, [onTourEnd]);
 
   // Stop / Destroy driver overlay
   const stopTour = useCallback(() => {
@@ -44,8 +49,8 @@ export function useTourDriver({
       driverRef.current = null;
     }
     setIsActive(false);
-    onTourEnd?.();
-  }, [onTourEnd]);
+    onTourEndRef.current?.();
+  }, []);
 
   // Handle skip
   const handleSkip = useCallback(async () => {
@@ -142,6 +147,10 @@ export function useTourDriver({
           handleSkip();
         },
         onDestroyStarted: () => {
+          if (driverRef.current) {
+            driverRef.current.destroy();
+            driverRef.current = null;
+          }
           setIsActive(false);
         },
         onPopoverRender: (popover) => {
@@ -181,21 +190,23 @@ export function useTourDriver({
       driverRef.current = driverObj;
       setIsActive(true);
 
+      const popoverOptions = {
+        title: step.title,
+        description: step.body,
+        showButtons: ["next", "previous", "close"] as ("next" | "previous" | "close")[],
+        showProgress: true,
+        progressText: `${stepIdx + 1} / ${steps.length}`,
+      };
+
       // Highlight target element or centered popover
       if (targetEl) {
         driverObj.highlight({
           element: targetEl,
-          popover: {
-            title: step.title,
-            description: step.body,
-          },
+          popover: popoverOptions,
         });
       } else {
         driverObj.highlight({
-          popover: {
-            title: step.title,
-            description: step.body,
-          },
+          popover: popoverOptions,
         });
       }
     },

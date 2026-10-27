@@ -8,12 +8,14 @@ import {
   AlertCircle,
   ExternalLink,
   CheckCircle2,
+  ShieldAlert,
 } from "lucide-react";
 import { ChecklistItemRow } from "./checklist-item-row";
 import { SubmitValidationDialog } from "./submit-validation-dialog";
+import { getChecklistItemsConfig } from "./checklist-config";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import type { SetupChecklistProps, ChecklistItemConfig } from "./types";
+import type { SetupChecklistProps } from "./types";
 
 export function SetupChecklistCard({
   checklist,
@@ -28,57 +30,7 @@ export function SetupChecklistCard({
       ? 7
       : completedCount;
   const progressPercent = Math.round((displayCompleted / 7) * 100);
-
-  const itemsConfig: ChecklistItemConfig[] = [
-    {
-      key: "photos",
-      stepNumber: 1,
-      title: "Photo de couverture et logo",
-      benefit: "Donne une première impression professionnelle sur la carte client.",
-      href: `/partner/${houseSlug}/settings`,
-      buttonLabel: "Profil",
-    },
-    {
-      key: "hours",
-      stepNumber: 2,
-      title: "Horaires d'ouverture",
-      benefit: "Définit les créneaux où les coursiers peuvent déposer le linge.",
-      href: `/partner/${houseSlug}/hours`,
-      buttonLabel: "Horaires",
-    },
-    {
-      key: "pricing",
-      stepNumber: 3,
-      title: "Au moins 1 article avec un prix",
-      benefit: "Sans prix, aucune commande client n'est possible.",
-      href: `/partner/${houseSlug}/catalogue`,
-      buttonLabel: "Catalogue",
-    },
-    {
-      key: "coverage",
-      stepNumber: 4,
-      title: "Au moins 1 quartier desservi",
-      benefit: "Permet aux clients de ces quartiers de commander chez vous.",
-      href: `/partner/${houseSlug}/coverage`,
-      buttonLabel: "Zones",
-    },
-    {
-      key: "payment",
-      stepNumber: 5,
-      title: "Moyen de réception des paiements",
-      benefit: "Indique le numéro Mobile Money pour recevoir vos versements.",
-      href: `/partner/${houseSlug}/settings`,
-      buttonLabel: "Paiement",
-    },
-    {
-      key: "contact",
-      stepNumber: 6,
-      title: "Téléphone de contact",
-      benefit: "Ligne directe utilisée par l'équipe d'assistance et les coursiers.",
-      href: `/partner/${houseSlug}/settings`,
-      buttonLabel: "Contact",
-    },
-  ];
+  const itemsConfig = getChecklistItemsConfig(houseSlug);
 
   // If already approved, show a sleek success card
   if (reviewStatus === "approved") {
@@ -175,6 +127,21 @@ export function SetupChecklistCard({
         </Alert>
       )}
 
+      {/* Status banner: suspended */}
+      {reviewStatus === "suspended" && (
+        <Alert variant="destructive" className="py-3 space-y-2">
+          <div className="flex items-start gap-2">
+            <ShieldAlert className="size-4 shrink-0 mt-0.5" />
+            <div className="text-xs leading-relaxed space-y-1">
+              <p className="font-bold">Votre pressing est actuellement suspendu :</p>
+              <p className="text-destructive-foreground/90 bg-destructive/10 p-2.5 rounded-lg border border-destructive/20 font-mono text-[11px]">
+                {reviewNote || "Votre compte a été suspendu par l'administration. Veuillez contacter le support SafiHub."}
+              </p>
+            </div>
+          </div>
+        </Alert>
+      )}
+
       {/* Items List */}
       <div className="space-y-2.5">
         {itemsConfig.map((item) => {
@@ -206,7 +173,7 @@ export function SetupChecklistCard({
           }}
           isDone={reviewStatus === "pending_review"}
           onAction={() => setIsSubmitOpen(true)}
-          isActionDisabled={!isReadyForSubmission || reviewStatus === "pending_review"}
+          isActionDisabled={!isReadyForSubmission || reviewStatus === "pending_review" || reviewStatus === "suspended"}
         />
       </div>
 

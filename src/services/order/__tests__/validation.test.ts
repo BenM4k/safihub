@@ -28,6 +28,7 @@ describe("Order Checkout Validation Engine", () => {
           commissionBps: 2000,
           cutoffMinutes: 120,
           dailyCapacity: 10,
+          reviewStatus: "approved",
         },
       ],
       [
@@ -42,6 +43,7 @@ describe("Order Checkout Validation Engine", () => {
           commissionBps: 2000,
           cutoffMinutes: 120,
           dailyCapacity: 10,
+          reviewStatus: "approved",
         },
       ],
     ]),
@@ -294,5 +296,34 @@ describe("Order Checkout Validation Engine", () => {
     if (!res.ok) {
       expect(res.error.code).toBe("SLOT_INVALID");
     }
+  });
+
+  it("rejects non-approved houses (draft, pending_review, needs_changes, suspended) and accepts approved houses", () => {
+    const unapprovedStatuses = ["draft", "pending_review", "needs_changes", "suspended"] as const;
+
+    for (const status of unapprovedStatuses) {
+      const houseData = defaultContext.houses.get(houseId)!;
+      const ctx: OrderValidationContext = {
+        ...defaultContext,
+        houses: new Map([
+          [houseId, { ...houseData, reviewStatus: status }],
+        ]),
+      };
+      const res = validateOrderCheckout(baseInput, ctx);
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error.code).toBe("HOUSE_NOT_AVAILABLE");
+      }
+    }
+
+    // Explicitly verify approved status succeeds
+    const approvedCtx: OrderValidationContext = {
+      ...defaultContext,
+      houses: new Map([
+        [houseId, { ...defaultContext.houses.get(houseId)!, reviewStatus: "approved" as const }],
+      ]),
+    };
+    const approvedRes = validateOrderCheckout(baseInput, approvedCtx);
+    expect(approvedRes.ok).toBe(true);
   });
 });

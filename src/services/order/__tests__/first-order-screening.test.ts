@@ -61,6 +61,7 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
         commissionBps: 2000,
         cutoffMinutes: 120,
         dailyCapacity: 10,
+        reviewStatus: "approved",
       }),
     ]);
     vi.spyOn(dal, "getNeighborhoods").mockResolvedValue([
@@ -136,6 +137,7 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
         commissionBps: 2000,
         cutoffMinutes: 120,
         dailyCapacity: 10,
+        reviewStatus: "approved",
       }),
     ]);
     vi.spyOn(dal, "getNeighborhoods").mockResolvedValue([
@@ -213,6 +215,7 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
         commissionBps: 2000,
         cutoffMinutes: 120,
         dailyCapacity: 10,
+        reviewStatus: "approved",
       }),
     ]);
     vi.spyOn(dal, "getNeighborhoods").mockResolvedValue([

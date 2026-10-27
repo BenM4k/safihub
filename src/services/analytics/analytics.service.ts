@@ -348,6 +348,21 @@ export async function trackHouseReviewNeedsChanges(params: {
   });
 }
 
+export async function trackHouseReviewSuspended(params: {
+  adminId: string;
+  houseId: string;
+  note?: string;
+}): Promise<void> {
+  await capturePostHogEvent({
+    event: "suspended",
+    distinctId: params.adminId,
+    properties: {
+      house_id: params.houseId,
+      has_note: Boolean(params.note),
+    },
+  });
+}
+
 export async function trackFirstOrderReceived(params: {
   houseId: string;
   orderId: string;

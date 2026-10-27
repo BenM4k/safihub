@@ -57,6 +57,7 @@ export async function buildOrderValidationContext(scope?: {
       commissionBps: h.commissionBps,
       cutoffMinutes: h.cutoffMinutes,
       dailyCapacity: h.dailyCapacity,
+      reviewStatus: h.reviewStatus,
     });
   }
 

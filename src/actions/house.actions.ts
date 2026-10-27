@@ -25,6 +25,8 @@ import {
   requestCoverageExtension,
   updateNeighborhoodCoverage,
   updateNeighborhoodCoverageBatch,
+  generateHouseAssetUploadUrlService,
+  updateHouseImagesService,
 } from "@/services/house";
 
 import { normalizeStaffRole, type HouseStaffRole } from "@/services/auth/house-permissions";
@@ -919,4 +921,127 @@ export async function revokeOtherSessionsAction(): Promise<Result<{ revokedCount
     );
   }
 }
+
+const getHouseAssetUploadUrlSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  assetType: z.enum(["cover", "logo"]),
+  contentType: z.enum(["image/webp", "image/jpeg", "image/png"]).optional(),
+});
+
+export async function getHouseAssetUploadUrlAction(input: {
+  houseId?: string;
+  assetType: "cover" | "logo";
+  contentType?: "image/webp" | "image/jpeg" | "image/png";
+}): Promise<
+  Result<{
+    uploadUrl: string;
+    storageKey: string;
+    publicUrl: string;
+    expiresInSeconds: number;
+  }>
+> {
+  const parsed = getHouseAssetUploadUrlSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Paramètres invalides");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
+  return generateHouseAssetUploadUrlService({
+    houseId: authCtx.value.houseId,
+    assetType: parsed.data.assetType,
+    contentType: parsed.data.contentType,
+  });
+}
+
+const updateHouseImagesSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  coverImageUrl: z.string().nullable().optional(),
+  logoUrl: z.string().nullable().optional(),
+});
+
+export async function updateHouseImagesAction(input: {
+  houseId?: string;
+  coverImageUrl?: string | null;
+  logoUrl?: string | null;
+}): Promise<Result<void>> {
+  const parsed = updateHouseImagesSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Paramètres invalides");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
+  const res = await updateHouseImagesService({
+    houseId: authCtx.value.houseId,
+    coverImageUrl: parsed.data.coverImageUrl,
+    logoUrl: parsed.data.logoUrl,
+  });
+
+  if (res.ok) {
+    revalidatePath("/partner", "layout");
+    revalidatePath("/houses");
+  }
+  return res;
+}
+
+export async function uploadHouseAssetDirectAction(
+  formData: FormData
+): Promise<Result<{ publicUrl: string; storageKey: string }>> {
+  const file = formData.get("file") as File | null;
+  const houseIdParam = (formData.get("houseId") as string | null) || undefined;
+  const assetType = formData.get("assetType") as "cover" | "logo" | null;
+
+  if (!file || !(file instanceof File)) {
+    return err("Fichier manquant ou invalide");
+  }
+  if (!assetType || (assetType !== "cover" && assetType !== "logo")) {
+    return err("Type d'élément requis ('cover' ou 'logo')");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(houseIdParam);
+  if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
+  const houseId = authCtx.value.houseId;
+  const uniqueId = Math.random().toString(36).substring(2, 9);
+  const ext = file.type === "image/png" ? "png" : file.type === "image/jpeg" ? "jpg" : "webp";
+  const storageKey = `houses/${houseId}/${assetType}_${Date.now()}_${uniqueId}.${ext}`;
+
+  const { putStorageObject, getStoragePublicUrl } = await import("@/lib/storage/r2-client");
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const uploaded = await putStorageObject(storageKey, buffer, file.type);
+  if (!uploaded) {
+    return err("Échec du téléversement du fichier");
+  }
+
+  const publicUrl = getStoragePublicUrl(storageKey);
+  const updatePayload =
+    assetType === "cover" ? { coverImageUrl: publicUrl } : { logoUrl: publicUrl };
+
+  const updateRes = await updateHouseImagesService({
+    houseId,
+    ...updatePayload,
+  });
+
+  if (!updateRes.ok) {
+    return err(updateRes.error);
+  }
+
+  revalidatePath("/partner", "layout");
+  revalidatePath("/houses");
+
+  return ok({ publicUrl, storageKey });
+}
+
 

@@ -12,7 +12,9 @@ import { evaluatePasswordStrength } from "@/lib/user-guardrails";
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Mot de passe temporaire requis"),
-    newPassword: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    newPassword: z
+      .string()
+      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
     confirmPassword: z.string().min(1, "Veuillez confirmer votre mot de passe"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
@@ -20,12 +22,13 @@ export const changePasswordSchema = z
     path: ["confirmPassword"],
   })
   .refine((data) => data.currentPassword !== data.newPassword, {
-    message: "Le nouveau mot de passe doit être différent du mot de passe temporaire",
+    message:
+      "Le nouveau mot de passe doit être différent du mot de passe temporaire",
     path: ["newPassword"],
   });
 
 export async function changeForcedPasswordAction(
-  formData: FormData
+  formData: FormData,
 ): Promise<Result<{ redirectUrl: string }>> {
   const user = await getCurrentUser();
   if (!user) {
@@ -36,7 +39,7 @@ export async function changeForcedPasswordAction(
   const limit = await rateLimitPasswordChange(user.id);
   if (!limit.allowed) {
     return err(
-      "Trop de tentatives de modification de mot de passe. Veuillez patienter avant de réessayer."
+      "Trop de tentatives de modification de mot de passe. Veuillez patienter avant de réessayer.",
     );
   }
 
@@ -56,7 +59,7 @@ export async function changeForcedPasswordAction(
   const strength = evaluatePasswordStrength(newPassword);
   if (!strength.isValid) {
     return err(
-      "Le mot de passe doit comporter au moins 8 caractères et inclure au moins un chiffre ou un caractère spécial."
+      "Le mot de passe doit comporter au moins 8 caractères et inclure au moins un chiffre ou un caractère spécial.",
     );
   }
 
@@ -72,12 +75,18 @@ export async function changeForcedPasswordAction(
     });
   } catch {
     return err(
-      "Le mot de passe temporaire est incorrect ou votre session a expiré."
+      "Le mot de passe temporaire est incorrect ou votre session a expiré.",
     );
   }
 
   // Clear mustChangePassword flag
-  await clearUserMustChangePassword(user.id);
+  try {
+    await clearUserMustChangePassword(user.id);
+  } catch {
+    return err(
+      "Votre mot de passe a bien été modifié mais la finalisation a échoué. Veuillez réessayer avec votre nouveau mot de passe comme mot de passe actuel et choisir un autre mot de passe.",
+    );
+  }
 
   // Determine redirect URL
   let redirectUrl = "/partner";

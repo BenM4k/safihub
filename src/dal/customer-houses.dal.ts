@@ -33,6 +33,8 @@ export interface CustomerHouseSummary {
   rating: number | null;
   reviewCount: number;
   imageUrl: string;
+  coverImageUrl?: string | null;
+  logoUrl?: string | null;
   coords: { lat: number; lng: number };
   estimatedDeliveryFee?: number | null;
 }
@@ -152,6 +154,8 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       zoneId: schema.neighborhoods.zoneId,
       zoneName: schema.zones.name,
       addressNote: schema.houses.addressNote,
+      coverImageUrl: schema.houses.coverImageUrl,
+      logoUrl: schema.houses.logoUrl,
       minimumOrderAmount: schema.houses.minimumOrderAmount,
       turnaroundHours: schema.houses.turnaroundHours,
       dailyCapacity: schema.houses.dailyCapacity,
@@ -270,7 +274,7 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       lng: 28.8608 + (index * 0.003),
     };
 
-    const imageUrl = HOUSE_STOCK_IMAGES[h.name] || DEFAULT_HOUSE_IMAGE;
+    const imageUrl = h.coverImageUrl || HOUSE_STOCK_IMAGES[h.name] || DEFAULT_HOUSE_IMAGE;
 
     return {
       id: h.id,
@@ -296,6 +300,8 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       rating: null,
       reviewCount: 0,
       imageUrl,
+      coverImageUrl: h.coverImageUrl || imageUrl,
+      logoUrl: h.logoUrl ?? null,
       coords,
     };
   });

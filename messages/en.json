@@ -1758,6 +1758,36 @@
       "saved": "Photo saved",
       "validate": "Save photo"
     },
+    "logoModal": {
+      "title": "Laundry Logo",
+      "subtitle": "1:1 square format · Visible on map and your public profile {houseName}",
+      "clickToChoose": "Click to choose a logo",
+      "fileFormats": "JPG, PNG or WebP · Max 5 MB",
+      "chooseAnother": "Choose another file",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "saved": "Logo saved",
+      "validate": "Save logo"
+    },
+    "settingsPhotos": {
+      "title": "Photos & Visual Identity",
+      "subtitle": "Customize your laundry cover and logo to attract more customers.",
+      "coverTitle": "Cover photo (4:1 Showcase)",
+      "coverDesc": "Displayed at the top of your laundry profile and on SafiHub customer maps.",
+      "logoTitle": "Official logo (1:1 Square)",
+      "logoDesc": "Displayed next to your workshop name and on order receipts.",
+      "uploadCover": "Upload cover",
+      "changeCover": "Change cover",
+      "uploadLogo": "Upload logo",
+      "changeLogo": "Change logo",
+      "deletePhoto": "Remove",
+      "deleting": "Removing...",
+      "uploading": "Uploading...",
+      "successCover": "Cover photo updated successfully",
+      "successLogo": "Laundry logo updated successfully",
+      "deleteCoverSuccess": "Cover photo removed",
+      "deleteLogoSuccess": "Logo removed"
+    },
     "pauseModal": {
       "pauseTitle": "Pause new orders?",
       "resumeTitle": "Resume accepting orders?",

@@ -84,8 +84,8 @@ export function ProfilTab({ house, onDirtyChange }: ProfilTabProps) {
       <IdentityCard house={house} />
       <Separator />
 
-      {/* 2. Photo de vitrine */}
-      <PhotoCard />
+      {/* 2. Photo de vitrine et logo */}
+      <PhotoCard house={house} />
       <Separator />
 
       {/* 3. Contact & Localisation */}

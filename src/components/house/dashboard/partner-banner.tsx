@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toggleHousePauseAction } from "@/actions/house.actions";
-import { validateBannerImageFile } from "@/lib/partner-dashboard";
 import { BannerUploadModal } from "./banner-upload-modal";
+import { LogoUploadModal } from "./logo-upload-modal";
 import { PartnerPauseDialog } from "./partner-pause-dialog";
 import { PartnerBannerCover } from "./partner-banner-cover";
 import { PartnerBannerPhotoNudge } from "./partner-banner-nudge";
 import { PartnerBannerActions } from "./partner-banner-actions";
 import { PartnerBannerIdentity } from "./partner-banner-identity";
 import { usePartnerBannerCover } from "./use-partner-banner-cover";
+import { usePartnerBannerModals } from "./use-partner-banner-modals";
 
 interface PartnerBannerProps {
   house: {
@@ -51,8 +52,21 @@ export function PartnerBanner({
     house.coverImageUrl
   );
 
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [stagedPreviewUrl, setStagedPreviewUrl] = useState<string | null>(null);
+  const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(
+    house.logoUrl ?? null
+  );
+  const {
+    isUploadOpen,
+    isLogoUploadOpen,
+    setIsLogoUploadOpen,
+    stagedPreviewUrl,
+    stagedFile,
+    fileInputRef,
+    handleTriggerUpload,
+    handleDirectFileSelect,
+    handleCloseCoverModal,
+  } = usePartnerBannerModals();
+
   const [internalPauseDialogOpen, setInternalPauseDialogOpen] = useState(false);
   const [internalPausedState, setInternalPausedState] = useState(house.isPaused);
 
@@ -60,26 +74,6 @@ export function PartnerBanner({
   const isPauseDialogOpen = liftedIsPauseDialogOpen ?? internalPauseDialogOpen;
 
   const [isPending, startTransition] = useTransition();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  function handleTriggerUpload() {
-    fileInputRef.current?.click();
-  }
-
-  function handleDirectFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const validation = validateBannerImageFile(file);
-    if (!validation.ok) {
-      alert(validation.error);
-      return;
-    }
-
-    const previewUrl = URL.createObjectURL(file);
-    setStagedPreviewUrl(previewUrl);
-    setIsUploadOpen(true);
-  }
 
   function handleTogglePause(targetPause: boolean) {
     startTransition(async () => {
@@ -134,10 +128,11 @@ export function PartnerBanner({
             <PartnerBannerIdentity
               name={house.name}
               initials={initials}
-              logoUrl={house.logoUrl}
+              logoUrl={currentLogoUrl}
               locationText={locationText}
               rating={house.rating}
               statusPill={house.statusPill}
+              onOpenLogoUpload={() => setIsLogoUploadOpen(true)}
             />
 
             <PartnerBannerActions
@@ -159,13 +154,21 @@ export function PartnerBanner({
 
       <BannerUploadModal
         isOpen={isUploadOpen}
-        onClose={() => {
-          setIsUploadOpen(false);
-          setStagedPreviewUrl(null);
-        }}
+        onClose={handleCloseCoverModal}
+        houseId={house.id}
         houseName={house.name}
         initialPreviewUrl={stagedPreviewUrl}
+        initialFile={stagedFile}
         onSavePhoto={saveCover}
+      />
+
+      <LogoUploadModal
+        isOpen={isLogoUploadOpen}
+        onClose={() => setIsLogoUploadOpen(false)}
+        houseId={house.id}
+        houseName={house.name}
+        currentLogoUrl={currentLogoUrl}
+        onSaveLogo={(newLogoUrl) => setCurrentLogoUrl(newLogoUrl)}
       />
 
       <PartnerPauseDialog

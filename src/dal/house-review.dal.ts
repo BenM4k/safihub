@@ -187,8 +187,19 @@ export async function transitionHouseReviewStatus(params: {
     const [updated] = await tx
       .update(schema.houses)
       .set(updatePayload)
-      .where(eq(schema.houses.id, params.houseId))
+      .where(
+        and(
+          eq(schema.houses.id, params.houseId),
+          eq(schema.houses.reviewStatus, params.fromStatus)
+        )
+      )
       .returning();
+
+    if (!updated) {
+      throw new Error(
+        `Transition conflict: house ${params.houseId} is not in expected status ${params.fromStatus}`
+      );
+    }
 
     await tx.insert(schema.houseReviewEvents).values({
       houseId: params.houseId,

@@ -33,6 +33,7 @@ describe("Phase 10.1: Abuse & Fraud Controls - Limits & Blocking", () => {
           commissionBps: 2000,
           cutoffMinutes: 120,
           dailyCapacity: 10,
+          reviewStatus: "approved",
         },
       ],
     ]),

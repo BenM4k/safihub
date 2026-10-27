@@ -1758,6 +1758,36 @@
       "saved": "Picha imehifadhiwa",
       "validate": "Thibitisha picha"
     },
+    "logoModal": {
+      "title": "Nembo ya Dobi",
+      "subtitle": "Muundo mraba 1:1 · Inaonekana kwenye ramani na wasifu wako wa umma {houseName}",
+      "clickToChoose": "Bofya ili kuchagua nembo",
+      "fileFormats": "JPG, PNG au WebP · Upeo 5 MB",
+      "chooseAnother": "Chagua faili lingine",
+      "cancel": "Ghairi",
+      "saving": "Inahifadhi...",
+      "saved": "Nembo imehifadhiwa",
+      "validate": "Thibitisha nembo"
+    },
+    "settingsPhotos": {
+      "title": "Picha & Utambulisho wa Dobi",
+      "subtitle": "Weka picha ya ukurasa na nembo ya dobi ili kuvutia wateja zaidi.",
+      "coverTitle": "Picha ya ukurasa (Umbizo 4:1)",
+      "coverDesc": "Inaonekana juu ya wasifu wako na kwenye ramani ya wateja wa SafiHub.",
+      "logoTitle": "Nembo rasmi (Umbizo mraba 1:1)",
+      "logoDesc": "Inaonekana karibu na jina la dobi lako na kwenye stakabadhi za agizo.",
+      "uploadCover": "Pakia picha ya jalada",
+      "changeCover": "Badilisha jalada",
+      "uploadLogo": "Pakia nembo",
+      "changeLogo": "Badilisha nembo",
+      "deletePhoto": "Futa",
+      "deleting": "Inafuta...",
+      "uploading": "Inapakia...",
+      "successCover": "Picha ya jalada imesasishwa kikamilifu",
+      "successLogo": "Nembo ya dobi imesasishwa kikamilifu",
+      "deleteCoverSuccess": "Picha ya jalada imefutwa",
+      "deleteLogoSuccess": "Nembo imefutwa"
+    },
     "pauseModal": {
       "pauseTitle": "Sitisha maagizo mapya?",
       "resumeTitle": "Endelea kupokea maagizo?",

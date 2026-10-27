@@ -153,4 +153,29 @@ describe("Partner Onboarding Checklist & Review Lifecycle", () => {
     expect(events[1].fromStatus).toBe("draft");
     expect(events[1].toStatus).toBe("pending_review");
   });
+
+  it("aborts transaction and throws when fromStatus does not match current house status", async () => {
+    const { neighborhoodId, userId } = await getBaseFixtures();
+    const house = await createTestHouse(neighborhoodId);
+
+    // house is in draft status, try transitioning from pending_review
+    await expect(
+      transitionHouseReviewStatus({
+        houseId: house.id,
+        fromStatus: "pending_review",
+        toStatus: "approved",
+        performedBy: userId,
+      })
+    ).rejects.toThrow("Transition conflict");
+
+    // Verify audit log has 0 events and house status remains draft
+    const events = await getHouseReviewEvents(house.id);
+    expect(events).toHaveLength(0);
+
+    const [currentHouse] = await db
+      .select({ reviewStatus: schema.houses.reviewStatus })
+      .from(schema.houses)
+      .where(eq(schema.houses.id, house.id));
+    expect(currentHouse.reviewStatus).toBe("draft");
+  });
 });

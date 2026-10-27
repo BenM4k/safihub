@@ -43,12 +43,20 @@ export function ChangePasswordForm() {
     fd.set("confirmPassword", confirmPassword);
 
     startTransition(async () => {
-      const res = await changeForcedPasswordAction(fd);
-      if (!res.ok) {
-        setError(res.error);
-      } else {
-        router.push(res.value.redirectUrl);
-        router.refresh();
+      try {
+        const res = await changeForcedPasswordAction(fd);
+        if (!res.ok) {
+          setError(res.error);
+        } else {
+          router.push(res.value.redirectUrl);
+          router.refresh();
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Une erreur inattendue est survenue lors de la mise à jour du mot de passe."
+        );
       }
     });
   }

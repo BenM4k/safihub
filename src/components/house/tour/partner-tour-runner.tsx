@@ -52,6 +52,7 @@ export function PartnerTourRunner({
 
   const isDashboard = pathname === `/partner/${houseSlug}`;
   const autoStartedRef = useRef(false);
+  const forceTourStartedRef = useRef(false);
 
   // Auto-start trigger: only when not_started, on dashboard, and 0 orders waiting
   useEffect(() => {
@@ -62,8 +63,8 @@ export function PartnerTourRunner({
       waitingAcceptanceCount === 0;
 
     if (shouldAutoStart) {
-      autoStartedRef.current = true;
       const timer = setTimeout(() => {
+        autoStartedRef.current = true;
         startTour(0);
       }, 700);
       return () => clearTimeout(timer);
@@ -73,7 +74,8 @@ export function PartnerTourRunner({
   // Handle URL query tour=start or custom event safihub:restart-tour
   useEffect(() => {
     const shouldForceStart = searchParams.get("tour") === "start";
-    if (shouldForceStart && isDashboard && waitingAcceptanceCount === 0) {
+    if (shouldForceStart && !forceTourStartedRef.current && isDashboard && waitingAcceptanceCount === 0) {
+      forceTourStartedRef.current = true;
       startTour(0);
     }
 

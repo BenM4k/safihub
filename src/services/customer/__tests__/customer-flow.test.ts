@@ -280,6 +280,7 @@ vi.mock("@/services/order/context", () => ({
             isPaused: false,
             commissionBps: 1500,
             phone: "+243999111222",
+            reviewStatus: "approved",
           },
         ],
       ]),

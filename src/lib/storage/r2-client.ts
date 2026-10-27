@@ -79,6 +79,20 @@ export function isStorageConfigured(): boolean {
 }
 
 /**
+ * Returns the public URL for a stored asset key.
+ * Prefers R2_PUBLIC_URL / NEXT_PUBLIC_STORAGE_URL if set,
+ * otherwise falls back to the SafiHub storage CDN domain.
+ */
+export function getStoragePublicUrl(storageKey: string): string {
+  const publicBase = process.env.R2_PUBLIC_URL || process.env.NEXT_PUBLIC_STORAGE_URL;
+  if (publicBase) {
+    return `${publicBase.replace(/\/$/, "")}/${storageKey}`;
+  }
+  const { bucket } = getR2S3Client();
+  return `https://storage.safihub.cd/${bucket}/${storageKey}`;
+}
+
+/**
  * Generates a short-lived presigned upload (PUT) URL for Cloudflare R2.
  * Valid for 5 minutes (300 seconds) by default.
  * Mobile clients compress locally and PUT directly to R2 (zero server proxying).
@@ -206,5 +220,48 @@ export async function headStorageObject(storageKey: string): Promise<R2ObjectMet
     };
   } catch {
     return null;
+  }
+}
+
+/**
+ * Puts an object directly into Cloudflare R2 from server side.
+ */
+export async function putStorageObject(
+  storageKey: string,
+  buffer: Buffer | Uint8Array,
+  contentType: string = "image/webp"
+): Promise<boolean> {
+  const workerBinding = await getWorkerR2Binding();
+  if (workerBinding) {
+    try {
+      await workerBinding.put(storageKey, buffer, {
+        httpMetadata: { contentType },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  const { client, bucket, isConfigured } = getR2S3Client();
+  if (!isConfigured || !client) {
+    if (process.env.NODE_ENV === "production") {
+      return false;
+    }
+    return true; // Mock succeeds in test/dev
+  }
+
+  try {
+    const command = new PutObjectCommand({
+      Bucket: bucket,
+      Key: storageKey,
+      Body: buffer,
+      ContentType: contentType,
+    });
+    await client.send(command);
+    return true;
+  } catch (error) {
+    console.error(`[Cloudflare R2] S3 API failed to put: ${storageKey}`, error);
+    return false;
   }
 }

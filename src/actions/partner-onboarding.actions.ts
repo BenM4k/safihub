@@ -8,7 +8,12 @@ import {
   type PartnerOnboardingStatus,
 } from "@/dal";
 import { err, ok, type Result } from "@/lib/result";
-import { capturePostHogEvent } from "@/services/analytics/posthog-client";
+import {
+  trackTourCompleted,
+  trackStepViewed,
+  trackStepSkipped,
+  trackTourReplayed,
+} from "@/services/analytics/analytics.service";
 
 const stepUpdateSchema = z.object({
   tourId: z.string().optional().default("partner-main"),
@@ -37,21 +42,15 @@ export async function updateOnboardingStepAction(
   });
 
   if (parsed.data.status === "completed") {
-    await capturePostHogEvent({
-      event: "tour_completed",
-      distinctId: user.id,
-      properties: {
-        tourId: parsed.data.tourId,
-      },
+    await trackTourCompleted({
+      userId: user.id,
+      tourId: parsed.data.tourId,
     });
   } else if (parsed.data.status === "in_progress") {
-    await capturePostHogEvent({
-      event: "step_viewed",
-      distinctId: user.id,
-      properties: {
-        tourId: parsed.data.tourId,
-        stepId: parsed.data.stepId,
-      },
+    await trackStepViewed({
+      userId: user.id,
+      tourId: parsed.data.tourId,
+      stepId: parsed.data.stepId,
     });
   }
 
@@ -78,13 +77,10 @@ export async function skipOnboardingTourAction(params?: {
     skippedAt: new Date(),
   });
 
-  await capturePostHogEvent({
-    event: "step_skipped",
-    distinctId: user.id,
-    properties: {
-      tourId,
-      stepId: params?.stepId,
-    },
+  await trackStepSkipped({
+    userId: user.id,
+    tourId,
+    stepId: params?.stepId,
   });
 
   return ok({ success: true });
@@ -108,12 +104,9 @@ export async function resetOnboardingTourAction(params?: {
     startedAt: new Date(),
   });
 
-  await capturePostHogEvent({
-    event: "tour_replayed",
-    distinctId: user.id,
-    properties: {
-      tourId,
-    },
+  await trackTourReplayed({
+    userId: user.id,
+    tourId,
   });
 
   return ok({ success: true });

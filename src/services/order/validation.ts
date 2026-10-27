@@ -267,7 +267,7 @@ export function validateOrderCheckout(
     return err({ code: "HOUSE_NOT_FOUND", message: "Selected laundry house does not exist or is inactive" });
   }
 
-  if (house.reviewStatus && house.reviewStatus !== "approved") {
+  if (house.reviewStatus !== "approved") {
     return err({
       code: "HOUSE_NOT_AVAILABLE",
       message: "Ce pressing n'est pas encore validé pour recevoir des commandes",

@@ -5,6 +5,8 @@ import { generateUniqueSlug } from "@/lib/slug";
 import { toBukavuDateTime } from "@/services/availability";
 import { err, ok, type Result } from "@/lib/result";
 
+import type { HouseReviewStatus } from "@/services/db/schema";
+
 export interface HouseMembershipInfo {
   houseId: string;
   userId: string;
@@ -22,6 +24,8 @@ export interface HouseRecord {
   neighborhoodName?: string | null;
   addressNote: string | null;
   contactPhone: string | null;
+  coverImageUrl?: string | null;
+  logoUrl?: string | null;
   commissionBps: number | null;
   minimumOrderAmount: number;
   cutoffMinutes: number;
@@ -32,6 +36,7 @@ export interface HouseRecord {
   isActive: boolean;
   isPaused: boolean;
   pausedUntil: Date | null;
+  reviewStatus?: HouseReviewStatus | null;
   createdAt: Date;
   updatedAt: Date | null;
 }
@@ -182,6 +187,8 @@ export async function getHouses(): Promise<HouseRecord[]> {
       neighborhoodName: schema.neighborhoods.name,
       addressNote: schema.houses.addressNote,
       contactPhone: schema.houses.contactPhone,
+      coverImageUrl: schema.houses.coverImageUrl,
+      logoUrl: schema.houses.logoUrl,
       commissionBps: schema.houses.commissionBps,
       minimumOrderAmount: schema.houses.minimumOrderAmount,
       cutoffMinutes: schema.houses.cutoffMinutes,
@@ -192,6 +199,7 @@ export async function getHouses(): Promise<HouseRecord[]> {
       isActive: schema.houses.isActive,
       isPaused: schema.houses.isPaused,
       pausedUntil: schema.houses.pausedUntil,
+      reviewStatus: schema.houses.reviewStatus,
       createdAt: schema.houses.createdAt,
       updatedAt: schema.houses.updatedAt,
     })
@@ -215,6 +223,8 @@ export async function getHouseById(id: string): Promise<HouseRecord | null> {
       neighborhoodName: schema.neighborhoods.name,
       addressNote: schema.houses.addressNote,
       contactPhone: schema.houses.contactPhone,
+      coverImageUrl: schema.houses.coverImageUrl,
+      logoUrl: schema.houses.logoUrl,
       commissionBps: schema.houses.commissionBps,
       minimumOrderAmount: schema.houses.minimumOrderAmount,
       cutoffMinutes: schema.houses.cutoffMinutes,
@@ -225,6 +235,7 @@ export async function getHouseById(id: string): Promise<HouseRecord | null> {
       isActive: schema.houses.isActive,
       isPaused: schema.houses.isPaused,
       pausedUntil: schema.houses.pausedUntil,
+      reviewStatus: schema.houses.reviewStatus,
       createdAt: schema.houses.createdAt,
       updatedAt: schema.houses.updatedAt,
     })
@@ -251,6 +262,8 @@ export async function getHouseBySlug(
       neighborhoodName: schema.neighborhoods.name,
       addressNote: schema.houses.addressNote,
       contactPhone: schema.houses.contactPhone,
+      coverImageUrl: schema.houses.coverImageUrl,
+      logoUrl: schema.houses.logoUrl,
       commissionBps: schema.houses.commissionBps,
       minimumOrderAmount: schema.houses.minimumOrderAmount,
       cutoffMinutes: schema.houses.cutoffMinutes,
@@ -261,6 +274,7 @@ export async function getHouseBySlug(
       isActive: schema.houses.isActive,
       isPaused: schema.houses.isPaused,
       pausedUntil: schema.houses.pausedUntil,
+      reviewStatus: schema.houses.reviewStatus,
       createdAt: schema.houses.createdAt,
       updatedAt: schema.houses.updatedAt,
     })
@@ -333,6 +347,8 @@ export async function updateHouse(
     neighborhoodId: string;
     addressNote: string | null;
     contactPhone: string | null;
+    coverImageUrl: string | null;
+    logoUrl: string | null;
     commissionBps: number | null;
     minimumOrderAmount: number;
     cutoffMinutes: number;
@@ -352,6 +368,34 @@ export async function updateHouse(
       updatedAt: new Date(),
     })
     .where(eq(schema.houses.id, id));
+}
+
+export async function updateHouseImages(
+  houseId: string,
+  images: {
+    coverImageUrl?: string | null;
+    logoUrl?: string | null;
+  }
+): Promise<void> {
+  const updateData: Partial<{
+    coverImageUrl: string | null;
+    logoUrl: string | null;
+    updatedAt: Date;
+  }> = {
+    updatedAt: new Date(),
+  };
+
+  if (images.coverImageUrl !== undefined) {
+    updateData.coverImageUrl = images.coverImageUrl;
+  }
+  if (images.logoUrl !== undefined) {
+    updateData.logoUrl = images.logoUrl;
+  }
+
+  await db
+    .update(schema.houses)
+    .set(updateData)
+    .where(eq(schema.houses.id, houseId));
 }
 
 export async function getHouseHours(houseId: string): Promise<HouseHourRecord[]> {
