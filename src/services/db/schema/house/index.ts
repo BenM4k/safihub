@@ -6,6 +6,7 @@ import {
   index,
   integer,
   jsonb,
+  pgEnum,
   pgTable,
   primaryKey,
   smallint,
@@ -25,6 +26,21 @@ import {
   updatedAt,
 } from "../common";
 import { neighborhoods } from "../coverage";
+
+export const houseReviewStatusEnum = pgEnum("house_review_status", [
+  "draft",
+  "pending_review",
+  "approved",
+  "needs_changes",
+  "suspended",
+]);
+
+export const partnerOnboardingStatusEnum = pgEnum("partner_onboarding_status", [
+  "not_started",
+  "in_progress",
+  "skipped",
+  "completed",
+]);
 
 export const houses = pgTable(
   "houses",
@@ -59,12 +75,20 @@ export const houses = pgTable(
     /** Set by the house or admin (temporary pause). */
     isPaused: boolean("is_paused").notNull().default(false),
     pausedUntil: ts("paused_until"),
+    /** Review lifecycle: draft | pending_review | approved | needs_changes | suspended */
+    reviewStatus: houseReviewStatusEnum("review_status").notNull().default("draft"),
+    submittedAt: ts("submitted_at"),
+    submittedBy: userRef("submitted_by"),
+    reviewedAt: ts("reviewed_at"),
+    reviewedBy: userRef("reviewed_by"),
+    reviewNote: text("review_note"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
     uniqueIndex("houses_slug_unique").on(t.slug),
     index("houses_neighborhood_idx").on(t.neighborhoodId),
+    index("houses_review_status_idx").on(t.reviewStatus),
     check(
       "houses_commission_range",
       sql`${t.commissionBps} is null or (${t.commissionBps} between 0 and 10000)`
@@ -242,3 +266,54 @@ export type House = typeof houses.$inferSelect;
 export type NewHouse = typeof houses.$inferInsert;
 export type HouseApplication = typeof houseApplications.$inferSelect;
 export type NewHouseApplication = typeof houseApplications.$inferInsert;
+
+/** Append-only audit log for pressing review status changes. */
+export const houseReviewEvents = pgTable(
+  "house_review_events",
+  {
+    id: id(),
+    houseId: uuid("house_id")
+      .notNull()
+      .references(() => houses.id, { onDelete: "cascade" }),
+    fromStatus: houseReviewStatusEnum("from_status").notNull(),
+    toStatus: houseReviewStatusEnum("to_status").notNull(),
+    note: text("note"),
+    performedBy: userRef("performed_by"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("house_review_events_house_idx").on(t.houseId, t.createdAt),
+  ]
+);
+
+/** Persistent guided tour state per user. */
+export const partnerOnboarding = pgTable(
+  "partner_onboarding",
+  {
+    id: id(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    tourId: text("tour_id").notNull().default("partner-main"),
+    version: integer("version").notNull().default(1),
+    status: partnerOnboardingStatusEnum("status").notNull().default("not_started"),
+    lastStepId: text("last_step_id"),
+    reminderCount: integer("reminder_count").notNull().default(0),
+    startedAt: ts("started_at"),
+    skippedAt: ts("skipped_at"),
+    completedAt: ts("completed_at"),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("partner_onboarding_user_tour_idx").on(t.userId, t.tourId),
+    index("partner_onboarding_user_idx").on(t.userId),
+  ]
+);
+
+export type HouseReviewStatus = (typeof houseReviewStatusEnum.enumValues)[number];
+export type PartnerOnboardingStatus = (typeof partnerOnboardingStatusEnum.enumValues)[number];
+export type HouseReviewEvent = typeof houseReviewEvents.$inferSelect;
+export type NewHouseReviewEvent = typeof houseReviewEvents.$inferInsert;
+export type PartnerOnboarding = typeof partnerOnboarding.$inferSelect;
+export type NewPartnerOnboarding = typeof partnerOnboarding.$inferInsert;
+

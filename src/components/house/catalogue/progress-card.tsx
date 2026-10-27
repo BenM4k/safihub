@@ -28,7 +28,7 @@ export function ProgressCard({
   const hasNoPrices = totalConfigured === 0;
 
   return (
-    <div className="space-y-4 sm:space-y-5 py-2">
+    <div data-tour-id="tour-catalogue-content" className="space-y-4 sm:space-y-5 py-2">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-2">
           {percent === 100 ? (

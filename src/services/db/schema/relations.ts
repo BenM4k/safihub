@@ -10,7 +10,9 @@ import {
   houseHours,
   houseItems,
   houseMembers,
+  houseReviewEvents,
   houses,
+  partnerOnboarding,
 } from "./house";
 import { courierProfiles, courierShifts, missions } from "./mission";
 import { cashLedger, orderPhotos } from "./ops";
@@ -86,7 +88,32 @@ export const housesRelations = relations(houses, ({ one, many }) => ({
   exclusions: many(houseExclusions),
   orders: many(orders),
   applications: many(houseApplications),
+  reviewEvents: many(houseReviewEvents),
 }));
+
+export const houseReviewEventsRelations = relations(
+  houseReviewEvents,
+  ({ one }) => ({
+    house: one(houses, {
+      fields: [houseReviewEvents.houseId],
+      references: [houses.id],
+    }),
+    performer: one(user, {
+      fields: [houseReviewEvents.performedBy],
+      references: [user.id],
+    }),
+  })
+);
+
+export const partnerOnboardingRelations = relations(
+  partnerOnboarding,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [partnerOnboarding.userId],
+      references: [user.id],
+    }),
+  })
+);
 
 export const houseApplicationsRelations = relations(
   houseApplications,

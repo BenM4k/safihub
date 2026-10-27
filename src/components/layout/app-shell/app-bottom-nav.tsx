@@ -7,12 +7,14 @@ import { MoreHorizontal, X, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logoutAction } from "@/actions/auth.actions";
 import { Button } from "@/components/ui/button";
+import type { ReactNode } from "react";
 import type { AppShellNavGroup, AppShellNavItem, AppShellUser } from "./types";
 
 interface AppBottomNavProps {
   tabs: AppShellNavItem[];
   moreGroups?: AppShellNavGroup[];
   user?: AppShellUser | null;
+  moreExtra?: ReactNode;
   className?: string;
 }
 
@@ -20,6 +22,7 @@ export function AppBottomNav({
   tabs,
   moreGroups = [],
   user,
+  moreExtra,
   className,
 }: AppBottomNavProps) {
   const pathname = usePathname();
@@ -49,11 +52,19 @@ export function AppBottomNav({
           {tabs.slice(0, 4).map((tab) => {
             const isActive = isItemActive(tab.href, tab.exactMatch);
             const Icon = tab.icon;
+            const tourId = tab.exactMatch
+              ? "tour-mobile-tab-dashboard"
+              : tab.href.endsWith("/orders")
+                ? "tour-mobile-tab-orders"
+                : tab.href.endsWith("/catalogue")
+                  ? "tour-mobile-tab-catalogue"
+                  : undefined;
 
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
+                data-tour-id={tourId}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "flex flex-col items-center justify-center min-h-[46px] rounded-xl py-1 px-1 transition relative",
@@ -80,6 +91,7 @@ export function AppBottomNav({
           {/* Plus button */}
           <button
             type="button"
+            data-tour-id="tour-mobile-tab-more"
             onClick={() => setIsMoreOpen(true)}
             aria-expanded={isMoreOpen}
             aria-label="Plus d'options de navigation"
@@ -129,6 +141,12 @@ export function AppBottomNav({
                 <X className="size-5" />
               </button>
             </div>
+
+            {moreExtra && (
+              <div className="pb-1">
+                {moreExtra}
+              </div>
+            )}
 
             {/* More groups */}
             <div className="space-y-4">

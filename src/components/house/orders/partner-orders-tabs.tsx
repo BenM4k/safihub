@@ -86,7 +86,7 @@ export function PartnerOrdersTabs({
   ];
 
   return (
-    <div className="relative w-full font-sans">
+    <div data-tour-id="tour-orders-stages" className="relative w-full font-sans">
       {/* Left scroll indicator on mobile */}
       {canScrollLeft && (
         <div

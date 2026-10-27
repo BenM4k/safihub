@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, Store } from "lucide-react";
@@ -12,6 +13,7 @@ interface AppSidebarProps {
   onToggleCollapse: () => void;
   brandTitle?: string;
   brandSubtitle?: string;
+  footer?: ReactNode | ((isCollapsed: boolean) => ReactNode);
   className?: string;
 }
 
@@ -21,6 +23,7 @@ export function AppSidebar({
   onToggleCollapse,
   brandTitle = "SafiHub",
   brandSubtitle = "Pressing",
+  footer,
   className,
 }: AppSidebarProps) {
   const pathname = usePathname();
@@ -82,7 +85,11 @@ export function AppSidebar({
         {/* Grouped navigation */}
         <nav className="space-y-5 flex-1">
           {groups.map((group, groupIdx) => (
-            <div key={group.title ?? groupIdx} className="space-y-1">
+            <div
+              key={group.title ?? groupIdx}
+              className="space-y-1"
+              data-tour-id={group.title ? "tour-nav-management-group" : undefined}
+            >
               {!isCollapsed && group.title && (
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2.5 block mb-1">
                   {group.title}
@@ -95,11 +102,19 @@ export function AppSidebar({
                 {group.items.map((item) => {
                   const isActive = isItemActive(item.href, item.exactMatch);
                   const Icon = item.icon;
+                  const tourId = item.href.endsWith("/orders")
+                    ? "tour-nav-orders"
+                    : item.href.endsWith("/catalogue")
+                      ? "tour-nav-catalogue"
+                      : item.href.endsWith("/settlements")
+                        ? "tour-nav-settlements"
+                        : undefined;
 
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
+                      data-tour-id={tourId}
                       aria-current={isActive ? "page" : undefined}
                       title={isCollapsed ? item.label : undefined}
                       className={cn(
@@ -142,6 +157,12 @@ export function AppSidebar({
           ))}
         </nav>
       </div>
+
+      {footer && (
+        <div className="p-3 border-t border-border mt-auto">
+          {typeof footer === "function" ? footer(isCollapsed) : footer}
+        </div>
+      )}
     </aside>
   );
 }

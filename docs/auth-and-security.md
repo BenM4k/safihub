@@ -47,7 +47,13 @@ SafiHub defines four distinct system roles configured with the Better Auth admin
 - `requireHouseAccess(houseId, customHeaders?)`: Asserts user is either an `admin` or a verified member of the specified house (`house_staff` table).
 - `guardAdminRoute()`: Used in `/admin` server layouts to ensure only active admins access the console, redirecting unauthorized users.
 - `guardCourierRoute()`: Used in `/courier` server layouts to ensure only couriers and admins access the courier PWA.
-- `guardHouseRoute()`: Used in `/house` server layouts to ensure only verified laundry house staff and admins access the house portal.
+- `guardHouseRoute()`: Used in `/partner/[houseSlug]` server layouts to ensure only verified laundry house staff and admins access the house portal. Enforces server-side forced password change: if `user.mustChangePassword` is `true`, redirects immediately to `/change-password`.
+
+### First-Login Forced Password Change Gate (`/change-password`)
+- New partner accounts created by admins have `mustChangePassword: true`.
+- Layout-level enforcement in `guardHouseRoute()` redirects to `/change-password` before any partner dashboard or tour can load.
+- `changeForcedPasswordAction` validates minimum 8 characters, verifies active session, calls Better Auth `changePassword` with `revokeOtherSessions: true`, clears `mustChangePassword`, and redirects to the partner dashboard.
+- Rate-limited via `rateLimitPasswordChange` (max 5 attempts per 15 minutes per IP/user).
 
 ### Action-Level Auth & Sentry Instrumentation (`src/lib/action-error-handler.ts`, `src/lib/sentry-privacy.ts`)
 Every server action checks session authenticity and role permissions first. Server actions are wrapped with `withActionErrorHandling()` or `withFormActionErrorHandling()`:

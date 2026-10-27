@@ -20,6 +20,7 @@ export interface HouseData {
   isPaused: boolean;
   pausedUntil?: Date | string | null;
   maxDistanceLevel?: number | null; // Per-house override
+  reviewStatus?: "draft" | "pending_review" | "approved" | "needs_changes" | "suspended" | null;
 }
 
 export interface HouseCoverageRecord {

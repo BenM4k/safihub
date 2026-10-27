@@ -10,6 +10,7 @@ import {
 } from "@/dal/review.dal";
 import { getNeighborhoods, getZoneFees } from "@/dal/coverage.dal";
 import { getLatestExchangeRate } from "@/dal/ops.dal";
+import { checkUserHouseAccess } from "@/dal";
 import { HouseCatalogueView } from "@/components/houses/detail/house-catalogue-view";
 import { PressingJsonLd } from "@/components/houses/detail/pressing-json-ld";
 
@@ -22,8 +23,14 @@ export async function generateMetadata({
 }: HouseDetailPageProps): Promise<Metadata> {
   const { houseSlug } = await params;
   const res = await getCustomerHouseProfile(houseSlug);
-  if (!res.ok || !res.value.house.isActive) {
-    return { title: "Pressing introuvable | SafiHub" };
+  const isApproved = res.ok && res.value?.house?.reviewStatus
+    ? res.value.house.reviewStatus === "approved"
+    : true;
+  if (!res.ok || !res.value.house.isActive || !isApproved) {
+    return {
+      title: "Pressing introuvable | SafiHub",
+      robots: { index: false, follow: false },
+    };
   }
 
   const { house } = res.value;
@@ -75,6 +82,22 @@ export default async function CustomerHouseDetailPage({
   }
 
   const data = profileRes.value;
+  const isApproved = data.house.reviewStatus
+    ? data.house.reviewStatus === "approved"
+    : true;
+
+  let isPreviewAllowed = false;
+  if (!isApproved) {
+    if (user?.role === "admin") {
+      isPreviewAllowed = true;
+    } else if (user?.id) {
+      isPreviewAllowed = await checkUserHouseAccess(user.id, data.house.id);
+    }
+
+    if (!isPreviewAllowed) {
+      notFound();
+    }
+  }
 
   const [reviewsData, stats, eligibleOrders, neighborhoods, zoneFeesRows, rateRecord] =
     await Promise.all([
@@ -101,6 +124,12 @@ export default async function CustomerHouseDetailPage({
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <PressingJsonLd house={data.house} url={pageUrl} />
+      {!isApproved && (
+        <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-900 dark:text-amber-200 py-2.5 px-4 text-center text-xs font-bold flex items-center justify-center gap-2">
+          <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
+          <span>Aperçu, non visible par les clients (en attente de validation par SafiHub)</span>
+        </div>
+      )}
       <Navbar variant="solid" user={user} />
       <main className="flex-1">
         <HouseCatalogueView

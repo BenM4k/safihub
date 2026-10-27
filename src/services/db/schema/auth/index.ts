@@ -35,6 +35,7 @@ export const user = pgTable("user", {
   isGuest: boolean("is_guest").default(false).notNull(),
   status: text("status").default("active").notNull(),
   contactPhone: text("contact_phone"),
+  mustChangePassword: boolean("must_change_password").default(false).notNull(),
 });
 
 /** Reference to a better-auth user (text id). Restrict deletes: financial history must stay. */

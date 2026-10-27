@@ -216,3 +216,153 @@ export async function trackCustomerReordered(params: {
     },
   });
 }
+
+export async function trackTourStarted(params: {
+  userId: string;
+  tourId: string;
+}): Promise<void> {
+  await capturePostHogEvent({
+    event: "tour_started",
+    distinctId: params.userId,
+    properties: {
+      tour_id: params.tourId,
+    },
+  });
+}
+
+export async function trackStepViewed(params: {
+  userId: string;
+  tourId: string;
+  stepId: string;
+}): Promise<void> {
+  await capturePostHogEvent({
+    event: "step_viewed",
+    distinctId: params.userId,
+    properties: {
+      tour_id: params.tourId,
+      step_id: params.stepId,
+    },
+  });
+}
+
+export async function trackStepSkipped(params: {
+  userId: string;
+  tourId: string;
+  stepId?: string;
+}): Promise<void> {
+  await capturePostHogEvent({
+    event: "step_skipped",
+    distinctId: params.userId,
+    properties: {
+      tour_id: params.tourId,
+      step_id: params.stepId,
+    },
+  });
+}
+
+export async function trackTourCompleted(params: {
+  userId: string;
+  tourId: string;
+}): Promise<void> {
+  await capturePostHogEvent({
+    event: "tour_completed",
+    distinctId: params.userId,
+    properties: {
+      tour_id: params.tourId,
+    },
+  });
+}
+
+export async function trackTourReplayed(params: {
+  userId: string;
+  tourId: string;
+}): Promise<void> {
+  await capturePostHogEvent({
+    event: "tour_replayed",
+    distinctId: params.userId,
+    properties: {
+      tour_id: params.tourId,
+    },
+  });
+}
+
+export async function trackChecklistItemCompleted(params: {
+  userId: string;
+  houseId: string;
+  itemId: string;
+}): Promise<void> {
+  await capturePostHogEvent({
+    event: "checklist_item_completed",
+    distinctId: params.userId,
+    properties: {
+      house_id: params.houseId,
+      item_id: params.itemId,
+    },
+  });
+}
+
+export async function trackSubmittedForReview(params: {
+  userId: string;
+  houseId: string;
+  completedItems: number;
+}): Promise<void> {
+  await capturePostHogEvent({
+    event: "submitted_for_review",
+    distinctId: params.userId,
+    properties: {
+      house_id: params.houseId,
+      completed_items: params.completedItems,
+    },
+  });
+}
+
+export async function trackHouseReviewApproved(params: {
+  adminId: string;
+  houseId: string;
+  timeToApprovalMinutes?: number;
+}): Promise<void> {
+  await capturePostHogEvent({
+    event: "approved",
+    distinctId: params.adminId,
+    properties: {
+      house_id: params.houseId,
+      ...(params.timeToApprovalMinutes !== undefined
+        ? { time_to_approval_minutes: params.timeToApprovalMinutes }
+        : {}),
+    },
+  });
+}
+
+export async function trackHouseReviewNeedsChanges(params: {
+  adminId: string;
+  houseId: string;
+  note?: string;
+}): Promise<void> {
+  await capturePostHogEvent({
+    event: "needs_changes",
+    distinctId: params.adminId,
+    properties: {
+      house_id: params.houseId,
+      has_note: Boolean(params.note),
+    },
+  });
+}
+
+export async function trackFirstOrderReceived(params: {
+  houseId: string;
+  orderId: string;
+  timeToFirstOrderMinutes?: number;
+}): Promise<void> {
+  await capturePostHogEvent({
+    event: "first_order_received",
+    distinctId: `house_${params.houseId}`,
+    properties: {
+      house_id: params.houseId,
+      order_id: params.orderId,
+      ...(params.timeToFirstOrderMinutes !== undefined
+        ? { time_to_first_order_minutes: params.timeToFirstOrderMinutes }
+        : {}),
+    },
+  });
+}
+

@@ -1,5 +1,5 @@
 import "server-only";
-import { asc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { toBukavuDateTime } from "@/services/availability/bukavu-time";
 import { filterCatalogueOutliers } from "@/services/catalog/outliers";
@@ -83,6 +83,7 @@ export interface CustomerHouseDetailData {
     createdAt?: Date | null;
     isActive?: boolean;
     isPaused?: boolean;
+    reviewStatus?: "draft" | "pending_review" | "approved" | "needs_changes" | "suspended" | null;
     ratingStats?: {
       reviewCount: number;
       averageRating: number | null;
@@ -162,7 +163,12 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
     .from(schema.houses)
     .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
     .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
-    .where(eq(schema.houses.isActive, true))
+    .where(
+      and(
+        eq(schema.houses.isActive, true),
+        eq(schema.houses.reviewStatus, "approved")
+      )
+    )
     .orderBy(asc(schema.houses.name));
 
   if (rawHouses.length === 0) return [];
@@ -320,6 +326,7 @@ export async function getCustomerHouseDetail(
       cutoffMinutes: schema.houses.cutoffMinutes,
       isActive: schema.houses.isActive,
       isPaused: schema.houses.isPaused,
+      reviewStatus: schema.houses.reviewStatus,
     })
     .from(schema.houses)
     .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
@@ -515,6 +522,7 @@ export async function getCustomerHouseDetail(
       createdAt: house.createdAt,
       isActive: house.isActive,
       isPaused: house.isPaused,
+      reviewStatus: house.reviewStatus,
       ratingStats: ratingStatsRow
         ? {
             reviewCount: ratingStatsRow.reviewCount,
