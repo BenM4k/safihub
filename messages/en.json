@@ -1786,7 +1786,10 @@
       "successCover": "Cover photo updated successfully",
       "successLogo": "Laundry logo updated successfully",
       "deleteCoverSuccess": "Cover photo removed",
-      "deleteLogoSuccess": "Logo removed"
+      "deleteLogoSuccess": "Logo removed",
+      "unexpectedError": "Unexpected error",
+      "coverAlt": "Laundry cover photo",
+      "formatNote": "Format 4:1 · JPG, PNG, WebP (max 5 MB)"
     },
     "checklist": {
       "approvedTitle": "Your laundry house is live!",

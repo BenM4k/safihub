@@ -61,7 +61,7 @@ export function CoverPhotoSection({
       setSuccess(t("successCover"));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("unexpectedError"));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -156,13 +156,13 @@ export function CoverPhotoSection({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={coverUrl}
-            alt="Couverture du pressing"
+            alt={t("coverAlt")}
             className="size-full object-cover"
           />
         ) : (
           <div className="flex flex-col items-center justify-center gap-1.5 text-muted-foreground/60 p-4 text-center">
             <ImageIcon className="size-8" />
-            <span className="text-xs font-medium">Format 4:1 · JPG, PNG, WebP (max 5 Mo)</span>
+            <span className="text-xs font-medium">{t("formatNote")}</span>
           </div>
         )}
       </div>

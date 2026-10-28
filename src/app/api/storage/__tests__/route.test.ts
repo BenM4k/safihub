@@ -41,6 +41,13 @@ describe("/api/storage/[...key] route handler", () => {
     expect(res.status).toBe(403);
   });
 
+  it("returns 403 on orders/ keys until authenticated session checks are implemented", async () => {
+    const res = await GET(new Request("http://localhost:3000/api/storage"), {
+      params: Promise.resolve({ key: ["orders", "ord_123", "pickup.webp"] }),
+    });
+    expect(res.status).toBe(403);
+  });
+
   it("returns 404 if object does not exist in R2", async () => {
     const res = await GET(new Request("http://localhost:3000/api/storage"), {
       params: Promise.resolve({ key: ["houses", "missing.webp"] }),

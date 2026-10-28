@@ -1,8 +1,15 @@
 import type { ChecklistItemConfig } from "./types";
 
+type ChecklistItemsMap = IntlMessages["house"]["checklist"]["items"];
+type ChecklistStepKey = keyof ChecklistItemsMap;
+
+export type ChecklistItemTranslationKey = {
+  [K in ChecklistStepKey]: `${K}.${Extract<keyof ChecklistItemsMap[K], string>}`;
+}[ChecklistStepKey];
+
 export function getChecklistItemsConfig(
   houseSlug: string,
-  t?: (key: string) => string
+  t?: (key: ChecklistItemTranslationKey) => string
 ): ChecklistItemConfig[] {
   return [
     {

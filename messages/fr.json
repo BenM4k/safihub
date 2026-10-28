@@ -1786,7 +1786,10 @@
       "successCover": "Photo de couverture mise à jour avec succès",
       "successLogo": "Logo du pressing mis à jour avec succès",
       "deleteCoverSuccess": "Photo de couverture supprimée",
-      "deleteLogoSuccess": "Logo supprimé"
+      "deleteLogoSuccess": "Logo supprimé",
+      "unexpectedError": "Erreur inattendue",
+      "coverAlt": "Couverture du pressing",
+      "formatNote": "Format 4:1 · JPG, PNG, WebP (max 5 Mo)"
     },
     "checklist": {
       "approvedTitle": "Votre pressing est en ligne !",

@@ -303,7 +303,7 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       rating: null,
       reviewCount: 0,
       imageUrl,
-      coverImageUrl: normalizedCover || imageUrl,
+      coverImageUrl: normalizedCover,
       logoUrl: normalizedLogo,
       coords,
     };
@@ -526,7 +526,7 @@ export async function getCustomerHouseDetail(
       rating,
       reviewCount,
       imageUrl,
-      coverImageUrl: normalizedCover || imageUrl,
+      coverImageUrl: normalizedCover,
       logoUrl: normalizedLogo,
       galleryImages,
       description: house.description ?? "Pressing artisanal & moderne à Bukavu, partenaire vérifié SafiHub.",

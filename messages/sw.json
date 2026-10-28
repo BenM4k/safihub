@@ -1786,7 +1786,10 @@
       "successCover": "Picha ya jalada imesasishwa kikamilifu",
       "successLogo": "Nembo ya dobi imesasishwa kikamilifu",
       "deleteCoverSuccess": "Picha ya jalada imefutwa",
-      "deleteLogoSuccess": "Nembo imefutwa"
+      "deleteLogoSuccess": "Nembo imefutwa",
+      "unexpectedError": "Hitilafu isiyotarajiwa",
+      "coverAlt": "Picha ya jalada ya dobi",
+      "formatNote": "Umbizo 4:1 · JPG, PNG, WebP (upeo 5 MB)"
     },
     "checklist": {
       "approvedTitle": "Pressing yako iko mtandaoni!",

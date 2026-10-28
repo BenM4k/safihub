@@ -33,7 +33,7 @@ export function SetupChecklistCard({
       : completedCount;
   const progressPercent = Math.round((displayCompleted / 7) * 100);
   const itemsConfig = getChecklistItemsConfig(houseSlug, (key) =>
-    t(`items.${key}` as Parameters<typeof t>[0])
+    t(`items.${key}`)
   );
 
   // If already approved, show a sleek success card

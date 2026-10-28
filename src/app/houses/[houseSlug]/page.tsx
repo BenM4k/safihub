@@ -13,6 +13,7 @@ import { getLatestExchangeRate } from "@/dal/ops.dal";
 import { checkUserHouseAccess } from "@/dal";
 import { HouseCatalogueView } from "@/components/houses/detail/house-catalogue-view";
 import { PressingJsonLd } from "@/components/houses/detail/pressing-json-ld";
+import { getAppBaseUrl } from "@/lib/app-url";
 
 interface HouseDetailPageProps {
   params: Promise<{ houseSlug: string }>;
@@ -23,9 +24,10 @@ export async function generateMetadata({
 }: HouseDetailPageProps): Promise<Metadata> {
   const { houseSlug } = await params;
   const res = await getCustomerHouseProfile(houseSlug);
-  const isApproved = res.ok && res.value?.house?.reviewStatus
-    ? res.value.house.reviewStatus === "approved"
-    : true;
+  const isApproved =
+    res.ok && res.value?.house?.reviewStatus
+      ? res.value.house.reviewStatus === "approved"
+      : true;
   if (!res.ok || !res.value.house.isActive || !isApproved) {
     return {
       title: "Pressing introuvable | SafiHub",
@@ -37,7 +39,7 @@ export async function generateMetadata({
   const cover = house.coverImageUrl || house.imageUrl;
   const title = `${house.name} - Services & Tarifs | SafiHub Bukavu`;
   const description = `Consultez les tarifs de pressing, lavage et repassage de ${house.name} à ${house.neighborhoodName}, Bukavu. Délais garantis et paiement à la livraison.`;
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const baseUrl = getAppBaseUrl();
   const pageUrl = `${baseUrl}/houses/${house.slug}`;
 
   return {
@@ -100,17 +102,23 @@ export default async function CustomerHouseDetailPage({
     }
   }
 
-  const [reviewsData, stats, eligibleOrders, neighborhoods, zoneFeesRows, rateRecord] =
-    await Promise.all([
-      getHouseReviews(data.house.id, { limit: 10 }),
-      getHouseRatingStats(data.house.id),
-      user
-        ? getCustomerDeliveredOrdersEligibleForReview(user.id, data.house.id)
-        : Promise.resolve([]),
-      getNeighborhoods(),
-      getZoneFees(),
-      getLatestExchangeRate("USD", "CDF"),
-    ]);
+  const [
+    reviewsData,
+    stats,
+    eligibleOrders,
+    neighborhoods,
+    zoneFeesRows,
+    rateRecord,
+  ] = await Promise.all([
+    getHouseReviews(data.house.id, { limit: 10 }),
+    getHouseRatingStats(data.house.id),
+    user
+      ? getCustomerDeliveredOrdersEligibleForReview(user.id, data.house.id)
+      : Promise.resolve([]),
+    getNeighborhoods(),
+    getZoneFees(),
+    getLatestExchangeRate("USD", "CDF"),
+  ]);
 
   const zoneFeesMap: Record<string, number> = {};
   for (const fee of zoneFeesRows) {
@@ -120,7 +128,7 @@ export default async function CustomerHouseDetailPage({
   }
 
   const usdExchangeRate = rateRecord?.rate ? Number(rateRecord.rate) : 2800;
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const baseUrl = getAppBaseUrl();
   const pageUrl = `${baseUrl}/houses/${data.house.slug}`;
 
   return (
@@ -129,7 +137,10 @@ export default async function CustomerHouseDetailPage({
       {!isApproved && (
         <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-900 dark:text-amber-200 py-2.5 px-4 text-center text-xs font-bold flex items-center justify-center gap-2">
           <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
-          <span>Aperçu, non visible par les clients (en attente de validation par SafiHub)</span>
+          <span>
+            Aperçu, non visible par les clients (en attente de validation par
+            SafiHub)
+          </span>
         </div>
       )}
       <Navbar variant="solid" user={user} />

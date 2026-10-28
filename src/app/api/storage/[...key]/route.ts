@@ -24,12 +24,10 @@ export async function GET(request: Request, { params }: RouteParams) {
   const storageKey = keySegments.join("/");
 
   // Public assets (laundry house covers and logos)
+  // Private order verification/delivery photos require authenticated session checks and are forbidden here
   const isPublicHouseAsset = storageKey.startsWith("houses/");
 
-  // Future private order verification/delivery photos
-  const isOrderPhoto = storageKey.startsWith("orders/");
-
-  if (!isPublicHouseAsset && !isOrderPhoto) {
+  if (!isPublicHouseAsset) {
     return new Response("Unauthorized asset path", { status: 403 });
   }
 
