@@ -19,7 +19,9 @@ import {
 } from "@/components/layout/app-shell";
 import { HouseSwitcher } from "./house-switcher";
 import { usePartnerSound } from "./use-partner-sound";
-import type { HouseMembershipInfo } from "@/dal";
+import { PartnerHelpMenu } from "./partner-help-menu";
+import { ChecklistCompactIndicator } from "./onboarding/checklist-compact-indicator";
+import type { HouseChecklistDerivation, HouseMembershipInfo } from "@/dal";
 import { useTranslations } from "next-intl";
 
 interface PartnerShellProps {
@@ -30,6 +32,7 @@ interface PartnerShellProps {
   memberships?: HouseMembershipInfo[];
   user?: AppShellUser | null;
   waitingCount?: number;
+  checklist?: HouseChecklistDerivation | null;
   children: ReactNode;
 }
 
@@ -44,6 +47,7 @@ export function PartnerShell({
   memberships = [],
   user,
   waitingCount = 0,
+  checklist,
   children,
 }: PartnerShellProps) {
   const { soundEnabled, toggleSound } = usePartnerSound();
@@ -163,12 +167,35 @@ export function PartnerShell({
           memberships={memberships}
         />
       }
+      topBarRight={<PartnerHelpMenu houseSlug={houseSlug} />}
       user={user}
       publicViewHref={`/houses/${houseSlug}`}
       publicViewLabel={tHeader("clientView")}
       soundEnabled={soundEnabled}
       onToggleSound={toggleSound}
       storageKey="safihub_partner_sidebar_collapsed"
+      sidebarFooter={
+        checklist && checklist.reviewStatus !== "approved"
+          ? (isCollapsed: boolean) => (
+              <ChecklistCompactIndicator
+                houseSlug={houseSlug}
+                completedCount={checklist.completedCount}
+                reviewStatus={checklist.reviewStatus}
+                isCollapsed={isCollapsed}
+              />
+            )
+          : undefined
+      }
+      mobileMoreExtra={
+        checklist && checklist.reviewStatus !== "approved" ? (
+          <ChecklistCompactIndicator
+            houseSlug={houseSlug}
+            completedCount={checklist.completedCount}
+            reviewStatus={checklist.reviewStatus}
+            isCollapsed={false}
+          />
+        ) : undefined
+      }
       bannerNotice={
         isAdminOverride ? (
           <div className="bg-warning text-warning-foreground text-xs font-bold px-4 py-1.5 flex items-center justify-center gap-2">

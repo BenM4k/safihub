@@ -1758,6 +1758,100 @@
       "saved": "Picha imehifadhiwa",
       "validate": "Thibitisha picha"
     },
+    "logoModal": {
+      "title": "Nembo ya Dobi",
+      "subtitle": "Muundo mraba 1:1 · Inaonekana kwenye ramani na wasifu wako wa umma {houseName}",
+      "clickToChoose": "Bofya ili kuchagua nembo",
+      "fileFormats": "JPG, PNG au WebP · Upeo 5 MB",
+      "chooseAnother": "Chagua faili lingine",
+      "cancel": "Ghairi",
+      "saving": "Inahifadhi...",
+      "saved": "Nembo imehifadhiwa",
+      "validate": "Thibitisha nembo"
+    },
+    "settingsPhotos": {
+      "title": "Picha & Utambulisho wa Dobi",
+      "subtitle": "Weka picha ya ukurasa na nembo ya dobi ili kuvutia wateja zaidi.",
+      "coverTitle": "Picha ya ukurasa (Umbizo 4:1)",
+      "coverDesc": "Inaonekana juu ya wasifu wako na kwenye ramani ya wateja wa SafiHub.",
+      "logoTitle": "Nembo rasmi (Umbizo mraba 1:1)",
+      "logoDesc": "Inaonekana karibu na jina la dobi lako na kwenye stakabadhi za agizo.",
+      "uploadCover": "Pakia picha ya jalada",
+      "changeCover": "Badilisha jalada",
+      "uploadLogo": "Pakia nembo",
+      "changeLogo": "Badilisha nembo",
+      "deletePhoto": "Futa",
+      "deleting": "Inafuta...",
+      "uploading": "Inapakia...",
+      "successCover": "Picha ya jalada imesasishwa kikamilifu",
+      "successLogo": "Nembo ya dobi imesasishwa kikamilifu",
+      "deleteCoverSuccess": "Picha ya jalada imefutwa",
+      "deleteLogoSuccess": "Nembo imefutwa",
+      "unexpectedError": "Hitilafu isiyotarajiwa",
+      "coverAlt": "Picha ya jalada ya dobi",
+      "formatNote": "Umbizo 4:1 · JPG, PNG, WebP (upeo 5 MB)"
+    },
+    "checklist": {
+      "approvedTitle": "Pressing yako iko mtandaoni!",
+      "approvedSubtitle": "Atelier yako imethibitishwa na iko tayari kupokea oda zake za kwanza.",
+      "viewPublicPage": "Tazama ukurasa wa umma",
+      "prepareTitle": "Tayarisha pressing yako (hatua {completed} / {total})",
+      "prepareSubtitle": "Kamilisha hatua hizi muhimu ili kuamsha pressing yako na kupokea oda za kwanza.",
+      "progressCompleted": "{percent}% imekamilika",
+      "pendingReviewTitle": "Inasubiri uthibitisho kutoka SafiHub:",
+      "pendingReviewDesc": "Pressing yako inakaguliwa na timu yetu. Bado unaweza kubadilisha bei au saa zako; mabadiliko yatakaguliwa wakati wa uthibitisho.",
+      "needsChangesTitle": "Marekebisho yaliyoombwa na timu ya SafiHub:",
+      "needsChangesFallback": "Tafadhali kagua vitu vilivyoonyeshwa hapa chini.",
+      "suspendedTitle": "Pressing yako imesimamishwa kwa sasa:",
+      "suspendedFallback": "Akaunti yako imesimamishwa na utawala. Tafadhali wasiliana na usaidizi wa SafiHub.",
+      "submitTitle": "Wasilisha kwa uthibitisho",
+      "submitBenefit": "Inatuma wasifu wako kwa timu ya SafiHub ili kuchapishwa kwa umma.",
+      "submitAgain": "Wasilisha tena",
+      "submit": "Wasilisha",
+      "minOrderHint": "Bei yako ya chini kabisa iko chini ya kiwango cha chini cha oda: wateja hawataweza kuagiza bidhaa hii peke yake.",
+      "items": {
+        "photos": {
+          "title": "Picha ya jalada na nembo",
+          "benefit": "Inatoa mwonekano wa kitaalamu kwenye ramani ya wateja.",
+          "buttonLabel": "Wasifu"
+        },
+        "hours": {
+          "title": "Saa za kufungua",
+          "benefit": "Inaweka vipindi ambavyo wasafirishaji wanaweza kuleta nguo.",
+          "buttonLabel": "Saa"
+        },
+        "pricing": {
+          "title": "Angalau kitu 1 chenye bei",
+          "benefit": "Bila bei, wateja hawawezi kuagiza.",
+          "buttonLabel": "Katalogi"
+        },
+        "coverage": {
+          "title": "Angalau mtaa 1 unaohudumiwa",
+          "benefit": "Inaruhusu wateja wa mitaa hii kuagiza kutoka kwako.",
+          "buttonLabel": "Kanda"
+        },
+        "payment": {
+          "title": "Njia ya kupokea malipo",
+          "benefit": "Inaonyesha namba ya Mobile Money ya kupokea malipo yako.",
+          "buttonLabel": "Malipo"
+        },
+        "contact": {
+          "title": "Namba ya simu ya mawasiliano",
+          "benefit": "Njia ya simu ya moja kwa moja inayotumiwa na usaidizi na wasafirishaji.",
+          "buttonLabel": "Mawasiliano"
+        }
+      }
+    },
+    "tour": {
+      "start": "Anza",
+      "finish": "Maliza",
+      "next": "Inayofuata",
+      "prev": "Iliyopita",
+      "done": "Imekamilika",
+      "skipTour": "Ruka ziara",
+      "skippedToast": "Ziara imerukwa. Unaweza kuitazama tena kutoka Msaada.",
+      "completedToast": "Ziara imekamilika! Sasa unaweza kukamilisha pressing yako."
+    },
     "pauseModal": {
       "pauseTitle": "Sitisha maagizo mapya?",
       "resumeTitle": "Endelea kupokea maagizo?",

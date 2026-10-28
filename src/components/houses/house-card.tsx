@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Share2, Star, Clock, Sparkles } from "lucide-react";
+import { Star, Clock, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 import type { CustomerHouseSummary } from "@/dal";
+import { HouseCardImage } from "./house-card-image";
 
 interface HouseCardProps {
   house: CustomerHouseSummary;
@@ -16,45 +15,7 @@ interface HouseCardProps {
 
 export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
   const t = useTranslations("customerHouses");
-  const [isFavorited, setIsFavorited] = useState(false);
-
   const targetSlug = house.slug || house.id;
-
-  const handleShare = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const url = `${window.location.origin}/houses/${targetSlug}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: house.name,
-          text: `Pressing ${house.name} à Bukavu`,
-          url,
-        });
-      } catch {
-        // Ignored if cancelled
-      }
-    } else if (navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(url);
-        toast.success("Lien copié dans le presse-papier !");
-      } catch {
-        toast.error("Impossible de copier le lien");
-      }
-    } else {
-      toast.error("Presse-papier indisponible");
-    }
-  };
-
-  const handleFavorite = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const next = !isFavorited;
-    setIsFavorited(next);
-    if (next) {
-      toast.success(`${house.name} ajouté aux favoris`);
-    }
-  };
 
   return (
     <div
@@ -66,55 +27,14 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
           : "border-border hover:border-border-strong hover:shadow-xs"
       }`}
     >
-      {/* Top Image Container matching house-search.png */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
-        <Image
-          src={house.imageUrl}
-          alt={house.name}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-
-        {/* Top-left Status Badge */}
-        <div className="absolute top-3 left-3 z-10">
-          {house.isOpenNow ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600/95 text-white shadow-2xs backdrop-blur-xs">
-              <span className="size-1.5 rounded-full bg-white animate-pulse" />
-              <span>{t("openNow")}</span>
-              <span className="text-white/80 font-normal">({house.todayHoursText})</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-900/90 text-white border border-white/20 shadow-2xs backdrop-blur-xs">
-              <span>{t("closed")}</span>
-            </span>
-          )}
-        </div>
-
-        {/* Top-right Actions: Heart & Share Buttons */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={handleFavorite}
-            aria-label="Ajouter aux favoris"
-            className="size-8 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-md text-white border border-white/20 flex items-center justify-center transition cursor-pointer"
-          >
-            <Heart
-              className={`size-4 transition ${
-                isFavorited ? "fill-rose-500 text-rose-500" : "text-white"
-              }`}
-            />
-          </button>
-          <button
-            type="button"
-            onClick={handleShare}
-            aria-label="Partager ce pressing"
-            className="size-8 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-md text-white border border-white/20 flex items-center justify-center transition cursor-pointer"
-          >
-            <Share2 className="size-3.5" />
-          </button>
-        </div>
-      </div>
+      {/* Top Image Container with badges and actions */}
+      <HouseCardImage
+        imageUrl={house.imageUrl}
+        name={house.name}
+        isOpenNow={house.isOpenNow}
+        todayHoursText={house.todayHoursText}
+        targetSlug={targetSlug}
+      />
 
       {/* Card Content Body */}
       <div className="p-4 flex flex-col flex-1">
@@ -162,13 +82,26 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
           )}
         </div>
 
-        {/* House Name */}
-        <Link
-          href={`/houses/${targetSlug}`}
-          className="text-base font-bold text-heading group-hover:text-primary transition line-clamp-1 mb-0.5"
-        >
-          {house.name}
-        </Link>
+        {/* House Name & Logo */}
+        <div className="flex items-center gap-2 mb-0.5">
+          {house.logoUrl && (
+            <div className="relative size-6 rounded-full overflow-hidden border border-border shrink-0 bg-muted">
+              <Image
+                src={house.logoUrl}
+                alt={`Logo ${house.name}`}
+                fill
+                sizes="24px"
+                className="object-contain"
+              />
+            </div>
+          )}
+          <Link
+            href={`/houses/${targetSlug}`}
+            className="text-base font-bold text-heading group-hover:text-primary transition line-clamp-1"
+          >
+            {house.name}
+          </Link>
+        </div>
 
         {/* Address & Zone */}
         <p className="text-xs text-muted-foreground line-clamp-1 mb-3">

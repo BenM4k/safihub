@@ -98,7 +98,11 @@ export function AcceptanceQueue({
   }
 
   return (
-    <section id="queue-section" className="space-y-4 font-sans">
+    <section
+      id="queue-section"
+      data-tour-id="tour-acceptance-queue"
+      className="space-y-4 font-sans"
+    >
       {/* Section Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">

@@ -1758,6 +1758,100 @@
       "saved": "Photo saved",
       "validate": "Save photo"
     },
+    "logoModal": {
+      "title": "Laundry Logo",
+      "subtitle": "1:1 square format · Visible on map and your public profile {houseName}",
+      "clickToChoose": "Click to choose a logo",
+      "fileFormats": "JPG, PNG or WebP · Max 5 MB",
+      "chooseAnother": "Choose another file",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "saved": "Logo saved",
+      "validate": "Save logo"
+    },
+    "settingsPhotos": {
+      "title": "Photos & Visual Identity",
+      "subtitle": "Customize your laundry cover and logo to attract more customers.",
+      "coverTitle": "Cover photo (4:1 Showcase)",
+      "coverDesc": "Displayed at the top of your laundry profile and on SafiHub customer maps.",
+      "logoTitle": "Official logo (1:1 Square)",
+      "logoDesc": "Displayed next to your workshop name and on order receipts.",
+      "uploadCover": "Upload cover",
+      "changeCover": "Change cover",
+      "uploadLogo": "Upload logo",
+      "changeLogo": "Change logo",
+      "deletePhoto": "Remove",
+      "deleting": "Removing...",
+      "uploading": "Uploading...",
+      "successCover": "Cover photo updated successfully",
+      "successLogo": "Laundry logo updated successfully",
+      "deleteCoverSuccess": "Cover photo removed",
+      "deleteLogoSuccess": "Logo removed",
+      "unexpectedError": "Unexpected error",
+      "coverAlt": "Laundry cover photo",
+      "formatNote": "Format 4:1 · JPG, PNG, WebP (max 5 MB)"
+    },
+    "checklist": {
+      "approvedTitle": "Your laundry house is live!",
+      "approvedSubtitle": "Your workshop is approved and ready to receive its first orders.",
+      "viewPublicPage": "View my public page",
+      "prepareTitle": "Prepare your laundry house ({completed} / {total} steps)",
+      "prepareSubtitle": "Complete these key steps to activate your laundry house and receive your first orders.",
+      "progressCompleted": "{percent}% completed",
+      "pendingReviewTitle": "Pending validation by SafiHub:",
+      "pendingReviewDesc": "Your laundry house is currently being reviewed by our team. You can still modify your prices or hours; changes will be reviewed during validation.",
+      "needsChangesTitle": "Corrections requested by SafiHub team:",
+      "needsChangesFallback": "Please check the items flagged below.",
+      "suspendedTitle": "Your laundry house is currently suspended:",
+      "suspendedFallback": "Your account has been suspended by administration. Please contact SafiHub support.",
+      "submitTitle": "Submit for validation",
+      "submitBenefit": "Submits your profile to the SafiHub team for public listing.",
+      "submitAgain": "Submit again",
+      "submit": "Submit",
+      "minOrderHint": "Your lowest price is lower than the minimum order amount: customers will not be able to order this item alone.",
+      "items": {
+        "photos": {
+          "title": "Cover photo and logo",
+          "benefit": "Provides a professional first impression on the customer map.",
+          "buttonLabel": "Profile"
+        },
+        "hours": {
+          "title": "Opening hours",
+          "benefit": "Defines the windows when couriers can drop off laundry.",
+          "buttonLabel": "Hours"
+        },
+        "pricing": {
+          "title": "At least 1 item with price",
+          "benefit": "Without prices, customer orders cannot be placed.",
+          "buttonLabel": "Catalogue"
+        },
+        "coverage": {
+          "title": "At least 1 covered neighborhood",
+          "benefit": "Allows customers in these neighborhoods to order from you.",
+          "buttonLabel": "Zones"
+        },
+        "payment": {
+          "title": "Payment payout method",
+          "benefit": "Indicates the Mobile Money number to receive your payouts.",
+          "buttonLabel": "Payment"
+        },
+        "contact": {
+          "title": "Contact phone number",
+          "benefit": "Direct phone line used by support team and couriers.",
+          "buttonLabel": "Contact"
+        }
+      }
+    },
+    "tour": {
+      "start": "Start",
+      "finish": "Finish",
+      "next": "Next",
+      "prev": "Previous",
+      "done": "Done",
+      "skipTour": "Skip tour",
+      "skippedToast": "Tour skipped. You can review it from Help.",
+      "completedToast": "Tour completed! You can now complete your laundry house."
+    },
     "pauseModal": {
       "pauseTitle": "Pause new orders?",
       "resumeTitle": "Resume accepting orders?",

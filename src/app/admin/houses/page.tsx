@@ -1,10 +1,15 @@
+import { guardAdminRoute } from "@/services/auth";
 import { listAdminHousesEnriched, listAdminNeighborhoods } from "@/services/admin";
+import { listAdminPendingHouseReviews } from "@/dal";
 import { HousesManagementView } from "@/components/admin/houses/houses-management-view";
 
 export default async function AdminHousesPage() {
-  const [housesRes, neighRes] = await Promise.all([
+  await guardAdminRoute();
+
+  const [housesRes, neighRes, pendingReviews] = await Promise.all([
     listAdminHousesEnriched(),
     listAdminNeighborhoods(),
+    listAdminPendingHouseReviews(),
   ]);
 
   if (!housesRes.ok) {
@@ -22,6 +27,7 @@ export default async function AdminHousesPage() {
       totalHousesCount={housesData.totalHousesCount}
       activeHousesCount={housesData.activeHousesCount}
       totalBalanceOwedCDF={housesData.totalBalanceOwedCDF}
+      pendingReviews={pendingReviews}
     />
   );
 }

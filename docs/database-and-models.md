@@ -24,7 +24,7 @@ SafiHub's 28 core domain tables are modularized across seven schema files:
 ### 1. Auth & Profiles (`schema/auth.ts`)
 | Table | Key Columns | Purpose |
 | :--- | :--- | :--- |
-| `users` | `id`, `name`, `email`, `role`, `status`, `contactPhone`, `isGuest` | better-auth user entity extended with SafiHub roles (`customer`, `courier`, `house`, `admin`), active/blocked status, and contact phone. Guest users have placeholder emails (`guest-<id>@guest.invalid`). |
+| `users` | `id`, `name`, `email`, `role`, `status`, `contactPhone`, `mustChangePassword`, `isGuest` | better-auth user entity extended with SafiHub roles (`customer`, `courier`, `house`, `admin`), active/blocked status, forced password reset flag (`mustChangePassword`), and contact phone. Guest users have placeholder emails (`guest-<id>@guest.invalid`). |
 | `sessions` | `id`, `userId`, `token`, `expiresAt`, `ipAddress`, `userAgent` | better-auth active session records. |
 | `accounts` | `id`, `userId`, `accountId`, `providerId`, `password` | better-auth credential storage. |
 | `customer_addresses`| `id`, `userId`, `label`, `neighborhoodId`, `landmark`, `phone` | Saved delivery locations for registered customers. |
@@ -41,12 +41,14 @@ SafiHub's 28 core domain tables are modularized across seven schema files:
 ### 3. Laundry Houses (`schema/house.ts`)
 | Table | Key Columns | Purpose |
 | :--- | :--- | :--- |
-| `houses` | `id`, `name`, `neighborhoodId`, `commissionRate`, `minOrderAmount`, `cutoffMinutes`, `turnaroundHours`, `dailyCapacity`, `maxDistanceLevel`, `isOpen`, `active` | Laundry facility entity with operational rules, minimums, and capacity limits. |
+| `houses` | `id`, `name`, `neighborhoodId`, `commissionRate`, `minOrderAmount`, `cutoffMinutes`, `turnaroundHours`, `dailyCapacity`, `maxDistanceLevel`, `isOpen`, `active`, `reviewStatus`, `submittedAt`, `submittedBy`, `reviewedAt`, `reviewedBy`, `reviewNote` | Laundry facility entity with operational rules, capacity limits, and admin approval review lifecycle (`draft`, `pending_review`, `approved`, `needs_changes`, `suspended`). |
 | `house_members` | `id`, `houseId`, `userId`, `role` | Links staff accounts to a specific laundry house. |
 | `house_hours` | `id`, `houseId`, `weekday`, `openTime`, `closeTime` | Weekly opening hours schedule per house (weekday 0=Sunday to 6=Saturday). |
 | `house_closures` | `id`, `houseId`, `startDate`, `endDate`, `reason` | Temporary closures (public holidays, scheduled maintenance, power outages). |
 | `house_exclusions` | `id`, `houseId`, `itemId`, `fabricId`, `category`, `note` | Items or fabrics the house refuses to clean (e.g. delicate silk, leather, carpets). |
 | `house_items` | `id`, `houseId`, `serviceId`, `itemId`, `fabricId`, `price`, `active` | Custom price (in integer CDF) charged by a house for a specific service/item/fabric combination. |
+| `house_review_events` | `id`, `houseId`, `fromStatus`, `toStatus`, `note`, `actorId`, `createdAt` | Append-only audit log of pressing approval lifecycle transitions. |
+| `partner_onboarding` | `id`, `userId`, `tourId`, `version`, `status`, `lastStepId`, `reminderCount`, `startedAt`, `skippedAt`, `completedAt`, `updatedAt` | Per-user tour and onboarding progress tracking with reminder limiting. |
 
 ### 4. Geographic Coverage & Zones (`schema/coverage.ts`)
 | Table | Key Columns | Purpose |

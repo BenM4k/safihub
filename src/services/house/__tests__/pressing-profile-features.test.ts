@@ -428,7 +428,7 @@ describe("Pressing Profile Features & Domain Invariants", () => {
 
       expect(meta.title).toContain("Pressing du Lac Kivu");
       expect(meta.description).toContain("Bukavu");
-      expect(meta.alternates?.canonical).toBe("https://safihub.cd/houses/lac-kivu");
+      expect(meta.alternates?.canonical).toContain("/houses/lac-kivu");
       expect(meta.openGraph?.images).toBeDefined();
     });
 

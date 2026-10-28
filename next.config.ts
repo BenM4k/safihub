@@ -40,6 +40,17 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        protocol: "https",
+        hostname: "**.r2.cloudflarestorage.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.r2.dev",
+      },
+      ...(process.env.STORAGE_HOSTNAME
+        ? [{ protocol: "https" as const, hostname: process.env.STORAGE_HOSTNAME }]
+        : []),
     ],
   },
   async headers() {

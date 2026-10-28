@@ -142,6 +142,7 @@ export interface ValidationFailure {
     | "DUPLICATE_ORDER"
     | "HOUSE_NOT_FOUND"
     | "HOUSE_INACTIVE"
+    | "HOUSE_NOT_AVAILABLE"
     | "COVERAGE_REJECTED"
     | "SLOT_INVALID"
     | "CAPACITY_REACHED"
@@ -262,8 +263,15 @@ export function validateOrderCheckout(
 
   // 3. Validate House and Customer Neighborhood existence
   const house = context.houses.get(input.houseId);
-  if (!house) {
-    return err({ code: "HOUSE_NOT_FOUND", message: "Selected laundry house does not exist" });
+  if (!house || !house.isActive) {
+    return err({ code: "HOUSE_NOT_FOUND", message: "Selected laundry house does not exist or is inactive" });
+  }
+
+  if (house.reviewStatus !== "approved") {
+    return err({
+      code: "HOUSE_NOT_AVAILABLE",
+      message: "Ce pressing n'est pas encore validé pour recevoir des commandes",
+    });
   }
 
   const customerNeighborhood = context.neighborhoods.get(input.customerNeighborhoodId);

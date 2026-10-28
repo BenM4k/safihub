@@ -1131,6 +1131,8 @@ export async function getHouseDashboardMetrics(
       isPaused: schema.houses.isPaused,
       pausedUntil: schema.houses.pausedUntil,
       contactPhone: schema.houses.contactPhone,
+      coverImageUrl: schema.houses.coverImageUrl,
+      logoUrl: schema.houses.logoUrl,
       turnaroundHours: schema.houses.turnaroundHours,
     })
     .from(schema.houses)
@@ -1591,8 +1593,8 @@ export async function getHouseDashboardMetrics(
       isPaused: houseRow?.isPaused ?? false,
       dailyCapacity: houseRow?.dailyCapacity ?? null,
       rating: null,
-      coverImageUrl: null,
-      logoUrl: null,
+      coverImageUrl: houseRow?.coverImageUrl ?? null,
+      logoUrl: houseRow?.logoUrl ?? null,
       statusPill,
     },
   };

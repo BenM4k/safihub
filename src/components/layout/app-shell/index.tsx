@@ -24,6 +24,8 @@ export function AppShell({
   onToggleSound,
   storageKey = "safihub_partner_sidebar_collapsed",
   bannerNotice,
+  sidebarFooter,
+  mobileMoreExtra,
   children,
 }: AppShellProps) {
   const isCollapsed = useSyncExternalStore(
@@ -59,6 +61,7 @@ export function AppShell({
           groups={sidebarGroups}
           isCollapsed={isCollapsed}
           onToggleCollapse={handleToggleCollapse}
+          footer={sidebarFooter}
           className="h-full"
         />
       </div>
@@ -87,6 +90,7 @@ export function AppShell({
         tabs={mobileTabs}
         moreGroups={moreGroups}
         user={user}
+        moreExtra={mobileMoreExtra}
       />
     </div>
   );

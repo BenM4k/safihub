@@ -35,5 +35,7 @@ export interface AppShellProps {
   onToggleSound?: () => void;
   storageKey?: string;
   bannerNotice?: ReactNode;
+  sidebarFooter?: ReactNode | ((isCollapsed: boolean) => ReactNode);
+  mobileMoreExtra?: ReactNode;
   children: ReactNode;
 }

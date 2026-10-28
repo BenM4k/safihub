@@ -28,6 +28,7 @@ import {
   setHouseHours,
   transitionOrderStatusAtomic,
   updateHouse,
+  updateHouseImages,
   upsertHouseCoverage,
   upsertHouseCoverageBatch,
   upsertHouseItemPrice,
@@ -45,6 +46,7 @@ import {
   transitionOrder,
   type ReceptionItemVerificationInput,
 } from "@/services/order";
+import { getSignedUploadUrl, getStoragePublicUrl } from "@/lib/storage/r2-client";
 import type { OrderStatus } from "@/services/db/schema";
 
 export async function getHouseDashboardData(
@@ -941,3 +943,82 @@ export async function requestCoverageExtension(
     );
   }
 }
+
+export async function generateHouseAssetUploadUrlService(params: {
+  houseId: string;
+  assetType: "cover" | "logo";
+  contentType?: string;
+}): Promise<
+  Result<{
+    uploadUrl: string;
+    storageKey: string;
+    publicUrl: string;
+    expiresInSeconds: number;
+  }>
+> {
+  try {
+    const house = await getHouseById(params.houseId);
+    if (!house) {
+      return err("Pressing introuvable");
+    }
+
+    const uniqueId = Math.random().toString(36).substring(2, 9);
+    const contentType = params.contentType || "image/webp";
+    const extension =
+      contentType === "image/jpeg"
+        ? "jpg"
+        : contentType === "image/png"
+        ? "png"
+        : "webp";
+
+    const storageKey = `houses/${params.houseId}/${params.assetType}_${Date.now()}_${uniqueId}.${extension}`;
+    const expiresInSeconds = 300; // 5 minutes
+
+    const uploadUrl = await getSignedUploadUrl(
+      storageKey,
+      contentType,
+      expiresInSeconds
+    );
+    const publicUrl = getStoragePublicUrl(storageKey);
+
+    return ok({
+      uploadUrl,
+      storageKey,
+      publicUrl,
+      expiresInSeconds,
+    });
+  } catch (error) {
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Échec de génération du lien de téléversement"
+    );
+  }
+}
+
+export async function updateHouseImagesService(params: {
+  houseId: string;
+  coverImageUrl?: string | null;
+  logoUrl?: string | null;
+}): Promise<Result<void>> {
+  try {
+    const house = await getHouseById(params.houseId);
+    if (!house) {
+      return err("Pressing introuvable");
+    }
+
+    await updateHouseImages(params.houseId, {
+      coverImageUrl: params.coverImageUrl,
+      logoUrl: params.logoUrl,
+    });
+
+    return ok(undefined);
+  } catch (error) {
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Échec de l'enregistrement de l'image"
+    );
+  }
+}
+

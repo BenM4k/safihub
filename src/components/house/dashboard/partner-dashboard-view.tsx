@@ -13,12 +13,16 @@ import { PartnerPipeline } from "./partner-pipeline";
 import { PartnerAnalytics } from "./partner-analytics";
 import { PartnerTables } from "./partner-tables";
 import { PartnerContextualActions } from "./partner-contextual-actions";
+import { SetupChecklistCard } from "../onboarding/setup-checklist-card";
+import { PartnerTourRunner } from "../tour/partner-tour-runner";
 import { usePartnerSound } from "../use-partner-sound";
-import type { HouseDashboardMetrics } from "@/dal";
+import type { HouseDashboardMetrics, HouseChecklistDerivation, PartnerOnboardingData } from "@/dal";
 
 interface PartnerDashboardViewProps {
   initialMetrics: HouseDashboardMetrics;
   houseSlug: string;
+  checklist?: HouseChecklistDerivation | null;
+  onboarding?: PartnerOnboardingData | null;
 }
 
 function subscribeOnline(callback: () => void) {
@@ -44,6 +48,8 @@ function getServerOnlineSnapshot() {
 export function PartnerDashboardView({
   initialMetrics,
   houseSlug,
+  checklist,
+  onboarding,
 }: PartnerDashboardViewProps) {
   const router = useRouter();
   const t = useTranslations("house.dashboard");
@@ -126,6 +132,21 @@ export function PartnerDashboardView({
 
       {/* 2. Priority Alert Strip (Hidden if empty) */}
       <PartnerAlertStrip alerts={metrics.alerts} />
+
+      {/* Guided Tour Runner & Collision/Resume notifications */}
+      <PartnerTourRunner
+        onboarding={onboarding ?? null}
+        houseSlug={houseSlug}
+        houseName={metrics.house.name}
+        waitingAcceptanceCount={metrics.waitingAcceptanceCount}
+      />
+
+      {/* 2b. Setup Checklist & Validation Card (shown regardless of tour status) */}
+      {checklist && (
+        <div data-tour-id="tour-checklist-card">
+          <SetupChecklistCard checklist={checklist} houseSlug={houseSlug} />
+        </div>
+      )}
 
       {/* 3. Orders Awaiting Acceptance Priority Queue */}
       <AcceptanceQueue

@@ -353,6 +353,7 @@ export async function createStaffAccountTransaction(params: {
   };
   hashedPassword?: string;
   houseId?: string | null;
+  mustChangePassword?: boolean;
 }): Promise<void> {
   await db.transaction(async (tx) => {
     await tx.insert(schema.user).values({
@@ -364,6 +365,7 @@ export async function createStaffAccountTransaction(params: {
       isGuest: false,
       status: "active",
       banned: false,
+      mustChangePassword: params.mustChangePassword ?? (params.user.role === "house"),
     });
 
     if (params.hashedPassword) {
@@ -528,4 +530,15 @@ export async function getMergedGuestAccounts(targetUserId: string): Promise<User
       )
     );
 }
+
+export async function clearUserMustChangePassword(userId: string): Promise<void> {
+  await db
+    .update(schema.user)
+    .set({
+      mustChangePassword: false,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.user.id, userId));
+}
+
 

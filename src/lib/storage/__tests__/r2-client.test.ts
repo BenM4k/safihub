@@ -29,11 +29,11 @@ describe("Cloudflare R2 Storage Client (vinext & Workers native bindings)", () =
     delete process.env.AWS_SECRET_ACCESS_KEY;
 
     const uploadUrl = await getSignedUploadUrl("test/image.webp", "image/webp", 300);
-    expect(uploadUrl).toContain("https://storage.safihub.cd/safihub/test/image.webp");
+    expect(uploadUrl).toContain("/api/storage/test/image.webp");
     expect(uploadUrl).toContain("mock_upload_sig");
 
     const downloadUrl = await getSignedDownloadUrl("test/image.webp", 900);
-    expect(downloadUrl).toContain("https://storage.safihub.cd/safihub/test/image.webp");
+    expect(downloadUrl).toContain("/api/storage/test/image.webp");
     expect(downloadUrl).toContain("mock_download_sig");
   });
 

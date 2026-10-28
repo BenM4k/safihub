@@ -237,6 +237,7 @@ async function main() {
           isOwnerHouse: false,
           isActive: true,
           isPaused: false,
+          reviewStatus: "approved",
         })
         .returning({ id: schema.houses.id });
       house1Id = newHouse!.id;
@@ -342,6 +343,7 @@ async function main() {
           isOwnerHouse: false,
           isActive: true,
           isPaused: false,
+          reviewStatus: "approved",
         })
         .returning({ id: schema.houses.id });
       house2Id = newHouse!.id;

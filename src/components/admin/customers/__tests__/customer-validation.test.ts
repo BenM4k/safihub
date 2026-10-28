@@ -228,6 +228,7 @@ describe("Customer Administration & Merge Validation Rules", () => {
         banReason: null,
         banExpires: null,
         isGuest: false,
+        mustChangePassword: false,
       });
       vi.mocked(getCustomerOrders).mockResolvedValueOnce([]);
 

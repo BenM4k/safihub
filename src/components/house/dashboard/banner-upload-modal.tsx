@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, Check, AlertCircle, Loader2 } from "lucide-react";
+import { Check, AlertCircle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -14,13 +14,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateBannerImageFile } from "@/lib/partner-dashboard";
+import { uploadHouseAsset } from "@/lib/house-asset-uploader";
 import { BannerCropEditor } from "./banner-crop-editor";
+import { BannerDropzone } from "./banner-dropzone";
 
 interface BannerUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
+  houseId: string;
   houseName: string;
   initialPreviewUrl?: string | null;
+  initialFile?: File | null;
   onSavePhoto?: (photoUrl: string) => void;
 }
 
@@ -30,11 +34,15 @@ interface BannerUploadModalProps {
 export function BannerUploadModal({
   isOpen,
   onClose,
+  houseId,
   houseName,
   initialPreviewUrl = null,
+  initialFile = null,
   onSavePhoto,
 }: BannerUploadModalProps) {
   const t = useTranslations("house.bannerModal");
+  const [selectedFile, setSelectedFile] = useState<File | null>(initialFile);
+  const [prevInitialFile, setPrevInitialFile] = useState<File | null>(initialFile);
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialPreviewUrl);
   const [prevInitialPreviewUrl, setPrevInitialPreviewUrl] = useState<string | null>(initialPreviewUrl);
   const [focalPoint, setFocalPoint] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
@@ -50,6 +58,13 @@ export function BannerUploadModal({
     }
   }
 
+  if (prevInitialFile !== initialFile) {
+    setPrevInitialFile(initialFile);
+    if (initialFile) {
+      setSelectedFile(initialFile);
+    }
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     setError(null);
     const file = e.target.files?.[0];
@@ -61,24 +76,51 @@ export function BannerUploadModal({
       return;
     }
 
+    if (previewUrl && previewUrl !== initialPreviewUrl && previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!previewUrl) return;
     setIsSubmitting(true);
     setError(null);
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSuccess(true);
-      onSavePhoto?.(previewUrl);
+    try {
+      if (selectedFile) {
+        const uploadRes = await uploadHouseAsset({
+          houseId,
+          file: selectedFile,
+          assetType: "cover",
+          maxDimension: 1280,
+        });
+
+        if (!uploadRes.ok) {
+          setError(uploadRes.error);
+          setIsSubmitting(false);
+          return;
+        }
+
+        setIsSubmitting(false);
+        setIsSuccess(true);
+        onSavePhoto?.(uploadRes.value.publicUrl);
+      } else {
+        setIsSubmitting(false);
+        setIsSuccess(true);
+        onSavePhoto?.(previewUrl);
+      }
 
       setTimeout(() => {
         setIsSuccess(false);
         onClose();
       }, 700);
-    }, 400);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -101,22 +143,7 @@ export function BannerUploadModal({
         )}
 
         {!previewUrl ? (
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-border hover:border-primary rounded-2xl p-8 text-center space-y-3 cursor-pointer bg-surface hover:bg-primary-soft/30 transition group"
-          >
-            <div className="size-12 rounded-2xl bg-card shadow-xs border border-border flex items-center justify-center mx-auto text-muted-foreground group-hover:text-primary transition">
-              <Upload className="size-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-heading">
-                {t("clickToChoose")}
-              </p>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                {t("fileFormats")}
-              </p>
-            </div>
-          </div>
+          <BannerDropzone onClick={() => fileInputRef.current?.click()} />
         ) : (
           <BannerCropEditor
             previewUrl={previewUrl}

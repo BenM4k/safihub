@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { normalizeStorageUrl } from "@/lib/storage-url";
 
 interface PressingBannerProps {
   name: string;
@@ -14,14 +15,16 @@ function getInitials(name: string): string {
 
 export function PressingBanner({ name, coverImageUrl, logoUrl }: PressingBannerProps) {
   const initials = getInitials(name);
+  const displayCoverUrl = normalizeStorageUrl(coverImageUrl);
+  const displayLogoUrl = normalizeStorageUrl(logoUrl);
 
   return (
     <div className="relative w-full bg-background">
       {/* Banner Cover Container: 4:1 on desktop, ~16:9 on mobile, max 320px on desktop */}
       <div className="relative w-full aspect-[16/9] md:aspect-[4/1] max-h-[320px] overflow-hidden bg-muted">
-        {coverImageUrl ? (
+        {displayCoverUrl ? (
           <Image
-            src={coverImageUrl}
+            src={displayCoverUrl}
             alt={`Photo de couverture du pressing ${name} à Bukavu`}
             fill
             priority
@@ -40,10 +43,10 @@ export function PressingBanner({ name, coverImageUrl, logoUrl }: PressingBannerP
       {/* Overlapping Logo (88-112px, e.g. size-24 sm:size-28) overlapping bottom-left edge */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
         <div className="absolute -top-12 sm:-top-14 left-4 sm:left-6 size-24 sm:size-28 rounded-2xl sm:rounded-3xl bg-card p-1.5 shadow-md border border-border z-10 overflow-hidden flex items-center justify-center">
-          {logoUrl ? (
+          {displayLogoUrl ? (
             <div className="relative w-full h-full rounded-xl sm:rounded-2xl overflow-hidden bg-muted">
               <Image
-                src={logoUrl}
+                src={displayLogoUrl}
                 alt={`Logo ${name}`}
                 fill
                 sizes="112px"

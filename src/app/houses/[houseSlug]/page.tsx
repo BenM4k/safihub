@@ -10,8 +10,10 @@ import {
 } from "@/dal/review.dal";
 import { getNeighborhoods, getZoneFees } from "@/dal/coverage.dal";
 import { getLatestExchangeRate } from "@/dal/ops.dal";
+import { checkUserHouseAccess } from "@/dal";
 import { HouseCatalogueView } from "@/components/houses/detail/house-catalogue-view";
 import { PressingJsonLd } from "@/components/houses/detail/pressing-json-ld";
+import { getAppBaseUrl } from "@/lib/app-url";
 
 interface HouseDetailPageProps {
   params: Promise<{ houseSlug: string }>;
@@ -22,15 +24,23 @@ export async function generateMetadata({
 }: HouseDetailPageProps): Promise<Metadata> {
   const { houseSlug } = await params;
   const res = await getCustomerHouseProfile(houseSlug);
-  if (!res.ok || !res.value.house.isActive) {
-    return { title: "Pressing introuvable | SafiHub" };
+  const isApproved =
+    res.ok && res.value?.house?.reviewStatus
+      ? res.value.house.reviewStatus === "approved"
+      : true;
+  if (!res.ok || !res.value.house.isActive || !isApproved) {
+    return {
+      title: "Pressing introuvable | SafiHub",
+      robots: { index: false, follow: false },
+    };
   }
 
   const { house } = res.value;
   const cover = house.coverImageUrl || house.imageUrl;
   const title = `${house.name} - Services & Tarifs | SafiHub Bukavu`;
   const description = `Consultez les tarifs de pressing, lavage et repassage de ${house.name} à ${house.neighborhoodName}, Bukavu. Délais garantis et paiement à la livraison.`;
-  const pageUrl = `https://safihub.cd/houses/${house.slug}`;
+  const baseUrl = getAppBaseUrl();
+  const pageUrl = `${baseUrl}/houses/${house.slug}`;
 
   return {
     title,
@@ -75,18 +85,40 @@ export default async function CustomerHouseDetailPage({
   }
 
   const data = profileRes.value;
+  const isApproved = data.house.reviewStatus
+    ? data.house.reviewStatus === "approved"
+    : true;
 
-  const [reviewsData, stats, eligibleOrders, neighborhoods, zoneFeesRows, rateRecord] =
-    await Promise.all([
-      getHouseReviews(data.house.id, { limit: 10 }),
-      getHouseRatingStats(data.house.id),
-      user
-        ? getCustomerDeliveredOrdersEligibleForReview(user.id, data.house.id)
-        : Promise.resolve([]),
-      getNeighborhoods(),
-      getZoneFees(),
-      getLatestExchangeRate("USD", "CDF"),
-    ]);
+  let isPreviewAllowed = false;
+  if (!isApproved) {
+    if (user?.role === "admin") {
+      isPreviewAllowed = true;
+    } else if (user?.id) {
+      isPreviewAllowed = await checkUserHouseAccess(user.id, data.house.id);
+    }
+
+    if (!isPreviewAllowed) {
+      notFound();
+    }
+  }
+
+  const [
+    reviewsData,
+    stats,
+    eligibleOrders,
+    neighborhoods,
+    zoneFeesRows,
+    rateRecord,
+  ] = await Promise.all([
+    getHouseReviews(data.house.id, { limit: 10 }),
+    getHouseRatingStats(data.house.id),
+    user
+      ? getCustomerDeliveredOrdersEligibleForReview(user.id, data.house.id)
+      : Promise.resolve([]),
+    getNeighborhoods(),
+    getZoneFees(),
+    getLatestExchangeRate("USD", "CDF"),
+  ]);
 
   const zoneFeesMap: Record<string, number> = {};
   for (const fee of zoneFeesRows) {
@@ -96,11 +128,21 @@ export default async function CustomerHouseDetailPage({
   }
 
   const usdExchangeRate = rateRecord?.rate ? Number(rateRecord.rate) : 2800;
-  const pageUrl = `https://safihub.cd/houses/${data.house.slug}`;
+  const baseUrl = getAppBaseUrl();
+  const pageUrl = `${baseUrl}/houses/${data.house.slug}`;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <PressingJsonLd house={data.house} url={pageUrl} />
+      {!isApproved && (
+        <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-900 dark:text-amber-200 py-2.5 px-4 text-center text-xs font-bold flex items-center justify-center gap-2">
+          <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
+          <span>
+            Aperçu, non visible par les clients (en attente de validation par
+            SafiHub)
+          </span>
+        </div>
+      )}
       <Navbar variant="solid" user={user} />
       <main className="flex-1">
         <HouseCatalogueView

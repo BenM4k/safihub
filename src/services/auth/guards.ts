@@ -18,6 +18,7 @@ export interface AuthenticatedUser {
   status: string;
   isGuest: boolean;
   contactPhone?: string | null;
+  mustChangePassword?: boolean;
 }
 
 export interface AuthContext {
@@ -80,6 +81,7 @@ export async function requireRole(
     status: userStatus,
     isGuest: Boolean(rawUser.isGuest),
     contactPhone: (rawUser.contactPhone as string) || null,
+    mustChangePassword: Boolean(rawUser.mustChangePassword),
   };
 
   // Enforce account blocking
@@ -249,6 +251,11 @@ export async function guardHouseRoute(
     redirect("/");
   }
 
+  // First-login gate: if mustChangePassword is set, redirect to /change-password immediately
+  if (result.value.user.mustChangePassword) {
+    redirect("/change-password");
+  }
+
   return result.value;
 }
 
@@ -284,6 +291,7 @@ export async function getCurrentUser(
       status: userStatus,
       isGuest: Boolean(rawUser.isGuest),
       contactPhone: (rawUser.contactPhone as string) || null,
+      mustChangePassword: Boolean(rawUser.mustChangePassword),
     };
   } catch {
     return null;

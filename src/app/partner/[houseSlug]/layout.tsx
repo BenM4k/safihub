@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { guardHouseRoute } from "@/services/auth";
-import { getHouseBySlug, getWaitingAcceptanceCount } from "@/dal";
+import { getHouseBySlug, getWaitingAcceptanceCount, getHouseChecklistDerivation } from "@/dal";
 import { PartnerShell } from "@/components/house/partner-shell";
 
 interface PartnerWorkspaceLayoutProps {
@@ -23,7 +23,10 @@ export default async function PartnerWorkspaceLayout({
     notFound();
   }
 
-  const waitingCount = await getWaitingAcceptanceCount(house.id);
+  const [waitingCount, checklist] = await Promise.all([
+    getWaitingAcceptanceCount(house.id),
+    getHouseChecklistDerivation(house.id),
+  ]);
 
   return (
     <PartnerShell
@@ -39,6 +42,7 @@ export default async function PartnerWorkspaceLayout({
         role: authCtx.user.role,
       }}
       waitingCount={waitingCount}
+      checklist={checklist}
     >
       {children}
     </PartnerShell>

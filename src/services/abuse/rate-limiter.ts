@@ -166,3 +166,13 @@ export function rateLimitPartnerApplication(
 ): Promise<RateLimitResult> {
   return recordRateLimitHit(`partner_app:${identifier}`, 3, 30 * 60);
 }
+
+/**
+ * Rate limit password changes: max 5 requests per 15 minutes.
+ */
+export function rateLimitPasswordChange(
+  identifier: string
+): Promise<RateLimitResult> {
+  return recordRateLimitHit(`pwd_change:${identifier}`, 5, 15 * 60);
+}
+

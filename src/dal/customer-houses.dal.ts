@@ -1,8 +1,9 @@
 import "server-only";
-import { asc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { toBukavuDateTime } from "@/services/availability/bukavu-time";
 import { filterCatalogueOutliers } from "@/services/catalog/outliers";
+import { normalizeStorageUrl } from "@/lib/storage-url";
 
 export interface CustomerHouseSummary {
   id: string;
@@ -33,6 +34,8 @@ export interface CustomerHouseSummary {
   rating: number | null;
   reviewCount: number;
   imageUrl: string;
+  coverImageUrl?: string | null;
+  logoUrl?: string | null;
   coords: { lat: number; lng: number };
   estimatedDeliveryFee?: number | null;
 }
@@ -83,6 +86,7 @@ export interface CustomerHouseDetailData {
     createdAt?: Date | null;
     isActive?: boolean;
     isPaused?: boolean;
+    reviewStatus?: "draft" | "pending_review" | "approved" | "needs_changes" | "suspended" | null;
     ratingStats?: {
       reviewCount: number;
       averageRating: number | null;
@@ -151,6 +155,8 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       zoneId: schema.neighborhoods.zoneId,
       zoneName: schema.zones.name,
       addressNote: schema.houses.addressNote,
+      coverImageUrl: schema.houses.coverImageUrl,
+      logoUrl: schema.houses.logoUrl,
       minimumOrderAmount: schema.houses.minimumOrderAmount,
       turnaroundHours: schema.houses.turnaroundHours,
       dailyCapacity: schema.houses.dailyCapacity,
@@ -162,7 +168,12 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
     .from(schema.houses)
     .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
     .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
-    .where(eq(schema.houses.isActive, true))
+    .where(
+      and(
+        eq(schema.houses.isActive, true),
+        eq(schema.houses.reviewStatus, "approved")
+      )
+    )
     .orderBy(asc(schema.houses.name));
 
   if (rawHouses.length === 0) return [];
@@ -264,7 +275,9 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       lng: 28.8608 + (index * 0.003),
     };
 
-    const imageUrl = HOUSE_STOCK_IMAGES[h.name] || DEFAULT_HOUSE_IMAGE;
+    const normalizedCover = normalizeStorageUrl(h.coverImageUrl);
+    const normalizedLogo = normalizeStorageUrl(h.logoUrl);
+    const imageUrl = normalizedCover || HOUSE_STOCK_IMAGES[h.name] || DEFAULT_HOUSE_IMAGE;
 
     return {
       id: h.id,
@@ -290,6 +303,8 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       rating: null,
       reviewCount: 0,
       imageUrl,
+      coverImageUrl: normalizedCover,
+      logoUrl: normalizedLogo,
       coords,
     };
   });
@@ -320,6 +335,7 @@ export async function getCustomerHouseDetail(
       cutoffMinutes: schema.houses.cutoffMinutes,
       isActive: schema.houses.isActive,
       isPaused: schema.houses.isPaused,
+      reviewStatus: schema.houses.reviewStatus,
     })
     .from(schema.houses)
     .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
@@ -466,7 +482,9 @@ export async function getCustomerHouseDetail(
     });
   }
 
-  const imageUrl = house.coverImageUrl || HOUSE_STOCK_IMAGES[house.name] || DEFAULT_HOUSE_IMAGE;
+  const normalizedCover = normalizeStorageUrl(house.coverImageUrl);
+  const normalizedLogo = normalizeStorageUrl(house.logoUrl);
+  const imageUrl = normalizedCover || HOUSE_STOCK_IMAGES[house.name] || DEFAULT_HOUSE_IMAGE;
   const reviewCount = ratingStatsRow?.reviewCount ?? 0;
   // Threshold: below 3 reviews, rating is null so the UI displays "Nouveau"
   const rating =
@@ -508,13 +526,14 @@ export async function getCustomerHouseDetail(
       rating,
       reviewCount,
       imageUrl,
-      coverImageUrl: house.coverImageUrl || imageUrl,
-      logoUrl: house.logoUrl ?? null,
+      coverImageUrl: normalizedCover,
+      logoUrl: normalizedLogo,
       galleryImages,
       description: house.description ?? "Pressing artisanal & moderne à Bukavu, partenaire vérifié SafiHub.",
       createdAt: house.createdAt,
       isActive: house.isActive,
       isPaused: house.isPaused,
+      reviewStatus: house.reviewStatus,
       ratingStats: ratingStatsRow
         ? {
             reviewCount: ratingStatsRow.reviewCount,

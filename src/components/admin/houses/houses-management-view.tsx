@@ -11,6 +11,8 @@ import { HouseCreateDrawer } from "./house-create-drawer";
 import { HouseDetailsSheet, type HouseDetailsTab } from "./details/house-details-sheet";
 import { HouseSuspendDialog } from "./house-suspend-dialog";
 import { formatMoney } from "@/lib/cash-formatters";
+import { AdminReviewQueue } from "./reviews/admin-review-queue";
+import type { AdminPendingReviewRow } from "@/dal/house-review.dal";
 import type { NeighborhoodRecord } from "@/dal";
 import type { AdminHouseRow } from "./types";
 
@@ -21,6 +23,7 @@ interface HousesManagementViewProps {
   totalHousesCount: number;
   activeHousesCount: number;
   totalBalanceOwedCDF: number;
+  pendingReviews?: AdminPendingReviewRow[];
 }
 
 export function HousesManagementView({
@@ -30,10 +33,12 @@ export function HousesManagementView({
   totalHousesCount,
   activeHousesCount,
   totalBalanceOwedCDF,
+  pendingReviews = [],
 }: HousesManagementViewProps) {
   const router = useRouter();
   const t = useTranslations("admin.houses");
 
+  const [viewMode, setViewMode] = useState<"all" | "reviews">("all");
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   const [selectedHouse, setSelectedHouse] = useState<AdminHouseRow | null>(null);
   const [activeTab, setActiveTab] = useState<HouseDetailsTab>("info");
@@ -83,17 +88,58 @@ export function HousesManagementView({
         </div>
       </PageHeader>
 
-      {/* Main content: list first */}
-      <HousesTable
-        houses={houses}
-        neighborhoods={neighborhoods}
-        defaultCommissionBps={defaultCommissionBps}
-        onSelectHouse={(h) => handleRowSelect(h, "info")}
-        onToggleStatus={(h) => setHouseToSuspend(h)}
-        onViewOrders={(h) => handleRowSelect(h, "orders")}
-        onViewSettlements={(h) => handleRowSelect(h, "settlements")}
-        onOpenCreateDrawer={() => setCreateDrawerOpen(true)}
-      />
+      {/* Navigation tabs */}
+      <div className="flex items-center gap-2 border-b border-border pb-3">
+        <button
+          type="button"
+          onClick={() => setViewMode("all")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+            viewMode === "all"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:text-heading hover:bg-muted"
+          }`}
+        >
+          Tous les pressings ({houses.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setViewMode("reviews")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+            viewMode === "reviews"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:text-heading hover:bg-muted"
+          }`}
+        >
+          <span>À valider</span>
+          {pendingReviews.length > 0 && (
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                viewMode === "reviews"
+                  ? "bg-white text-primary"
+                  : "bg-amber-500 text-white"
+              }`}
+            >
+              {pendingReviews.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {viewMode === "reviews" ? (
+        <AdminReviewQueue pendingReviews={pendingReviews} />
+      ) : (
+        <HousesTable
+          houses={houses}
+          neighborhoods={neighborhoods}
+          defaultCommissionBps={defaultCommissionBps}
+          onSelectHouse={(h) => handleRowSelect(h, "info")}
+          onToggleStatus={(h) => setHouseToSuspend(h)}
+          onViewOrders={(h) => handleRowSelect(h, "orders")}
+          onViewSettlements={(h) => handleRowSelect(h, "settlements")}
+          onOpenCreateDrawer={() => setCreateDrawerOpen(true)}
+        />
+      )}
 
       {/* Slide-over Create Drawer */}
       <HouseCreateDrawer

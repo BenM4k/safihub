@@ -78,6 +78,90 @@ export function isStorageConfigured(): boolean {
   return getR2S3Client().isConfigured;
 }
 
+export interface StorageObjectResult {
+  body: Uint8Array;
+  contentType: string;
+  etag: string;
+  size: number;
+}
+
+/**
+ * Returns the public URL for a stored asset key.
+ * Prefers STORAGE_PUBLIC_URL / NEXT_PUBLIC_STORAGE_URL / R2_PUBLIC_URL if set to a valid host,
+ * otherwise falls back to the internal application storage endpoint /api/storage/:key.
+ */
+export function getStoragePublicUrl(storageKey: string): string {
+  const rawBase =
+    process.env.STORAGE_PUBLIC_URL ||
+    process.env.NEXT_PUBLIC_STORAGE_URL ||
+    process.env.R2_PUBLIC_URL;
+  const cleanBase = rawBase?.trim().replace(/\/$/, "");
+
+  if (
+    cleanBase &&
+    !cleanBase.includes("safihub.r2.dev") &&
+    !cleanBase.includes("safihub.cd")
+  ) {
+    return `${cleanBase}/${storageKey}`;
+  }
+
+  return `/api/storage/${storageKey}`;
+}
+
+/**
+ * Retrieves a raw object from Cloudflare R2 bucket.
+ * Returns null if not configured or key not found.
+ */
+export async function getStorageObject(
+  storageKey: string
+): Promise<StorageObjectResult | null> {
+  const workerBinding = await getWorkerR2Binding();
+  if (workerBinding) {
+    try {
+      const obj = (await workerBinding.get(storageKey)) as {
+        body: ReadableStream;
+        httpMetadata?: { contentType?: string };
+        etag?: string;
+        size?: number;
+        arrayBuffer(): Promise<ArrayBuffer>;
+      } | null;
+      if (!obj) return null;
+      const arrayBuf = await obj.arrayBuffer();
+      return {
+        body: new Uint8Array(arrayBuf),
+        contentType: obj.httpMetadata?.contentType || "image/webp",
+        etag: obj.etag || "",
+        size: obj.size ?? arrayBuf.byteLength,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  const { client, bucket, isConfigured } = getR2S3Client();
+  if (!isConfigured || !client) {
+    return null;
+  }
+
+  try {
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: storageKey,
+    });
+    const res = await client.send(command);
+    if (!res.Body) return null;
+    const body = await res.Body.transformToByteArray();
+    return {
+      body,
+      contentType: res.ContentType || "image/webp",
+      etag: res.ETag || "",
+      size: res.ContentLength ?? body.length,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Generates a short-lived presigned upload (PUT) URL for Cloudflare R2.
  * Valid for 5 minutes (300 seconds) by default.
@@ -95,7 +179,8 @@ export async function getSignedUploadUrl(
       throw new Error("Cloudflare R2 storage client is not configured in production");
     }
     // In local dev/test environments without credentials, generate a deterministic mock URL
-    return `https://storage.safihub.cd/${bucket}/${storageKey}?mock_upload_sig=${Date.now()}&expires=${expiresInSeconds}`;
+    const baseUrl = process.env.STORAGE_PUBLIC_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    return `${baseUrl.replace(/\/$/, "")}/api/storage/${storageKey}?mock_upload_sig=${Date.now()}&expires=${expiresInSeconds}`;
   }
 
   const command = new PutObjectCommand({
@@ -122,7 +207,8 @@ export async function getSignedDownloadUrl(
     if (process.env.NODE_ENV === "production") {
       throw new Error("Cloudflare R2 storage client is not configured in production");
     }
-    return `https://storage.safihub.cd/${bucket}/${storageKey}?mock_download_sig=valid&expires=${expiresInSeconds}`;
+    const baseUrl = process.env.STORAGE_PUBLIC_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    return `${baseUrl.replace(/\/$/, "")}/api/storage/${storageKey}?mock_download_sig=valid&expires=${expiresInSeconds}`;
   }
 
   const command = new GetObjectCommand({
@@ -206,5 +292,48 @@ export async function headStorageObject(storageKey: string): Promise<R2ObjectMet
     };
   } catch {
     return null;
+  }
+}
+
+/**
+ * Puts an object directly into Cloudflare R2 from server side.
+ */
+export async function putStorageObject(
+  storageKey: string,
+  buffer: Buffer | Uint8Array,
+  contentType: string = "image/webp"
+): Promise<boolean> {
+  const workerBinding = await getWorkerR2Binding();
+  if (workerBinding) {
+    try {
+      await workerBinding.put(storageKey, buffer, {
+        httpMetadata: { contentType },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  const { client, bucket, isConfigured } = getR2S3Client();
+  if (!isConfigured || !client) {
+    if (process.env.NODE_ENV === "production") {
+      return false;
+    }
+    return true; // Mock succeeds in test/dev
+  }
+
+  try {
+    const command = new PutObjectCommand({
+      Bucket: bucket,
+      Key: storageKey,
+      Body: buffer,
+      ContentType: contentType,
+    });
+    await client.send(command);
+    return true;
+  } catch (error) {
+    console.error(`[Cloudflare R2] S3 API failed to put: ${storageKey}`, error);
+    return false;
   }
 }

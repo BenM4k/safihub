@@ -80,6 +80,13 @@ export const auth = betterAuth({
         input: false,
         returned: true,
       },
+      mustChangePassword: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+        returned: true,
+      },
     },
   },
   databaseHooks: {
