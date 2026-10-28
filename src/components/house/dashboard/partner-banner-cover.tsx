@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera } from "lucide-react";
+import { normalizeStorageUrl } from "@/lib/storage-url";
 
 interface PartnerBannerCoverProps {
   coverImageUrl?: string | null;
@@ -15,12 +16,14 @@ export function PartnerBannerCover({
   initials,
   onOpenUpload,
 }: PartnerBannerCoverProps) {
+  const displayCoverUrl = normalizeStorageUrl(coverImageUrl);
+
   return (
     <div className="relative w-full h-52 sm:h-64 md:h-72 lg:h-80 bg-surface border-b border-border overflow-hidden flex items-center justify-center">
-      {coverImageUrl ? (
+      {displayCoverUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={coverImageUrl}
+          src={displayCoverUrl}
           alt={`Photo de l'établissement ${houseName}`}
           className="w-full h-full object-cover"
           loading="lazy"

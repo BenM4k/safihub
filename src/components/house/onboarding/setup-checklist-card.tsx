@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   ShieldAlert,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ChecklistItemRow } from "./checklist-item-row";
 import { SubmitValidationDialog } from "./submit-validation-dialog";
 import { getChecklistItemsConfig } from "./checklist-config";
@@ -21,6 +22,7 @@ export function SetupChecklistCard({
   checklist,
   houseSlug,
 }: SetupChecklistProps) {
+  const t = useTranslations("house.checklist");
   const [isSubmitOpen, setIsSubmitOpen] = useState(false);
   const { reviewStatus, reviewNote, completedCount, isReadyForSubmission } = checklist;
 
@@ -30,7 +32,9 @@ export function SetupChecklistCard({
       ? 7
       : completedCount;
   const progressPercent = Math.round((displayCompleted / 7) * 100);
-  const itemsConfig = getChecklistItemsConfig(houseSlug);
+  const itemsConfig = getChecklistItemsConfig(houseSlug, (key) =>
+    t(`items.${key}` as Parameters<typeof t>[0])
+  );
 
   // If already approved, show a sleek success card
   if (reviewStatus === "approved") {
@@ -46,17 +50,17 @@ export function SetupChecklistCard({
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-bold text-heading">
-                Votre pressing est en ligne !
+                {t("approvedTitle")}
               </h2>
               <p className="text-xs text-muted-foreground">
-                Votre atelier est validé et prêt à recevoir ses premières commandes.
+                {t("approvedSubtitle")}
               </p>
             </div>
           </div>
 
           <Button size="sm" asChild className="text-xs font-semibold gap-1.5 shrink-0">
             <Link href={`/houses/${houseSlug}`} target="_blank" rel="noopener noreferrer">
-              <span>Voir ma page publique</span>
+              <span>{t("viewPublicPage")}</span>
               <ExternalLink className="size-3.5" />
             </Link>
           </Button>
@@ -79,16 +83,16 @@ export function SetupChecklistCard({
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-black text-heading tracking-tight">
-                Préparez votre pressing ({displayCompleted} / 7 étapes)
+                {t("prepareTitle", { completed: displayCompleted, total: 7 })}
               </h2>
               <p className="text-xs text-muted-foreground">
-                Complétez ces étapes clés pour activer votre pressing et recevoir vos premières commandes.
+                {t("prepareSubtitle")}
               </p>
             </div>
           </div>
 
           <span className="text-xs font-bold text-primary self-start sm:self-auto bg-primary/10 px-2.5 py-1 rounded-full">
-            {progressPercent}% complété
+            {t("progressCompleted", { percent: progressPercent })}
           </span>
         </div>
 
@@ -106,8 +110,7 @@ export function SetupChecklistCard({
         <Alert className="border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-200 py-3">
           <Clock className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <AlertDescription className="text-xs font-semibold leading-relaxed">
-            <strong>En attente de validation par SafiHub :</strong> Votre pressing est en cours d&apos;examen par notre équipe.
-            Vous pouvez toujours modifier vos tarifs ou horaires ; les modifications seront examinées lors de la validation.
+            <strong>{t("pendingReviewTitle")}</strong> {t("pendingReviewDesc")}
           </AlertDescription>
         </Alert>
       )}
@@ -118,9 +121,9 @@ export function SetupChecklistCard({
           <div className="flex items-start gap-2">
             <AlertCircle className="size-4 shrink-0 mt-0.5" />
             <div className="text-xs leading-relaxed space-y-1">
-              <p className="font-bold">Corrections demandées par l&apos;équipe SafiHub :</p>
+              <p className="font-bold">{t("needsChangesTitle")}</p>
               <p className="text-destructive-foreground/90 bg-destructive/10 p-2.5 rounded-lg border border-destructive/20 font-mono text-[11px]">
-                {reviewNote || "Veuillez vérifier les informations signalées ci-dessous."}
+                {reviewNote || t("needsChangesFallback")}
               </p>
             </div>
           </div>
@@ -133,9 +136,9 @@ export function SetupChecklistCard({
           <div className="flex items-start gap-2">
             <ShieldAlert className="size-4 shrink-0 mt-0.5" />
             <div className="text-xs leading-relaxed space-y-1">
-              <p className="font-bold">Votre pressing est actuellement suspendu :</p>
+              <p className="font-bold">{t("suspendedTitle")}</p>
               <p className="text-destructive-foreground/90 bg-destructive/10 p-2.5 rounded-lg border border-destructive/20 font-mono text-[11px]">
-                {reviewNote || "Votre compte a été suspendu par l'administration. Veuillez contacter le support SafiHub."}
+                {reviewNote || t("suspendedFallback")}
               </p>
             </div>
           </div>
@@ -148,7 +151,7 @@ export function SetupChecklistCard({
           const isDone = checklist.items[item.key as keyof typeof checklist.items]?.done ?? false;
           const hint =
             item.key === "pricing"
-              ? checklist.items.pricing.minOrderHint
+              ? (checklist.items.pricing.hasMinOrderMismatch ? t("minOrderHint") : undefined)
               : undefined;
 
           return (
@@ -166,10 +169,10 @@ export function SetupChecklistCard({
           item={{
             key: "submit",
             stepNumber: 7,
-            title: "Soumettre pour validation",
-            benefit: "Transmet votre dossier à l'équipe SafiHub pour publication publique.",
+            title: t("submitTitle"),
+            benefit: t("submitBenefit"),
             href: "#",
-            buttonLabel: reviewStatus === "needs_changes" ? "Soumettre à nouveau" : "Soumettre",
+            buttonLabel: reviewStatus === "needs_changes" ? t("submitAgain") : t("submit"),
           }}
           isDone={reviewStatus === "pending_review"}
           onAction={() => setIsSubmitOpen(true)}

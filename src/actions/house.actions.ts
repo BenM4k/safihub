@@ -980,10 +980,33 @@ export async function updateHouseImagesAction(input: {
   const roleCheck = requireHouseManagerOrOwner(authCtx.value);
   if (!roleCheck.ok) return roleCheck;
 
+  const houseId = authCtx.value.houseId;
+  const { getStoragePublicUrl } = await import("@/lib/storage/r2-client");
+  const { normalizeStorageUrl } = await import("@/lib/storage-url");
+  const expectedPrefix = getStoragePublicUrl(`houses/${houseId}/`);
+  const internalPrefix = `/api/storage/houses/${houseId}/`;
+
+  const isValidAssetUrl = (url: string | null | undefined): boolean => {
+    if (url === null || url === undefined) return true;
+    return (
+      url.startsWith(expectedPrefix) ||
+      url.startsWith(internalPrefix) ||
+      url.includes(`/houses/${houseId}/`)
+    );
+  };
+
+  if (!isValidAssetUrl(parsed.data.coverImageUrl)) {
+    return err("URL de photo de couverture non autorisée");
+  }
+
+  if (!isValidAssetUrl(parsed.data.logoUrl)) {
+    return err("URL de logo non autorisée");
+  }
+
   const res = await updateHouseImagesService({
-    houseId: authCtx.value.houseId,
-    coverImageUrl: parsed.data.coverImageUrl,
-    logoUrl: parsed.data.logoUrl,
+    houseId,
+    coverImageUrl: parsed.data.coverImageUrl !== undefined ? normalizeStorageUrl(parsed.data.coverImageUrl) : undefined,
+    logoUrl: parsed.data.logoUrl !== undefined ? normalizeStorageUrl(parsed.data.logoUrl) : undefined,
   });
 
   if (res.ok) {
@@ -1005,6 +1028,16 @@ export async function uploadHouseAssetDirectAction(
   }
   if (!assetType || (assetType !== "cover" && assetType !== "logo")) {
     return err("Type d'élément requis ('cover' ou 'logo')");
+  }
+
+  const allowedTypes = ["image/webp", "image/jpeg", "image/png"];
+  if (!allowedTypes.includes(file.type)) {
+    return err("Format non supporté. Formats acceptés : WebP, JPEG, PNG.");
+  }
+
+  const maxSizeBytes = 5 * 1024 * 1024; // 5 MB
+  if (file.size > maxSizeBytes) {
+    return err("Fichier trop volumineux. La taille maximale est de 5 Mo.");
   }
 
   const authCtx = await getAuthenticatedHouseContext(houseIdParam);

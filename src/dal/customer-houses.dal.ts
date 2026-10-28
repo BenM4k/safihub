@@ -3,6 +3,7 @@ import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { toBukavuDateTime } from "@/services/availability/bukavu-time";
 import { filterCatalogueOutliers } from "@/services/catalog/outliers";
+import { normalizeStorageUrl } from "@/lib/storage-url";
 
 export interface CustomerHouseSummary {
   id: string;
@@ -274,7 +275,9 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       lng: 28.8608 + (index * 0.003),
     };
 
-    const imageUrl = h.coverImageUrl || HOUSE_STOCK_IMAGES[h.name] || DEFAULT_HOUSE_IMAGE;
+    const normalizedCover = normalizeStorageUrl(h.coverImageUrl);
+    const normalizedLogo = normalizeStorageUrl(h.logoUrl);
+    const imageUrl = normalizedCover || HOUSE_STOCK_IMAGES[h.name] || DEFAULT_HOUSE_IMAGE;
 
     return {
       id: h.id,
@@ -300,8 +303,8 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       rating: null,
       reviewCount: 0,
       imageUrl,
-      coverImageUrl: h.coverImageUrl || imageUrl,
-      logoUrl: h.logoUrl ?? null,
+      coverImageUrl: normalizedCover || imageUrl,
+      logoUrl: normalizedLogo,
       coords,
     };
   });
@@ -479,7 +482,9 @@ export async function getCustomerHouseDetail(
     });
   }
 
-  const imageUrl = house.coverImageUrl || HOUSE_STOCK_IMAGES[house.name] || DEFAULT_HOUSE_IMAGE;
+  const normalizedCover = normalizeStorageUrl(house.coverImageUrl);
+  const normalizedLogo = normalizeStorageUrl(house.logoUrl);
+  const imageUrl = normalizedCover || HOUSE_STOCK_IMAGES[house.name] || DEFAULT_HOUSE_IMAGE;
   const reviewCount = ratingStatsRow?.reviewCount ?? 0;
   // Threshold: below 3 reviews, rating is null so the UI displays "Nouveau"
   const rating =
@@ -521,8 +526,8 @@ export async function getCustomerHouseDetail(
       rating,
       reviewCount,
       imageUrl,
-      coverImageUrl: house.coverImageUrl || imageUrl,
-      logoUrl: house.logoUrl ?? null,
+      coverImageUrl: normalizedCover || imageUrl,
+      logoUrl: normalizedLogo,
       galleryImages,
       description: house.description ?? "Pressing artisanal & moderne à Bukavu, partenaire vérifié SafiHub.",
       createdAt: house.createdAt,

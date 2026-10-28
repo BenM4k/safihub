@@ -37,7 +37,8 @@ export async function generateMetadata({
   const cover = house.coverImageUrl || house.imageUrl;
   const title = `${house.name} - Services & Tarifs | SafiHub Bukavu`;
   const description = `Consultez les tarifs de pressing, lavage et repassage de ${house.name} à ${house.neighborhoodName}, Bukavu. Délais garantis et paiement à la livraison.`;
-  const pageUrl = `https://safihub.cd/houses/${house.slug}`;
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const pageUrl = `${baseUrl}/houses/${house.slug}`;
 
   return {
     title,
@@ -119,7 +120,8 @@ export default async function CustomerHouseDetailPage({
   }
 
   const usdExchangeRate = rateRecord?.rate ? Number(rateRecord.rate) : 2800;
-  const pageUrl = `https://safihub.cd/houses/${data.house.slug}`;
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const pageUrl = `${baseUrl}/houses/${data.house.slug}`;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

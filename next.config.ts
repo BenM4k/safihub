@@ -48,14 +48,9 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.r2.dev",
       },
-      {
-        protocol: "https",
-        hostname: "storage.safihub.cd",
-      },
-      {
-        protocol: "https",
-        hostname: "safihub.cd",
-      },
+      ...(process.env.STORAGE_HOSTNAME
+        ? [{ protocol: "https" as const, hostname: process.env.STORAGE_HOSTNAME }]
+        : []),
     ],
   },
   async headers() {

@@ -2,6 +2,7 @@ import "server-only";
 
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "./db";
+import { normalizeStorageUrl } from "@/lib/storage-url";
 import type {
   House,
   HouseReviewEvent,
@@ -134,8 +135,8 @@ export async function getHouseChecklistDerivation(
     items: {
       photos: {
         done: photosDone,
-        coverImageUrl: house.coverImageUrl,
-        logoUrl: house.logoUrl,
+        coverImageUrl: normalizeStorageUrl(house.coverImageUrl),
+        logoUrl: normalizeStorageUrl(house.logoUrl),
       },
       hours: { done: hoursDone, count: hoursCount },
       pricing: {

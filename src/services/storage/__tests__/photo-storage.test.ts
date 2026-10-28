@@ -86,10 +86,10 @@ vi.mock("@/dal", () => ({
 
 vi.mock("@/lib/storage/r2-client", () => ({
   getSignedUploadUrl: vi.fn(
-    async (key: string) => `https://r2.safihub.cd/safihub/${key}?mock_put=1`
+    async (key: string) => `/api/storage/${key}?mock_put=1`
   ),
   getSignedDownloadUrl: vi.fn(
-    async (key: string) => `https://r2.safihub.cd/safihub/${key}?mock_get=1`
+    async (key: string) => `/api/storage/${key}?mock_get=1`
   ),
   deleteStorageObject: vi.fn(async () => true),
   headStorageObject: vi.fn(async (key: string) => ({
@@ -192,7 +192,7 @@ describe("Phase 7: Cloudflare R2 Photos, Compression & Storage Architecture", ()
 
       expect(res.ok).toBe(true);
       if (res.ok) {
-        expect(res.value.uploadUrl).toContain("https://r2.safihub.cd");
+        expect(res.value.uploadUrl).toContain("/api/storage/");
         expect(res.value.storageKey).toContain("orders/ord_100/pickup_condition/");
         expect(res.value.expiresInSeconds).toBe(300);
       }
@@ -206,7 +206,7 @@ describe("Phase 7: Cloudflare R2 Photos, Compression & Storage Architecture", ()
 
       expect(res.ok).toBe(true);
       if (res.ok) {
-        expect(res.value.downloadUrl).toContain("https://r2.safihub.cd");
+        expect(res.value.downloadUrl).toContain("/api/storage/");
         expect(res.value.storageKey).toBe("orders/ord_100/pickup_condition/photo1.webp");
         expect(res.value.expiresInSeconds).toBe(900);
       }
@@ -293,8 +293,8 @@ describe("Phase 7: Cloudflare R2 Photos, Compression & Storage Architecture", ()
       expect(res.ok).toBe(true);
       if (res.ok) {
         expect(res.value.length).toBe(2);
-        expect(res.value[0]?.downloadUrl).toContain("https://r2.safihub.cd");
-        expect(res.value[1]?.downloadUrl).toContain("https://r2.safihub.cd");
+        expect(res.value[0]?.downloadUrl).toContain("/api/storage/");
+        expect(res.value[1]?.downloadUrl).toContain("/api/storage/");
       }
     });
 

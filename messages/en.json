@@ -1788,6 +1788,67 @@
       "deleteCoverSuccess": "Cover photo removed",
       "deleteLogoSuccess": "Logo removed"
     },
+    "checklist": {
+      "approvedTitle": "Your laundry house is live!",
+      "approvedSubtitle": "Your workshop is approved and ready to receive its first orders.",
+      "viewPublicPage": "View my public page",
+      "prepareTitle": "Prepare your laundry house ({completed} / {total} steps)",
+      "prepareSubtitle": "Complete these key steps to activate your laundry house and receive your first orders.",
+      "progressCompleted": "{percent}% completed",
+      "pendingReviewTitle": "Pending validation by SafiHub:",
+      "pendingReviewDesc": "Your laundry house is currently being reviewed by our team. You can still modify your prices or hours; changes will be reviewed during validation.",
+      "needsChangesTitle": "Corrections requested by SafiHub team:",
+      "needsChangesFallback": "Please check the items flagged below.",
+      "suspendedTitle": "Your laundry house is currently suspended:",
+      "suspendedFallback": "Your account has been suspended by administration. Please contact SafiHub support.",
+      "submitTitle": "Submit for validation",
+      "submitBenefit": "Submits your profile to the SafiHub team for public listing.",
+      "submitAgain": "Submit again",
+      "submit": "Submit",
+      "minOrderHint": "Your lowest price is lower than the minimum order amount: customers will not be able to order this item alone.",
+      "items": {
+        "photos": {
+          "title": "Cover photo and logo",
+          "benefit": "Provides a professional first impression on the customer map.",
+          "buttonLabel": "Profile"
+        },
+        "hours": {
+          "title": "Opening hours",
+          "benefit": "Defines the windows when couriers can drop off laundry.",
+          "buttonLabel": "Hours"
+        },
+        "pricing": {
+          "title": "At least 1 item with price",
+          "benefit": "Without prices, customer orders cannot be placed.",
+          "buttonLabel": "Catalogue"
+        },
+        "coverage": {
+          "title": "At least 1 covered neighborhood",
+          "benefit": "Allows customers in these neighborhoods to order from you.",
+          "buttonLabel": "Zones"
+        },
+        "payment": {
+          "title": "Payment payout method",
+          "benefit": "Indicates the Mobile Money number to receive your payouts.",
+          "buttonLabel": "Payment"
+        },
+        "contact": {
+          "title": "Contact phone number",
+          "benefit": "Direct phone line used by support team and couriers.",
+          "buttonLabel": "Contact"
+        }
+      }
+    },
+    "tour": {
+      "start": "Start",
+      "finish": "Finish",
+      "next": "Next",
+      "prev": "Previous",
+      "done": "Done",
+      "skipTour": "Skip tour",
+      "skippedToast": "Tour skipped. You can review it from Help.",
+      "completedToast": "Tour completed! You can now complete your laundry house."
+    },
     "pauseModal": {
       "pauseTitle": "Pause new orders?",
       "resumeTitle": "Resume accepting orders?",

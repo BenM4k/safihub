@@ -52,6 +52,10 @@ export function LogoUploadModal({
       return;
     }
 
+    if (previewUrl && previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
   }

@@ -54,7 +54,7 @@ export async function sendEmail({
 
   const resendApiKey = process.env.RESEND_API_KEY;
   const fromEmail =
-    process.env.EMAIL_FROM || "SafiHub <no-reply@safihub.cd>";
+    process.env.EMAIL_FROM || `SafiHub <no-reply@${process.env.EMAIL_DOMAIN || "safihub.com"}>`;
 
   if (resendApiKey && process.env.NODE_ENV !== "test") {
     try {

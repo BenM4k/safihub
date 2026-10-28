@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import { normalizeStorageUrl } from "@/lib/storage-url";
 
 function getStoredCover(houseId: string): string | null {
   if (typeof window === "undefined") return null;
   try {
     const val = localStorage.getItem(`safihub_house_cover_${houseId}`);
-    return val && !val.startsWith("blob:") ? val : null;
+    return val && !val.startsWith("blob:") ? normalizeStorageUrl(val) : null;
   } catch {
     return null;
   }
@@ -28,7 +29,8 @@ export function usePartnerBannerCover(
     () => null
   );
 
-  const coverImageUrl = uploadedCoverUrl ?? initialCoverUrl ?? storedCover;
+  const rawCover = uploadedCoverUrl ?? initialCoverUrl ?? storedCover;
+  const coverImageUrl = normalizeStorageUrl(rawCover);
 
   function saveCover(newUrl: string) {
     setUploadedCoverUrl(newUrl);

@@ -17,6 +17,7 @@ export function PartnerTourRunner({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMobile, setIsMobile] = useState(false);
+  const [isDeviceReady, setIsDeviceReady] = useState(false);
   const [isOrderPaused, setIsOrderPaused] = useState(false);
   const [reminderCount, setReminderCount] = useState(onboarding?.reminderCount ?? 0);
   const [dismissedInSession, setDismissedInSession] = useState(false);
@@ -25,6 +26,7 @@ export function PartnerTourRunner({
   useEffect(() => {
     function checkDevice() {
       setIsMobile(window.innerWidth < 768);
+      setIsDeviceReady(true);
     }
     checkDevice();
     window.addEventListener("resize", checkDevice);
@@ -74,7 +76,13 @@ export function PartnerTourRunner({
   // Handle URL query tour=start or custom event safihub:restart-tour
   useEffect(() => {
     const shouldForceStart = searchParams.get("tour") === "start";
-    if (shouldForceStart && !forceTourStartedRef.current && isDashboard && waitingAcceptanceCount === 0) {
+    if (
+      shouldForceStart &&
+      isDeviceReady &&
+      !forceTourStartedRef.current &&
+      isDashboard &&
+      waitingAcceptanceCount === 0
+    ) {
       forceTourStartedRef.current = true;
       startTour(0);
     }
@@ -84,7 +92,7 @@ export function PartnerTourRunner({
     }
     window.addEventListener("safihub:restart-tour", handleRestartEvent);
     return () => window.removeEventListener("safihub:restart-tour", handleRestartEvent);
-  }, [searchParams, isDashboard, waitingAcceptanceCount, startTour]);
+  }, [searchParams, isDeviceReady, isDashboard, waitingAcceptanceCount, startTour]);
 
   // Order arrival guard: pause tour if an order arrives
   useEffect(() => {

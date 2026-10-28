@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateBannerImageFile } from "@/lib/partner-dashboard";
 import { uploadHouseAsset } from "@/lib/house-asset-uploader";
 import { updateHouseImagesAction } from "@/actions/house.actions";
+import { normalizeStorageUrl } from "@/lib/storage-url";
 
 interface LogoPhotoSectionProps {
   houseId: string;
@@ -21,7 +22,9 @@ export function LogoPhotoSection({
   initialLogoUrl,
 }: LogoPhotoSectionProps) {
   const t = useTranslations("house.settingsPhotos");
-  const [logoUrl, setLogoUrl] = useState<string | null>(initialLogoUrl ?? null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(
+    normalizeStorageUrl(initialLogoUrl) ?? null
+  );
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);

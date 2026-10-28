@@ -35,7 +35,7 @@ export function ApprovalCredentialsPanel({
   const loginUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/login`
-      : "https://safihub.cd/login";
+      : `${(process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "").replace(/\/$/, "")}/login`;
 
   const handleCopyPassword = () => {
     navigator.clipboard.writeText(temporaryPassword);

@@ -1,6 +1,7 @@
 "use client";
 
 import { Star, Camera } from "lucide-react";
+import { normalizeStorageUrl } from "@/lib/storage-url";
 
 interface PartnerBannerIdentityProps {
   name: string;
@@ -25,15 +26,17 @@ export function PartnerBannerIdentity({
   statusPill,
   onOpenLogoUpload,
 }: PartnerBannerIdentityProps) {
+  const displayLogoUrl = normalizeStorageUrl(logoUrl);
+
   return (
     <div className="flex items-stretch gap-3 sm:gap-3.5 min-w-0 flex-1">
       {/* 1. Logo container: matches the 3-row column height */}
       <div className="relative group aspect-square self-stretch shrink-0 min-w-[3.75rem] max-w-[5rem] rounded-2xl bg-card p-1 shadow-card border-2 border-card overflow-hidden flex items-center justify-center">
         <div className="size-full rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-black text-xl sm:text-2xl font-display shadow-xs relative overflow-hidden">
-          {logoUrl ? (
+          {displayLogoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={logoUrl}
+              src={displayLogoUrl}
               alt={`Logo ${name}`}
               className="size-full object-cover rounded-xl"
             />

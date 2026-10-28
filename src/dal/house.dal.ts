@@ -4,6 +4,7 @@ import { db, schema } from "./db";
 import { generateUniqueSlug } from "@/lib/slug";
 import { toBukavuDateTime } from "@/services/availability";
 import { err, ok, type Result } from "@/lib/result";
+import { normalizeStorageUrl } from "@/lib/storage-url";
 
 import type { HouseReviewStatus } from "@/services/db/schema";
 
@@ -210,7 +211,11 @@ export async function getHouses(): Promise<HouseRecord[]> {
     )
     .orderBy(asc(schema.houses.name));
 
-  return rows;
+  return rows.map((r) => ({
+    ...r,
+    coverImageUrl: normalizeStorageUrl(r.coverImageUrl),
+    logoUrl: normalizeStorageUrl(r.logoUrl),
+  }));
 }
 
 export async function getHouseById(id: string): Promise<HouseRecord | null> {
@@ -247,7 +252,12 @@ export async function getHouseById(id: string): Promise<HouseRecord | null> {
     .where(eq(schema.houses.id, id))
     .limit(1);
 
-  return row ?? null;
+  if (!row) return null;
+  return {
+    ...row,
+    coverImageUrl: normalizeStorageUrl(row.coverImageUrl),
+    logoUrl: normalizeStorageUrl(row.logoUrl),
+  };
 }
 
 export async function getHouseBySlug(
@@ -286,7 +296,12 @@ export async function getHouseBySlug(
     .where(eq(schema.houses.slug, slug))
     .limit(1);
 
-  return row ?? null;
+  if (!row) return null;
+  return {
+    ...row,
+    coverImageUrl: normalizeStorageUrl(row.coverImageUrl),
+    logoUrl: normalizeStorageUrl(row.logoUrl),
+  };
 }
 
 export async function createHouse(data: {

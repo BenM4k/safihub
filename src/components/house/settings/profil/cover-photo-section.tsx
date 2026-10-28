@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateBannerImageFile } from "@/lib/partner-dashboard";
 import { uploadHouseAsset } from "@/lib/house-asset-uploader";
 import { updateHouseImagesAction } from "@/actions/house.actions";
+import { normalizeStorageUrl } from "@/lib/storage-url";
 
 interface CoverPhotoSectionProps {
   houseId: string;
@@ -19,7 +20,9 @@ export function CoverPhotoSection({
   initialCoverUrl,
 }: CoverPhotoSectionProps) {
   const t = useTranslations("house.settingsPhotos");
-  const [coverUrl, setCoverUrl] = useState<string | null>(initialCoverUrl ?? null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(
+    normalizeStorageUrl(initialCoverUrl) ?? null
+  );
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Heart, Share2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { normalizeStorageUrl } from "@/lib/storage-url";
 
 interface HouseCardImageProps {
   imageUrl: string;
@@ -23,6 +24,7 @@ export function HouseCardImage({
 }: HouseCardImageProps) {
   const t = useTranslations("customerHouses");
   const [isFavorited, setIsFavorited] = useState(false);
+  const displayUrl = normalizeStorageUrl(imageUrl) || imageUrl;
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -63,7 +65,7 @@ export function HouseCardImage({
   return (
     <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
       <Image
-        src={imageUrl}
+        src={displayUrl}
         alt={name}
         fill
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

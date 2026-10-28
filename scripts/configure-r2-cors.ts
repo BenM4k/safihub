@@ -29,14 +29,18 @@ const client = new S3Client({
 
 async function main() {
   try {
+    const allowedOrigins = process.env.R2_CORS_ORIGINS
+      ? process.env.R2_CORS_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)
+      : ["*"];
+
     const corsCommand = new PutBucketCorsCommand({
       Bucket: bucket,
       CORSConfiguration: {
         CORSRules: [
           {
-            AllowedHeaders: ["*"],
-            AllowedMethods: ["GET", "PUT", "HEAD", "POST", "DELETE"],
-            AllowedOrigins: ["*"],
+            AllowedHeaders: ["Content-Type"],
+            AllowedMethods: ["GET", "PUT", "HEAD"],
+            AllowedOrigins: allowedOrigins,
             ExposeHeaders: ["ETag"],
             MaxAgeSeconds: 3600,
           },

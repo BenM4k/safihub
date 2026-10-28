@@ -90,7 +90,7 @@ describe("House Photos & Asset Upload Pipeline", () => {
     expect(initialChecklist?.items.photos.logoUrl).toBeNull();
 
     // 2. Set cover image via service
-    const testCoverUrl = "https://storage.safihub.cd/safihub/houses/test-cover.webp";
+    const testCoverUrl = "/api/storage/houses/test-cover.webp";
     const setCoverRes = await updateHouseImagesService({
       houseId: house.id,
       coverImageUrl: testCoverUrl,
@@ -111,7 +111,7 @@ describe("House Photos & Asset Upload Pipeline", () => {
     expect(checklistAfterCover?.items.photos.coverImageUrl).toBe(testCoverUrl);
 
     // 3. Set logo image via service
-    const testLogoUrl = "https://storage.safihub.cd/safihub/houses/test-logo.webp";
+    const testLogoUrl = "/api/storage/houses/test-logo.webp";
     const setLogoRes = await updateHouseImagesService({
       houseId: house.id,
       logoUrl: testLogoUrl,

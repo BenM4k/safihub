@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   updateOnboardingStepAction,
@@ -24,6 +25,7 @@ export function useTourDriver({
   initialStepId,
   onTourEnd,
 }: UseTourDriverOptions) {
+  const t = useTranslations("house.tour");
   const router = useRouter();
   const pathname = usePathname();
   const [isActive, setIsActive] = useState(false);
@@ -56,19 +58,19 @@ export function useTourDriver({
   const handleSkip = useCallback(async () => {
     const currentStep = steps[currentStepIndex];
     stopTour();
-    toast.info("Visite ignorée. Vous pouvez la revoir depuis Aide.");
+    toast.info(t("skippedToast"));
     try {
       await skipOnboardingTourAction({ stepId: currentStep?.id });
     } catch {
       // Optimistic persistence
     }
-  }, [steps, currentStepIndex, stopTour]);
+  }, [steps, currentStepIndex, stopTour, t]);
 
   // Handle tour completion
   const handleFinish = useCallback(async () => {
     const lastStep = steps[steps.length - 1];
     stopTour();
-    toast.success("Visite terminée ! Vous pouvez maintenant compléter votre pressing.");
+    toast.success(t("completedToast"));
     try {
       await updateOnboardingStepAction({
         stepId: lastStep?.id ?? "completed",
@@ -83,7 +85,7 @@ export function useTourDriver({
       const checklistCard = document.querySelector('[data-tour-id="tour-checklist-card"]');
       checklistCard?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 400);
-  }, [steps, stopTour, router, houseSlug]);
+  }, [steps, stopTour, router, houseSlug, t]);
 
   // Render a specific step by index
   const renderStep = useCallback(
@@ -116,10 +118,10 @@ export function useTourDriver({
       const isLast = stepIdx === steps.length - 1;
 
       const nextLabel = isFirst
-        ? "Commencer"
+        ? t("start")
         : isLast
-          ? "Terminer"
-          : step.actionCta ?? "Suivant";
+          ? t("finish")
+          : step.actionCta ?? t("next");
 
       // Configure driver instance
       const driverObj = driver({
@@ -128,8 +130,8 @@ export function useTourDriver({
         showProgress: true,
         progressText: `${stepIdx + 1} / ${steps.length}`,
         nextBtnText: nextLabel,
-        prevBtnText: "Précédent",
-        doneBtnText: "Terminer",
+        prevBtnText: t("prev"),
+        doneBtnText: t("done"),
         allowClose: true,
         onNextClick: () => {
           if (isLast) {
@@ -177,7 +179,7 @@ export function useTourDriver({
             const skipBtn = document.createElement("button");
             skipBtn.type = "button";
             skipBtn.className = "safihub-tour-skip-btn";
-            skipBtn.textContent = "Passer la visite";
+            skipBtn.textContent = t("skipTour");
             skipBtn.onclick = (e) => {
               e.preventDefault();
               handleSkip();
@@ -210,7 +212,7 @@ export function useTourDriver({
         });
       }
     },
-    [steps, houseSlug, pathname, router, handleFinish, handleSkip]
+    [steps, houseSlug, pathname, router, handleFinish, handleSkip, t]
   );
 
   useEffect(() => {

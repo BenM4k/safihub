@@ -22,6 +22,10 @@ export function usePartnerBannerModals() {
       return;
     }
 
+    if (stagedPreviewUrl && stagedPreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(stagedPreviewUrl);
+    }
+
     const previewUrl = URL.createObjectURL(file);
     setStagedFile(file);
     setStagedPreviewUrl(previewUrl);
@@ -29,6 +33,9 @@ export function usePartnerBannerModals() {
   }
 
   function handleCloseCoverModal() {
+    if (stagedPreviewUrl && stagedPreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(stagedPreviewUrl);
+    }
     setIsUploadOpen(false);
     setStagedPreviewUrl(null);
     setStagedFile(null);

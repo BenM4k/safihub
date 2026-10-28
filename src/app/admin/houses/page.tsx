@@ -1,8 +1,11 @@
+import { guardAdminRoute } from "@/services/auth";
 import { listAdminHousesEnriched, listAdminNeighborhoods } from "@/services/admin";
 import { listAdminPendingHouseReviews } from "@/dal";
 import { HousesManagementView } from "@/components/admin/houses/houses-management-view";
 
 export default async function AdminHousesPage() {
+  await guardAdminRoute();
+
   const [housesRes, neighRes, pendingReviews] = await Promise.all([
     listAdminHousesEnriched(),
     listAdminNeighborhoods(),

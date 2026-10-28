@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, Check, AlertCircle, Loader2 } from "lucide-react";
+import { Check, AlertCircle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -74,6 +74,10 @@ export function BannerUploadModal({
     if (!validation.ok) {
       setError(validation.error);
       return;
+    }
+
+    if (previewUrl && previewUrl !== initialPreviewUrl && previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
     }
 
     setSelectedFile(file);
