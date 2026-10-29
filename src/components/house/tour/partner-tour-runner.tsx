@@ -56,9 +56,15 @@ export function PartnerTourRunner({
   const autoStartedRef = useRef(false);
   const forceTourStartedRef = useRef(false);
 
-  // Auto-start trigger: only when not_started, on dashboard, and 0 orders waiting
   useEffect(() => {
-    if (autoStartedRef.current) return;
+    if (searchParams.get("tour") !== "start") {
+      forceTourStartedRef.current = false;
+    }
+  }, [searchParams]);
+
+  // Auto-start trigger: only when device is ready, not_started, on dashboard, and 0 orders waiting
+  useEffect(() => {
+    if (!isDeviceReady || autoStartedRef.current) return;
     const shouldAutoStart =
       (!onboarding || onboarding.status === "not_started") &&
       isDashboard &&
@@ -71,7 +77,7 @@ export function PartnerTourRunner({
       }, 700);
       return () => clearTimeout(timer);
     }
-  }, [onboarding, isDashboard, waitingAcceptanceCount, startTour]);
+  }, [isDeviceReady, onboarding, isDashboard, waitingAcceptanceCount, startTour]);
 
   // Handle URL query tour=start or custom event safihub:restart-tour
   useEffect(() => {
@@ -122,14 +128,19 @@ export function PartnerTourRunner({
   }, []);
 
   const hasIncompleteTour =
+    isDashboard &&
     !isActive &&
     !isOrderPaused &&
     !dismissedInSession &&
     onboarding?.status === "in_progress" &&
     reminderCount < 2;
 
+  if (!isOrderPaused && !hasIncompleteTour) {
+    return null;
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="mb-5">
       <TourResumeBanner
         isOrderPaused={isOrderPaused}
         hasIncompleteTour={hasIncompleteTour}

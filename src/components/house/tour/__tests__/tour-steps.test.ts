@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getDesktopTourSteps, getMobileTourSteps } from "../tour-steps";
+import { resolveInitialStepIndex } from "../popover-helpers";
 
 describe("Guided Tour Steps Configuration", () => {
   it("provides 6 steps for desktop with correct spotlight targets and navigation routes", () => {
@@ -54,5 +55,15 @@ describe("Guided Tour Steps Configuration", () => {
 
     expect(steps[3].id).toBe("mobile_plus");
     expect(steps[3].targetTourId).toBe("tour-mobile-tab-more");
+  });
+
+  it("resolves initial step index across desktop and mobile step lists", () => {
+    const desktopSteps = getDesktopTourSteps("Pressing Test");
+    const mobileSteps = getMobileTourSteps();
+
+    expect(resolveInitialStepIndex(mobileSteps, "mobile_catalogue")).toBe(2);
+    expect(resolveInitialStepIndex(mobileSteps, "welcome")).toBe(0);
+    expect(resolveInitialStepIndex(desktopSteps, "catalogue")).toBe(3);
+    expect(resolveInitialStepIndex(desktopSteps, null)).toBe(0);
   });
 });

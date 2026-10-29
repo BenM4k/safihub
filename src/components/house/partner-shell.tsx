@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -21,7 +21,12 @@ import { HouseSwitcher } from "./house-switcher";
 import { usePartnerSound } from "./use-partner-sound";
 import { PartnerHelpMenu } from "./partner-help-menu";
 import { ChecklistCompactIndicator } from "./onboarding/checklist-compact-indicator";
-import type { HouseChecklistDerivation, HouseMembershipInfo } from "@/dal";
+import { PartnerTourRunner } from "./tour/partner-tour-runner";
+import type {
+  HouseChecklistDerivation,
+  HouseMembershipInfo,
+  PartnerOnboardingData,
+} from "@/dal";
 import { useTranslations } from "next-intl";
 
 interface PartnerShellProps {
@@ -33,6 +38,7 @@ interface PartnerShellProps {
   user?: AppShellUser | null;
   waitingCount?: number;
   checklist?: HouseChecklistDerivation | null;
+  onboarding?: PartnerOnboardingData | null;
   children: ReactNode;
 }
 
@@ -48,6 +54,7 @@ export function PartnerShell({
   user,
   waitingCount = 0,
   checklist,
+  onboarding,
   children,
 }: PartnerShellProps) {
   const { soundEnabled, toggleSound } = usePartnerSound();
@@ -205,6 +212,14 @@ export function PartnerShell({
         ) : undefined
       }
     >
+      <Suspense fallback={null}>
+        <PartnerTourRunner
+          onboarding={onboarding ?? null}
+          houseSlug={houseSlug}
+          houseName={houseName}
+          waitingAcceptanceCount={waitingCount}
+        />
+      </Suspense>
       {children}
     </AppShell>
   );

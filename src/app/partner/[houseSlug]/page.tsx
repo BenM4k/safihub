@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { guardHouseRoute } from "@/services/auth";
 import { getHouseDashboardData } from "@/services/house";
-import { getHouseChecklistDerivation, getPartnerOnboarding } from "@/dal";
+import { getHouseChecklistDerivation } from "@/dal";
 import { PartnerDashboardView } from "@/components/house/dashboard/partner-dashboard-view";
 
 interface PageProps {
@@ -25,10 +25,9 @@ export default async function PartnerDashboardPage({ params }: PageProps) {
     notFound();
   }
 
-  const [dashboardRes, checklist, onboarding] = await Promise.all([
+  const [dashboardRes, checklist] = await Promise.all([
     getHouseDashboardData(houseId),
     getHouseChecklistDerivation(houseId),
-    getPartnerOnboarding(authCtx.user.id),
   ]);
 
   if (!dashboardRes.ok) {
@@ -45,7 +44,6 @@ export default async function PartnerDashboardPage({ params }: PageProps) {
       initialMetrics={dashboardRes.value}
       houseSlug={houseSlug}
       checklist={checklist}
-      onboarding={onboarding}
     />
   );
 }
