@@ -425,17 +425,19 @@ export async function setHouseHours(
   houseId: string,
   hours: Array<{ weekday: number; opensAt: string; closesAt: string }>
 ): Promise<void> {
-  await db.delete(schema.houseHours).where(eq(schema.houseHours.houseId, houseId));
-  if (hours.length > 0) {
-    await db.insert(schema.houseHours).values(
-      hours.map((h) => ({
-        houseId,
-        weekday: h.weekday,
-        opensAt: h.opensAt,
-        closesAt: h.closesAt,
-      }))
-    );
-  }
+  await db.transaction(async (tx) => {
+    await tx.delete(schema.houseHours).where(eq(schema.houseHours.houseId, houseId));
+    if (hours.length > 0) {
+      await tx.insert(schema.houseHours).values(
+        hours.map((h) => ({
+          houseId,
+          weekday: h.weekday,
+          opensAt: h.opensAt,
+          closesAt: h.closesAt,
+        }))
+      );
+    }
+  });
 }
 
 export async function getHouseClosures(houseId: string): Promise<HouseClosureRecord[]> {

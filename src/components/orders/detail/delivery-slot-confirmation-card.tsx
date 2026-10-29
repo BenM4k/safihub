@@ -13,6 +13,7 @@ interface DeliverySlotConfirmationCardProps {
   deliverySlotStart: Date | null;
   deliverySlotEnd: Date | null;
   method?: "app" | "tracking_link";
+  trackingToken?: string;
 }
 
 export function DeliverySlotConfirmationCard({
@@ -21,6 +22,7 @@ export function DeliverySlotConfirmationCard({
   deliverySlotStart,
   deliverySlotEnd,
   method = "app",
+  trackingToken,
 }: DeliverySlotConfirmationCardProps) {
   const t = useTranslations("orders");
   const [loading, setLoading] = useState(false);
@@ -38,7 +40,8 @@ export function DeliverySlotConfirmationCard({
         orderId,
         start.toISOString(),
         end.toISOString(),
-        method
+        method,
+        trackingToken
       );
       if (!res.success) {
         setError(res.error || "Impossible de confirmer le créneau.");

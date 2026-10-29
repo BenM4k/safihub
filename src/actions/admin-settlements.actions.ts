@@ -1,7 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getCurrentUser } from "@/services/auth";
+import { requireRole } from "@/services/auth";
 import { err, type Result } from "@/lib/result";
 import {
   settleAdminHouse,
@@ -37,44 +38,59 @@ const reverseSettlementSchema = z.object({
 export async function settleHouseAction(
   data: z.infer<typeof settleHouseSchema>
 ): Promise<Result<{ settlementId?: string; newBalanceCDF: number }>> {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "admin") return err("Non autorisé : droits administrateur requis");
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err("Non autorisé : droits administrateur requis");
 
   const parsed = settleHouseSchema.safeParse(data);
   if (!parsed.success) return err(parsed.error.issues[0]?.message || "Données invalides");
 
-  return await settleAdminHouse({
+  const res = await settleAdminHouse({
     ...parsed.data,
-    adminId: user.id,
+    adminId: auth.value.user.id,
   });
+  if (res.ok) {
+    revalidatePath("/admin/settlements");
+    revalidatePath("/partner", "layout");
+  }
+  return res;
 }
 
 export async function settleCourierAction(
   data: z.infer<typeof settleCourierSchema>
 ): Promise<Result<{ settlementId?: string; newBalanceCDF: number }>> {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "admin") return err("Non autorisé : droits administrateur requis");
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err("Non autorisé : droits administrateur requis");
 
   const parsed = settleCourierSchema.safeParse(data);
   if (!parsed.success) return err(parsed.error.issues[0]?.message || "Données invalides");
 
-  return await settleAdminCourier({
+  const res = await settleAdminCourier({
     ...parsed.data,
-    adminId: user.id,
+    adminId: auth.value.user.id,
   });
+  if (res.ok) {
+    revalidatePath("/admin/settlements");
+    revalidatePath("/admin/couriers");
+  }
+  return res;
 }
 
 export async function reverseSettlementAction(
   data: z.infer<typeof reverseSettlementSchema>
 ): Promise<Result<{ reversalId?: string }>> {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "admin") return err("Non autorisé : droits administrateur requis");
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err("Non autorisé : droits administrateur requis");
 
   const parsed = reverseSettlementSchema.safeParse(data);
   if (!parsed.success) return err(parsed.error.issues[0]?.message || "Données invalides");
 
-  return await reverseAdminSettlement({
+  const res = await reverseAdminSettlement({
     ...parsed.data,
-    adminId: user.id,
+    adminId: auth.value.user.id,
   });
+  if (res.ok) {
+    revalidatePath("/admin/settlements");
+    revalidatePath("/partner", "layout");
+  }
+  return res;
 }

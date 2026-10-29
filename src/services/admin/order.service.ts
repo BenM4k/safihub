@@ -12,7 +12,7 @@ import {
   getSettings,
   getUserByContactPhone,
   insertOrderWithDetails,
-  updateOrderStatus,
+  transitionOrderStatusAtomic,
   updateOrderStatusIfCurrent,
   updateOrderStatusWithDeadline,
   type OrderDetailRecord,
@@ -83,6 +83,10 @@ export async function executeAdminOnBehalfAction(params: {
       return err("Order not found");
     }
 
+    if (params.onBehalfOfHouseId && order.houseId !== params.onBehalfOfHouseId) {
+      return err("Order does not belong to the specified laundry house");
+    }
+
     const transitionResult = transitionOrder(order.id, order.status, {
       targetStatus: params.targetStatus,
       actorId: params.adminId,
@@ -97,8 +101,16 @@ export async function executeAdminOnBehalfAction(params: {
       return err(transitionResult.error);
     }
 
-    await updateOrderStatus(order.id, params.targetStatus);
-    await addOrderEvent(transitionResult.value.event);
+    const updated = await transitionOrderStatusAtomic({
+      orderId: order.id,
+      expectedStatus: order.status,
+      newStatus: params.targetStatus,
+      event: transitionResult.value.event,
+    });
+
+    if (!updated) {
+      return err("Order status has changed concurrently");
+    }
 
     return ok(undefined);
   } catch (error) {
@@ -273,6 +285,7 @@ export async function createManualAdminOrder(params: {
     const context = await buildOrderValidationContext({
       houseId: params.houseId,
       customerId: customer.id,
+      contactPhone: params.customerPhone.trim(),
       idempotencyKey,
     });
 
@@ -301,6 +314,12 @@ export async function createManualAdminOrder(params: {
     const val = validation.value;
     const code = `SF-${Math.floor(100000 + Math.random() * 900000)}`;
     const trackingToken = crypto.randomUUID();
+    const deadlines = computeAcceptanceDeadlines(
+      new Date(),
+      context.settings.acceptanceDelayMinutes,
+      context.houseHours.filter((h) => h.houseId === params.houseId),
+      context.houseClosures.filter((c) => c.houseId === params.houseId)
+    );
 
     // 3. Insert order + items + events + pickup mission
     const created = await insertOrderWithDetails({
@@ -317,8 +336,10 @@ export async function createManualAdminOrder(params: {
         status: "created",
         currency: "CDF",
         paymentCurrency: "CDF",
+        exchangeRateUsed: val.exchangeRateUsed ?? null,
         pickupSlotStart: val.pickupSlotStart,
         pickupSlotEnd: val.pickupSlotEnd,
+        acceptanceDeadlineAt: deadlines.deadlineAt,
         itemsTotal: val.itemsTotal,
         deliveryFee: val.deliveryFee,
         commissionBps: val.commissionBps,

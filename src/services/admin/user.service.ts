@@ -1,5 +1,7 @@
 import "server-only";
+import { revalidateTag } from "next/cache";
 import { hashPassword } from "better-auth/crypto";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { err, ok, type Result } from "@/lib/result";
 import {
   blockAdminUserWithGuard,
@@ -60,11 +62,16 @@ export async function blockAdminUser(params: {
       !targetUser.banned &&
       targetUser.status !== "blocked";
 
-    return await blockAdminUserWithGuard({
+    const res = await blockAdminUserWithGuard({
       userId: params.userId,
       reason: params.reason.trim(),
       isTargetActiveAdmin,
     });
+    if (res.ok) {
+      revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
+      revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
+    }
+    return res;
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to block user");
   }
@@ -91,12 +98,17 @@ export async function updateAdminUserRole(params: {
       !targetUser.banned &&
       targetUser.status !== "blocked";
 
-    return await updateUserRoleWithHouseAndGuard({
+    const res = await updateUserRoleWithHouseAndGuard({
       userId: params.userId,
       newRole: params.newRole,
       houseId: params.newRole === "house" ? params.houseId : null,
       isTargetActiveAdminDemotion,
     });
+    if (res.ok) {
+      revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
+      revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
+    }
+    return res;
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to update user role");
   }
@@ -109,6 +121,8 @@ export async function unblockAdminUser(userId: string): Promise<Result<void>> {
       status: "active",
       banReason: null,
     });
+    revalidateTag(CACHE_TAGS.userSession(userId), { expire: 0 });
+    revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to unblock user");
@@ -132,6 +146,8 @@ export async function resetAdminUserPassword(params: {
 
     // Revoke all active sessions immediately
     await deleteUserSessions(params.userId);
+    revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
+    revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
 
     return ok(undefined);
   } catch (error) {

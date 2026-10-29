@@ -1,9 +1,29 @@
 import "server-only";
-import { and, asc, count, desc, eq, gte, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNull,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 import { db, schema } from "./db";
-import { toBukavuDateTime, fromBukavuDateTime } from "@/services/availability/bukavu-time";
+import {
+  toBukavuDateTime,
+  fromBukavuDateTime,
+} from "@/services/availability/bukavu-time";
 import { ok, err, type Result } from "@/lib/result";
-import type { ApprovalMethod, OrderSource, OrderStatus } from "@/services/db/schema";
+import type {
+  ApprovalMethod,
+  OrderSource,
+  OrderStatus,
+} from "@/services/db/schema";
 import type { orderEventTypeEnum } from "@/services/db/schema";
 import type {
   FollowUpChannel,
@@ -116,8 +136,8 @@ export async function getOrders(filters?: {
       or(
         ilike(schema.orders.code, q),
         ilike(schema.orders.contactPhone, q),
-        ilike(schema.user.name, q)
-      )
+        ilike(schema.user.name, q),
+      ),
     );
   }
 
@@ -151,7 +171,7 @@ export async function getOrders(filters?: {
     .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
     .innerJoin(
       schema.neighborhoods,
-      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id),
     )
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(schema.orders.createdAt));
@@ -166,7 +186,9 @@ export async function getOrders(filters?: {
   return query;
 }
 
-export async function getOrderById(orderId: string): Promise<OrderDetailRecord | null> {
+export async function getOrderById(
+  orderId: string,
+): Promise<OrderDetailRecord | null> {
   const [row] = await db
     .select({
       id: schema.orders.id,
@@ -205,7 +227,7 @@ export async function getOrderById(orderId: string): Promise<OrderDetailRecord |
     .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
     .innerJoin(
       schema.neighborhoods,
-      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id),
     )
     .where(eq(schema.orders.id, orderId))
     .limit(1);
@@ -213,7 +235,9 @@ export async function getOrderById(orderId: string): Promise<OrderDetailRecord |
   return row ?? null;
 }
 
-export async function getOrderItems(orderId: string): Promise<OrderItemRecord[]> {
+export async function getOrderItems(
+  orderId: string,
+): Promise<OrderItemRecord[]> {
   const rows = await db
     .select({
       id: schema.orderItems.id,
@@ -235,7 +259,10 @@ export async function getOrderItems(orderId: string): Promise<OrderItemRecord[]>
       status: schema.orderItems.status,
     })
     .from(schema.orderItems)
-    .leftJoin(schema.services, eq(schema.orderItems.serviceId, schema.services.id))
+    .leftJoin(
+      schema.services,
+      eq(schema.orderItems.serviceId, schema.services.id),
+    )
     .leftJoin(schema.items, eq(schema.orderItems.itemId, schema.items.id))
     .leftJoin(schema.fabrics, eq(schema.orderItems.fabricId, schema.fabrics.id))
     .where(eq(schema.orderItems.orderId, orderId));
@@ -243,7 +270,9 @@ export async function getOrderItems(orderId: string): Promise<OrderItemRecord[]>
   return rows;
 }
 
-export async function getOrderEvents(orderId: string): Promise<OrderEventRecord[]> {
+export async function getOrderEvents(
+  orderId: string,
+): Promise<OrderEventRecord[]> {
   const rows = await db
     .select({
       id: schema.orderEvents.id,
@@ -264,11 +293,49 @@ export async function getOrderEvents(orderId: string): Promise<OrderEventRecord[
     })
     .from(schema.orderEvents)
     .leftJoin(schema.user, eq(schema.orderEvents.actorId, schema.user.id))
-    .leftJoin(schema.houses, eq(schema.orderEvents.onBehalfOfHouseId, schema.houses.id))
+    .leftJoin(
+      schema.houses,
+      eq(schema.orderEvents.onBehalfOfHouseId, schema.houses.id),
+    )
     .where(eq(schema.orderEvents.orderId, orderId))
     .orderBy(asc(schema.orderEvents.createdAt));
 
   return rows as OrderEventRecord[];
+}
+
+/**
+ * AC 15: Restricted order events projection for laundry houses.
+ * Masks customer actorName to first name only and excludes internal admin notes.
+ */
+export async function getHouseOrderEventsRestricted(
+  orderId: string,
+): Promise<OrderEventRecord[]> {
+  const rows = await getOrderEvents(orderId);
+  return rows
+    .filter((ev) => {
+      const category =
+        ev.payload && typeof ev.payload === "object"
+          ? (ev.payload as Record<string, unknown>).category
+          : undefined;
+
+      // Workshop issue flags must remain visible to the laundry house
+      if (category === "house_issue_flag") {
+        return true;
+      }
+
+      if (ev.actorRole === "admin" && ev.type === "note") {
+        return false;
+      }
+
+      return category !== "pressing_relance" && category !== "admin_note";
+    })
+    .map((ev) => ({
+      ...ev,
+      actorName:
+        ev.actorRole === "customer" && ev.actorName
+          ? ev.actorName.trim().split(/\s+/)[0] || "Client"
+          : ev.actorName,
+    }));
 }
 
 export async function addOrderEvent(event: {
@@ -301,7 +368,7 @@ export async function addOrderEvent(event: {
 
 export async function updateOrderStatus(
   orderId: string,
-  newStatus: OrderStatus
+  newStatus: OrderStatus,
 ): Promise<void> {
   await db
     .update(schema.orders)
@@ -319,7 +386,7 @@ export async function updateOrderStatus(
 export async function updateOrderStatusIfCurrent(
   orderId: string,
   expectedStatus: OrderStatus,
-  newStatus: OrderStatus
+  newStatus: OrderStatus,
 ): Promise<boolean> {
   const rows = await db
     .update(schema.orders)
@@ -327,7 +394,12 @@ export async function updateOrderStatusIfCurrent(
       status: newStatus,
       updatedAt: new Date(),
     })
-    .where(and(eq(schema.orders.id, orderId), eq(schema.orders.status, expectedStatus)))
+    .where(
+      and(
+        eq(schema.orders.id, orderId),
+        eq(schema.orders.status, expectedStatus),
+      ),
+    )
     .returning({ id: schema.orders.id });
   return rows.length > 0;
 }
@@ -336,7 +408,7 @@ export async function updateOrderStatusWithDeadline(
   orderId: string,
   expectedStatus: OrderStatus,
   newStatus: OrderStatus,
-  deadlineAt: Date | null
+  deadlineAt: Date | null,
 ): Promise<boolean> {
   const rows = await db
     .update(schema.orders)
@@ -345,7 +417,12 @@ export async function updateOrderStatusWithDeadline(
       acceptanceDeadlineAt: deadlineAt,
       updatedAt: new Date(),
     })
-    .where(and(eq(schema.orders.id, orderId), eq(schema.orders.status, expectedStatus)))
+    .where(
+      and(
+        eq(schema.orders.id, orderId),
+        eq(schema.orders.status, expectedStatus),
+      ),
+    )
     .returning({ id: schema.orders.id });
   return rows.length > 0;
 }
@@ -367,7 +444,9 @@ export async function updateOrderFinancials(params: {
     return ok(undefined);
   } catch (error) {
     return err(
-      error instanceof Error ? error.message : "Erreur mise à jour financière de la commande"
+      error instanceof Error
+        ? error.message
+        : "Erreur mise à jour financière de la commande",
     );
   }
 }
@@ -449,7 +528,7 @@ export async function insertOrderWithDetails(params: {
         params.items.map((it) => ({
           ...it,
           orderId,
-        }))
+        })),
       );
     }
 
@@ -463,7 +542,7 @@ export async function insertOrderWithDetails(params: {
         params.missions.map((m) => ({
           ...m,
           orderId,
-        }))
+        })),
       );
     }
 
@@ -538,13 +617,15 @@ export async function getOrderValidationData(scope?: {
     orderConditions.push(
       or(
         eq(schema.orders.customerId, scope.customerId),
-        eq(schema.orders.idempotencyKey, scope.idempotencyKey)
-      )
+        eq(schema.orders.idempotencyKey, scope.idempotencyKey),
+      ),
     );
   } else if (scope?.customerId) {
     orderConditions.push(eq(schema.orders.customerId, scope.customerId));
   } else if (scope?.idempotencyKey) {
-    orderConditions.push(eq(schema.orders.idempotencyKey, scope.idempotencyKey));
+    orderConditions.push(
+      eq(schema.orders.idempotencyKey, scope.idempotencyKey),
+    );
   }
 
   const existingOrdersQuery = db
@@ -607,7 +688,7 @@ export async function getOrderValidationData(scope?: {
     .innerJoin(schema.user, eq(schema.courierShifts.courierId, schema.user.id))
     .leftJoin(
       schema.courierProfiles,
-      eq(schema.courierShifts.courierId, schema.courierProfiles.userId)
+      eq(schema.courierShifts.courierId, schema.courierProfiles.userId),
     )
     .where(
       and(
@@ -615,9 +696,9 @@ export async function getOrderValidationData(scope?: {
         eq(schema.user.status, "active"),
         or(
           isNull(schema.courierProfiles.isActive),
-          eq(schema.courierProfiles.isActive, true)
-        )
-      )
+          eq(schema.courierProfiles.isActive, true),
+        ),
+      ),
     );
 
   const courierZonesQuery = db
@@ -652,8 +733,11 @@ export async function getOrderValidationData(scope?: {
         .where(
           and(
             eq(schema.orders.customerId, scope.customerId),
-            inArray(schema.orders.status, openStatuses as unknown as OrderStatus[])
-          )
+            inArray(
+              schema.orders.status,
+              openStatuses as unknown as OrderStatus[],
+            ),
+          ),
         )
     : Promise.resolve([{ count: 0 }]);
 
@@ -664,14 +748,23 @@ export async function getOrderValidationData(scope?: {
         .where(
           and(
             eq(schema.orders.customerId, scope.customerId),
-            eq(schema.orders.status, "delivered")
-          )
+            eq(schema.orders.status, "delivered"),
+          ),
         )
     : Promise.resolve([{ count: 0 }]);
 
   // Today start in UTC/Bukavu
   const now = new Date();
-  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+  const todayStart = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      0,
+      0,
+      0,
+    ),
+  );
 
   const dailyOrdersPromise = scope?.contactPhone
     ? db
@@ -681,8 +774,8 @@ export async function getOrderValidationData(scope?: {
           and(
             eq(schema.orders.contactPhone, scope.contactPhone),
             gte(schema.orders.createdAt, todayStart),
-            sql`${schema.orders.status} != 'cancelled'`
-          )
+            sql`${schema.orders.status} != 'cancelled'`,
+          ),
         )
     : Promise.resolve([{ count: 0 }]);
 
@@ -702,8 +795,8 @@ export async function getOrderValidationData(scope?: {
           and(
             eq(schema.user.contactPhone, scope.contactPhone),
             ne(schema.user.status, "merged"),
-            or(eq(schema.user.status, "blocked"), eq(schema.user.banned, true))
-          )
+            or(eq(schema.user.status, "blocked"), eq(schema.user.banned, true)),
+          ),
         )
         .limit(1)
     : Promise.resolve([]);
@@ -719,10 +812,12 @@ export async function getOrderValidationData(scope?: {
           and(
             eq(schema.orders.houseId, scope.houseId),
             sql`${schema.orders.status} != 'cancelled'`,
-            gte(schema.orders.pickupSlotStart, sql`now() - interval '1 day'`)
-          )
+            gte(schema.orders.pickupSlotStart, sql`now() - interval '1 day'`),
+          ),
         )
-        .groupBy(sql`to_char(${schema.orders.pickupSlotStart} at time zone 'Africa/Lubumbashi', 'YYYY-MM-DD')`)
+        .groupBy(
+          sql`to_char(${schema.orders.pickupSlotStart} at time zone 'Africa/Lubumbashi', 'YYYY-MM-DD')`,
+        )
     : Promise.resolve([] as Array<{ dateStr: string; count: number }>);
 
   const [
@@ -750,10 +845,14 @@ export async function getOrderValidationData(scope?: {
       ? houseHoursQuery.where(eq(schema.houseHours.houseId, scope.houseId))
       : houseHoursQuery,
     scope?.houseId
-      ? houseClosuresQuery.where(eq(schema.houseClosures.houseId, scope.houseId))
+      ? houseClosuresQuery.where(
+          eq(schema.houseClosures.houseId, scope.houseId),
+        )
       : houseClosuresQuery,
     scope?.houseId
-      ? houseCoverageQuery.where(eq(schema.houseCoverage.houseId, scope.houseId))
+      ? houseCoverageQuery.where(
+          eq(schema.houseCoverage.houseId, scope.houseId),
+        )
       : houseCoverageQuery,
     courierShiftsQuery,
     courierZonesQuery,
@@ -767,8 +866,9 @@ export async function getOrderValidationData(scope?: {
 
   const customerUser = customerUserResult[0];
   const isCustomerBlocked = Boolean(
-    (customerUser && (customerUser.status === "blocked" || customerUser.banned)) ||
-    phoneUserResult.length > 0
+    (customerUser &&
+      (customerUser.status === "blocked" || customerUser.banned)) ||
+    phoneUserResult.length > 0,
   );
 
   const bookedOrdersByDate: Record<string, number> = {};
@@ -806,7 +906,7 @@ import {
 export interface HouseOrderListItemRecord {
   id: string;
   code: string;
-  trackingToken: string;
+  trackingToken?: string;
   customerFirstName: string;
   neighborhoodId: string;
   neighborhoodName?: string;
@@ -852,7 +952,7 @@ export async function getHouseOrdersRestricted(
     offset?: number;
     orderBy?: "createdAt" | "acceptanceDeadlineAt";
     orderDirection?: "asc" | "desc";
-  }
+  },
 ): Promise<HouseOrderListItemRecord[]> {
   const conditions = [eq(schema.orders.houseId, houseId)];
 
@@ -863,10 +963,7 @@ export async function getHouseOrdersRestricted(
   if (filters?.search && filters.search.trim()) {
     const q = `%${filters.search.trim()}%`;
     conditions.push(
-      or(
-        ilike(schema.orders.code, q),
-        ilike(schema.neighborhoods.name, q)
-      )!
+      or(ilike(schema.orders.code, q), ilike(schema.neighborhoods.name, q))!,
     );
   }
 
@@ -882,7 +979,6 @@ export async function getHouseOrdersRestricted(
     .select({
       id: schema.orders.id,
       code: schema.orders.code,
-      trackingToken: schema.orders.trackingToken,
       customerRawName: schema.user.name,
       neighborhoodId: schema.orders.neighborhoodId,
       neighborhoodName: schema.neighborhoods.name,
@@ -908,50 +1004,63 @@ export async function getHouseOrdersRestricted(
     .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
     .innerJoin(
       schema.neighborhoods,
-      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id),
     )
     .where(and(...conditions))
     .orderBy(orderClause)
     .limit(filters?.limit ?? 50)
     .offset(filters?.offset ?? 0);
 
-  return rows.map((r) => ({
-    ...r,
-    customerFirstName: r.customerRawName.trim().split(" ")[0] || "Client",
-  }));
+  return rows.map((r) => {
+    const { customerRawName, ...rest } = r;
+    return {
+      ...rest,
+      customerFirstName: customerRawName.trim().split(/\s+/)[0] || "Client",
+    };
+  });
 }
 
 /**
- * AC 15: Projects an order for the house portal, stripping phone and street address.
+ * AC 15: Projects an order for the house portal, stripping phone, street address, and trackingToken.
  */
-export function projectHouseFacingOrder<T extends { customerRawName: string }>(
-  order: T
-): Omit<T, "customerPhone" | "streetAddress" | "landmark"> & { customerFirstName: string } {
+export function projectHouseFacingOrder<T extends { customerRawName?: string }>(
+  order: T,
+): Omit<
+  T,
+  "customerPhone" | "streetAddress" | "landmark" | "trackingToken" | "customerRawName"
+> & {
+  customerFirstName: string;
+} {
   const record = order as unknown as Record<string, unknown>;
   const copy = { ...record };
   delete copy.customerPhone;
   delete copy.streetAddress;
   delete copy.landmark;
-  const rawName = typeof record.customerRawName === "string" ? record.customerRawName : "";
+  delete copy.trackingToken;
+  delete copy.customerRawName;
+  const rawName =
+    typeof record.customerRawName === "string" ? record.customerRawName : "";
   return {
     ...copy,
-    customerFirstName: rawName.trim().split(" ")[0] || "Client",
-  } as Omit<T, "customerPhone" | "streetAddress" | "landmark"> & { customerFirstName: string };
+    customerFirstName: rawName.trim().split(/\s+/)[0] || "Client",
+  } as Omit<
+    T,
+    "customerPhone" | "streetAddress" | "landmark" | "trackingToken" | "customerRawName"
+  > & { customerFirstName: string };
 }
 
 /**
  * AC 15: Restricted house order detail projection.
- * Strictly verifies ownership by houseId, omits phone & street address.
+ * Strictly verifies ownership by houseId, omits phone, street address & trackingToken.
  */
 export async function getHouseOrderDetailRestricted(
   houseId: string,
-  orderId: string
+  orderId: string,
 ): Promise<HouseOrderDetailRecord | null> {
   const [row] = await db
     .select({
       id: schema.orders.id,
       code: schema.orders.code,
-      trackingToken: schema.orders.trackingToken,
       customerRawName: schema.user.name,
       neighborhoodId: schema.orders.neighborhoodId,
       neighborhoodName: schema.neighborhoods.name,
@@ -979,22 +1088,30 @@ export async function getHouseOrderDetailRestricted(
     .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
     .innerJoin(
       schema.neighborhoods,
-      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id),
     )
-    .where(and(eq(schema.orders.id, orderId), eq(schema.orders.houseId, houseId)))
+    .where(
+      and(eq(schema.orders.id, orderId), eq(schema.orders.houseId, houseId)),
+    )
     .limit(1);
 
   if (!row) return null;
 
+  const { customerRawName, ...rest } = row;
   return {
-    ...row,
-    customerFirstName: row.customerRawName.trim().split(" ")[0] || "Client",
+    ...rest,
+    customerFirstName: customerRawName.trim().split(/\s+/)[0] || "Client",
   };
 }
 
 export interface HouseDashboardAlert {
   id: string;
-  type: "expiring_order" | "missing_hours" | "unpriced_items" | "capacity_warning" | "house_paused";
+  type:
+    | "expiring_order"
+    | "missing_hours"
+    | "unpriced_items"
+    | "capacity_warning"
+    | "house_paused";
   severity: "warning" | "critical" | "info";
   title: string;
   message: string;
@@ -1060,7 +1177,7 @@ export interface HouseDashboardMetrics {
  * Helper to fetch order items and services summary for a list of house orders.
  */
 async function attachSummariesToHouseOrders(
-  orders: HouseOrderListItemRecord[]
+  orders: HouseOrderListItemRecord[],
 ): Promise<HouseOrderListItemRecord[]> {
   if (orders.length === 0) return orders;
 
@@ -1075,12 +1192,19 @@ async function attachSummariesToHouseOrders(
     })
     .from(schema.orderItems)
     .leftJoin(schema.items, eq(schema.orderItems.itemId, schema.items.id))
-    .leftJoin(schema.services, eq(schema.orderItems.serviceId, schema.services.id))
+    .leftJoin(
+      schema.services,
+      eq(schema.orderItems.serviceId, schema.services.id),
+    )
     .where(inArray(schema.orderItems.orderId, orderIds));
 
   const itemsByOrder = new Map<
     string,
-    Array<{ itemNameFr?: string | null; declaredQuantity: number; customLabel?: string | null }>
+    Array<{
+      itemNameFr?: string | null;
+      declaredQuantity: number;
+      customLabel?: string | null;
+    }>
   >();
   const servicesByOrder = new Map<string, Set<string>>();
 
@@ -1101,12 +1225,18 @@ async function attachSummariesToHouseOrders(
   return orders.map((ord) => {
     const ordItems = itemsByOrder.get(ord.id) || [];
     const ordServices = Array.from(servicesByOrder.get(ord.id) || []);
-    const countdown = computeOrderAcceptanceCountdown(ord.acceptanceDeadlineAt, now);
+    const countdown = computeOrderAcceptanceCountdown(
+      ord.acceptanceDeadlineAt,
+      now,
+    );
 
     return {
       ...ord,
       itemsSummary: formatOrderItemsSummary(ordItems),
-      servicesSummary: ordServices.length > 0 ? ordServices.join(" & ") : "Pressing & Repassage",
+      servicesSummary:
+        ordServices.length > 0
+          ? ordServices.join(" & ")
+          : "Pressing & Repassage",
       itemsCount: ordItems.reduce((acc, it) => acc + it.declaredQuantity, 0),
       isExpired: countdown.isExpired,
     };
@@ -1117,7 +1247,7 @@ async function attachSummariesToHouseOrders(
  * Computes rich workload, financial, and operational metrics for the Partner Dashboard.
  */
 export async function getHouseDashboardMetrics(
-  houseId: string
+  houseId: string,
 ): Promise<HouseDashboardMetrics> {
   const [houseRow] = await db
     .select({
@@ -1136,7 +1266,10 @@ export async function getHouseDashboardMetrics(
       turnaroundHours: schema.houses.turnaroundHours,
     })
     .from(schema.houses)
-    .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
+    .innerJoin(
+      schema.neighborhoods,
+      eq(schema.houses.neighborhoodId, schema.neighborhoods.id),
+    )
     .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
     .where(eq(schema.houses.id, houseId))
     .limit(1);
@@ -1148,8 +1281,12 @@ export async function getHouseDashboardMetrics(
 
   // Week start: calculate Monday of current Bukavu week
   const daysSinceMonday = bukavuNow.weekday - 1;
-  const startOfWeek = new Date(startOfDay.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000);
-  const startOfLastWeek = new Date(startOfWeek.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const startOfWeek = new Date(
+    startOfDay.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000,
+  );
+  const startOfLastWeek = new Date(
+    startOfWeek.getTime() - 7 * 24 * 60 * 60 * 1000,
+  );
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const [
@@ -1193,8 +1330,8 @@ export async function getHouseDashboardMetrics(
         and(
           eq(schema.orders.houseId, houseId),
           eq(schema.orders.status, "delivered"),
-          gte(schema.orders.updatedAt, startOfDay)
-        )
+          gte(schema.orders.updatedAt, startOfDay),
+        ),
       ),
     db
       .select({ count: count() })
@@ -1202,8 +1339,8 @@ export async function getHouseDashboardMetrics(
       .where(
         and(
           eq(schema.orders.houseId, houseId),
-          gte(schema.orders.createdAt, startOfDay)
-        )
+          gte(schema.orders.createdAt, startOfDay),
+        ),
       ),
     getHouseSettlementDetail(houseId).catch(() => ({
       balanceOwedCDF: 0,
@@ -1225,8 +1362,8 @@ export async function getHouseDashboardMetrics(
         and(
           eq(schema.orders.houseId, houseId),
           eq(schema.orders.status, "delivered"),
-          gte(schema.orders.updatedAt, startOfDay)
-        )
+          gte(schema.orders.updatedAt, startOfDay),
+        ),
       ),
     db
       .select({
@@ -1240,8 +1377,8 @@ export async function getHouseDashboardMetrics(
           eq(schema.orders.houseId, houseId),
           eq(schema.orders.status, "delivered"),
           gte(schema.orders.updatedAt, yesterdayStart),
-          sql`${schema.orders.updatedAt} < ${startOfDay}`
-        )
+          sql`${schema.orders.updatedAt} < ${startOfDay}`,
+        ),
       ),
     db
       .select({
@@ -1254,8 +1391,8 @@ export async function getHouseDashboardMetrics(
         and(
           eq(schema.orders.houseId, houseId),
           eq(schema.orders.status, "delivered"),
-          gte(schema.orders.updatedAt, startOfWeek)
-        )
+          gte(schema.orders.updatedAt, startOfWeek),
+        ),
       ),
     db
       .select({
@@ -1269,15 +1406,14 @@ export async function getHouseDashboardMetrics(
           eq(schema.orders.houseId, houseId),
           eq(schema.orders.status, "delivered"),
           gte(schema.orders.updatedAt, startOfLastWeek),
-          sql`${schema.orders.updatedAt} < ${startOfWeek}`
-        )
+          sql`${schema.orders.updatedAt} < ${startOfWeek}`,
+        ),
       ),
     getHouseOrdersRestricted(houseId, { limit: 5 }),
     db
       .select({
         id: schema.orders.id,
         code: schema.orders.code,
-        trackingToken: schema.orders.trackingToken,
         customerRawName: schema.user.name,
         neighborhoodId: schema.orders.neighborhoodId,
         neighborhoodName: schema.neighborhoods.name,
@@ -1301,20 +1437,32 @@ export async function getHouseDashboardMetrics(
       })
       .from(schema.orders)
       .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
-      .innerJoin(schema.neighborhoods, eq(schema.orders.neighborhoodId, schema.neighborhoods.id))
+      .innerJoin(
+        schema.neighborhoods,
+        eq(schema.orders.neighborhoodId, schema.neighborhoods.id),
+      )
       .where(
         and(
           eq(schema.orders.houseId, houseId),
-          inArray(schema.orders.status, ["accepted", "pickup_assigned", "pickup_in_progress"]),
-          gte(schema.orders.pickupSlotStart, startOfDay)
-        )
+          inArray(schema.orders.status, [
+            "accepted",
+            "pickup_assigned",
+            "pickup_in_progress",
+          ]),
+          gte(schema.orders.pickupSlotStart, startOfDay),
+        ),
       )
       .orderBy(asc(schema.orders.pickupSlotStart))
       .limit(5),
     db
       .select({ count: count() })
       .from(schema.houseItems)
-      .where(and(eq(schema.houseItems.houseId, houseId), eq(schema.houseItems.price, 0))),
+      .where(
+        and(
+          eq(schema.houseItems.houseId, houseId),
+          eq(schema.houseItems.price, 0),
+        ),
+      ),
     db
       .select({
         status: schema.orders.status,
@@ -1324,8 +1472,8 @@ export async function getHouseDashboardMetrics(
       .where(
         and(
           eq(schema.orders.houseId, houseId),
-          gte(schema.orders.createdAt, thirtyDaysAgo)
-        )
+          gte(schema.orders.createdAt, thirtyDaysAgo),
+        ),
       ),
     db
       .select({
@@ -1339,22 +1487,28 @@ export async function getHouseDashboardMetrics(
         and(
           eq(schema.orders.houseId, houseId),
           eq(schema.orders.status, "delivered"),
-          gte(schema.orders.updatedAt, thirtyDaysAgo)
-        )
+          gte(schema.orders.updatedAt, thirtyDaysAgo),
+        ),
       ),
   ]);
 
   // Enrich order summaries
-  const [waitingAcceptanceOrders, missedOrders, recentOrders] = await Promise.all([
-    attachSummariesToHouseOrders(waitingOrdersRaw),
-    attachSummariesToHouseOrders(missedOrdersRaw),
-    attachSummariesToHouseOrders(recentOrdersRaw),
-  ]);
+  const [waitingAcceptanceOrders, missedOrders, recentOrders] =
+    await Promise.all([
+      attachSummariesToHouseOrders(waitingOrdersRaw),
+      attachSummariesToHouseOrders(missedOrdersRaw),
+      attachSummariesToHouseOrders(recentOrdersRaw),
+    ]);
 
-  const upcomingPickups: HouseOrderListItemRecord[] = upcomingPickupsRaw.map((r) => ({
-    ...r,
-    customerFirstName: r.customerRawName.trim().split(" ")[0] || "Client",
-  }));
+  const upcomingPickups: HouseOrderListItemRecord[] = upcomingPickupsRaw.map(
+    (r) => {
+      const { customerRawName, ...rest } = r;
+      return {
+        ...rest,
+        customerFirstName: customerRawName.trim().split(/\s+/)[0] || "Client",
+      };
+    },
+  );
 
   const countsByStatus = new Map(statusCounts.map((r) => [r.status, r.count]));
   const waitingAcceptanceCount = countsByStatus.get("created") ?? 0;
@@ -1369,20 +1523,40 @@ export async function getHouseDashboardMetrics(
 
   // Net revenues calculations
   const todayNetRevenueCDF = deliveredTodayRows.reduce(
-    (sum, r) => sum + Math.max(0, (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0)),
-    0
+    (sum, r) =>
+      sum +
+      Math.max(
+        0,
+        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
+      ),
+    0,
   );
   const yesterdayNetRevenueCDF = deliveredYesterdayRows.reduce(
-    (sum, r) => sum + Math.max(0, (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0)),
-    0
+    (sum, r) =>
+      sum +
+      Math.max(
+        0,
+        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
+      ),
+    0,
   );
   const weekNetRevenueCDF = deliveredThisWeekRows.reduce(
-    (sum, r) => sum + Math.max(0, (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0)),
-    0
+    (sum, r) =>
+      sum +
+      Math.max(
+        0,
+        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
+      ),
+    0,
   );
   const lastWeekNetRevenueCDF = deliveredLastWeekRows.reduce(
-    (sum, r) => sum + Math.max(0, (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0)),
-    0
+    (sum, r) =>
+      sum +
+      Math.max(
+        0,
+        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
+      ),
+    0,
   );
 
   // Acceptance rate (30 days)
@@ -1414,7 +1588,11 @@ export async function getHouseDashboardMetrics(
     }
   }
 
-  const acceptanceRate30d = computeAcceptanceRate(accepted30d, rejected30d, expired30d);
+  const acceptanceRate30d = computeAcceptanceRate(
+    accepted30d,
+    rejected30d,
+    expired30d,
+  );
 
   // Daily 7-day chart data calculated from actual last30dOrders & deliveredLast30dRows
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -1422,22 +1600,28 @@ export async function getHouseDashboardMetrics(
   for (let i = 6; i >= 0; i--) {
     const dayDate = new Date(startOfDay.getTime() - i * 24 * 60 * 60 * 1000);
     const dayBukavu = toBukavuDateTime(dayDate);
-    const dayLabel = dayNames[dayBukavu.weekday - 1] || dayBukavu.dateString.slice(5);
+    const dayLabel =
+      dayNames[dayBukavu.weekday - 1] || dayBukavu.dateString.slice(5);
 
     const dayStart = new Date(dayDate.getTime());
     const dayEnd = new Date(dayDate.getTime() + 24 * 60 * 60 * 1000 - 1);
 
     const dayOrders = last30dOrders.filter(
-      (o) => o.createdAt && o.createdAt >= dayStart && o.createdAt <= dayEnd
+      (o) => o.createdAt && o.createdAt >= dayStart && o.createdAt <= dayEnd,
     );
     const ordersCount = dayOrders.length;
 
     const dayDelivered = deliveredLast30dRows.filter(
-      (r) => r.updatedAt && r.updatedAt >= dayStart && r.updatedAt <= dayEnd
+      (r) => r.updatedAt && r.updatedAt >= dayStart && r.updatedAt <= dayEnd,
     );
     const revenueCDF = dayDelivered.reduce(
-      (sum, r) => sum + Math.max(0, (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0)),
-      0
+      (sum, r) =>
+        sum +
+        Math.max(
+          0,
+          (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
+        ),
+      0,
     );
 
     dailyChart.push({
@@ -1450,10 +1634,16 @@ export async function getHouseDashboardMetrics(
 
   // Next settlement date: upcoming Friday at 16:00 (Bukavu-local calculation)
   const daysUntilFriday = (5 - bukavuNow.weekday + 7) % 7 || 7;
-  const nextFriday = new Date(startOfDay.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000);
+  const nextFriday = new Date(
+    startOfDay.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000,
+  );
   const nextFridayBukavu = toBukavuDateTime(nextFriday);
   const nextFridayUtc = new Date(
-    Date.UTC(nextFridayBukavu.year, nextFridayBukavu.month - 1, nextFridayBukavu.day)
+    Date.UTC(
+      nextFridayBukavu.year,
+      nextFridayBukavu.month - 1,
+      nextFridayBukavu.day,
+    ),
   );
   const nextSettlementMonth = nextFridayUtc.toLocaleDateString("fr-FR", {
     month: "short",
@@ -1479,7 +1669,10 @@ export async function getHouseDashboardMetrics(
     return !cd.isExpired && cd.urgency !== "normal";
   });
   if (imminentOrder) {
-    const cd = computeOrderAcceptanceCountdown(imminentOrder.acceptanceDeadlineAt, now);
+    const cd = computeOrderAcceptanceCountdown(
+      imminentOrder.acceptanceDeadlineAt,
+      now,
+    );
     alerts.push({
       id: "alert-expiring-order",
       type: "expiring_order",
@@ -1524,7 +1717,8 @@ export async function getHouseDashboardMetrics(
       titleKey: "missingHoursTitle",
       title: "Horaires non configurés",
       messageKey: "missingHoursMessage",
-      message: "Configurez vos heures d'ouverture pour activer la protection des délais de nuit.",
+      message:
+        "Configurez vos heures d'ouverture pour activer la protection des délais de nuit.",
       link: `/partner/${houseRow?.slug}/hours`,
     });
   }
@@ -1553,7 +1747,8 @@ export async function getHouseDashboardMetrics(
       titleKey: "housePausedTitle",
       title: "Réception de nouvelles commandes suspendue",
       messageKey: "housePausedMessage",
-      message: "Votre pressing est temporairement en pause. Vos commandes en cours restent actives.",
+      message:
+        "Votre pressing est temporairement en pause. Vos commandes en cours restent actives.",
     });
   }
 
@@ -1603,11 +1798,18 @@ export async function getHouseDashboardMetrics(
 /**
  * Returns the count of pending orders awaiting acceptance (status = 'created') for a house.
  */
-export async function getWaitingAcceptanceCount(houseId: string): Promise<number> {
+export async function getWaitingAcceptanceCount(
+  houseId: string,
+): Promise<number> {
   const [row] = await db
     .select({ count: count() })
     .from(schema.orders)
-    .where(and(eq(schema.orders.houseId, houseId), eq(schema.orders.status, "created")));
+    .where(
+      and(
+        eq(schema.orders.houseId, houseId),
+        eq(schema.orders.status, "created"),
+      ),
+    );
   return row?.count ?? 0;
 }
 
@@ -1640,13 +1842,13 @@ export async function saveReceptionCountTransaction(params: {
         .where(
           and(
             eq(schema.orderItems.id, item.id),
-            eq(schema.orderItems.orderId, params.orderId)
-          )
+            eq(schema.orderItems.orderId, params.orderId),
+          ),
         );
     }
 
-    // 2. Update order totals, status, and reception timestamp
-    await tx
+    // 2. Update order totals, status, and reception timestamp (only if still in picked_up or received)
+    const updated = await tx
       .update(schema.orders)
       .set({
         status: params.newStatus,
@@ -1659,9 +1861,15 @@ export async function saveReceptionCountTransaction(params: {
       .where(
         and(
           eq(schema.orders.id, params.orderId),
-          eq(schema.orders.houseId, params.houseId)
-        )
-      );
+          eq(schema.orders.houseId, params.houseId),
+          inArray(schema.orders.status, ["picked_up", "received"]),
+        ),
+      )
+      .returning({ id: schema.orders.id });
+
+    if (updated.length === 0) {
+      throw new Error("Order status mismatch or order not found; cannot submit reception");
+    }
 
     // 3. Insert audit event
     await tx.insert(schema.orderEvents).values({
@@ -1672,7 +1880,7 @@ export async function saveReceptionCountTransaction(params: {
 }
 
 export async function getCustomerOrders(
-  customerId: string
+  customerId: string,
 ): Promise<OrderListItemRecord[]> {
   const rows = await db
     .select({
@@ -1703,7 +1911,7 @@ export async function getCustomerOrders(
     .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
     .innerJoin(
       schema.neighborhoods,
-      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id),
     )
     .where(eq(schema.orders.customerId, customerId))
     .orderBy(desc(schema.orders.createdAt));
@@ -1712,7 +1920,7 @@ export async function getCustomerOrders(
 }
 
 export async function getOrderByTrackingToken(
-  trackingToken: string
+  trackingToken: string,
 ): Promise<OrderDetailRecord | null> {
   const [row] = await db
     .select({
@@ -1752,7 +1960,7 @@ export async function getOrderByTrackingToken(
     .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
     .innerJoin(
       schema.neighborhoods,
-      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id),
     )
     .where(eq(schema.orders.trackingToken, trackingToken))
     .limit(1);
@@ -1786,7 +1994,9 @@ export async function updateOrderDeliverySlot(params: {
       .returning({ id: schema.orders.id });
 
     if (updated.length === 0) {
-      throw new Error("Conflit de concurrence: la commande a déjà changé de statut.");
+      throw new Error(
+        "Conflit de concurrence: la commande a déjà changé de statut.",
+      );
     }
 
     await tx.insert(schema.orderEvents).values({
@@ -1820,7 +2030,9 @@ export async function createDisputeTransaction(params: {
       .returning({ id: schema.orders.id });
 
     if (updated.length === 0) {
-      throw new Error("Conflit de concurrence: la commande a déjà changé de statut.");
+      throw new Error(
+        "Conflit de concurrence: la commande a déjà changé de statut.",
+      );
     }
 
     const disputeId = crypto.randomUUID();
@@ -1847,7 +2059,7 @@ export async function createDisputeTransaction(params: {
  * Retrieves pressing relance note events for the given orders.
  */
 export async function getOrderRelanceEvents(
-  orderIds: string[]
+  orderIds: string[],
 ): Promise<RelanceEventSummary[]> {
   if (orderIds.length === 0) return [];
 
@@ -1866,8 +2078,8 @@ export async function getOrderRelanceEvents(
     .where(
       and(
         inArray(schema.orderEvents.orderId, orderIds),
-        eq(schema.orderEvents.type, "note")
-      )
+        eq(schema.orderEvents.type, "note"),
+      ),
     )
     .orderBy(desc(schema.orderEvents.createdAt));
 
@@ -1881,7 +2093,8 @@ export async function getOrderRelanceEvents(
         channel: (payload.channel as FollowUpChannel) || "call",
         outcome: (payload.outcome as FollowUpOutcome) || null,
         operatorId: r.actorId,
-        operatorName: r.actorName || (payload.operatorName as string) || "Opérateur",
+        operatorName:
+          r.actorName || (payload.operatorName as string) || "Opérateur",
         createdAt: r.createdAt,
         note: r.note,
       });
@@ -1919,17 +2132,19 @@ export async function logPressingRelance(params: {
   }
 
   const invalid = orders.find(
-    (o) => o.houseId !== params.pressingId || o.status !== "created"
+    (o) => o.houseId !== params.pressingId || o.status !== "created",
   );
   if (invalid) {
     throw new Error(
-      "Toutes les commandes doivent appartenir au pressing indiqué et être en attente d'acceptation (statut 'created')"
+      "Toutes les commandes doivent appartenir au pressing indiqué et être en attente d'acceptation (statut 'created')",
     );
   }
 
-  const channelLabel = params.channel === "call" ? "Appel téléphonique" : "WhatsApp";
+  const channelLabel =
+    params.channel === "call" ? "Appel téléphonique" : "WhatsApp";
   const outcomeLabel = params.outcome ? ` · Résultat: ${params.outcome}` : "";
-  const noteText = params.note || `Relance pressing (${channelLabel})${outcomeLabel}`;
+  const noteText =
+    params.note || `Relance pressing (${channelLabel})${outcomeLabel}`;
 
   const values = params.orderIds.map((orderId) => ({
     orderId,
@@ -1977,7 +2192,9 @@ export async function reassignOrderPressing(params: {
     }
 
     if (order.status !== "created") {
-      return err("Seules les commandes en attente d'acceptation peuvent être réassignées");
+      return err(
+        "Seules les commandes en attente d'acceptation peuvent être réassignées",
+      );
     }
 
     if (params.newHouseId === order.houseId) {
@@ -2000,7 +2217,9 @@ export async function reassignOrderPressing(params: {
     }
 
     if (!newHouse.isActive || newHouse.isPaused) {
-      return err("Le pressing partenaire sélectionné n'est pas actif ou est temporairement en pause");
+      return err(
+        "Le pressing partenaire sélectionné n'est pas actif ou est temporairement en pause",
+      );
     }
 
     const newDeadline = new Date(Date.now() + 45 * 60 * 1000);
@@ -2016,13 +2235,15 @@ export async function reassignOrderPressing(params: {
         .where(
           and(
             eq(schema.orders.id, params.orderId),
-            eq(schema.orders.status, "created")
-          )
+            eq(schema.orders.status, "created"),
+          ),
         )
         .returning({ id: schema.orders.id });
 
       if (updated.length === 0) {
-        throw new Error("La commande ne peut plus être réassignée (statut modifié)");
+        throw new Error(
+          "La commande ne peut plus être réassignée (statut modifié)",
+        );
       }
 
       await tx.insert(schema.orderEvents).values({
@@ -2044,14 +2265,20 @@ export async function reassignOrderPressing(params: {
 
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Échec de la réassignation de la commande");
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Échec de la réassignation de la commande",
+    );
   }
 }
 
 /**
  * Returns count of active (in-progress) orders grouped by houseId.
  */
-export async function getActiveOrdersCountsByHouse(): Promise<Record<string, number>> {
+export async function getActiveOrdersCountsByHouse(): Promise<
+  Record<string, number>
+> {
   const activeStatuses: OrderStatus[] = [
     "awaiting_confirmation",
     "created",
@@ -2086,5 +2313,3 @@ export async function getActiveOrdersCountsByHouse(): Promise<Record<string, num
   }
   return result;
 }
-
-

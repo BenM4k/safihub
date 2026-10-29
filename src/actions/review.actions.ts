@@ -20,7 +20,18 @@ const SubmitReviewSchema = z.object({
   ratingCare: z.number().int().min(1).max(5).optional().nullable(),
   ratingValue: z.number().int().min(1).max(5).optional().nullable(),
   comment: z.string().max(1000).optional().nullable(),
-  photos: z.array(z.string().url()).max(3).optional(),
+  photos: z
+    .array(
+      z
+        .string()
+        .url()
+        .refine(
+          (u) => u.startsWith("https://") || u.startsWith("http://") || u.startsWith("/api/storage/"),
+          "Protocole URL non autorisé"
+        )
+    )
+    .max(3)
+    .optional(),
 });
 
 const SubmitReplySchema = z.object({

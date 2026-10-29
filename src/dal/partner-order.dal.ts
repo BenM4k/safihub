@@ -3,7 +3,7 @@ import "server-only";
 import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import type { OrderStatus } from "@/services/db/schema";
-import { formatPhone, formatOrderReference } from "@/lib/order-formatters";
+import { formatOrderReference } from "@/lib/order-formatters";
 import { computeNetRevenue } from "@/lib/partner-dashboard";
 
 export type PartnerOrderTab =
@@ -108,8 +108,7 @@ export async function getPartnerOrdersRestricted(
       or(
         sql`${schema.orders.code} ILIKE ${q}`,
         sql`${schema.neighborhoods.name} ILIKE ${q}`,
-        sql`(${schema.orders.status} NOT IN ('awaiting_confirmation', 'created', 'rejected', 'expired', 'cancelled') AND ${schema.user.name} ILIKE ${q})`,
-        sql`(${schema.orders.status} IN ('awaiting_confirmation', 'created', 'rejected', 'expired', 'cancelled') AND split_part(${schema.user.name}, ' ', 1) ILIKE ${q})`
+        sql`split_part(${schema.user.name}, ' ', 1) ILIKE ${q}`
       )!
     );
   }
@@ -150,7 +149,6 @@ export async function getPartnerOrdersRestricted(
       code: schema.orders.code,
       status: schema.orders.status,
       customerRawName: schema.user.name,
-      contactPhone: schema.orders.contactPhone,
       neighborhoodName: schema.neighborhoods.name,
       totalDue: schema.orders.totalDue,
       itemsTotal: schema.orders.itemsTotal,
@@ -235,16 +233,13 @@ export async function getPartnerOrdersRestricted(
     }
     const services = servicesSet.size > 0 ? Array.from(servicesSet) : ["Lavage"];
 
-    // Customer privacy:
-    // Before acceptance ('created', 'rejected', 'expired', 'cancelled'): first name + initial only, phone hidden
-    // After acceptance: full name, phone shown
-    const isRevealed = !UNREVEALED_CUSTOMER_STATUSES.includes(r.status);
+    // AC 15 Customer privacy firewall:
+    // House queries never include the customer's phone or street address (first name and neighborhood only).
     const rawName = (r.customerRawName ?? "").trim();
     const nameParts = rawName.split(" ").filter(Boolean);
     const firstName = nameParts[0] || "Client";
-    const lastInitial = nameParts.length > 1 ? ` ${nameParts[1][0]}.` : "";
-    const customerDisplayName = isRevealed ? (rawName || "Client") : `${firstName}${lastInitial}`;
-    const customerPhone = isRevealed ? formatPhone(r.contactPhone) : null;
+    const customerDisplayName = firstName;
+    const customerPhone = null;
 
     // Net partner share
     const netPartnerShare = computeNetRevenue(

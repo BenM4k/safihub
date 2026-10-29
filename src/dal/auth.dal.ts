@@ -16,7 +16,7 @@ export interface GuestMergeResult {
  * Retrieves a user by their unique primary key ID.
  */
 export async function getUserById(
-  id: string
+  id: string,
 ): Promise<typeof schema.user.$inferSelect | null> {
   const users = await db
     .select()
@@ -31,7 +31,7 @@ export async function getUserById(
  * Retrieves a user by their unique email address.
  */
 export async function getUserByEmail(
-  email: string
+  email: string,
 ): Promise<typeof schema.user.$inferSelect | null> {
   const normalizedEmail = email.toLowerCase().trim();
   const users = await db
@@ -47,7 +47,7 @@ export async function getUserByEmail(
  * Retrieves a user by their contact phone number.
  */
 export async function getUserByContactPhone(
-  phone: string
+  phone: string,
 ): Promise<typeof schema.user.$inferSelect | null> {
   const normalizedPhone = phone.trim();
   const users = await db
@@ -78,7 +78,7 @@ export async function recordConsent({
       .where(eq(schema.consents.userId, userId));
 
     const alreadyAccepted = existing.find(
-      (c) => c.document === document && c.version === version
+      (c) => c.document === document && c.version === version,
     );
 
     if (alreadyAccepted) {
@@ -102,7 +102,9 @@ export async function recordConsent({
     return ok(inserted);
   } catch (error) {
     return err(
-      error instanceof Error ? error.message : "Database error recording consent."
+      error instanceof Error
+        ? error.message
+        : "Database error recording consent.",
     );
   }
 }
@@ -111,7 +113,7 @@ export async function recordConsent({
  * Retrieves all recorded consents for a given user.
  */
 export async function getUserConsents(
-  userId: string
+  userId: string,
 ): Promise<Array<typeof schema.consents.$inferSelect>> {
   return db
     .select()
@@ -155,7 +157,9 @@ export async function createGuestUser({
     return ok(created);
   } catch (error) {
     return err(
-      error instanceof Error ? error.message : "Database error creating guest user."
+      error instanceof Error
+        ? error.message
+        : "Database error creating guest user.",
     );
   }
 }
@@ -218,7 +222,8 @@ export async function mergeGuestUser({
           isGuest: false,
           status: "merged",
           banned: true,
-          banReason: auditReason || `Merged into registered account ${targetUserId}`,
+          banReason:
+            auditReason || `Merged into registered account ${targetUserId}`,
           updatedAt: new Date(),
         })
         .where(eq(schema.user.id, guestUserId));
@@ -232,7 +237,9 @@ export async function mergeGuestUser({
     });
   } catch (error) {
     return err(
-      error instanceof Error ? error.message : "Database error merging guest user."
+      error instanceof Error
+        ? error.message
+        : "Database error merging guest user.",
     );
   }
 }
@@ -254,7 +261,7 @@ export async function setUserPasswordCredential({
       .where(eq(schema.account.userId, userId));
 
     const credentialAccount = existingAccounts.find(
-      (a) => a.providerId === "credential"
+      (a) => a.providerId === "credential",
     );
 
     if (credentialAccount) {
@@ -277,7 +284,7 @@ export async function setUserPasswordCredential({
     return err(
       error instanceof Error
         ? error.message
-        : "Failed to update account password credential."
+        : "Failed to update account password credential.",
     );
   }
 }
@@ -294,27 +301,31 @@ export async function blockUserAccount({
   reason?: string;
 }): Promise<Result<typeof schema.user.$inferSelect>> {
   try {
-    const [updated] = await db
-      .update(schema.user)
-      .set({
-        status: "blocked",
-        banned: true,
-        banReason: reason,
-      })
-      .where(eq(schema.user.id, userId))
-      .returning();
+    return await db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(schema.user)
+        .set({
+          status: "blocked",
+          banned: true,
+          banReason: reason,
+        })
+        .where(eq(schema.user.id, userId))
+        .returning();
 
-    if (!updated) {
-      return err("Utilisateur introuvable.");
-    }
+      if (!updated) {
+        return err("Utilisateur introuvable.");
+      }
 
-    // Revoke all active sessions
-    await db.delete(schema.session).where(eq(schema.session.userId, userId));
+      // Revoke all active sessions atomically
+      await tx.delete(schema.session).where(eq(schema.session.userId, userId));
 
-    return ok(updated);
+      return ok(updated);
+    });
   } catch (error) {
     return err(
-      error instanceof Error ? error.message : "Erreur de base de données lors du blocage."
+      error instanceof Error
+        ? error.message
+        : "Erreur de base de données lors du blocage.",
     );
   }
 }
@@ -323,7 +334,7 @@ export async function blockUserAccount({
  * Unblocks a user account: restores status to active and lifts ban.
  */
 export async function unblockUserAccount(
-  userId: string
+  userId: string,
 ): Promise<Result<typeof schema.user.$inferSelect>> {
   try {
     const [updated] = await db
@@ -344,7 +355,9 @@ export async function unblockUserAccount(
     return ok(updated);
   } catch (error) {
     return err(
-      error instanceof Error ? error.message : "Erreur de base de données lors du déblocage."
+      error instanceof Error
+        ? error.message
+        : "Erreur de base de données lors du déblocage.",
     );
   }
 }
@@ -373,7 +386,7 @@ export async function updateUserRole({
     return ok(updated);
   } catch (error) {
     return err(
-      error instanceof Error ? error.message : "Erreur de mise à jour du rôle."
+      error instanceof Error ? error.message : "Erreur de mise à jour du rôle.",
     );
   }
 }
@@ -403,8 +416,8 @@ export async function isPhoneOrEmailBlocked(params: {
       and(
         or(...conditions),
         ne(schema.user.status, "merged"),
-        or(eq(schema.user.status, "blocked"), eq(schema.user.banned, true))
-      )
+        or(eq(schema.user.status, "blocked"), eq(schema.user.banned, true)),
+      ),
     )
     .limit(1);
 
@@ -422,7 +435,9 @@ export interface UserSessionDTO {
 /**
  * Retrieves all active sessions for a user, sorted newest first.
  */
-export async function getUserActiveSessions(userId: string): Promise<UserSessionDTO[]> {
+export async function getUserActiveSessions(
+  userId: string,
+): Promise<UserSessionDTO[]> {
   const rows = await db
     .select({
       id: schema.session.id,
@@ -435,8 +450,8 @@ export async function getUserActiveSessions(userId: string): Promise<UserSession
     .where(
       and(
         eq(schema.session.userId, userId),
-        gt(schema.session.expiresAt, new Date())
-      )
+        gt(schema.session.expiresAt, new Date()),
+      ),
     )
     .orderBy(desc(schema.session.createdAt));
 
@@ -448,18 +463,17 @@ export async function getUserActiveSessions(userId: string): Promise<UserSession
  */
 export async function revokeOtherUserSessions(
   userId: string,
-  currentSessionId: string
+  currentSessionId: string,
 ): Promise<number> {
   const result = await db
     .delete(schema.session)
     .where(
       and(
         eq(schema.session.userId, userId),
-        ne(schema.session.id, currentSessionId)
-      )
+        ne(schema.session.id, currentSessionId),
+      ),
     )
     .returning({ id: schema.session.id });
 
   return result.length;
 }
-

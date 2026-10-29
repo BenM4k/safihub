@@ -217,7 +217,7 @@ export async function assignMissionToCourier(params: {
       }
     }
 
-    const assigned = await assignMission(params.missionId, params.courierId);
+    const assigned = await assignMission(params.missionId, params.courierId, params.adminId);
     if (!assigned) {
       return err("Failed to assign mission: mission is no longer unassigned");
     }

@@ -8,9 +8,8 @@ import {
   reportPartnerOrderIssue,
   getHouseOrderDetailRestricted,
   getOrderItems,
-  getOrderEvents,
+  getHouseOrderEventsRestricted,
   transitionOrderStatusAtomic,
-  UNREVEALED_CUSTOMER_STATUSES,
   type PartnerOrderListItemDTO,
   type PartnerOrderQueryFilters,
   type PartnerOrderTabCounts,
@@ -19,36 +18,51 @@ import {
   type OrderEventRecord,
 } from "@/dal";
 import { transitionOrder } from "@/services/order/transitions";
-import { acceptIncomingOrder, rejectIncomingOrder, markOrderReady } from "./house.service";
+import {
+  acceptIncomingOrder,
+  rejectIncomingOrder,
+  markOrderReady,
+} from "./house.service";
 
 export async function listPartnerOrders(
   houseId: string,
-  filters: PartnerOrderQueryFilters = {}
+  filters: PartnerOrderQueryFilters = {},
 ): Promise<Result<PartnerOrderListItemDTO[]>> {
   try {
     const orders = await getPartnerOrdersRestricted(houseId, filters);
     return ok(orders);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du chargement des commandes.");
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Erreur lors du chargement des commandes.",
+    );
   }
 }
 
 export async function getPartnerOrderTabCounts(
-  houseId: string
+  houseId: string,
 ): Promise<Result<PartnerOrderTabCounts>> {
   try {
     const counts = await getPartnerOrderTabCountsRestricted(houseId);
     return ok(counts);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du calcul des compteurs.");
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Erreur lors du calcul des compteurs.",
+    );
   }
 }
 
-export type PartnerOrderDetailDTO = Omit<HouseOrderDetailRecord, "trackingToken">;
+export type PartnerOrderDetailDTO = Omit<
+  HouseOrderDetailRecord,
+  "trackingToken"
+>;
 
 export async function getPartnerOrderDetail(
   houseId: string,
-  orderId: string
+  orderId: string,
 ): Promise<
   Result<{
     order: PartnerOrderDetailDTO;
@@ -64,26 +78,26 @@ export async function getPartnerOrderDetail(
 
     const [items, events] = await Promise.all([
       getOrderItems(orderId),
-      getOrderEvents(orderId),
+      getHouseOrderEventsRestricted(orderId),
     ]);
 
     const { trackingToken: _, ...orderWithoutToken } = order;
     void _;
-    const isRevealed = !UNREVEALED_CUSTOMER_STATUSES.includes(order.status);
     const rawName = (order.customerFirstName ?? "").trim();
-    const nameParts = rawName.split(" ").filter(Boolean);
-    const firstName = nameParts[0] || "Client";
-    const lastInitial = nameParts.length > 1 ? ` ${nameParts[1][0]}.` : "";
-    const maskedName = isRevealed ? (rawName || "Client") : `${firstName}${lastInitial}`;
+    const firstName = rawName.split(" ").filter(Boolean)[0] || "Client";
 
     const safeOrder: PartnerOrderDetailDTO = {
       ...orderWithoutToken,
-      customerFirstName: maskedName,
+      customerFirstName: firstName,
     };
 
     return ok({ order: safeOrder, items, events });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du chargement du détail.");
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Erreur lors du chargement du détail.",
+    );
   }
 }
 
@@ -93,20 +107,27 @@ export async function acceptPartnerOrder(params: {
   actorId: string;
   actorRole: "house" | "admin";
 }): Promise<Result<void>> {
-  const detail = await getHouseOrderDetailRestricted(params.houseId, params.orderId);
+  const detail = await getHouseOrderDetailRestricted(
+    params.houseId,
+    params.orderId,
+  );
   if (!detail) {
     return err("Commande introuvable ou déjà réassignée.");
   }
 
   if (detail.status !== "created") {
-    return err(`Statut incompatible : la commande est '${detail.status}' et ne peut plus être acceptée.`);
+    return err(
+      `Statut incompatible : la commande est '${detail.status}' et ne peut plus être acceptée.`,
+    );
   }
 
   // Strict deadline lockout: if acceptance deadline elapsed, reject acceptance
   if (detail.acceptanceDeadlineAt) {
     const now = new Date();
     if (now.getTime() > new Date(detail.acceptanceDeadlineAt).getTime()) {
-      return err("Le délai d'acceptation de 45 minutes est dépassé. La commande ne peut plus être acceptée.");
+      return err(
+        "Le délai d'acceptation de 45 minutes est dépassé. La commande ne peut plus être acceptée.",
+      );
     }
   }
 
@@ -130,7 +151,10 @@ export async function markPartnerOrderReceived(params: {
   actorRole: "house" | "admin";
 }): Promise<Result<void>> {
   try {
-    const detail = await getHouseOrderDetailRestricted(params.houseId, params.orderId);
+    const detail = await getHouseOrderDetailRestricted(
+      params.houseId,
+      params.orderId,
+    );
     if (!detail) {
       return err("Commande introuvable ou n'appartenant pas à cet atelier.");
     }
@@ -159,7 +183,11 @@ export async function markPartnerOrderReceived(params: {
 
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Échec de la réception du linge.");
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Échec de la réception du linge.",
+    );
   }
 }
 
@@ -170,7 +198,10 @@ export async function startPartnerOrderWashing(params: {
   actorRole: "house" | "admin";
 }): Promise<Result<void>> {
   try {
-    const detail = await getHouseOrderDetailRestricted(params.houseId, params.orderId);
+    const detail = await getHouseOrderDetailRestricted(
+      params.houseId,
+      params.orderId,
+    );
     if (!detail) {
       return err("Commande introuvable ou n'appartenant pas à cet atelier.");
     }
@@ -199,7 +230,11 @@ export async function startPartnerOrderWashing(params: {
 
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Échec du démarrage du traitement.");
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Échec du démarrage du traitement.",
+    );
   }
 }
 
@@ -226,7 +261,11 @@ export async function handoverPartnerOrderToCourier(params: {
     }
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Échec de l'enregistrement de la remise au coursier.");
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Échec de l'enregistrement de la remise au coursier.",
+    );
   }
 }
 
@@ -245,7 +284,11 @@ export async function reportPartnerOrderIssueActionService(params: {
     }
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Échec du signalement du problème.");
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Échec du signalement du problème.",
+    );
   }
 }
 

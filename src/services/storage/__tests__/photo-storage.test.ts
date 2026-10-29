@@ -64,6 +64,27 @@ vi.mock("@/dal", () => ({
   getOrderPhotoById: vi.fn(async (photoId: string) => {
     return mockPhotos.find((p) => p.id === photoId) || null;
   }),
+  getPhotoByStorageKey: vi.fn(async (key: string) => {
+    if (key === "orders/ord_100/pickup_condition/11111111-1111-1111-1111-111111111111.webp") {
+      return {
+        id: "p_existing",
+        orderId: "ord_100",
+        orderItemId: "oi_1",
+        missionId: "m_1",
+        disputeId: null,
+      };
+    }
+    const found = mockPhotos.find((p) => p.storageKey === key);
+    return found
+      ? {
+          id: found.id,
+          orderId: found.orderId,
+          orderItemId: found.orderItemId,
+          missionId: found.missionId,
+          disputeId: found.disputeId,
+        }
+      : null;
+  }),
   countPhotosForOrder: vi.fn(async () => orderPhotoCount),
   countPhotosForItem: vi.fn(async () => itemPhotoCount),
   insertOrderPhotoRecord: vi.fn(async () => "photo_new_123"),
@@ -279,6 +300,37 @@ describe("Phase 7: Cloudflare R2 Photos, Compression & Storage Architecture", ()
       expect(res.ok).toBe(true);
       if (res.ok) {
         expect(res.value.photoId).toBe("photo_new_123");
+      }
+    });
+
+    it("returns existing photo idempotently when re-recording identical associations", async () => {
+      const res = await recordUploadedPhotoService({
+        user: { id: "courier_1", role: "courier" },
+        orderId: "ord_100",
+        orderItemId: "oi_1",
+        missionId: "m_1",
+        type: "pickup_condition",
+        storageKey: "orders/ord_100/pickup_condition/11111111-1111-1111-1111-111111111111.webp",
+      });
+
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.value.photoId).toBe("p_existing");
+      }
+    });
+
+    it("rejects re-recording when associations conflict with existing record", async () => {
+      const res = await recordUploadedPhotoService({
+        user: { id: "courier_1", role: "courier" },
+        orderId: "ord_100",
+        orderItemId: "different_item_id",
+        type: "pickup_condition",
+        storageKey: "orders/ord_100/pickup_condition/11111111-1111-1111-1111-111111111111.webp",
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toContain("déjà enregistrée avec des associations différentes");
       }
     });
   });

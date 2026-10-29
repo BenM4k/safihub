@@ -1,3 +1,5 @@
+import "server-only";
+
 import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
@@ -62,7 +64,10 @@ export async function requireRole(
   options?: RequireRoleOptions
 ): Promise<Result<AuthContext>> {
   const reqHeaders = options?.headers ?? (await headers());
-  const session = await auth.api.getSession({ headers: reqHeaders });
+  const session = await auth.api.getSession({
+    headers: reqHeaders,
+    query: { disableCookieCache: true },
+  });
 
   if (!session?.user) {
     if (options?.redirectIfUnauthorized) {

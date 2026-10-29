@@ -21,7 +21,7 @@ import {
   getHouseOrderDetailRestricted,
   getHouseOrdersRestricted,
   getHouseTodayOrdersCount,
-  getOrderEvents,
+  getHouseOrderEventsRestricted,
   getOrderItems,
   recordCoverageExtensionTicket,
   saveReceptionCountTransaction,
@@ -95,7 +95,7 @@ export async function getHouseOrderDetail(
 
     const [items, events] = await Promise.all([
       getOrderItems(orderId),
-      getOrderEvents(orderId),
+      getHouseOrderEventsRestricted(orderId),
     ]);
 
     return ok({ order, items, events });
@@ -117,6 +117,13 @@ export async function acceptIncomingOrder(params: {
     const detail = await getHouseOrderDetailRestricted(params.houseId, params.orderId);
     if (!detail) {
       return err("Order not found or does not belong to this laundry house");
+    }
+
+    if (detail.acceptanceDeadlineAt) {
+      const now = new Date();
+      if (now.getTime() > new Date(detail.acceptanceDeadlineAt).getTime()) {
+        return err("Le délai d'acceptation de 45 minutes est dépassé. La commande ne peut plus être acceptée.");
+      }
     }
 
     const transitionRes = transitionOrder(params.orderId, detail.status, {
@@ -245,6 +252,12 @@ export async function submitHouseReception(params: {
       return err("Submitted item counts must match the order items exactly");
     }
 
+    for (const c of params.itemCounts) {
+      if (!Number.isInteger(c.receivedQuantity) || c.receivedQuantity < 0) {
+        return err("Received quantity must be a non-negative integer");
+      }
+    }
+
     const countsMap = new Map(params.itemCounts.map((c) => [c.orderItemId, c]));
 
     const verificationInput: ReceptionItemVerificationInput[] = existingItems.map((item) => {
@@ -265,12 +278,12 @@ export async function submitHouseReception(params: {
       fabricId: e.fabricId,
     }));
 
-    // AC 10 verification
+    // AC 10 verification (uses order's frozen commissionBps first, fallback to house)
     const receptionResult = recordReceptionCount({
       items: verificationInput,
       houseExclusions: houseExclusionRules,
-      commissionBps: house?.commissionBps ?? 2000,
-      deliveryFee: 0, // delivery fee is preserved, calculation handles items
+      commissionBps: detail.commissionBps ?? house?.commissionBps ?? 2000,
+      deliveryFee: detail.deliveryFee ?? 0,
     });
 
     // Check transition
