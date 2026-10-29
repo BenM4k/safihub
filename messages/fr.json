@@ -2673,6 +2673,8 @@
     "saveSearch": "Enregistrer la recherche",
     "resultsCount": "{count} pressings disponibles",
     "resultsCountSingle": "1 pressing disponible",
+    "loadingMore": "Chargement d'autres pressings...",
+    "allHousesLoaded": "Tous les pressings disponibles ont été affichés",
     "sortBy": "Trier par",
     "sortRecommended": "Recommandés",
     "sortTurnaround": "Délai le plus court",

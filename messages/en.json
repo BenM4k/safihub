@@ -2673,6 +2673,8 @@
     "saveSearch": "Save Search",
     "resultsCount": "{count} laundry houses available",
     "resultsCountSingle": "1 laundry house available",
+    "loadingMore": "Loading more laundry houses...",
+    "allHousesLoaded": "All available laundry houses have been displayed",
     "sortBy": "Sort by",
     "sortRecommended": "Recommended",
     "sortTurnaround": "Fastest Turnaround",

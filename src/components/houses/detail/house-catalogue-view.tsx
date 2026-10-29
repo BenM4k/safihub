@@ -119,8 +119,8 @@ export function HouseCatalogueView({
           {/* Left Column: Catalogue Articles & Details */}
           <div className="lg:col-span-2 space-y-10">
             {filteredArticles.length === 0 ? (
-              <div className="py-16 text-center bg-card rounded-3xl border border-border p-6">
-                <p className="text-sm text-muted-foreground font-medium">
+              <div className="py-16 text-center bg-card rounded-2xl shadow-xs p-6">
+                <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
                   {t("noArticlesMatch")}
                 </p>
               </div>

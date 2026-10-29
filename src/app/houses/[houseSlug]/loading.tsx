@@ -2,8 +2,8 @@ import { HouseDetailSkeleton } from "@/components/houses/detail/house-detail-ske
 
 export default function CustomerHouseDetailLoading() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <div className="h-18 border-b border-border bg-card" />
+    <div className="min-h-screen flex flex-col bg-background font-sans">
+      <div className="h-16 border-b border-border/60 bg-card" />
       <main className="flex-1">
         <HouseDetailSkeleton />
       </main>

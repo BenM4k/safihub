@@ -40,7 +40,7 @@ export function PressingReviewFormDialog({
 }: PressingReviewFormDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open: boolean) => { if (!open) onClose(); }}>
-      <DialogContent className="w-full max-w-lg rounded-3xl p-6 shadow-2xl border-border max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-lg max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-2xl shadow-lift bg-card border border-border/60">
         {isOpen && (
           <ReviewFormBody
             houseId={houseId}
@@ -101,31 +101,31 @@ function ReviewFormBody({
 
   return (
     <>
-      <DialogHeader className="mb-2 text-left">
-        <DialogTitle className="text-lg font-black text-heading tracking-tight">
+      <DialogHeader className="p-4 sm:p-5 pb-3 border-b border-border/60 shrink-0 pr-12 text-left font-sans">
+        <DialogTitle className="text-lg font-black text-heading tracking-tight font-display">
           {t("dialogSubmitReviewTitle")}
         </DialogTitle>
-        <DialogDescription className="text-xs text-muted-foreground">
+        <DialogDescription className="text-xs text-slate-600 dark:text-slate-300">
           {houseName} · {t("dialogSubmitReviewDesc")}
         </DialogDescription>
       </DialogHeader>
 
       {isSuccess ? (
-        <div className="py-10 text-center space-y-2">
-          <CheckCircle2 className="size-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
+        <div className="py-10 text-center space-y-2 p-4">
+          <CheckCircle2 className="size-10 text-success mx-auto" />
           <p className="text-sm font-bold text-heading">{t("reviewSuccess")}</p>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="overflow-y-auto overflow-x-hidden flex-1 max-w-full min-w-0 p-4 sm:p-5 space-y-4 text-xs font-sans">
           {errorMessage && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 font-semibold">
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive font-semibold">
               {errorMessage}
             </div>
           )}
 
           {/* Order selector */}
-          <div>
-            <label htmlFor="order-selector" className="font-bold text-foreground block mb-1">
+          <div className="space-y-1">
+            <label htmlFor="order-selector" className="font-bold text-foreground block">
               {t("orderSelectLabel")}
             </label>
             <Select
@@ -134,7 +134,7 @@ function ReviewFormBody({
             >
               <SelectTrigger
                 id="order-selector"
-                className="w-full h-auto p-2.5 rounded-xl bg-muted/50 border border-border text-foreground font-medium text-base cursor-pointer"
+                className="w-full h-auto p-2.5 rounded-lg bg-muted/40 border border-input text-foreground font-medium text-base sm:text-xs cursor-pointer"
               >
                 <SelectValue placeholder={t("orderSelectLabel")} />
               </SelectTrigger>
@@ -151,8 +151,8 @@ function ReviewFormBody({
           </div>
 
           {/* Global Rating (Large clickable stars) */}
-          <div>
-            <label className="font-bold text-foreground block mb-1.5">
+          <div className="space-y-1.5">
+            <label className="font-bold text-foreground block">
               {t("globalRatingLabel")}
             </label>
             <div className="flex items-center gap-1.5">
@@ -186,8 +186,8 @@ function ReviewFormBody({
           />
 
           {/* Comment */}
-          <div>
-            <label htmlFor="review-comment" className="font-bold text-foreground block mb-1">
+          <div className="space-y-1">
+            <label htmlFor="review-comment" className="font-bold text-foreground block">
               {t("commentLabel")}
             </label>
             <textarea
@@ -197,20 +197,29 @@ function ReviewFormBody({
               maxLength={1000}
               rows={3}
               placeholder={t("commentPlaceholder")}
-              className="w-full p-2.5 rounded-xl bg-muted/50 border border-border text-foreground font-normal text-base placeholder:text-muted-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full p-2.5 rounded-lg bg-muted/40 border border-input text-foreground font-normal text-base sm:text-xs placeholder:text-muted-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <span className="text-[10px] text-muted-foreground float-right">
               {comment.length} / 1000
             </span>
           </div>
 
-          {/* Submit CTA */}
-          <div className="pt-3">
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-3 border-t border-border/60 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isPending}
+              className="w-full sm:w-auto h-9 px-4 rounded-lg text-xs font-semibold"
+            >
+              Annuler
+            </Button>
             <Button
               type="submit"
               variant="primary"
               disabled={isPending}
-              className="w-full py-3 rounded-xl font-black text-sm"
+              className="w-full sm:w-auto h-9 px-4 rounded-lg font-bold text-xs"
             >
               {isPending ? (
                 <>

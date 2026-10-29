@@ -39,17 +39,17 @@ export function PressingPracticalInfo({
     : null;
 
   return (
-    <section className="bg-card rounded-3xl border border-border p-6 space-y-6">
+    <section className="bg-card rounded-2xl shadow-xs p-5 sm:p-6 space-y-6">
       <div className="flex items-center gap-2">
         <Info className="size-5 text-primary" />
-        <h2 className="text-lg font-black text-heading tracking-tight">
+        <h2 className="text-lg font-black text-heading tracking-tight font-display">
           {t("practicalInfoTitle")}
         </h2>
       </div>
 
       {/* Description */}
       {description && (
-        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           {description}
         </p>
       )}
@@ -70,7 +70,7 @@ export function PressingPracticalInfo({
             return (
               <div
                 key={key}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-muted/50 border border-border"
+                className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40"
               >
                 <span className="font-semibold text-muted-foreground">{t(key)}</span>
                 <span className={`font-bold ${hasHours ? "text-heading" : "text-muted-foreground/50"}`}>
@@ -88,7 +88,7 @@ export function PressingPracticalInfo({
 
       {/* Membership & Trust Tag */}
       {memberSinceFormatted && (
-        <div className="pt-2 border-t border-border flex items-center gap-2 text-xs text-muted-foreground font-medium">
+        <div className="pt-2 border-t border-border/60 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
           <ShieldCheck className="size-4 text-primary shrink-0" />
           <span>{t("memberSince", { date: memberSinceFormatted })}</span>
         </div>

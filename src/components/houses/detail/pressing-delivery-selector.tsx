@@ -36,9 +36,11 @@ export function PressingDeliverySelector({
   const currentOption = neighborhoods.find((n) => n.id === selectedNeighborhoodId);
 
   return (
-    <div className="p-4 sm:p-5 rounded-3xl bg-card border border-border shadow-2xs space-y-3">
+    <div className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-muted/40 dark:bg-card/75 border border-border/80 shadow-xs space-y-3.5">
       <div className="flex items-center gap-2 text-xs font-bold text-heading">
-        <MapPin className="size-4 text-primary" />
+        <div className="size-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <MapPin className="size-3.5 text-primary" />
+        </div>
         <span>{t("deliveryTo")}</span>
       </div>
 
@@ -47,7 +49,7 @@ export function PressingDeliverySelector({
           value={selectedNeighborhoodId || "none"}
           onValueChange={(val: string) => onSelectNeighborhood(val === "none" ? null : val)}
         >
-          <SelectTrigger className="w-full h-auto p-2.5 rounded-2xl bg-muted/60 border border-border text-base font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 dark:bg-card cursor-pointer">
+          <SelectTrigger className="w-full h-auto p-2.5 rounded-lg bg-card border border-input text-base font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-xs">
             <SelectValue placeholder={t("chooseNeighborhood")} />
           </SelectTrigger>
           <SelectContent>
@@ -64,21 +66,21 @@ export function PressingDeliverySelector({
       </div>
 
       {currentOption && (
-        <div className="pt-1">
+        <div className="pt-0.5">
           {currentOption.isServed ? (
-            <div className="flex items-center justify-between text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20">
+            <div className="flex items-center justify-between text-xs font-semibold text-success bg-success-soft/30 p-2.5 rounded-lg border border-success/20">
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <CheckCircle2 className="size-3.5 text-success shrink-0" />
                 <span>Quartier desservi</span>
               </div>
-              <span className="font-black">
+              <span className="font-black text-success">
                 {currentOption.deliveryFeeCdf !== null
                   ? formatAmount(currentOption.deliveryFeeCdf)
                   : "Frais calculés"}
               </span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">
               <AlertCircle className="size-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
               <span>{t("deliveryNotServed")}</span>
             </div>

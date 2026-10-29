@@ -36,7 +36,7 @@ export function PressingCartTransferBanner({
         <Button
           type="button"
           size="sm"
-          className="font-bold bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+          className="font-bold bg-primary hover:bg-primary/90 text-primary-foreground shrink-0 rounded-lg"
           onClick={() => onTransfer(houseId, houseName, items)}
         >
           Transférer mon panier

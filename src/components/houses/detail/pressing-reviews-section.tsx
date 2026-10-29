@@ -66,14 +66,14 @@ export function PressingReviewsSection({
   const visibleReviews = filteredReviews.slice(0, displayCount);
 
   return (
-    <section id="avis" className="bg-card rounded-3xl border border-border p-6 space-y-6">
+    <section id="avis" className="bg-card rounded-2xl shadow-xs p-5 sm:p-6 space-y-6">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
         <div>
-          <h2 className="text-xl font-black text-heading tracking-tight">
+          <h2 className="text-xl font-black text-heading tracking-tight font-display">
             {t("reviewsTitle")}
           </h2>
-          <p className="text-xs text-muted-foreground font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium mt-0.5">
             Retours d&apos;expérience vérifiés des clients SafiHub à Bukavu.
           </p>
         </div>
@@ -83,7 +83,7 @@ export function PressingReviewsSection({
           variant="outline"
           size="sm"
           onClick={handleWriteReviewClick}
-          className="font-bold text-xs gap-1.5 shrink-0 border-primary/40 text-primary hover:bg-primary/5 cursor-pointer"
+          className="font-bold text-xs gap-1.5 shrink-0 border-primary/40 text-primary hover:bg-primary/5 rounded-lg cursor-pointer"
         >
           <MessageSquarePlus className="size-3.5" />
           <span>{t("writeReview")}</span>
@@ -91,12 +91,12 @@ export function PressingReviewsSection({
       </div>
 
       {eligibilityNotice && (
-        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-medium flex items-center justify-between animate-in fade-in">
+        <div className="border-l-2 border-primary/50 bg-muted/20 pl-3.5 p-3 rounded-r-xl text-xs text-slate-600 dark:text-slate-300 font-medium flex items-center justify-between animate-in fade-in">
           <span>{eligibilityNotice}</span>
           <button
             type="button"
             onClick={() => setEligibilityNotice(null)}
-            className="text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-100 font-bold ml-2 text-sm"
+            className="text-muted-foreground hover:text-foreground font-bold ml-2 text-sm"
           >
             ✕
           </button>
@@ -121,8 +121,8 @@ export function PressingReviewsSection({
 
       {/* Reviews List */}
       {visibleReviews.length === 0 ? (
-        <div className="py-12 text-center bg-muted/30 rounded-2xl border border-dashed border-border">
-          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+        <div className="py-12 text-center bg-muted/30 rounded-2xl">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
             {t("noReviewsYet")}
           </p>
         </div>
@@ -143,7 +143,7 @@ export function PressingReviewsSection({
                 variant="outline"
                 size="sm"
                 onClick={() => setDisplayCount((prev) => prev + 5)}
-                className="font-bold text-xs"
+                className="font-bold text-xs rounded-lg"
               >
                 {t("loadMoreReviews")}
               </Button>

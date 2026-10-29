@@ -57,12 +57,12 @@ export function PressingShareButton({ name }: PressingShareButtonProps) {
           type="button"
           variant="outline"
           onClick={handleShare}
-          className="h-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer"
+          className="h-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/70 bg-card hover:bg-muted text-foreground text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer"
         >
           {isCopied ? (
             <>
-              <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-emerald-700 dark:text-emerald-400">{t("shareSuccess")}</span>
+              <Check className="size-3.5 text-success" />
+              <span className="text-success">{t("shareSuccess")}</span>
             </>
           ) : (
             <>

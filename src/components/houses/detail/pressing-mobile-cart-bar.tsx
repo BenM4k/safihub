@@ -31,7 +31,7 @@ export function PressingMobileCartBar({
   if (totalItemsCount === 0) return null;
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-2xl animate-in slide-in-from-bottom duration-300">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/60 shadow-2xl animate-in slide-in-from-bottom duration-300">
       {/* Minimum order progress ribbon if not reached */}
       {minimumOrderAmount > 0 && !isMinOrderReached && (
         <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2">
@@ -65,7 +65,7 @@ export function PressingMobileCartBar({
             <span className="text-base font-black text-heading tabular-nums block truncate">
               {formatAmount(subtotalCdf)}
             </span>
-            <span className="text-[11px] text-muted-foreground font-medium block truncate">
+            <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium block truncate">
               {t("cartBarItems", { count: totalItemsCount })} · {houseName}
             </span>
           </div>
@@ -78,7 +78,7 @@ export function PressingMobileCartBar({
           size="sm"
           onClick={onProceedOrder}
           disabled={!isMinOrderReached}
-          className="px-4 py-2.5 rounded-xl font-black text-xs gap-1.5 shrink-0 shadow-sm press hover-lift"
+          className="px-4 py-2.5 rounded-lg font-black text-xs gap-1.5 shrink-0 shadow-xs press hover-lift"
         >
           <span>{t("orderNow")}</span>
           <ArrowRight className="size-3.5" />

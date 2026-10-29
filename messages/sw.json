@@ -2673,6 +2673,8 @@
     "saveSearch": "Hifadhi Utafutaji",
     "resultsCount": "Madobi {count} yanapatikana",
     "resultsCountSingle": "Dobi 1 linapatikana",
+    "loadingMore": "Inapakia madobi zaidi...",
+    "allHousesLoaded": "Madobi yote yanayopatikana yameonyeshwa",
     "sortBy": "Panga kwa",
     "sortRecommended": "Inayopendekezwa",
     "sortTurnaround": "Muda mfupi zaidi",

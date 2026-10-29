@@ -56,7 +56,7 @@ export function PressingCategoryNav({
   const hasMultipleServices = services.length > 1;
 
   return (
-    <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-md border-b border-border py-3 space-y-2.5 transition">
+    <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-md border-b border-border/60 py-3 space-y-2.5 transition">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-2.5">
         {/* Row 1: Search & Service/Fabric Filters */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
@@ -68,7 +68,7 @@ export function PressingCategoryNav({
               value={searchQuery}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value)}
               placeholder={t("searchArticles")}
-              className="w-full pl-10 pr-9 py-2 rounded-xl bg-muted/60 hover:bg-muted focus:bg-card border border-border text-base sm:text-xs font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
+              className="w-full pl-10 pr-9 py-2 rounded-xl bg-muted/60 hover:bg-muted focus:bg-card border border-input text-base sm:text-xs font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
             />
             {searchQuery && (
               <button
@@ -85,13 +85,13 @@ export function PressingCategoryNav({
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             {/* Service tabs */}
             {hasMultipleServices && (
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-muted border border-border">
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/40">
                 <button
                   type="button"
                   onClick={() => onSelectService(null)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                     activeServiceSlug === null
-                      ? "bg-card text-heading shadow-2xs"
+                      ? "bg-card text-heading shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -104,7 +104,7 @@ export function PressingCategoryNav({
                     onClick={() => onSelectService(srv.slug)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                       activeServiceSlug === srv.slug
-                        ? "bg-card text-heading shadow-2xs"
+                        ? "bg-card text-heading shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -120,7 +120,7 @@ export function PressingCategoryNav({
                 value={activeFabricId || "all"}
                 onValueChange={(val: string) => onSelectFabric(val === "all" ? null : val)}
               >
-                <SelectTrigger className="h-auto px-3 py-2 rounded-xl bg-muted/60 hover:bg-muted border border-border text-base sm:text-xs font-bold text-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
+                <SelectTrigger className="h-auto px-3 py-2 rounded-xl bg-muted/60 hover:bg-muted border border-input text-base sm:text-xs font-bold text-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
                   <SelectValue placeholder={t("allFabrics")} />
                 </SelectTrigger>
                 <SelectContent align="end">

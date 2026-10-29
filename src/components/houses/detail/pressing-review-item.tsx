@@ -44,15 +44,15 @@ export function PressingReviewItem({ review, houseName }: PressingReviewItemProp
   const photos = Array.isArray(review.photos) ? (review.photos as string[]) : [];
 
   return (
-    <div className="p-5 rounded-3xl bg-card border border-border space-y-3.5 transition">
+    <div className="p-5 rounded-2xl bg-card shadow-xs space-y-3.5 transition">
       {/* Header: Author, Rating, Date, Verified Badge */}
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-black text-heading">
+            <span className="text-sm font-black text-heading font-display">
               {review.customerFirstName} {review.customerLastInitial}
             </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-success-soft/30 text-success border border-success/20">
               <ShieldCheck className="size-3" />
               <span>{t("verifiedOrder")}</span>
             </span>
@@ -119,7 +119,7 @@ export function PressingReviewItem({ review, houseName }: PressingReviewItemProp
       )}
 
       {reportSent && (
-        <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
+        <p className="text-[11px] text-success font-semibold">
           {t("reportSuccess")}
         </p>
       )}

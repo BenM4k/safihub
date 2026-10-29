@@ -19,9 +19,9 @@ export function PressingReviewsSummary({
   const averageRating = isNew || !stats.averageRating ? null : stats.averageRating;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-5 rounded-2xl bg-muted/40 border border-border">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-5 rounded-2xl bg-muted/40">
       {/* Large Score */}
-      <div className="flex flex-col items-center justify-center text-center p-3 sm:border-r border-border">
+      <div className="flex flex-col items-center justify-center text-center p-3 sm:border-r border-border/60">
         {averageRating !== null ? (
           <>
             <span className="text-4xl sm:text-5xl font-black text-heading tabular-nums">
@@ -37,16 +37,16 @@ export function PressingReviewsSummary({
                 />
               ))}
             </div>
-            <span className="text-xs text-muted-foreground font-medium">
+            <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
               {t("ratingSummaryText", { count: reviewCount })}
             </span>
           </>
         ) : (
           <div className="space-y-1">
-            <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-sm font-black">
+            <span className="inline-block px-3 py-1 rounded-full bg-success-soft/30 border border-success/20 text-success text-sm font-black">
               {t("newBadge")}
             </span>
-            <p className="text-xs text-muted-foreground font-medium">
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
               Moins de 3 avis pour établir une moyenne
             </p>
           </div>

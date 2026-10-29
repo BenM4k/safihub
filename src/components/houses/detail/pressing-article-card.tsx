@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import { formatAmount } from "@/lib/order-formatters";
 import type { CustomerHouseCatalogueItem } from "@/dal";
 
-
 interface PressingArticleCardProps {
   itemName: string;
   serviceName: string;

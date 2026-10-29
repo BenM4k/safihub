@@ -15,7 +15,7 @@ export function PressingIdentityHeader({ house }: PressingIdentityHeaderProps) {
   const t = useTranslations("customerHouses");
 
   return (
-    <div className="w-full bg-card border-b border-border">
+    <div className="w-full bg-card border-b border-border/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 sm:pt-18 pb-6">
         {/* Top bar with back navigation & share */}
         <div className="flex items-center justify-between mb-3">
@@ -42,7 +42,7 @@ export function PressingIdentityHeader({ house }: PressingIdentityHeaderProps) {
             </div>
 
             {/* Metadata row: Location, Rating, Live Status */}
-            <div className="flex items-center flex-wrap gap-x-3 gap-y-1.5 text-xs text-muted-foreground font-medium">
+            <div className="flex items-center flex-wrap gap-x-3 gap-y-1.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
               <span className="inline-flex items-center gap-1 text-foreground">
                 <MapPin className="size-3.5 text-muted-foreground" />
                 {house.neighborhoodName}, {house.zoneName}
@@ -65,9 +65,9 @@ export function PressingIdentityHeader({ house }: PressingIdentityHeaderProps) {
               ) : (
                 <a
                   href="#avis"
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold text-[11px]"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-success-soft/30 border border-success/20 text-success font-bold text-[11px]"
                 >
-                  <Star className="size-3 text-emerald-600 dark:text-emerald-400" />
+                  <Star className="size-3 text-success" />
                   <span>{t("newBadge")}</span>
                 </a>
               )}
@@ -78,15 +78,15 @@ export function PressingIdentityHeader({ house }: PressingIdentityHeaderProps) {
               <span className="inline-flex items-center gap-1">
                 <Clock className="size-3.5 text-muted-foreground" />
                 {house.isPaused ? (
-                  <span className="text-amber-700 dark:text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded-md">
+                  <span className="text-amber-700 dark:text-amber-300 font-bold bg-amber-500/10 px-2.5 py-0.5 rounded-full">
                     {t("temporarilyPaused")}
                   </span>
                 ) : house.isOpenNow ? (
-                  <span className="text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                  <span className="text-success font-bold bg-success-soft/30 border border-success/20 px-2.5 py-0.5 rounded-full">
                     {t("openNow")} ({house.todayHoursText})
                   </span>
                 ) : (
-                  <span className="text-muted-foreground font-bold bg-muted px-2 py-0.5 rounded-md">
+                  <span className="text-muted-foreground font-bold bg-muted px-2.5 py-0.5 rounded-full">
                     {t("closed")} ({house.todayHoursText})
                   </span>
                 )}

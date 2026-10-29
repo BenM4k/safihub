@@ -1,7 +1,11 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * Skeleton placeholder matching HousesSplitView (search bar, filter pills, house cards list, and interactive map placeholder).
+ * Skeleton placeholder matching HousesSplitView 1:1:
+ * - Search top bar (search input, service chips, open now, all filters, view switchers, save search)
+ * - Main split layout:
+ *   - Left column (58% / 52%): Results header + 2-column house cards grid
+ *   - Right column: Map placeholder
  */
 export function HousesSearchSkeleton() {
   return (
@@ -10,66 +14,100 @@ export function HousesSearchSkeleton() {
       aria-live="polite"
       aria-busy="true"
       aria-label="Recherche des pressings partenaires"
-      className="flex-1 flex flex-col h-[calc(100dvh-4.5rem)] overflow-hidden bg-background"
+      className="flex flex-col h-[calc(100dvh-5rem)] bg-background overflow-hidden"
     >
-      {/* Search Top Bar skeleton */}
-      <div className="border-b border-border bg-card px-4 py-3 sm:px-6 space-y-3">
-        <div className="flex flex-col sm:flex-row items-center gap-3 max-w-7xl mx-auto w-full">
-          {/* Search input pill */}
-          <Skeleton className="h-11 w-full sm:max-w-md rounded-full" />
-          {/* Filter action pills */}
-          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-            <Skeleton className="h-9 w-24 rounded-full" />
-            <Skeleton className="h-9 w-28 rounded-full" />
-            <Skeleton className="h-9 w-20 rounded-full" />
-          </div>
-        </div>
+      {/* Sticky Search Top Bar Skeleton */}
+      <div className="w-full bg-card/95 backdrop-blur-md border-b border-border px-4 sm:px-6 py-3 sticky top-0 z-30 shadow-2xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Left: Search input + Quick filter pills */}
+          <div className="flex flex-1 flex-wrap items-center gap-2.5">
+            <div className="relative flex-1 min-w-[240px] max-w-md">
+              <Skeleton className="h-10 w-full rounded-full" />
+            </div>
 
-        {/* Neighborhood chips horizontal row */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-7xl mx-auto w-full">
-          <Skeleton className="h-7 w-20 rounded-full bg-primary/20" />
-          <Skeleton className="h-7 w-24 rounded-full" />
-          <Skeleton className="h-7 w-28 rounded-full" />
-          <Skeleton className="h-7 w-20 rounded-full" />
-          <Skeleton className="h-7 w-24 rounded-full" />
+            {/* Service filter quick pills (hidden on mobile, visible on sm+) */}
+            <div className="hidden sm:flex items-center gap-1.5 overflow-x-auto py-0.5">
+              <Skeleton className="h-8 w-24 rounded-full" />
+              <Skeleton className="h-8 w-20 rounded-full" />
+              <Skeleton className="h-8 w-24 rounded-full" />
+            </div>
+
+            {/* Open now toggle button */}
+            <Skeleton className="h-8 w-28 rounded-full" />
+
+            {/* All filters button */}
+            <Skeleton className="h-8 w-24 rounded-full" />
+          </div>
+
+          {/* Right: View switchers & Save Search */}
+          <div className="flex items-center justify-between sm:justify-end gap-2.5">
+            <Skeleton className="h-8 w-36 rounded-full" />
+            <Skeleton className="h-8 w-28 rounded-full" />
+          </div>
         </div>
       </div>
 
-      {/* Split View Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: House cards list panel */}
-        <div className="w-full lg:w-[480px] xl:w-[540px] border-r border-border overflow-y-auto p-4 sm:p-5 space-y-4 shrink-0">
-          <div className="flex justify-between items-center pb-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-24" />
+      {/* Main Split Layout: Cards on Left, Map on Right */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left Column: House Cards List */}
+        <div className="w-full lg:w-[58%] xl:w-[52%] flex flex-col h-full bg-background dark:bg-card/20 overflow-y-auto px-4 sm:px-6 py-5">
+          {/* Results Header Skeleton */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
+            <Skeleton className="h-5 w-44 rounded-md" />
+            <Skeleton className="h-8 w-36 rounded-xl" />
           </div>
 
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="rounded-2xl border border-border bg-card p-4 shadow-2xs space-y-3"
-            >
-              <div className="flex gap-3.5">
-                <Skeleton className="size-20 rounded-xl shrink-0" />
-                <div className="space-y-2 flex-1">
-                  <div className="flex justify-between items-start">
-                    <Skeleton className="h-4 w-36" />
-                    <Skeleton className="h-5 w-12 bg-amber-500/20" />
+          {/* 2-column House Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-12">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="flex flex-col rounded-2xl bg-card border border-border overflow-hidden"
+              >
+                {/* Image aspect ratio 16/10 on mobile, 16/9 on sm+ */}
+                <Skeleton className="w-full aspect-[16/10] sm:aspect-[16/9] rounded-none" />
+
+                {/* Card Content Body */}
+                <div className="p-4 flex flex-col flex-1 space-y-2.5">
+                  {/* Price & delivery fee */}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <Skeleton className="h-6 w-32 rounded-md" />
+                    <Skeleton className="h-5 w-24 rounded-md" />
                   </div>
-                  <Skeleton className="h-3 w-28" />
-                  <div className="flex gap-1.5 pt-1">
-                    <Skeleton className="h-5 w-16 rounded-md" />
-                    <Skeleton className="h-5 w-20 rounded-md" />
+
+                  {/* Specs row */}
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-20 rounded-md" />
+                    <Skeleton className="h-4 w-24 rounded-md" />
+                    <Skeleton className="h-4 w-16 rounded-md" />
+                  </div>
+
+                  {/* House Name & Logo */}
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <Skeleton className="size-6 rounded-full shrink-0" />
+                    <Skeleton className="h-5 w-36 rounded-md" />
+                  </div>
+
+                  {/* Address & Zone */}
+                  <Skeleton className="h-3.5 w-48 rounded-md" />
+
+                  {/* Services badges & CTA */}
+                  <div className="mt-auto pt-3 border-t border-border flex items-center justify-between gap-2">
+                    <div className="flex gap-1">
+                      <Skeleton className="h-5 w-16 rounded-md" />
+                      <Skeleton className="h-5 w-16 rounded-md" />
+                    </div>
+                    <Skeleton className="h-4 w-20 rounded-md" />
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        {/* Right: Map placeholder */}
-        <div className="hidden lg:flex flex-1 bg-muted/40 items-center justify-center p-8">
-          <Skeleton className="w-full h-full rounded-3xl" />
+        {/* Right Column: Interactive Bukavu Map Placeholder */}
+        <div className="hidden lg:flex flex-1 h-full border-l border-border bg-muted/40 relative">
+          <Skeleton className="w-full h-full rounded-none" />
         </div>
       </div>
     </div>

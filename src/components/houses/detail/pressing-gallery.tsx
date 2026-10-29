@@ -21,7 +21,7 @@ export function PressingGallery({ photos, houseName }: PressingGalleryProps) {
   const displayPhotos = photos.slice(0, 4);
 
   return (
-    <div className="w-full bg-card border-b border-border">
+    <div className="w-full bg-card border-b border-border/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -33,7 +33,7 @@ export function PressingGallery({ photos, houseName }: PressingGalleryProps) {
               setCurrentIndex(0);
               setIsOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition cursor-pointer"
           >
             <Images className="size-3.5" />
             <span>{t("viewPhotos", { count: photos.length })}</span>
@@ -50,7 +50,7 @@ export function PressingGallery({ photos, houseName }: PressingGalleryProps) {
                 setCurrentIndex(idx);
                 setIsOpen(true);
               }}
-              className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-muted border border-border cursor-pointer shadow-2xs hover:shadow-sm transition"
+              className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-muted cursor-pointer shadow-xs hover:shadow-sm transition"
             >
               <Image
                 src={url}
