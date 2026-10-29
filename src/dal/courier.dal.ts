@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, ne, notInArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne, notInArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
 import { DEFAULT_RETRY_FEE_CDF, RETRY_FEE_FAILED_PICKUP_COUNT } from "@/lib/fees";
@@ -221,20 +221,22 @@ export async function setCourierShifts(
   courierId: string,
   shifts: Array<{ weekday: number; startsAt: string; endsAt: string }>
 ): Promise<void> {
-  await db
-    .delete(schema.courierShifts)
-    .where(eq(schema.courierShifts.courierId, courierId));
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(schema.courierShifts)
+      .where(eq(schema.courierShifts.courierId, courierId));
 
-  if (shifts.length > 0) {
-    await db.insert(schema.courierShifts).values(
-      shifts.map((s) => ({
-        courierId,
-        weekday: s.weekday,
-        startsAt: s.startsAt,
-        endsAt: s.endsAt,
-      }))
-    );
-  }
+    if (shifts.length > 0) {
+      await tx.insert(schema.courierShifts).values(
+        shifts.map((s) => ({
+          courierId,
+          weekday: s.weekday,
+          startsAt: s.startsAt,
+          endsAt: s.endsAt,
+        }))
+      );
+    }
+  });
 }
 
 export async function getCourierZones(courierId: string): Promise<CourierZoneRecord[]> {
@@ -255,18 +257,20 @@ export async function setCourierZones(
   courierId: string,
   zoneIds: string[]
 ): Promise<void> {
-  await db
-    .delete(schema.courierZones)
-    .where(eq(schema.courierZones.courierId, courierId));
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(schema.courierZones)
+      .where(eq(schema.courierZones.courierId, courierId));
 
-  if (zoneIds.length > 0) {
-    await db.insert(schema.courierZones).values(
-      zoneIds.map((zId) => ({
-        courierId,
-        zoneId: zId,
-      }))
-    );
-  }
+    if (zoneIds.length > 0) {
+      await tx.insert(schema.courierZones).values(
+        zoneIds.map((zId) => ({
+          courierId,
+          zoneId: zId,
+        }))
+      );
+    }
+  });
 }
 
 /**
@@ -278,22 +282,29 @@ export async function getEligibleCouriersForZones(
 ): Promise<CourierRecord[]> {
   const allCouriers = await getCouriers();
   const activeCouriers = allCouriers.filter((c) => c.isActive && c.status === "active");
+  if (activeCouriers.length === 0) return [];
 
-  const eligible: CourierRecord[] = [];
+  const activeCourierIds = activeCouriers.map((c) => c.userId);
+  const allCourierZones = await db
+    .select({
+      courierId: schema.courierZones.courierId,
+      zoneId: schema.courierZones.zoneId,
+    })
+    .from(schema.courierZones)
+    .where(inArray(schema.courierZones.courierId, activeCourierIds));
 
-  for (const courier of activeCouriers) {
-    const courierZones = await getCourierZones(courier.userId);
-    const coveredZoneIds = new Set(courierZones.map((z) => z.zoneId));
-
-    const coversCustomer = coveredZoneIds.has(customerZoneId);
-    const coversHouse = coveredZoneIds.has(houseZoneId);
-
-    if (coversCustomer && coversHouse) {
-      eligible.push(courier);
-    }
+  const zonesByCourier = new Map<string, Set<string>>();
+  for (const row of allCourierZones) {
+    const set = zonesByCourier.get(row.courierId) ?? new Set<string>();
+    set.add(row.zoneId);
+    zonesByCourier.set(row.courierId, set);
   }
 
-  return eligible;
+  return activeCouriers.filter((courier) => {
+    const coveredZoneIds = zonesByCourier.get(courier.userId);
+    if (!coveredZoneIds) return false;
+    return coveredZoneIds.has(customerZoneId) && coveredZoneIds.has(houseZoneId);
+  });
 }
 
 export async function getMissionById(missionId: string): Promise<MissionRecord | null> {
@@ -397,22 +408,71 @@ export async function assignMission(
   missionId: string,
   courierId: string
 ): Promise<boolean> {
-  const result = await db
-    .update(schema.missions)
-    .set({
-      courierId,
-      status: "assigned",
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(schema.missions.id, missionId),
-        eq(schema.missions.status, "unassigned")
+  return await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(schema.missions)
+      .set({
+        courierId,
+        status: "assigned",
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.missions.id, missionId),
+          eq(schema.missions.status, "unassigned")
+        )
       )
-    )
-    .returning({ id: schema.missions.id });
+      .returning({
+        id: schema.missions.id,
+        orderId: schema.missions.orderId,
+        type: schema.missions.type,
+      });
 
-  return result.length > 0;
+    if (!updated) return false;
+
+    const [order] = await tx
+      .select({ id: schema.orders.id, status: schema.orders.status })
+      .from(schema.orders)
+      .where(eq(schema.orders.id, updated.orderId))
+      .limit(1);
+
+    if (order) {
+      if (updated.type === "pickup" && order.status === "accepted") {
+        await tx
+          .update(schema.orders)
+          .set({ status: "pickup_assigned", updatedAt: new Date() })
+          .where(eq(schema.orders.id, order.id));
+        await tx.insert(schema.orderEvents).values({
+          orderId: order.id,
+          type: "status_change",
+          fromStatus: "accepted",
+          toStatus: "pickup_assigned",
+          actorId: courierId,
+          actorRole: "admin",
+          note: "Coursier assigné pour la collecte",
+        });
+      } else if (
+        updated.type === "delivery" &&
+        (order.status === "ready" || order.status === "delivery_slot_confirmed")
+      ) {
+        await tx
+          .update(schema.orders)
+          .set({ status: "delivery_assigned", updatedAt: new Date() })
+          .where(eq(schema.orders.id, order.id));
+        await tx.insert(schema.orderEvents).values({
+          orderId: order.id,
+          type: "status_change",
+          fromStatus: order.status,
+          toStatus: "delivery_assigned",
+          actorId: courierId,
+          actorRole: "admin",
+          note: "Coursier assigné pour la livraison",
+        });
+      }
+    }
+
+    return true;
+  });
 }
 
 export interface CourierAssignedMissionSummary {
@@ -591,7 +651,6 @@ export async function getCourierMissionDetail(
       orderId: schema.missions.orderId,
       orderCode: schema.orders.code,
       orderStatus: schema.orders.status,
-      deliveryConfirmationCode: schema.orders.deliveryConfirmationCode,
       paymentCurrency: schema.orders.paymentCurrency,
       exchangeRateUsed: schema.orders.exchangeRateUsed,
       type: schema.missions.type,
@@ -645,7 +704,7 @@ export async function getCourierMissionDetail(
     .leftJoin(schema.services, eq(schema.orderItems.serviceId, schema.services.id))
     .where(eq(schema.orderItems.orderId, row.orderId));
 
-  // Photos query
+  // Photos query (active only)
   const photoRows = await db
     .select({
       id: schema.orderPhotos.id,
@@ -655,7 +714,7 @@ export async function getCourierMissionDetail(
       createdAt: schema.orderPhotos.createdAt,
     })
     .from(schema.orderPhotos)
-    .where(eq(schema.orderPhotos.orderId, row.orderId));
+    .where(and(eq(schema.orderPhotos.orderId, row.orderId), isNull(schema.orderPhotos.deletedAt)));
 
   const isActive = ["assigned", "accepted", "in_progress"].includes(row.status);
 
@@ -680,7 +739,7 @@ export async function getCourierMissionDetail(
       houseNeighborhood: row.houseNeighborhood || "Bukavu",
     },
     orderStatus: row.orderStatus,
-    deliveryConfirmationCode: row.deliveryConfirmationCode,
+    deliveryConfirmationCode: null,
     paymentCurrency: row.paymentCurrency,
     exchangeRateUsed: row.exchangeRateUsed,
     items: itemsRows.map((it) => ({
@@ -772,7 +831,7 @@ export async function startPickupMissionAtomic(
       })
       .where(eq(schema.missions.id, missionId));
 
-    if (order.status === "pickup_assigned") {
+    if (order.status === "pickup_assigned" || order.status === "accepted") {
       await tx
         .update(schema.orders)
         .set({
@@ -784,7 +843,7 @@ export async function startPickupMissionAtomic(
       await tx.insert(schema.orderEvents).values({
         orderId: order.id,
         type: "status_change",
-        fromStatus: "pickup_assigned",
+        fromStatus: order.status,
         toStatus: "pickup_in_progress",
         actorId: courierId,
         actorRole: "courier",
@@ -847,7 +906,7 @@ export async function completePickupMissionAtomic(params: {
     const existingPhotos = await tx
       .select()
       .from(schema.orderPhotos)
-      .where(eq(schema.orderPhotos.orderId, order.id));
+      .where(and(eq(schema.orderPhotos.orderId, order.id), isNull(schema.orderPhotos.deletedAt)));
 
     const photosByItem = new Set(
       existingPhotos.filter((p) => p.orderItemId).map((p) => p.orderItemId as string)
@@ -1056,6 +1115,8 @@ export async function failPickupMissionAtomic(params: {
         })
         .where(eq(schema.user.id, order.customerId));
 
+      await tx.delete(schema.session).where(eq(schema.session.userId, order.customerId));
+
       await tx.insert(schema.orderEvents).values({
         orderId: order.id,
         type: "note",
@@ -1172,7 +1233,12 @@ export async function startDeliveryMissionAtomic(
       order.deliveryConfirmationCode ||
       Math.floor(1000 + Math.random() * 9000).toString();
 
-    if (order.status === "delivery_assigned" || !order.deliveryConfirmationCode) {
+    if (
+      order.status === "delivery_assigned" ||
+      order.status === "ready" ||
+      order.status === "delivery_slot_confirmed" ||
+      !order.deliveryConfirmationCode
+    ) {
       await tx
         .update(schema.orders)
         .set({
@@ -1182,15 +1248,17 @@ export async function startDeliveryMissionAtomic(
         })
         .where(eq(schema.orders.id, order.id));
 
-      await tx.insert(schema.orderEvents).values({
-        orderId: order.id,
-        type: "status_change",
-        fromStatus: order.status,
-        toStatus: "delivery_in_progress",
-        actorId: courierId,
-        actorRole: "courier",
-        note: "Coursier en route pour la livraison",
-      });
+      if (order.status !== "delivery_in_progress") {
+        await tx.insert(schema.orderEvents).values({
+          orderId: order.id,
+          type: "status_change",
+          fromStatus: order.status,
+          toStatus: "delivery_in_progress",
+          actorId: courierId,
+          actorRole: "courier",
+          note: "Coursier en route pour la livraison",
+        });
+      }
     }
 
     return { ok: true };

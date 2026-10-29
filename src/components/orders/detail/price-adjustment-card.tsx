@@ -16,6 +16,7 @@ interface PriceAdjustmentCardProps {
   totalDue: number;
   items: OrderItemRecord[];
   method?: "app" | "tracking_link";
+  trackingToken?: string;
 }
 
 export function PriceAdjustmentCard({
@@ -24,6 +25,7 @@ export function PriceAdjustmentCard({
   totalDue,
   items,
   method = "app",
+  trackingToken,
 }: PriceAdjustmentCardProps) {
   const t = useTranslations("orders");
   const [loading, setLoading] = useState(false);
@@ -35,7 +37,7 @@ export function PriceAdjustmentCard({
     setLoading(true);
     setError(null);
     try {
-      const res = await approvePriceAdjustmentAction(orderId, method);
+      const res = await approvePriceAdjustmentAction(orderId, method, trackingToken);
       if (!res.success) {
         setError(res.error || "Impossible de valider l'ajustement.");
       }
@@ -53,7 +55,8 @@ export function PriceAdjustmentCard({
       const res = await declinePriceAdjustmentAction(
         orderId,
         method,
-        "Ajustement refusé par le client"
+        "Ajustement refusé par le client",
+        trackingToken
       );
       if (!res.success) {
         setError(res.error || "Impossible de refuser l'ajustement.");

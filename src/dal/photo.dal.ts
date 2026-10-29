@@ -33,7 +33,9 @@ export interface OrderAccessDetails {
 /**
  * Retrieve all active photos for an order (not soft-deleted).
  */
-export async function getOrderPhotos(orderId: string): Promise<OrderPhotoRecord[]> {
+export async function getOrderPhotos(
+  orderId: string,
+): Promise<OrderPhotoRecord[]> {
   const rows = await db
     .select({
       id: schema.orderPhotos.id,
@@ -53,8 +55,8 @@ export async function getOrderPhotos(orderId: string): Promise<OrderPhotoRecord[
     .where(
       and(
         eq(schema.orderPhotos.orderId, orderId),
-        isNull(schema.orderPhotos.deletedAt)
-      )
+        isNull(schema.orderPhotos.deletedAt),
+      ),
     )
     .orderBy(schema.orderPhotos.createdAt);
 
@@ -65,7 +67,7 @@ export async function getOrderPhotos(orderId: string): Promise<OrderPhotoRecord[
  * Retrieve a single photo record by ID.
  */
 export async function getOrderPhotoById(
-  photoId: string
+  photoId: string,
 ): Promise<OrderPhotoRecord | null> {
   const [row] = await db
     .select({
@@ -99,8 +101,8 @@ export async function countPhotosForOrder(orderId: string): Promise<number> {
     .where(
       and(
         eq(schema.orderPhotos.orderId, orderId),
-        isNull(schema.orderPhotos.deletedAt)
-      )
+        isNull(schema.orderPhotos.deletedAt),
+      ),
     );
 
   return result?.count ?? 0;
@@ -116,8 +118,8 @@ export async function countPhotosForItem(orderItemId: string): Promise<number> {
     .where(
       and(
         eq(schema.orderPhotos.orderItemId, orderItemId),
-        isNull(schema.orderPhotos.deletedAt)
-      )
+        isNull(schema.orderPhotos.deletedAt),
+      ),
     );
 
   return result?.count ?? 0;
@@ -163,7 +165,7 @@ export async function insertOrderPhotoRecord(params: {
  * Query orders access details for authorization checks.
  */
 export async function getOrderAccessDetails(
-  orderId: string
+  orderId: string,
 ): Promise<OrderAccessDetails | null> {
   const [order] = await db
     .select({
@@ -180,11 +182,20 @@ export async function getOrderAccessDetails(
 
   if (!order) return null;
 
-  // Find couriers currently or previously assigned to missions for this order
+  // Find couriers currently assigned to active missions for this order (AC 15)
   const missionRows = await db
     .select({ courierId: schema.missions.courierId })
     .from(schema.missions)
-    .where(eq(schema.missions.orderId, orderId));
+    .where(
+      and(
+        eq(schema.missions.orderId, orderId),
+        inArray(schema.missions.status, [
+          "assigned",
+          "accepted",
+          "in_progress",
+        ]),
+      ),
+    );
 
   const activeCourierIds = missionRows
     .map((m) => m.courierId)
@@ -197,8 +208,8 @@ export async function getOrderAccessDetails(
     .where(
       and(
         eq(schema.disputes.orderId, orderId),
-        eq(schema.disputes.status, "open")
-      )
+        eq(schema.disputes.status, "open"),
+      ),
     );
 
   return {
@@ -219,7 +230,7 @@ export async function getOrderAccessDetails(
  */
 export async function getExpiredPhotosForPruning(
   now: Date,
-  limit: number = 100
+  limit: number = 100,
 ): Promise<Array<{ id: string; storageKey: string; orderId: string }>> {
   const rows = await db
     .select({
@@ -231,8 +242,8 @@ export async function getExpiredPhotosForPruning(
     .where(
       and(
         lte(schema.orderPhotos.deleteAfter, now),
-        isNull(schema.orderPhotos.deletedAt)
-      )
+        isNull(schema.orderPhotos.deletedAt),
+      ),
     )
     .limit(limit);
 
@@ -244,7 +255,7 @@ export async function getExpiredPhotosForPruning(
  */
 export async function markPhotosDeletedAtomic(
   photoIds: string[],
-  deletedAt: Date = new Date()
+  deletedAt: Date = new Date(),
 ): Promise<number> {
   if (photoIds.length === 0) return 0;
 

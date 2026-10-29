@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { CustomerHouseCatalogueItem } from "@/dal";
 
 export interface OutlierPolicyConfig {

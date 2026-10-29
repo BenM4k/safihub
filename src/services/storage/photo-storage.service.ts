@@ -299,6 +299,7 @@ export async function recordUploadedPhotoService(params: {
 
     // Limit checks
     if (actualSizeBytes && actualSizeBytes > PHOTO_LIMITS.MAX_SIZE_BYTES) {
+      await deleteStorageObject(params.storageKey).catch(() => false);
       return err(
         `Taille de photo excessive (${Math.round(actualSizeBytes / 1024)} Ko > 500 Ko)`
       );
@@ -306,12 +307,14 @@ export async function recordUploadedPhotoService(params: {
 
     const orderPhotoCount = await countPhotosForOrder(params.orderId);
     if (orderPhotoCount >= PHOTO_LIMITS.MAX_PER_ORDER) {
+      await deleteStorageObject(params.storageKey).catch(() => false);
       return err(`Limite maximale de photos atteinte pour cette commande`);
     }
 
     if (params.orderItemId) {
       const itemPhotoCount = await countPhotosForItem(params.orderItemId);
       if (itemPhotoCount >= PHOTO_LIMITS.MAX_PER_ITEM) {
+        await deleteStorageObject(params.storageKey).catch(() => false);
         return err(`Limite maximale de photos atteinte pour cet article`);
       }
     }

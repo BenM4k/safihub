@@ -1019,11 +1019,7 @@ export async function updateHouseImagesAction(input: {
 
   const isValidAssetUrl = (url: string | null | undefined): boolean => {
     if (url === null || url === undefined) return true;
-    return (
-      url.startsWith(expectedPrefix) ||
-      url.startsWith(internalPrefix) ||
-      url.includes(`/houses/${houseId}/`)
-    );
+    return url.startsWith(expectedPrefix) || url.startsWith(internalPrefix);
   };
 
   if (!isValidAssetUrl(parsed.data.coverImageUrl)) {

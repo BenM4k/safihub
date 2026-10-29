@@ -1,6 +1,7 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
 import {
+  findReviewById,
   findReviewByOrderId,
   insertReview,
   insertReviewReply,
@@ -139,6 +140,12 @@ export async function submitReviewReply(
 
   if (input.text.length > 500) {
     return err("La réponse ne doit pas dépasser 500 caractères.");
+  }
+
+  // Verify the review belongs to input.houseId
+  const review = await findReviewById(input.reviewId);
+  if (!review || review.houseId !== input.houseId) {
+    return err("Avis introuvable ou n'appartenant pas à cet établissement.");
   }
 
   try {

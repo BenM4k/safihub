@@ -152,36 +152,50 @@ export async function cancelOrderAction(
 
 export async function approvePriceAdjustmentAction(
   orderId: string,
-  method: "app" | "tracking_link" = "app"
+  method: "app" | "tracking_link" = "app",
+  trackingToken?: string
 ): Promise<{ success: boolean; error?: string }> {
   const user = await getCurrentUser();
+  if (method === "app" && !user) {
+    return { success: false, error: "Vous devez être connecté pour valider cet ajustement." };
+  }
   const actorId = user?.id || "guest-customer";
 
-  const res = await approveCustomerPriceAdjustment(orderId, actorId, method);
+  const res = await approveCustomerPriceAdjustment(orderId, actorId, method, trackingToken);
   if (!res.ok) {
     return { success: false, error: res.error };
   }
 
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/orders");
+  if (trackingToken) {
+    revalidatePath(`/track/${trackingToken}`);
+  }
   return { success: true };
 }
 
 export async function declinePriceAdjustmentAction(
   orderId: string,
   method: "app" | "tracking_link" = "app",
-  reason?: string
+  reason?: string,
+  trackingToken?: string
 ): Promise<{ success: boolean; error?: string }> {
   const user = await getCurrentUser();
+  if (method === "app" && !user) {
+    return { success: false, error: "Vous devez être connecté pour refuser cet ajustement." };
+  }
   const actorId = user?.id || "guest-customer";
 
-  const res = await declineCustomerPriceAdjustment(orderId, actorId, method, reason);
+  const res = await declineCustomerPriceAdjustment(orderId, actorId, method, reason, trackingToken);
   if (!res.ok) {
     return { success: false, error: res.error };
   }
 
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/orders");
+  if (trackingToken) {
+    revalidatePath(`/track/${trackingToken}`);
+  }
   return { success: true };
 }
 
@@ -189,9 +203,13 @@ export async function confirmDeliverySlotAction(
   orderId: string,
   slotStart?: string,
   slotEnd?: string,
-  method: "app" | "tracking_link" = "app"
+  method: "app" | "tracking_link" = "app",
+  trackingToken?: string
 ): Promise<{ success: boolean; error?: string }> {
   const user = await getCurrentUser();
+  if (method === "app" && !user) {
+    return { success: false, error: "Vous devez être connecté pour confirmer le créneau." };
+  }
   const actorId = user?.id || "guest-customer";
 
   let slot: { start: Date; end: Date } | undefined;
@@ -208,7 +226,8 @@ export async function confirmDeliverySlotAction(
     orderId,
     actorId,
     slot,
-    method
+    method,
+    trackingToken
   );
 
   if (!res.ok) {
@@ -217,6 +236,9 @@ export async function confirmDeliverySlotAction(
 
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/orders");
+  if (trackingToken) {
+    revalidatePath(`/track/${trackingToken}`);
+  }
   return { success: true };
 }
 

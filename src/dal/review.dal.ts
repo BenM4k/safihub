@@ -168,6 +168,19 @@ export async function recalculateHouseRatingStats(houseId: string): Promise<Hous
 }
 
 /**
+ * Finds an existing review by ID.
+ */
+export async function findReviewById(reviewId: string): Promise<Review | null> {
+  const [row] = await db
+    .select()
+    .from(schema.reviews)
+    .where(eq(schema.reviews.id, reviewId))
+    .limit(1);
+
+  return row ?? null;
+}
+
+/**
  * Finds an existing review by order ID.
  */
 export async function findReviewByOrderId(orderId: string): Promise<Review | null> {

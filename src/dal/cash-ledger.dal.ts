@@ -546,15 +546,22 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
       )
     );
 
-  const results = [];
-  let sumExpectedCDF = 0;
-  let sumReceivedCDF = 0;
-  let sumDiscrepancyCDF = 0;
+  const activeCourierIds = activeCouriers.map((c) => c.id);
+  if (activeCourierIds.length === 0) {
+    return {
+      couriers: [],
+      summary: {
+        totalExpectedCDF: 0,
+        totalReceivedCDF: 0,
+        totalDiscrepancyCDF: 0,
+      },
+    };
+  }
 
-  for (const c of activeCouriers) {
-    // Expected cash for this specific businessDate (from cash_collected ledger entries)
-    const dayEntries = await db
+  const [allDayEntries, allBalanceEntries, allRecons] = await Promise.all([
+    db
       .select({
+        courierId: schema.cashLedger.courierId,
         amount: schema.cashLedger.amount,
         currency: schema.cashLedger.currency,
         exchangeRateUsed: schema.orders.exchangeRateUsed,
@@ -567,12 +574,81 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
       .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
       .where(
         and(
-          eq(schema.cashLedger.courierId, c.id),
+          inArray(schema.cashLedger.courierId, activeCourierIds),
           eq(schema.cashLedger.entryType, "cash_collected"),
           sql`to_char(${schema.cashLedger.createdAt} at time zone 'Africa/Lubumbashi', 'YYYY-MM-DD') = ${businessDate}`,
           notInArray(schema.cashLedger.id, reversedSubquery)
         )
-      );
+      ),
+    db
+      .select({
+        courierId: schema.cashLedger.courierId,
+        entryType: schema.cashLedger.entryType,
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+      })
+      .from(schema.cashLedger)
+      .where(
+        and(
+          inArray(schema.cashLedger.courierId, activeCourierIds),
+          sql`${schema.cashLedger.entryType} <> 'reversal'`,
+          notInArray(schema.cashLedger.id, reversedSubquery)
+        )
+      ),
+    db
+      .select({
+        courierId: schema.cashReconciliations.courierId,
+        id: schema.cashReconciliations.id,
+        receivedAmount: schema.cashReconciliations.receivedAmount,
+        difference: schema.cashReconciliations.difference,
+        status: schema.cashReconciliations.status,
+        currency: schema.cashReconciliations.currency,
+        note: schema.cashReconciliations.note,
+        reconciledBy: schema.cashReconciliations.reconciledBy,
+        createdAt: schema.cashReconciliations.createdAt,
+        reconciledByName: schema.user.name,
+      })
+      .from(schema.cashReconciliations)
+      .leftJoin(schema.user, eq(schema.cashReconciliations.reconciledBy, schema.user.id))
+      .where(
+        and(
+          inArray(schema.cashReconciliations.courierId, activeCourierIds),
+          eq(schema.cashReconciliations.businessDate, businessDate)
+        )
+      ),
+  ]);
+
+  const dayEntriesByCourier = new Map<string, typeof allDayEntries>();
+  for (const e of allDayEntries) {
+    if (!e.courierId) continue;
+    const list = dayEntriesByCourier.get(e.courierId) ?? [];
+    list.push(e);
+    dayEntriesByCourier.set(e.courierId, list);
+  }
+
+  const heldCashCDFByCourier = new Map<string, number>();
+  for (const entry of allBalanceEntries) {
+    if (!entry.courierId || entry.currency === "USD") continue;
+    const current = heldCashCDFByCourier.get(entry.courierId) ?? 0;
+    if (entry.entryType === "cash_collected" || entry.entryType === "float_issued") {
+      heldCashCDFByCourier.set(entry.courierId, current + entry.amount);
+    } else if (entry.entryType === "cash_remitted" || entry.entryType === "float_returned") {
+      heldCashCDFByCourier.set(entry.courierId, current - entry.amount);
+    }
+  }
+
+  const reconByCourier = new Map<string, (typeof allRecons)[number]>();
+  for (const r of allRecons) {
+    reconByCourier.set(r.courierId, r);
+  }
+
+  const results = [];
+  let sumExpectedCDF = 0;
+  let sumReceivedCDF = 0;
+  let sumDiscrepancyCDF = 0;
+
+  for (const c of activeCouriers) {
+    const dayEntries = dayEntriesByCourier.get(c.id) ?? [];
 
     let expectedCashCDF = 0;
     let expectedCashUSD = 0;
@@ -597,31 +673,8 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
         createdAt: e.createdAt,
       }));
 
-    // Held cash overall
-    const balances = await getCourierCashBalances(c.id);
-
-    // Existing reconciliation record for this date with operator name
-    const [recon] = await db
-      .select({
-        id: schema.cashReconciliations.id,
-        receivedAmount: schema.cashReconciliations.receivedAmount,
-        difference: schema.cashReconciliations.difference,
-        status: schema.cashReconciliations.status,
-        currency: schema.cashReconciliations.currency,
-        note: schema.cashReconciliations.note,
-        reconciledBy: schema.cashReconciliations.reconciledBy,
-        createdAt: schema.cashReconciliations.createdAt,
-        reconciledByName: schema.user.name,
-      })
-      .from(schema.cashReconciliations)
-      .leftJoin(schema.user, eq(schema.cashReconciliations.reconciledBy, schema.user.id))
-      .where(
-        and(
-          eq(schema.cashReconciliations.courierId, c.id),
-          eq(schema.cashReconciliations.businessDate, businessDate)
-        )
-      )
-      .limit(1);
+    const heldCashCDF = Math.max(0, heldCashCDFByCourier.get(c.id) ?? 0);
+    const recon = reconByCourier.get(c.id);
 
     const receivedAmount = recon?.receivedAmount ?? 0;
     const difference = recon ? recon.difference : -expectedCashCDF;
@@ -639,7 +692,7 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
       phone: c.phone,
       expectedCashCDF,
       expectedCashUSD,
-      heldCashCDF: balances.cashHeldCDF,
+      heldCashCDF,
       securityDeposit: c.securityDeposit ?? 0,
       changeFloat: c.changeFloat ?? 0,
       reconciliationId: recon?.id ?? null,

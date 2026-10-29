@@ -284,17 +284,40 @@ export async function cancelCustomerOrder(
   return ok(undefined);
 }
 
+function verifyCustomerOrTrackingAccess(
+  order: OrderDetailRecord,
+  actorId: string,
+  method: "app" | "tracking_link",
+  trackingToken?: string
+): boolean {
+  if (order.customerId === actorId) {
+    return true;
+  }
+  if (
+    method === "tracking_link" &&
+    Boolean(trackingToken) &&
+    order.trackingToken === trackingToken
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export async function approveCustomerPriceAdjustment(
   orderId: string,
   actorId: string,
-  method: "app" | "tracking_link" = "app"
+  method: "app" | "tracking_link" = "app",
+  trackingToken?: string
 ): Promise<Result<void, string>> {
   const order = await getOrderById(orderId);
   if (!order) return err("Commande introuvable.");
+  if (!verifyCustomerOrTrackingAccess(order, actorId, method, trackingToken)) {
+    return err("Action non autorisée sur cette commande.");
+  }
 
   const transitionRes = transitionOrder(orderId, order.status, {
     targetStatus: "washing",
-    actorId,
+    actorId: order.customerId,
     actorRole: "customer",
     approvalMethod: method,
     note: "Ajustement de prix validé par le client",
@@ -320,14 +343,18 @@ export async function declineCustomerPriceAdjustment(
   orderId: string,
   actorId: string,
   method: "app" | "tracking_link" = "app",
-  reason: string = "Ajustement de prix refusé par le client"
+  reason: string = "Ajustement de prix refusé par le client",
+  trackingToken?: string
 ): Promise<Result<void, string>> {
   const order = await getOrderById(orderId);
   if (!order) return err("Commande introuvable.");
+  if (!verifyCustomerOrTrackingAccess(order, actorId, method, trackingToken)) {
+    return err("Action non autorisée sur cette commande.");
+  }
 
   const transitionRes = transitionOrder(orderId, order.status, {
     targetStatus: "price_declined",
-    actorId,
+    actorId: order.customerId,
     actorRole: "customer",
     reason,
     note: `Refus via ${method}`,
@@ -353,10 +380,14 @@ export async function confirmCustomerDeliverySlot(
   orderId: string,
   actorId: string,
   slot?: { start: Date; end: Date },
-  method: "app" | "tracking_link" = "app"
+  method: "app" | "tracking_link" = "app",
+  trackingToken?: string
 ): Promise<Result<void, string>> {
   const order = await getOrderById(orderId);
   if (!order) return err("Commande introuvable.");
+  if (!verifyCustomerOrTrackingAccess(order, actorId, method, trackingToken)) {
+    return err("Action non autorisée sur cette commande.");
+  }
 
   const resolvedSlot =
     order.deliverySlotStart && order.deliverySlotEnd
@@ -377,7 +408,7 @@ export async function confirmCustomerDeliverySlot(
 
   const transitionRes = transitionOrder(orderId, order.status, {
     targetStatus: "delivery_slot_confirmed",
-    actorId,
+    actorId: order.customerId,
     actorRole: "customer",
     note: `Créneau de livraison confirmé via ${method}`,
   });

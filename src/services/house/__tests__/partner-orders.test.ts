@@ -16,192 +16,194 @@ vi.mock("@/dal", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/dal")>();
   return {
     ...actual,
-    getHouseOrderDetailRestricted: vi.fn(async (houseId: string, orderId: string) => {
-      // Mock db records
-      if (houseId === "house-alpha" && orderId === "ord-created-valid") {
-        return {
-          id: "ord-created-valid",
-          code: "ORD-20261015-alpha01",
-          trackingToken: "trk_alpha_01",
-          customerRawName: "Jean Munanira",
-          customerFirstName: "Jean",
-          neighborhoodId: "neigh-1",
-          neighborhoodName: "Ibanda",
-          status: "created",
-          source: "app",
-          totalDue: 18000,
-          itemsTotal: 15000,
-          adjustedItemsTotal: null,
-          commissionAmount: 3000,
-          commissionBps: 2000,
-          currency: "CDF",
-          pickupSlotStart: new Date(),
-          pickupSlotEnd: new Date(),
-          deliverySlotStart: null,
-          deliverySlotEnd: null,
-          estimatedDeliveryAt: new Date(Date.now() + 24 * 3600 * 1000),
-          acceptanceDeadlineAt: new Date(Date.now() + 30 * 60 * 1000), // in 30 mins
-          receptionDeadlineAt: null,
-          notes: null,
-          createdAt: new Date(),
-          updatedAt: null,
-        };
-      }
+    getHouseOrderDetailRestricted: vi.fn(
+      async (houseId: string, orderId: string) => {
+        // Mock db records
+        if (houseId === "house-alpha" && orderId === "ord-created-valid") {
+          return {
+            id: "ord-created-valid",
+            code: "ORD-20261015-alpha01",
+            trackingToken: "trk_alpha_01",
+            customerRawName: "Jean Munanira",
+            customerFirstName: "Jean",
+            neighborhoodId: "neigh-1",
+            neighborhoodName: "Ibanda",
+            status: "created",
+            source: "app",
+            totalDue: 18000,
+            itemsTotal: 15000,
+            adjustedItemsTotal: null,
+            commissionAmount: 3000,
+            commissionBps: 2000,
+            currency: "CDF",
+            pickupSlotStart: new Date(),
+            pickupSlotEnd: new Date(),
+            deliverySlotStart: null,
+            deliverySlotEnd: null,
+            estimatedDeliveryAt: new Date(Date.now() + 24 * 3600 * 1000),
+            acceptanceDeadlineAt: new Date(Date.now() + 30 * 60 * 1000), // in 30 mins
+            receptionDeadlineAt: null,
+            notes: null,
+            createdAt: new Date(),
+            updatedAt: null,
+          };
+        }
 
-      if (houseId === "house-alpha" && orderId === "ord-created-expired") {
-        return {
-          id: "ord-created-expired",
-          code: "ORD-20261015-alpha02",
-          trackingToken: "trk_alpha_02",
-          customerRawName: "Amani Safari",
-          customerFirstName: "Amani",
-          neighborhoodId: "neigh-1",
-          neighborhoodName: "Ibanda",
-          status: "created",
-          source: "app",
-          totalDue: 12000,
-          itemsTotal: 10000,
-          adjustedItemsTotal: null,
-          commissionAmount: 2000,
-          commissionBps: 2000,
-          currency: "CDF",
-          pickupSlotStart: new Date(),
-          pickupSlotEnd: new Date(),
-          deliverySlotStart: null,
-          deliverySlotEnd: null,
-          estimatedDeliveryAt: null,
-          acceptanceDeadlineAt: new Date(Date.now() - 10 * 60 * 1000), // 10 mins ago (EXPIRED)
-          receptionDeadlineAt: null,
-          notes: null,
-          createdAt: new Date(),
-          updatedAt: null,
-        };
-      }
+        if (houseId === "house-alpha" && orderId === "ord-created-expired") {
+          return {
+            id: "ord-created-expired",
+            code: "ORD-20261015-alpha02",
+            trackingToken: "trk_alpha_02",
+            customerRawName: "Amani Safari",
+            customerFirstName: "Amani",
+            neighborhoodId: "neigh-1",
+            neighborhoodName: "Ibanda",
+            status: "created",
+            source: "app",
+            totalDue: 12000,
+            itemsTotal: 10000,
+            adjustedItemsTotal: null,
+            commissionAmount: 2000,
+            commissionBps: 2000,
+            currency: "CDF",
+            pickupSlotStart: new Date(),
+            pickupSlotEnd: new Date(),
+            deliverySlotStart: null,
+            deliverySlotEnd: null,
+            estimatedDeliveryAt: null,
+            acceptanceDeadlineAt: new Date(Date.now() - 10 * 60 * 1000), // 10 mins ago (EXPIRED)
+            receptionDeadlineAt: null,
+            notes: null,
+            createdAt: new Date(),
+            updatedAt: null,
+          };
+        }
 
-      if (houseId === "house-alpha" && orderId === "ord-picked-up") {
-        return {
-          id: "ord-picked-up",
-          code: "ORD-20261015-alpha03",
-          trackingToken: "trk_alpha_03",
-          customerRawName: "Clarisse Baraka",
-          customerFirstName: "Clarisse",
-          neighborhoodId: "neigh-1",
-          neighborhoodName: "Ibanda",
-          status: "picked_up",
-          source: "app",
-          totalDue: 25000,
-          itemsTotal: 20000,
-          adjustedItemsTotal: null,
-          commissionAmount: 4000,
-          commissionBps: 2000,
-          currency: "CDF",
-          pickupSlotStart: new Date(),
-          pickupSlotEnd: new Date(),
-          deliverySlotStart: null,
-          deliverySlotEnd: null,
-          estimatedDeliveryAt: null,
-          acceptanceDeadlineAt: null,
-          receptionDeadlineAt: null,
-          notes: null,
-          createdAt: new Date(),
-          updatedAt: null,
-        };
-      }
+        if (houseId === "house-alpha" && orderId === "ord-picked-up") {
+          return {
+            id: "ord-picked-up",
+            code: "ORD-20261015-alpha03",
+            trackingToken: "trk_alpha_03",
+            customerRawName: "Clarisse Baraka",
+            customerFirstName: "Clarisse",
+            neighborhoodId: "neigh-1",
+            neighborhoodName: "Ibanda",
+            status: "picked_up",
+            source: "app",
+            totalDue: 25000,
+            itemsTotal: 20000,
+            adjustedItemsTotal: null,
+            commissionAmount: 4000,
+            commissionBps: 2000,
+            currency: "CDF",
+            pickupSlotStart: new Date(),
+            pickupSlotEnd: new Date(),
+            deliverySlotStart: null,
+            deliverySlotEnd: null,
+            estimatedDeliveryAt: null,
+            acceptanceDeadlineAt: null,
+            receptionDeadlineAt: null,
+            notes: null,
+            createdAt: new Date(),
+            updatedAt: null,
+          };
+        }
 
-      if (houseId === "house-alpha" && orderId === "ord-received") {
-        return {
-          id: "ord-received",
-          code: "ORD-20261015-alpha05",
-          trackingToken: "trk_alpha_05",
-          customerRawName: "Clarisse Baraka",
-          customerFirstName: "Clarisse",
-          neighborhoodId: "neigh-1",
-          neighborhoodName: "Ibanda",
-          status: "received",
-          source: "app",
-          totalDue: 25000,
-          itemsTotal: 20000,
-          adjustedItemsTotal: null,
-          commissionAmount: 4000,
-          commissionBps: 2000,
-          currency: "CDF",
-          pickupSlotStart: new Date(),
-          pickupSlotEnd: new Date(),
-          deliverySlotStart: null,
-          deliverySlotEnd: null,
-          estimatedDeliveryAt: null,
-          acceptanceDeadlineAt: null,
-          receptionDeadlineAt: null,
-          notes: null,
-          createdAt: new Date(),
-          updatedAt: null,
-        };
-      }
+        if (houseId === "house-alpha" && orderId === "ord-received") {
+          return {
+            id: "ord-received",
+            code: "ORD-20261015-alpha05",
+            trackingToken: "trk_alpha_05",
+            customerRawName: "Clarisse Baraka",
+            customerFirstName: "Clarisse",
+            neighborhoodId: "neigh-1",
+            neighborhoodName: "Ibanda",
+            status: "received",
+            source: "app",
+            totalDue: 25000,
+            itemsTotal: 20000,
+            adjustedItemsTotal: null,
+            commissionAmount: 4000,
+            commissionBps: 2000,
+            currency: "CDF",
+            pickupSlotStart: new Date(),
+            pickupSlotEnd: new Date(),
+            deliverySlotStart: null,
+            deliverySlotEnd: null,
+            estimatedDeliveryAt: null,
+            acceptanceDeadlineAt: null,
+            receptionDeadlineAt: null,
+            notes: null,
+            createdAt: new Date(),
+            updatedAt: null,
+          };
+        }
 
-      if (houseId === "house-alpha" && orderId === "ord-washing") {
-        return {
-          id: "ord-washing",
-          code: "ORD-20261015-alpha04",
-          trackingToken: "trk_alpha_04",
-          customerRawName: "David Mugisho",
-          customerFirstName: "David",
-          neighborhoodId: "neigh-1",
-          neighborhoodName: "Ibanda",
-          status: "washing",
-          source: "app",
-          totalDue: 18000,
-          itemsTotal: 15000,
-          adjustedItemsTotal: null,
-          commissionAmount: 3000,
-          commissionBps: 2000,
-          currency: "CDF",
-          pickupSlotStart: new Date(),
-          pickupSlotEnd: new Date(),
-          deliverySlotStart: null,
-          deliverySlotEnd: null,
-          estimatedDeliveryAt: null,
-          acceptanceDeadlineAt: null,
-          receptionDeadlineAt: null,
-          notes: null,
-          createdAt: new Date(),
-          updatedAt: null,
-        };
-      }
+        if (houseId === "house-alpha" && orderId === "ord-washing") {
+          return {
+            id: "ord-washing",
+            code: "ORD-20261015-alpha04",
+            trackingToken: "trk_alpha_04",
+            customerRawName: "David Mugisho",
+            customerFirstName: "David",
+            neighborhoodId: "neigh-1",
+            neighborhoodName: "Ibanda",
+            status: "washing",
+            source: "app",
+            totalDue: 18000,
+            itemsTotal: 15000,
+            adjustedItemsTotal: null,
+            commissionAmount: 3000,
+            commissionBps: 2000,
+            currency: "CDF",
+            pickupSlotStart: new Date(),
+            pickupSlotEnd: new Date(),
+            deliverySlotStart: null,
+            deliverySlotEnd: null,
+            estimatedDeliveryAt: null,
+            acceptanceDeadlineAt: null,
+            receptionDeadlineAt: null,
+            notes: null,
+            createdAt: new Date(),
+            updatedAt: null,
+          };
+        }
 
-      // Reassigned order ORD-bkloj0q belongs exclusively to house-beta
-      if (houseId === "house-beta" && orderId === "ord-reassigned-bkloj0q") {
-        return {
-          id: "ord-reassigned-bkloj0q",
-          code: "ORD-20261015-bkloj0q",
-          trackingToken: "trk_bkloj0q",
-          customerRawName: "Esperance Nabintu",
-          customerFirstName: "Esperance",
-          neighborhoodId: "neigh-2",
-          neighborhoodName: "Kadutu",
-          status: "created",
-          source: "app",
-          totalDue: 22000,
-          itemsTotal: 18000,
-          adjustedItemsTotal: null,
-          commissionAmount: 3600,
-          commissionBps: 2000,
-          currency: "CDF",
-          pickupSlotStart: new Date(),
-          pickupSlotEnd: new Date(),
-          deliverySlotStart: null,
-          deliverySlotEnd: null,
-          estimatedDeliveryAt: null,
-          acceptanceDeadlineAt: new Date(Date.now() + 45 * 60 * 1000),
-          receptionDeadlineAt: null,
-          notes: null,
-          createdAt: new Date(),
-          updatedAt: null,
-        };
-      }
+        // Reassigned order ORD-bkloj0q belongs exclusively to house-beta
+        if (houseId === "house-beta" && orderId === "ord-reassigned-bkloj0q") {
+          return {
+            id: "ord-reassigned-bkloj0q",
+            code: "ORD-20261015-bkloj0q",
+            trackingToken: "trk_bkloj0q",
+            customerRawName: "Esperance Nabintu",
+            customerFirstName: "Esperance",
+            neighborhoodId: "neigh-2",
+            neighborhoodName: "Kadutu",
+            status: "created",
+            source: "app",
+            totalDue: 22000,
+            itemsTotal: 18000,
+            adjustedItemsTotal: null,
+            commissionAmount: 3600,
+            commissionBps: 2000,
+            currency: "CDF",
+            pickupSlotStart: new Date(),
+            pickupSlotEnd: new Date(),
+            deliverySlotStart: null,
+            deliverySlotEnd: null,
+            estimatedDeliveryAt: null,
+            acceptanceDeadlineAt: new Date(Date.now() + 45 * 60 * 1000),
+            receptionDeadlineAt: null,
+            notes: null,
+            createdAt: new Date(),
+            updatedAt: null,
+          };
+        }
 
-      // Any attempt by house-alpha to view ord-reassigned-bkloj0q returns null
-      return null;
-    }),
+        // Any attempt by house-alpha to view ord-reassigned-bkloj0q returns null
+        return null;
+      },
+    ),
 
     getOrderItems: vi.fn(async () => [
       {
@@ -215,6 +217,7 @@ vi.mock("@/dal", async (importOriginal) => {
     ]),
 
     getOrderEvents: vi.fn(async () => []),
+    getHouseOrderEventsRestricted: vi.fn(async () => []),
 
     transitionOrderStatusAtomic: vi.fn(async () => true),
 
@@ -255,8 +258,8 @@ vi.mock("@/dal", async (importOriginal) => {
             shortReference: "#ALPHA05",
             status: "accepted",
             customerFirstName: "Baraka",
-            customerDisplayName: "Baraka Cikuru",
-            customerPhone: "+243 99 123 4567", // Shown after acceptance!
+            customerDisplayName: "Baraka",
+            customerPhone: null, // AC 15: Never shown to house!
             neighborhoodName: "Ibanda",
             itemsCount: 3,
             itemsSummary: "3 Chemise",
@@ -305,13 +308,17 @@ vi.mock("@/dal", async (importOriginal) => {
       };
     }),
 
-    recordPartnerOrderHandover: vi.fn(async (params: { houseId: string; orderId: string }) => {
-      return params.houseId === "house-alpha";
-    }),
+    recordPartnerOrderHandover: vi.fn(
+      async (params: { houseId: string; orderId: string }) => {
+        return params.houseId === "house-alpha";
+      },
+    ),
 
-    reportPartnerOrderIssue: vi.fn(async (params: { houseId: string; orderId: string }) => {
-      return params.houseId === "house-alpha";
-    }),
+    reportPartnerOrderIssue: vi.fn(
+      async (params: { houseId: string; orderId: string }) => {
+        return params.houseId === "house-alpha";
+      },
+    ),
   };
 });
 
@@ -319,7 +326,10 @@ describe("Partner Orders Domain Service", () => {
   describe("1. Tenant Isolation & Reassignment Guarantee", () => {
     it("prevents House Alpha from accessing or modifying an order belonging to House Beta", async () => {
       // Reassigned order ORD-bkloj0q belongs to house-beta
-      const res = await getPartnerOrderDetail("house-alpha", "ord-reassigned-bkloj0q");
+      const res = await getPartnerOrderDetail(
+        "house-alpha",
+        "ord-reassigned-bkloj0q",
+      );
       expect(res.ok).toBe(false);
       if (!res.ok) {
         expect(res.error).toContain("Commande introuvable");
@@ -340,7 +350,10 @@ describe("Partner Orders Domain Service", () => {
     });
 
     it("allows House Beta to access its legitimately reassigned order", async () => {
-      const res = await getPartnerOrderDetail("house-beta", "ord-reassigned-bkloj0q");
+      const res = await getPartnerOrderDetail(
+        "house-beta",
+        "ord-reassigned-bkloj0q",
+      );
       expect(res.ok).toBe(true);
       if (res.ok) {
         expect(res.value.order.code).toBe("ORD-20261015-bkloj0q");
@@ -353,21 +366,25 @@ describe("Partner Orders Domain Service", () => {
       const ordersRes = await listPartnerOrders("house-alpha");
       expect(ordersRes.ok).toBe(true);
       if (ordersRes.ok) {
-        const createdOrder = ordersRes.value.find((o) => o.status === "created");
+        const createdOrder = ordersRes.value.find(
+          (o) => o.status === "created",
+        );
         expect(createdOrder).toBeDefined();
         expect(createdOrder?.customerPhone).toBeNull();
         expect(createdOrder?.customerDisplayName).toBe("Jean M.");
       }
     });
 
-    it("reveals customer phone and full name only after order is accepted", async () => {
+    it("enforces AC 15 privacy firewall: never reveals customer phone or full name even after order is accepted", async () => {
       const ordersRes = await listPartnerOrders("house-alpha");
       expect(ordersRes.ok).toBe(true);
       if (ordersRes.ok) {
-        const acceptedOrder = ordersRes.value.find((o) => o.status === "accepted");
+        const acceptedOrder = ordersRes.value.find(
+          (o) => o.status === "accepted",
+        );
         expect(acceptedOrder).toBeDefined();
-        expect(acceptedOrder?.customerPhone).toBe("+243 99 123 4567");
-        expect(acceptedOrder?.customerDisplayName).toBe("Baraka Cikuru");
+        expect(acceptedOrder?.customerPhone).toBeNull();
+        expect(acceptedOrder?.customerDisplayName).toBe("Baraka");
       }
     });
 
@@ -391,7 +408,9 @@ describe("Partner Orders Domain Service", () => {
       });
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toContain("Le délai d'acceptation de 45 minutes est dépassé");
+        expect(res.error).toContain(
+          "Le délai d'acceptation de 45 minutes est dépassé",
+        );
       }
     });
 

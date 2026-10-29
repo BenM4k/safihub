@@ -10,6 +10,12 @@ vi.mock("@/dal/review.dal", () => {
   const repliesDb = new Map<string, Record<string, unknown>>();
 
   return {
+    findReviewById: vi.fn(async (reviewId: string) => {
+      if (reviewId === "rev-sample") {
+        return { id: "rev-sample", houseId: "house-1", status: "published" };
+      }
+      return reviewsDb.get(reviewId) || null;
+    }),
     findReviewByOrderId: vi.fn(async (orderId: string) => {
       for (const rev of reviewsDb.values()) {
         if (rev.orderId === orderId) return rev;
@@ -243,6 +249,18 @@ describe("Pressing Profile Features & Domain Invariants", () => {
       expect(res.ok).toBe(false);
       if (!res.ok) {
         expect(res.error).toContain("pas autorisé à répondre");
+      }
+    });
+
+    it("rejects cross-house IDOR reply when review belongs to another house", async () => {
+      const res = await submitReviewReply("staff-house-1", "house", {
+        reviewId: "rev-other-house",
+        houseId: "house-1",
+        text: "Tentative sur avis d'un autre pressing",
+      });
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toContain("n'appartenant pas à cet établissement");
       }
     });
   });

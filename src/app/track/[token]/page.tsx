@@ -68,6 +68,7 @@ async function TrackOrderContent({ params }: TrackOrderPageProps) {
         totalDue={order.totalDue}
         items={items}
         method="tracking_link"
+        trackingToken={token}
       />
 
       <DeliverySlotConfirmationCard
@@ -76,6 +77,7 @@ async function TrackOrderContent({ params }: TrackOrderPageProps) {
         deliverySlotStart={order.deliverySlotStart}
         deliverySlotEnd={order.deliverySlotEnd}
         method="tracking_link"
+        trackingToken={token}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
