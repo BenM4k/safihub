@@ -251,6 +251,29 @@ export async function getExpiredPhotosForPruning(
 }
 
 /**
+ * Query photo record by storage key to ensure idempotent recording and prevent double uploads.
+ */
+export async function getPhotoByStorageKey(
+  storageKey: string,
+): Promise<{ id: string; orderId: string } | null> {
+  const [photo] = await db
+    .select({
+      id: schema.orderPhotos.id,
+      orderId: schema.orderPhotos.orderId,
+    })
+    .from(schema.orderPhotos)
+    .where(
+      and(
+        eq(schema.orderPhotos.storageKey, storageKey),
+        isNull(schema.orderPhotos.deletedAt),
+      ),
+    )
+    .limit(1);
+
+  return photo ?? null;
+}
+
+/**
  * Soft-delete photo records after R2 object deletion (Task 7.4).
  */
 export async function markPhotosDeletedAtomic(

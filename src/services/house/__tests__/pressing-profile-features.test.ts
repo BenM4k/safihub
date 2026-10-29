@@ -4,11 +4,16 @@ import { filterCatalogueOutliers } from "@/services/catalog/outliers";
 import { generateMetadata } from "@/app/houses/[houseSlug]/page";
 import type { CustomerHouseCatalogueItem } from "@/dal";
 
+const { reviewsDb, insertReviewReplyMock } = vi.hoisted(() => ({
+  reviewsDb: new Map<string, Record<string, unknown>>(),
+  insertReviewReplyMock: vi.fn(async (data: Record<string, unknown>) => {
+    const created = { ...data, id: `rep-${Date.now()}`, createdAt: new Date() };
+    return created;
+  }),
+}));
+
 // Mock DAL layer for review tests
 vi.mock("@/dal/review.dal", () => {
-  const reviewsDb = new Map<string, Record<string, unknown>>();
-  const repliesDb = new Map<string, Record<string, unknown>>();
-
   return {
     findReviewById: vi.fn(async (reviewId: string) => {
       if (reviewId === "rev-sample") {
@@ -27,11 +32,7 @@ vi.mock("@/dal/review.dal", () => {
       reviewsDb.set(created.id as string, created);
       return created;
     }),
-    insertReviewReply: vi.fn(async (data: Record<string, unknown>) => {
-      const created = { ...data, id: `rep-${Date.now()}`, createdAt: new Date() };
-      repliesDb.set(created.id as string, created);
-      return created;
-    }),
+    insertReviewReply: insertReviewReplyMock,
     setReviewModerationStatus: vi.fn(async (reviewId: string, status: string, reason: string) => {
       const existing = reviewsDb.get(reviewId) || { id: reviewId, status: "published" };
       existing.status = status;
@@ -253,6 +254,12 @@ describe("Pressing Profile Features & Domain Invariants", () => {
     });
 
     it("rejects cross-house IDOR reply when review belongs to another house", async () => {
+      reviewsDb.set("rev-other-house", {
+        id: "rev-other-house",
+        houseId: "house-2",
+        status: "published",
+      });
+
       const res = await submitReviewReply("staff-house-1", "house", {
         reviewId: "rev-other-house",
         houseId: "house-1",
@@ -262,6 +269,7 @@ describe("Pressing Profile Features & Domain Invariants", () => {
       if (!res.ok) {
         expect(res.error).toContain("n'appartenant pas à cet établissement");
       }
+      expect(insertReviewReplyMock).not.toHaveBeenCalled();
     });
   });
 

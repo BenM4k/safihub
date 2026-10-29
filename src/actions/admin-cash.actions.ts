@@ -176,6 +176,7 @@ export async function reverseCourierReconciliationAction(
   });
   if (res.ok) {
     revalidatePath("/admin/cash");
+    revalidatePath("/admin/couriers");
   }
   return res;
 }

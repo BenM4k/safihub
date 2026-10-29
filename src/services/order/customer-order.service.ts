@@ -315,9 +315,16 @@ export async function approveCustomerPriceAdjustment(
     return err("Action non autorisée sur cette commande.");
   }
 
+  const resolvedActorId =
+    actorId && actorId !== "guest-customer"
+      ? actorId
+      : method === "tracking_link"
+        ? null
+        : order.customerId;
+
   const transitionRes = transitionOrder(orderId, order.status, {
     targetStatus: "washing",
-    actorId: order.customerId,
+    actorId: resolvedActorId,
     actorRole: "customer",
     approvalMethod: method,
     note: "Ajustement de prix validé par le client",
@@ -352,9 +359,16 @@ export async function declineCustomerPriceAdjustment(
     return err("Action non autorisée sur cette commande.");
   }
 
+  const resolvedActorId =
+    actorId && actorId !== "guest-customer"
+      ? actorId
+      : method === "tracking_link"
+        ? null
+        : order.customerId;
+
   const transitionRes = transitionOrder(orderId, order.status, {
     targetStatus: "price_declined",
-    actorId: order.customerId,
+    actorId: resolvedActorId,
     actorRole: "customer",
     reason,
     note: `Refus via ${method}`,
@@ -406,9 +420,16 @@ export async function confirmCustomerDeliverySlot(
     return err("Créneau de livraison invalide.");
   }
 
+  const resolvedActorId =
+    actorId && actorId !== "guest-customer"
+      ? actorId
+      : method === "tracking_link"
+        ? null
+        : order.customerId;
+
   const transitionRes = transitionOrder(orderId, order.status, {
     targetStatus: "delivery_slot_confirmed",
-    actorId: order.customerId,
+    actorId: resolvedActorId,
     actorRole: "customer",
     note: `Créneau de livraison confirmé via ${method}`,
   });

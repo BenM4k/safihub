@@ -11,7 +11,7 @@ import {
 
 export interface TransitionOrderInput {
   targetStatus: OrderStatus;
-  actorId: string;
+  actorId?: string | null;
   actorRole: ActorRole;
   onBehalfOfHouseId?: string | null;
   reason?: string | null;
@@ -25,7 +25,7 @@ export interface GeneratedOrderEvent {
   type: "status_change" | "approval" | "price_adjustment";
   fromStatus: OrderStatus;
   toStatus: OrderStatus;
-  actorId: string;
+  actorId: string | null;
   actorRole: string;
   onBehalfOfHouseId?: string | null;
   approvalMethod?: ApprovalMethod | null;
@@ -111,7 +111,7 @@ export function transitionOrder(
     type: rule.requiresApprovalMethod ? "approval" : "status_change",
     fromStatus: currentStatus,
     toStatus: targetStatus,
-    actorId,
+    actorId: actorId ?? null,
     actorRole,
     onBehalfOfHouseId: isAllowedOnBehalf ? onBehalfOfHouseId : null,
     approvalMethod: approvalMethod ?? null,

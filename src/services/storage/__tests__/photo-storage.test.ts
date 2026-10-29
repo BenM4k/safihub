@@ -64,6 +64,10 @@ vi.mock("@/dal", () => ({
   getOrderPhotoById: vi.fn(async (photoId: string) => {
     return mockPhotos.find((p) => p.id === photoId) || null;
   }),
+  getPhotoByStorageKey: vi.fn(async (key: string) => {
+    const found = mockPhotos.find((p) => p.storageKey === key);
+    return found ? { id: found.id, orderId: found.orderId } : null;
+  }),
   countPhotosForOrder: vi.fn(async () => orderPhotoCount),
   countPhotosForItem: vi.fn(async () => itemPhotoCount),
   insertOrderPhotoRecord: vi.fn(async () => "photo_new_123"),

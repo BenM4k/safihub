@@ -313,6 +313,9 @@ export async function getHouseOrderEventsRestricted(
   const rows = await getOrderEvents(orderId);
   return rows
     .filter((ev) => {
+      if (ev.actorRole === "admin" && ev.type === "note") {
+        return false;
+      }
       const category =
         ev.payload && typeof ev.payload === "object"
           ? (ev.payload as Record<string, unknown>).category
@@ -1001,18 +1004,24 @@ export async function getHouseOrdersRestricted(
     .limit(filters?.limit ?? 50)
     .offset(filters?.offset ?? 0);
 
-  return rows.map((r) => ({
-    ...r,
-    customerFirstName: r.customerRawName.trim().split(" ")[0] || "Client",
-  }));
+  return rows.map((r) => {
+    const { customerRawName, ...rest } = r;
+    return {
+      ...rest,
+      customerFirstName: customerRawName.trim().split(" ")[0] || "Client",
+    };
+  });
 }
 
 /**
  * AC 15: Projects an order for the house portal, stripping phone, street address, and trackingToken.
  */
-export function projectHouseFacingOrder<T extends { customerRawName: string }>(
+export function projectHouseFacingOrder<T extends { customerRawName?: string }>(
   order: T,
-): Omit<T, "customerPhone" | "streetAddress" | "landmark" | "trackingToken"> & {
+): Omit<
+  T,
+  "customerPhone" | "streetAddress" | "landmark" | "trackingToken" | "customerRawName"
+> & {
   customerFirstName: string;
 } {
   const record = order as unknown as Record<string, unknown>;
@@ -1021,6 +1030,7 @@ export function projectHouseFacingOrder<T extends { customerRawName: string }>(
   delete copy.streetAddress;
   delete copy.landmark;
   delete copy.trackingToken;
+  delete copy.customerRawName;
   const rawName =
     typeof record.customerRawName === "string" ? record.customerRawName : "";
   return {
@@ -1028,7 +1038,7 @@ export function projectHouseFacingOrder<T extends { customerRawName: string }>(
     customerFirstName: rawName.trim().split(" ")[0] || "Client",
   } as Omit<
     T,
-    "customerPhone" | "streetAddress" | "landmark" | "trackingToken"
+    "customerPhone" | "streetAddress" | "landmark" | "trackingToken" | "customerRawName"
   > & { customerFirstName: string };
 }
 
@@ -1080,9 +1090,10 @@ export async function getHouseOrderDetailRestricted(
 
   if (!row) return null;
 
+  const { customerRawName, ...rest } = row;
   return {
-    ...row,
-    customerFirstName: row.customerRawName.trim().split(" ")[0] || "Client",
+    ...rest,
+    customerFirstName: customerRawName.trim().split(" ")[0] || "Client",
   };
 }
 
@@ -1827,7 +1838,7 @@ export async function saveReceptionCountTransaction(params: {
     }
 
     // 2. Update order totals, status, and reception timestamp (only if still in picked_up or received)
-    await tx
+    const updated = await tx
       .update(schema.orders)
       .set({
         status: params.newStatus,
@@ -1843,7 +1854,12 @@ export async function saveReceptionCountTransaction(params: {
           eq(schema.orders.houseId, params.houseId),
           inArray(schema.orders.status, ["picked_up", "received"]),
         ),
-      );
+      )
+      .returning({ id: schema.orders.id });
+
+    if (updated.length === 0) {
+      throw new Error("Order status mismatch or order not found; cannot submit reception");
+    }
 
     // 3. Insert audit event
     await tx.insert(schema.orderEvents).values({

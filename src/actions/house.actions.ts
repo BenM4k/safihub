@@ -1014,12 +1014,37 @@ export async function updateHouseImagesAction(input: {
   const houseId = authCtx.value.houseId;
   const { getStoragePublicUrl } = await import("@/lib/storage/r2-client");
   const { normalizeStorageUrl } = await import("@/lib/storage-url");
+  const path = await import("node:path");
   const expectedPrefix = getStoragePublicUrl(`houses/${houseId}/`);
   const internalPrefix = `/api/storage/houses/${houseId}/`;
 
   const isValidAssetUrl = (url: string | null | undefined): boolean => {
     if (url === null || url === undefined) return true;
-    return url.startsWith(expectedPrefix) || url.startsWith(internalPrefix);
+    try {
+      const isAbsolute = url.startsWith("http://") || url.startsWith("https://");
+      const parsedUrl = isAbsolute ? new URL(url) : new URL(url, "http://localhost");
+      const normalizedPath = path.posix.normalize(parsedUrl.pathname);
+
+      if (!isAbsolute && normalizedPath.startsWith(path.posix.normalize(internalPrefix))) {
+        return true;
+      }
+
+      if (expectedPrefix.startsWith("http://") || expectedPrefix.startsWith("https://")) {
+        const expectedParsed = new URL(expectedPrefix);
+        if (
+          parsedUrl.origin === expectedParsed.origin &&
+          normalizedPath.startsWith(path.posix.normalize(expectedParsed.pathname))
+        ) {
+          return true;
+        }
+      } else if (normalizedPath.startsWith(path.posix.normalize(expectedPrefix))) {
+        return true;
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
   };
 
   if (!isValidAssetUrl(parsed.data.coverImageUrl)) {

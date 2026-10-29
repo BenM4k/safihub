@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import {
   getOrderPhotos,
   getOrderPhotoById,
+  getPhotoByStorageKey,
   countPhotosForOrder,
   countPhotosForItem,
   insertOrderPhotoRecord,
@@ -287,6 +288,19 @@ export async function recordUploadedPhotoService(params: {
       return err("Format de clé de stockage invalide (UUID .webp attendu)");
     }
 
+    // Check if this storageKey has already been recorded (idempotent retry)
+    const existingPhoto = await getPhotoByStorageKey(params.storageKey);
+    if (existingPhoto) {
+      return ok({ photoId: existingPhoto.id, storageKey: params.storageKey });
+    }
+
+    const deleteIfUnrecorded = async (key: string) => {
+      const existing = await getPhotoByStorageKey(key);
+      if (!existing) {
+        await deleteStorageObject(key).catch(() => false);
+      }
+    };
+
     // Verify object existence and actual size in storage
     const objMeta = await headStorageObject(params.storageKey);
     if (!objMeta) {
@@ -299,7 +313,7 @@ export async function recordUploadedPhotoService(params: {
 
     // Limit checks
     if (actualSizeBytes && actualSizeBytes > PHOTO_LIMITS.MAX_SIZE_BYTES) {
-      await deleteStorageObject(params.storageKey).catch(() => false);
+      await deleteIfUnrecorded(params.storageKey);
       return err(
         `Taille de photo excessive (${Math.round(actualSizeBytes / 1024)} Ko > 500 Ko)`
       );
@@ -307,14 +321,14 @@ export async function recordUploadedPhotoService(params: {
 
     const orderPhotoCount = await countPhotosForOrder(params.orderId);
     if (orderPhotoCount >= PHOTO_LIMITS.MAX_PER_ORDER) {
-      await deleteStorageObject(params.storageKey).catch(() => false);
+      await deleteIfUnrecorded(params.storageKey);
       return err(`Limite maximale de photos atteinte pour cette commande`);
     }
 
     if (params.orderItemId) {
       const itemPhotoCount = await countPhotosForItem(params.orderItemId);
       if (itemPhotoCount >= PHOTO_LIMITS.MAX_PER_ITEM) {
-        await deleteStorageObject(params.storageKey).catch(() => false);
+        await deleteIfUnrecorded(params.storageKey);
         return err(`Limite maximale de photos atteinte pour cet article`);
       }
     }

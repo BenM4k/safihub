@@ -68,8 +68,8 @@ export async function blockAdminUser(params: {
       isTargetActiveAdmin,
     });
     if (res.ok) {
-      revalidateTag(CACHE_TAGS.userSession(params.userId), "max");
-      revalidateTag(CACHE_TAGS.authSessions, "max");
+      revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
+      revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
     }
     return res;
   } catch (error) {
@@ -105,8 +105,8 @@ export async function updateAdminUserRole(params: {
       isTargetActiveAdminDemotion,
     });
     if (res.ok) {
-      revalidateTag(CACHE_TAGS.userSession(params.userId), "max");
-      revalidateTag(CACHE_TAGS.authSessions, "max");
+      revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
+      revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
     }
     return res;
   } catch (error) {
@@ -121,8 +121,8 @@ export async function unblockAdminUser(userId: string): Promise<Result<void>> {
       status: "active",
       banReason: null,
     });
-    revalidateTag(CACHE_TAGS.userSession(userId), "max");
-    revalidateTag(CACHE_TAGS.authSessions, "max");
+    revalidateTag(CACHE_TAGS.userSession(userId), { expire: 0 });
+    revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to unblock user");
@@ -146,8 +146,8 @@ export async function resetAdminUserPassword(params: {
 
     // Revoke all active sessions immediately
     await deleteUserSessions(params.userId);
-    revalidateTag(CACHE_TAGS.userSession(params.userId), "max");
-    revalidateTag(CACHE_TAGS.authSessions, "max");
+    revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
+    revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
 
     return ok(undefined);
   } catch (error) {

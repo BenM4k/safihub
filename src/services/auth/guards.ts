@@ -64,7 +64,10 @@ export async function requireRole(
   options?: RequireRoleOptions
 ): Promise<Result<AuthContext>> {
   const reqHeaders = options?.headers ?? (await headers());
-  const session = await auth.api.getSession({ headers: reqHeaders });
+  const session = await auth.api.getSession({
+    headers: reqHeaders,
+    query: { disableCookieCache: true },
+  });
 
   if (!session?.user) {
     if (options?.redirectIfUnauthorized) {

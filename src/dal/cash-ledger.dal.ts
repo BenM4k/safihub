@@ -637,9 +637,9 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
     }
   }
 
-  const reconByCourier = new Map<string, (typeof allRecons)[number]>();
+  const reconByCourierAndCurrency = new Map<string, (typeof allRecons)[number]>();
   for (const r of allRecons) {
-    reconByCourier.set(r.courierId, r);
+    reconByCourierAndCurrency.set(`${r.courierId}:${r.currency}`, r);
   }
 
   const results = [];
@@ -652,9 +652,11 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
 
     let expectedCashCDF = 0;
     let expectedCashUSD = 0;
+    let usdConversionRate = 2800;
     for (const e of dayEntries) {
       const rate = Number(e.exchangeRateUsed) || 2800;
       if (e.currency === "USD") {
+        usdConversionRate = rate;
         expectedCashUSD += e.amount;
         expectedCashCDF += Math.round(e.amount * rate);
       } else {
@@ -674,16 +676,41 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
       }));
 
     const heldCashCDF = Math.max(0, heldCashCDFByCourier.get(c.id) ?? 0);
-    const recon = reconByCourier.get(c.id);
+    const reconCDF = reconByCourierAndCurrency.get(`${c.id}:CDF`);
+    const reconUSD = reconByCourierAndCurrency.get(`${c.id}:USD`);
 
-    const receivedAmount = recon?.receivedAmount ?? 0;
-    const difference = recon ? recon.difference : -expectedCashCDF;
-    const status = recon?.status ?? "open";
+    let courierReceivedCDF = 0;
+    let courierDiscrepancyCDF = 0;
+    let hasAnyRecon = false;
+    let isFullyConfirmed = true;
+
+    if (reconCDF) {
+      hasAnyRecon = true;
+      courierReceivedCDF += reconCDF.receivedAmount;
+      courierDiscrepancyCDF += reconCDF.difference;
+      if (reconCDF.status !== "confirmed") isFullyConfirmed = false;
+    }
+    if (reconUSD) {
+      hasAnyRecon = true;
+      courierReceivedCDF += Math.round(reconUSD.receivedAmount * usdConversionRate);
+      courierDiscrepancyCDF += Math.round(reconUSD.difference * usdConversionRate);
+      if (reconUSD.status !== "confirmed") isFullyConfirmed = false;
+    }
+
+    if (!hasAnyRecon) {
+      isFullyConfirmed = false;
+      courierDiscrepancyCDF = -expectedCashCDF;
+    }
+
+    const primaryRecon = reconCDF ?? reconUSD;
+    const receivedAmount = hasAnyRecon ? courierReceivedCDF : 0;
+    const difference = courierDiscrepancyCDF;
+    const status: "open" | "confirmed" = hasAnyRecon && isFullyConfirmed ? "confirmed" : "open";
 
     sumExpectedCDF += expectedCashCDF;
     sumReceivedCDF += receivedAmount;
-    if (recon) {
-      sumDiscrepancyCDF += recon.difference;
+    if (hasAnyRecon) {
+      sumDiscrepancyCDF += difference;
     }
 
     results.push({
@@ -695,14 +722,14 @@ export async function getDailyCourierReconciliationData(businessDate: string): P
       heldCashCDF,
       securityDeposit: c.securityDeposit ?? 0,
       changeFloat: c.changeFloat ?? 0,
-      reconciliationId: recon?.id ?? null,
+      reconciliationId: primaryRecon?.id ?? null,
       status,
       receivedAmount,
       difference,
-      currency: (recon?.currency as "CDF" | "USD") ?? "CDF",
-      note: recon?.note ?? null,
-      reconciledByName: recon?.reconciledByName ?? null,
-      reconciledAt: recon?.createdAt ?? null,
+      currency: (primaryRecon?.currency as "CDF" | "USD") ?? "CDF",
+      note: primaryRecon?.note ?? null,
+      reconciledByName: primaryRecon?.reconciledByName ?? null,
+      reconciledAt: primaryRecon?.createdAt ?? null,
       orders: courierOrders,
     });
   }

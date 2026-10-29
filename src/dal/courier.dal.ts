@@ -406,7 +406,8 @@ export async function getMissions(filters?: {
 
 export async function assignMission(
   missionId: string,
-  courierId: string
+  courierId: string,
+  adminId?: string
 ): Promise<boolean> {
   return await db.transaction(async (tx) => {
     const [updated] = await tx
@@ -434,7 +435,8 @@ export async function assignMission(
       .select({ id: schema.orders.id, status: schema.orders.status })
       .from(schema.orders)
       .where(eq(schema.orders.id, updated.orderId))
-      .limit(1);
+      .limit(1)
+      .for("update");
 
     if (order) {
       if (updated.type === "pickup" && order.status === "accepted") {
@@ -447,7 +449,7 @@ export async function assignMission(
           type: "status_change",
           fromStatus: "accepted",
           toStatus: "pickup_assigned",
-          actorId: courierId,
+          actorId: adminId ?? courierId,
           actorRole: "admin",
           note: "Coursier assigné pour la collecte",
         });
@@ -464,7 +466,7 @@ export async function assignMission(
           type: "status_change",
           fromStatus: order.status,
           toStatus: "delivery_assigned",
-          actorId: courierId,
+          actorId: adminId ?? courierId,
           actorRole: "admin",
           note: "Coursier assigné pour la livraison",
         });
@@ -1236,8 +1238,7 @@ export async function startDeliveryMissionAtomic(
     if (
       order.status === "delivery_assigned" ||
       order.status === "ready" ||
-      order.status === "delivery_slot_confirmed" ||
-      !order.deliveryConfirmationCode
+      order.status === "delivery_slot_confirmed"
     ) {
       await tx
         .update(schema.orders)
@@ -1248,17 +1249,15 @@ export async function startDeliveryMissionAtomic(
         })
         .where(eq(schema.orders.id, order.id));
 
-      if (order.status !== "delivery_in_progress") {
-        await tx.insert(schema.orderEvents).values({
-          orderId: order.id,
-          type: "status_change",
-          fromStatus: order.status,
-          toStatus: "delivery_in_progress",
-          actorId: courierId,
-          actorRole: "courier",
-          note: "Coursier en route pour la livraison",
-        });
-      }
+      await tx.insert(schema.orderEvents).values({
+        orderId: order.id,
+        type: "status_change",
+        fromStatus: order.status,
+        toStatus: "delivery_in_progress",
+        actorId: courierId,
+        actorRole: "courier",
+        note: "Coursier en route pour la livraison",
+      });
     }
 
     return { ok: true };
