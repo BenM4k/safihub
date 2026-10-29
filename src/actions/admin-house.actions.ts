@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/services/auth";
 import { err, type Result } from "@/lib/result";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { percentToBps } from "@/lib/commission-conversion";
 import {
   addAdminHouseClosure,
@@ -86,6 +87,7 @@ export async function createHouseAction(formData: FormData): Promise<Result<unkn
 
   const res = await createAdminHouse(parsed.data);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/houses");
   }
   return res;
@@ -138,6 +140,8 @@ export async function updateHouseProfileAction(
   const res = await updateAdminHouseProfile(validatedHouseId, updateData);
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(validatedHouseId), "max");
     revalidatePath(`/admin/houses/${validatedHouseId}`);
     revalidatePath("/admin/houses");
   }
@@ -184,6 +188,8 @@ export async function toggleHouseActiveStatusAction(params: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(parsed.data.houseId), "max");
     revalidatePath("/admin/houses");
     revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
@@ -199,6 +205,8 @@ export async function updateHouseHoursAction(
 
   const res = await updateAdminHouseHours(houseId, hours);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(houseId), "max");
     revalidatePath(`/admin/houses/${houseId}`);
   }
   return res;
@@ -215,6 +223,8 @@ export async function addHouseClosureAction(formData: FormData): Promise<Result<
 
   const res = await addAdminHouseClosure({ houseId, startsOn, endsOn, reason });
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(houseId), "max");
     revalidatePath(`/admin/houses/${houseId}`);
   }
   return res;
@@ -229,6 +239,8 @@ export async function removeHouseClosureAction(
 
   const res = await removeAdminHouseClosure(closureId);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(houseId), "max");
     revalidatePath(`/admin/houses/${houseId}`);
   }
   return res;
@@ -245,6 +257,8 @@ export async function addHouseExclusionAction(formData: FormData): Promise<Resul
 
   const res = await addAdminHouseExclusion({ houseId, itemId, fabricId, note });
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(houseId), "max");
     revalidatePath(`/admin/houses/${houseId}`);
   }
   return res;
@@ -259,6 +273,8 @@ export async function removeHouseExclusionAction(
 
   const res = await removeAdminHouseExclusion(exclusionId);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(houseId), "max");
     revalidatePath(`/admin/houses/${houseId}`);
   }
   return res;
@@ -274,6 +290,8 @@ export async function toggleHouseCoverageAction(
 
   const res = await toggleAdminHouseCoverage({ houseId, neighborhoodId, isActive });
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(houseId), "max");
     revalidatePath(`/admin/houses/${houseId}`);
   }
   return res;

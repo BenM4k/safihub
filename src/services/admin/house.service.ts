@@ -10,22 +10,24 @@ import {
   getActiveOrdersCountsByHouse,
   getAllHousesClosures,
   getAllHousesHours,
+  getHouseBalancesMap,
   getHouseById,
   getHouseClosures,
   getHouseCoverage,
   getHouseExclusions,
   getHouseHours,
   getHouses,
-  getHouseSettlementsOverview,
   getHouseStaff,
   getMasterFabrics,
   getMasterItems,
   getNeighborhoods,
   getSettings,
+  listAdminPendingHouseReviews,
   removeHouseMember,
   setHouseHours,
   updateHouse,
   upsertHouseCoverage,
+  type AdminPendingReviewRow,
   type HouseClosureRecord,
   type HouseCoverageRecord,
   type HouseExclusionRecord,
@@ -326,21 +328,18 @@ export async function listAdminHousesEnriched(): Promise<
       hours,
       closures,
       activeOrdersCounts,
-      settlementsOverview,
+      settlementsMap,
       settings,
     ] = await Promise.all([
       getHouses(),
       getAllHousesHours(),
       getAllHousesClosures(),
       getActiveOrdersCountsByHouse(),
-      getHouseSettlementsOverview().catch(() => ({ houses: [], totalOwedToHousesCDF: 0 })),
+      getHouseBalancesMap().catch(() => new Map<string, number>()),
       getSettings().catch(() => null),
     ]);
 
     const defaultCommissionBps = settings?.defaultCommissionBps ?? 2000;
-    const settlementsMap = new Map(
-      settlementsOverview.houses.map((s) => [s.houseId, s.balanceOwedCDF])
-    );
 
     const now = new Date();
     const bukavuNow = toBukavuDateTime(now);
@@ -409,6 +408,14 @@ export async function listAdminHousesEnriched(): Promise<
     return err(
       error instanceof Error ? error.message : "Failed to load enriched houses"
     );
+  }
+}
+
+export async function listAdminPendingReviews(): Promise<AdminPendingReviewRow[]> {
+  try {
+    return await listAdminPendingHouseReviews();
+  } catch {
+    return [];
   }
 }
 

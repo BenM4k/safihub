@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/services/auth";
 import { err, type Result } from "@/lib/result";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
   addAdminNeighborhood,
   addAdminZone,
@@ -55,6 +56,8 @@ export async function createZoneAction(formData: FormData): Promise<Result<unkno
 
   const res = await addAdminZone(parsed.data);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.coverageZones, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/neighborhoods");
     revalidatePath("/admin/coverage");
   }
@@ -79,6 +82,8 @@ export async function createNeighborhoodAction(formData: FormData): Promise<Resu
 
   const res = await addAdminNeighborhood(parsed.data);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.coverageZones, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/neighborhoods");
     revalidatePath("/admin/coverage");
   }
@@ -101,6 +106,8 @@ export async function setNeighborhoodStatusAction(formData: FormData): Promise<R
 
   const res = await setAdminNeighborhoodStatus(parsed.data);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.coverageZones, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/neighborhoods");
     revalidatePath("/admin/coverage");
   }
@@ -124,6 +131,8 @@ export async function setZoneFeePairAction(formData: FormData): Promise<Result<u
 
   const res = await setAdminZoneFeePair(parsed.data);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.coverageZones, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/delivery-fees");
     revalidatePath("/admin/coverage");
   }
@@ -141,6 +150,8 @@ export async function updateGlobalDistanceLimitAction(formData: FormData): Promi
 
   const res = await updateAdminGlobalDistanceLimit(limit);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.coverageZones, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/coverage");
     revalidatePath("/admin/settings");
   }
@@ -165,6 +176,9 @@ export async function updateHouseDistanceOverrideAction(formData: FormData): Pro
 
   const res = await updateAdminHouseDistanceOverride({ houseId, maxDistanceLevel });
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.coverageZones, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(houseId), "max");
     revalidatePath("/admin/coverage");
     revalidatePath(`/admin/houses/${houseId}`);
   }

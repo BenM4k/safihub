@@ -5,6 +5,9 @@ import { NotificationsView } from "@/components/notifications/notifications-view
 import { Navbar } from "@/components/home/header/navbar";
 import { Footer } from "@/components/home/footer";
 
+// instant = false: kept on purpose — authenticated user notifications inbox
+export const instant = false;
+
 export default async function NotificationsPage() {
   const user = await getCurrentUser();
   if (!user) {

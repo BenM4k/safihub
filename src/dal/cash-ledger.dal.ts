@@ -1041,6 +1041,59 @@ export async function reverseCourierReconciliation(params: {
 }
 
 /**
+ * Lightweight batch query for unpaid house balances (used by /admin/houses list).
+ */
+export async function getHouseBalancesMap(): Promise<Map<string, number>> {
+  const reversedSubquery = db
+    .select({ id: schema.cashLedger.reversalOfId })
+    .from(schema.cashLedger)
+    .where(
+      and(
+        eq(schema.cashLedger.entryType, "reversal"),
+        sql`${schema.cashLedger.reversalOfId} is not null`
+      )
+    );
+
+  const entries = await db
+    .select({
+      houseId: schema.cashLedger.houseId,
+      entryType: schema.cashLedger.entryType,
+      amount: schema.cashLedger.amount,
+      currency: schema.cashLedger.currency,
+      exchangeRateUsed: schema.orders.exchangeRateUsed,
+    })
+    .from(schema.cashLedger)
+    .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
+    .where(
+      and(
+        sql`${schema.cashLedger.houseId} is not null`,
+        inArray(schema.cashLedger.entryType, ["owed_to_house", "house_settlement_paid"]),
+        notInArray(schema.cashLedger.id, reversedSubquery)
+      )
+    );
+
+  const totalsByHouse = new Map<string, { owed: number; settled: number }>();
+
+  for (const e of entries) {
+    if (!e.houseId) continue;
+    const current = totalsByHouse.get(e.houseId) ?? { owed: 0, settled: 0 };
+    if (e.entryType === "owed_to_house") {
+      const rate = Number(e.exchangeRateUsed) || 2800;
+      current.owed += e.currency === "USD" ? Math.round(e.amount * rate) : e.amount;
+    } else if (e.entryType === "house_settlement_paid") {
+      current.settled += e.currency === "USD" ? Math.round(e.amount * 2800) : e.amount;
+    }
+    totalsByHouse.set(e.houseId, current);
+  }
+
+  const balanceMap = new Map<string, number>();
+  for (const [houseId, totals] of totalsByHouse.entries()) {
+    balanceMap.set(houseId, Math.max(0, totals.owed - totals.settled));
+  }
+  return balanceMap;
+}
+
+/**
  * Task 8.4: Get house settlements summary for admin.
  */
 export async function getHouseSettlementsOverview(): Promise<{
@@ -1070,16 +1123,6 @@ export async function getHouseSettlementsOverview(): Promise<{
   housesWithBalanceCount: number;
   oldestUnpaidDays: number | null;
 }> {
-  const allHouses = await db
-    .select({
-      id: schema.houses.id,
-      name: schema.houses.name,
-      neighborhoodName: schema.neighborhoods.name,
-    })
-    .from(schema.houses)
-    .leftJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
-    .where(eq(schema.houses.isActive, true));
-
   const reversedSubquery = db
     .select({ id: schema.cashLedger.reversalOfId })
     .from(schema.cashLedger)
@@ -1090,16 +1133,20 @@ export async function getHouseSettlementsOverview(): Promise<{
       )
     );
 
-  const housesSummary = [];
-  let totalPendingOwed = 0;
-  const now = new Date();
-  let maxUnpaidAgeDays: number | null = null;
-
-  for (const h of allHouses) {
-    // 1. Delivered orders with gross & commission breakdown
-    const ordersList = await db
+  const [allHouses, allDeliveredOrders, allHouseLedgerEntries] = await Promise.all([
+    db
+      .select({
+        id: schema.houses.id,
+        name: schema.houses.name,
+        neighborhoodName: schema.neighborhoods.name,
+      })
+      .from(schema.houses)
+      .leftJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
+      .where(eq(schema.houses.isActive, true)),
+    db
       .select({
         id: schema.orders.id,
+        houseId: schema.orders.houseId,
         code: schema.orders.code,
         itemsTotal: schema.orders.itemsTotal,
         adjustedItemsTotal: schema.orders.adjustedItemsTotal,
@@ -1107,13 +1154,65 @@ export async function getHouseSettlementsOverview(): Promise<{
         updatedAt: schema.orders.updatedAt,
       })
       .from(schema.orders)
+      .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
       .where(
         and(
-          eq(schema.orders.houseId, h.id),
+          eq(schema.houses.isActive, true),
           eq(schema.orders.status, "delivered")
         )
       )
-      .orderBy(desc(schema.orders.updatedAt));
+      .orderBy(desc(schema.orders.updatedAt)),
+    db
+      .select({
+        houseId: schema.cashLedger.houseId,
+        entryType: schema.cashLedger.entryType,
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+        exchangeRateUsed: schema.orders.exchangeRateUsed,
+        createdAt: schema.cashLedger.createdAt,
+      })
+      .from(schema.cashLedger)
+      .innerJoin(schema.houses, eq(schema.cashLedger.houseId, schema.houses.id))
+      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
+      .where(
+        and(
+          eq(schema.houses.isActive, true),
+          inArray(schema.cashLedger.entryType, ["owed_to_house", "house_settlement_paid"]),
+          notInArray(schema.cashLedger.id, reversedSubquery)
+        )
+      )
+      .orderBy(desc(schema.cashLedger.createdAt)),
+  ]);
+
+  const ordersByHouseId = new Map<string, typeof allDeliveredOrders>();
+  for (const order of allDeliveredOrders) {
+    const list = ordersByHouseId.get(order.houseId);
+    if (list) list.push(order);
+    else ordersByHouseId.set(order.houseId, [order]);
+  }
+
+  const owedByHouseId = new Map<string, typeof allHouseLedgerEntries>();
+  const settledByHouseId = new Map<string, typeof allHouseLedgerEntries>();
+  for (const entry of allHouseLedgerEntries) {
+    if (!entry.houseId) continue;
+    if (entry.entryType === "owed_to_house") {
+      const list = owedByHouseId.get(entry.houseId);
+      if (list) list.push(entry);
+      else owedByHouseId.set(entry.houseId, [entry]);
+    } else if (entry.entryType === "house_settlement_paid") {
+      const list = settledByHouseId.get(entry.houseId);
+      if (list) list.push(entry);
+      else settledByHouseId.set(entry.houseId, [entry]);
+    }
+  }
+
+  const housesSummary = [];
+  let totalPendingOwed = 0;
+  const now = new Date();
+  let maxUnpaidAgeDays: number | null = null;
+
+  for (const h of allHouses) {
+    const ordersList = ordersByHouseId.get(h.id) ?? [];
 
     let grossTotalCDF = 0;
     let commissionTotalCDF = 0;
@@ -1133,45 +1232,13 @@ export async function getHouseSettlementsOverview(): Promise<{
       };
     });
 
-    // 2. Total owed_to_house entries from cash_ledger
-    const owedEntries = await db
-      .select({
-        amount: schema.cashLedger.amount,
-        currency: schema.cashLedger.currency,
-        exchangeRateUsed: schema.orders.exchangeRateUsed,
-      })
-      .from(schema.cashLedger)
-      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
-      .where(
-        and(
-          eq(schema.cashLedger.houseId, h.id),
-          eq(schema.cashLedger.entryType, "owed_to_house"),
-          notInArray(schema.cashLedger.id, reversedSubquery)
-        )
-      );
-
+    const owedEntries = owedByHouseId.get(h.id) ?? [];
     const totalOwedCDF = owedEntries.reduce((sum, e) => {
       const rate = Number(e.exchangeRateUsed) || 2800;
       return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
     }, 0);
 
-    // 3. Total house_settlement_paid entries
-    const settledEntries = await db
-      .select({
-        amount: schema.cashLedger.amount,
-        currency: schema.cashLedger.currency,
-        createdAt: schema.cashLedger.createdAt,
-      })
-      .from(schema.cashLedger)
-      .where(
-        and(
-          eq(schema.cashLedger.houseId, h.id),
-          eq(schema.cashLedger.entryType, "house_settlement_paid"),
-          notInArray(schema.cashLedger.id, reversedSubquery)
-        )
-      )
-      .orderBy(desc(schema.cashLedger.createdAt));
-
+    const settledEntries = settledByHouseId.get(h.id) ?? [];
     const totalSettledCDF = settledEntries.reduce((sum, e) => {
       return sum + (e.currency === "USD" ? Math.round(e.amount * 2800) : e.amount);
     }, 0);
@@ -1527,16 +1594,6 @@ export async function getCourierSettlementsOverview(): Promise<{
   couriersWithBalanceCount: number;
   oldestUnpaidDays: number | null;
 }> {
-  const activeCouriers = await db
-    .select({
-      id: schema.user.id,
-      name: schema.user.name,
-      phone: schema.user.contactPhone,
-    })
-    .from(schema.courierProfiles)
-    .innerJoin(schema.user, eq(schema.courierProfiles.userId, schema.user.id))
-    .where(eq(schema.courierProfiles.isActive, true));
-
   const reversedSubquery = db
     .select({ id: schema.cashLedger.reversalOfId })
     .from(schema.cashLedger)
@@ -1547,48 +1604,79 @@ export async function getCourierSettlementsOverview(): Promise<{
       )
     );
 
-  const couriersList = [];
-  let totalPendingOwed = 0;
-  const now = new Date();
-  let maxUnpaidAgeDays: number | null = null;
-
-  for (const c of activeCouriers) {
-    const earnedEntries = await db
+  const [activeCouriers, allCourierLedgerEntries] = await Promise.all([
+    db
+      .select({
+        id: schema.user.id,
+        name: schema.user.name,
+        phone: schema.user.contactPhone,
+      })
+      .from(schema.courierProfiles)
+      .innerJoin(schema.user, eq(schema.courierProfiles.userId, schema.user.id))
+      .where(eq(schema.courierProfiles.isActive, true)),
+    db
       .select({
         id: schema.cashLedger.id,
+        courierId: schema.cashLedger.courierId,
+        entryType: schema.cashLedger.entryType,
         amount: schema.cashLedger.amount,
         currency: schema.cashLedger.currency,
+        note: schema.cashLedger.note,
         exchangeRateUsed: schema.orders.exchangeRateUsed,
         orderId: schema.cashLedger.orderId,
         orderCode: schema.orders.code,
         createdAt: schema.cashLedger.createdAt,
       })
       .from(schema.cashLedger)
+      .innerJoin(
+        schema.courierProfiles,
+        eq(schema.cashLedger.courierId, schema.courierProfiles.userId)
+      )
       .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
       .where(
         and(
-          eq(schema.cashLedger.courierId, c.id),
-          eq(schema.cashLedger.entryType, "courier_pay"),
+          eq(schema.courierProfiles.isActive, true),
+          sql`${schema.cashLedger.entryType} <> 'reversal'`,
           notInArray(schema.cashLedger.id, reversedSubquery)
         )
       )
-      .orderBy(desc(schema.cashLedger.createdAt));
+      .orderBy(desc(schema.cashLedger.createdAt)),
+  ]);
 
-    const paidEntries = await db
-      .select({
-        amount: schema.cashLedger.amount,
-        currency: schema.cashLedger.currency,
-        createdAt: schema.cashLedger.createdAt,
-      })
-      .from(schema.cashLedger)
-      .where(
-        and(
-          eq(schema.cashLedger.courierId, c.id),
-          eq(schema.cashLedger.entryType, "courier_pay_paid"),
-          notInArray(schema.cashLedger.id, reversedSubquery)
-        )
-      )
-      .orderBy(desc(schema.cashLedger.createdAt));
+  const entriesByCourierId = new Map<string, typeof allCourierLedgerEntries>();
+  for (const entry of allCourierLedgerEntries) {
+    if (!entry.courierId) continue;
+    const list = entriesByCourierId.get(entry.courierId);
+    if (list) list.push(entry);
+    else entriesByCourierId.set(entry.courierId, [entry]);
+  }
+
+  const couriersList = [];
+  let totalPendingOwed = 0;
+  const now = new Date();
+  let maxUnpaidAgeDays: number | null = null;
+
+  for (const c of activeCouriers) {
+    const courierEntries = entriesByCourierId.get(c.id) ?? [];
+
+    const earnedEntries = [];
+    const paidEntries = [];
+    const discrepancyRows = [];
+    let cashHeldCDF = 0;
+
+    for (const entry of courierEntries) {
+      if (entry.entryType === "courier_pay") {
+        earnedEntries.push(entry);
+      } else if (entry.entryType === "courier_pay_paid") {
+        paidEntries.push(entry);
+      } else if (entry.entryType === "discrepancy") {
+        discrepancyRows.push(entry);
+      } else if (entry.entryType === "cash_collected" || entry.entryType === "float_issued") {
+        if (entry.currency !== "USD") cashHeldCDF += entry.amount;
+      } else if (entry.entryType === "cash_remitted" || entry.entryType === "float_returned") {
+        if (entry.currency !== "USD") cashHeldCDF -= entry.amount;
+      }
+    }
 
     const totalEarnedCDF = earnedEntries.reduce((sum, e) => {
       const rate = Number(e.exchangeRateUsed) || 2800;
@@ -1606,26 +1694,6 @@ export async function getCourierSettlementsOverview(): Promise<{
       ? (paidEntries[0].currency === "USD" ? Math.round(paidEntries[0].amount * 2800) : paidEntries[0].amount)
       : null;
     const lastPaymentAt = paidEntries[0]?.createdAt ?? null;
-
-    // Held cash and discrepancies from Cash Controls
-    const balances = await getCourierCashBalances(c.id);
-
-    const discrepancyRows = await db
-      .select({
-        amount: schema.cashLedger.amount,
-        currency: schema.cashLedger.currency,
-        note: schema.cashLedger.note,
-        exchangeRateUsed: schema.orders.exchangeRateUsed,
-      })
-      .from(schema.cashLedger)
-      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
-      .where(
-        and(
-          eq(schema.cashLedger.courierId, c.id),
-          eq(schema.cashLedger.entryType, "discrepancy"),
-          notInArray(schema.cashLedger.id, reversedSubquery)
-        )
-      );
 
     const cashDiscrepancyCDF = discrepancyRows.reduce((sum, d) => {
       const rate = Number(d.exchangeRateUsed) || 2800;
@@ -1678,7 +1746,7 @@ export async function getCourierSettlementsOverview(): Promise<{
       lastPaymentAmount,
       lastPaymentAt,
       cashDiscrepancyCDF,
-      cashHeldCDF: balances.cashHeldCDF,
+      cashHeldCDF: Math.max(0, cashHeldCDF),
       oldestUnpaidDate,
       deliveredOrders,
     });

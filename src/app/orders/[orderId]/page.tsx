@@ -21,6 +21,9 @@ interface OrderDetailPageProps {
   params: Promise<{ orderId: string }>;
 }
 
+// instant = false: kept on purpose — authenticated customer order detail
+export const instant = false;
+
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
   const user = await getCurrentUser();
   const { orderId } = await params;

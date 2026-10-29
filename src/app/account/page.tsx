@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   description: "Gérez votre profil, vos adresses et vos préférences SafiHub.",
 };
 
+// instant = false: kept on purpose — authenticated customer account page
+export const instant = false;
+
 export default async function AccountPage() {
   const user = await getCurrentUser();
   if (!user) {

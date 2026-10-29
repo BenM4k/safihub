@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { Navbar } from "@/components/home/header/navbar";
+import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { HeroSection } from "@/components/home/hero/hero-section";
 import { TrustBanner } from "@/components/home/trust-banner/trust-banner";
 import { ServicesTabs } from "@/components/home/services-tabs/services-tabs";
@@ -8,7 +10,23 @@ import { Testimonials } from "@/components/home/testimonials/testimonials";
 import { FaqSection } from "@/components/home/faq/faq-section";
 import { Footer } from "@/components/home/footer/footer";
 import { getCurrentUser } from "@/services/auth";
-import { getNeighborhoods } from "@/dal";
+import { getCachedNeighborhoods } from "@/lib/cached-data";
+import type { NeighborhoodRecord } from "@/dal";
+
+async function HomeUserSections({
+  neighborhoods,
+}: {
+  neighborhoods: NeighborhoodRecord[];
+}) {
+  const user = await getCurrentUser();
+  return (
+    <>
+      <HeroSection user={user} neighborhoods={neighborhoods} />
+      <TrustBanner user={user} />
+      <ServicesTabs user={user} />
+    </>
+  );
+}
 
 /**
  * SafiHub Master Homepage
@@ -18,18 +36,25 @@ import { getNeighborhoods } from "@/dal";
  * - Calibrated typography and mobile-first responsive layout
  */
 export default async function HomePage() {
-  const [user, neighborhoods] = await Promise.all([
-    getCurrentUser(),
-    getNeighborhoods(),
-  ]);
+  const neighborhoods = await getCachedNeighborhoods();
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary-soft selection:text-primary">
-      <Navbar user={user} />
+      <Suspense fallback={<Navbar user={null} />}>
+        <SessionNavbar />
+      </Suspense>
       <main className="flex-1">
-        <HeroSection user={user} neighborhoods={neighborhoods} />
-        <TrustBanner user={user} />
-        <ServicesTabs user={user} />
+        <Suspense
+          fallback={
+            <>
+              <HeroSection user={null} neighborhoods={neighborhoods} />
+              <TrustBanner user={null} />
+              <ServicesTabs user={null} />
+            </>
+          }
+        >
+          <HomeUserSections neighborhoods={neighborhoods} />
+        </Suspense>
         <HowItWorks />
         <ProductsCatalogue />
         <Testimonials />

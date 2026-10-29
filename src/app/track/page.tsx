@@ -1,28 +1,31 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/services/auth";
 import { getCustomerOrdersList } from "@/services/order";
-import { Navbar } from "@/components/home/header/navbar";
+import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { Footer } from "@/components/home/footer/footer";
 import { TrackLookupCard } from "@/components/track/track-lookup-card";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("track");
-  return {
-    title: `${t("searchTitle")} | SafiHub Bukavu`,
-    description: t("searchSubtitle"),
-  };
-}
+export const metadata: Metadata = {
+  title: "Suivre une commande | SafiHub Bukavu",
+  description:
+    "Saisissez votre code de suivi unique (envoyé par SMS/WhatsApp) ou collez votre lien pour voir l'avancement en direct.",
+};
 
-export default async function TrackLookupPage() {
+async function TrackLookupContent() {
   const user = await getCurrentUser();
   const orders = user ? await getCustomerOrdersList(user.id) : [];
+  return <TrackLookupCard recentOrders={orders} />;
+}
 
+export default function TrackLookupPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar variant="solid" user={user} />
+      <SessionNavbar variant="solid" />
       <main className="flex-1 flex flex-col">
-        <TrackLookupCard recentOrders={orders} />
+        <Suspense fallback={<TrackLookupCard recentOrders={[]} />}>
+          <TrackLookupContent />
+        </Suspense>
       </main>
       <Footer />
     </div>

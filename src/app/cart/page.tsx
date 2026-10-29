@@ -1,33 +1,22 @@
-import type { Metadata } from "next";
 import { Suspense } from "react";
-import { getTranslations } from "next-intl/server";
-import { getCurrentUser } from "@/services/auth";
-import { Navbar } from "@/components/home/header/navbar";
+import type { Metadata } from "next";
+import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { Footer } from "@/components/home/footer/footer";
 import { CartView } from "@/components/cart/cart-view";
+import { CartSkeleton } from "@/components/cart/cart-skeleton";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("cart");
-  return {
-    title: `${t("title")} | SafiHub`,
-    description: t("metaDescription"),
-  };
-}
+export const metadata: Metadata = {
+  title: "Mon panier | SafiHub",
+  description:
+    "Vérifiez vos articles de pressing et validez votre commande à Bukavu.",
+};
 
-export default async function CartPage() {
-  const user = await getCurrentUser();
-
+export default function CartPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar variant="solid" user={user} />
+      <SessionNavbar variant="solid" />
       <main className="flex-1 flex flex-col">
-        <Suspense
-          fallback={
-            <div className="flex-1 min-h-[50vh] flex items-center justify-center">
-              <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-            </div>
-          }
-        >
+        <Suspense fallback={<CartSkeleton />}>
           <CartView />
         </Suspense>
       </main>

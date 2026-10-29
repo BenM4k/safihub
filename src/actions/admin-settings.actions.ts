@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/services/auth";
 import { err, type Result } from "@/lib/result";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
   recordAdminDailyExchangeRate,
   updateAdminPlatformSettings,
@@ -53,6 +54,8 @@ export async function updatePlatformSettingsAction(formData: FormData): Promise<
   const res = await updateAdminPlatformSettings(parsed.data);
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.catalogItems, "max");
+    revalidateTag(CACHE_TAGS.coverageZones, "max");
     revalidatePath("/admin/settings");
   }
 
@@ -79,6 +82,8 @@ export async function recordDailyExchangeRateAction(formData: FormData): Promise
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.catalogItems, "max");
+    revalidateTag(CACHE_TAGS.coverageZones, "max");
     revalidatePath("/admin/settings");
   }
 

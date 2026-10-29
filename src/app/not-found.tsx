@@ -11,18 +11,14 @@ import {
   ShieldCheck,
   PhoneCall,
 } from "lucide-react";
-import { getTranslations } from "next-intl/server";
-import { getCurrentUser } from "@/services/auth";
-import { Navbar } from "@/components/home/header/navbar";
+import { useTranslations } from "next-intl";
+import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { Footer } from "@/components/home/footer/footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-export default async function NotFound() {
-  const [t, user] = await Promise.all([
-    getTranslations("notFound"),
-    getCurrentUser(),
-  ]);
+export default function NotFound() {
+  const t = useTranslations("notFound");
 
   const destinations = [
     {
@@ -59,7 +55,7 @@ export default async function NotFound() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary-soft selection:text-primary">
-      <Navbar variant="solid" user={user} />
+      <SessionNavbar variant="solid" />
 
       <main className="flex-1 flex items-center justify-center py-16 sm:py-24 px-4 sm:px-6">
         <div className="container-page max-w-2xl text-center flex flex-col items-center">

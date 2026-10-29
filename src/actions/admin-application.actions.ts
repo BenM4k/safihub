@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/services/auth";
 import { err, ok, type Result } from "@/lib/result";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
   approvePartnerApplication,
   rejectPartnerApplication,
@@ -67,6 +68,7 @@ export async function approveApplicationAction(formData: FormData): Promise<
 
   if (!res.ok) return err(res.error);
 
+  revalidateTag(CACHE_TAGS.housesList, "max");
   revalidatePath("/admin/applications");
   revalidatePath("/admin/houses");
   revalidatePath("/admin/users");

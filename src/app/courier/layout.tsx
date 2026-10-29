@@ -4,6 +4,9 @@ import { CourierHeader } from "@/components/courier/courier-header";
 import { CourierNavTabs } from "@/components/courier/courier-nav-tabs";
 import { CourierPwaRegistrar } from "@/components/courier/courier-pwa-registrar";
 
+// instant = false: kept on purpose — authenticated courier workspace
+export const instant = false;
+
 export default async function CourierLayout({
   children,
 }: {

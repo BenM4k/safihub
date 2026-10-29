@@ -34,6 +34,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  cacheComponents: true,
   images: {
     remotePatterns: [
       {

@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { getCurrentUser } from "@/services/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
   submitReview,
   submitReviewReply,
@@ -55,6 +56,8 @@ export async function submitReviewAction(rawInput: unknown) {
     return { success: false, error: res.error };
   }
 
+  revalidateTag(CACHE_TAGS.housesList, "max");
+  revalidateTag(CACHE_TAGS.house(parsed.data.houseId), "max");
   revalidatePath(`/houses`);
   return { success: true, data: res.value };
 }
@@ -75,6 +78,8 @@ export async function submitReviewReplyAction(rawInput: unknown) {
     return { success: false, error: res.error };
   }
 
+  revalidateTag(CACHE_TAGS.housesList, "max");
+  revalidateTag(CACHE_TAGS.house(parsed.data.houseId), "max");
   revalidatePath(`/houses`);
   return { success: true, data: res.value };
 }
@@ -114,6 +119,7 @@ export async function moderateReviewAction(rawInput: unknown) {
     return { success: false, error: res.error };
   }
 
+  revalidateTag(CACHE_TAGS.housesList, "max");
   revalidatePath(`/houses`);
   return { success: true, data: res.value };
 }

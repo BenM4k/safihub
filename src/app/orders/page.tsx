@@ -12,6 +12,9 @@ export const metadata = {
   description: "Suivez l'historique et l'avancement de vos commandes de pressing.",
 };
 
+// instant = false: kept on purpose — authenticated customer orders list
+export const instant = false;
+
 interface CustomerOrdersPageProps {
   searchParams?: Promise<{
     tab?: "active" | "past";

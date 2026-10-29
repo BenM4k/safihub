@@ -12,6 +12,9 @@ export const metadata = {
   description: "Sélectionnez votre atelier de pressing pour accéder à votre tableau de bord.",
 };
 
+// instant = false: kept on purpose — authenticated partner chooser route
+export const instant = false;
+
 /**
  * Route page for /partner - routes user to their single house or presents the chooser.
  */

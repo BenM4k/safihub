@@ -1,10 +1,10 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { getCurrentUser } from "@/services/auth";
-import { Navbar } from "@/components/home/header/navbar";
+import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { Footer } from "@/components/home/footer/footer";
 import { getPublicTrackingOrder } from "@/services/order";
 import { getOrderPhotosWithSignedUrlsService } from "@/services/storage";
@@ -13,6 +13,7 @@ import { OrderItemsCard } from "@/components/orders/detail/order-items-card";
 import { OrderStatusTimeline } from "@/components/orders/detail/order-status-timeline";
 import { PriceAdjustmentCard } from "@/components/orders/detail/price-adjustment-card";
 import { DeliverySlotConfirmationCard } from "@/components/orders/detail/delivery-slot-confirmation-card";
+import { OrderDetailSkeleton } from "@/components/orders/detail/order-detail-skeleton";
 import { DeliveryCodeBadge } from "@/components/track/delivery-code-badge";
 import { OrderPhotosGallery } from "@/components/photos/order-photos-gallery";
 
@@ -20,18 +21,14 @@ interface TrackOrderPageProps {
   params: Promise<{ token: string }>;
 }
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("track");
-  return {
-    title: `${t("title")} — SafiHub`,
-    description: t("searchSubtitle"),
-  };
-}
+export const metadata: Metadata = {
+  title: "Suivi de votre commande — SafiHub",
+  description:
+    "Suivez en direct l'avancement du traitement et de la livraison de votre commande de pressing à Bukavu.",
+};
 
-export default async function TrackOrderPage({ params }: TrackOrderPageProps) {
-  const { token } = await params;
-  const t = await getTranslations("track");
-  const user = await getCurrentUser();
+async function TrackOrderContent({ params }: TrackOrderPageProps) {
+  const [{ token }, t] = await Promise.all([params, getTranslations("track")]);
 
   const res = await getPublicTrackingOrder(token);
   if (!res.ok) {
@@ -47,63 +44,71 @@ export default async function TrackOrderPage({ params }: TrackOrderPageProps) {
   const photos = photosRes.ok ? photosRes.value : [];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Navbar variant="solid" user={user} />
-      <main className="flex-1 flex flex-col py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col space-y-6">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/track"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
-            >
-              <ArrowLeft className="size-3.5" />
-              <span>{t("otherLookup")}</span>
-            </Link>
-            <span className="text-xs text-muted-foreground font-medium">
-              {t("guestTrackingBadge")}
-            </span>
-          </div>
+    <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col space-y-6">
+      <div className="flex items-center justify-between">
+        <Link
+          href="/track"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
+        >
+          <ArrowLeft className="size-3.5" />
+          <span>{t("otherLookup")}</span>
+        </Link>
+        <span className="text-xs text-muted-foreground font-medium">
+          {t("guestTrackingBadge")}
+        </span>
+      </div>
 
-        <DeliveryCodeBadge code={order.deliveryConfirmationCode} />
+      <DeliveryCodeBadge code={order.deliveryConfirmationCode} />
 
-        <OrderHeader order={order} />
+      <OrderHeader order={order} />
 
-        <PriceAdjustmentCard
-          orderId={order.id}
-          status={order.status}
-          totalDue={order.totalDue}
-          items={items}
-          method="tracking_link"
-        />
+      <PriceAdjustmentCard
+        orderId={order.id}
+        status={order.status}
+        totalDue={order.totalDue}
+        items={items}
+        method="tracking_link"
+      />
 
-        <DeliverySlotConfirmationCard
-          orderId={order.id}
-          status={order.status}
-          deliverySlotStart={order.deliverySlotStart}
-          deliverySlotEnd={order.deliverySlotEnd}
-          method="tracking_link"
-        />
+      <DeliverySlotConfirmationCard
+        orderId={order.id}
+        status={order.status}
+        deliverySlotStart={order.deliverySlotStart}
+        deliverySlotEnd={order.deliverySlotEnd}
+        method="tracking_link"
+      />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          <div className="md:col-span-2 space-y-6">
-            <OrderItemsCard
-              items={items}
-              currency={order.currency}
-              itemsTotal={order.itemsTotal}
-              deliveryFee={order.deliveryFee}
-              totalDue={order.totalDue}
-            />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div className="md:col-span-2 space-y-6">
+          <OrderItemsCard
+            items={items}
+            currency={order.currency}
+            itemsTotal={order.itemsTotal}
+            deliveryFee={order.deliveryFee}
+            totalDue={order.totalDue}
+          />
 
-            <OrderPhotosGallery photos={photos} />
-          </div>
+          <OrderPhotosGallery photos={photos} />
+        </div>
 
-          <div className="md:col-span-1">
-            <OrderStatusTimeline events={events} currentStatus={order.status} />
-          </div>
+        <div className="md:col-span-1">
+          <OrderStatusTimeline events={events} currentStatus={order.status} />
         </div>
       </div>
-    </main>
-    <Footer />
-  </div>
-);
+    </div>
+  );
+}
+
+export default function TrackOrderPage({ params }: TrackOrderPageProps) {
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <SessionNavbar variant="solid" />
+      <main className="flex-1 flex flex-col py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+        <Suspense fallback={<OrderDetailSkeleton />}>
+          <TrackOrderContent params={params} />
+        </Suspense>
+      </main>
+      <Footer />
+    </div>
+  );
 }

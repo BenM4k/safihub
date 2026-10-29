@@ -1,9 +1,12 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Navbar } from "@/components/home/header/navbar";
+import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { Footer } from "@/components/home/footer/footer";
 import { getCurrentUser } from "@/services/auth";
-import { getCustomerAddresses, getNeighborhoods } from "@/dal";
+import { getCustomerAddresses } from "@/dal";
+import { getCachedNeighborhoods } from "@/lib/cached-data";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
+import { CheckoutSkeleton } from "@/components/checkout/checkout-skeleton";
 
 export const metadata: Metadata = {
   title: "Commander votre pressing | SafiHub Bukavu",
@@ -11,22 +14,30 @@ export const metadata: Metadata = {
     "Finalisez votre commande de pressing à Bukavu avec collecte et livraison à domicile.",
 };
 
-export default async function CheckoutPage() {
+async function CheckoutContent() {
   const user = await getCurrentUser();
   const [savedAddresses, neighborhoods] = await Promise.all([
     user ? getCustomerAddresses(user.id) : Promise.resolve([]),
-    getNeighborhoods(),
+    getCachedNeighborhoods(),
   ]);
 
   return (
+    <CheckoutForm
+      user={user}
+      savedAddresses={savedAddresses}
+      neighborhoods={neighborhoods}
+    />
+  );
+}
+
+export default function CheckoutPage() {
+  return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar variant="solid" user={user} />
+      <SessionNavbar variant="solid" />
       <main className="flex-1 flex flex-col py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-        <CheckoutForm
-          user={user}
-          savedAddresses={savedAddresses}
-          neighborhoods={neighborhoods}
-        />
+        <Suspense fallback={<CheckoutSkeleton />}>
+          <CheckoutContent />
+        </Suspense>
       </main>
       <Footer />
     </div>

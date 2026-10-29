@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form/forgot-password-form";
-import { redirectIfAuthenticated } from "@/services/auth";
+import { AuthRedirectGate } from "@/components/auth/auth-redirect-gate";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("auth");
-  return {
-    title: `${t("forgotPasswordTitle")} | SafiHub`,
-    description: t("forgotPasswordSubtitle"),
-  };
-}
+export const metadata: Metadata = {
+  title: "Mot de passe oublié | SafiHub",
+  description:
+    "Saisissez l'adresse e-mail associée à votre compte pour recevoir un lien de réinitialisation.",
+};
 
-export default async function ForgotPasswordPage() {
-  await redirectIfAuthenticated();
-  return <ForgotPasswordForm />;
+export default function ForgotPasswordPage() {
+  return (
+    <>
+      <AuthRedirectGate />
+      <ForgotPasswordForm />
+    </>
+  );
 }

@@ -3,6 +3,9 @@ import { guardAdminRoute } from "@/services/auth";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
+// instant = false: kept on purpose — authenticated admin operations console
+export const instant = false;
+
 export default async function AdminLayout({
   children,
 }: {

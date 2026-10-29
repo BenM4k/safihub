@@ -1,9 +1,9 @@
 import { Suspense } from "react";
-import { Metadata } from "next";
-import { Navbar } from "@/components/home/header/navbar";
-import { getCurrentUser } from "@/services/auth";
-import { getCustomerHousesData } from "@/services/house/customer-search.service";
+import type { Metadata } from "next";
+import { SessionNavbar } from "@/components/home/header/session-navbar";
+import { getCachedCustomerHousesData } from "@/lib/cached-data";
 import { HousesSplitView } from "@/components/houses/houses-split-view";
+import { HousesSearchSkeleton } from "@/components/houses/houses-search-skeleton";
 
 export const metadata: Metadata = {
   title: "Trouver un Pressing à Bukavu | SafiHub",
@@ -15,27 +15,32 @@ interface CustomerHousesPageProps {
   searchParams: Promise<{ neighborhoodId?: string; query?: string }>;
 }
 
-export default async function CustomerHousesPage({
+async function HousesResultsContent({
   searchParams,
 }: CustomerHousesPageProps) {
   const params = await searchParams;
-  const [user, pageData] = await Promise.all([
-    getCurrentUser(),
-    getCustomerHousesData({
-      neighborhoodId: params.neighborhoodId,
-      query: params.query,
-    }),
-  ]);
+  const pageData = await getCachedCustomerHousesData({
+    neighborhoodId: params.neighborhoodId,
+    query: params.query,
+  });
 
   return (
+    <HousesSplitView
+      initialData={pageData}
+      initialNeighborhoodId={params.neighborhoodId}
+    />
+  );
+}
+
+export default function CustomerHousesPage({
+  searchParams,
+}: CustomerHousesPageProps) {
+  return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar variant="solid" user={user} />
+      <SessionNavbar variant="solid" />
       <main className="flex-1 overflow-hidden">
-        <Suspense fallback={null}>
-          <HousesSplitView
-            initialData={pageData}
-            initialNeighborhoodId={params.neighborhoodId}
-          />
+        <Suspense fallback={<HousesSearchSkeleton />}>
+          <HousesResultsContent searchParams={searchParams} />
         </Suspense>
       </main>
     </div>

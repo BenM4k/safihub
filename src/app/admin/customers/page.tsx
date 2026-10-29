@@ -3,10 +3,8 @@ import { listAdminCustomers } from "@/services/admin";
 import { CustomersManagementView } from "@/components/admin/customers/customers-management-view";
 
 export default async function AdminCustomersPage() {
-  const [currentUser, res] = await Promise.all([
-    getCurrentUser(),
-    listAdminCustomers({ limit: 500 }),
-  ]);
+  const currentUser = await getCurrentUser();
+  const res = await listAdminCustomers({ limit: 500 });
 
   if (!res.ok) {
     throw new Error(res.error);

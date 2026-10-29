@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/services/auth";
 import { err, type Result } from "@/lib/result";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
   addAdminMasterFabric,
   addAdminMasterItem,
@@ -65,6 +66,8 @@ export async function createMasterItemAction(formData: FormData): Promise<Result
 
   const res = await addAdminMasterItem(parsed.data);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.catalogItems, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/catalogue");
   }
   return res;
@@ -76,6 +79,8 @@ export async function toggleMasterItemActiveAction(itemId: string, isActive: boo
 
   const res = await toggleAdminMasterItemActive(itemId, isActive);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.catalogItems, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/catalogue");
   }
   return res;
@@ -97,6 +102,8 @@ export async function createMasterFabricAction(formData: FormData): Promise<Resu
 
   const res = await addAdminMasterFabric(parsed.data);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.catalogItems, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/catalogue");
   }
   return res;
@@ -108,6 +115,8 @@ export async function toggleMasterFabricActiveAction(fabricId: string, isActive:
 
   const res = await toggleAdminMasterFabricActive(fabricId, isActive);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.catalogItems, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/catalogue");
   }
   return res;
@@ -130,6 +139,8 @@ export async function createMasterServiceAction(formData: FormData): Promise<Res
 
   const res = await addAdminMasterService(parsed.data);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.catalogItems, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/catalogue");
   }
   return res;
@@ -159,6 +170,8 @@ export async function approveItemRequestAction(formData: FormData): Promise<Resu
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.catalogItems, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/catalogue");
   }
   return res;
@@ -183,6 +196,8 @@ export async function rejectItemRequestAction(formData: FormData): Promise<Resul
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.catalogItems, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
     revalidatePath("/admin/catalogue");
   }
   return res;

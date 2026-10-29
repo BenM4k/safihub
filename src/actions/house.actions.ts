@@ -1,10 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireHouseAccess } from "@/services/auth";
 import { getHouses } from "@/dal";
 import { err, ok, type Result } from "@/lib/result";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
   acceptIncomingOrder,
   addHouseClosureEntry,
@@ -275,6 +276,8 @@ export async function updateHouseCatalogueItemAction(input: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -324,6 +327,8 @@ export async function updateHouseCatalogueBatchAction(input: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -399,6 +404,8 @@ export async function updateHouseHoursAction(input: {
 
   const res = await updateHouseHoursSchedule(authCtx.value.houseId, parsed.data.hours);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -441,6 +448,8 @@ export async function addHouseClosureAction(input: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -484,6 +493,8 @@ export async function updateHouseClosureAction(input: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -524,6 +535,8 @@ export async function importHouseHolidaysAction(input: {
 
   const res = await importHouseHolidays(authCtx.value.houseId, parsed.data.holidays);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -552,6 +565,8 @@ export async function deleteHouseClosureAction(input: {
 
   const res = await deleteHouseClosureEntry(authCtx.value.houseId, parsed.data.closureId);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -588,6 +603,8 @@ export async function updateNeighborhoodCoverageAction(input: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -627,6 +644,8 @@ export async function updateNeighborhoodCoverageBatchAction(input: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -714,6 +733,8 @@ export async function updateHouseGeneralSettingsAction(input: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -752,6 +773,8 @@ export async function addHouseExclusionAction(input: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -770,6 +793,8 @@ export async function deleteHouseExclusionAction(input: {
 
   const res = await deleteHouseExclusionRule(authCtx.value.houseId, input.exclusionId);
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -811,6 +836,8 @@ export async function updateHouseExclusionAction(input: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -844,6 +871,8 @@ export async function toggleHousePauseAction(input: {
       pausedUntil: null,
     });
 
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
     return ok(undefined);
@@ -900,6 +929,8 @@ export async function updateHouseCommandesAction(input: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -1010,6 +1041,8 @@ export async function updateHouseImagesAction(input: {
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
     revalidatePath("/partner", "layout");
     revalidatePath("/houses");
   }
@@ -1071,6 +1104,8 @@ export async function uploadHouseAssetDirectAction(
     return err(updateRes.error);
   }
 
+  revalidateTag(CACHE_TAGS.housesList, "max");
+  revalidateTag(CACHE_TAGS.house(houseId), "max");
   revalidatePath("/partner", "layout");
   revalidatePath("/houses");
 

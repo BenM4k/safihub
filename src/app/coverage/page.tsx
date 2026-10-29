@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Navbar } from "@/components/home/header/navbar";
+import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { Footer } from "@/components/home/footer/footer";
 import { getCurrentUser } from "@/services/auth";
-import { getNeighborhoods } from "@/dal";
+import { getCachedNeighborhoods } from "@/lib/cached-data";
 import { CoverageRequestForm } from "@/components/coverage/coverage-request-form";
+import { CoverageSkeleton } from "@/components/coverage/coverage-skeleton";
 
 export const metadata: Metadata = {
   title: "Demande de couverture | SafiHub Bukavu",
@@ -15,22 +17,30 @@ interface CoveragePageProps {
   searchParams: Promise<{ neighborhoodId?: string }>;
 }
 
-export default async function CoveragePage({ searchParams }: CoveragePageProps) {
-  const { neighborhoodId } = await searchParams;
-  const [user, neighborhoods] = await Promise.all([
+async function CoverageContent({ searchParams }: CoveragePageProps) {
+  const [{ neighborhoodId }, user, neighborhoods] = await Promise.all([
+    searchParams,
     getCurrentUser(),
-    getNeighborhoods(),
+    getCachedNeighborhoods(),
   ]);
 
   return (
+    <CoverageRequestForm
+      neighborhoods={neighborhoods}
+      initialNeighborhoodId={neighborhoodId}
+      defaultPhone={user?.contactPhone || ""}
+    />
+  );
+}
+
+export default function CoveragePage({ searchParams }: CoveragePageProps) {
+  return (
     <div className="min-h-screen flex flex-col bg-slate-50/50">
-      <Navbar variant="solid" user={user} />
+      <SessionNavbar variant="solid" />
       <main className="flex-1 py-12 px-4 sm:px-6">
-        <CoverageRequestForm
-          neighborhoods={neighborhoods}
-          initialNeighborhoodId={neighborhoodId}
-          defaultPhone={user?.contactPhone || ""}
-        />
+        <Suspense fallback={<CoverageSkeleton />}>
+          <CoverageContent searchParams={searchParams} />
+        </Suspense>
       </main>
       <Footer />
     </div>

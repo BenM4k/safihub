@@ -14,6 +14,9 @@ export const metadata = {
   description: "Formulaire de déclaration de litige pour une commande de pressing.",
 };
 
+// instant = false: kept on purpose — authenticated customer order dispute form
+export const instant = false;
+
 export default async function OrderDisputePage({ params }: OrderDisputePageProps) {
   const user = await getCurrentUser();
   const { orderId } = await params;

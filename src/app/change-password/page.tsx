@@ -10,6 +10,9 @@ export const metadata = {
   description: "Première connexion : définissez votre mot de passe personnel pour sécuriser votre compte.",
 };
 
+// instant = false: kept on purpose — authenticated password change screen
+export const instant = false;
+
 export default async function ChangePasswordPage() {
   const user = await getCurrentUser();
 

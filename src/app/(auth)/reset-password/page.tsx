@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form/reset-password-form";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("auth");
-  return {
-    title: `${t("resetPasswordTitle")} | SafiHub`,
-    description: t("resetPasswordSubtitle"),
-  };
-}
+export const metadata: Metadata = {
+  title: "Nouveau mot de passe | SafiHub",
+  description:
+    "Choisissez un nouveau mot de passe sécurisé pour votre compte SafiHub.",
+};
 
 export default function ResetPasswordPage() {
   return <ResetPasswordForm />;

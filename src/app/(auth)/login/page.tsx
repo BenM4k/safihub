@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { LoginForm } from "@/components/auth/login-form/login-form";
-import { redirectIfAuthenticated } from "@/services/auth";
+import { AuthRedirectGate } from "@/components/auth/auth-redirect-gate";
 
 export const metadata: Metadata = {
   title: "Connexion | SafiHub",
@@ -8,7 +8,11 @@ export const metadata: Metadata = {
     "Connectez-vous à votre compte SafiHub pour gérer vos commandes de pressing et blanchisserie à Bukavu.",
 };
 
-export default async function LoginPage() {
-  await redirectIfAuthenticated();
-  return <LoginForm />;
+export default function LoginPage() {
+  return (
+    <>
+      <AuthRedirectGate />
+      <LoginForm />
+    </>
+  );
 }

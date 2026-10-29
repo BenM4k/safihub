@@ -1,17 +1,20 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Navbar } from "@/components/home/header/navbar";
 import { getCurrentUser } from "@/services/auth";
-import { getCustomerHouseProfile } from "@/services/house";
 import {
-  getHouseReviews,
-  getHouseRatingStats,
-  getCustomerDeliveredOrdersEligibleForReview,
-} from "@/dal/review.dal";
-import { getNeighborhoods, getZoneFees } from "@/dal/coverage.dal";
-import { getLatestExchangeRate } from "@/dal/ops.dal";
+  getCachedCustomerHouseProfile,
+  getCachedHouseReviews,
+  getCachedHouseRatingStats,
+  getCachedNeighborhoods,
+  getCachedZoneFees,
+  getCachedExchangeRate,
+} from "@/lib/cached-data";
+import { getCustomerDeliveredOrdersEligibleForReview } from "@/dal/review.dal";
 import { checkUserHouseAccess } from "@/dal";
 import { HouseCatalogueView } from "@/components/houses/detail/house-catalogue-view";
+import { HouseDetailSkeleton } from "@/components/houses/detail/house-detail-skeleton";
 import { PressingJsonLd } from "@/components/houses/detail/pressing-json-ld";
 import { getAppBaseUrl } from "@/lib/app-url";
 
@@ -23,7 +26,7 @@ export async function generateMetadata({
   params,
 }: HouseDetailPageProps): Promise<Metadata> {
   const { houseSlug } = await params;
-  const res = await getCustomerHouseProfile(houseSlug);
+  const res = await getCachedCustomerHouseProfile(houseSlug);
   const isApproved =
     res.ok && res.value?.house?.reviewStatus
       ? res.value.house.reviewStatus === "approved"
@@ -71,13 +74,11 @@ export async function generateMetadata({
   };
 }
 
-export default async function CustomerHouseDetailPage({
-  params,
-}: HouseDetailPageProps) {
+async function HouseDetailContent({ params }: HouseDetailPageProps) {
   const { houseSlug } = await params;
   const [user, profileRes] = await Promise.all([
     getCurrentUser(),
-    getCustomerHouseProfile(houseSlug),
+    getCachedCustomerHouseProfile(houseSlug),
   ]);
 
   if (!profileRes.ok || !profileRes.value.house.isActive) {
@@ -110,14 +111,14 @@ export default async function CustomerHouseDetailPage({
     zoneFeesRows,
     rateRecord,
   ] = await Promise.all([
-    getHouseReviews(data.house.id, { limit: 10 }),
-    getHouseRatingStats(data.house.id),
+    getCachedHouseReviews(data.house.id, 10),
+    getCachedHouseRatingStats(data.house.id),
     user
       ? getCustomerDeliveredOrdersEligibleForReview(user.id, data.house.id)
       : Promise.resolve([]),
-    getNeighborhoods(),
-    getZoneFees(),
-    getLatestExchangeRate("USD", "CDF"),
+    getCachedNeighborhoods(),
+    getCachedZoneFees(),
+    getCachedExchangeRate("USD", "CDF"),
   ]);
 
   const zoneFeesMap: Record<string, number> = {};
@@ -132,7 +133,7 @@ export default async function CustomerHouseDetailPage({
   const pageUrl = `${baseUrl}/houses/${data.house.slug}`;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <>
       <PressingJsonLd house={data.house} url={pageUrl} />
       {!isApproved && (
         <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-900 dark:text-amber-200 py-2.5 px-4 text-center text-xs font-bold flex items-center justify-center gap-2">
@@ -156,6 +157,27 @@ export default async function CustomerHouseDetailPage({
           isAuthenticated={Boolean(user)}
         />
       </main>
+    </>
+  );
+}
+
+export default function CustomerHouseDetailPage({
+  params,
+}: HouseDetailPageProps) {
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <Suspense
+        fallback={
+          <>
+            <Navbar variant="solid" user={null} />
+            <main className="flex-1">
+              <HouseDetailSkeleton />
+            </main>
+          </>
+        }
+      >
+        <HouseDetailContent params={params} />
+      </Suspense>
     </div>
   );
 }

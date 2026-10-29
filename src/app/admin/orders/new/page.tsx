@@ -1,3 +1,4 @@
+import { guardAdminRoute } from "@/services/auth";
 import {
   listAdminCatalog,
   listAdminHouses,
@@ -6,6 +7,7 @@ import {
 import { ManualOrderForm } from "@/components/admin/orders/manual-order-form";
 
 export default async function AdminNewOrderPage() {
+  await guardAdminRoute();
 
   const [housesRes, neighRes, catalogRes] = await Promise.all([
     listAdminHouses(),

@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireHouseAccess, requireRole } from "@/services/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
   getHouseChecklistDerivation,
   transitionHouseReviewStatus,
@@ -157,6 +158,9 @@ export async function adminReviewHouseAction(params: {
     });
   }
 
+  revalidateTag(CACHE_TAGS.housesList, "max");
+  revalidateTag(CACHE_TAGS.house(params.houseId), "max");
+  revalidateTag(CACHE_TAGS.house(checklist.houseSlug), "max");
   revalidatePath(`/partner/${checklist.houseSlug}`);
   revalidatePath("/admin/houses");
   revalidatePath("/houses");

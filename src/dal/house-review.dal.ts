@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { normalizeStorageUrl } from "@/lib/storage-url";
 import type {
@@ -264,11 +264,77 @@ export async function listAdminPendingHouseReviews(statusFilter?: HouseReviewSta
     ? await query.where(eq(schema.houses.reviewStatus, statusFilter)).orderBy(desc(schema.houses.submittedAt))
     : await query.where(eq(schema.houses.reviewStatus, "pending_review")).orderBy(desc(schema.houses.submittedAt));
 
-  const rows: AdminPendingReviewRow[] = [];
+  if (rawHouses.length === 0) {
+    return [];
+  }
 
-  for (const h of rawHouses) {
-    const checklist = await getHouseChecklistDerivation(h.houseId);
-    rows.push({
+  const houseIds = rawHouses.map((h) => h.houseId);
+
+  const [hoursCounts, coverageCounts, pricedCounts] = await Promise.all([
+    db
+      .select({
+        houseId: schema.houseHours.houseId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(schema.houseHours)
+      .where(inArray(schema.houseHours.houseId, houseIds))
+      .groupBy(schema.houseHours.houseId),
+    db
+      .select({
+        houseId: schema.houseCoverage.houseId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(schema.houseCoverage)
+      .where(
+        and(
+          inArray(schema.houseCoverage.houseId, houseIds),
+          eq(schema.houseCoverage.isActive, true)
+        )
+      )
+      .groupBy(schema.houseCoverage.houseId),
+    db
+      .select({
+        houseId: schema.houseItems.houseId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(schema.houseItems)
+      .where(
+        and(
+          inArray(schema.houseItems.houseId, houseIds),
+          eq(schema.houseItems.isActive, true),
+          sql`${schema.houseItems.price} > 0`
+        )
+      )
+      .groupBy(schema.houseItems.houseId),
+  ]);
+
+  const hoursMap = new Map(hoursCounts.map((r) => [r.houseId, r.count]));
+  const coverageMap = new Map(coverageCounts.map((r) => [r.houseId, r.count]));
+  const pricedMap = new Map(pricedCounts.map((r) => [r.houseId, r.count]));
+
+  return rawHouses.map((h) => {
+    const hoursCount = hoursMap.get(h.houseId) ?? 0;
+    const coverageCount = coverageMap.get(h.houseId) ?? 0;
+    const pricedCount = pricedMap.get(h.houseId) ?? 0;
+
+    const photosDone = Boolean(h.coverImageUrl || h.logoUrl);
+    const hoursDone = hoursCount > 0;
+    const pricingDone = pricedCount >= 1;
+    const coverageDone = coverageCount > 0;
+    const hasPhone = Boolean(h.contactPhone && h.contactPhone.trim().length >= 6);
+    const paymentDone = hasPhone;
+    const contactDone = hasPhone;
+
+    const completedCount = [
+      photosDone,
+      hoursDone,
+      pricingDone,
+      coverageDone,
+      paymentDone,
+      contactDone,
+    ].filter(Boolean).length;
+
+    return {
       houseId: h.houseId,
       name: h.name,
       slug: h.slug,
@@ -278,10 +344,8 @@ export async function listAdminPendingHouseReviews(statusFilter?: HouseReviewSta
       submittedBy: h.submittedBy,
       contactPhone: h.contactPhone,
       neighborhoodName: h.neighborhoodName,
-      pricedItemsCount: checklist?.items.pricing.pricedCount ?? 0,
-      completedChecklistCount: checklist?.completedCount ?? 0,
-    });
-  }
-
-  return rows;
+      pricedItemsCount: pricedCount,
+      completedChecklistCount: completedCount,
+    };
+  });
 }

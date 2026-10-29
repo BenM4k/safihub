@@ -4,6 +4,9 @@ import { guardHouseRoute } from "@/services/auth";
 import { getHouseBySlug, getWaitingAcceptanceCount, getHouseChecklistDerivation } from "@/dal";
 import { PartnerShell } from "@/components/house/partner-shell";
 
+// instant = false: kept on purpose — authenticated partner house workspace
+export const instant = false;
+
 interface PartnerWorkspaceLayoutProps {
   children: ReactNode;
   params: Promise<{ houseSlug: string }>;
