@@ -28,10 +28,10 @@ export function HowItWorksCard({
             <HelpCircle className="size-4" />
           </div>
           <div>
-            <span className="text-sm font-bold text-foreground block">
+            <span className="text-sm sm:text-base font-bold text-foreground block">
               {t("howItWorksTitle")}
             </span>
-            <span className="text-2xs text-muted-foreground">
+            <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
               {t("howItWorksSubtitle")}
             </span>
           </div>
@@ -52,46 +52,46 @@ export function HowItWorksCard({
             : "grid-rows-[0fr] opacity-0"
         }`}
       >
-        <div className="overflow-hidden space-y-5 pb-3 text-xs text-muted-foreground leading-relaxed">
+        <div className="overflow-hidden space-y-5 pb-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-1">
             {/* Rule 1: Frequency */}
             <div className="border-l-2 border-primary/50 pl-3.5 space-y-1">
-              <span className="font-bold text-foreground block text-xs">
+              <span className="font-bold text-foreground block text-xs sm:text-sm">
                 {t("ruleFrequencyTitle")}
               </span>
-              <p className="text-2xs sm:text-xs">{t("ruleFrequencyDesc")}</p>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">{t("ruleFrequencyDesc")}</p>
             </div>
 
             {/* Rule 2: Commission */}
             <div className="border-l-2 border-primary/50 pl-3.5 space-y-1">
-              <span className="font-bold text-foreground block text-xs">
+              <span className="font-bold text-foreground block text-xs sm:text-sm">
                 {t("ruleCommissionTitle", { rate: commissionRatePercent })}
               </span>
-              <p className="text-2xs sm:text-xs">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
                 {t("ruleCommissionDesc", { rate: commissionRatePercent })}
               </p>
             </div>
 
             {/* Rule 3: Delivery cutoff */}
             <div className="border-l-2 border-primary/50 pl-3.5 space-y-1">
-              <span className="font-bold text-foreground block text-xs">
+              <span className="font-bold text-foreground block text-xs sm:text-sm">
                 {t("ruleDelayTitle")}
               </span>
-              <p className="text-2xs sm:text-xs">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
                 {t("ruleDelayDesc", { notice: settlementDelayNotice })}
               </p>
             </div>
 
             {/* Rule 4: Disputes & Cancelled */}
             <div className="border-l-2 border-primary/50 pl-3.5 space-y-1">
-              <span className="font-bold text-foreground block text-xs">
+              <span className="font-bold text-foreground block text-xs sm:text-sm">
                 {t("ruleDisputesTitle")}
               </span>
-              <p className="text-2xs sm:text-xs">{t("ruleDisputesDesc")}</p>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">{t("ruleDisputesDesc")}</p>
             </div>
           </div>
 
-          <div className="pl-3.5 py-1 text-foreground flex items-center gap-2.5 text-2xs">
+          <div className="pl-3.5 py-1 text-slate-600 dark:text-slate-300 flex items-center gap-2.5 text-xs sm:text-sm">
             <ShieldCheck className="size-4 text-primary shrink-0" />
             <span>{t("supportNotice")}</span>
           </div>

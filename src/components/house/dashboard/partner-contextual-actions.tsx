@@ -82,7 +82,7 @@ export function PartnerContextualActions({
       </>
     );
 
-    const baseClass = `flex-1 p-2.5 sm:p-3 rounded-xl hover:bg-muted/30 transition-colors group flex items-center gap-3 cursor-pointer min-h-[48px] touch ${className ?? ""}`;
+    const baseClass = `flex-1 p-2.5 sm:p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-accent/40 transition-colors group flex items-center gap-3 cursor-pointer min-h-[48px] touch ${className ?? ""}`;
 
     if (a.type === "button") {
       return (
@@ -107,11 +107,11 @@ export function PartnerContextualActions({
 
   return (
     <section className="space-y-3 font-sans" aria-label={t("quickActionsTitle")}>
-      <h3 className="font-display font-bold text-sm sm:text-base text-heading">
+      <h3 className="font-display font-bold text-base sm:text-lg text-heading tracking-tight">
         {t("quickActionsTitle")}
       </h3>
 
-      <div className="bg-card rounded-3xl p-2 sm:p-3 font-sans">
+      <div className="bg-card rounded-2xl p-2 sm:p-3 font-sans">
         {/* Desktop Layout (>=1024px): 1 continuous row with clean vertical separators */}
         <div className="hidden lg:flex lg:items-stretch">
           {actions.map((a, idx) => (

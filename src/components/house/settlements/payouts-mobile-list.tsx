@@ -36,7 +36,7 @@ export function PayoutsMobileList({
   }
 
   return (
-    <div className="md:hidden rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
+    <div className="md:hidden rounded-2xl bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
       {payouts.map((p) => (
         <div
           key={p.id}
@@ -60,7 +60,7 @@ export function PayoutsMobileList({
               }).format(new Date(p.date))}
             </span>
 
-            <Badge variant="outline" className="gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-2xs font-semibold">
+            <Badge variant="outline" className="gap-1 rounded-full border-success/30 text-success bg-success-soft/30 text-2xs font-semibold">
               <CheckCircle2 className="size-3" />
               <span>{t("statusPaid")}</span>
             </Badge>
@@ -78,7 +78,7 @@ export function PayoutsMobileList({
               )}
             </div>
 
-            <div className="font-mono font-bold text-lg text-emerald-600 dark:text-emerald-400 tabular-nums">
+            <div className="font-mono font-bold text-lg text-success tabular-nums">
               +{formatMoney(p.amount, "CDF")}
             </div>
           </div>

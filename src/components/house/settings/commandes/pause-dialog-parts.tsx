@@ -66,13 +66,13 @@ export function DurationPicker({
       </div>
 
       {durationMode === "preset" ? (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2 min-w-0">
           {PRESET_DURATIONS.map((item) => (
             <button
               key={item.hours}
               type="button"
               onClick={() => onSetPresetHours(item.hours)}
-              className={`py-2 rounded-lg border text-xs font-medium transition ${
+              className={`py-2 px-1.5 rounded-lg border text-xs font-medium transition min-w-0 truncate text-center cursor-pointer ${
                 presetDurationHours === item.hours
                   ? "bg-primary/10 border-primary text-primary font-bold"
                   : "bg-surface border-border text-muted-foreground hover:bg-secondary"
@@ -87,7 +87,7 @@ export function DurationPicker({
           type="datetime-local"
           value={customDateTime}
           onChange={(e) => onSetCustomDateTime(e.target.value)}
-          className="w-full h-9 px-3 rounded-xl border border-border text-base sm:text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          className="w-full min-w-0 max-w-full h-9 px-3 rounded-lg border border-input bg-background text-base sm:text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary"
         />
       )}
     </div>

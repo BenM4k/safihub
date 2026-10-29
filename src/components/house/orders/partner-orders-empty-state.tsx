@@ -21,15 +21,15 @@ export function PartnerOrdersEmptyState({ tab }: PartnerOrdersEmptyStateProps) {
   const { icon: Icon, titleKey } = config[tab] ?? { icon: Inbox, titleKey: "empty" };
 
   return (
-    <div className="bg-card rounded-2xl border-2 border-dashed border-border-strong p-8 sm:p-12 text-center space-y-3">
-      <div className="w-12 h-12 mx-auto rounded-full bg-surface text-muted-foreground flex items-center justify-center">
+    <div className="bg-card rounded-2xl p-8 sm:p-12 text-center space-y-3 font-sans">
+      <div className="w-12 h-12 mx-auto rounded-xl bg-surface text-muted-foreground flex items-center justify-center">
         <Icon className="size-6" aria-hidden="true" />
       </div>
       <div className="space-y-1">
         <h3 className="text-sm sm:text-base font-bold text-heading font-display">
           {t(titleKey)}
         </h3>
-        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-sm mx-auto leading-relaxed">
           {t("empty")}
         </p>
       </div>

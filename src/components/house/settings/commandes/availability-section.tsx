@@ -24,16 +24,16 @@ export function AvailabilitySection({
           <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
             <span>Disponibilité des commandes</span>
             {isPaused ? (
-              <Badge variant="outline" className="border-amber-500/30 text-amber-800 dark:text-amber-300 text-[11px] font-bold">
+              <Badge variant="outline" className="border-amber-500/30 text-amber-800 dark:text-amber-300 text-[11px] font-bold rounded-full">
                 En pause
               </Badge>
             ) : (
-              <Badge variant="outline" className="border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold">
+              <Badge variant="outline" className="border-success/30 text-success bg-success-soft/30 text-[11px] font-bold rounded-full">
                 Commandes acceptées
               </Badge>
             )}
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
             Suspend temporairement la réception de nouvelles commandes sans affecter les commandes en cours.
           </p>
         </div>
@@ -43,7 +43,7 @@ export function AvailabilitySection({
           onClick={onTogglePause}
           variant={isPaused ? "default" : "outline"}
           size="sm"
-          className={`min-h-[40px] px-4 text-xs font-bold gap-2 shrink-0 ${
+          className={`min-h-[40px] px-4 text-xs font-bold gap-2 shrink-0 rounded-lg cursor-pointer ${
             isPaused ? "bg-amber-600 hover:bg-amber-700 text-white" : ""
           }`}
         >
@@ -54,7 +54,7 @@ export function AvailabilitySection({
             </>
           ) : (
             <>
-              <PlayCircle className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <PlayCircle className="size-4 text-success shrink-0" />
               <span>Mettre en pause</span>
             </>
           )}

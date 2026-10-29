@@ -59,9 +59,9 @@ export function PartnerOrdersFilterBar({
   }, [localSearch, search, onSearchChange]);
 
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 p-3 rounded-2xl bg-card border border-border shadow-xs font-sans">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl bg-card border-0 shadow-none sm:shadow-xs font-sans">
       {/* Search Bar */}
-      <div className="relative flex-1">
+      <div className="relative flex-1 w-full">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
         <input
           type="search"
@@ -78,45 +78,61 @@ export function PartnerOrdersFilterBar({
         />
       </div>
 
-      {/* Date filter & Sorting */}
-      <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-        <div className="relative flex-1 sm:flex-initial min-w-[130px]">
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => onDateChange(e.target.value)}
-            aria-label={t("filterDateLabel")}
-            className="pl-8 pr-2 py-2 text-base sm:text-xs rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[40px] sm:min-h-[36px] w-full sm:w-auto cursor-pointer"
-          />
+      {/* Date filter & Sorting - Separated with clean grid on mobile */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2.5 w-full sm:w-auto">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-2 w-full sm:w-auto">
+          {/* Date picker */}
+          <div className="relative w-full sm:w-auto min-w-0 sm:min-w-[135px]">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => onDateChange(e.target.value)}
+              aria-label={t("filterDateLabel")}
+              className="pl-8 pr-2 py-2 text-base sm:text-xs rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[40px] sm:min-h-[36px] w-full cursor-pointer"
+            />
+          </div>
+
+          {/* Sort Select */}
+          <div className="w-full sm:w-auto min-w-0 sm:min-w-[135px]">
+            <Select
+              value={sort}
+              onValueChange={(val) =>
+                onSortChange(val as "deadline" | "promised" | "recent")
+              }
+            >
+              <SelectTrigger
+                aria-label={t("sortBy")}
+                className="w-full min-h-[40px] sm:min-h-[36px] h-auto text-base sm:text-xs rounded-xl border-border bg-background px-3 cursor-pointer"
+              >
+                <SelectValue placeholder={t("sortBy")} />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl bg-card border-border shadow-lift p-1 font-sans">
+                <SelectItem
+                  value="promised"
+                  className="text-xs font-medium rounded-lg cursor-pointer"
+                >
+                  {t("sortPromised")}
+                </SelectItem>
+                <SelectItem
+                  value="deadline"
+                  className="text-xs font-medium rounded-lg cursor-pointer"
+                >
+                  {t("sortDeadline")}
+                </SelectItem>
+                <SelectItem
+                  value="recent"
+                  className="text-xs font-medium rounded-lg cursor-pointer"
+                >
+                  {t("sortRecent")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <Select
-          value={sort}
-          onValueChange={(val) =>
-            onSortChange(val as "deadline" | "promised" | "recent")
-          }
-        >
-          <SelectTrigger
-            aria-label={t("sortBy")}
-            className="min-h-[40px] sm:min-h-[36px] h-auto text-base sm:text-xs rounded-xl border-border bg-background px-3 flex-1 sm:flex-initial cursor-pointer"
-          >
-            <SelectValue placeholder={t("sortBy")} />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl bg-card border-border shadow-lift">
-            <SelectItem value="promised" className="text-xs cursor-pointer">
-              {t("sortPromised")}
-            </SelectItem>
-            <SelectItem value="deadline" className="text-xs cursor-pointer">
-              {t("sortDeadline")}
-            </SelectItem>
-            <SelectItem value="recent" className="text-xs cursor-pointer">
-              {t("sortRecent")}
-            </SelectItem>
-          </SelectContent>
-        </Select>
-
-        <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
+        {/* Audio toggle & refresh button */}
+        <div className="flex items-center justify-end gap-2 shrink-0 self-end sm:self-auto">
           {/* Audio chime toggle */}
           <Button
             type="button"

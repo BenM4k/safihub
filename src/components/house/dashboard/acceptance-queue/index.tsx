@@ -17,7 +17,6 @@ import {
 import { OrderAcceptanceCard } from "./order-acceptance-card";
 import { OrderRejectDialog } from "./order-reject-dialog";
 import { MissedOrdersList } from "./missed-orders-list";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { HouseOrderListItemRecord } from "@/dal";
 
 interface AcceptanceQueueProps {
@@ -106,14 +105,14 @@ export function AcceptanceQueue({
       {/* Section Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="size-8 rounded-xl bg-primary-soft text-primary flex items-center justify-center font-bold">
+          <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
             <Inbox className="size-4.5" />
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-bold text-heading tracking-tight font-display">
               {t("waitingTitle")}
             </h2>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
               {t("waitingSubtitle")}
             </p>
           </div>
@@ -122,7 +121,7 @@ export function AcceptanceQueue({
         {totalWaiting > 5 && (
           <Link
             href={`/partner/${houseSlug}/orders?tab=to_accept`}
-            className="text-xs font-bold text-primary hover:text-primary-hover flex items-center gap-1 hover:underline"
+            className="text-xs font-semibold text-primary hover:text-primary-hover flex items-center gap-1 hover:underline"
           >
             <span>{t("viewAllWithCount", { count: totalWaiting })}</span>
             <ArrowRight className="size-3" />
@@ -132,34 +131,34 @@ export function AcceptanceQueue({
 
       {/* Success banner */}
       {successNotice && (
-        <Alert variant="success" className="py-2.5">
-          <CheckCircle2 className="size-4.5" />
-          <AlertDescription className="text-xs font-medium">
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-950 dark:text-emerald-200 flex items-start gap-3">
+          <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+          <div className="text-xs sm:text-sm font-semibold leading-relaxed">
             {successNotice}
-          </AlertDescription>
-        </Alert>
+          </div>
+        </div>
       )}
 
       {/* Error notice */}
       {errorNotice && (
-        <Alert variant="destructive" className="py-2.5">
-          <AlertTriangle className="size-4.5" />
-          <AlertDescription className="text-xs font-medium">
+        <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3">
+          <AlertTriangle className="size-5 shrink-0 mt-0.5" />
+          <div className="text-xs sm:text-sm font-semibold leading-relaxed">
             {errorNotice}
-          </AlertDescription>
-        </Alert>
+          </div>
+        </div>
       )}
 
       {/* Active waiting queue */}
       {sortedOrders.length === 0 ? (
-        <div className="p-8 rounded-3xl bg-card text-center space-y-2">
-          <div className="size-12 rounded-2xl bg-success-soft text-success flex items-center justify-center mx-auto shadow-xs">
+        <div className="p-8 sm:p-10 rounded-2xl bg-card text-center space-y-3">
+          <div className="size-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
             <Check className="size-6" />
           </div>
-          <h3 className="font-bold text-sm text-heading">
+          <h3 className="font-bold text-sm sm:text-base text-heading">
             {t("noWaitingOrders")}
           </h3>
-          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-sm mx-auto leading-relaxed">
             {t("noWaitingOrdersDesc")}
           </p>
         </div>

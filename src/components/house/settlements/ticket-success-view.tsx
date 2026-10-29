@@ -48,7 +48,7 @@ export function TicketSuccessView({
           href={waLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 sm:flex-initial px-4 h-10 sm:h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-2 transition shadow-xs"
+          className="flex-1 sm:flex-initial px-4 h-10 sm:h-9 rounded-lg bg-success hover:bg-success/90 text-white text-xs font-semibold flex items-center justify-center gap-2 transition shadow-xs"
         >
           <PhoneCall className="size-3.5" />
           <span>{t("ticketTrackWhatsApp")}</span>
@@ -58,7 +58,7 @@ export function TicketSuccessView({
           type="button"
           variant="outline"
           onClick={onClose}
-          className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-semibold rounded-xl"
+          className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-semibold rounded-lg"
         >
           {t("ticketClose")}
         </Button>

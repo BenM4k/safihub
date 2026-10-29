@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
+import { AlertCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { guardHouseRoute } from "@/services/auth";
 import { getPartnerSettlements } from "@/services/house";
-import { PageHeader } from "@/components/shared";
 import { SettlementsView } from "@/components/house/settlements/settlements-view";
 import type { PeriodType } from "@/types/partner-settlements";
 
@@ -41,9 +41,12 @@ export default async function PartnerSettlementsPage({
 
   if (!settlementsRes.ok) {
     return (
-      <div className="p-6 bg-destructive-light text-destructive-base rounded-2xl border border-destructive-base/30 text-sm">
-        <h2 className="font-bold text-base">{t("errorTitle")}</h2>
-        <p className="mt-1">{settlementsRes.error}</p>
+      <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-start gap-3 font-sans">
+        <AlertCircle className="size-5 shrink-0 mt-0.5 text-destructive" />
+        <div>
+          <h2 className="font-bold text-base mb-1 font-display">{t("errorTitle")}</h2>
+          <p className="text-xs leading-relaxed">{settlementsRes.error}</p>
+        </div>
       </div>
     );
   }
@@ -51,11 +54,15 @@ export default async function PartnerSettlementsPage({
   const data = settlementsRes.value;
 
   return (
-    <div className="space-y-6 sm:space-y-8 pb-24 sm:pb-28">
-      <PageHeader
-        title={t("title")}
-        subtitle={`${t("subtitle")} — ${data.houseName}`}
-      />
+    <div className="space-y-6 sm:space-y-8 pb-24 sm:pb-28 font-sans">
+      <div className="border-b border-border/60 pb-5">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-heading font-display tracking-tight">
+          {t("title")}
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+          {t("subtitle")} — {data.houseName}
+        </p>
+      </div>
 
       <SettlementsView data={data} />
     </div>

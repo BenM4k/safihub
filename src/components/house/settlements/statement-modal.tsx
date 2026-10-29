@@ -28,7 +28,7 @@ export function StatementModal({ isOpen, onClose, data }: StatementModalProps) {
         if (!open) onClose();
       }}
     >
-      <DialogContent className="max-w-2xl p-0 overflow-hidden max-h-[92vh] flex flex-col print:max-h-none print:overflow-visible print:border-none print:shadow-none print:max-w-full print:m-0">
+      <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-2xl p-0 overflow-hidden max-h-[92vh] flex flex-col rounded-2xl bg-card border border-border shadow-lift print:max-h-none print:overflow-visible print:border-none print:shadow-none print:max-w-full print:m-0">
         <style>{`
           @media print {
             body * {
@@ -50,11 +50,11 @@ export function StatementModal({ isOpen, onClose, data }: StatementModalProps) {
           }
         `}</style>
 
-        {/* Modal Top Bar (screen only) */}
-        <DialogHeader className="p-4 border-b border-border flex flex-row items-center justify-between bg-surface print:hidden shrink-0">
-          <div className="flex items-center gap-2">
-            <FileText className="size-4 text-primary" />
-            <DialogTitle className="text-sm font-bold text-foreground">
+        {/* Modal Top Bar (screen only) with right padding to clear Radix close button */}
+        <DialogHeader className="p-3 sm:p-4 pr-12 border-b border-border flex flex-row items-center justify-between gap-2 bg-surface print:hidden shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText className="size-4 text-primary shrink-0" />
+            <DialogTitle className="text-xs sm:text-sm font-bold text-foreground truncate">
               {t("statementTitle")}
             </DialogTitle>
           </div>
@@ -63,7 +63,7 @@ export function StatementModal({ isOpen, onClose, data }: StatementModalProps) {
             type="button"
             size="sm"
             onClick={() => window.print()}
-            className="min-h-[38px] px-3.5 text-xs font-semibold gap-1.5"
+            className="h-8 px-2.5 sm:px-3 text-xs font-semibold gap-1.5 rounded-lg shrink-0 cursor-pointer"
           >
             <Printer className="size-3.5" />
             <span>{t("printOrSavePdf")}</span>
@@ -71,7 +71,7 @@ export function StatementModal({ isOpen, onClose, data }: StatementModalProps) {
         </DialogHeader>
 
         {/* Printable Statement Document */}
-        <div id="statement-printable" className="flex-1 overflow-y-auto">
+        <div id="statement-printable" className="flex-1 overflow-y-auto overflow-x-hidden">
           <StatementDocument data={data} />
         </div>
       </DialogContent>

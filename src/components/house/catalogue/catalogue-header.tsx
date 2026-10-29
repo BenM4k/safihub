@@ -2,7 +2,6 @@
 
 import { AlertCircle, Check, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ProgressCard } from "./progress-card";
 import { PricingFreezeNotice } from "./pricing-freeze-notice";
 import type { CatalogueServiceTab } from "./types";
@@ -31,7 +30,7 @@ export function CatalogueHeader({
   const t = useTranslations("house.catalogue");
 
   return (
-    <div className="space-y-7 sm:space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* View as customer link */}
       <div className="flex justify-end">
         <a
@@ -56,21 +55,21 @@ export function CatalogueHeader({
       <PricingFreezeNotice />
 
       {saveSuccessMsg && (
-        <Alert className="bg-success-soft text-success border-success/30 text-xs py-2.5">
-          <Check className="size-4 text-success" />
-          <AlertDescription className="text-xs font-bold text-success">
+        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-950 dark:text-emerald-200 flex items-start gap-3">
+          <Check className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+          <p className="text-xs font-bold">
             {saveSuccessMsg}
-          </AlertDescription>
-        </Alert>
+          </p>
+        </div>
       )}
 
       {errorMsg && (
-        <Alert variant="destructive" className="bg-destructive-soft text-destructive border-destructive/30 text-xs py-2.5">
-          <AlertCircle className="size-4 text-destructive" />
-          <AlertDescription className="text-xs font-bold text-destructive">
+        <div className="p-3.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3">
+          <AlertCircle className="size-4 shrink-0 text-destructive mt-0.5" />
+          <p className="text-xs font-bold">
             {errorMsg}
-          </AlertDescription>
-        </Alert>
+          </p>
+        </div>
       )}
     </div>
   );

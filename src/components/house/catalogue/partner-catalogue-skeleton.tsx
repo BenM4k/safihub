@@ -9,67 +9,117 @@ export function PartnerCatalogueSkeleton() {
       role="status"
       aria-live="polite"
       aria-busy="true"
-      className="space-y-6"
+      aria-label="Chargement du catalogue"
+      className="space-y-6 sm:space-y-8 pb-24 sm:pb-28 font-sans"
     >
-      {/* Header Skeleton */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* 1. Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div className="space-y-1.5">
-          <Skeleton className="h-7 w-48 rounded-lg" />
-          <Skeleton className="h-4 w-72 rounded-lg" />
+          <Skeleton className="h-8 sm:h-9 w-48 sm:w-64 rounded-lg" />
+          <Skeleton className="h-4 w-72 sm:w-96 rounded-md" />
         </div>
-        <Skeleton className="h-10 w-44 rounded-xl" />
+        <Skeleton className="h-9 w-44 rounded-lg shrink-0 self-start sm:self-auto" />
       </div>
 
-      {/* Progress Card Skeleton */}
-      <div
-        data-tour-id="tour-catalogue-content"
-        className="space-y-4 sm:space-y-5 py-2"
-      >
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-4 w-44 rounded-md" />
-          <Skeleton className="h-4 w-28 rounded-md" />
+      {/* 2. Catalogue Header & Progress Card */}
+      <div className="space-y-6 sm:space-y-8">
+        <div className="flex justify-end">
+          <Skeleton className="h-4 w-36 rounded-md" />
         </div>
-        <Skeleton className="h-2.5 w-full rounded-full" />
-        <div className="flex flex-wrap gap-2 pt-1">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-8 w-28 rounded-xl" />
-          ))}
+
+        {/* Progress Card */}
+        <div
+          data-tour-id="tour-catalogue-content"
+          className="space-y-4 sm:space-y-5 py-2 font-sans"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <Skeleton className="size-2 rounded-full" />
+              <Skeleton className="h-4 w-40 rounded-md" />
+            </div>
+            <Skeleton className="h-4 w-32 rounded-md" />
+          </div>
+
+          <Skeleton className="h-2.5 w-full rounded-full" />
+
+          {/* Service tabs */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 pb-0.5">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-8 w-24 sm:w-28 rounded-xl" />
+            ))}
+          </div>
+        </div>
+
+        {/* Pricing Freeze Notice */}
+        <div className="border-l-2 border-primary/50 bg-muted/20 pl-3.5 p-3 rounded-r-xl space-y-1">
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-4 rounded-full" />
+            <Skeleton className="h-4 w-48 rounded-md" />
+          </div>
+          <Skeleton className="h-3.5 w-3/4 rounded-md" />
         </div>
       </div>
 
-      {/* Toolbar Skeleton */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Skeleton className="h-10 w-full sm:max-w-xs rounded-xl" />
-        <div className="flex gap-2">
-          <Skeleton className="h-10 w-28 rounded-xl" />
-          <Skeleton className="h-10 w-28 rounded-xl" />
+      {/* 3. Toolbar */}
+      <div className="py-4 border-b border-border/60 space-y-3.5 font-sans">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+          <Skeleton className="h-10 sm:h-9 w-full sm:max-w-sm rounded-xl" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton className="h-10 sm:h-9 w-28 sm:w-32 rounded-xl" />
+            <Skeleton className="h-10 sm:h-9 w-24 sm:w-28 rounded-xl" />
+            <Skeleton className="h-10 sm:h-9 w-28 rounded-lg" />
+          </div>
         </div>
       </div>
 
-      {/* Catalogue Grid Skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
+      {/* 4. Desktop Table View (>=768px) */}
+      <div className="hidden md:block space-y-6 font-sans">
+        <div className="rounded-2xl bg-card overflow-hidden shadow-xs font-sans">
+          <div className="p-3.5 sm:p-4 bg-muted/40 border-b border-border/60 flex items-center justify-between">
+            <Skeleton className="h-5 w-36 rounded-md" />
+            <Skeleton className="h-4 w-24 rounded-md" />
+          </div>
+          <div className="divide-y divide-border/60">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="p-3.5 sm:p-4 flex items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-4 rounded-md" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-4 w-32 rounded-md" />
+                    <Skeleton className="h-3 w-20 rounded-md" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-9 w-20 rounded-lg" />
+                  <Skeleton className="h-9 w-20 rounded-lg" />
+                  <Skeleton className="h-9 w-20 rounded-lg" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 4b. Mobile Card Accordion View (<768px) */}
+      <div className="md:hidden space-y-3 font-sans">
+        {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="p-5 rounded-2xl bg-card border border-border space-y-4 shadow-2xs"
+            className="p-4 rounded-2xl bg-card border border-border/70 shadow-xs space-y-3"
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-4 w-32 rounded-md" />
+                <Skeleton className="h-3 w-20 rounded-md" />
               </div>
-              <Skeleton className="h-6 w-12 rounded-full" />
+              <Skeleton className="size-8 rounded-lg" />
             </div>
-
-            <div className="space-y-2 pt-2 border-t border-border">
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-3.5 w-20" />
-                <Skeleton className="h-5 w-24" />
-              </div>
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-3.5 w-24" />
-                <Skeleton className="h-4 w-16" />
-              </div>
+            <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+              <Skeleton className="h-4 w-24 rounded-md" />
+              <Skeleton className="h-8 w-24 rounded-lg" />
             </div>
           </div>
         ))}

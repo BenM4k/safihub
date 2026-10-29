@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { ConfirmDialog } from "@/components/shared";
 import { normalizeStaffRole, validateMemberActionGuardrails } from "@/services/auth/house-permissions";
@@ -55,12 +54,13 @@ export function EquipeTab({ staff, currentUserId, currentUserRole }: EquipeTabPr
   return (
     <div className="space-y-6">
       {guardrailError && (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertDescription className="text-xs font-semibold">
-            {guardrailError}
-          </AlertDescription>
-        </Alert>
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/20 bg-destructive-soft/30 p-3 sm:p-4 text-xs font-semibold text-destructive flex items-center gap-2.5 break-words"
+        >
+          <AlertCircle className="size-4 shrink-0" />
+          <span className="min-w-0 flex-1">{guardrailError}</span>
+        </div>
       )}
 
       {/* 1. Header and Staff List */}

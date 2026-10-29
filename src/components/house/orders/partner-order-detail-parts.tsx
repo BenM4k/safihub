@@ -37,10 +37,10 @@ export function OrderDetailFinancials({
           </span>
         </div>
         <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-success-soft/30 border border-success/20 text-success font-bold text-sm mt-2">
-          <span className="font-sans font-bold text-xs text-foreground">
+          <span className="font-sans font-semibold text-xs text-foreground">
             {partnerShareLabel}
           </span>
-          <span className="font-black font-mono">
+          <span className="font-bold font-mono text-success">
             {formatAmount(order.netPartnerShare, order.currency)}
           </span>
         </div>

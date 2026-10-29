@@ -60,7 +60,7 @@ export function PartnerKpiRow({
   return (
     <div
       className={cn(
-        "mt-4 sm:mt-6 lg:mt-8 bg-surface dark:bg-card/75 rounded-3xl p-2 sm:p-3.5 border border-border/50 shadow-xs font-sans",
+        "bg-surface dark:bg-card/75 rounded-2xl p-2 sm:p-3.5 shadow-xs font-sans",
         className
       )}
     >

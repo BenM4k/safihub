@@ -19,9 +19,9 @@ export function PhotoCard({ house }: PhotoCardProps) {
         <ImageIcon className="size-4 text-primary" />
         <h2 className="text-sm font-bold text-foreground">{t("title")}</h2>
       </div>
-      <p className="text-xs text-muted-foreground">{t("subtitle")}</p>
+      <p className="text-xs text-slate-600 dark:text-slate-300">{t("subtitle")}</p>
 
-      <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-card space-y-5">
+      <div className="p-4 sm:p-5 rounded-2xl bg-card space-y-5">
         <CoverPhotoSection
           houseId={house.id}
           initialCoverUrl={house.coverImageUrl}

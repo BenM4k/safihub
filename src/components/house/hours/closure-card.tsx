@@ -59,13 +59,13 @@ export function ClosureCard({
   return (
     <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-muted/30 transition-colors">
       <div className="flex items-start sm:items-center gap-3 min-w-0">
-        <div className="size-8 rounded-lg bg-muted/40 border border-border flex items-center justify-center text-primary shrink-0">
+        <div className="size-8 rounded-lg bg-muted/40 border border-border/60 flex items-center justify-center text-primary shrink-0">
           <Calendar className="size-4" aria-hidden="true" />
         </div>
 
         <div className="space-y-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-sm text-heading font-display">
+            <span className="font-bold text-sm text-heading font-display tracking-tight">
               {closure.startsOn === closure.endsOn
                 ? `Le ${formatDateFr(closure.startsOn)}`
                 : `Du ${formatDateFr(closure.startsOn)} au ${formatDateFr(closure.endsOn)}`}
@@ -74,7 +74,7 @@ export function ClosureCard({
             {/* Duration pill */}
             <Badge
               variant="outline"
-              className="text-[11px] font-semibold text-muted-foreground rounded-lg"
+              className="text-[11px] font-semibold text-muted-foreground rounded-full border-border/80"
             >
               {t("daysCount", { count: durationDays })}
             </Badge>
@@ -82,7 +82,7 @@ export function ClosureCard({
             {/* Status pill */}
             <Badge
               variant="outline"
-              className={`inline-flex items-center gap-1 text-[11px] font-bold border rounded-lg ${statusConfig.badgeClass}`}
+              className={`inline-flex items-center gap-1 text-[11px] font-bold border rounded-full ${statusConfig.badgeClass}`}
             >
               <StatusIcon className="size-3" aria-hidden="true" />
               <span>{statusConfig.label}</span>
@@ -90,7 +90,7 @@ export function ClosureCard({
           </div>
 
           {closure.reason && (
-            <p className="text-xs text-muted-foreground font-medium truncate">
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium truncate">
               {closure.reason}
             </p>
           )}
@@ -108,7 +108,7 @@ export function ClosureCard({
           aria-label={t("editClosureAria", {
             date: formatDateFr(closure.startsOn),
           })}
-          className="h-9 sm:h-8.5 px-3 rounded-xl text-xs text-foreground cursor-pointer min-h-[38px] flex items-center"
+          className="h-9 sm:h-8.5 px-3 rounded-lg text-xs text-foreground cursor-pointer min-h-[38px] flex items-center"
         >
           <Edit2
             className="size-3.5 mr-1 text-muted-foreground"
@@ -126,7 +126,7 @@ export function ClosureCard({
           aria-label={t("deleteClosureAria", {
             date: formatDateFr(closure.startsOn),
           })}
-          className="h-9 sm:h-8.5 px-3 rounded-xl text-xs text-destructive hover:bg-destructive-soft hover:text-destructive cursor-pointer min-h-[38px] flex items-center"
+          className="h-9 sm:h-8.5 px-3 rounded-lg text-xs text-destructive hover:bg-destructive-soft hover:text-destructive cursor-pointer min-h-[38px] flex items-center"
         >
           <Trash2 className="size-3.5 mr-1" aria-hidden="true" />
           <span>{t("deleteClosure")}</span>

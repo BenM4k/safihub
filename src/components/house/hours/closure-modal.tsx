@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, Loader2 } from "lucide-react";
+import { Calendar, Loader2, AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -110,24 +109,20 @@ function ClosureModalContent({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="p-4 sm:p-5 border-b border-border bg-surface shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-lg bg-primary-soft flex items-center justify-center text-primary shrink-0 border border-primary/20">
-              <Calendar className="size-4" aria-hidden="true" />
-            </div>
-            <div>
-              <DialogTitle className="text-base font-bold text-heading font-display">
-                {isEditing ? t("editClosure") : t("addClosure")}
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                {isEditing ? t("closuresSubtitle") : t("closuresSubtitle")}
-              </DialogDescription>
-            </div>
+      <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-lg max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-2xl bg-card border border-border shadow-lift font-sans">
+        <DialogHeader className="p-4 sm:p-5 pr-12 border-b border-border/60 bg-surface shrink-0 text-left space-y-1">
+          <div className="flex items-center gap-2 text-primary font-bold">
+            <Calendar className="size-5 text-primary shrink-0" aria-hidden="true" />
+            <DialogTitle className="text-base sm:text-lg font-bold text-heading font-display tracking-tight">
+              {isEditing ? t("editClosure") : t("addClosure")}
+            </DialogTitle>
           </div>
+          <DialogDescription className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            {t("closuresSubtitle")}
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="overflow-y-auto overflow-x-hidden flex-1 max-w-full p-4 sm:p-5 space-y-4">
           <ClosureFormFields
             startsOn={startsOn}
             endsOn={endsOn}
@@ -142,25 +137,29 @@ function ClosureModalContent({
           />
 
           {errorMsg && (
-            <Alert variant="destructive" className="py-2.5">
-              <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
-            </Alert>
+            <div
+              role="alert"
+              className="p-3.5 rounded-xl bg-destructive-soft/30 border border-destructive/20 text-destructive flex items-start gap-3 text-xs font-bold break-words"
+            >
+              <AlertCircle className="size-4 shrink-0 text-destructive mt-0.5" />
+              <div className="min-w-0 flex-1">{errorMsg}</div>
+            </div>
           )}
 
-          <div className="flex flex-row items-center justify-end gap-2 pt-3 border-t border-border/60">
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-3 border-t border-border/60 shrink-0">
             <Button
               type="button"
               variant="outline"
               disabled={isPending}
               onClick={onClose}
-              className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 rounded-xl text-xs font-semibold cursor-pointer"
+              className="w-full sm:w-auto h-9 px-4 rounded-lg text-xs font-semibold cursor-pointer"
             >
               {t("cancel")}
             </Button>
             <Button
               type="submit"
               disabled={isPending}
-              className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer"
+              className="w-full sm:w-auto h-9 px-4 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer"
             >
               {isPending && <Loader2 className="size-3.5 animate-spin mr-1.5" aria-hidden="true" />}
               <span>{isEditing ? t("saveHours") : t("addClosure")}</span>

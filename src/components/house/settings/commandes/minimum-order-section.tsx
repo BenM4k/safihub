@@ -24,7 +24,7 @@ export function MinimumOrderSection({
     <section className="py-2 space-y-3">
       <div>
         <h2 className="text-sm font-bold text-foreground">Montant minimum de commande</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
           Seuil en dessous duquel le client ne peut pas valider son panier auprès de votre pressing.
         </p>
       </div>
@@ -36,7 +36,7 @@ export function MinimumOrderSection({
             inputMode="numeric"
             value={formattedDisplay}
             onChange={handleRawChange}
-            className="pl-3 pr-14 text-base sm:text-xs font-bold font-mono h-10 sm:h-9 rounded-xl"
+            className="pl-3 pr-14 text-base sm:text-xs font-bold font-mono h-10 sm:h-9 rounded-lg"
             aria-label="Montant minimum en francs congolais"
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">
@@ -44,7 +44,7 @@ export function MinimumOrderSection({
           </span>
         </div>
       </div>
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-[11px] text-slate-600 dark:text-slate-300">
         Actuellement configuré à {formatAmount(minimumOrderAmount)}. Défaut recommandé plateforme : 5 000 CDF (max 500 000 CDF).
       </p>
     </section>

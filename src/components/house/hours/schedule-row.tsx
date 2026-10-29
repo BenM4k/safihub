@@ -90,7 +90,7 @@ export function ScheduleRow({
                     onClick={() => onRemoveRange(day.weekday, idx)}
                     disabled={disabled}
                     aria-label={t("deleteSlotAria", { day: day.name })}
-                    className="h-10 w-10 sm:h-8 sm:w-8 p-0 text-destructive hover:bg-destructive-soft hover:text-destructive shrink-0 cursor-pointer rounded-xl"
+                    className="h-10 w-10 sm:h-8 sm:w-8 p-0 text-destructive hover:bg-destructive-soft hover:text-destructive shrink-0 cursor-pointer rounded-lg"
                   >
                     <Trash2 className="size-4" aria-hidden="true" />
                   </Button>
@@ -104,7 +104,7 @@ export function ScheduleRow({
                     onClick={() => onAddRange(day.weekday)}
                     disabled={disabled}
                     aria-label={t("addSlotAria", { day: day.name })}
-                    className="h-10 sm:h-8 px-3 text-xs text-primary font-semibold hover:bg-primary-soft shrink-0 cursor-pointer rounded-xl"
+                    className="h-10 sm:h-8 px-3 text-xs text-primary font-semibold hover:bg-primary-soft shrink-0 cursor-pointer rounded-lg"
                   >
                     <Plus className="size-3.5 mr-1" aria-hidden="true" />
                     <span>{t("addSlot")}</span>

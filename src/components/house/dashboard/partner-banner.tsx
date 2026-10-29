@@ -115,7 +115,7 @@ export function PartnerBanner({
         onChange={handleDirectFileSelect}
       />
 
-      <div className="bg-card rounded-3xl overflow-hidden font-sans">
+      <div className="bg-card rounded-2xl overflow-hidden font-sans">
         <PartnerBannerCover
           coverImageUrl={coverImageUrl}
           houseName={house.name}
@@ -124,7 +124,7 @@ export function PartnerBanner({
         />
 
         <div className="px-3 sm:px-6 pb-4 sm:pb-5 pt-0">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 rounded-3xl bg-card/90 dark:bg-card/90 backdrop-blur-md border border-border/60 shadow-sm -mt-10 sm:-mt-12 relative z-10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-5 rounded-2xl bg-card/90 dark:bg-card/90 backdrop-blur-md shadow-xs -mt-10 sm:-mt-12 relative z-10">
             <PartnerBannerIdentity
               name={house.name}
               initials={initials}

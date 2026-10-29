@@ -14,7 +14,6 @@ import { useTranslations } from "next-intl";
 import { ChecklistItemRow } from "./checklist-item-row";
 import { SubmitValidationDialog } from "./submit-validation-dialog";
 import { getChecklistItemsConfig } from "./checklist-config";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { SetupChecklistProps } from "./types";
 
@@ -41,30 +40,28 @@ export function SetupChecklistCard({
     return (
       <div
         data-tour-id="tour-checklist"
-        className="p-5 sm:p-6 rounded-3xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-950 dark:text-emerald-100 space-y-3 font-sans shadow-xs"
+        className="p-4 sm:p-5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-950 dark:text-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-sans"
       >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center">
-              <CheckCircle2 className="size-5" />
-            </div>
-            <div>
-              <h2 className="text-sm sm:text-base font-bold text-heading">
-                {t("approvedTitle")}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {t("approvedSubtitle")}
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="size-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0">
+            <CheckCircle2 className="size-5" />
           </div>
-
-          <Button size="sm" asChild className="text-xs font-semibold gap-1.5 shrink-0">
-            <Link href={`/houses/${houseSlug}`} target="_blank" rel="noopener noreferrer">
-              <span>{t("viewPublicPage")}</span>
-              <ExternalLink className="size-3.5" />
-            </Link>
-          </Button>
+          <div>
+            <h2 className="text-sm sm:text-base font-bold text-heading">
+              {t("approvedTitle")}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {t("approvedSubtitle")}
+            </p>
+          </div>
         </div>
+
+        <Button size="sm" asChild className="text-xs font-semibold gap-1.5 shrink-0 self-start sm:self-center">
+          <Link href={`/houses/${houseSlug}`} target="_blank" rel="noopener noreferrer">
+            <span>{t("viewPublicPage")}</span>
+            <ExternalLink className="size-3.5" />
+          </Link>
+        </Button>
       </div>
     );
   }
@@ -72,17 +69,17 @@ export function SetupChecklistCard({
   return (
     <section
       data-tour-id="tour-checklist"
-      className="p-5 sm:p-6 rounded-3xl border border-border bg-card shadow-xs space-y-5 font-sans"
+      className="p-4 sm:p-6 rounded-2xl bg-card space-y-6 font-sans shadow-xs"
     >
       {/* Header with KPI and progress bar */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+            <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Sparkles className="size-4.5" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-black text-heading tracking-tight">
+              <h2 className="text-sm sm:text-base font-bold text-heading tracking-tight font-display">
                 {t("prepareTitle", { completed: displayCompleted, total: 7 })}
               </h2>
               <p className="text-xs text-muted-foreground">
@@ -91,13 +88,13 @@ export function SetupChecklistCard({
             </div>
           </div>
 
-          <span className="text-xs font-bold text-primary self-start sm:self-auto bg-primary/10 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-semibold text-primary border border-primary/20 bg-primary/5 px-3 py-0.5 rounded-full self-start sm:self-auto">
             {t("progressCompleted", { percent: progressPercent })}
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+        <div className="h-2 w-full bg-slate-100 dark:bg-muted rounded-full overflow-hidden">
           <div
             className="h-full bg-primary transition-all duration-300 ease-out"
             style={{ width: `${progressPercent}%` }}
@@ -107,42 +104,38 @@ export function SetupChecklistCard({
 
       {/* Status banner: pending_review */}
       {reviewStatus === "pending_review" && (
-        <Alert className="border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-200 py-3">
-          <Clock className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
-          <AlertDescription className="text-xs font-semibold leading-relaxed">
-            <strong>{t("pendingReviewTitle")}</strong> {t("pendingReviewDesc")}
-          </AlertDescription>
-        </Alert>
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-3">
+          <Clock className="size-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-xs sm:text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
+            <strong className="font-semibold">{t("pendingReviewTitle")}</strong> {t("pendingReviewDesc")}
+          </div>
+        </div>
       )}
 
       {/* Status banner: needs_changes */}
       {reviewStatus === "needs_changes" && (
-        <Alert variant="destructive" className="py-3 space-y-2">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="size-4 shrink-0 mt-0.5" />
-            <div className="text-xs leading-relaxed space-y-1">
-              <p className="font-bold">{t("needsChangesTitle")}</p>
-              <p className="text-destructive-foreground/90 bg-destructive/10 p-2.5 rounded-lg border border-destructive/20 font-mono text-[11px]">
-                {reviewNote || t("needsChangesFallback")}
-              </p>
-            </div>
+        <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3">
+          <AlertCircle className="size-5 shrink-0 mt-0.5" />
+          <div className="text-xs sm:text-sm leading-relaxed space-y-1">
+            <strong className="font-semibold block">{t("needsChangesTitle")}</strong>
+            <p className="text-destructive/90 bg-destructive/10 p-2.5 rounded-lg border border-destructive/20 font-mono text-[11px]">
+              {reviewNote || t("needsChangesFallback")}
+            </p>
           </div>
-        </Alert>
+        </div>
       )}
 
       {/* Status banner: suspended */}
       {reviewStatus === "suspended" && (
-        <Alert variant="destructive" className="py-3 space-y-2">
-          <div className="flex items-start gap-2">
-            <ShieldAlert className="size-4 shrink-0 mt-0.5" />
-            <div className="text-xs leading-relaxed space-y-1">
-              <p className="font-bold">{t("suspendedTitle")}</p>
-              <p className="text-destructive-foreground/90 bg-destructive/10 p-2.5 rounded-lg border border-destructive/20 font-mono text-[11px]">
-                {reviewNote || t("suspendedFallback")}
-              </p>
-            </div>
+        <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3">
+          <ShieldAlert className="size-5 shrink-0 mt-0.5" />
+          <div className="text-xs sm:text-sm leading-relaxed space-y-1">
+            <strong className="font-semibold block">{t("suspendedTitle")}</strong>
+            <p className="text-destructive/90 bg-destructive/10 p-2.5 rounded-lg border border-destructive/20 font-mono text-[11px]">
+              {reviewNote || t("suspendedFallback")}
+            </p>
           </div>
-        </Alert>
+        </div>
       )}
 
       {/* Items List */}

@@ -10,7 +10,7 @@ export function AdvancedProposalsSection() {
         <span>Paramètres opérationnels avancés (Standard plateforme)</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-        <div className="p-3 bg-muted/40 rounded-xl space-y-1">
+        <div className="p-3 bg-muted/30 rounded-xl space-y-1">
           <span className="font-semibold text-foreground block">
             Délai standard de traitement
           </span>
@@ -18,17 +18,17 @@ export function AdvancedProposalsSection() {
             24h à 48h selon service et charge
           </span>
         </div>
-        <div className="p-3 bg-muted/40 rounded-xl space-y-1">
+        <div className="p-3 bg-muted/30 rounded-xl space-y-1">
           <span className="font-semibold text-foreground block">Service Express 12h</span>
           <span className="text-muted-foreground text-[11px]">Majoration standard +50%</span>
         </div>
-        <div className="p-3 bg-muted/40 rounded-xl space-y-1">
+        <div className="p-3 bg-muted/30 rounded-xl space-y-1">
           <span className="font-semibold text-foreground block">Créneaux de collecte</span>
           <span className="text-muted-foreground text-[11px]">
             Créneaux de 2h pendant les heures d&apos;ouverture
           </span>
         </div>
-        <div className="p-3 bg-muted/40 rounded-xl space-y-1">
+        <div className="p-3 bg-muted/30 rounded-xl space-y-1">
           <span className="font-semibold text-foreground block">
             Plafond articles par commande
           </span>

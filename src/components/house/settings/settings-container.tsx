@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
-import { PageHeader, ConfirmDialog } from "@/components/shared";
+import { ConfirmDialog } from "@/components/shared";
 import {
   SettingsDesktopTabs,
   SettingsMobileList,
@@ -82,10 +82,14 @@ export function SettingsContainer({
   return (
     <div className="space-y-8 sm:space-y-10 max-w-6xl mx-auto pb-24 sm:pb-28">
       {/* Page Title (Displayed once) */}
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitleWithName", { name: house.name })}
-      />
+      <div className="space-y-1 pb-5 border-b border-border/60">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black font-display tracking-tight text-foreground">
+          {t("title")}
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          {t("subtitleWithName", { name: house.name })}
+        </p>
+      </div>
 
       {/* Desktop Tabs */}
       <SettingsDesktopTabs
@@ -103,7 +107,7 @@ export function SettingsContainer({
             <button
               type="button"
               onClick={handleBackToSections}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-heading py-2 px-3 rounded-xl bg-muted/40 hover:bg-muted/70 min-h-[40px] transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-heading py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/70 min-h-[40px] transition cursor-pointer"
             >
               <ChevronLeft className="size-4" />
               <span>{t("allSections")}</span>

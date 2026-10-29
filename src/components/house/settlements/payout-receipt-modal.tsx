@@ -38,7 +38,7 @@ export function PayoutReceiptModal({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="max-w-lg p-0 overflow-hidden print:p-0 print:border-none print:shadow-none print:max-w-full">
+      <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-lg p-0 overflow-hidden rounded-2xl bg-card border border-border shadow-lift print:p-0 print:border-none print:shadow-none print:max-w-full">
         <style>{`
           @media print {
             body * {
@@ -60,11 +60,11 @@ export function PayoutReceiptModal({
           }
         `}</style>
 
-        {/* Modal Top Bar (screen only) */}
-        <DialogHeader className="p-4 border-b border-border flex flex-row items-center justify-between bg-surface print:hidden">
-          <div className="flex items-center gap-2">
-            <Receipt className="size-4 text-primary" />
-            <DialogTitle className="text-sm font-bold text-foreground">
+        {/* Modal Top Bar (screen only) with right padding to clear Radix close button */}
+        <DialogHeader className="p-3 sm:p-4 pr-12 border-b border-border flex flex-row items-center justify-between gap-2 bg-surface print:hidden">
+          <div className="flex items-center gap-2 min-w-0">
+            <Receipt className="size-4 text-primary shrink-0" />
+            <DialogTitle className="text-xs sm:text-sm font-bold text-foreground truncate">
               {t("officialReceiptTitle")}
             </DialogTitle>
           </div>
@@ -73,7 +73,7 @@ export function PayoutReceiptModal({
             type="button"
             size="sm"
             onClick={() => window.print()}
-            className="min-h-[38px] px-3 text-xs font-semibold gap-1.5"
+            className="h-8 px-2.5 sm:px-3 text-xs font-semibold gap-1.5 rounded-lg shrink-0 cursor-pointer"
           >
             <Printer className="size-3.5" />
             <span>{t("printOrPdf")}</span>

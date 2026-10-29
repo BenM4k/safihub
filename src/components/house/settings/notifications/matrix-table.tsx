@@ -27,7 +27,7 @@ interface MatrixTableProps {
 
 export function MatrixTable({ rows, onToggleChannel }: MatrixTableProps) {
   return (
-    <div className="rounded-xl border border-border/60 overflow-hidden bg-background">
+    <div className="rounded-2xl bg-card overflow-x-auto shadow-xs">
       <Table className="text-xs min-w-[500px]">
         <TableHeader>
           <TableRow className="border-b border-border/60 hover:bg-transparent">

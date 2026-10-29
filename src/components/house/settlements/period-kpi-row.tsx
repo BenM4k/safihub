@@ -24,7 +24,7 @@ export function PeriodKpiRow({ kpis }: PeriodKpiRowProps) {
 
     const isUp = diff > 0;
     const Arrow = isUp ? ArrowUpRight : ArrowDownRight;
-    const color = isUp ? "text-emerald-600 dark:text-emerald-400" : "text-destructive";
+    const color = isUp ? "text-success" : "text-destructive";
     const sign = isUp ? "+" : "";
 
     return (
@@ -41,7 +41,7 @@ export function PeriodKpiRow({ kpis }: PeriodKpiRowProps) {
   }
 
   return (
-    <div className="bg-muted/40 dark:bg-card/75 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 border border-border/70 shadow-xs font-sans space-y-4">
+    <div className="bg-muted/40 dark:bg-card/75 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 shadow-xs font-sans space-y-4">
       {/* Responsive unified grid: 2x2 on mobile (<md) with hairline cross-divider, 4 columns on desktop (>=md) with vertical dividers */}
       <div className="grid grid-cols-2 md:grid-cols-4 md:divide-x md:divide-border/60">
         {/* 1. Chiffre d'affaires brut (Top-Left on mobile) */}
@@ -89,16 +89,16 @@ export function PeriodKpiRow({ kpis }: PeriodKpiRowProps) {
         {/* 3. Net à percevoir - HERO METRIC (Bottom-Left on mobile) */}
         <div className="pr-3 pt-3.5 md:p-0 md:px-5 border-r border-border/60 md:border-r-0 space-y-1.5">
           {/* Layer 1: Label (Hero accented) */}
-          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-emerald-700 dark:text-emerald-300 font-semibold">
-            <Wallet className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-success font-semibold">
+            <Wallet className="size-3.5 text-success shrink-0" aria-hidden="true" />
             <span className="truncate">{t("netReceivable")}</span>
           </div>
           {/* Layer 2: Big Price - Maximum prominence */}
           <div className="flex items-baseline">
-            <span className="text-3xl sm:text-3xl lg:text-4xl font-black font-mono tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
+            <span className="text-3xl sm:text-3xl lg:text-4xl font-black font-mono tracking-tight text-success tabular-nums">
               {formatMoney(kpis.netReceivableCDF, "").trim()}
             </span>
-            <span className="text-2xs sm:text-xs font-bold font-mono text-emerald-700/70 dark:text-emerald-300/70 ml-1">
+            <span className="text-2xs sm:text-xs font-bold font-mono text-success/70 ml-1">
               CDF
             </span>
           </div>
@@ -110,12 +110,12 @@ export function PeriodKpiRow({ kpis }: PeriodKpiRowProps) {
         <div className="pl-3 pt-3.5 md:p-0 md:px-5 last:md:pr-0 space-y-1.5">
           {/* Layer 1: Label */}
           <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground font-medium">
-            <Receipt className="size-3.5 text-emerald-600/70 dark:text-emerald-400/70 shrink-0" aria-hidden="true" />
+            <Receipt className="size-3.5 text-success/70 shrink-0" aria-hidden="true" />
             <span className="truncate">{t("totalSettledLabel")}</span>
           </div>
           {/* Layer 2: Big Price (Dominant on mobile) */}
           <div className="flex items-baseline">
-            <span className="text-2xl sm:text-2xl lg:text-3xl font-black font-mono tracking-tight text-emerald-600/90 dark:text-emerald-400/90 tabular-nums">
+            <span className="text-2xl sm:text-2xl lg:text-3xl font-black font-mono tracking-tight text-success/90 tabular-nums">
               {formatMoney(kpis.totalSettledCDF, "").trim()}
             </span>
             <span className="text-2xs sm:text-xs font-semibold font-mono text-muted-foreground/60 ml-1">

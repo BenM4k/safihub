@@ -57,7 +57,7 @@ export function CoverageExtensionSuccessView({
           variant="outline"
           size="sm"
           onClick={handleCopy}
-          className="h-7 px-2 text-[11px] font-semibold gap-1 text-muted-foreground hover:text-heading"
+          className="h-7 px-2 text-[11px] font-semibold gap-1 text-muted-foreground hover:text-heading rounded-lg cursor-pointer"
           aria-label={t("ticketCopyRef")}
         >
           {copied ? (
@@ -74,7 +74,7 @@ export function CoverageExtensionSuccessView({
         </Button>
       </div>
 
-      <div className="p-3.5 bg-primary-soft/50 rounded-xl border border-primary/20 text-xs text-muted-foreground text-left leading-relaxed">
+      <div className="p-3.5 bg-primary/10 rounded-xl border border-primary/20 text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-left leading-relaxed">
         {t("ticketNextStep")}
       </div>
 
@@ -83,7 +83,7 @@ export function CoverageExtensionSuccessView({
           type="button"
           variant="outline"
           onClick={onClose}
-          className="w-full sm:w-auto min-h-[44px] text-xs font-bold"
+          className="w-full sm:w-auto h-10 sm:h-9 px-4 text-xs font-bold rounded-lg cursor-pointer"
         >
           {t("closeDialog")}
         </Button>

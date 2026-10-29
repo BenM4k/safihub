@@ -37,7 +37,7 @@ export function DeliveredOrdersMobileList({
   return (
     <div className="md:hidden space-y-4">
       {/* Unified Orders List */}
-      <div className="rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
+      <div className="rounded-2xl bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
         {orders.map((o) => (
           <div key={o.id} className="p-4 space-y-2.5">
             <div className="flex items-center justify-between gap-2">
@@ -49,17 +49,17 @@ export function DeliveredOrdersMobileList({
               </Link>
 
               {o.settlementStatus === "settled" ? (
-                <Badge variant="outline" className="gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-2xs font-semibold">
+                <Badge variant="outline" className="gap-1 rounded-full border-success/30 text-success bg-success-soft/30 text-2xs font-semibold">
                   <CheckCircle2 className="size-3" />
                   <span>{t("statusSettled")}</span>
                 </Badge>
               ) : o.settlementStatus === "disputed" ? (
-                <Badge variant="destructive" className="gap-1 text-2xs font-bold">
+                <Badge variant="destructive" className="gap-1 rounded-full text-2xs font-bold">
                   <ShieldAlert className="size-3" />
                   <span>{t("statusDisputed")}</span>
                 </Badge>
               ) : (
-                <Badge variant="outline" className="gap-1 border-amber-500/30 text-amber-800 dark:text-amber-300 text-2xs font-medium">
+                <Badge variant="outline" className="gap-1 rounded-full border-amber-500/30 text-amber-800 dark:text-amber-300 text-2xs font-medium">
                   <Clock className="size-3" />
                   <span>{t("statusPending")}</span>
                 </Badge>
@@ -84,7 +84,7 @@ export function DeliveredOrdersMobileList({
               <div className="text-2xs text-muted-foreground">
                 Brut: {formatMoney(o.itemsTotal)} · Com: -{formatMoney(o.commissionAmount)}
               </div>
-              <div className="font-mono font-bold text-sm text-emerald-600 dark:text-emerald-400 tabular-nums">
+              <div className="font-mono font-bold text-sm text-success tabular-nums">
                 {formatMoney(o.netReceivable, "CDF")}
               </div>
             </div>
@@ -111,7 +111,7 @@ export function DeliveredOrdersMobileList({
       </div>
 
       {/* Mobile Totals Summary */}
-      <div className="p-4 rounded-2xl border border-border/60 bg-muted/30 space-y-2 text-xs">
+      <div className="p-4 rounded-2xl bg-muted/30 space-y-2 text-xs">
         <div className="flex justify-between text-muted-foreground">
           <span>{t("itemsAmount")} ({orders.length} cmd) :</span>
           <span className="font-mono font-bold text-foreground">{formatMoney(totals.itemsTotal)}</span>
@@ -122,7 +122,7 @@ export function DeliveredOrdersMobileList({
         </div>
         <div className="flex justify-between pt-2 border-t border-border/60 font-bold text-foreground">
           <span>{t("netReceivableCol")} :</span>
-          <span className="font-mono text-emerald-600 dark:text-emerald-400 text-base font-black">{formatMoney(totals.net)}</span>
+          <span className="font-mono text-success text-base font-black">{formatMoney(totals.net)}</span>
         </div>
       </div>
     </div>

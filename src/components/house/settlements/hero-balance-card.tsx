@@ -46,7 +46,7 @@ export function HeroBalanceCard({ hero, houseSlug }: HeroBalanceCardProps) {
         {/* Payout method badge or action */}
         {hero.isPayoutMethodConfigured ? (
           <div className="flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-lg bg-muted/50 text-xs font-medium text-foreground">
-            <Phone className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+            <Phone className="size-3.5 text-success shrink-0" aria-hidden="true" />
             <span className="font-mono text-2xs sm:text-xs">
               {hero.payoutMethodName} · {hero.maskedAccount}
             </span>
@@ -95,7 +95,7 @@ export function HeroBalanceCard({ hero, houseSlug }: HeroBalanceCardProps) {
               <span>{t("pendingWeeklyCycle")}</span>
             </Badge>
           ) : (
-            <Badge variant="outline" className="gap-1.5 px-3 py-1 rounded-full border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+            <Badge variant="outline" className="gap-1.5 px-3 py-1 rounded-full border-success/30 text-success bg-success-soft/30 text-xs font-semibold">
               <CheckCircle2 className="size-3.5" />
               <span>{t("allUpToDate")}</span>
             </Badge>
@@ -118,10 +118,10 @@ export function HeroBalanceCard({ hero, houseSlug }: HeroBalanceCardProps) {
             </span>
             <span className="text-muted-foreground text-2xs font-sans">({t("alreadyPaid")})</span>
             <span className="font-bold">=</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+            <span className="text-success font-bold">
               {formatMoney(hero.balanceOwedCDF, "CDF")}
             </span>
-            <span className="text-emerald-600/80 dark:text-emerald-400/80 text-2xs font-sans">({t("remainingDue")})</span>
+            <span className="text-success/80 text-2xs font-sans">({t("remainingDue")})</span>
           </div>
 
           <span className="text-2xs text-muted-foreground">

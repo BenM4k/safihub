@@ -108,7 +108,7 @@ export function SettlementsView({ data }: SettlementsViewProps) {
           >
             <PackageCheck className="size-4" />
             <span>{t("tabDeliveredOrders")}</span>
-            <Badge variant="secondary" className="px-2 py-0 text-2xs font-semibold">
+            <Badge variant="secondary" className="px-2 py-0 text-2xs font-semibold rounded-full">
               {data.orders.length}
             </Badge>
           </button>
@@ -126,7 +126,7 @@ export function SettlementsView({ data }: SettlementsViewProps) {
           >
             <Receipt className="size-4" />
             <span>{t("tabPayoutsReceived")}</span>
-            <Badge variant="secondary" className="px-2 py-0 text-2xs font-semibold">
+            <Badge variant="secondary" className="px-2 py-0 text-2xs font-semibold rounded-full">
               {data.payouts.length}
             </Badge>
           </button>

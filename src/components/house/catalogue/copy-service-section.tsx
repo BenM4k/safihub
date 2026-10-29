@@ -49,10 +49,10 @@ export function CopyServiceSection({
           value={selectedSourceService}
           onValueChange={setSelectedSourceService}
         >
-          <SelectTrigger className="flex-1 h-10 sm:h-9 text-base sm:text-xs rounded-xl" aria-label={t("sourceServiceLabel")}>
+          <SelectTrigger className="flex-1 h-10 sm:h-9 text-base sm:text-xs rounded-lg border-input" aria-label={t("sourceServiceLabel")}>
             <SelectValue placeholder={t("selectSourceServicePrompt")} />
           </SelectTrigger>
-          <SelectContent className="font-sans">
+          <SelectContent className="font-sans rounded-xl bg-card border border-border shadow-lift">
             {otherServices.map((s) => (
               <SelectItem key={s.id} value={s.id} className="text-xs">
                 {s.nameFr} ({t("pricesConfiguredCount", { count: s.configuredCount })})
@@ -65,7 +65,7 @@ export function CopyServiceSection({
           size="sm"
           disabled={!selectedSourceService}
           onClick={handleCopy}
-          className="h-9 text-xs font-semibold px-4 shrink-0"
+          className="h-9 text-xs font-semibold px-4 shrink-0 rounded-lg cursor-pointer"
         >
           {t("apply")}
         </Button>

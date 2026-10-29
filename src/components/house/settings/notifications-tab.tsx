@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Bell, CheckCircle2, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { MatrixTable, type NotificationMatrixRow } from "./notifications/matrix-table";
 import { QuietHoursCard } from "./notifications/quiet-hours-card";
@@ -112,10 +111,13 @@ export function NotificationsTab() {
   return (
     <div className="space-y-6">
       {testNotice && (
-        <Alert className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-          <CheckCircle2 className="size-4 text-emerald-600" />
-          <AlertDescription className="text-xs font-semibold">{testNotice}</AlertDescription>
-        </Alert>
+        <div
+          role="status"
+          className="rounded-xl border border-success/20 bg-success-soft/30 p-3 sm:p-4 text-xs font-semibold text-success flex items-center gap-2.5"
+        >
+          <CheckCircle2 className="size-4 shrink-0" />
+          <span>{testNotice}</span>
+        </div>
       )}
 
       {/* Header and Test action */}
@@ -126,7 +128,7 @@ export function NotificationsTab() {
               <Bell className="size-4 text-primary" />
               <span>Matrice des notifications d&apos;urgence</span>
             </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
               Choisissez les alertes sonores et push activées pour chaque événement critique.
             </p>
           </div>
@@ -136,7 +138,7 @@ export function NotificationsTab() {
             variant="outline"
             size="sm"
             onClick={handleTestSound}
-            className="min-h-[40px] font-semibold text-xs gap-1.5"
+            className="min-h-[40px] font-semibold text-xs gap-1.5 rounded-lg cursor-pointer"
           >
             <Volume2 className="size-3.5 text-primary" />
             <span>Tester la notification sonore</span>

@@ -8,7 +8,6 @@ import { getSupportWhatsAppUrl } from "@/lib/support-config";
 import { reportPartnerSettlementIssueAction } from "@/actions/partner-settlement.actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export interface SupportTicketTarget {
   type: "order" | "settlement";
@@ -97,11 +96,9 @@ export function SupportTicketForm({
       </div>
 
       {errorMsg && (
-        <Alert variant="destructive">
-          <AlertDescription className="text-xs font-medium">
-            {errorMsg}
-          </AlertDescription>
-        </Alert>
+        <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs font-medium text-destructive">
+          {errorMsg}
+        </div>
       )}
 
       {/* Category selection */}
@@ -112,7 +109,7 @@ export function SupportTicketForm({
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full px-3 py-2 rounded-xl border border-input bg-background text-base sm:text-xs focus:ring-2 focus:ring-primary focus:outline-hidden min-h-[40px]"
+          className="w-full px-3 py-2 rounded-lg border border-input bg-background text-base sm:text-xs focus:ring-2 focus:ring-primary focus:outline-hidden min-h-[40px]"
         >
           {categoryOptions.map((c) => (
             <option key={c.key} value={c.label}>
@@ -133,7 +130,7 @@ export function SupportTicketForm({
           rows={4}
           required
           placeholder={t("ticketDetailsPlaceholder")}
-          className="resize-none text-base sm:text-xs"
+          className="resize-none text-base sm:text-xs rounded-lg border-input"
         />
       </div>
 
@@ -143,7 +140,7 @@ export function SupportTicketForm({
           href={waLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline flex items-center justify-center sm:justify-start gap-1.5 min-h-[40px] shrink-0"
+          className="text-xs text-success hover:underline flex items-center justify-center sm:justify-start gap-1.5 min-h-[40px] shrink-0"
         >
           <PhoneCall className="size-3.5" />
           <span>{t("ticketWhatsAppSupport")}</span>
@@ -156,7 +153,7 @@ export function SupportTicketForm({
             size="sm"
             onClick={onClose}
             disabled={isPending}
-            className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 text-xs font-semibold rounded-xl"
+            className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 text-xs font-semibold rounded-lg"
           >
             {t("ticketCancel")}
           </Button>
@@ -165,7 +162,7 @@ export function SupportTicketForm({
             type="submit"
             size="sm"
             disabled={isPending || message.trim().length < 5}
-            className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 text-xs font-semibold gap-1.5 rounded-xl shadow-xs"
+            className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 text-xs font-semibold gap-1.5 rounded-lg shadow-xs"
           >
             <Send className="size-3.5" />
             <span>{isPending ? t("ticketSubmitting") : t("ticketSubmit")}</span>

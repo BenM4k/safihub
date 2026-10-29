@@ -79,14 +79,14 @@ export default async function PartnerOrdersPage({
       };
 
   return (
-    <div className="space-y-5 font-sans">
+    <div className="space-y-6 sm:space-y-8 font-sans">
       {/* Page Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-5">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-heading font-display tracking-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-heading font-display tracking-tight">
             {t("title")}
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
             {t("subtitle")}
           </p>
         </div>

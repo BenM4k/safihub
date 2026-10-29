@@ -12,7 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatMoney } from "@/lib/cash-formatters";
 import type { CellDiff } from "./types";
 
@@ -47,37 +46,35 @@ export function SaveConfirmDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && !isSaving && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col font-sans">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col font-sans rounded-2xl bg-card border border-border p-6 space-y-4">
         <DialogHeader>
-          <DialogTitle className="text-base font-bold text-heading font-display">
+          <DialogTitle className="text-base sm:text-lg font-bold text-heading font-display tracking-tight">
             {t("confirmSaveTitle")}
           </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground">
+          <DialogDescription className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             {t("confirmSaveDesc")}
           </DialogDescription>
         </DialogHeader>
 
         {/* Freeze rule notice */}
-        <Alert className="bg-primary/5 border-primary/20 text-xs py-2.5">
-          <ShieldCheck className="size-4 text-primary" />
-          <AlertDescription className="text-xs text-muted-foreground">
+        <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 text-xs text-slate-700 dark:text-slate-300 flex items-start gap-3">
+          <ShieldCheck className="size-4 shrink-0 text-primary mt-0.5" />
+          <div className="leading-relaxed">
             <strong className="font-bold text-heading mr-1">{t("freezeNoticeTitle")} :</strong>
             <span>{t("confirmSaveNotice")}</span>
-          </AlertDescription>
-        </Alert>
+          </div>
+        </div>
 
         {/* Outlier Warning banner */}
         {hasOutliers && (
-          <Alert variant="destructive" className="bg-warning-soft text-warning border-warning/30 text-xs py-2.5">
-            <AlertTriangle className="size-4 text-warning" />
-            <AlertDescription className="text-xs font-medium text-warning">
-              {t("outlierWarning")}
-            </AlertDescription>
-          </Alert>
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs font-medium flex items-start gap-3">
+            <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+            <div className="leading-relaxed">{t("outlierWarning")}</div>
+          </div>
         )}
 
         {/* Changes summary (scrollable) */}
-        <div className="flex-1 overflow-y-auto space-y-2 pr-1 border border-border/60 rounded-xl p-3 bg-muted/30 text-xs max-h-60">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1 border border-border/60 rounded-xl p-3.5 bg-muted/30 text-xs max-h-60">
           <div className="flex items-center justify-between text-xs font-semibold text-heading pb-1 border-b border-border/40">
             <span>{t("diffCount", { count: diffs.length })} :</span>
             {diffs.length > 5 && (
@@ -86,7 +83,7 @@ export function SaveConfirmDialog({
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsListExpanded(!isListExpanded)}
-                className="text-[11px] text-primary hover:bg-primary/10 h-6 px-1.5 gap-1"
+                className="text-[11px] text-primary hover:bg-primary/10 h-6 px-1.5 gap-1 rounded-md cursor-pointer"
               >
                 <span>{isListExpanded ? t("collapse") : t("expandAll")}</span>
                 {isListExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
@@ -106,7 +103,7 @@ export function SaveConfirmDialog({
                     {displayItems.map((d) => (
                       <div
                         key={d.key}
-                        className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-card border border-border/40 text-xs"
+                        className="flex items-center justify-between gap-2 p-2 rounded-lg bg-card border border-border/40 text-xs"
                       >
                         <div className="truncate min-w-0">
                           <span className="font-bold text-heading">{d.itemName}</span>
@@ -146,14 +143,14 @@ export function SaveConfirmDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex flex-row items-center justify-end gap-2.5 pt-3 border-t border-border sm:space-x-0">
+        <DialogFooter className="flex flex-row items-center justify-end gap-2.5 pt-3 border-t border-border/60 sm:space-x-0">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={onClose}
             disabled={isSaving}
-            className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-semibold rounded-xl"
+            className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-semibold rounded-lg cursor-pointer"
           >
             {t("cancelChanges")}
           </Button>
@@ -163,7 +160,7 @@ export function SaveConfirmDialog({
             size="sm"
             onClick={onConfirm}
             disabled={isSaving}
-            className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-bold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+            className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-bold rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground shadow-xs cursor-pointer"
           >
             {isSaving ? t("saving") : t("confirmButton")}
           </Button>

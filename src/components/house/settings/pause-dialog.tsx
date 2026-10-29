@@ -70,27 +70,27 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
         if (!open) onClose();
       }}
     >
-      <DialogContent className="max-w-lg p-0 overflow-hidden">
-        <DialogHeader className="p-4 sm:p-5 border-b border-border bg-surface text-left">
+      <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-lg max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-2xl bg-card border border-border shadow-lift font-sans">
+        <DialogHeader className="p-4 sm:p-5 pr-12 border-b border-border/60 bg-surface text-left shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <div className="size-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
               <PauseCircle className="size-4" aria-hidden="true" />
             </div>
-            <div>
+            <div className="min-w-0">
               <DialogTitle className="text-sm font-bold text-foreground">
                 Mettre le pressing en pause
               </DialogTitle>
-              <DialogDescription className="text-2xs text-muted-foreground">
+              <DialogDescription className="text-2xs text-slate-600 dark:text-slate-300">
                 Suspension temporaire de la réception de nouvelles commandes
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleConfirm} className="p-5 space-y-4 text-xs">
-          <div className="p-3 bg-muted/40 rounded-xl flex items-start gap-2.5">
+        <form onSubmit={handleConfirm} className="overflow-y-auto overflow-x-hidden flex-1 max-w-full p-4 sm:p-5 space-y-4 text-xs min-w-0">
+          <div className="rounded-xl border-l-2 border-primary/50 bg-muted/20 pl-3.5 p-3 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2.5">
             <AlertCircle className="size-4 text-primary shrink-0 mt-0.5" />
-            <div className="text-muted-foreground leading-relaxed text-[11px]">
+            <div className="leading-relaxed text-[11px] min-w-0 flex-1 break-words">
               <strong className="text-foreground block">Effet sur les commandes en cours :</strong>
               Les commandes déjà passées continuent d&apos;être traitées et livrées normalement. Seule la prise de <em>nouvelles commandes</em> est suspendue.
             </div>
@@ -128,7 +128,7 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
                 placeholder="Préciser le motif de pause..."
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
-                className="mt-2 text-base sm:text-xs"
+                className="mt-2 text-base sm:text-xs rounded-lg w-full min-w-0"
                 autoFocus
               />
             )}
@@ -144,25 +144,29 @@ export function PauseDialog({ isOpen, onClose, onConfirm }: PauseDialogProps) {
           />
 
           {dateError && (
-            <div className="p-2.5 rounded-lg bg-destructive/10 text-destructive text-xs font-semibold">
-              {dateError}
+            <div
+              role="alert"
+              className="rounded-xl border border-destructive/20 bg-destructive-soft/30 p-2.5 text-xs font-semibold text-destructive flex items-center gap-2"
+            >
+              <AlertCircle className="size-3.5 shrink-0" />
+              <span>{dateError}</span>
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-3 border-t border-border">
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-3 border-t border-border/60 shrink-0">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={onClose}
-              className="flex-1 sm:flex-initial w-full sm:w-auto text-xs h-10 sm:h-9 px-4 rounded-xl cursor-pointer"
+              className="w-full sm:w-auto text-xs h-9 px-4 rounded-lg cursor-pointer"
             >
               Annuler
             </Button>
             <Button
               type="submit"
               size="sm"
-              className="flex-1 sm:flex-initial w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-10 sm:h-9 px-4 rounded-xl shadow-xs cursor-pointer"
+              className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-xs cursor-pointer"
             >
               Confirmer la pause
             </Button>

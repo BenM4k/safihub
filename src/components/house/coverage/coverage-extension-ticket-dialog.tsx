@@ -36,18 +36,18 @@ export function CoverageExtensionTicketDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="p-0 overflow-hidden rounded-2xl bg-card border border-border shadow-lift font-sans sm:max-w-lg max-h-[90vh] flex flex-col">
         {/* Header */}
-        <DialogHeader className="p-4 sm:p-5 border-b border-border bg-surface shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-xl flex items-center justify-center bg-primary-soft text-primary border border-primary/20 shrink-0">
+        <DialogHeader className="p-4 sm:p-5 pr-12 border-b border-border bg-surface shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="size-8 rounded-xl flex items-center justify-center bg-primary/10 text-primary border border-primary/20 shrink-0">
               <FileText className="size-4" aria-hidden="true" />
             </div>
-            <div>
-              <DialogTitle className="text-sm font-bold text-heading font-display">
+            <div className="min-w-0">
+              <DialogTitle className="text-sm font-bold text-foreground font-display truncate">
                 {t("requestExtensionModalTitle")}
               </DialogTitle>
-              <DialogDescription className="text-[11px] text-muted-foreground mt-0.5">
+              <DialogDescription className="text-[11px] text-muted-foreground mt-0.5 truncate">
                 {t("requestExtensionModalSubtitle")}
               </DialogDescription>
             </div>
@@ -55,7 +55,7 @@ export function CoverageExtensionTicketDialog({
         </DialogHeader>
 
         {/* Content Body */}
-        <div className="overflow-y-auto">
+        <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
           {createdTicketRef ? (
             <CoverageExtensionSuccessView ticketRef={createdTicketRef} onClose={handleClose} />
           ) : (

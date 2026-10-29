@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { AlertCircle, Loader2, Send } from "lucide-react";
 import { requestCoverageExtensionAction } from "@/actions/house.actions";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -66,18 +65,18 @@ export function CoverageExtensionForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4">
+    <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 max-w-full overflow-hidden">
       {errorMsg && (
-        <Alert variant="destructive" className="py-2.5">
-          <AlertCircle className="size-4" />
-          <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
-        </Alert>
+        <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs font-semibold text-destructive flex items-center gap-2 break-words">
+          <AlertCircle className="size-4 shrink-0" />
+          <span className="min-w-0 flex-1">{errorMsg}</span>
+        </div>
       )}
 
       {/* Target Level Choice */}
-      <div className="space-y-1.5">
-        <label className="text-xs font-bold text-heading">{t("targetLevelLabel")}</label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="space-y-1.5 min-w-0">
+        <label className="text-xs font-bold text-foreground block">{t("targetLevelLabel")}</label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
           {eligibleTargetLevels.map((lvl) => {
             const def = DISTANCE_LEVEL_DEFINITIONS[lvl];
             const isSelected = targetLevel === lvl;
@@ -86,14 +85,14 @@ export function CoverageExtensionForm({
                 key={lvl}
                 type="button"
                 onClick={() => setTargetLevel(lvl)}
-                className={`p-3 rounded-xl border text-left text-xs transition cursor-pointer ${
+                className={`p-3 rounded-lg border text-left text-xs transition cursor-pointer min-w-0 w-full ${
                   isSelected
-                    ? "bg-primary-soft/60 border-primary text-primary font-bold shadow-2xs"
+                    ? "bg-primary/10 border-primary text-primary font-bold shadow-2xs"
                     : "bg-surface border-border text-foreground hover:bg-muted"
                 }`}
               >
-                <div className="font-extrabold">Niveau {lvl} : {def?.label}</div>
-                <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                <div className="font-extrabold truncate">Niveau {lvl} : {def?.label}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug break-words">
                   {def?.description}
                 </div>
               </button>
@@ -103,15 +102,15 @@ export function CoverageExtensionForm({
       </div>
 
       {/* Category Dropdown with shadcn Select */}
-      <div className="space-y-1.5">
-        <label htmlFor={`${formId}-cat`} className="text-xs font-bold text-heading">
+      <div className="space-y-1.5 min-w-0">
+        <label htmlFor={`${formId}-cat`} className="text-xs font-bold text-foreground block">
           {t("reasonCategoryLabel")}
         </label>
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger id={`${formId}-cat`} className="h-10 text-base sm:text-xs">
+          <SelectTrigger id={`${formId}-cat`} className="h-10 text-base sm:text-xs rounded-lg border-input w-full min-w-0">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="rounded-xl bg-card border border-border shadow-lift font-sans max-w-[calc(100%-2rem)] sm:max-w-sm">
             <SelectItem value="Demande client" className="text-xs">{t("catCustomerDemand")}</SelectItem>
             <SelectItem value="Capacité logistique" className="text-xs">{t("catCapacity")}</SelectItem>
             <SelectItem value="Partenariat local" className="text-xs">{t("catPartnership")}</SelectItem>
@@ -121,9 +120,9 @@ export function CoverageExtensionForm({
       </div>
 
       {/* Motivation Textarea with shadcn Textarea */}
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 min-w-0">
         <div className="flex justify-between items-center text-xs">
-          <label htmlFor={`${formId}-note`} className="font-bold text-heading">
+          <label htmlFor={`${formId}-note`} className="font-bold text-foreground">
             {t("reasonNoteLabel")}
           </label>
           <span
@@ -140,30 +139,30 @@ export function CoverageExtensionForm({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={t("reasonNotePlaceholder")}
-          className="text-base sm:text-xs resize-none"
+          className="text-base sm:text-xs resize-none rounded-lg border-input w-full min-w-0"
         />
       </div>
 
       {/* Internal Processing Notice */}
-      <div className="p-3 bg-muted/40 rounded-xl border border-border text-[11px] text-muted-foreground leading-snug">
+      <div className="rounded-xl border-l-2 border-primary/50 bg-muted/20 pl-3.5 p-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-snug break-words">
         {t("ticketNotice")}
       </div>
 
       {/* Footer Buttons */}
-      <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
+      <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5 min-w-0">
         <Button
           type="button"
           variant="outline"
           disabled={isPending}
           onClick={onCancel}
-          className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 rounded-xl text-xs font-semibold cursor-pointer"
+          className="w-full sm:w-auto h-10 sm:h-9 px-4 rounded-lg text-xs font-semibold cursor-pointer shrink-0"
         >
           {t("cancelChanges")}
         </Button>
         <Button
           type="submit"
           disabled={isPending || note.trim().length < 5}
-          className="flex-1 sm:flex-initial h-10 sm:h-9 px-4 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+          className="w-full sm:w-auto h-10 sm:h-9 px-4 rounded-lg text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground flex items-center justify-center gap-2 cursor-pointer shadow-xs shrink-0"
         >
           {isPending ? (
             <>

@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { AlertCircle, Check, RotateCcw } from "lucide-react";
 import type { HouseCoverageWithLimitsData } from "@/dal";
 import { EmptyState } from "@/components/admin/shared/empty-state";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CoverageHeader } from "./coverage-header";
 import { DeliveryPerimeterCard } from "./delivery-perimeter-card";
@@ -78,20 +77,18 @@ export function CoverageManager({ coverageData }: CoverageManagerProps) {
 
       {/* Success Banner */}
       {saveSuccessMsg && (
-        <Alert className="bg-success-soft text-success border-success/30 py-2.5">
-          <Check className="size-4 text-success" />
-          <AlertDescription className="text-xs font-bold text-success">
-            {saveSuccessMsg}
-          </AlertDescription>
-        </Alert>
+        <div className="rounded-xl border border-success/30 bg-success-soft/30 p-3 text-xs font-bold text-success flex items-center gap-2">
+          <Check className="size-4 text-success shrink-0" />
+          <span>{saveSuccessMsg}</span>
+        </div>
       )}
 
       {/* Error Banner with Retry */}
       {errorMsg && (
-        <Alert variant="destructive" className="py-2.5 flex items-center justify-between">
+        <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs font-semibold text-destructive flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <AlertCircle className="size-4 text-destructive" />
-            <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
+            <AlertCircle className="size-4 text-destructive shrink-0" />
+            <span>{errorMsg}</span>
           </div>
           {diffs.length > 0 && (
             <Button
@@ -100,13 +97,13 @@ export function CoverageManager({ coverageData }: CoverageManagerProps) {
               variant="destructive"
               disabled={isSaving}
               onClick={() => triggerSave()}
-              className="h-7 text-xs font-bold gap-1 px-2.5"
+              className="h-8 text-xs font-bold gap-1 px-3 rounded-lg cursor-pointer"
             >
               <RotateCcw className="size-3" aria-hidden="true" />
               <span>{t("retry")}</span>
             </Button>
           )}
-        </Alert>
+        </div>
       )}
 
       {/* 3. Filter Bar */}

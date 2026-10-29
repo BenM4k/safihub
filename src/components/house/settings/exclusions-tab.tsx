@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { AlertCircle, Ban, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { ConfirmDialog } from "@/components/shared";
 import { deleteHouseExclusionAction } from "@/actions/house.actions";
@@ -78,14 +77,17 @@ export function ExclusionsTab({
   return (
     <div className="space-y-6">
       {errorMsg && (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
-        </Alert>
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/20 bg-destructive-soft/30 p-3 sm:p-4 text-xs font-semibold text-destructive flex items-center gap-2.5"
+        >
+          <AlertCircle className="size-4 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
       )}
 
       {/* Difference Explanation Banner */}
-      <div className="p-4 rounded-xl bg-muted/40 text-xs text-muted-foreground flex items-start gap-3">
+      <div className="rounded-xl border-l-2 border-primary/50 bg-muted/20 pl-3.5 p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 flex items-start gap-3">
         <Ban className="size-4 text-primary shrink-0 mt-0.5" />
         <div className="leading-relaxed">
           <strong className="text-foreground block">
@@ -102,7 +104,7 @@ export function ExclusionsTab({
             <h2 className="text-sm font-bold text-foreground">
               Règles d&apos;exclusion actives ({exclusions.length})
             </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
               Articles ou matières que votre pressing ne traite pas.
             </p>
           </div>
@@ -111,7 +113,7 @@ export function ExclusionsTab({
             type="button"
             size="sm"
             onClick={handleOpenAdd}
-            className="h-10 sm:h-9 px-4 rounded-xl text-xs font-bold gap-1.5 w-full sm:w-auto shadow-xs cursor-pointer"
+            className="h-10 sm:h-9 px-4 rounded-lg text-xs font-bold gap-1.5 w-full sm:w-auto shadow-xs cursor-pointer"
           >
             <PlusCircle className="size-3.5" />
             <span>Ajouter une exclusion</span>
@@ -123,7 +125,7 @@ export function ExclusionsTab({
             Aucune exclusion configurée. Votre pressing accepte tous les articles et matières actifs de votre catalogue.
           </div>
         ) : (
-          <div className="rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
+          <div className="rounded-2xl bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
             {exclusions.map((ex) => (
               <ExclusionItemCard
                 key={ex.id}

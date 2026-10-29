@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { WifiOff } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PartnerBanner } from "./partner-banner";
 import { PartnerAlertStrip } from "./partner-alert-strip";
 import { AcceptanceQueue } from "./acceptance-queue";
@@ -61,7 +60,7 @@ export function PartnerDashboardView({
   const isOnline = useSyncExternalStore(
     subscribeOnline,
     getOnlineSnapshot,
-    getServerOnlineSnapshot
+    getServerOnlineSnapshot,
   );
 
   // Play chime if new order arrived and sound enabled
@@ -93,28 +92,23 @@ export function PartnerDashboardView({
   }, [router]);
 
   return (
-    <div className="space-y-5 sm:space-y-6 lg:space-y-8 font-sans">
+    <div className="space-y-8 sm:space-y-10 lg:space-y-12 font-sans">
       {/* Offline Indicator */}
       {!isOnline && (
-        <Alert
-          variant="destructive"
-          className="border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200 py-3"
-        >
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
-              <WifiOff className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-              <AlertDescription className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                {t("offlineTitle")} ·{" "}
-                {t("offlineUpdated", {
-                  time: lastUpdated.toLocaleTimeString(),
-                })}
-              </AlertDescription>
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 dark:text-amber-200">
+          <div className="flex items-center gap-3">
+            <WifiOff className="size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="text-xs sm:text-sm font-semibold leading-relaxed">
+              <strong>{t("offlineTitle")}</strong> ·{" "}
+              {t("offlineUpdated", {
+                time: lastUpdated.toLocaleTimeString(),
+              })}
             </div>
-            <span className="text-[11px] font-normal text-amber-700 dark:text-amber-300 hidden sm:inline">
-              {t("offlineReconnecting")}
-            </span>
           </div>
-        </Alert>
+          <span className="text-xs text-amber-800 dark:text-amber-300">
+            {t("offlineReconnecting")}
+          </span>
+        </div>
       )}
 
       {/* 1. Identity Banner Header */}

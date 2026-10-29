@@ -46,7 +46,7 @@ export function PayoutDetailSheet({
         {/* Header */}
         <SheetHeader className="p-4 sm:p-5 border-b border-border bg-surface text-left">
           <div className="flex items-center gap-2.5">
-            <div className="size-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <div className="size-9 rounded-xl bg-success-soft/30 text-success flex items-center justify-center shrink-0">
               <Receipt className="size-5" />
             </div>
             <div>
@@ -66,13 +66,13 @@ export function PayoutDetailSheet({
           <div className="pb-5 border-b border-border/60 space-y-3">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">{t("payoutAmountLabel")}</span>
-              <Badge variant="outline" className="gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-2xs font-semibold">
+              <Badge variant="outline" className="gap-1 rounded-full border-success/30 text-success bg-success-soft/30 text-2xs font-semibold">
                 <CheckCircle2 className="size-3" />
                 <span>{t("statusPaid")}</span>
               </Badge>
             </div>
 
-            <div className="text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
+            <div className="text-3xl font-black font-mono text-success tabular-nums">
               +{formatMoney(payout.amount, "CDF")}
             </div>
 
@@ -119,7 +119,7 @@ export function PayoutDetailSheet({
                 {t("noIncludedOrdersDirect")}
               </div>
             ) : (
-              <div className="divide-y divide-border/60 rounded-xl border border-border/60 overflow-hidden bg-card">
+              <div className="divide-y divide-border/60 rounded-xl overflow-hidden bg-card">
                 {payout.includedOrders.map((ord) => (
                   <div
                     key={ord.id}
@@ -142,7 +142,7 @@ export function PayoutDetailSheet({
                       <span className="font-mono font-bold text-foreground tabular-nums block">
                         {formatMoney(ord.netAmount, "CDF")}
                       </span>
-                      <span className="text-2xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <span className="text-2xs text-success font-semibold">
                         {t("includedInPayout")}
                       </span>
                     </div>
@@ -160,7 +160,7 @@ export function PayoutDetailSheet({
             variant="outline"
             size="sm"
             onClick={() => onOpenReceiptModal(payout)}
-            className="flex-1 h-10 sm:h-9 text-xs font-semibold gap-1.5 rounded-xl"
+            className="flex-1 h-10 sm:h-9 text-xs font-semibold gap-1.5 rounded-lg"
           >
             <FileText className="size-3.5" />
             <span>{t("viewOfficialReceipt")}</span>
@@ -171,7 +171,7 @@ export function PayoutDetailSheet({
             variant="ghost"
             size="sm"
             onClick={() => onOpenReportDialog(payout)}
-            className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-semibold text-destructive hover:bg-destructive-soft hover:text-destructive rounded-xl"
+            className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-semibold text-destructive hover:bg-destructive-soft hover:text-destructive rounded-lg"
           >
             {t("reportIssue")}
           </Button>

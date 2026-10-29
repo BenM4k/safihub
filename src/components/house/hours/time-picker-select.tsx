@@ -45,13 +45,13 @@ export function TimePickerSelect({
         id={selectId}
         aria-label={label}
         className={cn(
-          "h-10 sm:h-9 px-3 font-mono text-base sm:text-sm font-semibold w-26 sm:w-28 rounded-xl",
+          "h-10 sm:h-9 px-3 font-mono text-base sm:text-sm font-semibold w-26 sm:w-28 rounded-lg border-input",
           error && "border-destructive text-destructive"
         )}
       >
         <SelectValue placeholder={value} />
       </SelectTrigger>
-      <SelectContent className="max-h-56">
+      <SelectContent className="max-h-56 font-sans rounded-xl bg-card border border-border shadow-lift">
         {selectOptions.map((opt) => (
           <SelectItem key={opt} value={opt} className="font-mono text-xs sm:text-sm">
             {opt}

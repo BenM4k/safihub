@@ -84,14 +84,14 @@ export function PartnerOrderDetailSheet({
         side="right"
         className="w-full sm:max-w-lg p-0 flex flex-col font-sans bg-card border-l border-border"
       >
-        <SheetHeader className="p-4 sm:p-5 border-b border-border space-y-1">
+        <SheetHeader className="p-5 sm:p-6 border-b border-border space-y-1">
           <div className="flex items-center gap-2">
-            <SheetTitle className="text-base sm:text-lg font-black text-heading font-mono">
+            <SheetTitle className="text-lg sm:text-xl font-bold text-heading font-mono">
               {order.shortReference}
             </SheetTitle>
             <Badge
               variant="outline"
-              className={`gap-1 px-2.5 py-0.5 text-xs font-bold ${statusCfg.badgeClass}`}
+              className={`gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full ${statusCfg.badgeClass}`}
             >
               <span className={`size-1.5 rounded-full ${statusCfg.dotClass}`} />
               <span>{statusCfg.label}</span>
@@ -103,27 +103,27 @@ export function PartnerOrderDetailSheet({
         </SheetHeader>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 text-xs">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6 text-xs leading-relaxed">
           {/* Customer & Privacy (Unified, no boxy card) */}
-          <div className="space-y-2 pb-4 border-b border-border/60">
+          <div className="space-y-3 pb-5 border-b border-border/60">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-heading text-sm flex items-center gap-2">
+              <span className="font-semibold text-heading text-sm sm:text-base flex items-center gap-2">
                 <User className="size-4 text-primary" />
                 <span>{order.customerDisplayName}</span>
               </span>
-              <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                <MapPin className="size-3.5" />
+              <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1 text-xs">
+                <MapPin className="size-3.5 text-muted-foreground" />
                 <span>{order.neighborhoodName}</span>
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-0.5">
-              <Shield className="size-3.5 text-primary/70 shrink-0" />
+            <div className="p-3 rounded-lg bg-surface text-slate-600 dark:text-slate-300 flex items-start gap-2.5 text-xs leading-relaxed">
+              <Shield className="size-4 text-primary shrink-0 mt-0.5" />
               <span>
                 {order.status === "created"
                   ? t("privacyNoticeCreated")
                   : t("privacyNoticeAccepted")}
               </span>
-            </p>
+            </div>
           </div>
 
           {/* Financial Breakdown */}

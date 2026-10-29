@@ -17,7 +17,7 @@ export function PreferencesTab() {
           </div>
           <div>
             <h2 className="text-sm font-bold text-foreground">Préférences régionales</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
               Langue et fuseau horaire opérationnel.
             </p>
           </div>
@@ -31,9 +31,9 @@ export function PreferencesTab() {
             <Input
               disabled
               value="Français (RDC) — Géré via le widget en bas à droite"
-              className="text-base sm:text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed rounded-xl"
+              className="text-base sm:text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed rounded-lg border-input"
             />
-            <span className="text-[10px] text-muted-foreground mt-1 block">
+            <span className="text-[10px] text-slate-600 dark:text-slate-300 mt-1 block">
               Utilisez le bouton flottant circulaire en bas à droite de l&apos;écran pour changer de langue (FR / EN / SW).
             </span>
           </Field>
@@ -47,7 +47,7 @@ export function PreferencesTab() {
               type="text"
               value="Heure de Bukavu (UTC+2 / Africa/Lubumbashi)"
               disabled
-              className="text-base sm:text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed rounded-xl"
+              className="text-base sm:text-xs h-10 min-h-[40px] bg-muted/30 text-muted-foreground cursor-not-allowed rounded-lg border-input"
             />
           </Field>
         </div>
@@ -63,7 +63,7 @@ export function PreferencesTab() {
           </div>
           <div>
             <h2 className="text-sm font-bold text-destructive">Zone sensible</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
               Actions d&apos;export et demandes de clôture de compte.
             </p>
           </div>
@@ -74,7 +74,7 @@ export function PreferencesTab() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
             <div>
               <span className="font-bold text-foreground block">Exporter mes données</span>
-              <p className="text-muted-foreground text-[11px] mt-0.5">
+              <p className="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5">
                 Télécharger une copie complète au format JSON/CSV de vos commandes, catalogue et versements.
               </p>
             </div>
@@ -83,7 +83,7 @@ export function PreferencesTab() {
               variant="outline"
               size="sm"
               disabled
-              className="h-10 sm:h-9 px-4 rounded-xl text-xs font-semibold self-start sm:self-auto opacity-50 cursor-not-allowed gap-1.5"
+              className="h-10 sm:h-9 px-4 rounded-lg text-xs font-semibold self-start sm:self-auto opacity-50 cursor-not-allowed gap-1.5"
             >
               <Download className="size-3.5" />
               <span>Exporter les données (Bientôt disponible)</span>
@@ -94,7 +94,7 @@ export function PreferencesTab() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 text-xs">
             <div>
               <span className="font-bold text-destructive block">Demander la fermeture du pressing</span>
-              <p className="text-muted-foreground text-[11px] mt-0.5">
+              <p className="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5">
                 Nécessite la clôture préalable de toutes les commandes en cours et la liquidation des versements dus.
               </p>
             </div>
@@ -102,7 +102,7 @@ export function PreferencesTab() {
               variant="outline"
               size="sm"
               asChild
-              className="h-10 sm:h-9 px-4 rounded-xl text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 self-start sm:self-auto gap-1.5 cursor-pointer"
+              className="h-10 sm:h-9 px-4 rounded-lg text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 self-start sm:self-auto gap-1.5 cursor-pointer"
             >
               <a
                 href="https://wa.me/243999999999"

@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   addHouseExclusionAction,
   updateHouseExclusionAction,
@@ -82,20 +81,23 @@ export function ExclusionForm({
   const isEditing = Boolean(initialExclusion);
 
   return (
-    <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+    <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 text-xs max-w-full overflow-hidden min-w-0">
       {errorMsg && (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
-        </Alert>
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/20 bg-destructive-soft/30 p-2.5 text-xs font-semibold text-destructive flex items-center gap-2 break-words"
+        >
+          <AlertCircle className="size-3.5 shrink-0" />
+          <span className="min-w-0 flex-1">{errorMsg}</span>
+        </div>
       )}
 
-      <div>
-        <label className="font-semibold text-foreground block mb-1.5">Article concerné</label>
+      <div className="space-y-1.5 min-w-0">
+        <label className="font-semibold text-foreground block">Article concerné</label>
         <select
           value={selectedItemId}
           onChange={(e) => setSelectedItemId(e.target.value)}
-          className="w-full h-10 min-h-[40px] px-3 rounded-xl border border-input bg-background text-base sm:text-xs focus:ring-2 focus:ring-primary focus:outline-hidden"
+          className="w-full h-10 min-h-[40px] px-3 rounded-lg border border-input bg-background text-base sm:text-xs focus:ring-2 focus:ring-primary focus:outline-hidden"
         >
           <option value="">Tous les articles</option>
           {masterItems.map((item) => (
@@ -104,12 +106,12 @@ export function ExclusionForm({
         </select>
       </div>
 
-      <div>
-        <label className="font-semibold text-foreground block mb-1.5">Matière ou tissu</label>
+      <div className="space-y-1.5 min-w-0">
+        <label className="font-semibold text-foreground block">Matière ou tissu</label>
         <select
           value={selectedFabricId}
           onChange={(e) => setSelectedFabricId(e.target.value)}
-          className="w-full h-10 min-h-[40px] px-3 rounded-xl border border-input bg-background text-base sm:text-xs focus:ring-2 focus:ring-primary focus:outline-hidden"
+          className="w-full h-10 min-h-[40px] px-3 rounded-lg border border-input bg-background text-base sm:text-xs focus:ring-2 focus:ring-primary focus:outline-hidden"
         >
           <option value="">Toutes les matières</option>
           {masterFabrics.map((fabric) => (
@@ -118,8 +120,8 @@ export function ExclusionForm({
         </select>
       </div>
 
-      <div>
-        <label className="font-semibold text-foreground block mb-1.5">
+      <div className="space-y-1.5 min-w-0">
+        <label className="font-semibold text-foreground block">
           Précision pour les clients (optionnel)
         </label>
         <Input
@@ -128,9 +130,9 @@ export function ExclusionForm({
           onChange={(e) => setNote(e.target.value)}
           placeholder="Ex. Risque de décoloration..."
           maxLength={120}
-          className="text-base sm:text-xs min-h-[38px]"
+          className="text-base sm:text-xs min-h-[38px] rounded-lg border-input w-full min-w-0"
         />
-        <span className="text-[10px] text-muted-foreground block text-right mt-1">
+        <span className="text-[10px] text-slate-600 dark:text-slate-300 block text-right">
           {note.length} / 120 caractères
         </span>
       </div>
@@ -139,7 +141,7 @@ export function ExclusionForm({
         <Button
           type="submit"
           disabled={isPending}
-          className="w-full min-h-[40px] text-xs font-bold"
+          className="w-full min-h-[40px] text-xs font-bold rounded-lg cursor-pointer"
         >
           {isPending ? (
             <>

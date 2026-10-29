@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ChevronDown, ChevronRight, Copy, CheckSquare, Square } from "lucide-react";
+import { ChevronDown, Copy, CheckSquare, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type {
   CatalogueCategoryGroup,
@@ -58,7 +58,7 @@ export function MobileArticleAccordion({
             {cat.label} ({cat.articles.length})
           </div>
 
-          <div className="rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
+          <div className="rounded-2xl bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
             {cat.articles.map((article) => {
               const isExpanded = expandedArticles.has(article.id);
               const isSelected = selectedArticleIds.has(article.id);
@@ -115,53 +115,62 @@ export function MobileArticleAccordion({
                       className="size-8 rounded-lg flex items-center justify-center hover:bg-muted/40 text-muted-foreground cursor-pointer shrink-0"
                       aria-label={t("expandArticleMaterialsAria", { name: article.nameFr })}
                     >
-                      {isExpanded ? (
-                        <ChevronDown className="size-4" />
-                      ) : (
-                        <ChevronRight className="size-4" />
-                      )}
+                      <ChevronDown
+                        className={`size-4 transition-transform duration-500 ease-in-out ${
+                          isExpanded ? "rotate-180" : "rotate-0"
+                        }`}
+                        aria-hidden="true"
+                      />
                     </button>
                   </div>
 
-                  {/* Expanded Material Rows */}
-                  {isExpanded && (
-                    <div className="border-t border-border bg-muted/20 p-4 space-y-3.5">
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => onApplyPriceToAllFabrics(article)}
-                          className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Copy className="size-3.5" aria-hidden="true" />
-                          <span>{t("applyAllFabrics")}</span>
-                        </button>
-                      </div>
+                  {/* Expanded Material Rows with slow, smooth transition */}
+                  <div
+                    className={`grid transition-all duration-500 ease-in-out ${
+                      isExpanded
+                        ? "grid-rows-[1fr] opacity-100"
+                        : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="border-t border-border/60 bg-muted/20 p-4 space-y-3.5">
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => onApplyPriceToAllFabrics(article)}
+                            className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Copy className="size-3.5" aria-hidden="true" />
+                            <span>{t("applyAllFabrics")}</span>
+                          </button>
+                        </div>
 
-                      <div className="divide-y divide-border/60">
-                        {materials.map((mat) => {
-                          const cell = article.cellsByFabricId.get(mat.id);
-                          if (!cell) return null;
-                          const cellKey = getCellKey(cell.serviceId, cell.itemId, cell.fabricId);
-                          const currentEdit = edits[cellKey];
+                        <div className="divide-y divide-border/60">
+                          {materials.map((mat) => {
+                            const cell = article.cellsByFabricId.get(mat.id);
+                            if (!cell) return null;
+                            const cellKey = getCellKey(cell.serviceId, cell.itemId, cell.fabricId);
+                            const currentEdit = edits[cellKey];
 
-                          return (
-                            <div key={mat.id} className="py-2.5 first:pt-0 last:pb-0 space-y-1">
-                              <div className="text-xs font-semibold text-heading flex items-center justify-between">
-                                <span>{mat.nameFr}</span>
+                            return (
+                              <div key={mat.id} className="py-2.5 first:pt-0 last:pb-0 space-y-1">
+                                <div className="text-xs font-semibold text-heading flex items-center justify-between">
+                                  <span>{mat.nameFr}</span>
+                                </div>
+                                <PricingCell
+                                  item={cell}
+                                  edit={currentEdit}
+                                  commissionBps={commissionBps}
+                                  onChange={(nextEdit) => onCellChange(cellKey, nextEdit)}
+                                  isMobileLayout
+                                />
                               </div>
-                              <PricingCell
-                                item={cell}
-                                edit={currentEdit}
-                                commissionBps={commissionBps}
-                                onChange={(nextEdit) => onCellChange(cellKey, nextEdit)}
-                                isMobileLayout
-                              />
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}

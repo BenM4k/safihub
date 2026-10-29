@@ -68,7 +68,7 @@ export function PartnerOrderCard({
           {order.isAtRisk && (
             <Badge
               variant="outline"
-              className="gap-1 font-bold bg-amber-500/10 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-200"
+              className="gap-1 font-semibold bg-amber-500/10 text-amber-900 border-amber-500/20 dark:text-amber-200 rounded-full text-[10px] px-2 py-0.5"
             >
               <AlertTriangle
                 className="size-3 text-amber-600 dark:text-amber-400"
@@ -134,7 +134,7 @@ export function PartnerOrderCard({
 
       {/* Slots / Promised Date */}
       {order.estimatedDeliveryAt && (
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/40 px-2.5 py-1.5 rounded-lg border border-border">
+        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 bg-surface px-2.5 py-1.5 rounded-lg">
           <Clock
             className="size-3 text-muted-foreground shrink-0"
             aria-hidden="true"
@@ -163,11 +163,11 @@ export function PartnerOrderCard({
               -{formatAmount(order.commissionAmount, order.currency)}
             </span>
           </div>
-          <div className="text-xs font-black font-mono flex items-center justify-between gap-2 px-2.5 py-1 rounded-lg bg-success-soft/30 border border-success/20 text-success mt-1.5">
-            <span className="font-sans font-bold text-[11px] text-foreground">
+          <div className="text-xs font-mono flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-success-soft/30 border border-success/20 text-success mt-1.5">
+            <span className="font-sans font-semibold text-xs text-foreground">
               {t("financialPartnerShare")} :
             </span>
-            <span className="text-sm font-black">
+            <span className="text-sm font-bold font-mono text-success">
               {formatAmount(order.netPartnerShare, order.currency)}
             </span>
           </div>

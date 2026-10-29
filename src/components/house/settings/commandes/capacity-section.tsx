@@ -33,7 +33,7 @@ export function CapacitySection({
             <Gauge className="size-4 text-primary" />
             <span>Capacité journalière de traitement</span>
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
             Limite le nombre de commandes acceptées par jour. Au plafond, les créneaux sont verrouillés.
           </p>
         </div>
@@ -46,7 +46,7 @@ export function CapacitySection({
       </div>
 
       {/* Usage Gauge */}
-      <div className="p-3.5 bg-muted/40 rounded-xl space-y-2">
+      <div className="p-3.5 bg-muted/30 rounded-xl space-y-2">
         <div className="flex items-center justify-between text-xs">
           <span className="font-medium text-muted-foreground">Commandes aujourd&apos;hui</span>
           <span className="font-bold text-foreground">
@@ -70,7 +70,7 @@ export function CapacitySection({
             max={500}
             value={dailyCapacity ?? ""}
             onChange={(e) => onChangeCapacity(parseInt(e.target.value, 10) || 1)}
-            className="w-full sm:w-48 text-base sm:text-xs font-bold font-mono h-10 sm:h-9 rounded-xl"
+            className="w-full sm:w-48 text-base sm:text-xs font-bold font-mono h-10 sm:h-9 rounded-lg"
           />
         </div>
       )}

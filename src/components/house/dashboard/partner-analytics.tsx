@@ -24,17 +24,17 @@ export function PartnerAnalytics({ metrics, className }: PartnerAnalyticsProps) 
   return (
     <div className={cn("grid lg:grid-cols-3 gap-4 font-sans", className)}>
       {/* 1. Accessible Bar Chart (7 derniers jours) */}
-      <div className="lg:col-span-2 p-4 sm:p-5 rounded-3xl bg-surface dark:bg-card/75 border border-border/50 shadow-xs space-y-4">
+      <div className="lg:col-span-2 p-4 sm:p-5 rounded-2xl bg-card shadow-xs space-y-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="size-8 rounded-xl bg-primary-soft text-primary flex items-center justify-center font-bold">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
               <BarChart3 className="size-4.5" />
             </div>
             <div>
-              <h3 className="font-display font-bold text-sm sm:text-base text-heading">
+              <h3 className="font-display font-bold text-base sm:text-lg text-heading tracking-tight">
                 {t("analyticsTitle")}
               </h3>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-600 dark:text-slate-300">
                 {t("analyticsSubtitle")}
               </p>
             </div>
@@ -96,14 +96,14 @@ export function PartnerAnalytics({ metrics, className }: PartnerAnalyticsProps) 
       {/* 2. Capacity & Performance Side Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
         {/* Capacity Widget */}
-        <div className="p-4 sm:p-5 rounded-3xl bg-surface dark:bg-card/75 border border-border/50 shadow-xs space-y-3">
+        <div className="p-4 sm:p-5 rounded-2xl bg-card shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-foreground">
+            <span className="text-xs font-bold text-heading">
               {t("capacityTitle")}
             </span>
             {isHighCapacity && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning-soft px-2 py-0.5 rounded-full border border-warning/20">
-                <AlertTriangle className="size-3" />
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-900 dark:text-amber-200 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                <AlertTriangle className="size-3 text-amber-600 dark:text-amber-400" />
                 {t("capacityThreshold80")}
               </span>
             )}
@@ -111,26 +111,26 @@ export function PartnerAnalytics({ metrics, className }: PartnerAnalyticsProps) 
 
           <div>
             <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-black text-heading font-display">
+              <span className="text-2xl font-bold text-heading font-display">
                 {used} / {metrics.dailyCapacity ? metrics.dailyCapacity : `${capacity} max`}
               </span>
-              <span className="text-xs font-bold text-muted-foreground">
+              <span className="text-xs font-semibold text-muted-foreground">
                 {capacityPercent}%
               </span>
             </div>
 
             {/* Progress bar */}
-            <div className="w-full h-2.5 bg-secondary rounded-full mt-2 overflow-hidden">
+            <div className="w-full h-2 bg-slate-100 dark:bg-muted rounded-full mt-2 overflow-hidden">
               <div
                 style={{ width: `${capacityPercent}%` }}
                 className={`h-full rounded-full transition-all duration-300 ${
-                  isHighCapacity ? "bg-warning" : "bg-primary"
+                  isHighCapacity ? "bg-amber-500" : "bg-primary"
                 }`}
               />
             </div>
           </div>
 
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
             {metrics.dailyCapacity
               ? t("capacityConfiguredDesc")
               : t("capacityUnconfiguredDesc")}
@@ -138,31 +138,31 @@ export function PartnerAnalytics({ metrics, className }: PartnerAnalyticsProps) 
         </div>
 
         {/* Performance Widget */}
-        <div className="p-4 sm:p-5 rounded-3xl bg-surface dark:bg-card/75 border border-border/50 shadow-xs space-y-3">
-          <span className="text-xs font-bold text-foreground block">
+        <div className="p-4 sm:p-5 rounded-2xl bg-card shadow-xs space-y-3">
+          <span className="text-xs font-bold text-heading block">
             {t("performanceTitle")}
           </span>
 
-          <div className="grid grid-cols-2 divide-x divide-border/60 bg-card dark:bg-surface rounded-2xl p-1 border border-border/40">
+          <div className="grid grid-cols-2 divide-x divide-border/60 bg-surface dark:bg-card/60 rounded-xl p-1">
             <div className="p-2.5 sm:p-3">
-              <span className="text-[10px] font-bold text-muted-foreground block uppercase">
+              <span className="text-[10px] font-semibold text-muted-foreground block uppercase">
                 {t("onTimeRate")}
               </span>
-              <span className="text-lg font-black text-success font-display block mt-1">
+              <span className="text-lg font-bold text-success font-display block mt-1">
                 {metrics.onTimeDeliveryRate ? `${metrics.onTimeDeliveryRate}%` : "—"}
               </span>
               <span className="text-[10px] text-muted-foreground">{t("vsPromised")}</span>
             </div>
 
             <div className="p-2.5 sm:p-3 pl-3 sm:pl-4">
-              <span className="text-[10px] font-bold text-muted-foreground block uppercase">
+              <span className="text-[10px] font-semibold text-muted-foreground block uppercase">
                 {t("averageRating")}
               </span>
               <div className="flex items-center gap-1 mt-1">
-                <span className="text-lg font-black text-heading font-display">
+                <span className="text-lg font-bold text-heading font-display">
                   {metrics.house.rating ? metrics.house.rating.toFixed(1) : "—"}
                 </span>
-                {metrics.house.rating && <Star className="size-4 fill-amber-400 text-warning" />}
+                {metrics.house.rating && <Star className="size-4 fill-amber-400 text-amber-500" />}
               </div>
               <span className="text-[10px] text-muted-foreground">{t("customerReviews")}</span>
             </div>

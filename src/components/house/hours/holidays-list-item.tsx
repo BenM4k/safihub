@@ -38,14 +38,14 @@ export function HolidaysListItem({
           <span className="font-bold text-heading block truncate">
             {holiday.name}
           </span>
-          <span className="text-[11px] text-muted-foreground block">
+          <span className="text-[11px] text-slate-600 dark:text-slate-300 block">
             {formatDateFr(holiday.date)}
           </span>
         </div>
       </div>
 
       {holiday.isPast && (
-        <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/80 shrink-0">
+        <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/80 shrink-0 rounded-full">
           {t("statusPast")}
         </Badge>
       )}

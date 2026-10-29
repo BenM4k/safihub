@@ -2,7 +2,7 @@
 
 import { useState, Fragment } from "react";
 import { useTranslations } from "next-intl";
-import { HelpCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { HelpCircle, ChevronDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -56,14 +56,14 @@ export function DesktopPricingGrid({
   }
 
   return (
-    <div className="hidden md:block bg-card rounded-2xl border border-border shadow-xs overflow-hidden">
+    <div className="hidden md:block bg-card rounded-2xl shadow-xs overflow-hidden font-sans">
       <div className="overflow-x-auto">
         <Table className="border-collapse text-left text-xs">
           {/* Sticky Table Header */}
           <TableHeader className="sticky top-0 z-30 bg-muted/80 backdrop-blur-xs select-none">
-            <TableRow className="border-b border-border">
+            <TableRow className="border-b border-border/60">
               {/* Sticky first column header: Article name & bulk select */}
-              <TableHead className="sticky left-0 z-40 bg-muted py-4 px-5 min-w-[220px] max-w-[260px] border-r border-border font-bold text-heading">
+              <TableHead className="sticky left-0 z-40 bg-muted py-4 px-5 min-w-[220px] max-w-[260px] border-r border-border/60 font-bold text-heading">
                 <div className="flex items-center gap-2">
                   <span>{t("itemCol")}</span>
                 </div>
@@ -92,25 +92,25 @@ export function DesktopPricingGrid({
             </TableRow>
           </TableHeader>
 
-          <TableBody className="divide-y divide-border">
+          <TableBody className="divide-y divide-border/60">
             {categories.map((cat) => {
               const isCollapsed = collapsedCategories.has(cat.key);
               return (
                 <Fragment key={cat.key}>
                   {/* Category Group Header Row */}
-                  <TableRow className="bg-muted/40 hover:bg-muted/60 border-y border-border">
+                  <TableRow className="bg-muted/40 hover:bg-muted/60 border-y border-border/60">
                     <TableCell
                       colSpan={materials.length + 1}
                       className="py-3 px-5 font-bold text-xs text-heading cursor-pointer select-none"
                       onClick={() => toggleCategory(cat.key)}
                     >
                       <div className="flex items-center gap-2">
-                        {isCollapsed ? (
-                          <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-                        ) : (
-                          <ChevronDown className="size-4 text-muted-foreground shrink-0" />
-                        )}
-                        <span className="font-display tracking-tight text-xs uppercase">
+                        <ChevronDown
+                          className={`size-4 text-muted-foreground shrink-0 transition-transform duration-500 ease-in-out ${
+                            isCollapsed ? "-rotate-90" : "rotate-0"
+                          }`}
+                        />
+                        <span className="font-display tracking-tight text-xs uppercase font-bold">
                           {cat.label}
                         </span>
                         <span className="text-[11px] font-normal text-muted-foreground">

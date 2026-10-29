@@ -13,18 +13,18 @@ export function TwoFactorCard() {
           </div>
           <div>
             <h2 className="text-sm font-bold text-foreground">Double authentification (2FA)</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
               Protection renforcée par code OTP / application d&apos;authentification.
             </p>
           </div>
         </div>
 
-        <Badge variant="secondary" className="text-[10px] font-bold">
+        <Badge variant="secondary" className="text-[10px] font-bold rounded-full">
           Non configuré
         </Badge>
       </div>
 
-      <p className="text-xs text-muted-foreground bg-muted/20 p-3.5 rounded-xl border border-border/60 leading-relaxed">
+      <p className="text-xs text-slate-600 dark:text-slate-300 bg-muted/20 p-3.5 rounded-xl border border-border/60 leading-relaxed">
         La double authentification avec codes de secours et application TOTP fait partie des modules Better Auth proposés pour la prochaine mise à jour de sécurité de la plateforme.
       </p>
     </section>

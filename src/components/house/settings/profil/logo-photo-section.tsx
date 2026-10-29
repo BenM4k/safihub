@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useRef, useTransition } from "react";
-import { Upload, Trash2, Loader2 } from "lucide-react";
+import { Upload, Trash2, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { validateBannerImageFile } from "@/lib/partner-dashboard";
 import { uploadHouseAsset } from "@/lib/house-asset-uploader";
 import { updateHouseImagesAction } from "@/actions/house.actions";
@@ -119,7 +118,7 @@ export function LogoPhotoSection({
             variant="outline"
             disabled={isUploading || isDeleting}
             onClick={() => fileInputRef.current?.click()}
-            className="text-xs font-semibold gap-1.5 cursor-pointer h-8"
+            className="text-xs font-semibold gap-1.5 cursor-pointer h-8 rounded-lg"
           >
             {isUploading ? (
               <Loader2 className="size-3.5 animate-spin" />
@@ -136,7 +135,7 @@ export function LogoPhotoSection({
               variant="ghost"
               disabled={isUploading || isDeleting}
               onClick={handleDelete}
-              className="text-xs font-semibold text-destructive hover:bg-destructive/10 gap-1.5 cursor-pointer h-8"
+              className="text-xs font-semibold text-destructive hover:bg-destructive/10 gap-1.5 cursor-pointer h-8 rounded-lg"
             >
               {isDeleting ? (
                 <Loader2 className="size-3.5 animate-spin" />
@@ -150,15 +149,23 @@ export function LogoPhotoSection({
       </div>
 
       {error && (
-        <Alert variant="destructive" className="py-2">
-          <AlertDescription className="text-xs">{error}</AlertDescription>
-        </Alert>
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/20 bg-destructive-soft/30 p-2.5 text-xs font-semibold text-destructive flex items-center gap-2"
+        >
+          <AlertCircle className="size-3.5 shrink-0" />
+          <span>{error}</span>
+        </div>
       )}
 
       {success && (
-        <Alert className="py-2 border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300">
-          <AlertDescription className="text-xs font-semibold">{success}</AlertDescription>
-        </Alert>
+        <div
+          role="status"
+          className="rounded-xl border border-success/20 bg-success-soft/30 p-2.5 text-xs font-semibold text-success flex items-center gap-2"
+        >
+          <CheckCircle2 className="size-3.5 shrink-0" />
+          <span>{success}</span>
+        </div>
       )}
 
       <div className="flex items-center gap-4">

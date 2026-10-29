@@ -31,7 +31,7 @@ export function ExclusionItemCard({
             <Badge
               variant="outline"
               title="Cet article est actif et tarifé dans votre catalogue : l'exclusion prévaudra."
-              className="gap-1 border-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-bold"
+              className="gap-1 border-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-bold rounded-full"
             >
               <AlertTriangle className="size-3" />
               <span>Conflit catalogue (Exclusion prioritaire)</span>
@@ -39,7 +39,7 @@ export function ExclusionItemCard({
           )}
         </div>
         {exclusion.note && (
-          <p className="text-xs text-muted-foreground italic">
+          <p className="text-xs text-slate-600 dark:text-slate-300 italic">
             Précision client : « {exclusion.note} »
           </p>
         )}
@@ -51,7 +51,7 @@ export function ExclusionItemCard({
           variant="ghost"
           onClick={() => onEdit(exclusion)}
           disabled={disabled}
-          className="text-muted-foreground hover:text-foreground h-9 px-3 rounded-xl text-xs cursor-pointer"
+          className="text-muted-foreground hover:text-foreground h-9 px-3 rounded-lg text-xs cursor-pointer"
         >
           <Edit2 className="size-3.5 mr-1" />
           <span>Modifier</span>
@@ -61,7 +61,7 @@ export function ExclusionItemCard({
           variant="ghost"
           onClick={() => onDelete(exclusion)}
           disabled={disabled}
-          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 px-3 rounded-xl text-xs cursor-pointer"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 px-3 rounded-lg text-xs cursor-pointer"
         >
           <Trash2 className="size-3.5 mr-1" />
           <span>Supprimer</span>

@@ -42,7 +42,7 @@ export function StickySaveBar({
           size="sm"
           onClick={onCancel}
           disabled={isSaving}
-          className="h-9 text-xs font-semibold rounded-xl"
+          className="h-9 text-xs font-semibold rounded-lg cursor-pointer"
         >
           <Undo2 className="size-3.5 mr-1" aria-hidden="true" />
           <span>{t("cancelChanges")}</span>
@@ -53,7 +53,7 @@ export function StickySaveBar({
           size="sm"
           onClick={onSave}
           disabled={isSaving}
-          className="h-9 text-xs font-bold rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm transition"
+          className="h-9 text-xs font-bold rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground shadow-xs transition cursor-pointer"
         >
           {isSaving ? (
             <>

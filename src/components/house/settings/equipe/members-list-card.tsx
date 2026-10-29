@@ -33,7 +33,7 @@ export function MembersListCard({ staff, onRemoveClick }: MembersListCardProps) 
             <Users className="size-4 text-primary" />
             <span>Membres du pressing ({staff.length})</span>
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
             Collaborateurs disposant d&apos;un accès au portail de votre pressing.
           </p>
         </div>
@@ -43,7 +43,7 @@ export function MembersListCard({ staff, onRemoveClick }: MembersListCardProps) 
           size="sm"
           disabled
           variant="secondary"
-          className="min-h-[40px] text-xs font-semibold self-start sm:self-auto gap-1.5 opacity-60 cursor-not-allowed"
+          className="min-h-[40px] text-xs font-semibold self-start sm:self-auto gap-1.5 opacity-60 cursor-not-allowed rounded-lg"
         >
           <UserPlus className="size-3.5" />
           <span>Inviter un collaborateur (Bientôt disponible)</span>
@@ -55,7 +55,7 @@ export function MembersListCard({ staff, onRemoveClick }: MembersListCardProps) 
           {t("noStaff")}
         </div>
       ) : (
-        <div className="divide-y divide-border/60 rounded-2xl border border-border/60 overflow-hidden bg-card shadow-xs">
+        <div className="divide-y divide-border/60 rounded-2xl overflow-hidden bg-card shadow-xs">
           {paginatedStaff.map((m) => {
             const isOwner = m.role === "admin" || m.role === "owner" || m.role === "house";
             const roleLabel = isOwner ? "Propriétaire" : m.role === "manager" ? "Gérant" : "Opérateur";
@@ -70,18 +70,18 @@ export function MembersListCard({ staff, onRemoveClick }: MembersListCardProps) 
                     <span className="font-bold text-foreground text-sm">{m.name}</span>
                     <Badge
                       variant={isOwner ? "default" : "secondary"}
-                      className="text-[10px] font-bold"
+                      className="text-[10px] font-bold rounded-full"
                     >
                       {roleLabel}
                     </Badge>
                     <Badge
                       variant="outline"
-                      className="text-[10px] font-bold text-emerald-600 border-emerald-500/30 bg-emerald-500/10"
+                      className="text-[10px] font-bold text-success border-success/30 bg-success-soft/30 rounded-full"
                     >
                       Actif
                     </Badge>
                   </div>
-                  <p className="text-muted-foreground text-[11px] mt-0.5">{m.email}</p>
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5">{m.email}</p>
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-center">
@@ -90,7 +90,7 @@ export function MembersListCard({ staff, onRemoveClick }: MembersListCardProps) 
                     variant="ghost"
                     disabled
                     onClick={() => onRemoveClick?.(m)}
-                    className="text-muted-foreground opacity-50 cursor-not-allowed min-h-[36px] px-3 text-xs"
+                    className="text-muted-foreground opacity-50 cursor-not-allowed min-h-[36px] px-3 text-xs rounded-lg"
                   >
                     Indisponible
                   </Button>

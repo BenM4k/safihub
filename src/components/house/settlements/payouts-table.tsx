@@ -71,7 +71,7 @@ export function PayoutsTable({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("searchPayouts")}
-            className="pl-9 h-10 sm:h-9 rounded-xl text-base sm:text-xs"
+            className="pl-9 h-10 sm:h-9 rounded-xl border-input text-base sm:text-xs"
             aria-label={t("searchPayoutsAria")}
           />
         </div>
@@ -103,7 +103,7 @@ export function PayoutsTable({
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block rounded-xl border border-border/80 overflow-hidden">
+      <div className="hidden md:block rounded-2xl bg-card shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>

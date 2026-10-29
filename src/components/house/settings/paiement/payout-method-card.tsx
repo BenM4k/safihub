@@ -17,7 +17,7 @@ export function PayoutMethodCard({ house }: PayoutMethodCardProps) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-sm font-bold text-foreground">Moyen de réception des fonds</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
             Compte Mobile Money ou bancaire où sont transférés vos gains nets.
           </p>
         </div>
@@ -26,7 +26,7 @@ export function PayoutMethodCard({ house }: PayoutMethodCardProps) {
           variant="outline"
           size="sm"
           asChild
-          className="min-h-[40px] text-xs font-semibold self-start sm:self-auto gap-1.5"
+          className="min-h-[40px] text-xs font-semibold self-start sm:self-auto gap-1.5 rounded-lg cursor-pointer"
         >
           <a
             href="https://wa.me/243999999999"
@@ -45,12 +45,12 @@ export function PayoutMethodCard({ house }: PayoutMethodCardProps) {
             {isConfigured ? "Mobile Money" : "Non configuré"}
           </span>
           {isConfigured ? (
-            <Badge variant="outline" className="text-[10px] font-bold text-emerald-600 border-emerald-500/30 bg-emerald-500/10 gap-1">
+            <Badge variant="outline" className="text-[10px] font-bold text-success border-success/30 bg-success-soft/30 gap-1 rounded-full">
               <ShieldCheck className="size-3" />
               <span>Vérifié</span>
             </Badge>
           ) : (
-            <Badge variant="secondary" className="text-[10px] font-bold">
+            <Badge variant="secondary" className="text-[10px] font-bold rounded-full">
               Non configuré
             </Badge>
           )}
@@ -58,16 +58,16 @@ export function PayoutMethodCard({ house }: PayoutMethodCardProps) {
         {isConfigured ? (
           <>
             <p className="font-mono text-muted-foreground">{maskedPhone}</p>
-            <p className="text-muted-foreground text-[11px]">Titulaire : {house.name}</p>
+            <p className="text-slate-600 dark:text-slate-300 text-[11px]">Titulaire : {house.name}</p>
           </>
         ) : (
-          <p className="text-muted-foreground text-xs">
+          <p className="text-slate-600 dark:text-slate-300 text-xs">
             Aucun compte de versement n&apos;est enregistré. Les versements sont retenus en toute sécurité.
           </p>
         )}
       </div>
 
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-[11px] text-slate-600 dark:text-slate-300">
         Pour des raisons de sécurité financière, la modification du compte de versement nécessite une vérification par l&apos;assistance SafiHub.
       </p>
     </section>

@@ -31,7 +31,7 @@ export function IdentityCard({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-sm font-bold text-foreground">Identité du pressing</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
             Raison sociale et visibilité publique sur SafiHub.
           </p>
         </div>
@@ -42,11 +42,11 @@ export function IdentityCard({
             variant="outline"
             size="sm"
             onClick={handleCopyPublicLink}
-            className="text-xs font-semibold h-10 sm:h-9 px-3.5 rounded-xl cursor-pointer"
+            className="text-xs font-semibold h-9 px-3.5 rounded-lg cursor-pointer"
           >
             {copiedLink ? (
               <>
-                <Check className="size-3.5 text-emerald-600 dark:text-emerald-400 mr-1.5" />
+                <Check className="size-3.5 text-success mr-1.5" />
                 <span>Lien copié</span>
               </>
             ) : (
@@ -56,7 +56,7 @@ export function IdentityCard({
               </>
             )}
           </Button>
-          <Button asChild variant="outline" size="sm" className="h-10 sm:h-9 px-3.5 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer">
+          <Button asChild variant="outline" size="sm" className="h-9 px-3.5 rounded-lg text-xs font-semibold gap-1.5 cursor-pointer">
             <a href={`/houses/${house.slug}`} target="_blank" rel="noreferrer">
               <span>Voir</span>
               <ExternalLink className="size-3.5" />
@@ -74,7 +74,7 @@ export function IdentityCard({
             type="text"
             value={house.name}
             disabled
-            className="h-10 sm:h-9 rounded-xl text-base sm:text-xs font-medium bg-muted/50 cursor-not-allowed"
+            className="h-10 sm:h-9 rounded-lg text-base sm:text-xs font-medium bg-muted/50 cursor-not-allowed"
           />
           <span className="text-[10px] text-muted-foreground mt-1 block">
             Pour modifier le nom officiel ou les informations légales, contactez l&apos;administration SafiHub.
@@ -89,7 +89,7 @@ export function IdentityCard({
             type="text"
             value={house.neighborhoodName || "Bukavu"}
             disabled
-            className="h-10 sm:h-9 rounded-xl text-base sm:text-xs font-medium bg-muted/50 cursor-not-allowed"
+            className="h-10 sm:h-9 rounded-lg text-base sm:text-xs font-medium bg-muted/50 cursor-not-allowed"
           />
         </div>
       </div>
@@ -103,7 +103,7 @@ export function IdentityCard({
           readOnly
           disabled
           rows={2}
-          className="text-base sm:text-xs bg-muted/50 cursor-not-allowed resize-none rounded-xl"
+          className="text-base sm:text-xs bg-muted/50 cursor-not-allowed resize-none rounded-lg"
         />
         <span className="text-[10px] text-muted-foreground block text-right mt-0.5">
           Géré par l&apos;administration SafiHub
@@ -111,7 +111,7 @@ export function IdentityCard({
       </div>
 
       {/* Spécialités et langues */}
-      <div className="p-3 bg-muted/40 rounded-xl flex items-center justify-between text-xs">
+      <div className="p-3 bg-muted/30 rounded-xl flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
           <Sparkles className="size-3.5 text-primary shrink-0" />
           <span className="font-semibold text-foreground">Langues & Spécialités :</span>

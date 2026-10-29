@@ -3,7 +3,6 @@ import "server-only";
 import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
-import { cacheLife, cacheTag } from "next/cache";
 import { auth } from "./auth";
 import {
   checkUserHouseAccess,
@@ -11,7 +10,6 @@ import {
   getUserHouseMemberships,
   type HouseMembershipInfo,
 } from "@/dal";
-import { CACHE_TAGS } from "@/lib/cache-tags";
 import { err, ok, type Result } from "@/lib/result";
 import type { UserRole } from "./permissions";
 
@@ -290,17 +288,9 @@ function mapSessionToAuthenticatedUser(
   };
 }
 
-async function resolveCachedUserByCookieHeader(
+async function resolveUserByCookieHeader(
   cookieHeader: string
 ): Promise<AuthenticatedUser | null> {
-  "use cache";
-  try {
-    cacheLife("minutes");
-    cacheTag(CACHE_TAGS.authSessions);
-  } catch {
-    // No-op outside Next.js workUnitAsyncStorage (e.g. unit tests)
-  }
-
   try {
     const reqHeaders = new Headers({ cookie: cookieHeader });
     const session = await auth.api.getSession({ headers: reqHeaders });
@@ -308,17 +298,9 @@ async function resolveCachedUserByCookieHeader(
       return null;
     }
 
-    const user = mapSessionToAuthenticatedUser(
+    return mapSessionToAuthenticatedUser(
       session.user as Record<string, unknown>
     );
-    if (user) {
-      try {
-        cacheTag(CACHE_TAGS.userSession(user.id));
-      } catch {
-        // No-op outside Next.js workUnitAsyncStorage
-      }
-    }
-    return user;
   } catch {
     return null;
   }
@@ -340,7 +322,7 @@ const getRequestCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
       .map((c) => `${c.name}=${c.value}`)
       .join("; ");
 
-    return await resolveCachedUserByCookieHeader(cookieHeader);
+    return await resolveUserByCookieHeader(cookieHeader);
   } catch {
     return null;
   }
@@ -348,7 +330,7 @@ const getRequestCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
 
 /**
  * Retrieves the currently authenticated user if a valid session exists.
- * Deduplicated per-request via React `cache()` and cached across refreshes via `"use cache"`.
+ * Deduplicated per-request via React `cache()`.
  * Returns null if unauthenticated, blocked, or banned.
  */
 export async function getCurrentUser(

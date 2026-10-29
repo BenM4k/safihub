@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, AlertTriangle, ArrowRight, Info, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { HouseDashboardAlert } from "@/dal";
 
@@ -34,11 +33,10 @@ export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
   }
 
   return (
-    <div className="space-y-2.5 font-sans" aria-label={t("priorityAlertsAria")}>
+    <div className="space-y-3 font-sans" aria-label={t("priorityAlertsAria")}>
       {activeAlerts.map((alert) => {
         const isCritical = alert.severity === "critical";
         const isWarning = alert.severity === "warning";
-        const variant = isCritical ? "destructive" : "default";
 
         const Icon = isCritical
           ? AlertCircle
@@ -54,39 +52,53 @@ export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
           ? t(alert.messageKey as AlertKey, alert.messageParams ?? {})
           : alert.message;
 
+        const cardClasses = isCritical
+          ? "bg-destructive/10 border-destructive/20 text-destructive"
+          : isWarning
+          ? "bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200"
+          : "bg-surface dark:bg-card border-border text-foreground";
+
+        const iconClasses = isCritical
+          ? "text-destructive"
+          : isWarning
+          ? "text-amber-600 dark:text-amber-400"
+          : "text-primary";
+
+        const descClasses = isCritical
+          ? "text-destructive/90"
+          : isWarning
+          ? "text-amber-900/90 dark:text-amber-200/90"
+          : "text-slate-600 dark:text-slate-300";
+
         return (
-          <Alert
+          <div
             key={alert.id}
-            variant={variant}
-            className={`p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs ${
-              isWarning
-                ? "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200"
-                : ""
-            }`}
+            role="alert"
+            className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${cardClasses}`}
           >
             <div className="flex items-start gap-3 min-w-0">
-              <Icon className="size-5 shrink-0 mt-0.5" />
+              <Icon className={`size-5 shrink-0 mt-0.5 ${iconClasses}`} />
               <div className="space-y-0.5 min-w-0">
-                <AlertTitle className="text-xs sm:text-sm font-bold leading-tight">
+                <div className="text-xs sm:text-sm font-bold text-heading leading-snug">
                   {title}
-                </AlertTitle>
-                <AlertDescription className="text-xs opacity-90 leading-relaxed">
+                </div>
+                <div className={`text-xs sm:text-sm leading-relaxed ${descClasses}`}>
                   {message}
-                </AlertDescription>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t border-border/30 sm:border-t-0">
+            <div className="flex items-center justify-end gap-2 shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t border-border/20 sm:border-t-0">
               {alert.link && (
                 <Button
                   variant="outline"
                   size="sm"
                   asChild
-                  className="h-8 px-3 rounded-xl text-xs font-bold bg-card hover:bg-secondary text-heading shadow-2xs border-border flex-1 sm:flex-initial justify-center"
+                  className="h-8 px-3.5 rounded-lg text-xs font-semibold bg-card hover:bg-secondary border-border text-heading flex-1 sm:flex-initial justify-center"
                 >
                   <Link href={alert.link}>
                     <span>{t("manage")}</span>
-                    <ArrowRight className="size-3" />
+                    <ArrowRight className="size-3.5" />
                   </Link>
                 </Button>
               )}
@@ -101,7 +113,7 @@ export function PartnerAlertStrip({ alerts }: PartnerAlertStripProps) {
                 <X className="size-4" />
               </Button>
             </div>
-          </Alert>
+          </div>
         );
       })}
     </div>

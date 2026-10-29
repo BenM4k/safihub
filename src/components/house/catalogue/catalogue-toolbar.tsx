@@ -47,10 +47,10 @@ export function CatalogueToolbar({
     categories.find((c) => c.key === filters.category)?.label;
 
   return (
-    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xs py-4 border-b border-border space-y-3.5">
+    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xs py-4 border-b border-border/60 space-y-3.5 font-sans">
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
         {/* Search */}
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1 sm:max-w-sm">
           <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
           <Input
             value={filters.search}
@@ -58,14 +58,14 @@ export function CatalogueToolbar({
               onFilterChange({ ...filters, search: e.target.value })
             }
             placeholder={t("searchPlaceholder")}
-            className="pl-9 h-10 sm:h-9 text-base sm:text-xs bg-transparent rounded-xl border-input focus-visible:border-primary"
+            className="pl-9 h-10 sm:h-9 text-base sm:text-xs bg-card rounded-xl border border-input focus-visible:border-primary"
             aria-label={t("searchPlaceholder")}
           />
           {filters.search && (
             <button
               type="button"
               onClick={() => onFilterChange({ ...filters, search: "" })}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-heading p-0.5"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-heading p-0.5 cursor-pointer"
               aria-label={t("clearSearch")}
             >
               <X className="size-3.5" />
@@ -74,44 +74,47 @@ export function CatalogueToolbar({
         </div>
 
         {/* Status filter buttons & Bulk Actions */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
-          {(
-            [
-              { id: "all", label: t("filterAll") },
-              { id: "offered", label: t("filterOffered") },
-              { id: "not_offered", label: t("filterNotOffered") },
-              { id: "no_price", label: t("filterNoPrice") },
-            ] as const
-          ).map((st) => (
-            <button
-              key={st.id}
-              type="button"
-              onClick={() =>
-                onFilterChange({
-                  ...filters,
-                  status: st.id as CatalogueStatusFilter,
-                })
-              }
-              className={`px-3 py-1.5 text-xs whitespace-nowrap transition cursor-pointer rounded-xl border ${
-                filters.status === st.id
-                  ? "bg-primary-soft/80 border-primary/30 text-primary font-bold shadow-xs"
-                  : "border-transparent text-muted-foreground hover:text-heading hover:bg-muted/40 font-medium"
-              }`}
-            >
-              {st.label}
-            </button>
-          ))}
+        <div className="flex items-center justify-between sm:justify-start gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+            {(
+              [
+                { id: "all", label: t("filterAll") },
+                { id: "offered", label: t("filterOffered") },
+                { id: "not_offered", label: t("filterNotOffered") },
+                { id: "no_price", label: t("filterNoPrice") },
+              ] as const
+            ).map((st) => (
+              <button
+                key={st.id}
+                type="button"
+                onClick={() =>
+                  onFilterChange({
+                    ...filters,
+                    status: st.id as CatalogueStatusFilter,
+                  })
+                }
+                className={`px-3 py-1.5 text-xs whitespace-nowrap transition cursor-pointer rounded-xl border ${
+                  filters.status === st.id
+                    ? "bg-primary-soft/80 border-primary/30 text-primary font-bold shadow-xs"
+                    : "border-transparent text-muted-foreground hover:text-heading hover:bg-muted/40 font-medium"
+                }`}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
 
           {/* Bulk Tools trigger */}
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={onOpenBulkTools}
-            className="h-10 sm:h-8 text-xs font-semibold rounded-xl ml-auto shrink-0 text-heading hover:text-primary hover:bg-transparent"
+            className="h-9 text-xs font-semibold rounded-lg shrink-0 border-border/80 text-heading hover:text-primary hover:bg-muted/40 cursor-pointer ml-auto"
           >
             <SlidersHorizontal className="size-3.5 mr-1.5 text-primary" aria-hidden="true" />
-            <span>{t("bulkTools")}</span>
+            <span className="hidden xs:inline">{t("bulkTools")}</span>
+            <span className="xs:hidden">{t("bulkTools")}</span>
             {selectedArticlesCount > 0 && (
               <Badge className="ml-1 px-1.5 py-0 h-4 bg-primary text-primary-foreground font-mono text-[10px]">
                 {selectedArticlesCount}

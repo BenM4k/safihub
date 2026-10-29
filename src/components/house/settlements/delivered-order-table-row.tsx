@@ -57,23 +57,23 @@ export function DeliveredOrderTableRow({
         -{formatMoney(o.commissionAmount, "CDF")}
       </TableCell>
 
-      <TableCell className="font-mono tabular-nums text-right font-bold text-emerald-600 dark:text-emerald-400">
+      <TableCell className="font-mono tabular-nums text-right font-bold text-success">
         {formatMoney(o.netReceivable, "CDF")}
       </TableCell>
 
       <TableCell className="text-center">
         {o.settlementStatus === "settled" ? (
-          <Badge variant="outline" className="gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-2xs font-semibold">
+          <Badge variant="outline" className="gap-1 rounded-full border-success/30 text-success bg-success-soft/30 text-2xs font-semibold">
             <CheckCircle2 className="size-3" />
             <span>{t("statusSettled")}</span>
           </Badge>
         ) : o.settlementStatus === "disputed" ? (
-          <Badge variant="destructive" className="gap-1 text-2xs font-bold">
+          <Badge variant="destructive" className="gap-1 rounded-full text-2xs font-bold">
             <ShieldAlert className="size-3" />
             <span>{t("statusDisputed")}</span>
           </Badge>
         ) : (
-          <Badge variant="outline" className="gap-1 border-amber-500/30 text-amber-800 dark:text-amber-300 text-2xs font-medium">
+          <Badge variant="outline" className="gap-1 rounded-full border-amber-500/30 text-amber-800 dark:text-amber-300 text-2xs font-medium">
             <Clock className="size-3" />
             <span>{t("statusPending")}</span>
           </Badge>

@@ -4,7 +4,6 @@ import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { CatalogueServiceTab } from "./types";
 import { CatalogueSetupGuide } from "./catalogue-setup-guide";
 
@@ -28,7 +27,7 @@ export function ProgressCard({
   const hasNoPrices = totalConfigured === 0;
 
   return (
-    <div data-tour-id="tour-catalogue-content" className="space-y-4 sm:space-y-5 py-2">
+    <div data-tour-id="tour-catalogue-content" className="space-y-4 sm:space-y-5 py-2 font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-2">
           {percent === 100 ? (
@@ -88,12 +87,12 @@ export function ProgressCard({
       <CatalogueSetupGuide defaultExpanded={percent < 100} />
 
       {hasNoPrices && (
-        <Alert variant="destructive" className="bg-warning-soft text-warning border-warning/30 text-xs py-2.5">
-          <AlertCircle className="size-4 text-warning" />
-          <AlertDescription className="text-xs font-medium text-warning">
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 flex items-start gap-3">
+          <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+          <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
             {t("noPriceWarning")}
-          </AlertDescription>
-        </Alert>
+          </p>
+        </div>
       )}
     </div>
   );

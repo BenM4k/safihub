@@ -75,19 +75,19 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="h-10 sm:h-9 w-full sm:w-auto text-xs font-semibold rounded-xl border-primary text-primary hover:bg-primary/10 hover:text-primary"
+          className="h-10 sm:h-9 w-full sm:w-auto text-xs font-semibold rounded-lg border-primary/40 text-primary hover:bg-primary/10 hover:text-primary cursor-pointer"
         >
           <PlusCircle className="size-3.5 mr-1.5 text-primary" />
           <span>{t("requestItem")}</span>
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-2xl bg-card border border-border p-6 space-y-4 font-sans">
         <DialogHeader>
-          <DialogTitle className="text-base font-bold text-heading">
+          <DialogTitle className="text-base sm:text-lg font-bold text-heading font-display tracking-tight">
             {t("requestItemTitle")}
           </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground">
+          <DialogDescription className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             {t("requestItemDesc")}
           </DialogDescription>
         </DialogHeader>
@@ -103,7 +103,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
                 variant={kind === "item" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setKind("item")}
-                className="text-xs font-semibold"
+                className="text-xs font-semibold rounded-lg h-9"
               >
                 {t("kindItem")}
               </Button>
@@ -112,7 +112,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
                 variant={kind === "fabric" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setKind("fabric")}
-                className="text-xs font-semibold"
+                className="text-xs font-semibold rounded-lg h-9"
               >
                 {t("kindFabric")}
               </Button>
@@ -129,7 +129,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t("namePlaceholder")}
-              className="text-base sm:text-xs rounded-xl"
+              className="h-10 sm:h-9 text-base sm:text-xs rounded-lg border-input"
             />
           </div>
 
@@ -143,25 +143,29 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={t("notePlaceholder")}
-              className="text-base sm:text-xs resize-none rounded-xl"
+              className="text-base sm:text-xs resize-none rounded-lg border-input"
             />
           </div>
 
           {errorMsg && (
-            <p className="text-xs text-destructive font-medium">{errorMsg}</p>
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold">
+              {errorMsg}
+            </div>
           )}
           {successMsg && (
-            <p className="text-xs text-success font-medium">{successMsg}</p>
+            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-950 dark:text-emerald-200 text-xs font-semibold">
+              {successMsg}
+            </div>
           )}
 
-          <DialogFooter className="flex flex-row items-center justify-end gap-2.5 pt-3 border-t border-border sm:space-x-0">
+          <DialogFooter className="flex flex-row items-center justify-end gap-2.5 pt-3 border-t border-border/60 sm:space-x-0">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => handleOpenChange(false)}
               disabled={isPending}
-              className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-semibold rounded-xl"
+              className="flex-1 sm:flex-initial h-10 sm:h-9 text-xs font-semibold rounded-lg"
             >
               {t("close")}
             </Button>
@@ -169,7 +173,7 @@ export function RequestItemModal({ houseId }: { houseId?: string }) {
               type="submit"
               size="sm"
               disabled={isPending || !name.trim()}
-              className="flex-1 sm:flex-initial h-10 sm:h-9 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs rounded-xl shadow-xs"
+              className="flex-1 sm:flex-initial h-10 sm:h-9 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-xs rounded-lg shadow-xs"
             >
               {isPending ? (
                 <Loader2 className="size-3.5 animate-spin mr-1" />

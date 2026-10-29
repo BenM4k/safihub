@@ -26,7 +26,7 @@ export function ContactLocationCard({
     <section className="py-2 space-y-4">
       <div>
         <h2 className="text-sm font-bold text-foreground">Contact & Localisation</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
           Informations utilisées pour les opérations logistiques et la coordination des coursiers.
         </p>
       </div>
@@ -44,7 +44,7 @@ export function ContactLocationCard({
             value={contactPhone}
             onChange={(e) => onChangeContactPhone(e.target.value)}
             placeholder="+243 99 912 3456"
-            className="text-base sm:text-xs font-mono h-10 sm:h-9 rounded-xl"
+            className="text-base sm:text-xs font-mono h-10 sm:h-9 rounded-lg"
           />
           {contactPhone && (
             <span className="text-[10px] text-muted-foreground mt-1 block">
@@ -65,7 +65,7 @@ export function ContactLocationCard({
             value={whatsAppPhone || ""}
             disabled
             placeholder="+243..."
-            className="text-base sm:text-xs font-mono h-10 sm:h-9 rounded-xl bg-muted/50 cursor-not-allowed"
+            className="text-base sm:text-xs font-mono h-10 sm:h-9 rounded-lg bg-muted/50 cursor-not-allowed"
           />
         </div>
       </div>
@@ -76,7 +76,7 @@ export function ContactLocationCard({
             <MapPin className="size-3.5 text-primary" />
             <span>Repère d&apos;accès pour les coursiers</span>
           </span>
-          <Badge variant="outline" className="border-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-bold rounded-md">
+          <Badge variant="outline" className="border-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-bold rounded-full">
             Confidentiel coursiers
           </Badge>
         </label>
@@ -86,7 +86,7 @@ export function ContactLocationCard({
           placeholder="Ex. Avenue Patrice Lumumba, à côté de la pharmacie du Lac, portail vert métallique..."
           maxLength={250}
           rows={2}
-          className="text-base sm:text-xs resize-none rounded-xl"
+          className="text-base sm:text-xs resize-none rounded-lg"
         />
         <span className="text-[10px] text-muted-foreground block text-right mt-0.5">
           {addressNote.length} / 250 caractères
@@ -105,14 +105,14 @@ export function ContactLocationCard({
               value={latitude}
               disabled
               placeholder="Lat"
-              className="w-1/2 text-base sm:text-xs font-mono bg-muted/50 cursor-not-allowed h-10 sm:h-9 rounded-xl"
+              className="w-1/2 text-base sm:text-xs font-mono bg-muted/50 cursor-not-allowed h-10 sm:h-9 rounded-lg"
             />
             <Input
               type="text"
               value={longitude}
               disabled
               placeholder="Lng"
-              className="w-1/2 text-base sm:text-xs font-mono bg-muted/50 cursor-not-allowed h-10 sm:h-9 rounded-xl"
+              className="w-1/2 text-base sm:text-xs font-mono bg-muted/50 cursor-not-allowed h-10 sm:h-9 rounded-lg"
             />
           </div>
         </div>

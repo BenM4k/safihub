@@ -36,20 +36,22 @@ export default async function PartnerCataloguePage({ params }: PageProps) {
   const commissionBps = house?.commissionBps ?? 2000;
 
   return (
-    <div className="space-y-5 sm:space-y-6 pb-24 sm:pb-28">
+    <div className="space-y-6 sm:space-y-8 pb-24 sm:pb-28 font-sans">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-heading tracking-tight font-display">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-heading font-display tracking-tight">
             {t("title")}
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
             {t("subtitle")}
           </p>
         </div>
 
         {/* Secondary Action: Demander un nouvel article */}
-        <RequestItemModal houseId={houseId} />
+        <div className="shrink-0">
+          <RequestItemModal houseId={houseId} />
+        </div>
       </div>
 
       {/* Catalogue Grid View */}

@@ -66,14 +66,14 @@ export function PartnerTables({
   return (
     <div className="grid lg:grid-cols-2 gap-4 font-sans">
       {/* 1. Commandes récentes */}
-      <div className="rounded-3xl bg-card space-y-4">
+      <div className="p-4 sm:p-5 rounded-2xl bg-card space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-display font-bold text-sm sm:text-base text-heading">
+          <h3 className="font-display font-bold text-base sm:text-lg text-heading tracking-tight">
             {t("recentOrdersTitle")}
           </h3>
           <Link
             href={`/partner/${houseSlug}/orders`}
-            className="text-xs font-bold text-primary hover:text-primary-hover flex items-center gap-1 hover:underline"
+            className="text-xs font-semibold text-primary hover:text-primary-hover flex items-center gap-1 hover:underline"
           >
             <span>{t("viewAll")}</span>
             <ArrowRight className="size-3" />
@@ -81,7 +81,7 @@ export function PartnerTables({
         </div>
 
         {recentOrders.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-6 text-center">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 py-6 text-center">
             {t("noRecentOrders")}
           </p>
         ) : (
@@ -91,7 +91,7 @@ export function PartnerTables({
               return (
                 <div
                   key={ord.id}
-                  className="py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-3 text-xs hover:bg-surface/50 rounded-xl px-2 transition"
+                  className="py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-3 text-xs hover:bg-surface/50 rounded-lg px-2 transition"
                 >
                   <div className="space-y-0.5 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
@@ -102,19 +102,19 @@ export function PartnerTables({
                         {ord.code}
                       </Link>
                       <span
-                        className={`px-2 py-0.2 rounded-full text-[10px] font-bold border ${statusCfg.class}`}
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusCfg.class}`}
                       >
                         {statusCfg.label}
                       </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground truncate">
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 truncate">
                       {ord.customerFirstName} · {ord.neighborhoodName} ·{" "}
                       {ord.itemsSummary || t("laundryArticlesLabel")}
                     </p>
                   </div>
 
                   <div className="text-right shrink-0 min-w-[70px]">
-                    <span className="font-black text-heading block">
+                    <span className="font-bold text-heading block font-mono">
                       {formatAmount(ord.totalDue)}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
@@ -133,11 +133,11 @@ export function PartnerTables({
       </div>
 
       {/* 2. Collectes à venir */}
-      <div className="p-4 sm:p-5 rounded-3xl bg-card space-y-4">
+      <div className="p-4 sm:p-5 rounded-2xl bg-card space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Truck className="size-4 text-primary" />
-            <h3 className="font-display font-bold text-sm sm:text-base text-heading">
+            <h3 className="font-display font-bold text-base sm:text-lg text-heading tracking-tight">
               {t("upcomingPickupsTitle")}
             </h3>
           </div>
@@ -147,7 +147,7 @@ export function PartnerTables({
         </div>
 
         {upcomingPickups.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-6 text-center">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 py-6 text-center">
             {t("noUpcomingPickups")}
           </p>
         ) : (
@@ -164,18 +164,18 @@ export function PartnerTables({
               return (
                 <div
                   key={ord.id}
-                  className="py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-3 text-xs hover:bg-surface/50 rounded-xl px-2 transition"
+                  className="py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-3 text-xs hover:bg-slate-50 dark:hover:bg-accent/40 rounded-lg px-2 transition"
                 >
                   <div className="space-y-0.5 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                       <span className="font-mono font-bold text-heading">
                         {ord.code}
                       </span>
-                      <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-primary-soft text-primary border border-primary/20">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
                         {t("slotFrom", { time: slotTime })}
                       </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 truncate flex items-center gap-1">
                       <MapPin className="size-3 text-muted-foreground shrink-0" />
                       <span>
                         {ord.neighborhoodName} · {ord.customerFirstName}

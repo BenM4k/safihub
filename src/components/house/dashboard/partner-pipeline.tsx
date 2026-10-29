@@ -92,14 +92,14 @@ export function PartnerPipeline({ metrics, houseSlug }: PartnerPipelineProps) {
         </h2>
         <Link
           href={`/partner/${houseSlug}/orders`}
-          className="text-xs font-bold text-primary hover:text-primary-hover flex items-center gap-1 hover:underline"
+          className="text-xs font-semibold text-primary hover:text-primary-hover flex items-center gap-1 hover:underline"
         >
           <span>{t("allOrdersLink")}</span>
           <ArrowRight className="size-3" />
         </Link>
       </div>
 
-      <div className="bg-card rounded-3xl p-2 sm:p-3 font-sans">
+      <div className="bg-card rounded-2xl p-2 sm:p-3 font-sans">
         {/* Desktop Layout (>=768px): 1 continuous row with clean vertical separators */}
         <div className="hidden md:flex md:items-stretch">
           {cards.map((c, idx) => (

@@ -54,15 +54,15 @@ export function CoverageFilterBar({
         )}
       </div>
 
-      {/* Filter Tabs: Sleek segmented pills */}
-      <div className="inline-flex items-center p-1 rounded-xl bg-muted/50 border border-border/50 gap-1 overflow-x-auto shrink-0 self-start sm:self-auto">
+      {/* Filter Tabs: Sleek borderless tabs */}
+      <div className="inline-flex items-center gap-1 overflow-x-auto shrink-0 self-start sm:self-auto">
         <button
           type="button"
           onClick={() => onFilterStatusChange("all")}
-          className={`px-3 py-1.5 text-xs whitespace-nowrap rounded-lg transition-all cursor-pointer ${
+          className={`px-3 py-1.5 text-xs whitespace-nowrap transition-all cursor-pointer bg-transparent border-0 shadow-none ${
             filterStatus === "all"
-              ? "bg-card text-heading font-bold shadow-2xs border border-border/60"
-              : "text-muted-foreground hover:text-heading font-medium"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           }`}
         >
           {t("filterAll", { count: counts.all })}
@@ -71,10 +71,10 @@ export function CoverageFilterBar({
         <button
           type="button"
           onClick={() => onFilterStatusChange("served")}
-          className={`px-3 py-1.5 text-xs whitespace-nowrap rounded-lg transition-all cursor-pointer ${
+          className={`px-3 py-1.5 text-xs whitespace-nowrap transition-all cursor-pointer bg-transparent border-0 shadow-none ${
             filterStatus === "served"
-              ? "bg-card text-primary font-bold shadow-2xs border border-border/60"
-              : "text-muted-foreground hover:text-heading font-medium"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           }`}
         >
           {t("filterServed", { count: counts.served })}
@@ -83,10 +83,10 @@ export function CoverageFilterBar({
         <button
           type="button"
           onClick={() => onFilterStatusChange("not_served")}
-          className={`px-3 py-1.5 text-xs whitespace-nowrap rounded-lg transition-all cursor-pointer ${
+          className={`px-3 py-1.5 text-xs whitespace-nowrap transition-all cursor-pointer bg-transparent border-0 shadow-none ${
             filterStatus === "not_served"
-              ? "bg-card text-heading font-bold shadow-2xs border border-border/60"
-              : "text-muted-foreground hover:text-heading font-medium"
+              ? "text-primary font-bold"
+              : "text-muted-foreground hover:text-foreground font-medium"
           }`}
         >
           {t("filterNotServed", { count: counts.notServed })}

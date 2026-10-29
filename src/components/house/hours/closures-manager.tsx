@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { PlusCircle, Sparkles } from "lucide-react";
+import { PlusCircle, Sparkles, AlertCircle, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   addHouseClosureAction,
@@ -10,7 +10,6 @@ import {
   importHouseHolidaysAction,
 } from "@/actions/house.actions";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/shared";
 import { ClosuresList } from "./closures-list";
 import { ClosureModal } from "./closure-modal";
@@ -99,11 +98,11 @@ export function ClosuresManager({
   }
 
   return (
-    <div className="space-y-4 py-2">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border pb-3">
+    <div className="space-y-4 py-2 font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-3">
         <div>
-          <h2 className="text-base font-bold text-heading font-display">{t("closuresTitle")}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{t("closuresSubtitle")}</p>
+          <h2 className="text-base sm:text-lg font-bold text-heading font-display tracking-tight">{t("closuresTitle")}</h2>
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{t("closuresSubtitle")}</p>
         </div>
 
         <div className="flex items-center gap-2 self-stretch sm:self-auto flex-wrap sm:flex-nowrap">
@@ -113,7 +112,7 @@ export function ClosuresManager({
             size="sm"
             onClick={() => setIsHolidaysModalOpen(true)}
             disabled={isPending}
-            className="h-10 sm:h-9 px-3.5 rounded-xl text-xs font-semibold border-primary text-primary hover:bg-primary/10 cursor-pointer flex-1 sm:flex-initial"
+            className="h-10 sm:h-9 px-3.5 rounded-lg text-xs font-semibold border-primary/40 text-primary hover:bg-primary/10 cursor-pointer flex-1 sm:flex-initial"
           >
             <Sparkles className="size-3.5 mr-1.5 text-primary" aria-hidden="true" />
             <span>{t("importHolidays")}</span>
@@ -127,7 +126,7 @@ export function ClosuresManager({
               setIsAddModalOpen(true);
             }}
             disabled={isPending}
-            className="h-10 sm:h-9 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer flex-1 sm:flex-initial"
+            className="h-10 sm:h-9 px-4 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer flex-1 sm:flex-initial"
           >
             <PlusCircle className="size-3.5 mr-1.5" aria-hidden="true" />
             <span>{t("addClosure")}</span>
@@ -136,14 +135,19 @@ export function ClosuresManager({
       </div>
 
       {errorMsg && (
-        <Alert variant="destructive" className="py-2.5">
-          <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
-        </Alert>
+        <div className="p-3.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3 text-xs font-bold">
+          <AlertCircle className="size-4 shrink-0 text-destructive mt-0.5" />
+          <div>{errorMsg}</div>
+        </div>
       )}
       {successMsg && (
-        <Alert className="py-2.5 bg-success-soft text-success border-success/30">
-          <AlertDescription className="text-xs font-semibold text-success">{successMsg}</AlertDescription>
-        </Alert>
+        <div
+          role="status"
+          className="p-3.5 rounded-xl bg-success-soft/30 border border-success/20 text-success flex items-start gap-3 text-xs font-bold"
+        >
+          <Check className="size-4 shrink-0 text-success mt-0.5" />
+          <div>{successMsg}</div>
+        </div>
       )}
 
       <ClosuresList

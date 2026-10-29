@@ -4,15 +4,12 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ChevronDown,
-  ChevronUp,
-  Coins,
   MapPin,
   CheckSquare2,
   Square,
   MinusSquare,
 } from "lucide-react";
 import type { HouseCoverageWithLimitsItem } from "@/dal";
-import { formatMoney } from "@/lib/cash-formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QuartierRowItem } from "./quartier-row-item";
@@ -62,19 +59,12 @@ export function CommuneGroupCard({
     return isUniform ? first : null;
   }, [items]);
 
-  // Group delivery fee
-  const deliveryFee = useMemo(() => {
-    const itemWithFee = items.find((i) => i.deliveryFee != null);
-    if (!itemWithFee || itemWithFee.deliveryFee == null) return null;
-    return formatMoney(itemWithFee.deliveryFee, itemWithFee.deliveryFeeCurrency || "CDF");
-  }, [items]);
-
   const displayName = zoneName.toLowerCase().startsWith("commune")
     ? zoneName
     : `Commune de ${zoneName}`;
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-xs divide-y divide-border/60">
+    <div className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-card divide-y divide-border/60">
       {/* Group Header */}
       <div className="p-3.5 sm:p-4 bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -85,13 +75,14 @@ export function CommuneGroupCard({
             onClick={() => setIsExpanded(!isExpanded)}
             aria-expanded={isExpanded}
             aria-label={t(isExpanded ? "collapseZoneAria" : "expandZoneAria", { zone: displayName })}
-            className="size-8 rounded-lg p-0 text-muted-foreground hover:text-heading hover:bg-muted/40 transition shrink-0"
+            className="size-8 rounded-lg p-0 text-muted-foreground hover:text-heading hover:bg-muted/40 transition shrink-0 cursor-pointer"
           >
-            {isExpanded ? (
-              <ChevronUp className="size-4" aria-hidden="true" />
-            ) : (
-              <ChevronDown className="size-4" aria-hidden="true" />
-            )}
+            <ChevronDown
+              className={`size-4 transition-transform duration-500 ease-in-out ${
+                isExpanded ? "rotate-180" : ""
+              }`}
+              aria-hidden="true"
+            />
           </Button>
 
           <div className="space-y-0.5 min-w-0">
@@ -103,16 +94,8 @@ export function CommuneGroupCard({
 
               {/* Constant distance level badge */}
               {constantDistanceLevel != null && (
-                <Badge variant="outline" className="text-[11px] font-semibold bg-primary-soft text-primary border-primary/20">
+                <Badge variant="outline" className="text-[11px] font-semibold rounded-full bg-primary-soft text-primary border-primary/20">
                   {getDistanceLevelShortLabel(constantDistanceLevel)}
-                </Badge>
-              )}
-
-              {/* Delivery Fee badge */}
-              {deliveryFee && (
-                <Badge variant="outline" className="inline-flex items-center gap-1 text-[11px] font-semibold bg-success-soft text-success border-success/30">
-                  <Coins className="size-3" aria-hidden="true" />
-                  <span>{t("deliveryFeeLabel", { fee: deliveryFee })}</span>
                 </Badge>
               )}
             </div>
@@ -136,7 +119,7 @@ export function CommuneGroupCard({
               size="sm"
               disabled={disabled}
               onClick={() => onToggleGroup(items)}
-              className="h-9 px-3 text-xs font-semibold rounded-xl text-heading hover:text-primary hover:bg-muted/40 transition min-h-[36px] flex items-center cursor-pointer"
+              className="h-9 px-3 text-xs font-semibold rounded-lg text-heading hover:text-primary hover:bg-muted/40 transition min-h-[36px] flex items-center cursor-pointer"
               title={triState === "all" ? t("deselectAll") : t("selectAll")}
             >
               {triState === "all" ? (
@@ -160,10 +143,12 @@ export function CommuneGroupCard({
         )}
       </div>
 
-      {/* Quartiers list with smooth 300ms CSS grid accordion */}
+      {/* Quartiers list with smooth 500ms CSS grid accordion */}
       <div
-        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
-          isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        className={`grid transition-all duration-500 ease-in-out ${
+          isExpanded
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0 pointer-events-none"
         }`}
       >
         <div className="overflow-hidden">

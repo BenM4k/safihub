@@ -3,7 +3,6 @@
 import { AlertCircle, AlertTriangle, Check, Loader2, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared";
 import { ScheduleRow } from "./schedule-row";
@@ -55,16 +54,16 @@ export function HoursEditor({
   );
 
   return (
-    <div className="space-y-4 py-2 border-b border-border pb-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border pb-3">
+    <div className="space-y-4 py-2 border-b border-border/60 pb-6 font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/60 pb-3">
         <div>
-          <h2 className="text-base font-bold text-heading font-display">{t("weeklySchedule")}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{t("subtitle")}</p>
+          <h2 className="text-base sm:text-lg font-bold text-heading font-display tracking-tight">{t("weeklySchedule")}</h2>
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{t("subtitle")}</p>
         </div>
 
         {isDirty && (
-          <Badge variant="outline" className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-warning-soft text-warning border-warning/30 self-start sm:self-auto">
-            <span className="size-1.5 rounded-full bg-warning animate-ping" />
+          <Badge variant="outline" className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-amber-500/10 text-amber-900 dark:text-amber-200 border-amber-500/20 self-start sm:self-auto rounded-full">
+            <span className="size-1.5 rounded-full bg-amber-500 animate-ping" />
             <span>{t("unsavedChanges")}</span>
           </Badge>
         )}
@@ -78,7 +77,7 @@ export function HoursEditor({
       />
 
       <form onSubmit={handleInitiateSave} className="space-y-4">
-        <div className="border border-border/60 rounded-2xl overflow-hidden divide-y divide-border/60 shadow-xs bg-card">
+        <div className="rounded-2xl overflow-hidden divide-y divide-border/60 shadow-xs bg-card">
           <div className="hidden sm:flex items-center justify-between px-4 py-2.5 bg-muted/20 border-b border-border/60 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
             <span className="min-w-40">{t("day")}</span>
             <div className="flex items-center gap-12 pr-6">
@@ -101,26 +100,29 @@ export function HoursEditor({
         </div>
 
         {!hasAtLeastOneOpenDay && (
-          <Alert variant="destructive" className="py-2.5 bg-warning-soft text-warning border-warning/30 rounded-xl">
-            <AlertTriangle className="size-4 text-warning" />
-            <AlertDescription className="text-xs font-semibold text-warning">
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 flex items-start gap-3 text-xs font-medium">
+            <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+            <div>
               {t("atLeastOneOpenDay")}
-            </AlertDescription>
-          </Alert>
+            </div>
+          </div>
         )}
 
         <div aria-live="polite" className="space-y-2">
           {errorMsg && (
-            <Alert variant="destructive" className="py-2.5 rounded-xl">
-              <AlertCircle className="size-4" />
-              <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
-            </Alert>
+            <div className="p-3.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3 text-xs font-bold">
+              <AlertCircle className="size-4 shrink-0 text-destructive mt-0.5" />
+              <div>{errorMsg}</div>
+            </div>
           )}
           {successMsg && (
-            <Alert className="py-2.5 bg-success-soft text-success border-success/30 rounded-xl">
-              <Check className="size-4 text-success" />
-              <AlertDescription className="text-xs font-semibold text-success">{successMsg}</AlertDescription>
-            </Alert>
+            <div
+              role="status"
+              className="p-3.5 rounded-xl bg-success-soft/30 border border-success/20 text-success flex items-start gap-3 text-xs font-bold"
+            >
+              <Check className="size-4 shrink-0 text-success mt-0.5" />
+              <div>{successMsg}</div>
+            </div>
           )}
         </div>
 
@@ -128,7 +130,7 @@ export function HoursEditor({
           <Button
             type="submit"
             disabled={isPending || !isValid || !isDirty}
-            className="h-11 sm:h-10 px-6 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer w-full sm:w-auto min-w-36 disabled:opacity-50"
+            className="h-10 sm:h-9 px-6 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-xs cursor-pointer w-full sm:w-auto min-w-36 disabled:opacity-50"
           >
             {isPending ? (
               <Loader2 className="size-4 animate-spin mr-2" aria-hidden="true" />
@@ -139,7 +141,7 @@ export function HoursEditor({
           </Button>
 
           {isDirty && (
-            <span className="text-xs text-muted-foreground hidden sm:inline">
+            <span className="text-xs text-slate-600 dark:text-slate-300 hidden sm:inline">
               {t("rememberToSave")}
             </span>
           )}

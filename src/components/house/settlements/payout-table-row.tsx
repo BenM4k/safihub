@@ -62,18 +62,18 @@ export function PayoutTableRow({
 
       <TableCell className="text-foreground font-medium">{methodLabel}</TableCell>
 
-      <TableCell className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-right tabular-nums text-sm">
+      <TableCell className="font-mono font-bold text-success text-right tabular-nums text-sm">
         +{formatMoney(p.amount, "CDF")}
       </TableCell>
 
       <TableCell className="text-center">
         {p.status === "paid" ? (
-          <Badge variant="outline" className="gap-1 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-2xs font-semibold">
+          <Badge variant="outline" className="gap-1 rounded-full border-success/30 text-success bg-success-soft/30 text-2xs font-semibold">
             <CheckCircle2 className="size-3" />
             <span>{t("statusPaid")}</span>
           </Badge>
         ) : (
-          <Badge variant="destructive" className="gap-1 text-2xs font-bold">
+          <Badge variant="destructive" className="gap-1 rounded-full text-2xs font-bold">
             <XCircle className="size-3" />
             <span>{t("statusCancelled")}</span>
           </Badge>
@@ -90,7 +90,7 @@ export function PayoutTableRow({
           >
             <span>{p.reference}</span>
             {copiedRef === p.reference ? (
-              <Check className="size-3 text-emerald-600 dark:text-emerald-400" />
+              <Check className="size-3 text-success" />
             ) : (
               <Copy className="size-3" />
             )}

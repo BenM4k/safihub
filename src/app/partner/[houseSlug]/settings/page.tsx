@@ -36,7 +36,7 @@ export default async function PartnerSettingsPage({ params }: PageProps) {
 
   if (!settingsRes.ok) {
     return (
-      <div className="p-6 bg-destructive-soft text-destructive rounded-2xl border border-destructive/30 text-sm">
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-4 text-xs font-medium text-destructive">
         {settingsRes.error}
       </div>
     );

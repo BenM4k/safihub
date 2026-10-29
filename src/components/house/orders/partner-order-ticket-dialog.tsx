@@ -37,15 +37,15 @@ export function PartnerOrderTicketDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm rounded-2xl bg-card border border-border p-5 space-y-4 font-sans">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <Printer className="size-4 text-primary" />
-            <DialogTitle className="text-sm font-bold text-heading">
+            <DialogTitle className="font-display font-bold text-base text-heading">
               {t("ticketTitle")}
             </DialogTitle>
           </div>
-          <DialogDescription className="text-xs text-muted-foreground">
+          <DialogDescription className="text-xs text-muted-foreground font-mono">
             {t("orderCodeLabel", { code: order.shortReference })}
           </DialogDescription>
         </DialogHeader>
@@ -97,14 +97,14 @@ export function PartnerOrderTicketDialog({
             type="button"
             variant="ghost"
             onClick={onClose}
-            className="flex-1 sm:flex-initial text-xs font-semibold cursor-pointer h-10 sm:h-9"
+            className="flex-1 sm:flex-initial text-xs font-semibold cursor-pointer h-10 sm:h-9 rounded-lg"
           >
             {t("close")}
           </Button>
           <Button
             type="button"
             onClick={handlePrint}
-            className="flex-1 sm:flex-initial bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs cursor-pointer h-10 sm:h-9"
+            className="flex-1 sm:flex-initial bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs cursor-pointer h-10 sm:h-9 rounded-lg"
           >
             <Printer className="size-3.5 mr-1.5" />
             <span>{t("ticketPrintBtn")}</span>

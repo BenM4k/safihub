@@ -19,13 +19,13 @@ export default function PartnerSettlementsError({
   }, [error]);
 
   return (
-    <div className="p-8 bg-destructive-light/40 border border-destructive-base/30 rounded-2xl text-center space-y-4 max-w-lg mx-auto my-12">
-      <div className="size-12 rounded-full bg-destructive-light text-destructive-base flex items-center justify-center mx-auto border border-destructive-base/20">
+    <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-8 text-center space-y-4 max-w-lg mx-auto my-12">
+      <div className="size-12 rounded-full bg-destructive/20 text-destructive flex items-center justify-center mx-auto border border-destructive/30">
         <AlertCircle className="size-6" />
       </div>
 
       <div className="space-y-1">
-        <h2 className="text-base font-bold text-heading">
+        <h2 className="text-base font-bold text-foreground">
           {t("errorTitle")}
         </h2>
         <p className="text-xs text-muted-foreground leading-relaxed">
@@ -36,7 +36,7 @@ export default function PartnerSettlementsError({
       <Button
         type="button"
         onClick={reset}
-        className="min-h-[44px] px-4 text-xs font-semibold gap-2"
+        className="min-h-[44px] px-4 text-xs font-semibold gap-2 rounded-lg"
       >
         <RefreshCw className="size-3.5" />
         <span>{t("retryButton")}</span>

@@ -5,11 +5,6 @@ import { useTranslations } from "next-intl";
 import { ShieldCheck, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -24,52 +19,53 @@ export function PricingFreezeNotice() {
 
   return (
     <>
-      <Alert className="bg-primary/5 border-primary/20 text-foreground">
-        <ShieldCheck className="size-4 text-primary" />
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 w-full">
+      <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 text-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="size-5 shrink-0 text-primary mt-0.5" aria-hidden="true" />
           <div>
-            <AlertTitle className="font-bold text-heading text-xs">
+            <h4 className="font-display font-bold text-xs sm:text-sm text-heading tracking-tight">
               {t("freezeNoticeTitle")}
-            </AlertTitle>
-            <AlertDescription className="text-xs text-muted-foreground mt-0.5">
+            </h4>
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
               {t("freezeNoticeDesc")}
-            </AlertDescription>
+            </p>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowModal(true)}
-            className="text-primary hover:bg-primary/10 font-semibold text-xs shrink-0 self-start sm:self-center h-7 px-2.5 gap-1.5"
-          >
-            <Info className="size-3.5" aria-hidden="true" />
-            <span>{t("learnMore")}</span>
-          </Button>
         </div>
-      </Alert>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setShowModal(true)}
+          className="rounded-lg border-primary/30 text-primary hover:bg-primary/10 font-semibold text-xs shrink-0 self-start sm:self-center h-8 px-3 gap-1.5"
+        >
+          <Info className="size-3.5" aria-hidden="true" />
+          <span>{t("learnMore")}</span>
+        </Button>
+      </div>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-2xl bg-card border border-border p-6 space-y-4 font-sans">
           <DialogHeader>
             <div className="flex items-center gap-2 text-primary font-bold">
-              <ShieldCheck className="size-5" aria-hidden="true" />
-              <DialogTitle className="text-base font-bold text-heading font-display">
+              <ShieldCheck className="size-5 text-primary shrink-0" aria-hidden="true" />
+              <DialogTitle className="text-base sm:text-lg font-bold text-heading font-display tracking-tight">
                 {t("freezeLearnMoreTitle")}
               </DialogTitle>
             </div>
-            <DialogDescription className="text-xs text-muted-foreground leading-relaxed pt-1">
+            <DialogDescription className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
               {t("freezeLearnMoreDesc")}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="p-3 bg-muted/40 rounded-xl border border-border text-xs text-muted-foreground space-y-1.5 my-2">
+          <div className="p-4 bg-muted/40 rounded-xl border border-border/60 text-xs text-slate-600 dark:text-slate-300 space-y-2.5 my-2">
             <div>
               <strong className="text-heading font-semibold block text-xs">
                 • {t("freezePastOrdersTitle")}
               </strong>
               <span>{t("freezePastOrdersDesc")}</span>
             </div>
-            <div className="pt-1 border-t border-border/50">
+            <div className="pt-2 border-t border-border/50">
               <strong className="text-heading font-semibold block text-xs">
                 • {t("freezeNewOrdersTitle")}
               </strong>
@@ -83,7 +79,7 @@ export function PricingFreezeNotice() {
               variant="outline"
               size="sm"
               onClick={() => setShowModal(false)}
-              className="text-xs font-semibold"
+              className="text-xs font-semibold rounded-lg h-9 px-4"
             >
               {t("close")}
             </Button>

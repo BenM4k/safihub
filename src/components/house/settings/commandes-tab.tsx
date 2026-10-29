@@ -4,7 +4,6 @@ import { useState, useEffect, useTransition } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { updateHouseCommandesAction } from "@/actions/house.actions";
 import { StickySaveBar } from "@/components/house/catalogue/sticky-save-bar";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { PauseDialog } from "./pause-dialog";
 import { AvailabilitySection } from "./commandes/availability-section";
@@ -115,16 +114,22 @@ export function CommandesTab({
   return (
     <div className="space-y-6">
       {errorMsg && (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertDescription className="text-xs font-semibold">{errorMsg}</AlertDescription>
-        </Alert>
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/20 bg-destructive-soft/30 p-3 sm:p-4 text-xs font-semibold text-destructive flex items-center gap-2.5"
+        >
+          <AlertCircle className="size-4 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
       )}
       {successMsg && (
-        <Alert className="border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300">
-          <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
-          <AlertDescription className="text-xs font-semibold">{successMsg}</AlertDescription>
-        </Alert>
+        <div
+          role="status"
+          className="rounded-xl border border-success/20 bg-success-soft/30 p-3 sm:p-4 text-xs font-semibold text-success flex items-center gap-2.5"
+        >
+          <CheckCircle2 className="size-4 shrink-0" />
+          <span>{successMsg}</span>
+        </div>
       )}
 
       {/* 1. Pause Switch Box */}

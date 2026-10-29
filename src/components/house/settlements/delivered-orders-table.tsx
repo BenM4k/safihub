@@ -78,7 +78,7 @@ export function DeliveredOrdersTable({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("searchDeliveredOrders")}
-            className="pl-9 h-10 sm:h-9 rounded-xl text-base sm:text-xs"
+            className="pl-9 h-10 sm:h-9 rounded-xl border-input text-base sm:text-xs"
             aria-label={t("searchDeliveredOrdersAria")}
           />
         </div>
@@ -110,7 +110,7 @@ export function DeliveredOrdersTable({
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block rounded-xl border border-border/80 overflow-hidden">
+      <div className="hidden md:block rounded-2xl bg-card shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -159,7 +159,7 @@ export function DeliveredOrdersTable({
                 <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
                   -{formatMoney(totals.commission, "CDF")}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums text-emerald-600 dark:text-emerald-400 text-sm font-black">
+                <TableCell className="text-right font-mono tabular-nums text-success text-sm font-black">
                   {formatMoney(totals.net, "CDF")}
                 </TableCell>
                 <TableCell colSpan={3} />

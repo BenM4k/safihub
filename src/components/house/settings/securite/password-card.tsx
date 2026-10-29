@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/services/auth/auth-client";
 
@@ -66,23 +65,29 @@ export function PasswordCard() {
         </div>
         <div>
           <h2 className="text-sm font-bold text-foreground">Modifier le mot de passe</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
             Utilisez un mot de passe robuste d&apos;au moins 8 caractères.
           </p>
         </div>
       </div>
 
       {passwordError && (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertDescription className="text-xs font-semibold">{passwordError}</AlertDescription>
-        </Alert>
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/20 bg-destructive-soft/30 p-2.5 text-xs font-semibold text-destructive flex items-center gap-2"
+        >
+          <AlertCircle className="size-3.5 shrink-0" />
+          <span>{passwordError}</span>
+        </div>
       )}
       {passwordSuccess && (
-        <Alert className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-          <CheckCircle2 className="size-4 text-emerald-600" />
-          <AlertDescription className="text-xs font-semibold">{passwordSuccess}</AlertDescription>
-        </Alert>
+        <div
+          role="status"
+          className="rounded-xl border border-success/20 bg-success-soft/30 p-2.5 text-xs font-semibold text-success flex items-center gap-2"
+        >
+          <CheckCircle2 className="size-3.5 shrink-0" />
+          <span>{passwordSuccess}</span>
+        </div>
       )}
 
       <form onSubmit={handlePasswordSubmit} className="space-y-3.5 max-w-md text-xs">
@@ -93,7 +98,7 @@ export function PasswordCard() {
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             required
-            className="text-base sm:text-xs h-10 min-h-[40px] rounded-xl"
+            className="text-base sm:text-xs h-10 min-h-[40px] rounded-lg border-input"
           />
         </Field>
 
@@ -105,7 +110,7 @@ export function PasswordCard() {
             onChange={(e) => setNewPassword(e.target.value)}
             required
             minLength={8}
-            className="text-base sm:text-xs h-10 min-h-[40px] rounded-xl"
+            className="text-base sm:text-xs h-10 min-h-[40px] rounded-lg border-input"
           />
         </Field>
 
@@ -119,7 +124,7 @@ export function PasswordCard() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={8}
-            className="text-base sm:text-xs h-10 min-h-[40px] rounded-xl"
+            className="text-base sm:text-xs h-10 min-h-[40px] rounded-lg border-input"
           />
         </Field>
 
@@ -137,7 +142,7 @@ export function PasswordCard() {
         <Button
           type="submit"
           disabled={isChangingPassword}
-          className="h-10 sm:h-9 px-4 bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs cursor-pointer w-full sm:w-auto"
+          className="h-10 sm:h-9 px-4 bg-primary text-primary-foreground font-bold text-xs rounded-lg shadow-xs cursor-pointer w-full sm:w-auto"
         >
           {isChangingPassword ? (
             <>

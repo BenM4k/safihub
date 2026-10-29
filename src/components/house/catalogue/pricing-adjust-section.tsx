@@ -46,14 +46,14 @@ export function PricingAdjustSection({
             value={percentValue}
             onChange={(e) => setPercentValue(e.target.value)}
             placeholder={t("percentPlaceholder")}
-            className="h-10 sm:h-9 text-base sm:text-xs flex-1 font-mono rounded-xl"
+            className="h-10 sm:h-9 text-base sm:text-xs flex-1 font-mono rounded-lg border-input"
           />
           <Button
             type="button"
             size="sm"
             disabled={!percentValue}
             onClick={handleApplyPercent}
-            className="h-10 sm:h-9 text-xs font-semibold px-3.5 shrink-0 rounded-xl"
+            className="h-10 sm:h-9 text-xs font-semibold px-3.5 shrink-0 rounded-lg cursor-pointer"
           >
             {t("apply")}
           </Button>
@@ -74,14 +74,14 @@ export function PricingAdjustSection({
             value={fixedPriceValue}
             onChange={(e) => setFixedPriceValue(e.target.value)}
             placeholder={t("fixedPricePlaceholder")}
-            className="h-10 sm:h-9 text-base sm:text-xs flex-1 font-mono rounded-xl"
+            className="h-10 sm:h-9 text-base sm:text-xs flex-1 font-mono rounded-lg border-input"
           />
           <Button
             type="button"
             size="sm"
             disabled={!fixedPriceValue}
             onClick={handleApplyFixedPrice}
-            className="h-10 sm:h-9 text-xs font-semibold px-3.5 shrink-0 rounded-xl"
+            className="h-10 sm:h-9 text-xs font-semibold px-3.5 shrink-0 rounded-lg cursor-pointer"
           >
             {t("apply")}
           </Button>

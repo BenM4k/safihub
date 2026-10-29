@@ -20,7 +20,7 @@ export function ActiveFiltersChips({
   const t = useTranslations("house.catalogue");
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground pt-1">
+    <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 pt-1 font-sans">
       <span className="text-[11px] font-semibold text-heading">
         {t("activeFilters")}
       </span>
@@ -30,7 +30,7 @@ export function ActiveFiltersChips({
           <button
             type="button"
             onClick={() => onFilterChange({ ...filters, search: "" })}
-            className="hover:text-destructive text-primary/70 hover:text-primary"
+            className="hover:text-destructive text-primary/70 hover:text-primary cursor-pointer"
             aria-label={t("removeSearchFilter")}
           >
             <X className="size-3" />
@@ -43,7 +43,7 @@ export function ActiveFiltersChips({
           <button
             type="button"
             onClick={() => onFilterChange({ ...filters, category: "all" })}
-            className="hover:text-destructive text-primary/70 hover:text-primary"
+            className="hover:text-destructive text-primary/70 hover:text-primary cursor-pointer"
             aria-label={t("removeCategoryFilter")}
           >
             <X className="size-3" />
@@ -60,7 +60,7 @@ export function ActiveFiltersChips({
           <button
             type="button"
             onClick={() => onFilterChange({ ...filters, status: "all" })}
-            className="hover:text-destructive text-primary/70 hover:text-primary"
+            className="hover:text-destructive text-primary/70 hover:text-primary cursor-pointer"
             aria-label={t("removeStatusFilter")}
           >
             <X className="size-3" />
@@ -70,7 +70,7 @@ export function ActiveFiltersChips({
       <button
         type="button"
         onClick={onClearFilters}
-        className="text-[11px] font-semibold text-primary hover:underline ml-1"
+        className="text-[11px] font-semibold text-primary hover:underline ml-1 cursor-pointer"
       >
         {t("clearFilters")}
       </button>

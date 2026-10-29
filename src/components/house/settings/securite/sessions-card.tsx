@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { AlertCircle, CheckCircle2, Laptop, LogOut, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/shared";
 import { revokeOtherSessionsAction } from "@/actions/house.actions";
 import type { UserSessionDTO } from "@/dal";
@@ -41,7 +40,7 @@ export function SessionsCard({ sessions, currentSessionId }: SessionsCardProps) 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-sm font-bold text-foreground">Sessions actives</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
             Appareils actuellement connectés à votre compte pressing.
           </p>
         </div>
@@ -52,7 +51,7 @@ export function SessionsCard({ sessions, currentSessionId }: SessionsCardProps) 
             variant="outline"
             size="sm"
             onClick={() => setIsRevokeDialogOpen(true)}
-            className="text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 h-10 sm:h-9 px-4 rounded-xl cursor-pointer"
+            className="text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 h-10 sm:h-9 px-4 rounded-lg cursor-pointer"
           >
             <LogOut className="size-3.5 mr-1.5" />
             <span>Déconnecter les autres appareils</span>
@@ -61,19 +60,25 @@ export function SessionsCard({ sessions, currentSessionId }: SessionsCardProps) 
       </div>
 
       {sessionSuccess && (
-        <Alert className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-          <CheckCircle2 className="size-4 text-emerald-600" />
-          <AlertDescription className="text-xs font-semibold">{sessionSuccess}</AlertDescription>
-        </Alert>
+        <div
+          role="status"
+          className="rounded-xl border border-success/20 bg-success-soft/30 p-2.5 text-xs font-semibold text-success flex items-center gap-2"
+        >
+          <CheckCircle2 className="size-3.5 shrink-0" />
+          <span>{sessionSuccess}</span>
+        </div>
       )}
       {sessionError && (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertDescription className="text-xs font-semibold">{sessionError}</AlertDescription>
-        </Alert>
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/20 bg-destructive-soft/30 p-2.5 text-xs font-semibold text-destructive flex items-center gap-2"
+        >
+          <AlertCircle className="size-3.5 shrink-0" />
+          <span>{sessionError}</span>
+        </div>
       )}
 
-      <div className="divide-y divide-border/60 rounded-2xl border border-border/60 overflow-hidden bg-card shadow-xs">
+      <div className="divide-y divide-border/60 rounded-2xl overflow-hidden bg-card shadow-xs">
         {sessions.map((sess) => {
           const isCurrent = sess.id === currentSessionId;
           const isMobile = sess.userAgent?.toLowerCase().includes("mobile");
@@ -95,13 +100,13 @@ export function SessionsCard({ sessions, currentSessionId }: SessionsCardProps) 
                     {isCurrent && (
                       <Badge
                         variant="outline"
-                        className="text-[10px] font-bold text-emerald-600 border-emerald-500/30 bg-emerald-500/10"
+                        className="text-[10px] font-bold text-success border-success/30 bg-success-soft/30 rounded-full"
                       >
                         Cette session
                       </Badge>
                     )}
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
                     IP : {sess.ipAddress || "Bukavu / RDC"} • Connecté le{" "}
                     {new Date(sess.createdAt).toLocaleDateString("fr-FR")}
                   </p>

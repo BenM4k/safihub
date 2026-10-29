@@ -10,12 +10,12 @@ export function QuietHoursCard() {
           <Moon className="size-4 text-primary" />
           <h2 className="text-sm font-bold text-foreground">Plage de repos (Heures calmes)</h2>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-slate-600 dark:text-slate-300">
           En dehors des heures d&apos;ouverture (21h00 à 07h00), les sonneries répétées sont automatiquement atténuées.
         </p>
       </section>
 
-      <div className="p-3.5 rounded-xl border border-dashed border-border/80 bg-muted/20 flex items-start gap-3 text-xs text-muted-foreground">
+      <div className="p-3.5 rounded-xl border border-dashed border-border/80 bg-muted/20 flex items-start gap-3 text-xs text-slate-600 dark:text-slate-300">
         <Sparkles className="size-4 text-primary shrink-0 mt-0.5" />
         <div className="leading-relaxed">
           <strong className="text-foreground block">Canaux externes (SMS, WhatsApp, E-mail) :</strong>

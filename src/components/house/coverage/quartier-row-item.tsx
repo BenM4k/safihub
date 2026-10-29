@@ -48,7 +48,7 @@ export function QuartierRowItem({
           {/* Distance Level Tag */}
           <Badge
             variant="outline"
-            className={`text-[11px] font-semibold border ${
+            className={`text-[11px] font-semibold border rounded-full ${
               isAllowed
                 ? "bg-secondary text-secondary-foreground border-border"
                 : "bg-destructive-soft text-destructive border-destructive/20"
@@ -61,7 +61,7 @@ export function QuartierRowItem({
           {isDirty && (
             <Badge
               variant="outline"
-              className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-warning-soft text-warning border-warning/30 animate-in fade-in duration-150"
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold rounded-full bg-warning-soft text-warning border-warning/30 animate-in fade-in duration-150"
             >
               <span className="size-1.5 rounded-full bg-warning animate-pulse" aria-hidden="true" />
               <span>{t("modifiedBadge")}</span>
@@ -72,7 +72,7 @@ export function QuartierRowItem({
           {(item.activeOrdersCount ?? 0) > 0 && (
             <Badge
               variant="outline"
-              className="inline-flex items-center gap-1 text-[11px] font-bold bg-primary-soft text-primary border-primary/20"
+              className="inline-flex items-center gap-1 text-[11px] font-bold rounded-full bg-primary-soft text-primary border-primary/20"
             >
               <Clock className="size-3" aria-hidden="true" />
               <span>{t("activeOrdersCount", { count: item.activeOrdersCount ?? 0 })}</span>
@@ -83,7 +83,7 @@ export function QuartierRowItem({
           {(item.orders30dCount ?? 0) > 0 && (
             <Badge
               variant="outline"
-              className="inline-flex items-center gap-1 text-[11px] font-medium bg-muted/40 text-muted-foreground border-border"
+              className="inline-flex items-center gap-1 text-[11px] font-medium rounded-full bg-muted/40 text-muted-foreground border-border"
             >
               <ShoppingBag className="size-3" aria-hidden="true" />
               <span>{t("orders30d", { count: item.orders30dCount ?? 0 })}</span>
@@ -94,7 +94,7 @@ export function QuartierRowItem({
           {!isCovered && (item.demandCount ?? 0) > 0 && (
             <Badge
               variant="outline"
-              className="inline-flex items-center gap-1 text-[11px] font-semibold bg-success-soft text-success border-success/30"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold rounded-full bg-success-soft text-success border-success/30"
             >
               <Users className="size-3" aria-hidden="true" />
               <span>{t("demandWaiting", { count: item.demandCount ?? 0 })}</span>

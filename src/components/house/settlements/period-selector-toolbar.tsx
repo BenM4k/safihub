@@ -78,11 +78,11 @@ export function PeriodSelectorToolbar({
   }).format(new Date(periodEnd));
 
   return (
-    <div className="py-2 space-y-3 border-b border-border/60 pb-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div className="py-2 space-y-3 border-b border-border/60 pb-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
         {/* Period Filter Buttons: text-primary, no bg */}
         <div
-          className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 scrollbar-none"
+          className="flex items-center gap-0.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none"
           role="tablist"
           aria-label={t("periodSelectorAria")}
         >
@@ -95,7 +95,7 @@ export function PeriodSelectorToolbar({
                 role="tab"
                 aria-selected={isSelected}
                 onClick={() => handleSelectPeriod(opt.key)}
-                className={`px-3 py-1.5 text-xs transition shrink-0 min-h-[40px] flex items-center justify-center cursor-pointer bg-transparent border-0 shadow-none ${
+                className={`px-2.5 py-1 text-xs transition shrink-0 h-8 flex items-center justify-center cursor-pointer bg-transparent border-0 shadow-none ${
                   isSelected
                     ? "text-primary font-bold"
                     : "text-muted-foreground hover:text-foreground font-medium"
@@ -108,10 +108,10 @@ export function PeriodSelectorToolbar({
         </div>
 
         {/* Right side: Active date label & shadcn DropdownMenu for Export */}
-        <div className="flex items-center gap-3 justify-between md:justify-end">
-          <div className="text-2xs text-muted-foreground flex items-center gap-1.5">
-            <Calendar className="size-3.5 text-primary shrink-0" aria-hidden="true" />
-            <span className="font-medium text-foreground">
+        <div className="flex items-center gap-2.5 justify-between md:justify-end">
+          <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+            <Calendar className="size-3 text-primary/80 shrink-0" aria-hidden="true" />
+            <span className="font-normal text-muted-foreground">
               {startDateStr} — {endDateStr}
             </span>
           </div>
@@ -122,14 +122,14 @@ export function PeriodSelectorToolbar({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-10 sm:h-9 px-3.5 text-xs font-semibold gap-1.5 cursor-pointer rounded-xl"
+                className="h-8 px-2.5 text-xs font-medium gap-1.5 cursor-pointer rounded-lg border-border/70 hover:bg-muted/50 shadow-none"
                 aria-label={t("exportAria")}
               >
-                <Download className="size-3.5" aria-hidden="true" />
+                <Download className="size-3 text-muted-foreground" aria-hidden="true" />
                 <span>{t("export")}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 font-sans p-1.5 rounded-xl bg-card border border-border shadow-lift">
               <DropdownMenuItem
                 onClick={onOpenStatementModal}
                 className="cursor-pointer gap-2.5 text-xs font-medium"
@@ -141,14 +141,14 @@ export function PeriodSelectorToolbar({
                 onClick={() => onExportCsv("orders")}
                 className="cursor-pointer gap-2.5 text-xs font-medium"
               >
-                <FileSpreadsheet className="size-4 text-emerald-600 shrink-0" />
+                <FileSpreadsheet className="size-4 text-success shrink-0" />
                 <span>{t("ordersCsv")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => onExportCsv("payouts")}
                 className="cursor-pointer gap-2.5 text-xs font-medium"
               >
-                <FileSpreadsheet className="size-4 text-emerald-600 shrink-0" />
+                <FileSpreadsheet className="size-4 text-success shrink-0" />
                 <span>{t("payoutsCsv")}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -160,27 +160,31 @@ export function PeriodSelectorToolbar({
       {currentPeriod === "custom" && (
         <form
           onSubmit={handleApplyCustomDates}
-          className="pt-2 flex flex-wrap items-center gap-2.5 text-xs"
+          className="pt-2 grid grid-cols-2 sm:flex sm:items-center gap-3 sm:gap-2 text-xs font-sans"
         >
-          <span className="text-muted-foreground font-medium">{t("customFrom")}</span>
-          <Input
-            type="date"
-            value={customFrom}
-            onChange={(e) => setCustomFrom(e.target.value)}
-            className="w-auto h-10 sm:h-9 rounded-xl text-base sm:text-xs font-mono"
-            required
-            aria-label={t("startDateAria")}
-          />
-          <span className="text-muted-foreground font-medium">{t("customTo")}</span>
-          <Input
-            type="date"
-            value={customTo}
-            onChange={(e) => setCustomTo(e.target.value)}
-            className="w-auto h-10 sm:h-9 rounded-xl text-base sm:text-xs font-mono"
-            required
-            aria-label={t("endDateAria")}
-          />
-          <Button type="submit" size="sm" className="h-10 sm:h-9 px-4 text-xs font-semibold rounded-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-1.5">
+            <span className="text-muted-foreground font-medium text-[11px]">{t("customFrom")}</span>
+            <Input
+              type="date"
+              value={customFrom}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="w-full sm:w-auto h-8 rounded-lg text-xs font-mono border-input"
+              required
+              aria-label={t("startDateAria")}
+            />
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-1.5">
+            <span className="text-muted-foreground font-medium text-[11px]">{t("customTo")}</span>
+            <Input
+              type="date"
+              value={customTo}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="w-full sm:w-auto h-8 rounded-lg text-xs font-mono border-input"
+              required
+              aria-label={t("endDateAria")}
+            />
+          </div>
+          <Button type="submit" size="sm" className="col-span-2 sm:col-span-1 h-8 px-3 text-xs font-medium rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground shadow-none cursor-pointer">
             {t("apply")}
           </Button>
         </form>
