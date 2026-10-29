@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/services/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
   addCustomerAddress,
   editCustomerAddress,
@@ -39,6 +40,7 @@ export async function updateProfileAction(
     return { success: false, error: res.error };
   }
 
+  revalidateTag(CACHE_TAGS.userSession(user.id), "max");
   revalidatePath("/account");
   return { success: true, message: t("profileSuccess") };
 }

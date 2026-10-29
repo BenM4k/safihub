@@ -11,4 +11,6 @@ export const CACHE_TAGS = {
   courierMissions: (courierId: string) => `courier:missions:${courierId}`,
   adminDispatch: "admin:dispatch",
   adminCash: "admin:cash",
+  authSessions: "auth:sessions",
+  userSession: (userId: string) => `auth:user:${userId}`,
 } as const;

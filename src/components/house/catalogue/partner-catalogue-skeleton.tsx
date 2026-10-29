@@ -20,6 +20,23 @@ export function PartnerCatalogueSkeleton() {
         <Skeleton className="h-10 w-44 rounded-xl" />
       </div>
 
+      {/* Progress Card Skeleton */}
+      <div
+        data-tour-id="tour-catalogue-content"
+        className="space-y-4 sm:space-y-5 py-2"
+      >
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-4 w-44 rounded-md" />
+          <Skeleton className="h-4 w-28 rounded-md" />
+        </div>
+        <Skeleton className="h-2.5 w-full rounded-full" />
+        <div className="flex flex-wrap gap-2 pt-1">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-8 w-28 rounded-xl" />
+          ))}
+        </div>
+      </div>
+
       {/* Toolbar Skeleton */}
       <div className="flex flex-col sm:flex-row gap-3">
         <Skeleton className="h-10 w-full sm:max-w-xs rounded-xl" />

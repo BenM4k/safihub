@@ -1,10 +1,12 @@
 "use server";
 
 import { headers } from "next/headers";
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/services/auth/auth";
 import { getCurrentUser } from "@/services/auth/guards";
 import { clearUserMustChangePassword, getUserHouseMemberships } from "@/dal";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { rateLimitPasswordChange } from "@/services/abuse";
 import { err, ok, type Result } from "@/lib/result";
 import { evaluatePasswordStrength } from "@/lib/user-guardrails";
@@ -82,6 +84,7 @@ export async function changeForcedPasswordAction(
   // Clear mustChangePassword flag
   try {
     await clearUserMustChangePassword(user.id);
+    revalidateTag(CACHE_TAGS.userSession(user.id), "max");
   } catch {
     return err(
       "Votre mot de passe a bien été modifié mais la finalisation a échoué. Veuillez réessayer avec votre nouveau mot de passe comme mot de passe actuel et choisir un autre mot de passe.",

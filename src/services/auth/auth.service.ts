@@ -1,4 +1,5 @@
 import "server-only";
+import { revalidateTag } from "next/cache";
 import { auth } from "./auth";
 import {
   blockUserAccount,
@@ -13,9 +14,21 @@ import {
   updateUserRole,
   type GuestMergeResult,
 } from "@/dal";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { rateLimitLogin, rateLimitRegistration } from "@/services/abuse";
 import { err, ok, type Result } from "@/lib/result";
 import type { UserRole } from "./permissions";
+
+function safeRevalidateAuthCache(userId?: string): void {
+  try {
+    revalidateTag(CACHE_TAGS.authSessions, "max");
+    if (userId) {
+      revalidateTag(CACHE_TAGS.userSession(userId), "max");
+    }
+  } catch {
+    // No-op outside Next.js request context (e.g. unit tests)
+  }
+}
 
 
 export interface RegisterUserInput {
@@ -221,8 +234,10 @@ export async function logoutCustomer(headers?: Headers): Promise<Result<boolean>
         headers,
       });
     }
+    safeRevalidateAuthCache();
     return ok(true);
   } catch {
+    safeRevalidateAuthCache();
     return ok(true);
   }
 }
@@ -401,6 +416,7 @@ export async function adminBlockUser({
     return err(result.error);
   }
 
+  safeRevalidateAuthCache(targetUserId);
   return ok(result.value as unknown as Record<string, unknown>);
 }
 
@@ -425,6 +441,7 @@ export async function adminUnblockUser({
     return err(result.error);
   }
 
+  safeRevalidateAuthCache(targetUserId);
   return ok(result.value as unknown as Record<string, unknown>);
 }
 
@@ -454,6 +471,7 @@ export async function adminSetUserRole({
     return err(result.error);
   }
 
+  safeRevalidateAuthCache(targetUserId);
   return ok(result.value as unknown as Record<string, unknown>);
 }
 

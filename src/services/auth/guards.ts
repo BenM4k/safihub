@@ -1,5 +1,7 @@
+import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { cacheLife, cacheTag } from "next/cache";
 import { auth } from "./auth";
 import {
   checkUserHouseAccess,
@@ -7,6 +9,7 @@ import {
   getUserHouseMemberships,
   type HouseMembershipInfo,
 } from "@/dal";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { err, ok, type Result } from "@/lib/result";
 import type { UserRole } from "./permissions";
 
@@ -259,40 +262,107 @@ export async function guardHouseRoute(
   return result.value;
 }
 
+function mapSessionToAuthenticatedUser(
+  rawSessionUser: Record<string, unknown>
+): AuthenticatedUser | null {
+  const userRole = (rawSessionUser.role as UserRole) || "customer";
+  const userStatus = (rawSessionUser.status as string) || "active";
+  const isBanned = Boolean(rawSessionUser.banned);
+
+  if (userStatus === "blocked" || isBanned) {
+    return null;
+  }
+
+  return {
+    id: String(rawSessionUser.id),
+    email: String(rawSessionUser.email),
+    name: String(rawSessionUser.name),
+    role: userRole,
+    status: userStatus,
+    isGuest: Boolean(rawSessionUser.isGuest),
+    contactPhone: (rawSessionUser.contactPhone as string) || null,
+    mustChangePassword: Boolean(rawSessionUser.mustChangePassword),
+  };
+}
+
+async function resolveCachedUserByCookieHeader(
+  cookieHeader: string
+): Promise<AuthenticatedUser | null> {
+  "use cache";
+  try {
+    cacheLife("minutes");
+    cacheTag(CACHE_TAGS.authSessions);
+  } catch {
+    // No-op outside Next.js workUnitAsyncStorage (e.g. unit tests)
+  }
+
+  try {
+    const reqHeaders = new Headers({ cookie: cookieHeader });
+    const session = await auth.api.getSession({ headers: reqHeaders });
+    if (!session?.user) {
+      return null;
+    }
+
+    const user = mapSessionToAuthenticatedUser(
+      session.user as Record<string, unknown>
+    );
+    if (user) {
+      try {
+        cacheTag(CACHE_TAGS.userSession(user.id));
+      } catch {
+        // No-op outside Next.js workUnitAsyncStorage
+      }
+    }
+    return user;
+  } catch {
+    return null;
+  }
+}
+
+const getRequestCurrentUser = cache(async (): Promise<AuthenticatedUser | null> => {
+  try {
+    const cookieStore = await cookies();
+    const hasSessionCookie = cookieStore
+      .getAll()
+      .some((c) => c.name.includes("better-auth.session_token"));
+
+    if (!hasSessionCookie) {
+      return null;
+    }
+
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+
+    return await resolveCachedUserByCookieHeader(cookieHeader);
+  } catch {
+    return null;
+  }
+});
+
 /**
  * Retrieves the currently authenticated user if a valid session exists.
+ * Deduplicated per-request via React `cache()` and cached across refreshes via `"use cache"`.
  * Returns null if unauthenticated, blocked, or banned.
  */
 export async function getCurrentUser(
   options?: { headers?: Headers }
 ): Promise<AuthenticatedUser | null> {
+  if (!options?.headers) {
+    return getRequestCurrentUser();
+  }
+
   try {
-    const reqHeaders = options?.headers ?? (await headers());
-    const session = await auth.api.getSession({ headers: reqHeaders });
+    const session = await auth.api.getSession({ headers: options.headers });
 
     if (!session?.user) {
       return null;
     }
 
-    const rawUser = session.user as Record<string, unknown>;
-    const userRole = (rawUser.role as UserRole) || "customer";
-    const userStatus = (rawUser.status as string) || "active";
-    const isBanned = Boolean(rawUser.banned);
-
-    if (userStatus === "blocked" || isBanned) {
-      return null;
-    }
-
-    return {
-      id: session.user.id,
-      email: session.user.email,
-      name: session.user.name,
-      role: userRole,
-      status: userStatus,
-      isGuest: Boolean(rawUser.isGuest),
-      contactPhone: (rawUser.contactPhone as string) || null,
-      mustChangePassword: Boolean(rawUser.mustChangePassword),
-    };
+    return mapSessionToAuthenticatedUser(
+      session.user as Record<string, unknown>
+    );
   } catch {
     return null;
   }

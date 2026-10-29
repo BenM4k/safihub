@@ -10,6 +10,14 @@ export default function PartnerOrdersLoading() {
           <Skeleton className="h-4 w-72" />
         </div>
       </div>
+      <div
+        data-tour-id="tour-orders-stages"
+        className="flex items-center gap-2 overflow-hidden py-1"
+      >
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Skeleton key={i} className="h-9 w-28 rounded-xl shrink-0" />
+        ))}
+      </div>
       <PartnerOrdersSkeleton />
     </div>
   );

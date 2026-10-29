@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { Navbar } from "@/components/home/header/navbar";
 import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { HeroSection } from "@/components/home/hero/hero-section";
 import { TrustBanner } from "@/components/home/trust-banner/trust-banner";
@@ -40,9 +39,7 @@ export default async function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary-soft selection:text-primary">
-      <Suspense fallback={<Navbar user={null} />}>
-        <SessionNavbar />
-      </Suspense>
+      <SessionNavbar />
       <main className="flex-1">
         <Suspense
           fallback={

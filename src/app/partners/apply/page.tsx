@@ -6,7 +6,7 @@ import { getCachedNeighborhoods } from "@/lib/cached-data";
 import { PartnerApplicationForm } from "@/components/partner/partner-application-form";
 import { PartnerBenefits } from "@/components/partner/partner-benefits";
 import { PartnerApplySkeleton } from "@/components/partner/partner-apply-skeleton";
-import { Navbar } from "@/components/home/header/navbar";
+import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { Footer } from "@/components/home/footer/footer";
 
 export const metadata: Metadata = {
@@ -58,7 +58,7 @@ async function PartnerApplyContent() {
 export default function PartnerApplyPage() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50/50">
-      <Navbar variant="solid" />
+      <SessionNavbar variant="solid" />
       <main className="flex-1 py-12 sm:py-16">
         <Suspense fallback={<PartnerApplySkeleton />}>
           <PartnerApplyContent />

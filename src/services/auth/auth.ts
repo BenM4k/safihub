@@ -47,6 +47,10 @@ export const auth = betterAuth({
   }),
   session: {
     freshAge: 0,
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes signed cookie cache to avoid DB round-trips on refreshes
+    },
   },
   emailAndPassword: {
     enabled: true,

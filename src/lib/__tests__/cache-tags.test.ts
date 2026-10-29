@@ -8,6 +8,7 @@ describe("CACHE_TAGS", () => {
     expect(CACHE_TAGS.housesList).toBe("houses:list");
     expect(CACHE_TAGS.adminDispatch).toBe("admin:dispatch");
     expect(CACHE_TAGS.adminCash).toBe("admin:cash");
+    expect(CACHE_TAGS.authSessions).toBe("auth:sessions");
   });
 
   it("formats entity-scoped cache tags accurately", () => {
@@ -15,6 +16,7 @@ describe("CACHE_TAGS", () => {
     expect(CACHE_TAGS.house("pressing-lac-kivu")).toBe("house:pressing-lac-kivu");
     expect(CACHE_TAGS.order("ord-456")).toBe("order:ord-456");
     expect(CACHE_TAGS.courierMissions("cour-789")).toBe("courier:missions:cour-789");
+    expect(CACHE_TAGS.userSession("usr-001")).toBe("auth:user:usr-001");
   });
 });
 

@@ -48,7 +48,21 @@ export function useTourDriver({
 
   useEffect(() => {
     pathnameRef.current = pathname;
-  }, [pathname]);
+    if (!isActive || !driverRef.current) return;
+    const step = steps[currentStepIndexRef.current];
+    if (!step?.targetTourId) return;
+
+    const timer = setTimeout(() => {
+      if (!driverRef.current) return;
+      const el = document.querySelector<HTMLElement>(
+        `[data-tour-id="${step.targetTourId}"]`
+      );
+      if (el) {
+        driverRef.current.refresh();
+      }
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [pathname, isActive, steps]);
 
   useEffect(() => {
     onTourEndRef.current = onTourEnd;
@@ -99,6 +113,12 @@ export function useTourDriver({
       const step = steps[stepIdx];
       setActiveStepIndex(stepIdx);
 
+      // Hide previous spotlight immediately before starting async route/DOM transition
+      if (driverRef.current) {
+        driverRef.current.destroy();
+        driverRef.current = null;
+      }
+
       updateOnboardingStepAction({
         stepId: step.id,
         status: "in_progress",
@@ -109,7 +129,7 @@ export function useTourDriver({
         router.push(targetPath);
       }
 
-      const targetEl = await waitForTourElement(step.targetTourId, 3000);
+      const targetEl = await waitForTourElement(step.targetTourId, 8000);
 
       const { driver } = await import("driver.js");
       await import("@/styles/tour.css");
@@ -121,11 +141,6 @@ export function useTourDriver({
         : isLast
           ? t("finish")
           : step.actionCta ?? t("next");
-
-      if (driverRef.current) {
-        driverRef.current.destroy();
-        driverRef.current = null;
-      }
 
       const driverObj = driver({
         animate: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
