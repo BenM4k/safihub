@@ -1222,6 +1222,18 @@ export async function startDeliveryMissionAtomic(
 
     if (!order) return { ok: false, error: "Commande introuvable" };
 
+    const isOrderEligible =
+      order.status === "delivery_assigned" ||
+      order.status === "ready" ||
+      order.status === "delivery_slot_confirmed";
+
+    if (!isOrderEligible) {
+      return {
+        ok: false,
+        error: `Impossible de démarrer la livraison : la commande est au statut '${order.status}'`,
+      };
+    }
+
     await tx
       .update(schema.missions)
       .set({
@@ -1235,30 +1247,24 @@ export async function startDeliveryMissionAtomic(
       order.deliveryConfirmationCode ||
       Math.floor(1000 + Math.random() * 9000).toString();
 
-    if (
-      order.status === "delivery_assigned" ||
-      order.status === "ready" ||
-      order.status === "delivery_slot_confirmed"
-    ) {
-      await tx
-        .update(schema.orders)
-        .set({
-          status: "delivery_in_progress",
-          deliveryConfirmationCode: deliveryCode,
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.orders.id, order.id));
+    await tx
+      .update(schema.orders)
+      .set({
+        status: "delivery_in_progress",
+        deliveryConfirmationCode: deliveryCode,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.orders.id, order.id));
 
-      await tx.insert(schema.orderEvents).values({
-        orderId: order.id,
-        type: "status_change",
-        fromStatus: order.status,
-        toStatus: "delivery_in_progress",
-        actorId: courierId,
-        actorRole: "courier",
-        note: "Coursier en route pour la livraison",
-      });
-    }
+    await tx.insert(schema.orderEvents).values({
+      orderId: order.id,
+      type: "status_change",
+      fromStatus: order.status,
+      toStatus: "delivery_in_progress",
+      actorId: courierId,
+      actorRole: "courier",
+      note: "Coursier en route pour la livraison",
+    });
 
     return { ok: true };
   });

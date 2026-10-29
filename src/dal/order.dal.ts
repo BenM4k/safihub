@@ -313,20 +313,27 @@ export async function getHouseOrderEventsRestricted(
   const rows = await getOrderEvents(orderId);
   return rows
     .filter((ev) => {
-      if (ev.actorRole === "admin" && ev.type === "note") {
-        return false;
-      }
       const category =
         ev.payload && typeof ev.payload === "object"
           ? (ev.payload as Record<string, unknown>).category
           : undefined;
+
+      // Workshop issue flags must remain visible to the laundry house
+      if (category === "house_issue_flag") {
+        return true;
+      }
+
+      if (ev.actorRole === "admin" && ev.type === "note") {
+        return false;
+      }
+
       return category !== "pressing_relance" && category !== "admin_note";
     })
     .map((ev) => ({
       ...ev,
       actorName:
         ev.actorRole === "customer" && ev.actorName
-          ? ev.actorName.trim().split(" ")[0] || "Client"
+          ? ev.actorName.trim().split(/\s+/)[0] || "Client"
           : ev.actorName,
     }));
 }
@@ -1008,7 +1015,7 @@ export async function getHouseOrdersRestricted(
     const { customerRawName, ...rest } = r;
     return {
       ...rest,
-      customerFirstName: customerRawName.trim().split(" ")[0] || "Client",
+      customerFirstName: customerRawName.trim().split(/\s+/)[0] || "Client",
     };
   });
 }
@@ -1035,7 +1042,7 @@ export function projectHouseFacingOrder<T extends { customerRawName?: string }>(
     typeof record.customerRawName === "string" ? record.customerRawName : "";
   return {
     ...copy,
-    customerFirstName: rawName.trim().split(" ")[0] || "Client",
+    customerFirstName: rawName.trim().split(/\s+/)[0] || "Client",
   } as Omit<
     T,
     "customerPhone" | "streetAddress" | "landmark" | "trackingToken" | "customerRawName"
@@ -1093,7 +1100,7 @@ export async function getHouseOrderDetailRestricted(
   const { customerRawName, ...rest } = row;
   return {
     ...rest,
-    customerFirstName: customerRawName.trim().split(" ")[0] || "Client",
+    customerFirstName: customerRawName.trim().split(/\s+/)[0] || "Client",
   };
 }
 
@@ -1494,10 +1501,13 @@ export async function getHouseDashboardMetrics(
     ]);
 
   const upcomingPickups: HouseOrderListItemRecord[] = upcomingPickupsRaw.map(
-    (r) => ({
-      ...r,
-      customerFirstName: r.customerRawName.trim().split(" ")[0] || "Client",
-    }),
+    (r) => {
+      const { customerRawName, ...rest } = r;
+      return {
+        ...rest,
+        customerFirstName: customerRawName.trim().split(/\s+/)[0] || "Client",
+      };
+    },
   );
 
   const countsByStatus = new Map(statusCounts.map((r) => [r.status, r.count]));

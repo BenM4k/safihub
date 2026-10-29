@@ -255,11 +255,20 @@ export async function getExpiredPhotosForPruning(
  */
 export async function getPhotoByStorageKey(
   storageKey: string,
-): Promise<{ id: string; orderId: string } | null> {
+): Promise<{
+  id: string;
+  orderId: string;
+  orderItemId: string | null;
+  missionId: string | null;
+  disputeId: string | null;
+} | null> {
   const [photo] = await db
     .select({
       id: schema.orderPhotos.id,
       orderId: schema.orderPhotos.orderId,
+      orderItemId: schema.orderPhotos.orderItemId,
+      missionId: schema.orderPhotos.missionId,
+      disputeId: schema.orderPhotos.disputeId,
     })
     .from(schema.orderPhotos)
     .where(

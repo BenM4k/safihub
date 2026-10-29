@@ -291,6 +291,15 @@ export async function recordUploadedPhotoService(params: {
     // Check if this storageKey has already been recorded (idempotent retry)
     const existingPhoto = await getPhotoByStorageKey(params.storageKey);
     if (existingPhoto) {
+      const isMismatch =
+        existingPhoto.orderId !== params.orderId ||
+        (params.orderItemId && existingPhoto.orderItemId && existingPhoto.orderItemId !== params.orderItemId) ||
+        (params.missionId && existingPhoto.missionId && existingPhoto.missionId !== params.missionId) ||
+        (params.disputeId && existingPhoto.disputeId && existingPhoto.disputeId !== params.disputeId);
+
+      if (isMismatch) {
+        return err("Cette clé de photo est déjà enregistrée avec des associations différentes");
+      }
       return ok({ photoId: existingPhoto.id, storageKey: params.storageKey });
     }
 
