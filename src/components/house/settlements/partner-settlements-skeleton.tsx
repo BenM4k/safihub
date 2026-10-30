@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 
-export default function PartnerSettlementsLoading() {
+export function PartnerSettlementsSkeleton() {
   return (
     <div
       className="space-y-6 sm:space-y-8 pb-24 sm:pb-28 font-sans"
@@ -126,3 +126,4 @@ export default function PartnerSettlementsLoading() {
     </div>
   );
 }
+

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import type { PartnerPayoutDTO } from "@/types/partner-settlements";
 import { EmptyState } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -32,6 +33,7 @@ export function PayoutsTable({
 }: PayoutsTableProps) {
   const t = useTranslations("house.settlements");
   const [search, setSearch] = useState("");
+  const [localSearch, setLocalSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState<string>("all");
 
   const methodLabels: Record<string, string> = {
@@ -60,21 +62,42 @@ export function PayoutsTable({
     { key: "cash", label: t("methodCash") },
   ];
 
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSearch(localSearch.trim());
+  }
+
   return (
     <div className="space-y-4 py-2">
       {/* Search and filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <Input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("searchPayouts")}
-            className="pl-9 h-10 sm:h-9 rounded-xl border-input text-base sm:text-xs"
-            aria-label={t("searchPayoutsAria")}
-          />
-        </div>
+        <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm flex items-center gap-1.5">
+          <div className="relative flex-1">
+            <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Input
+              type="search"
+              value={localSearch}
+              onChange={(e) => {
+                const val = e.target.value;
+                setLocalSearch(val);
+                if (val === "" && search !== "") {
+                  setSearch("");
+                }
+              }}
+              placeholder={t("searchPayouts")}
+              className="pl-9 h-10 sm:h-9 rounded-xl border-input text-base sm:text-xs"
+              aria-label={t("searchPayoutsAria")}
+            />
+          </div>
+          <Button
+            type="submit"
+            size="sm"
+            className="h-10 sm:h-9 px-3 sm:px-3.5 rounded-xl text-xs font-semibold shrink-0 gap-1.5"
+          >
+            <Search className="size-3.5" />
+            <span className="hidden sm:inline">{t("searchButton")}</span>
+          </Button>
+        </form>
 
         {/* Method filter tabs: text-primary, no bg */}
         <div

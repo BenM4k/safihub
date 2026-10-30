@@ -3,6 +3,7 @@ import "server-only";
 import { err, ok, type Result } from "@/lib/result";
 import {
   getPartnerOrdersRestricted,
+  getPartnerOrdersCountRestricted,
   getPartnerOrderTabCountsRestricted,
   recordPartnerOrderHandover,
   reportPartnerOrderIssue,
@@ -31,6 +32,25 @@ export async function listPartnerOrders(
   try {
     const orders = await getPartnerOrdersRestricted(houseId, filters);
     return ok(orders);
+  } catch (error) {
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Erreur lors du chargement des commandes.",
+    );
+  }
+}
+
+export async function listPartnerOrdersWithCount(
+  houseId: string,
+  filters: PartnerOrderQueryFilters = {},
+): Promise<Result<{ orders: PartnerOrderListItemDTO[]; totalCount: number }>> {
+  try {
+    const [orders, totalCount] = await Promise.all([
+      getPartnerOrdersRestricted(houseId, filters),
+      getPartnerOrdersCountRestricted(houseId, filters),
+    ]);
+    return ok({ orders, totalCount });
   } catch (error) {
     return err(
       error instanceof Error

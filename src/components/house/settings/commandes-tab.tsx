@@ -5,6 +5,7 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { updateHouseCommandesAction } from "@/actions/house.actions";
 import { StickySaveBar } from "@/components/house/catalogue/sticky-save-bar";
 import { Separator } from "@/components/ui/separator";
+import { useSettingsDirty } from "./settings-context";
 import { PauseDialog } from "./pause-dialog";
 import { AvailabilitySection } from "./commandes/availability-section";
 import { CapacitySection } from "./commandes/capacity-section";
@@ -56,10 +57,12 @@ export function CommandesTab({
     minimumOrderAmount !== initialMinAmount;
 
   const dirtyCount = isDirty ? 1 : 0;
+  const { setIsDirty } = useSettingsDirty();
 
   useEffect(() => {
     onDirtyChange?.(isDirty);
-  }, [isDirty, onDirtyChange]);
+    setIsDirty(isDirty);
+  }, [isDirty, onDirtyChange, setIsDirty]);
 
   function handleTogglePause() {
     if (isPaused) {

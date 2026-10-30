@@ -13,11 +13,14 @@ import { getCachedNeighborhoods } from "@/lib/cached-data";
 import type { NeighborhoodRecord } from "@/dal";
 
 async function HomeUserSections({
-  neighborhoods,
+  neighborhoodsPromise,
 }: {
-  neighborhoods: NeighborhoodRecord[];
+  neighborhoodsPromise: Promise<NeighborhoodRecord[]>;
 }) {
-  const user = await getCurrentUser();
+  const [user, neighborhoods] = await Promise.all([
+    getCurrentUser(),
+    neighborhoodsPromise,
+  ]);
   return (
     <>
       <HeroSection user={user} neighborhoods={neighborhoods} />
@@ -34,8 +37,8 @@ async function HomeUserSections({
  * - Solid palette with brand royal indigo #2824D5, slate #101828 (zero gradients)
  * - Calibrated typography and mobile-first responsive layout
  */
-export default async function HomePage() {
-  const neighborhoods = await getCachedNeighborhoods();
+export default function HomePage() {
+  const neighborhoodsPromise = getCachedNeighborhoods();
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary-soft selection:text-primary">
@@ -44,13 +47,13 @@ export default async function HomePage() {
         <Suspense
           fallback={
             <>
-              <HeroSection user={null} neighborhoods={neighborhoods} />
+              <HeroSection user={null} />
               <TrustBanner user={null} />
               <ServicesTabs user={null} />
             </>
           }
         >
-          <HomeUserSections neighborhoods={neighborhoods} />
+          <HomeUserSections neighborhoodsPromise={neighborhoodsPromise} />
         </Suspense>
         <HowItWorks />
         <ProductsCatalogue />

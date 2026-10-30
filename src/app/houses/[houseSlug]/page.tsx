@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { Navbar } from "@/components/home/header/navbar";
+import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { getCurrentUser } from "@/services/auth";
 import {
   getCachedCustomerHouseProfile,
@@ -144,19 +144,16 @@ async function HouseDetailContent({ params }: HouseDetailPageProps) {
           </span>
         </div>
       )}
-      <Navbar variant="solid" user={user} />
-      <main className="flex-1">
-        <HouseCatalogueView
-          data={data}
-          initialReviews={reviewsData.reviews}
-          stats={stats}
-          eligibleOrders={eligibleOrders}
-          neighborhoods={neighborhoods}
-          zoneFees={zoneFeesMap}
-          usdExchangeRate={usdExchangeRate}
-          isAuthenticated={Boolean(user)}
-        />
-      </main>
+      <HouseCatalogueView
+        data={data}
+        initialReviews={reviewsData.reviews}
+        stats={stats}
+        eligibleOrders={eligibleOrders}
+        neighborhoods={neighborhoods}
+        zoneFees={zoneFeesMap}
+        usdExchangeRate={usdExchangeRate}
+        isAuthenticated={Boolean(user)}
+      />
     </>
   );
 }
@@ -166,18 +163,12 @@ export default function CustomerHouseDetailPage({
 }: HouseDetailPageProps) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Suspense
-        fallback={
-          <>
-            <Navbar variant="solid" user={null} />
-            <main className="flex-1">
-              <HouseDetailSkeleton />
-            </main>
-          </>
-        }
-      >
-        <HouseDetailContent params={params} />
-      </Suspense>
+      <SessionNavbar variant="solid" />
+      <main className="flex-1">
+        <Suspense fallback={<HouseDetailSkeleton />}>
+          <HouseDetailContent params={params} />
+        </Suspense>
+      </main>
     </div>
   );
 }

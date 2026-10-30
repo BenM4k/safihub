@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import type { CoverageFilterStatus } from "./types";
 
 interface CoverageFilterBarProps {
@@ -25,34 +27,68 @@ export function CoverageFilterBar({
   counts,
 }: CoverageFilterBarProps) {
   const t = useTranslations("house.coverage");
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+  const [prevSearch, setPrevSearch] = useState(searchQuery);
+
+  if (prevSearch !== searchQuery) {
+    setPrevSearch(searchQuery);
+    setLocalSearch(searchQuery);
+  }
+
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    onSearchChange(localSearch.trim());
+  }
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
-      {/* Search Input */}
-      <div className="relative flex-1 max-w-sm">
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
-          aria-hidden="true"
-        />
-        <Input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder={t("searchPlaceholder")}
-          className="pl-9 h-10 sm:h-9 text-base sm:text-xs bg-card rounded-xl border-input focus-visible:border-primary shadow-2xs"
-          aria-label={t("searchPlaceholder")}
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => onSearchChange("")}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-heading p-1 rounded-md transition"
-            aria-label={t("clearSearch")}
-          >
-            <X className="size-3.5" />
-          </button>
-        )}
-      </div>
+      {/* Search Input with Button */}
+      <form
+        onSubmit={handleSearchSubmit}
+        className="relative flex-1 max-w-sm flex items-center gap-1.5"
+      >
+        <div className="relative flex-1">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
+            aria-hidden="true"
+          />
+          <Input
+            type="text"
+            value={localSearch}
+            onChange={(e) => {
+              const val = e.target.value;
+              setLocalSearch(val);
+              if (val === "" && searchQuery !== "") {
+                onSearchChange("");
+              }
+            }}
+            placeholder={t("searchPlaceholder")}
+            className="pl-9 pr-8 h-10 sm:h-9 text-base sm:text-xs bg-card rounded-xl border-input focus-visible:border-primary shadow-2xs"
+            aria-label={t("searchPlaceholder")}
+          />
+          {localSearch && (
+            <button
+              type="button"
+              onClick={() => {
+                setLocalSearch("");
+                onSearchChange("");
+              }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-heading p-1 rounded-md transition"
+              aria-label={t("clearSearch")}
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+        </div>
+        <Button
+          type="submit"
+          size="sm"
+          className="h-10 sm:h-9 px-3 sm:px-3.5 rounded-xl text-xs font-semibold shrink-0 gap-1.5"
+        >
+          <Search className="size-3.5" />
+          <span className="hidden sm:inline">{t("searchButton")}</span>
+        </Button>
+      </form>
 
       {/* Filter Tabs: Sleek borderless tabs */}
       <div className="inline-flex items-center gap-1 overflow-x-auto shrink-0 self-start sm:self-auto">

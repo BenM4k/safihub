@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { guardHouseRoute } from "@/services/auth";
 import { getPartnerSettlements } from "@/services/house";
 import { SettlementsView } from "@/components/house/settlements/settlements-view";
+import { PartnerSettlementsSkeleton } from "@/components/house/settlements/partner-settlements-skeleton";
 import type { PeriodType } from "@/types/partner-settlements";
 
 interface PageProps {
@@ -11,10 +13,15 @@ interface PageProps {
   searchParams: Promise<{ period?: string; from?: string; to?: string }>;
 }
 
-export default async function PartnerSettlementsPage({
-  params,
-  searchParams,
-}: PageProps) {
+export async function generateMetadata({ params }: PageProps) {
+  const { houseSlug } = await params;
+  return {
+    title: `Règlements et versements — SafiHub Partner (${houseSlug})`,
+    description: "Suivez votre solde à recevoir, vos commandes livrées et l'historique des versements reçus.",
+  };
+}
+
+async function PartnerSettlementsContent({ params, searchParams }: PageProps) {
   const { houseSlug } = await params;
   const authCtx = await guardHouseRoute({ houseSlug });
   const houseId = authCtx.houseId;
@@ -54,7 +61,7 @@ export default async function PartnerSettlementsPage({
   const data = settlementsRes.value;
 
   return (
-    <div className="space-y-6 sm:space-y-8 pb-24 sm:pb-28 font-sans">
+    <>
       <div className="border-b border-border/60 pb-5">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-heading font-display tracking-tight">
           {t("title")}
@@ -65,6 +72,19 @@ export default async function PartnerSettlementsPage({
       </div>
 
       <SettlementsView data={data} />
+    </>
+  );
+}
+
+export default function PartnerSettlementsPage({
+  params,
+  searchParams,
+}: PageProps) {
+  return (
+    <div className="space-y-6 sm:space-y-8 pb-24 sm:pb-28 font-sans">
+      <Suspense fallback={<PartnerSettlementsSkeleton />}>
+        <PartnerSettlementsContent params={params} searchParams={searchParams} />
+      </Suspense>
     </div>
   );
 }

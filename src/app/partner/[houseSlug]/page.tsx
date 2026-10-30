@@ -1,9 +1,10 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { AlertCircle } from "lucide-react";
 import { guardHouseRoute } from "@/services/auth";
-import { getHouseDashboardData } from "@/services/house";
-import { getHouseChecklistDerivation } from "@/dal";
+import { getHouseBannerData } from "@/services/house";
+import { getWaitingAcceptanceCount, getHouseChecklistDerivation } from "@/dal";
 import { PartnerDashboardView } from "@/components/house/dashboard/partner-dashboard-view";
+import { PartnerDashboardSkeleton } from "@/components/house/dashboard/partner-dashboard-skeleton";
 
 interface PageProps {
   params: Promise<{ houseSlug: string }>;
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-export default async function PartnerDashboardPage({ params }: PageProps) {
+async function PartnerDashboardContent({ params }: PageProps) {
   const { houseSlug } = await params;
   const authCtx = await guardHouseRoute({ houseSlug });
   const houseId = authCtx.houseId;
@@ -26,28 +27,35 @@ export default async function PartnerDashboardPage({ params }: PageProps) {
     notFound();
   }
 
-  const [dashboardRes, checklist] = await Promise.all([
-    getHouseDashboardData(houseId),
+  // Fetch common data shared across multiple dashboard components in parent:
+  // - house: used by PartnerBanner, PartnerDashboardInteractive, and PartnerContextualActions
+  // - waitingAcceptanceCount: used by PartnerDashboardInteractive, AcceptanceQueue, PartnerKpiRow, PartnerPipeline
+  // - checklist: used by SetupChecklistCard
+  const [bannerRes, waitingAcceptanceCount, checklist] = await Promise.all([
+    getHouseBannerData(houseId),
+    getWaitingAcceptanceCount(houseId),
     getHouseChecklistDerivation(houseId),
   ]);
 
-  if (!dashboardRes.ok) {
-    return (
-      <div className="p-4 sm:p-5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3">
-        <AlertCircle className="size-5 shrink-0 mt-0.5 text-destructive" />
-        <div className="text-xs sm:text-sm leading-relaxed">
-          <strong className="text-destructive font-semibold block mb-1">Erreur de chargement</strong>
-          <p>{dashboardRes.error}</p>
-        </div>
-      </div>
-    );
+  if (!bannerRes.ok) {
+    notFound();
   }
 
   return (
     <PartnerDashboardView
-      initialMetrics={dashboardRes.value}
+      house={bannerRes.value}
+      houseId={houseId}
       houseSlug={houseSlug}
+      waitingAcceptanceCount={waitingAcceptanceCount}
       checklist={checklist}
     />
+  );
+}
+
+export default function PartnerDashboardPage({ params }: PageProps) {
+  return (
+    <Suspense fallback={<PartnerDashboardSkeleton />}>
+      <PartnerDashboardContent params={params} />
+    </Suspense>
   );
 }

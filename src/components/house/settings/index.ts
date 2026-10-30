@@ -1,5 +1,7 @@
 export * from "./types";
 export * from "./settings-container";
+export * from "./settings-context";
+export * from "./settings-sections";
 export * from "./settings-nav";
 export * from "./commandes-tab";
 export * from "./pause-dialog";

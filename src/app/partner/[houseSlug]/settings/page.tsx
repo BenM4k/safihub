@@ -1,22 +1,44 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { guardHouseRoute } from "@/services/auth";
-import {
-  getMasterItems,
-  getMasterFabrics,
-  getHouseCatalogueItems,
-  getHouseStaff,
-  getUserActiveSessions,
-} from "@/dal";
-import { getNextPayoutDate } from "@/dal/partner-settlements.dal";
-import { getHouseSettings } from "@/services/house";
+import { getHouseById, getHouseExclusions, getHouseStaff } from "@/dal";
 import { SettingsContainer } from "@/components/house/settings";
+import { SettingsTabRouter } from "@/components/house/settings/settings-sections";
+import {
+  PartnerSettingsSkeleton,
+  PartnerSettingsTabSkeleton,
+} from "@/components/house/settings/partner-settings-skeleton";
+import type { SettingsSection } from "@/components/house/settings/types";
 
 interface PageProps {
   params: Promise<{ houseSlug: string }>;
+  searchParams?: Promise<{ section?: string }>;
 }
 
-export default async function PartnerSettingsPage({ params }: PageProps) {
+export async function generateMetadata({ params }: PageProps) {
   const { houseSlug } = await params;
+  return {
+    title: `Paramètres de l'atelier — SafiHub Partner (${houseSlug})`,
+    description: "Gérez le profil de votre pressing, les exclusions de linge, l'équipe et vos préférences.",
+  };
+}
+
+const VALID_SECTIONS = new Set<SettingsSection>([
+  "profil",
+  "commandes",
+  "exclusions",
+  "paiement",
+  "notifications",
+  "equipe",
+  "securite",
+  "preferences",
+]);
+
+async function PartnerSettingsContent({ params, searchParams }: PageProps) {
+  const { houseSlug } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const rawSection = resolvedSearchParams?.section;
+
   const authCtx = await guardHouseRoute({ houseSlug });
   const houseId = authCtx.houseId;
 
@@ -24,40 +46,51 @@ export default async function PartnerSettingsPage({ params }: PageProps) {
     notFound();
   }
 
-  const [settingsRes, masterItems, masterFabrics, catalogueItems, staff, sessions] =
-    await Promise.all([
-      getHouseSettings(houseId),
-      getMasterItems(),
-      getMasterFabrics(),
-      getHouseCatalogueItems(houseId),
-      getHouseStaff(houseId),
-      getUserActiveSessions(authCtx.user.id),
-    ]);
+  // Common data for the navigation tabs/badges
+  const [house, exclusions, staff] = await Promise.all([
+    getHouseById(houseId),
+    getHouseExclusions(houseId),
+    getHouseStaff(houseId),
+  ]);
 
-  if (!settingsRes.ok) {
-    return (
-      <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-4 text-xs font-medium text-destructive">
-        {settingsRes.error}
-      </div>
-    );
+  if (!house) {
+    notFound();
   }
 
-  const { house, exclusions, todayOrdersCount } = settingsRes.value;
-  const nextPayoutDate = getNextPayoutDate(new Date());
+  const activeSection: SettingsSection =
+    rawSection && VALID_SECTIONS.has(rawSection as SettingsSection)
+      ? (rawSection as SettingsSection)
+      : "commandes";
 
   return (
     <SettingsContainer
-      house={house}
-      exclusions={exclusions}
-      masterItems={masterItems}
-      masterFabrics={masterFabrics}
-      catalogueItems={catalogueItems}
-      staff={staff}
-      todayOrdersCount={todayOrdersCount}
-      sessions={sessions}
-      user={authCtx.user}
-      currentSessionId={authCtx.session.id}
-      nextPayoutDate={nextPayoutDate}
-    />
+      houseName={house.name}
+      isPaused={house.isPaused}
+      exclusionsCount={exclusions.length}
+      staffCount={staff.length}
+    >
+      <Suspense key={activeSection} fallback={<PartnerSettingsTabSkeleton />}>
+        <SettingsTabRouter
+          houseId={houseId}
+          house={house}
+          section={activeSection}
+          user={authCtx.user}
+          currentSessionId={authCtx.session.id}
+        />
+      </Suspense>
+    </SettingsContainer>
+  );
+}
+
+export default function PartnerSettingsPage({
+  params,
+  searchParams,
+}: PageProps) {
+  return (
+    <div className="font-sans">
+      <Suspense fallback={<PartnerSettingsSkeleton />}>
+        <PartnerSettingsContent params={params} searchParams={searchParams} />
+      </Suspense>
+    </div>
   );
 }

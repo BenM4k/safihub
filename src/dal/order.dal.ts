@@ -1813,6 +1813,641 @@ export async function getWaitingAcceptanceCount(
   return row?.count ?? 0;
 }
 
+export interface HouseBannerProfileRecord {
+  id: string;
+  name: string;
+  slug: string;
+  neighborhoodName: string;
+  communeName: string;
+  contactPhone: string | null;
+  isPaused: boolean;
+  dailyCapacity: number | null;
+  rating: number | null;
+  coverImageUrl: string | null;
+  logoUrl: string | null;
+  statusPill: {
+    status: "open" | "closed" | "paused";
+    label: string;
+    badgeClass: string;
+  };
+}
+
+export async function getHouseBannerProfile(
+  houseId: string,
+): Promise<HouseBannerProfileRecord | null> {
+  const [houseRow] = await db
+    .select({
+      id: schema.houses.id,
+      name: schema.houses.name,
+      slug: schema.houses.slug,
+      neighborhoodId: schema.houses.neighborhoodId,
+      neighborhoodName: schema.neighborhoods.name,
+      communeName: schema.zones.name,
+      dailyCapacity: schema.houses.dailyCapacity,
+      isPaused: schema.houses.isPaused,
+      pausedUntil: schema.houses.pausedUntil,
+      contactPhone: schema.houses.contactPhone,
+      coverImageUrl: schema.houses.coverImageUrl,
+      logoUrl: schema.houses.logoUrl,
+      turnaroundHours: schema.houses.turnaroundHours,
+    })
+    .from(schema.houses)
+    .innerJoin(
+      schema.neighborhoods,
+      eq(schema.houses.neighborhoodId, schema.neighborhoods.id),
+    )
+    .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
+    .where(eq(schema.houses.id, houseId))
+    .limit(1);
+
+  if (!houseRow) return null;
+
+  const [hours, closures] = await Promise.all([
+    getHouseHours(houseId),
+    getHouseClosures(houseId),
+  ]);
+
+  const now = new Date();
+  const statusPill = computeHouseOpenStatus({
+    isPaused: houseRow.isPaused ?? false,
+    pausedUntil: houseRow.pausedUntil,
+    hours,
+    closures,
+    now,
+  });
+
+  return {
+    id: houseRow.id,
+    name: houseRow.name,
+    slug: houseRow.slug,
+    neighborhoodName: houseRow.neighborhoodName,
+    communeName: houseRow.communeName,
+    contactPhone: houseRow.contactPhone ?? null,
+    isPaused: houseRow.isPaused ?? false,
+    dailyCapacity: houseRow.dailyCapacity ?? null,
+    rating: null,
+    coverImageUrl: houseRow.coverImageUrl ?? null,
+    logoUrl: houseRow.logoUrl ?? null,
+    statusPill,
+  };
+}
+
+export async function getHouseAcceptanceQueueOrders(houseId: string): Promise<{
+  waitingAcceptanceOrders: HouseOrderListItemRecord[];
+  missedOrders: HouseOrderListItemRecord[];
+}> {
+  const [waitingOrdersRaw, missedOrdersRaw] = await Promise.all([
+    getHouseOrdersRestricted(houseId, {
+      status: "created",
+      limit: 5,
+      orderBy: "acceptanceDeadlineAt",
+      orderDirection: "asc",
+    }),
+    getHouseOrdersRestricted(houseId, { status: "expired", limit: 5 }),
+  ]);
+
+  const [waitingAcceptanceOrders, missedOrders] = await Promise.all([
+    attachSummariesToHouseOrders(waitingOrdersRaw),
+    attachSummariesToHouseOrders(missedOrdersRaw),
+  ]);
+
+  return { waitingAcceptanceOrders, missedOrders };
+}
+
+export async function getHousePipelineMetrics(houseId: string): Promise<{
+  pickupCount: number;
+  washingCount: number;
+  readyCount: number;
+}> {
+  const statusCounts = await db
+    .select({
+      status: schema.orders.status,
+      count: count(),
+    })
+    .from(schema.orders)
+    .where(eq(schema.orders.houseId, houseId))
+    .groupBy(schema.orders.status);
+
+  const countsByStatus = new Map(statusCounts.map((r) => [r.status, r.count]));
+  return {
+    pickupCount:
+      (countsByStatus.get("accepted") ?? 0) +
+      (countsByStatus.get("pickup_assigned") ?? 0) +
+      (countsByStatus.get("pickup_in_progress") ?? 0) +
+      (countsByStatus.get("picked_up") ?? 0),
+    washingCount:
+      (countsByStatus.get("received") ?? 0) +
+      (countsByStatus.get("price_adjusted") ?? 0) +
+      (countsByStatus.get("washing") ?? 0),
+    readyCount:
+      (countsByStatus.get("ready") ?? 0) +
+      (countsByStatus.get("delivery_slot_confirmed") ?? 0) +
+      (countsByStatus.get("delivery_assigned") ?? 0) +
+      (countsByStatus.get("delivery_in_progress") ?? 0),
+  };
+}
+
+export async function getHouseKpiMetrics(houseId: string): Promise<{
+  todayNetRevenueCDF: number;
+  yesterdayNetRevenueCDF: number;
+  weekNetRevenueCDF: number;
+  lastWeekNetRevenueCDF: number;
+  todayOrdersCount: number;
+  balanceOwedCDF: number;
+  nextSettlementDate: string;
+}> {
+  const now = new Date();
+  const bukavuNow = toBukavuDateTime(now);
+  const startOfDay = fromBukavuDateTime(bukavuNow.dateString, "00:00");
+  const yesterdayStart = new Date(startOfDay.getTime() - 24 * 60 * 60 * 1000);
+  const daysSinceMonday = bukavuNow.weekday - 1;
+  const startOfWeek = new Date(
+    startOfDay.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000,
+  );
+  const startOfLastWeek = new Date(
+    startOfWeek.getTime() - 7 * 24 * 60 * 60 * 1000,
+  );
+
+  const [
+    deliveredTodayRows,
+    deliveredYesterdayRows,
+    deliveredThisWeekRows,
+    deliveredLastWeekRows,
+    [todayOrdersRow],
+    settlementDetail,
+  ] = await Promise.all([
+    db
+      .select({
+        itemsTotal: schema.orders.itemsTotal,
+        adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+        commissionAmount: schema.orders.commissionAmount,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          eq(schema.orders.status, "delivered"),
+          gte(schema.orders.updatedAt, startOfDay),
+        ),
+      ),
+    db
+      .select({
+        itemsTotal: schema.orders.itemsTotal,
+        adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+        commissionAmount: schema.orders.commissionAmount,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          eq(schema.orders.status, "delivered"),
+          gte(schema.orders.updatedAt, yesterdayStart),
+          sql`${schema.orders.updatedAt} < ${startOfDay}`,
+        ),
+      ),
+    db
+      .select({
+        itemsTotal: schema.orders.itemsTotal,
+        adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+        commissionAmount: schema.orders.commissionAmount,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          eq(schema.orders.status, "delivered"),
+          gte(schema.orders.updatedAt, startOfWeek),
+        ),
+      ),
+    db
+      .select({
+        itemsTotal: schema.orders.itemsTotal,
+        adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+        commissionAmount: schema.orders.commissionAmount,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          eq(schema.orders.status, "delivered"),
+          gte(schema.orders.updatedAt, startOfLastWeek),
+          sql`${schema.orders.updatedAt} < ${startOfWeek}`,
+        ),
+      ),
+    db
+      .select({ count: count() })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          gte(schema.orders.createdAt, startOfDay),
+        ),
+      ),
+    getHouseSettlementDetail(houseId).catch(() => ({
+      balanceOwedCDF: 0,
+      totalRevenueCDF: 0,
+      totalCommissionCDF: 0,
+      totalOwedCDF: 0,
+      totalSettledCDF: 0,
+    })),
+  ]);
+
+  const todayNetRevenueCDF = deliveredTodayRows.reduce(
+    (sum, r) =>
+      sum +
+      Math.max(
+        0,
+        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
+      ),
+    0,
+  );
+  const yesterdayNetRevenueCDF = deliveredYesterdayRows.reduce(
+    (sum, r) =>
+      sum +
+      Math.max(
+        0,
+        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
+      ),
+    0,
+  );
+  const weekNetRevenueCDF = deliveredThisWeekRows.reduce(
+    (sum, r) =>
+      sum +
+      Math.max(
+        0,
+        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
+      ),
+    0,
+  );
+  const lastWeekNetRevenueCDF = deliveredLastWeekRows.reduce(
+    (sum, r) =>
+      sum +
+      Math.max(
+        0,
+        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
+      ),
+    0,
+  );
+
+  const daysUntilFriday = (5 - bukavuNow.weekday + 7) % 7 || 7;
+  const nextFriday = new Date(
+    startOfDay.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000,
+  );
+  const nextFridayBukavu = toBukavuDateTime(nextFriday);
+  const nextFridayUtc = new Date(
+    Date.UTC(
+      nextFridayBukavu.year,
+      nextFridayBukavu.month - 1,
+      nextFridayBukavu.day,
+    ),
+  );
+  const nextSettlementMonth = nextFridayUtc.toLocaleDateString("fr-FR", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  const nextSettlementDate = `Vendredi ${nextFridayBukavu.day} ${nextSettlementMonth}`;
+
+  return {
+    todayNetRevenueCDF,
+    yesterdayNetRevenueCDF,
+    weekNetRevenueCDF,
+    lastWeekNetRevenueCDF,
+    todayOrdersCount: todayOrdersRow?.count ?? 0,
+    balanceOwedCDF: settlementDetail.balanceOwedCDF,
+    nextSettlementDate,
+  };
+}
+
+export async function getHouseTablesOrders(houseId: string): Promise<{
+  recentOrders: HouseOrderListItemRecord[];
+  upcomingPickups: HouseOrderListItemRecord[];
+}> {
+  const now = new Date();
+  const bukavuNow = toBukavuDateTime(now);
+  const startOfDay = fromBukavuDateTime(bukavuNow.dateString, "00:00");
+
+  const [recentOrdersRaw, upcomingPickupsRaw] = await Promise.all([
+    getHouseOrdersRestricted(houseId, { limit: 5 }),
+    db
+      .select({
+        id: schema.orders.id,
+        code: schema.orders.code,
+        customerRawName: schema.user.name,
+        neighborhoodId: schema.orders.neighborhoodId,
+        neighborhoodName: schema.neighborhoods.name,
+        status: schema.orders.status,
+        source: schema.orders.source,
+        totalDue: schema.orders.totalDue,
+        itemsTotal: schema.orders.itemsTotal,
+        adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+        commissionAmount: schema.orders.commissionAmount,
+        commissionBps: schema.orders.commissionBps,
+        deliveryFee: schema.orders.deliveryFee,
+        currency: schema.orders.currency,
+        pickupSlotStart: schema.orders.pickupSlotStart,
+        pickupSlotEnd: schema.orders.pickupSlotEnd,
+        deliverySlotStart: schema.orders.deliverySlotStart,
+        deliverySlotEnd: schema.orders.deliverySlotEnd,
+        estimatedDeliveryAt: schema.orders.estimatedDeliveryAt,
+        acceptanceDeadlineAt: schema.orders.acceptanceDeadlineAt,
+        receptionDeadlineAt: schema.orders.receptionDeadlineAt,
+        createdAt: schema.orders.createdAt,
+      })
+      .from(schema.orders)
+      .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+      .innerJoin(
+        schema.neighborhoods,
+        eq(schema.orders.neighborhoodId, schema.neighborhoods.id),
+      )
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          inArray(schema.orders.status, [
+            "accepted",
+            "pickup_assigned",
+            "pickup_in_progress",
+          ]),
+          gte(schema.orders.pickupSlotStart, startOfDay),
+        ),
+      )
+      .orderBy(asc(schema.orders.pickupSlotStart))
+      .limit(5),
+  ]);
+
+  const recentOrders = await attachSummariesToHouseOrders(recentOrdersRaw);
+  const upcomingPickups: HouseOrderListItemRecord[] = upcomingPickupsRaw.map(
+    (r) => {
+      const { customerRawName, ...rest } = r;
+      return {
+        ...rest,
+        customerFirstName: customerRawName.trim().split(/\s+/)[0] || "Client",
+      };
+    },
+  );
+
+  return { recentOrders, upcomingPickups };
+}
+
+export async function getHouseAnalyticsMetrics(houseId: string): Promise<{
+  acceptanceRate30d: number | null;
+  todayOrdersCount: number;
+  dailyChart: Array<{
+    date: string;
+    label: string;
+    ordersCount: number;
+    revenueCDF: number;
+  }>;
+}> {
+  const now = new Date();
+  const bukavuNow = toBukavuDateTime(now);
+  const startOfDay = fromBukavuDateTime(bukavuNow.dateString, "00:00");
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const [last30dOrders, deliveredLast30dRows] = await Promise.all([
+    db
+      .select({
+        status: schema.orders.status,
+        createdAt: schema.orders.createdAt,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          gte(schema.orders.createdAt, thirtyDaysAgo),
+        ),
+      ),
+    db
+      .select({
+        itemsTotal: schema.orders.itemsTotal,
+        adjustedItemsTotal: schema.orders.adjustedItemsTotal,
+        commissionAmount: schema.orders.commissionAmount,
+        updatedAt: schema.orders.updatedAt,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          eq(schema.orders.status, "delivered"),
+          gte(schema.orders.updatedAt, thirtyDaysAgo),
+        ),
+      ),
+  ]);
+
+  let accepted30d = 0;
+  let rejected30d = 0;
+  let expired30d = 0;
+  for (const o of last30dOrders) {
+    if (
+      [
+        "accepted",
+        "pickup_assigned",
+        "pickup_in_progress",
+        "picked_up",
+        "received",
+        "price_adjusted",
+        "washing",
+        "ready",
+        "delivery_slot_confirmed",
+        "delivery_assigned",
+        "delivery_in_progress",
+        "delivered",
+      ].includes(o.status)
+    ) {
+      accepted30d++;
+    } else if (o.status === "rejected") {
+      rejected30d++;
+    } else if (o.status === "expired") {
+      expired30d++;
+    }
+  }
+
+  const acceptanceRate30d = computeAcceptanceRate(
+    accepted30d,
+    rejected30d,
+    expired30d,
+  );
+
+  const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  const dailyChart = [];
+  for (let i = 6; i >= 0; i--) {
+    const dayDate = new Date(startOfDay.getTime() - i * 24 * 60 * 60 * 1000);
+    const dayBukavu = toBukavuDateTime(dayDate);
+    const dayLabel =
+      dayNames[dayBukavu.weekday - 1] || dayBukavu.dateString.slice(5);
+
+    const dayStart = new Date(dayDate.getTime());
+    const dayEnd = new Date(dayDate.getTime() + 24 * 60 * 60 * 1000 - 1);
+
+    const dayOrders = last30dOrders.filter(
+      (o) => o.createdAt && o.createdAt >= dayStart && o.createdAt <= dayEnd,
+    );
+    const ordersCount = dayOrders.length;
+
+    const dayDelivered = deliveredLast30dRows.filter(
+      (r) => r.updatedAt && r.updatedAt >= dayStart && r.updatedAt <= dayEnd,
+    );
+    const revenueCDF = dayDelivered.reduce(
+      (sum, r) =>
+        sum +
+        Math.max(
+          0,
+          (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
+        ),
+      0,
+    );
+
+    dailyChart.push({
+      date: dayBukavu.dateString,
+      label: dayLabel,
+      ordersCount,
+      revenueCDF,
+    });
+  }
+
+  const todayOrdersCount = dailyChart[dailyChart.length - 1]?.ordersCount ?? 0;
+  return { acceptanceRate30d, todayOrdersCount, dailyChart };
+}
+
+export async function getHouseAlertsMetrics(
+  houseId: string,
+): Promise<HouseDashboardAlert[]> {
+  const [houseRow] = await db
+    .select({
+      slug: schema.houses.slug,
+      dailyCapacity: schema.houses.dailyCapacity,
+      isPaused: schema.houses.isPaused,
+    })
+    .from(schema.houses)
+    .where(eq(schema.houses.id, houseId))
+    .limit(1);
+
+  const now = new Date();
+  const bukavuNow = toBukavuDateTime(now);
+  const startOfDay = fromBukavuDateTime(bukavuNow.dateString, "00:00");
+
+  const [
+    waitingOrdersRaw,
+    hours,
+    [unpricedItemsCountRow],
+    [todayOrdersRow],
+  ] = await Promise.all([
+    getHouseOrdersRestricted(houseId, {
+      status: "created",
+      limit: 5,
+      orderBy: "acceptanceDeadlineAt",
+      orderDirection: "asc",
+    }),
+    getHouseHours(houseId),
+    db
+      .select({ count: count() })
+      .from(schema.houseItems)
+      .where(
+        and(
+          eq(schema.houseItems.houseId, houseId),
+          eq(schema.houseItems.price, 0),
+        ),
+      ),
+    db
+      .select({ count: count() })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          gte(schema.orders.createdAt, startOfDay),
+        ),
+      ),
+  ]);
+
+  const alerts: HouseDashboardAlert[] = [];
+  const todayOrdersCount = todayOrdersRow?.count ?? 0;
+
+  const imminentOrder = waitingOrdersRaw.find((o) => {
+    const cd = computeOrderAcceptanceCountdown(o.acceptanceDeadlineAt, now);
+    return !cd.isExpired && cd.urgency !== "normal";
+  });
+  if (imminentOrder) {
+    const cd = computeOrderAcceptanceCountdown(
+      imminentOrder.acceptanceDeadlineAt,
+      now,
+    );
+    alerts.push({
+      id: "alert-expiring-order",
+      type: "expiring_order",
+      severity: cd.urgency === "critical" ? "critical" : "warning",
+      titleKey: "expiringOrderTitle",
+      title: "Commande en attente urgente",
+      messageKey: "expiringOrderMessage",
+      messageParams: { code: imminentOrder.code, mins: cd.minutesRemaining },
+      message: `La commande ${imminentOrder.code} expire dans ${cd.minutesRemaining} min. Confirmez rapidement pour maintenir votre taux d'acceptation.`,
+      link: `#queue-section`,
+    });
+  }
+
+  if (
+    houseRow?.dailyCapacity &&
+    todayOrdersCount >= Math.floor(houseRow.dailyCapacity * 0.8)
+  ) {
+    alerts.push({
+      id: "alert-capacity",
+      type: "capacity_warning",
+      severity: "warning",
+      titleKey: "capacityWarningTitle",
+      title: "Capacité journalière bientôt atteinte",
+      messageKey: "capacityWarningMessage",
+      messageParams: {
+        count: todayOrdersCount,
+        total: houseRow.dailyCapacity,
+        percent: Math.round((todayOrdersCount / houseRow.dailyCapacity) * 100),
+      },
+      message: `${todayOrdersCount} sur ${houseRow.dailyCapacity} commandes acceptées aujourd'hui (${Math.round((todayOrdersCount / houseRow.dailyCapacity) * 100)}%).`,
+      link: `/partner/${houseRow.slug}/settings`,
+    });
+  }
+
+  if (hours.length === 0) {
+    alerts.push({
+      id: "alert-hours",
+      type: "missing_hours",
+      severity: "warning",
+      titleKey: "missingHoursTitle",
+      title: "Horaires non configurés",
+      messageKey: "missingHoursMessage",
+      message:
+        "Configurez vos heures d'ouverture pour activer la protection des délais de nuit.",
+      link: `/partner/${houseRow?.slug}/hours`,
+    });
+  }
+
+  if (unpricedItemsCountRow?.count && unpricedItemsCountRow.count > 0) {
+    alerts.push({
+      id: "alert-unpriced-items",
+      type: "unpriced_items",
+      severity: "warning",
+      titleKey: "unpricedItemsTitle",
+      title: "Articles du catalogue sans tarif",
+      messageKey: "unpricedItemsMessage",
+      messageParams: { count: unpricedItemsCountRow.count },
+      message: `${unpricedItemsCountRow.count} article(s) de votre catalogue n'ont pas encore de prix défini.`,
+      link: `/partner/${houseRow?.slug}/catalogue`,
+    });
+  }
+
+  if (houseRow?.isPaused) {
+    alerts.push({
+      id: "alert-paused",
+      type: "house_paused",
+      severity: "info",
+      titleKey: "housePausedTitle",
+      title: "Réception de nouvelles commandes suspendue",
+      messageKey: "housePausedMessage",
+      message:
+        "Votre pressing est temporairement en pause. Vos commandes en cours restent actives.",
+    });
+  }
+
+  return alerts;
+}
+
 /**
  * Atomic transaction to save reception counts and status transition (Task 4.3).
  */
