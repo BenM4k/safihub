@@ -1,20 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Sparkles,
   Clock,
   AlertCircle,
-  ExternalLink,
-  CheckCircle2,
   ShieldAlert,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ChecklistItemRow } from "./checklist-item-row";
 import { SubmitValidationDialog } from "./submit-validation-dialog";
 import { getChecklistItemsConfig } from "./checklist-config";
-import { Button } from "@/components/ui/button";
 import type { SetupChecklistProps } from "./types";
 
 export function SetupChecklistCard({
@@ -35,35 +31,9 @@ export function SetupChecklistCard({
     t(`items.${key}`)
   );
 
-  // If already approved, show a sleek success card
+  // If already approved, do not display the checklist / live card
   if (reviewStatus === "approved") {
-    return (
-      <div
-        data-tour-id="tour-checklist"
-        className="p-4 sm:p-5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-950 dark:text-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-sans"
-      >
-        <div className="flex items-center gap-3">
-          <div className="size-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0">
-            <CheckCircle2 className="size-5" />
-          </div>
-          <div>
-            <h2 className="text-sm sm:text-base font-bold text-heading">
-              {t("approvedTitle")}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {t("approvedSubtitle")}
-            </p>
-          </div>
-        </div>
-
-        <Button size="sm" asChild className="text-xs font-semibold gap-1.5 shrink-0 self-start sm:self-center">
-          <Link href={`/houses/${houseSlug}`} target="_blank" rel="noopener noreferrer">
-            <span>{t("viewPublicPage")}</span>
-            <ExternalLink className="size-3.5" />
-          </Link>
-        </Button>
-      </div>
-    );
+    return null;
   }
 
   return (

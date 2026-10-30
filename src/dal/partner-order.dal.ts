@@ -92,10 +92,10 @@ export interface PartnerOrderQueryFilters {
  * Lists partner-scoped orders strictly isolated to houseId.
  * Never includes admin notes, platform margins, or unauthorized client contact details.
  */
-export async function getPartnerOrdersRestricted(
+function buildPartnerOrderConditions(
   houseId: string,
   filters: PartnerOrderQueryFilters = {}
-): Promise<PartnerOrderListItemDTO[]> {
+) {
   const conditions = [eq(schema.orders.houseId, houseId)];
 
   if (filters.tab && TAB_STATUS_MAP[filters.tab]) {
@@ -126,6 +126,33 @@ export async function getPartnerOrdersRestricted(
       );
     }
   }
+
+  return conditions;
+}
+
+export async function getPartnerOrdersCountRestricted(
+  houseId: string,
+  filters: PartnerOrderQueryFilters = {}
+): Promise<number> {
+  const conditions = buildPartnerOrderConditions(houseId, filters);
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.orders)
+    .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+    .innerJoin(
+      schema.neighborhoods,
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+    )
+    .where(and(...conditions));
+
+  return row?.count ?? 0;
+}
+
+export async function getPartnerOrdersRestricted(
+  houseId: string,
+  filters: PartnerOrderQueryFilters = {}
+): Promise<PartnerOrderListItemDTO[]> {
+  const conditions = buildPartnerOrderConditions(houseId, filters);
 
   // Sorting
   const orderExpressions = [];

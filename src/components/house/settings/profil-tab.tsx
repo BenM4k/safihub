@@ -5,6 +5,7 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { updateHouseGeneralSettingsAction } from "@/actions/house.actions";
 import { StickySaveBar } from "@/components/house/catalogue/sticky-save-bar";
 import { Separator } from "@/components/ui/separator";
+import { useSettingsDirty } from "./settings-context";
 import { IdentityCard } from "./profil/identity-card";
 import { PhotoCard } from "./profil/photo-card";
 import { ContactLocationCard } from "./profil/contact-location-card";
@@ -29,10 +30,16 @@ export function ProfilTab({ house, onDirtyChange }: ProfilTabProps) {
 
   const isDirty = contactPhone !== initialPhone || addressNote !== initialAddressNote;
   const dirtyCount = isDirty ? 1 : 0;
+  const { setIsDirty } = useSettingsDirty();
 
   useEffect(() => {
     onDirtyChange?.(isDirty);
-  }, [isDirty, onDirtyChange]);
+    setIsDirty(isDirty);
+    return () => {
+      onDirtyChange?.(false);
+      setIsDirty(false);
+    };
+  }, [isDirty, onDirtyChange, setIsDirty]);
 
   function handleReset() {
     setContactPhone(initialPhone);

@@ -14,7 +14,13 @@ import {
   getHouseCatalogueItems,
   getHouseClosures,
   getHouseCoverageWithLimits,
-  getHouseDashboardMetrics,
+  getHouseBannerProfile,
+  getHouseAcceptanceQueueOrders,
+  getHousePipelineMetrics,
+  getHouseKpiMetrics,
+  getHouseAnalyticsMetrics,
+  getHouseTablesOrders,
+  getHouseAlertsMetrics,
   getHouseExclusions,
   getHouseHours,
   getHouseItemRequests,
@@ -35,7 +41,6 @@ import {
   upsertHouseItemPricesBatch,
   type HouseCatalogueItemRecord,
   type HouseCoverageWithLimitsData,
-  type HouseDashboardMetrics,
   type HouseOrderDetailRecord,
   type HouseOrderListItemRecord,
   type OrderEventRecord,
@@ -49,14 +54,67 @@ import {
 import { getSignedUploadUrl, getStoragePublicUrl } from "@/lib/storage/r2-client";
 import type { OrderStatus } from "@/services/db/schema";
 
-export async function getHouseDashboardData(
-  houseId: string
-): Promise<Result<HouseDashboardMetrics>> {
+export async function getHouseBannerData(houseId: string) {
   try {
-    const metrics = await getHouseDashboardMetrics(houseId);
-    return ok(metrics);
+    const profile = await getHouseBannerProfile(houseId);
+    if (!profile) return err("House not found");
+    return ok(profile);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load dashboard metrics");
+    return err(error instanceof Error ? error.message : "Failed to load house banner profile");
+  }
+}
+
+export async function getHouseAcceptanceQueueData(houseId: string) {
+  try {
+    const data = await getHouseAcceptanceQueueOrders(houseId);
+    return ok(data);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to load acceptance queue");
+  }
+}
+
+export async function getHousePipelineData(houseId: string) {
+  try {
+    const data = await getHousePipelineMetrics(houseId);
+    return ok(data);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to load pipeline metrics");
+  }
+}
+
+export async function getHouseKpiData(houseId: string) {
+  try {
+    const data = await getHouseKpiMetrics(houseId);
+    return ok(data);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to load KPI metrics");
+  }
+}
+
+export async function getHouseAnalyticsData(houseId: string) {
+  try {
+    const data = await getHouseAnalyticsMetrics(houseId);
+    return ok(data);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to load analytics metrics");
+  }
+}
+
+export async function getHouseTablesData(houseId: string) {
+  try {
+    const data = await getHouseTablesOrders(houseId);
+    return ok(data);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to load tables orders");
+  }
+}
+
+export async function getHouseAlertsData(houseId: string) {
+  try {
+    const data = await getHouseAlertsMetrics(houseId);
+    return ok(data);
+  } catch (error) {
+    return err(error instanceof Error ? error.message : "Failed to load alerts");
   }
 }
 

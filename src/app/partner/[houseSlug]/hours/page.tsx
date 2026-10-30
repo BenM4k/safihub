@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { guardHouseRoute } from "@/services/auth";
 import { getHouseHoursData } from "@/services/house";
 import { getHouseBySlug } from "@/dal";
 import { HoursPageView } from "@/components/house/hours";
+import { PartnerHoursSkeleton } from "@/components/house/hours/partner-hours-skeleton";
 
 interface PageProps {
   params: Promise<{ houseSlug: string }>;
@@ -17,7 +19,7 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-export default async function PartnerHoursPage({ params }: PageProps) {
+async function PartnerHoursContent({ params }: PageProps) {
   const { houseSlug } = await params;
   const authCtx = await guardHouseRoute({ houseSlug });
   const houseId = authCtx.houseId;
@@ -44,14 +46,22 @@ export default async function PartnerHoursPage({ params }: PageProps) {
   }
 
   return (
+    <HoursPageView
+      initialHours={hoursDataRes.value.hours}
+      initialClosures={hoursDataRes.value.closures}
+      waitingOrdersCount={hoursDataRes.value.waitingOrdersCount}
+      isPaused={Boolean(house?.isPaused)}
+      houseId={houseId}
+    />
+  );
+}
+
+export default function PartnerHoursPage({ params }: PageProps) {
+  return (
     <div className="space-y-8 sm:space-y-10 pb-24 sm:pb-28 max-w-6xl font-sans">
-      <HoursPageView
-        initialHours={hoursDataRes.value.hours}
-        initialClosures={hoursDataRes.value.closures}
-        waitingOrdersCount={hoursDataRes.value.waitingOrdersCount}
-        isPaused={Boolean(house?.isPaused)}
-        houseId={houseId}
-      />
+      <Suspense fallback={<PartnerHoursSkeleton />}>
+        <PartnerHoursContent params={params} />
+      </Suspense>
     </div>
   );
 }

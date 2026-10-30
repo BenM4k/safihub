@@ -1862,6 +1862,7 @@
       "confirmResume": "Thibitisha Kuendelea"
     },
     "dashboard": {
+      "loadingDashboard": "Inapakia dashibodi",
       "title": "Dashibodi",
       "subtitle": "Fuatilia maagizo yako, muda wa kukubali, na mzigo wa kazi wa leo",
       "waitingTitle": "Maagizo Yanayosubiri Kukubaliwa",
@@ -1984,6 +1985,8 @@
       "housePausedMessage": "Duka lako la dobi limesitishwa kwa muda. Maagizo yanayoendelea bado yanaendelea."
     },
     "orders": {
+      "metaTitle": "Maagizo — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Usimamizi wa maagizo ya dobi, ukubali, kufuliwa, na uwasilishaji.",
       "title": "Maagizo ya Karakana",
       "subtitle": "Kukubali, kufuatilia na kushughulikia nguo za wateja",
       "filterAll": "Yote",
@@ -2031,6 +2034,7 @@
       "emptyDelivered": "Hakuna agizo lililopelekwa bado",
       "emptyFailed": "Hakuna agizo lililokosekana au kughairiwa",
       "filterSearchPlaceholder": "Tafuta kwa nambari (#1042) au mteja...",
+      "searchButton": "Tafuta",
       "filterDateLabel": "Chuja kwa tarehe",
       "filterAllDates": "Tarehe zote",
       "sortBy": "Panga kwa",
@@ -2142,6 +2146,10 @@
       "markReadyTitle": "Nguo zimefuliwa na kunyooshwa?"
     },
     "catalogue": {
+      "metaTitle": "Katalogi & Bei — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Simamia vitu vyako, vitambaa, na bei za huduma.",
+      "errorTitle": "Hitilafu ya Katalogi ya Huduma",
+      "errorDescription": "Haikuweza kupakia au kubadilisha bei za dobi yako.",
       "title": "Katalogi na bei",
       "subtitle": "Weka huduma unazotoa na bei zake",
       "serviceCol": "Huduma",
@@ -2193,6 +2201,7 @@
       "freezeLearnMoreTitle": "Kanuni ya kugandisha bei inafanyaje kazi?",
       "freezeLearnMoreDesc": "Mteja anapokamilisha agizo lake, bei za nguo, kamisheni na ada za usafiri zinaganda kabisa kwenye agizo hilo. Kubadilisha bei hapa kunabadilisha tu maagizo yajayo.",
       "searchPlaceholder": "Tafuta nguo...",
+      "searchButton": "Tafuta",
       "allCategories": "Aina zote",
       "filterAll": "Zote",
       "filterOffered": "Inatolewa",
@@ -2365,6 +2374,10 @@
       "nextClosureDisplay": "Kufunga kufuata kuonyeshwa: kuanzia {starts} hadi {ends}"
     },
     "coverage": {
+      "metaTitle": "Eneo la Utoaji Huduma — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Simamia mitaa inayohudumiwa na dobi yako na uweke mipaka ya uwasilishaji.",
+      "errorTitle": "Hitilafu ya Eneo la Huduma",
+      "errorDescription": "Haikuweza kupakia au kubadilisha mitaa inayohudumiwa na dobi yako.",
       "title": "Kanda Zinazohudumiwa",
       "subtitle": "Chagua mitaa ambayo dobi lako linahudumia",
       "effectiveMaxDistance": "Kikomo cha Umbali Kilichoidhinishwa: Kiwango",
@@ -2401,6 +2414,7 @@
       "selectAll": "Chagua yote",
       "deselectAll": "Ondoa uteuzi wote",
       "searchPlaceholder": "Tafuta mtaa...",
+      "searchButton": "Tafuta",
       "filterAll": "Yote ({count})",
       "filterServed": "Inayohudumiwa ({count})",
       "filterNotServed": "Isiyohudumiwa ({count})",
@@ -2447,6 +2461,10 @@
       "charactersCount": "Herufi {count}"
     },
     "settings": {
+      "metaTitle": "Mipangilio ya Warsha — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Simamia wasifu wa dobi yako, vitu visivyokubalika, wafanyakazi, na mapendeleo.",
+      "loadingSettings": "Inapakia mipangilio ya karakana",
+      "loadingSection": "Inapakia sehemu",
       "title": "Mipangilio ya Karakana",
       "subtitle": "Uwezo wa siku, kusitisha kwa dharura, kima cha chini cha agizo na nguo zilizokataliwa",
       "capacityTitle": "Uwezo wa Siku & Kima cha Chini cha Agizo",
@@ -2499,6 +2517,8 @@
       "noStaff": "Hakuna mfanyakazi aliyesajiliwa."
     },
     "settlements": {
+      "metaTitle": "Malipo na Mapato — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Fuatilia salio lako, maagizo yaliyowasilishwa, na historia ya malipo kutoka SafiHub.",
       "title": "Mapato na Malipo",
       "subtitle": "Kufuatilia mapato yako, makato ya kamisheni, na malipo uliyopokea kutoka SafiHub",
       "balanceOwed": "Salio la Kupokea",
@@ -2570,6 +2590,7 @@
       "vsPrevious": "dhidi ya awali",
       "searchDeliveredOrders": "Tafuta nambari, mteja, uhamisho...",
       "searchDeliveredOrdersAria": "Tafuta agizo lililowasilishwa",
+      "searchButton": "Tafuta",
       "searchPayouts": "Tafuta kwa kumbukumbu, maelezo...",
       "searchPayoutsAria": "Tafuta malipo",
       "filterSettlementStatusAria": "Chuja kwa hali ya malipo",

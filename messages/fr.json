@@ -1862,6 +1862,7 @@
       "confirmResume": "Confirmer la reprise"
     },
     "dashboard": {
+      "loadingDashboard": "Chargement du tableau de bord",
       "title": "Tableau de bord",
       "subtitle": "Suivez vos commandes, vos délais d'acceptation et votre charge du jour",
       "waitingTitle": "Commandes en attente d'acceptation",
@@ -1984,6 +1985,8 @@
       "housePausedMessage": "Votre pressing est temporairement en pause. Vos commandes en cours restent actives."
     },
     "orders": {
+      "metaTitle": "Commandes — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Gestion des commandes de pressing, acceptation, lavage et livraison.",
       "title": "Commandes de l'atelier",
       "subtitle": "Acceptation, suivi et traitement des commandes confiées au pressing",
       "filterAll": "Toutes",
@@ -2031,6 +2034,7 @@
       "emptyDelivered": "Aucune commande livrée pour le moment",
       "emptyFailed": "Aucune commande manquée ou annulée",
       "filterSearchPlaceholder": "Rechercher par réf. (#1042) ou client...",
+      "searchButton": "Rechercher",
       "filterDateLabel": "Filtrer par date",
       "filterAllDates": "Toutes les dates",
       "sortBy": "Trier par",
@@ -2142,6 +2146,10 @@
       "markReadyTitle": "Linge nettoyé et repassé ?"
     },
     "catalogue": {
+      "metaTitle": "Catalogue & Tarifs — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Gérez vos articles, tissus et tarifs par service.",
+      "errorTitle": "Erreur du catalogue des prestations",
+      "errorDescription": "Impossible de charger ou de modifier les tarifs de votre pressing.",
       "title": "Catalogue et tarifs",
       "subtitle": "Définissez les prestations que vous proposez et leurs prix",
       "serviceCol": "Service",
@@ -2193,6 +2201,7 @@
       "freezeLearnMoreTitle": "Comment fonctionne le gel des tarifs ?",
       "freezeLearnMoreDesc": "Dès qu'un client passe commande, les prix unitaires, commissions et frais sont figés de façon immuable. Modifier vos tarifs ici actualise uniquement les futures commandes.",
       "searchPlaceholder": "Rechercher un article...",
+      "searchButton": "Rechercher",
       "allCategories": "Toutes les catégories",
       "filterAll": "Tous",
       "filterOffered": "Proposé",
@@ -2365,6 +2374,10 @@
       "nextClosureDisplay": "Prochaine fermeture affichée : du {starts} au {ends}"
     },
     "coverage": {
+      "metaTitle": "Zone de couverture — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Gérez les quartiers desservis par votre pressing et configurez votre périmètre de livraison.",
+      "errorTitle": "Erreur de la couverture de livraison",
+      "errorDescription": "Impossible de charger ou de modifier les quartiers desservis par votre pressing.",
       "title": "Zones couvertes",
       "subtitle": "Choisissez les quartiers que votre pressing dessert",
       "effectiveMaxDistance": "Limite de distance autorisée : Niveau",
@@ -2401,6 +2414,7 @@
       "selectAll": "Tout sélectionner",
       "deselectAll": "Tout désélectionner",
       "searchPlaceholder": "Rechercher un quartier...",
+      "searchButton": "Rechercher",
       "filterAll": "Tous ({count})",
       "filterServed": "Desservis ({count})",
       "filterNotServed": "Non desservis ({count})",
@@ -2447,6 +2461,10 @@
       "charactersCount": "{count} car."
     },
     "settings": {
+      "metaTitle": "Paramètres de l'atelier — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Gérez le profil de votre pressing, les exclusions de linge, l'équipe et vos préférences.",
+      "loadingSettings": "Chargement des paramètres de votre atelier",
+      "loadingSection": "Chargement de la section",
       "title": "Paramètres du pressing",
       "subtitle": "Capacité journalière, mise en pause d'urgence, commande minimum et exclusions",
       "capacityTitle": "Capacité journalière & Commande minimum",
@@ -2499,6 +2517,8 @@
       "noStaff": "Aucun collaborateur enregistré."
     },
     "settlements": {
+      "metaTitle": "Règlements et versements — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Suivez votre solde à recevoir, vos commandes livrées et l'historique des versements reçus.",
       "title": "Revenus et versements",
       "subtitle": "Suivi de vos revenus, commissions et versements reçus de SafiHub",
       "balanceOwed": "Solde à recevoir",
@@ -2570,6 +2590,7 @@
       "vsPrevious": "vs préc.",
       "searchDeliveredOrders": "Rechercher code, client, virement...",
       "searchDeliveredOrdersAria": "Rechercher une commande livrée",
+      "searchButton": "Rechercher",
       "searchPayouts": "Rechercher par référence, note...",
       "searchPayoutsAria": "Rechercher un versement",
       "filterSettlementStatusAria": "Filtrer par statut de règlement",

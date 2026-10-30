@@ -1,20 +1,32 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { guardHouseRoute } from "@/services/auth";
-import { getHouseById } from "@/dal";
-import {
-  getHouseCatalogue,
-  listHouseCatalogueRequests,
-} from "@/services/house";
-import { CatalogueView } from "@/components/house/catalogue/catalogue-view";
 import { RequestItemModal } from "@/components/house/catalogue/request-item-modal";
-import { ItemRequestsList } from "@/components/house/catalogue/item-requests-list";
+import {
+  HouseCatalogueSection,
+  HouseItemRequestsSection,
+} from "@/components/house/catalogue/catalogue-sections";
+import {
+  PartnerCatalogueSkeleton,
+  CatalogueGridSkeleton,
+  ItemRequestsSkeleton,
+} from "@/components/house/catalogue/partner-catalogue-skeleton";
 
 interface PageProps {
   params: Promise<{ houseSlug: string }>;
 }
 
-export default async function PartnerCataloguePage({ params }: PageProps) {
+export async function generateMetadata({ params }: PageProps) {
+  const { houseSlug } = await params;
+  const t = await getTranslations("house.catalogue");
+  return {
+    title: t("metaTitle", { houseSlug }),
+    description: t("metaDescription"),
+  };
+}
+
+async function PartnerCatalogueContent({ params }: PageProps) {
   const { houseSlug } = await params;
   const authCtx = await guardHouseRoute({ houseSlug });
   const houseId = authCtx.houseId;
@@ -25,18 +37,8 @@ export default async function PartnerCataloguePage({ params }: PageProps) {
 
   const t = await getTranslations("house.catalogue");
 
-  const [catalogueRes, requestsRes, house] = await Promise.all([
-    getHouseCatalogue(houseId),
-    listHouseCatalogueRequests(houseId),
-    getHouseById(houseId),
-  ]);
-
-  const items = catalogueRes.ok ? catalogueRes.value : [];
-  const requests = requestsRes.ok ? requestsRes.value : [];
-  const commissionBps = house?.commissionBps ?? 2000;
-
   return (
-    <div className="space-y-6 sm:space-y-8 pb-24 sm:pb-28 font-sans">
+    <>
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div>
@@ -55,15 +57,24 @@ export default async function PartnerCataloguePage({ params }: PageProps) {
       </div>
 
       {/* Catalogue Grid View */}
-      <CatalogueView
-        items={items}
-        houseId={houseId}
-        houseSlug={houseSlug}
-        commissionBps={commissionBps}
-      />
+      <Suspense fallback={<CatalogueGridSkeleton />}>
+        <HouseCatalogueSection houseId={houseId} houseSlug={houseSlug} />
+      </Suspense>
 
       {/* Previously requested items */}
-      <ItemRequestsList requests={requests} />
+      <Suspense fallback={<ItemRequestsSkeleton />}>
+        <HouseItemRequestsSection houseId={houseId} />
+      </Suspense>
+    </>
+  );
+}
+
+export default function PartnerCataloguePage({ params }: PageProps) {
+  return (
+    <div className="space-y-6 sm:space-y-8 pb-24 sm:pb-28 font-sans">
+      <Suspense fallback={<PartnerCatalogueSkeleton />}>
+        <PartnerCatalogueContent params={params} />
+      </Suspense>
     </div>
   );
 }

@@ -1244,11 +1244,45 @@ async function attachSummariesToHouseOrders(
 }
 
 /**
- * Computes rich workload, financial, and operational metrics for the Partner Dashboard.
+ * Returns the count of pending orders awaiting acceptance (status = 'created') for a house.
  */
-export async function getHouseDashboardMetrics(
+export async function getWaitingAcceptanceCount(
   houseId: string,
-): Promise<HouseDashboardMetrics> {
+): Promise<number> {
+  const [row] = await db
+    .select({ count: count() })
+    .from(schema.orders)
+    .where(
+      and(
+        eq(schema.orders.houseId, houseId),
+        eq(schema.orders.status, "created"),
+      ),
+    );
+  return row?.count ?? 0;
+}
+
+export interface HouseBannerProfileRecord {
+  id: string;
+  name: string;
+  slug: string;
+  neighborhoodName: string;
+  communeName: string;
+  contactPhone: string | null;
+  isPaused: boolean;
+  dailyCapacity: number | null;
+  rating: number | null;
+  coverImageUrl: string | null;
+  logoUrl: string | null;
+  statusPill: {
+    status: "open" | "closed" | "paused";
+    label: string;
+    badgeClass: string;
+  };
+}
+
+export async function getHouseBannerProfile(
+  houseId: string,
+): Promise<HouseBannerProfileRecord | null> {
   const [houseRow] = await db
     .select({
       id: schema.houses.id,
@@ -1274,40 +1308,43 @@ export async function getHouseDashboardMetrics(
     .where(eq(schema.houses.id, houseId))
     .limit(1);
 
+  if (!houseRow) return null;
+
+  const [hours, closures] = await Promise.all([
+    getHouseHours(houseId),
+    getHouseClosures(houseId),
+  ]);
+
   const now = new Date();
-  const bukavuNow = toBukavuDateTime(now);
-  const startOfDay = fromBukavuDateTime(bukavuNow.dateString, "00:00");
-  const yesterdayStart = new Date(startOfDay.getTime() - 24 * 60 * 60 * 1000);
-
-  // Week start: calculate Monday of current Bukavu week
-  const daysSinceMonday = bukavuNow.weekday - 1;
-  const startOfWeek = new Date(
-    startOfDay.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000,
-  );
-  const startOfLastWeek = new Date(
-    startOfWeek.getTime() - 7 * 24 * 60 * 60 * 1000,
-  );
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-  const [
-    waitingOrdersRaw,
-    missedOrdersRaw,
-    statusCounts,
-    [completedTodayRow],
-    [todayOrdersRow],
-    settlementDetail,
+  const statusPill = computeHouseOpenStatus({
+    isPaused: houseRow.isPaused ?? false,
+    pausedUntil: houseRow.pausedUntil,
     hours,
     closures,
-    deliveredTodayRows,
-    deliveredYesterdayRows,
-    deliveredThisWeekRows,
-    deliveredLastWeekRows,
-    recentOrdersRaw,
-    upcomingPickupsRaw,
-    [unpricedItemsCountRow],
-    last30dOrders,
-    deliveredLast30dRows,
-  ] = await Promise.all([
+    now,
+  });
+
+  return {
+    id: houseRow.id,
+    name: houseRow.name,
+    slug: houseRow.slug,
+    neighborhoodName: houseRow.neighborhoodName,
+    communeName: houseRow.communeName,
+    contactPhone: houseRow.contactPhone ?? null,
+    isPaused: houseRow.isPaused ?? false,
+    dailyCapacity: houseRow.dailyCapacity ?? null,
+    rating: null,
+    coverImageUrl: houseRow.coverImageUrl ?? null,
+    logoUrl: houseRow.logoUrl ?? null,
+    statusPill,
+  };
+}
+
+export async function getHouseAcceptanceQueueOrders(houseId: string): Promise<{
+  waitingAcceptanceOrders: HouseOrderListItemRecord[];
+  missedOrders: HouseOrderListItemRecord[];
+}> {
+  const [waitingOrdersRaw, missedOrdersRaw] = await Promise.all([
     getHouseOrdersRestricted(houseId, {
       status: "created",
       limit: 5,
@@ -1315,6 +1352,45 @@ export async function getHouseDashboardMetrics(
       orderDirection: "asc",
     }),
     getHouseOrdersRestricted(houseId, { status: "expired", limit: 5 }),
+  ]);
+
+  const [waitingAcceptanceOrders, missedOrders] = await Promise.all([
+    attachSummariesToHouseOrders(waitingOrdersRaw),
+    attachSummariesToHouseOrders(missedOrdersRaw),
+  ]);
+
+  return { waitingAcceptanceOrders, missedOrders };
+}
+
+function computeDeliveredNetRevenue(
+  rows: Array<{
+    itemsTotal: number;
+    adjustedItemsTotal: number | null;
+    commissionAmount: number | null;
+  }>,
+): number {
+  return rows.reduce(
+    (sum, r) =>
+      sum +
+      Math.max(
+        0,
+        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
+      ),
+    0,
+  );
+}
+
+export async function getHousePipelineMetrics(houseId: string): Promise<{
+  pickupCount: number;
+  washingCount: number;
+  readyCount: number;
+  completedTodayCount: number;
+}> {
+  const now = new Date();
+  const bukavuNow = toBukavuDateTime(now);
+  const startOfDay = fromBukavuDateTime(bukavuNow.dateString, "00:00");
+
+  const [statusCounts, [deliveredTodayRow]] = await Promise.all([
     db
       .select({
         status: schema.orders.status,
@@ -1333,24 +1409,60 @@ export async function getHouseDashboardMetrics(
           gte(schema.orders.updatedAt, startOfDay),
         ),
       ),
-    db
-      .select({ count: count() })
-      .from(schema.orders)
-      .where(
-        and(
-          eq(schema.orders.houseId, houseId),
-          gte(schema.orders.createdAt, startOfDay),
-        ),
-      ),
-    getHouseSettlementDetail(houseId).catch(() => ({
-      balanceOwedCDF: 0,
-      totalRevenueCDF: 0,
-      totalCommissionCDF: 0,
-      totalOwedCDF: 0,
-      totalSettledCDF: 0,
-    })),
-    getHouseHours(houseId),
-    getHouseClosures(houseId),
+  ]);
+
+  const countsByStatus = new Map(statusCounts.map((r) => [r.status, r.count]));
+  return {
+    pickupCount:
+      (countsByStatus.get("accepted") ?? 0) +
+      (countsByStatus.get("pickup_assigned") ?? 0) +
+      (countsByStatus.get("pickup_in_progress") ?? 0) +
+      (countsByStatus.get("picked_up") ?? 0),
+    washingCount:
+      (countsByStatus.get("received") ?? 0) +
+      (countsByStatus.get("price_adjusted") ?? 0) +
+      (countsByStatus.get("washing") ?? 0),
+    readyCount:
+      (countsByStatus.get("ready") ?? 0) +
+      (countsByStatus.get("delivery_slot_confirmed") ?? 0) +
+      (countsByStatus.get("delivery_assigned") ?? 0) +
+      (countsByStatus.get("delivery_in_progress") ?? 0),
+    completedTodayCount: deliveredTodayRow?.count ?? 0,
+  };
+}
+
+export async function getHouseKpiMetrics(houseId: string): Promise<{
+  todayNetRevenueCDF: number;
+  yesterdayNetRevenueCDF: number;
+  weekNetRevenueCDF: number;
+  lastWeekNetRevenueCDF: number;
+  todayOrdersCount: number;
+  balanceOwedCDF: number;
+  nextSettlementDate: string;
+  acceptanceRate30d: number | null;
+}> {
+  const now = new Date();
+  const bukavuNow = toBukavuDateTime(now);
+  const startOfDay = fromBukavuDateTime(bukavuNow.dateString, "00:00");
+  const yesterdayStart = new Date(startOfDay.getTime() - 24 * 60 * 60 * 1000);
+  const daysSinceMonday = bukavuNow.weekday - 1;
+  const startOfWeek = new Date(
+    startOfDay.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000,
+  );
+  const startOfLastWeek = new Date(
+    startOfWeek.getTime() - 7 * 24 * 60 * 60 * 1000,
+  );
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const [
+    deliveredTodayRows,
+    deliveredYesterdayRows,
+    deliveredThisWeekRows,
+    deliveredLastWeekRows,
+    [todayOrdersRow],
+    settlementDetail,
+    last30dOrders,
+  ] = await Promise.all([
     db
       .select({
         itemsTotal: schema.orders.itemsTotal,
@@ -1409,6 +1521,113 @@ export async function getHouseDashboardMetrics(
           sql`${schema.orders.updatedAt} < ${startOfWeek}`,
         ),
       ),
+    db
+      .select({ count: count() })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          gte(schema.orders.createdAt, startOfDay),
+        ),
+      ),
+    getHouseSettlementDetail(houseId).catch(() => ({
+      balanceOwedCDF: 0,
+      totalRevenueCDF: 0,
+      totalCommissionCDF: 0,
+      totalOwedCDF: 0,
+      totalSettledCDF: 0,
+    })),
+    db
+      .select({
+        status: schema.orders.status,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          gte(schema.orders.createdAt, thirtyDaysAgo),
+        ),
+      ),
+  ]);
+
+  const todayNetRevenueCDF = computeDeliveredNetRevenue(deliveredTodayRows);
+  const yesterdayNetRevenueCDF = computeDeliveredNetRevenue(deliveredYesterdayRows);
+  const weekNetRevenueCDF = computeDeliveredNetRevenue(deliveredThisWeekRows);
+  const lastWeekNetRevenueCDF = computeDeliveredNetRevenue(deliveredLastWeekRows);
+
+  let accepted30d = 0;
+  let rejected30d = 0;
+  let expired30d = 0;
+  for (const o of last30dOrders) {
+    if (
+      [
+        "accepted",
+        "pickup_assigned",
+        "pickup_in_progress",
+        "picked_up",
+        "received",
+        "price_adjusted",
+        "washing",
+        "ready",
+        "delivery_slot_confirmed",
+        "delivery_assigned",
+        "delivery_in_progress",
+        "delivered",
+      ].includes(o.status)
+    ) {
+      accepted30d++;
+    } else if (o.status === "rejected") {
+      rejected30d++;
+    } else if (o.status === "expired") {
+      expired30d++;
+    }
+  }
+
+  const acceptanceRate30d = computeAcceptanceRate(
+    accepted30d,
+    rejected30d,
+    expired30d,
+  );
+
+  const daysUntilFriday = (5 - bukavuNow.weekday + 7) % 7 || 7;
+  const nextFriday = new Date(
+    startOfDay.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000,
+  );
+  const nextFridayBukavu = toBukavuDateTime(nextFriday);
+  const nextFridayUtc = new Date(
+    Date.UTC(
+      nextFridayBukavu.year,
+      nextFridayBukavu.month - 1,
+      nextFridayBukavu.day,
+    ),
+  );
+  const nextSettlementMonth = nextFridayUtc.toLocaleDateString("fr-FR", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  const nextSettlementDate = `Vendredi ${nextFridayBukavu.day} ${nextSettlementMonth}`;
+
+  return {
+    todayNetRevenueCDF,
+    yesterdayNetRevenueCDF,
+    weekNetRevenueCDF,
+    lastWeekNetRevenueCDF,
+    todayOrdersCount: todayOrdersRow?.count ?? 0,
+    balanceOwedCDF: settlementDetail.balanceOwedCDF,
+    nextSettlementDate,
+    acceptanceRate30d,
+  };
+}
+
+export async function getHouseTablesOrders(houseId: string): Promise<{
+  recentOrders: HouseOrderListItemRecord[];
+  upcomingPickups: HouseOrderListItemRecord[];
+}> {
+  const now = new Date();
+  const bukavuNow = toBukavuDateTime(now);
+  const startOfDay = fromBukavuDateTime(bukavuNow.dateString, "00:00");
+
+  const [recentOrdersRaw, upcomingPickupsRaw] = await Promise.all([
     getHouseOrdersRestricted(houseId, { limit: 5 }),
     db
       .select({
@@ -1454,15 +1673,38 @@ export async function getHouseDashboardMetrics(
       )
       .orderBy(asc(schema.orders.pickupSlotStart))
       .limit(5),
-    db
-      .select({ count: count() })
-      .from(schema.houseItems)
-      .where(
-        and(
-          eq(schema.houseItems.houseId, houseId),
-          eq(schema.houseItems.price, 0),
-        ),
-      ),
+  ]);
+
+  const recentOrders = await attachSummariesToHouseOrders(recentOrdersRaw);
+  const upcomingPickups: HouseOrderListItemRecord[] = upcomingPickupsRaw.map(
+    (r) => {
+      const { customerRawName, ...rest } = r;
+      return {
+        ...rest,
+        customerFirstName: customerRawName.trim().split(/\s+/)[0] || "Client",
+      };
+    },
+  );
+
+  return { recentOrders, upcomingPickups };
+}
+
+export async function getHouseAnalyticsMetrics(houseId: string): Promise<{
+  acceptanceRate30d: number | null;
+  todayOrdersCount: number;
+  dailyChart: Array<{
+    date: string;
+    label: string;
+    ordersCount: number;
+    revenueCDF: number;
+  }>;
+}> {
+  const now = new Date();
+  const bukavuNow = toBukavuDateTime(now);
+  const startOfDay = fromBukavuDateTime(bukavuNow.dateString, "00:00");
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const [last30dOrders, deliveredLast30dRows] = await Promise.all([
     db
       .select({
         status: schema.orders.status,
@@ -1492,74 +1734,6 @@ export async function getHouseDashboardMetrics(
       ),
   ]);
 
-  // Enrich order summaries
-  const [waitingAcceptanceOrders, missedOrders, recentOrders] =
-    await Promise.all([
-      attachSummariesToHouseOrders(waitingOrdersRaw),
-      attachSummariesToHouseOrders(missedOrdersRaw),
-      attachSummariesToHouseOrders(recentOrdersRaw),
-    ]);
-
-  const upcomingPickups: HouseOrderListItemRecord[] = upcomingPickupsRaw.map(
-    (r) => {
-      const { customerRawName, ...rest } = r;
-      return {
-        ...rest,
-        customerFirstName: customerRawName.trim().split(/\s+/)[0] || "Client",
-      };
-    },
-  );
-
-  const countsByStatus = new Map(statusCounts.map((r) => [r.status, r.count]));
-  const waitingAcceptanceCount = countsByStatus.get("created") ?? 0;
-  const missedOrdersCount = countsByStatus.get("expired") ?? 0;
-  const washingCount =
-    (countsByStatus.get("received") ?? 0) +
-    (countsByStatus.get("price_adjusted") ?? 0) +
-    (countsByStatus.get("washing") ?? 0);
-  const readyCount = countsByStatus.get("ready") ?? 0;
-  const completedTodayCount = completedTodayRow?.count ?? 0;
-  const todayOrdersCount = todayOrdersRow?.count ?? 0;
-
-  // Net revenues calculations
-  const todayNetRevenueCDF = deliveredTodayRows.reduce(
-    (sum, r) =>
-      sum +
-      Math.max(
-        0,
-        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
-      ),
-    0,
-  );
-  const yesterdayNetRevenueCDF = deliveredYesterdayRows.reduce(
-    (sum, r) =>
-      sum +
-      Math.max(
-        0,
-        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
-      ),
-    0,
-  );
-  const weekNetRevenueCDF = deliveredThisWeekRows.reduce(
-    (sum, r) =>
-      sum +
-      Math.max(
-        0,
-        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
-      ),
-    0,
-  );
-  const lastWeekNetRevenueCDF = deliveredLastWeekRows.reduce(
-    (sum, r) =>
-      sum +
-      Math.max(
-        0,
-        (r.adjustedItemsTotal ?? r.itemsTotal) - (r.commissionAmount ?? 0),
-      ),
-    0,
-  );
-
-  // Acceptance rate (30 days)
   let accepted30d = 0;
   let rejected30d = 0;
   let expired30d = 0;
@@ -1594,7 +1768,6 @@ export async function getHouseDashboardMetrics(
     expired30d,
   );
 
-  // Daily 7-day chart data calculated from actual last30dOrders & deliveredLast30dRows
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
   const dailyChart = [];
   for (let i = 6; i >= 0; i--) {
@@ -1632,39 +1805,64 @@ export async function getHouseDashboardMetrics(
     });
   }
 
-  // Next settlement date: upcoming Friday at 16:00 (Bukavu-local calculation)
-  const daysUntilFriday = (5 - bukavuNow.weekday + 7) % 7 || 7;
-  const nextFriday = new Date(
-    startOfDay.getTime() + daysUntilFriday * 24 * 60 * 60 * 1000,
-  );
-  const nextFridayBukavu = toBukavuDateTime(nextFriday);
-  const nextFridayUtc = new Date(
-    Date.UTC(
-      nextFridayBukavu.year,
-      nextFridayBukavu.month - 1,
-      nextFridayBukavu.day,
-    ),
-  );
-  const nextSettlementMonth = nextFridayUtc.toLocaleDateString("fr-FR", {
-    month: "short",
-    timeZone: "UTC",
-  });
-  const nextSettlementDate = `Vendredi ${nextFridayBukavu.day} ${nextSettlementMonth}`;
+  const todayOrdersCount = dailyChart[dailyChart.length - 1]?.ordersCount ?? 0;
+  return { acceptanceRate30d, todayOrdersCount, dailyChart };
+}
 
-  // Status pill
-  const statusPill = computeHouseOpenStatus({
-    isPaused: houseRow?.isPaused ?? false,
-    pausedUntil: houseRow?.pausedUntil,
+export async function getHouseAlertsMetrics(
+  houseId: string,
+): Promise<HouseDashboardAlert[]> {
+  const [houseRow] = await db
+    .select({
+      slug: schema.houses.slug,
+      dailyCapacity: schema.houses.dailyCapacity,
+      isPaused: schema.houses.isPaused,
+    })
+    .from(schema.houses)
+    .where(eq(schema.houses.id, houseId))
+    .limit(1);
+
+  const now = new Date();
+  const bukavuNow = toBukavuDateTime(now);
+  const startOfDay = fromBukavuDateTime(bukavuNow.dateString, "00:00");
+
+  const [
+    waitingOrdersRaw,
     hours,
-    closures,
-    now,
-  });
+    [unpricedItemsCountRow],
+    [todayOrdersRow],
+  ] = await Promise.all([
+    getHouseOrdersRestricted(houseId, {
+      status: "created",
+      limit: 5,
+      orderBy: "acceptanceDeadlineAt",
+      orderDirection: "asc",
+    }),
+    getHouseHours(houseId),
+    db
+      .select({ count: count() })
+      .from(schema.houseItems)
+      .where(
+        and(
+          eq(schema.houseItems.houseId, houseId),
+          eq(schema.houseItems.price, 0),
+        ),
+      ),
+    db
+      .select({ count: count() })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          gte(schema.orders.createdAt, startOfDay),
+        ),
+      ),
+  ]);
 
-  // Alerts synthesis
   const alerts: HouseDashboardAlert[] = [];
+  const todayOrdersCount = todayOrdersRow?.count ?? 0;
 
-  // 1. Urgency alert for expiring orders (< 10 min)
-  const imminentOrder = waitingAcceptanceOrders.find((o) => {
+  const imminentOrder = waitingOrdersRaw.find((o) => {
     const cd = computeOrderAcceptanceCountdown(o.acceptanceDeadlineAt, now);
     return !cd.isExpired && cd.urgency !== "normal";
   });
@@ -1686,7 +1884,6 @@ export async function getHouseDashboardMetrics(
     });
   }
 
-  // 2. Capacity threshold warning (80%)
   if (
     houseRow?.dailyCapacity &&
     todayOrdersCount >= Math.floor(houseRow.dailyCapacity * 0.8)
@@ -1708,7 +1905,6 @@ export async function getHouseDashboardMetrics(
     });
   }
 
-  // 3. Missing opening hours
   if (hours.length === 0) {
     alerts.push({
       id: "alert-hours",
@@ -1723,7 +1919,6 @@ export async function getHouseDashboardMetrics(
     });
   }
 
-  // 4. Unpriced catalogue items
   if (unpricedItemsCountRow?.count && unpricedItemsCountRow.count > 0) {
     alerts.push({
       id: "alert-unpriced-items",
@@ -1738,7 +1933,6 @@ export async function getHouseDashboardMetrics(
     });
   }
 
-  // 5. House paused notice
   if (houseRow?.isPaused) {
     alerts.push({
       id: "alert-paused",
@@ -1752,65 +1946,7 @@ export async function getHouseDashboardMetrics(
     });
   }
 
-  return {
-    waitingAcceptanceCount,
-    waitingAcceptanceOrders,
-    missedOrders,
-    missedOrdersCount,
-    washingCount,
-    readyCount,
-    completedTodayCount,
-    todayOrdersCount,
-    dailyCapacity: houseRow?.dailyCapacity ?? null,
-    isPaused: houseRow?.isPaused ?? false,
-    pausedUntil: houseRow?.pausedUntil ?? null,
-    todayNetRevenueCDF,
-    yesterdayNetRevenueCDF,
-    weekNetRevenueCDF,
-    lastWeekNetRevenueCDF,
-    balanceOwedCDF: settlementDetail.balanceOwedCDF,
-    nextSettlementDate,
-    acceptanceRate30d,
-    acceptanceRateTrend: null,
-    avgAcceptanceMinutes: null,
-    onTimeDeliveryRate: null,
-    dailyChart,
-    recentOrders,
-    upcomingPickups,
-    alerts,
-    house: {
-      id: houseRow?.id ?? houseId,
-      name: houseRow?.name ?? "Pressing Partenaire",
-      slug: houseRow?.slug ?? "pressing",
-      neighborhoodName: houseRow?.neighborhoodName ?? "Ndendere",
-      communeName: houseRow?.communeName ?? "Ibanda",
-      contactPhone: houseRow?.contactPhone ?? null,
-      isPaused: houseRow?.isPaused ?? false,
-      dailyCapacity: houseRow?.dailyCapacity ?? null,
-      rating: null,
-      coverImageUrl: houseRow?.coverImageUrl ?? null,
-      logoUrl: houseRow?.logoUrl ?? null,
-      statusPill,
-    },
-  };
-}
-
-/**
- * Returns the count of pending orders awaiting acceptance (status = 'created') for a house.
- */
-export async function getWaitingAcceptanceCount(
-  houseId: string,
-): Promise<number> {
-  const [row] = await db
-    .select({ count: count() })
-    .from(schema.orders)
-    .where(
-      and(
-        eq(schema.orders.houseId, houseId),
-        eq(schema.orders.status, "created"),
-      ),
-    );
-  return row?.count ?? 0;
+  return alerts;
 }
 
 /**

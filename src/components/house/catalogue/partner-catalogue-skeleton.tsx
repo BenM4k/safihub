@@ -3,24 +3,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 /**
  * Skeleton placeholder matching the partner catalogue page (/partner/[houseSlug]/catalogue).
  */
-export function PartnerCatalogueSkeleton() {
+export function CatalogueGridSkeleton() {
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-      aria-label="Chargement du catalogue"
-      className="space-y-6 sm:space-y-8 pb-24 sm:pb-28 font-sans"
-    >
-      {/* 1. Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
-        <div className="space-y-1.5">
-          <Skeleton className="h-8 sm:h-9 w-48 sm:w-64 rounded-lg" />
-          <Skeleton className="h-4 w-72 sm:w-96 rounded-md" />
-        </div>
-        <Skeleton className="h-9 w-44 rounded-lg shrink-0 self-start sm:self-auto" />
-      </div>
-
+    <div className="space-y-6 sm:space-y-8 font-sans">
       {/* 2. Catalogue Header & Progress Card */}
       <div className="space-y-6 sm:space-y-8">
         <div className="flex justify-end">
@@ -124,6 +109,42 @@ export function PartnerCatalogueSkeleton() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+export function ItemRequestsSkeleton() {
+  return (
+    <div className="bg-card rounded-2xl overflow-hidden shadow-xs font-sans p-4 sm:p-5 space-y-3">
+      <Skeleton className="h-5 w-36 rounded-md" />
+      <div className="space-y-2 pt-1">
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+export function PartnerCatalogueSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label="Chargement du catalogue"
+      className="space-y-6 sm:space-y-8 pb-24 sm:pb-28 font-sans"
+    >
+      {/* 1. Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
+        <div className="space-y-1.5">
+          <Skeleton className="h-8 sm:h-9 w-48 sm:w-64 rounded-lg" />
+          <Skeleton className="h-4 w-72 sm:w-96 rounded-md" />
+        </div>
+        <Skeleton className="h-9 w-44 rounded-lg shrink-0 self-start sm:self-auto" />
+      </div>
+
+      <CatalogueGridSkeleton />
+      <ItemRequestsSkeleton />
     </div>
   );
 }

@@ -8,19 +8,35 @@ import { ProductsCatalogue } from "@/components/home/products-catalogue/products
 import { Testimonials } from "@/components/home/testimonials/testimonials";
 import { FaqSection } from "@/components/home/faq/faq-section";
 import { Footer } from "@/components/home/footer/footer";
-import { getCurrentUser } from "@/services/auth";
+import { getCurrentUser, type AuthenticatedUser } from "@/services/auth";
 import { getCachedNeighborhoods } from "@/lib/cached-data";
 import type { NeighborhoodRecord } from "@/dal";
 
-async function HomeUserSections({
-  neighborhoods,
+async function HeroWithNeighborhoods({
+  neighborhoodsPromise,
+  user,
 }: {
-  neighborhoods: NeighborhoodRecord[];
+  neighborhoodsPromise: Promise<NeighborhoodRecord[]>;
+  user?: AuthenticatedUser | null;
+}) {
+  const neighborhoods = await neighborhoodsPromise;
+  return <HeroSection user={user} neighborhoods={neighborhoods} />;
+}
+
+async function HomeUserSections({
+  neighborhoodsPromise,
+}: {
+  neighborhoodsPromise: Promise<NeighborhoodRecord[]>;
 }) {
   const user = await getCurrentUser();
   return (
     <>
-      <HeroSection user={user} neighborhoods={neighborhoods} />
+      <Suspense fallback={<HeroSection user={user} />}>
+        <HeroWithNeighborhoods
+          neighborhoodsPromise={neighborhoodsPromise}
+          user={user}
+        />
+      </Suspense>
       <TrustBanner user={user} />
       <ServicesTabs user={user} />
     </>
@@ -34,8 +50,8 @@ async function HomeUserSections({
  * - Solid palette with brand royal indigo #2824D5, slate #101828 (zero gradients)
  * - Calibrated typography and mobile-first responsive layout
  */
-export default async function HomePage() {
-  const neighborhoods = await getCachedNeighborhoods();
+export default function HomePage() {
+  const neighborhoodsPromise = getCachedNeighborhoods();
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary-soft selection:text-primary">
@@ -44,13 +60,18 @@ export default async function HomePage() {
         <Suspense
           fallback={
             <>
-              <HeroSection user={null} neighborhoods={neighborhoods} />
+              <Suspense fallback={<HeroSection user={null} />}>
+                <HeroWithNeighborhoods
+                  neighborhoodsPromise={neighborhoodsPromise}
+                  user={null}
+                />
+              </Suspense>
               <TrustBanner user={null} />
               <ServicesTabs user={null} />
             </>
           }
         >
-          <HomeUserSections neighborhoods={neighborhoods} />
+          <HomeUserSections neighborhoodsPromise={neighborhoodsPromise} />
         </Suspense>
         <HowItWorks />
         <ProductsCatalogue />

@@ -11,6 +11,7 @@ import { PartnerBannerActions } from "./partner-banner-actions";
 import { PartnerBannerIdentity } from "./partner-banner-identity";
 import { usePartnerBannerCover } from "./use-partner-banner-cover";
 import { usePartnerBannerModals } from "./use-partner-banner-modals";
+import { usePartnerPause } from "./partner-dashboard-interactive";
 
 interface PartnerBannerProps {
   house: {
@@ -67,13 +68,22 @@ export function PartnerBanner({
     handleCloseCoverModal,
   } = usePartnerBannerModals();
 
+  const pauseCtx = usePartnerPause();
   const [internalPauseDialogOpen, setInternalPauseDialogOpen] = useState(false);
   const [internalPausedState, setInternalPausedState] = useState(house.isPaused);
 
-  const isPausedState = liftedIsPaused ?? internalPausedState;
-  const isPauseDialogOpen = liftedIsPauseDialogOpen ?? internalPauseDialogOpen;
+  const isPausedState = liftedIsPaused ?? pauseCtx?.isPaused ?? internalPausedState;
+  const isPauseDialogOpen = liftedIsPauseDialogOpen ?? pauseCtx?.isPauseDialogOpen ?? internalPauseDialogOpen;
 
   const [isPending, startTransition] = useTransition();
+
+  const handleOpenPause =
+    onOpenPauseDialog ??
+    (pauseCtx ? pauseCtx.openPauseDialog : () => setInternalPauseDialogOpen(true));
+
+  const handleClosePause =
+    onClosePauseDialog ??
+    (pauseCtx ? pauseCtx.closePauseDialog : () => setInternalPauseDialogOpen(false));
 
   function handleTogglePause(targetPause: boolean) {
     startTransition(async () => {
@@ -83,12 +93,9 @@ export function PartnerBanner({
       });
       if (res.ok) {
         setInternalPausedState(targetPause);
+        pauseCtx?.setIsPaused(targetPause);
         onPauseChanged?.(targetPause);
-        if (onClosePauseDialog) {
-          onClosePauseDialog();
-        } else {
-          setInternalPauseDialogOpen(false);
-        }
+        handleClosePause();
       }
     });
   }
@@ -138,9 +145,7 @@ export function PartnerBanner({
             <PartnerBannerActions
               slug={house.slug}
               isPaused={isPausedState}
-              onOpenPauseDialog={
-                onOpenPauseDialog ?? (() => setInternalPauseDialogOpen(true))
-              }
+              onOpenPauseDialog={handleOpenPause}
             />
           </div>
 
@@ -173,9 +178,7 @@ export function PartnerBanner({
 
       <PartnerPauseDialog
         isOpen={isPauseDialogOpen}
-        onClose={
-          onClosePauseDialog ?? (() => setInternalPauseDialogOpen(false))
-        }
+        onClose={handleClosePause}
         isPaused={isPausedState}
         onConfirm={() => handleTogglePause(!isPausedState)}
         isPending={isPending}

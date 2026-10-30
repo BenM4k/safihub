@@ -160,9 +160,9 @@ export function PartnerAnalytics({ metrics, className }: PartnerAnalyticsProps) 
               </span>
               <div className="flex items-center gap-1 mt-1">
                 <span className="text-lg font-bold text-heading font-display">
-                  {metrics.house.rating ? metrics.house.rating.toFixed(1) : "—"}
+                  {metrics.house?.rating ? metrics.house.rating.toFixed(1) : "—"}
                 </span>
-                {metrics.house.rating && <Star className="size-4 fill-amber-400 text-amber-500" />}
+                {metrics.house?.rating && <Star className="size-4 fill-amber-400 text-amber-500" />}
               </div>
               <span className="text-[10px] text-muted-foreground">{t("customerReviews")}</span>
             </div>

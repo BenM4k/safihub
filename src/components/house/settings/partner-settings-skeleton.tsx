@@ -1,15 +1,20 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Skeleton placeholder matching the partner settings view (/partner/[houseSlug]/settings).
  */
 export function PartnerSettingsSkeleton() {
+  const t = useTranslations("house.settings");
+
   return (
     <div
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label="Chargement des paramètres de votre atelier"
+      aria-label={t("loadingSettings")}
       className="space-y-6 sm:space-y-8 max-w-6xl mx-auto pb-24 sm:pb-28 font-sans"
     >
       {/* 1. Header */}
@@ -42,26 +47,45 @@ export function PartnerSettingsSkeleton() {
       </div>
 
       {/* 3. Section Cards (Commandes default view) */}
-      <div className="hidden md:block space-y-6 font-sans">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="rounded-2xl bg-card shadow-xs p-5 space-y-4 font-sans"
-          >
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Skeleton className="h-5 w-36 rounded-md" />
-                <Skeleton className="h-3.5 w-60 rounded-md" />
-              </div>
-              <Skeleton className="h-9 w-24 rounded-lg" />
-            </div>
-            <div className="space-y-2 pt-2">
-              <Skeleton className="h-10 w-full sm:max-w-md rounded-lg" />
-              <Skeleton className="h-3.5 w-48 rounded-md" />
-            </div>
-          </div>
-        ))}
+      <div className="hidden md:block font-sans">
+        <PartnerSettingsTabSkeleton />
       </div>
+    </div>
+  );
+}
+
+/**
+ * Skeleton placeholder for the active tab inside the settings container.
+ */
+export function PartnerSettingsTabSkeleton() {
+  const t = useTranslations("house.settings");
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={t("loadingSection")}
+      className="space-y-6 font-sans animate-pulse"
+    >
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="rounded-2xl bg-card shadow-xs p-5 space-y-4 font-sans"
+        >
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Skeleton className="h-5 w-36 rounded-md" />
+              <Skeleton className="h-3.5 w-60 rounded-md" />
+            </div>
+            <Skeleton className="h-9 w-24 rounded-lg" />
+          </div>
+          <div className="space-y-2 pt-2">
+            <Skeleton className="h-10 w-full sm:max-w-md rounded-lg" />
+            <Skeleton className="h-3.5 w-48 rounded-md" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

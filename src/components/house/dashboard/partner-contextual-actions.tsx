@@ -10,11 +10,12 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Separator } from "@/components/ui/separator";
+import { usePartnerPause } from "./partner-dashboard-interactive";
 
 interface PartnerContextualActionsProps {
   houseSlug: string;
-  onOpenPause: () => void;
-  isPaused: boolean;
+  onOpenPause?: () => void;
+  isPaused?: boolean;
 }
 
 export function PartnerContextualActions({
@@ -23,6 +24,11 @@ export function PartnerContextualActions({
   isPaused,
 }: PartnerContextualActionsProps) {
   const t = useTranslations("house.dashboard");
+  const pauseCtx = usePartnerPause();
+
+  const activeIsPaused = isPaused ?? pauseCtx?.isPaused ?? false;
+  const activeOnOpenPause =
+    onOpenPause ?? (pauseCtx ? pauseCtx.openPauseDialog : () => {});
 
   const actions = [
     {
@@ -36,10 +42,10 @@ export function PartnerContextualActions({
     },
     {
       id: "pause",
-      onClick: onOpenPause,
-      icon: isPaused ? PlayCircle : PauseCircle,
-      iconBg: isPaused ? "bg-success-soft text-success" : "bg-warning-soft text-warning",
-      title: isPaused ? t("actionResume") : t("actionPause"),
+      onClick: activeOnOpenPause,
+      icon: activeIsPaused ? PlayCircle : PauseCircle,
+      iconBg: activeIsPaused ? "bg-success-soft text-success" : "bg-warning-soft text-warning",
+      title: activeIsPaused ? t("actionResume") : t("actionPause"),
       subtitle: t("actionPauseDesc"),
       type: "button" as const,
     },

@@ -1,27 +1,28 @@
 "use client";
 
-import { use } from "react";
+import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { PartnerErrorView } from "@/components/house/partner-error-view";
 
 interface PartnerCoverageErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
-  params: Promise<{ houseSlug: string }>;
 }
 
 export default function PartnerCoverageError({
   error,
   reset,
-  params,
 }: PartnerCoverageErrorProps) {
-  const { houseSlug } = use(params);
+  const t = useTranslations("house.coverage");
+  const params = useParams<{ houseSlug?: string }>();
+  const houseSlug = params?.houseSlug;
 
   return (
     <PartnerErrorView
       error={error}
       reset={reset}
-      title="Erreur de zones couvertes"
-      description="Impossible de charger le gestionnaire de couverture géographique et les quartiers desservis."
+      title={t("errorTitle")}
+      description={t("errorDescription")}
       houseSlug={houseSlug}
     />
   );

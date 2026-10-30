@@ -1,20 +1,19 @@
 "use client";
 
-import { use } from "react";
+import { useParams } from "next/navigation";
 import { PartnerErrorView } from "@/components/house/partner-error-view";
 
 interface PartnerOrdersErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
-  params: Promise<{ houseSlug: string }>;
 }
 
 export default function PartnerOrdersError({
   error,
   reset,
-  params,
 }: PartnerOrdersErrorProps) {
-  const { houseSlug } = use(params);
+  const params = useParams<{ houseSlug?: string }>();
+  const houseSlug = params?.houseSlug;
 
   return (
     <PartnerErrorView
