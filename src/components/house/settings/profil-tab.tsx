@@ -35,6 +35,10 @@ export function ProfilTab({ house, onDirtyChange }: ProfilTabProps) {
   useEffect(() => {
     onDirtyChange?.(isDirty);
     setIsDirty(isDirty);
+    return () => {
+      onDirtyChange?.(false);
+      setIsDirty(false);
+    };
   }, [isDirty, onDirtyChange, setIsDirty]);
 
   function handleReset() {

@@ -1,15 +1,20 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Skeleton placeholder matching the partner settings view (/partner/[houseSlug]/settings).
  */
 export function PartnerSettingsSkeleton() {
+  const t = useTranslations("house.settings");
+
   return (
     <div
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label="Chargement des paramètres de votre atelier"
+      aria-label={t("loadingSettings")}
       className="space-y-6 sm:space-y-8 max-w-6xl mx-auto pb-24 sm:pb-28 font-sans"
     >
       {/* 1. Header */}
@@ -53,12 +58,14 @@ export function PartnerSettingsSkeleton() {
  * Skeleton placeholder for the active tab inside the settings container.
  */
 export function PartnerSettingsTabSkeleton() {
+  const t = useTranslations("house.settings");
+
   return (
     <div
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label="Chargement de la section"
+      aria-label={t("loadingSection")}
       className="space-y-6 font-sans animate-pulse"
     >
       {[1, 2, 3].map((i) => (

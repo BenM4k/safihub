@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { guardHouseRoute } from "@/services/auth";
 import { getHouseCoverageData } from "@/services/house";
 import { CoverageManager } from "@/components/house/coverage/coverage-manager";
@@ -11,9 +12,10 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { houseSlug } = await params;
+  const t = await getTranslations("house.coverage");
   return {
-    title: `Zone de couverture — SafiHub Partner (${houseSlug})`,
-    description: "Gérez les quartiers desservis par votre pressing et configurez votre périmètre de livraison.",
+    title: t("metaTitle", { houseSlug }),
+    description: t("metaDescription"),
   };
 }
 

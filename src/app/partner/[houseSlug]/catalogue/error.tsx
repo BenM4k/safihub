@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { PartnerErrorView } from "@/components/house/partner-error-view";
 
 interface PartnerCatalogueErrorProps {
@@ -12,6 +13,7 @@ export default function PartnerCatalogueError({
   error,
   reset,
 }: PartnerCatalogueErrorProps) {
+  const t = useTranslations("house.catalogue");
   const params = useParams<{ houseSlug?: string }>();
   const houseSlug = params?.houseSlug;
 
@@ -19,8 +21,8 @@ export default function PartnerCatalogueError({
     <PartnerErrorView
       error={error}
       reset={reset}
-      title="Erreur du catalogue des prestations"
-      description="Impossible de charger ou de modifier les tarifs de votre pressing."
+      title={t("errorTitle")}
+      description={t("errorDescription")}
       houseSlug={houseSlug}
     />
   );

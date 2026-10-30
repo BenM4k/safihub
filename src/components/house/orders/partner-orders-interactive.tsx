@@ -4,7 +4,10 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
-import type { PartnerOrderListItemDTO, PartnerOrderTab } from "@/dal/partner-order.dal";
+import type {
+  PartnerOrderListItemDTO,
+  PartnerOrderTab,
+} from "@/dal/partner-order.dal";
 import {
   acceptPartnerOrderAction,
   handoverPartnerOrderToCourierAction,
@@ -22,15 +25,11 @@ import {
   PartnerOrdersActionsContext,
   type PartnerOrdersActionsContextValue,
 } from "./partner-orders-context";
+import {
+  parsePartnerOrderTab,
+  type PartnerOrderTab,
+} from "./partner-orders-helpers";
 
-const VALID_TABS: PartnerOrderTab[] = [
-  "to_accept",
-  "to_collect",
-  "in_treatment",
-  "ready",
-  "delivered",
-  "failed",
-];
 const VALID_SORTS = ["deadline", "promised", "recent"] as const;
 
 export function PartnerOrdersInteractive({
@@ -45,15 +44,15 @@ export function PartnerOrdersInteractive({
   const t = useTranslations("house.orders");
 
   const rawTab = searchParams.get("tab");
-  const currentTab: PartnerOrderTab = VALID_TABS.includes(rawTab as PartnerOrderTab)
-    ? (rawTab as PartnerOrderTab)
-    : "to_accept";
+  const currentTab = parsePartnerOrderTab(rawTab);
 
   const currentSearch = searchParams.get("search") || "";
   const currentDate = searchParams.get("date") || "";
 
   const rawSort = searchParams.get("sort");
-  const currentSort = VALID_SORTS.includes(rawSort as (typeof VALID_SORTS)[number])
+  const currentSort = VALID_SORTS.includes(
+    rawSort as (typeof VALID_SORTS)[number],
+  )
     ? (rawSort as (typeof VALID_SORTS)[number])
     : "promised";
 
@@ -70,10 +69,15 @@ export function PartnerOrdersInteractive({
     type: "success" | "error";
   } | null>(null);
 
-  const [detailOrder, setDetailOrder] = useState<PartnerOrderListItemDTO | null>(null);
-  const [ticketOrder, setTicketOrder] = useState<PartnerOrderListItemDTO | null>(null);
-  const [rejectOrder, setRejectOrder] = useState<PartnerOrderListItemDTO | null>(null);
-  const [issueOrder, setIssueOrder] = useState<PartnerOrderListItemDTO | null>(null);
+  const [detailOrder, setDetailOrder] =
+    useState<PartnerOrderListItemDTO | null>(null);
+  const [ticketOrder, setTicketOrder] =
+    useState<PartnerOrderListItemDTO | null>(null);
+  const [rejectOrder, setRejectOrder] =
+    useState<PartnerOrderListItemDTO | null>(null);
+  const [issueOrder, setIssueOrder] = useState<PartnerOrderListItemDTO | null>(
+    null,
+  );
 
   const [, startTransition] = useTransition();
 
@@ -129,7 +133,7 @@ export function PartnerOrdersInteractive({
 
       router.replace(`?${nextParams.toString()}`, { scroll: false });
     },
-    [router, searchParams]
+    [router, searchParams],
   );
 
   const handleRefresh = useCallback(() => {
@@ -217,7 +221,10 @@ export function PartnerOrdersInteractive({
   async function handleHandover(orderId: string) {
     setPendingOrderId(orderId);
     startTransition(async () => {
-      const res = await handoverPartnerOrderToCourierAction({ houseSlug, orderId });
+      const res = await handoverPartnerOrderToCourierAction({
+        houseSlug,
+        orderId,
+      });
       setPendingOrderId(null);
       if (res.ok) {
         showToast(t("handoverSuccess"));
@@ -228,7 +235,11 @@ export function PartnerOrdersInteractive({
     });
   }
 
-  async function handleReportIssue(orderId: string, reason: string, note?: string) {
+  async function handleReportIssue(
+    orderId: string,
+    reason: string,
+    note?: string,
+  ) {
     const res = await reportPartnerOrderIssueAction({
       houseSlug,
       orderId,
@@ -330,4 +341,3 @@ export function PartnerOrdersInteractive({
     </PartnerOrdersActionsContext.Provider>
   );
 }
-

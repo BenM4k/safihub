@@ -1,6 +1,6 @@
 import { getPartnerOrderTabCounts } from "@/services/house/partner-order.service";
-import type { PartnerOrderTab } from "@/dal/partner-order.dal";
 import { PartnerOrdersTabsClient } from "./partner-orders-tabs-client";
+import { parsePartnerOrderTab } from "./partner-orders-helpers";
 
 interface PartnerOrdersTabsSectionProps {
   houseId: string;
@@ -12,9 +12,7 @@ export async function PartnerOrdersTabsSection({
   searchParams,
 }: PartnerOrdersTabsSectionProps) {
   const { tab } = await searchParams;
-  const validTab = (["to_accept", "to_collect", "in_treatment", "ready", "delivered", "failed"].includes(tab || "")
-    ? tab
-    : "to_accept") as PartnerOrderTab;
+  const validTab = parsePartnerOrderTab(tab);
 
   const countsRes = await getPartnerOrderTabCounts(houseId);
   const counts = countsRes.ok

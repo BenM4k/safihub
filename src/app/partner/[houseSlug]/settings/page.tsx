@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { guardHouseRoute } from "@/services/auth";
-import { getHouseById, getHouseExclusions, getHouseStaff } from "@/dal";
+import { getHouseById, getHouseBySlug, getHouseExclusions, getHouseStaff } from "@/dal";
 import { SettingsContainer } from "@/components/house/settings";
 import { SettingsTabRouter } from "@/components/house/settings/settings-sections";
 import {
@@ -17,9 +18,14 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { houseSlug } = await params;
+  const [house, t] = await Promise.all([
+    getHouseBySlug(houseSlug),
+    getTranslations("house.settings"),
+  ]);
+  const houseDisplayName = house?.name ?? houseSlug;
   return {
-    title: `Paramètres de l'atelier — SafiHub Partner (${houseSlug})`,
-    description: "Gérez le profil de votre pressing, les exclusions de linge, l'équipe et vos préférences.",
+    title: t("metaTitle", { houseSlug: houseDisplayName }),
+    description: t("metaDescription"),
   };
 }
 

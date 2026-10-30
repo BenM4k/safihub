@@ -101,6 +101,7 @@ export function CatalogueToolbar({
           <Button
             type="submit"
             size="sm"
+            aria-label={t("searchButton")}
             className="h-10 sm:h-9 px-3 sm:px-3.5 rounded-xl text-xs font-semibold shrink-0 gap-1.5"
           >
             <Search className="size-3.5" />

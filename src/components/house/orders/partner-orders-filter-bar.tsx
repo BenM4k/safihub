@@ -43,14 +43,19 @@ export function PartnerOrdersFilterBar({
   const t = useTranslations("house.orders");
   const [localSearch, setLocalSearch] = useState(search);
   const [prevSearch, setPrevSearch] = useState(search);
+  const [clearing, setClearing] = useState(false);
 
   if (prevSearch !== search) {
     setPrevSearch(search);
-    setLocalSearch(search);
+    if (!clearing || localSearch === "") {
+      setLocalSearch(search);
+    }
+    setClearing(false);
   }
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setClearing(false);
     onSearchChange(localSearch.trim());
   }
 
@@ -70,6 +75,7 @@ export function PartnerOrdersFilterBar({
               const val = e.target.value;
               setLocalSearch(val);
               if (val === "" && search !== "") {
+                setClearing(true);
                 onSearchChange("");
               }
             }}
@@ -81,6 +87,7 @@ export function PartnerOrdersFilterBar({
         <Button
           type="submit"
           size="sm"
+          aria-label={t("searchButton")}
           className="min-h-[40px] sm:min-h-[36px] px-3 sm:px-3.5 rounded-xl text-xs font-semibold shrink-0 gap-1.5"
         >
           <Search className="size-3.5" />

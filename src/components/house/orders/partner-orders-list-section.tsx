@@ -1,7 +1,7 @@
 import { listPartnerOrdersWithCount } from "@/services/house/partner-order.service";
 import { PartnerOrdersEmptyState } from "./partner-orders-empty-state";
 import { PartnerOrdersListView } from "./partner-orders-list-view";
-import type { PartnerOrderTab } from "@/dal/partner-order.dal";
+import { parsePartnerOrderTab } from "./partner-orders-helpers";
 
 interface PartnerOrdersListSectionProps {
   houseId: string;
@@ -21,9 +21,7 @@ export async function PartnerOrdersListSection({
 }: PartnerOrdersListSectionProps) {
   const { tab, search, date, sort, page, pageSize } = await searchParams;
 
-  const validTab = (["to_accept", "to_collect", "in_treatment", "ready", "delivered", "failed"].includes(tab || "")
-    ? tab
-    : "to_accept") as PartnerOrderTab;
+  const validTab = parsePartnerOrderTab(tab);
 
   const validSort = (["deadline", "promised", "recent"].includes(sort || "")
     ? sort
@@ -49,7 +47,7 @@ export async function PartnerOrdersListSection({
     ? res.value
     : { orders: [], totalCount: 0 };
 
-  if (orders.length === 0) {
+  if (totalCount === 0) {
     return <PartnerOrdersEmptyState tab={validTab} />;
   }
 

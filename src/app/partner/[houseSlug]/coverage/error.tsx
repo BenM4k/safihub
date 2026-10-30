@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { PartnerErrorView } from "@/components/house/partner-error-view";
 
 interface PartnerCoverageErrorProps {
@@ -12,6 +13,7 @@ export default function PartnerCoverageError({
   error,
   reset,
 }: PartnerCoverageErrorProps) {
+  const t = useTranslations("house.coverage");
   const params = useParams<{ houseSlug?: string }>();
   const houseSlug = params?.houseSlug;
 
@@ -19,8 +21,8 @@ export default function PartnerCoverageError({
     <PartnerErrorView
       error={error}
       reset={reset}
-      title="Erreur de la couverture de livraison"
-      description="Impossible de charger ou de modifier les quartiers desservis par votre pressing."
+      title={t("errorTitle")}
+      description={t("errorDescription")}
       houseSlug={houseSlug}
     />
   );

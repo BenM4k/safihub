@@ -19,8 +19,6 @@ export default function PartnerOrderDetailError({
     <PartnerErrorView
       error={error}
       reset={reset}
-      title="Erreur lors du chargement de la commande"
-      description="Impossible d'afficher les détails ou les pièces de cette commande."
       houseSlug={houseSlug}
     />
   );

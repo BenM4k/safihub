@@ -38,7 +38,10 @@ async function PartnerDashboardContent({ params }: PageProps) {
   ]);
 
   if (!bannerRes.ok) {
-    notFound();
+    if (bannerRes.error === "House not found") {
+      notFound();
+    }
+    throw new Error(bannerRes.error);
   }
 
   return (

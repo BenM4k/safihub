@@ -26,9 +26,10 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { houseSlug } = await params;
+  const t = await getTranslations("house.orders");
   return {
-    title: `Commandes — SafiHub Partner (${houseSlug})`,
-    description: "Gestion des commandes de pressing, acceptation, lavage et livraison.",
+    title: t("metaTitle", { houseSlug }),
+    description: t("metaDescription"),
   };
 }
 

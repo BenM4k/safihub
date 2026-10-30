@@ -8,22 +8,35 @@ import { ProductsCatalogue } from "@/components/home/products-catalogue/products
 import { Testimonials } from "@/components/home/testimonials/testimonials";
 import { FaqSection } from "@/components/home/faq/faq-section";
 import { Footer } from "@/components/home/footer/footer";
-import { getCurrentUser } from "@/services/auth";
+import { getCurrentUser, type AuthenticatedUser } from "@/services/auth";
 import { getCachedNeighborhoods } from "@/lib/cached-data";
 import type { NeighborhoodRecord } from "@/dal";
+
+async function HeroWithNeighborhoods({
+  neighborhoodsPromise,
+  user,
+}: {
+  neighborhoodsPromise: Promise<NeighborhoodRecord[]>;
+  user?: AuthenticatedUser | null;
+}) {
+  const neighborhoods = await neighborhoodsPromise;
+  return <HeroSection user={user} neighborhoods={neighborhoods} />;
+}
 
 async function HomeUserSections({
   neighborhoodsPromise,
 }: {
   neighborhoodsPromise: Promise<NeighborhoodRecord[]>;
 }) {
-  const [user, neighborhoods] = await Promise.all([
-    getCurrentUser(),
-    neighborhoodsPromise,
-  ]);
+  const user = await getCurrentUser();
   return (
     <>
-      <HeroSection user={user} neighborhoods={neighborhoods} />
+      <Suspense fallback={<HeroSection user={user} />}>
+        <HeroWithNeighborhoods
+          neighborhoodsPromise={neighborhoodsPromise}
+          user={user}
+        />
+      </Suspense>
       <TrustBanner user={user} />
       <ServicesTabs user={user} />
     </>
@@ -47,7 +60,12 @@ export default function HomePage() {
         <Suspense
           fallback={
             <>
-              <HeroSection user={null} />
+              <Suspense fallback={<HeroSection user={null} />}>
+                <HeroWithNeighborhoods
+                  neighborhoodsPromise={neighborhoodsPromise}
+                  user={null}
+                />
+              </Suspense>
               <TrustBanner user={null} />
               <ServicesTabs user={null} />
             </>

@@ -105,8 +105,8 @@ export function PartnerDashboardView({
         <PartnerTablesSection houseId={houseId} houseSlug={houseSlug} />
       </Suspense>
 
-      {/* 8. Contextual Actions (uses shared house data; renders immediately!) */}
-      <PartnerContextualActions houseSlug={houseSlug} isPaused={house.isPaused} />
+      {/* 8. Contextual Actions (uses shared pause context; renders immediately!) */}
+      <PartnerContextualActions houseSlug={houseSlug} />
     </PartnerDashboardInteractive>
   );
 }

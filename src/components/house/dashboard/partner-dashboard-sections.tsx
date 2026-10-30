@@ -67,6 +67,7 @@ export async function PartnerKpiRowSection({
         todayOrdersCount: 0,
         balanceOwedCDF: 0,
         nextSettlementDate: "",
+        acceptanceRate30d: null,
       };
 
   const syntheticMetrics: Partial<HouseDashboardMetrics> = {
@@ -79,7 +80,7 @@ export async function PartnerKpiRowSection({
     balanceOwedCDF: data.balanceOwedCDF,
     nextSettlementDate: data.nextSettlementDate,
     waitingAcceptanceCount,
-    acceptanceRate30d: null,
+    acceptanceRate30d: data.acceptanceRate30d ?? null,
     acceptanceRateTrend: null,
   };
 
@@ -107,13 +108,14 @@ export async function PartnerPipelineSection({
         pickupCount: 0,
         washingCount: 0,
         readyCount: 0,
+        completedTodayCount: 0,
       };
 
   const syntheticMetrics: Partial<HouseDashboardMetrics> = {
     waitingAcceptanceCount,
     washingCount: counts.washingCount,
     readyCount: counts.readyCount,
-    completedTodayCount: 0,
+    completedTodayCount: counts.completedTodayCount ?? 0,
   };
 
   return (

@@ -14,7 +14,6 @@ import {
   getHouseCatalogueItems,
   getHouseClosures,
   getHouseCoverageWithLimits,
-  getHouseDashboardMetrics,
   getHouseBannerProfile,
   getHouseAcceptanceQueueOrders,
   getHousePipelineMetrics,
@@ -42,7 +41,6 @@ import {
   upsertHouseItemPricesBatch,
   type HouseCatalogueItemRecord,
   type HouseCoverageWithLimitsData,
-  type HouseDashboardMetrics,
   type HouseOrderDetailRecord,
   type HouseOrderListItemRecord,
   type OrderEventRecord,
@@ -55,17 +53,6 @@ import {
 } from "@/services/order";
 import { getSignedUploadUrl, getStoragePublicUrl } from "@/lib/storage/r2-client";
 import type { OrderStatus } from "@/services/db/schema";
-
-export async function getHouseDashboardData(
-  houseId: string
-): Promise<Result<HouseDashboardMetrics>> {
-  try {
-    const metrics = await getHouseDashboardMetrics(houseId);
-    return ok(metrics);
-  } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load dashboard metrics");
-  }
-}
 
 export async function getHouseBannerData(houseId: string) {
   try {

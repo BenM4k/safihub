@@ -1862,6 +1862,7 @@
       "confirmResume": "Confirm Resume"
     },
     "dashboard": {
+      "loadingDashboard": "Loading dashboard",
       "title": "Dashboard",
       "subtitle": "Track your orders, acceptance deadlines, and daily workload",
       "waitingTitle": "Orders Awaiting Acceptance",
@@ -1984,6 +1985,8 @@
       "housePausedMessage": "Your laundry house is temporarily paused. In-progress orders remain active."
     },
     "orders": {
+      "metaTitle": "Orders — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Laundry order management, acceptance, washing, and delivery.",
       "title": "House Orders",
       "subtitle": "Acceptance, tracking, and item fulfillment for your laundry house",
       "filterAll": "All",
@@ -2143,6 +2146,10 @@
       "markReadyTitle": "Laundry cleaned and pressed?"
     },
     "catalogue": {
+      "metaTitle": "Catalogue & Prices — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Manage your items, fabrics, and service prices.",
+      "errorTitle": "Service Catalogue Error",
+      "errorDescription": "Unable to load or modify prices for your laundry house.",
       "title": "Catalogue & Pricing",
       "subtitle": "Set the services and items you offer and their prices",
       "serviceCol": "Service",
@@ -2367,6 +2374,10 @@
       "nextClosureDisplay": "Next closure shown: from {starts} to {ends}"
     },
     "coverage": {
+      "metaTitle": "Coverage Area — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Manage neighborhoods served by your laundry house and configure your delivery perimeter.",
+      "errorTitle": "Delivery Coverage Error",
+      "errorDescription": "Unable to load or modify the neighborhoods served by your laundry house.",
       "title": "Covered Zones",
       "subtitle": "Choose the neighborhoods your laundry house serves",
       "effectiveMaxDistance": "Authorized Distance Limit: Level",
@@ -2450,6 +2461,10 @@
       "charactersCount": "{count} chars"
     },
     "settings": {
+      "metaTitle": "Workshop Settings — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Manage your laundry profile, item exclusions, staff, and preferences.",
+      "loadingSettings": "Loading workshop settings",
+      "loadingSection": "Loading section",
       "title": "House Settings",
       "subtitle": "Daily capacity, emergency pause, minimum order amount, and item exclusions",
       "capacityTitle": "Daily Capacity & Minimum Order",
@@ -2502,6 +2517,8 @@
       "noStaff": "No staff member registered."
     },
     "settlements": {
+      "metaTitle": "Settlements & Payouts — SafiHub Partner ({houseSlug})",
+      "metaDescription": "Track your balance owed, delivered orders, and received settlement history.",
       "title": "Earnings & Payouts",
       "subtitle": "Track your revenues, platform commissions, and payouts received from SafiHub",
       "balanceOwed": "Balance to Receive",

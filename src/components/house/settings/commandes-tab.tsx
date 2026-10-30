@@ -62,6 +62,10 @@ export function CommandesTab({
   useEffect(() => {
     onDirtyChange?.(isDirty);
     setIsDirty(isDirty);
+    return () => {
+      onDirtyChange?.(false);
+      setIsDirty(false);
+    };
   }, [isDirty, onDirtyChange, setIsDirty]);
 
   function handleTogglePause() {
