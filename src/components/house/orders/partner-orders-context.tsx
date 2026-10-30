@@ -27,6 +27,7 @@ export interface PartnerOrdersActionsContextValue {
   handlePageChange: (page: number) => void;
   handlePageSizeChange: (size: number) => void;
   handleRefresh: () => void;
+  notifyOrders: (orderIds: string[]) => void;
 
   handleAccept: (orderId: string) => Promise<void>;
   handleReject: (orderId: string, reason: string) => Promise<void>;

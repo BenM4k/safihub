@@ -4,11 +4,17 @@ import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 
-export {
+import {
   PartnerBannerSkeleton,
   AcceptanceQueueSkeleton,
   PartnerKpiRowSkeleton,
 } from "./partner-dashboard-top-skeleton";
+
+export {
+  PartnerBannerSkeleton,
+  AcceptanceQueueSkeleton,
+  PartnerKpiRowSkeleton,
+};
 
 export function PartnerPipelineSkeleton() {
   return (

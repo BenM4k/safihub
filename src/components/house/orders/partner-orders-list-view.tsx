@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePartnerOrdersActions } from "./partner-orders-context";
 import { PartnerOrdersCardList } from "./partner-orders-card-list";
 import { PartnerOrdersTable } from "./partner-orders-table";
@@ -20,6 +21,7 @@ export function PartnerOrdersListView({
   pageSize,
 }: PartnerOrdersListViewProps) {
   const {
+    notifyOrders,
     pendingOrderId,
     handleAccept,
     handleMarkReceived,
@@ -33,6 +35,10 @@ export function PartnerOrdersListView({
     handlePageChange,
     handlePageSizeChange,
   } = usePartnerOrdersActions();
+
+  useEffect(() => {
+    notifyOrders(orders.map((o) => o.id));
+  }, [orders, notifyOrders]);
 
   return (
     <>

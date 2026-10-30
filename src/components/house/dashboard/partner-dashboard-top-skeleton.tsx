@@ -123,6 +123,12 @@ export function PartnerKpiRowSkeleton() {
             <Skeleton className="h-3 w-20 rounded-md" />
           </div>
         </div>
+        <Separator className="my-1.5 bg-border/60" />
+        <div className="p-2 space-y-2">
+          <Skeleton className="h-3 w-24 rounded-md" />
+          <Skeleton className="h-5 w-20 rounded-lg" />
+          <Skeleton className="h-3 w-28 rounded-md" />
+        </div>
       </div>
     </div>
   );

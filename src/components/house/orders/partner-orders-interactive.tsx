@@ -1,13 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
-import type {
-  PartnerOrderListItemDTO,
-  PartnerOrderTab,
-} from "@/dal/partner-order.dal";
+import type { PartnerOrderListItemDTO } from "@/dal/partner-order.dal";
 import {
   acceptPartnerOrderAction,
   handoverPartnerOrderToCourierAction,
@@ -17,17 +14,14 @@ import {
   reportPartnerOrderIssueAction,
   startPartnerOrderWashingAction,
 } from "@/actions/partner-orders.actions";
-import { PartnerOrderDetailSheet } from "./partner-order-detail-sheet";
-import { PartnerOrderRejectDialog } from "./partner-order-reject-dialog";
-import { PartnerOrderIssueDialog } from "./partner-order-issue-dialog";
-import { PartnerOrderTicketDialog } from "./partner-order-ticket-dialog";
+import { PartnerOrdersDialogs } from "./partner-orders-dialogs";
 import {
   PartnerOrdersActionsContext,
   type PartnerOrdersActionsContextValue,
 } from "./partner-orders-context";
 import {
   parsePartnerOrderTab,
-  type PartnerOrderTab,
+  playNewOrderChime,
 } from "./partner-orders-helpers";
 
 const VALID_SORTS = ["deadline", "promised", "recent"] as const;
@@ -134,6 +128,35 @@ export function PartnerOrdersInteractive({
       router.replace(`?${nextParams.toString()}`, { scroll: false });
     },
     [router, searchParams],
+  );
+
+  const knownOrderIdsRef = useRef<Set<string>>(new Set());
+  const isFirstRenderRef = useRef(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      isFirstRenderRef.current = false;
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const notifyOrders = useCallback(
+    (orderIds: string[]) => {
+      if (isFirstRenderRef.current) {
+        orderIds.forEach((id) => knownOrderIdsRef.current.add(id));
+        return;
+      }
+
+      const hasNewOrder = orderIds.some(
+        (id) => !knownOrderIdsRef.current.has(id),
+      );
+      orderIds.forEach((id) => knownOrderIdsRef.current.add(id));
+
+      if (hasNewOrder && currentTab === "to_accept" && soundEnabled) {
+        playNewOrderChime();
+      }
+    },
+    [currentTab, soundEnabled],
   );
 
   const handleRefresh = useCallback(() => {
@@ -276,6 +299,7 @@ export function PartnerOrdersInteractive({
     handlePageChange: (page) => updateUrl({ page }),
     handlePageSizeChange: (size) => updateUrl({ pageSize: size, page: 1 }),
     handleRefresh,
+    notifyOrders,
     handleAccept,
     handleReject,
     handleMarkReceived,
@@ -311,31 +335,18 @@ export function PartnerOrdersInteractive({
         {children}
 
         {/* Dialogs */}
-        <PartnerOrderDetailSheet
-          order={detailOrder}
+        <PartnerOrdersDialogs
           houseSlug={houseSlug}
-          isOpen={Boolean(detailOrder)}
-          onClose={() => setDetailOrder(null)}
-        />
-
-        <PartnerOrderTicketDialog
-          order={ticketOrder}
-          isOpen={Boolean(ticketOrder)}
-          onClose={() => setTicketOrder(null)}
-        />
-
-        <PartnerOrderRejectDialog
-          order={rejectOrder}
-          isOpen={Boolean(rejectOrder)}
-          onClose={() => setRejectOrder(null)}
-          onConfirm={handleReject}
-        />
-
-        <PartnerOrderIssueDialog
-          order={issueOrder}
-          isOpen={Boolean(issueOrder)}
-          onClose={() => setIssueOrder(null)}
-          onConfirm={handleReportIssue}
+          detailOrder={detailOrder}
+          setDetailOrder={setDetailOrder}
+          ticketOrder={ticketOrder}
+          setTicketOrder={setTicketOrder}
+          rejectOrder={rejectOrder}
+          setRejectOrder={setRejectOrder}
+          issueOrder={issueOrder}
+          setIssueOrder={setIssueOrder}
+          onReject={handleReject}
+          onReportIssue={handleReportIssue}
         />
       </div>
     </PartnerOrdersActionsContext.Provider>
