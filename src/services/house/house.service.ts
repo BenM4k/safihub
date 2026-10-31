@@ -1,4 +1,5 @@
 import "server-only";
+import crypto from "node:crypto";
 import { err, ok, type Result } from "@/lib/result";
 import {
   createHouseClosure,
@@ -992,7 +993,7 @@ export async function requestCoverageExtension(
       return err(`Votre pressing dessert déjà jusqu'au niveau ${currentLevel}.`);
     }
 
-    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const suffix = crypto.randomBytes(2).toString("hex").toUpperCase();
     const timeCode = Date.now().toString(36).toUpperCase();
     const ticketReference = `TIC-EXT-${suffix}-${timeCode}`;
 
@@ -1033,7 +1034,7 @@ export async function generateHouseAssetUploadUrlService(params: {
       return err("Pressing introuvable");
     }
 
-    const uniqueId = Math.random().toString(36).substring(2, 9);
+    const uniqueId = crypto.randomUUID().substring(0, 8);
     const contentType = params.contentType || "image/webp";
     const extension =
       contentType === "image/jpeg"
