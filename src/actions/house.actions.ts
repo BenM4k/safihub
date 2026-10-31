@@ -1,5 +1,5 @@
 "use server";
-
+import crypto from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireHouseAccess } from "@/services/auth";
@@ -1101,7 +1101,7 @@ export async function uploadHouseAssetDirectAction(
   if (!roleCheck.ok) return roleCheck;
 
   const houseId = authCtx.value.houseId;
-  const uniqueId = Math.random().toString(36).substring(2, 9);
+  const uniqueId = crypto.randomUUID().substring(0, 8);
   const ext = file.type === "image/png" ? "png" : file.type === "image/jpeg" ? "jpg" : "webp";
   const storageKey = `houses/${houseId}/${assetType}_${Date.now()}_${uniqueId}.${ext}`;
 

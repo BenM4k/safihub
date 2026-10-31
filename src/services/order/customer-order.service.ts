@@ -1,4 +1,5 @@
 import "server-only";
+import crypto from "node:crypto";
 import {
   createDisputeTransaction,
   getCustomerHouseDetail,
@@ -164,7 +165,7 @@ export async function placeCustomerOrder(
 
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
+  const randomSuffix = crypto.randomInt(1000, 10000).toString();
   const orderCode = `ORD-${dateStr}-${randomSuffix}`;
   const trackingToken = crypto.randomUUID();
 
