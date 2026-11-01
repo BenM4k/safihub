@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray, isNull, ne, notInArray, sql } from "drizzl
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
 import { DEFAULT_RETRY_FEE_CDF, RETRY_FEE_FAILED_PICKUP_COUNT } from "@/lib/fees";
+import crypto from "node:crypto";
 
 export interface CourierRecord {
   userId: string;
@@ -1245,7 +1246,7 @@ export async function startDeliveryMissionAtomic(
 
     const deliveryCode =
       order.deliveryConfirmationCode ||
-      Math.floor(1000 + Math.random() * 9000).toString();
+      crypto.randomInt(1000, 10000).toString();
 
     await tx
       .update(schema.orders)

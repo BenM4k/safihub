@@ -55,7 +55,7 @@ export async function uploadPickupConditionPhoto({
       if (!recordRes.ok) return err(recordRes.error);
     } else {
       await enqueueOfflinePhoto({
-        id: `offline_photo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        id: `offline_photo_${Date.now()}_${crypto.randomUUID().substring(0, 5)}`,
         orderId,
         orderItemId,
         missionId,

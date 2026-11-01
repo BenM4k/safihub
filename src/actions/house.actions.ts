@@ -31,6 +31,7 @@ import {
 } from "@/services/house";
 
 import { normalizeStaffRole, type HouseStaffRole } from "@/services/auth/house-permissions";
+import crypto from "node:crypto";
 
 async function getAuthenticatedHouseContext(providedHouseId?: string) {
   const authRes = await requireHouseAccess({ houseId: providedHouseId });
@@ -1101,7 +1102,7 @@ export async function uploadHouseAssetDirectAction(
   if (!roleCheck.ok) return roleCheck;
 
   const houseId = authCtx.value.houseId;
-  const uniqueId = Math.random().toString(36).substring(2, 9);
+  const uniqueId = crypto.randomBytes(4).toString("hex").substring(0, 7);
   const ext = file.type === "image/png" ? "png" : file.type === "image/jpeg" ? "jpg" : "webp";
   const storageKey = `houses/${houseId}/${assetType}_${Date.now()}_${uniqueId}.${ext}`;
 
