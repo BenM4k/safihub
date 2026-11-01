@@ -27,6 +27,7 @@ import {
 import { computeAcceptanceDeadlines } from "./deadlines";
 import { transitionOrder } from "./transitions";
 import { trackOrderCancelled, trackOrderPlaced } from "@/services/analytics";
+import crypto from "node:crypto";
 export interface CartEstimateResult {
   items: Array<{
     houseItemId: string;
@@ -164,7 +165,7 @@ export async function placeCustomerOrder(
 
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
+  const randomSuffix = crypto.randomInt(1000, 10000).toString();
   const orderCode = `ORD-${dateStr}-${randomSuffix}`;
   const trackingToken = crypto.randomUUID();
 

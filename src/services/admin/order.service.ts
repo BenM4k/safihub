@@ -245,6 +245,7 @@ export async function adminRejectFirstOrder(params: {
 }
 
 import { buildOrderValidationContext } from "@/services/order";
+import crypto from "node:crypto";
 export { buildOrderValidationContext };
 
 export async function createManualAdminOrder(params: {
@@ -312,7 +313,7 @@ export async function createManualAdminOrder(params: {
     }
 
     const val = validation.value;
-    const code = `SF-${Math.floor(100000 + Math.random() * 900000)}`;
+    const code = `SF-${crypto.randomInt(100000, 1000000)}`;
     const trackingToken = crypto.randomUUID();
     const deadlines = computeAcceptanceDeadlines(
       new Date(),
