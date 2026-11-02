@@ -1,4 +1,5 @@
 import "server-only";
+import crypto from "node:crypto";
 import { err, ok, type Result } from "@/lib/result";
 import {
   addOrderEvent,
@@ -312,7 +313,8 @@ export async function createManualAdminOrder(params: {
     }
 
     const val = validation.value;
-    const code = `SF-${Math.floor(100000 + Math.random() * 900000)}`;
+    // 🛡️ Sentinel: Use crypto.randomInt for secure random generation
+    const code = `SF-${crypto.randomInt(100000, 1000000)}`;
     const trackingToken = crypto.randomUUID();
     const deadlines = computeAcceptanceDeadlines(
       new Date(),
