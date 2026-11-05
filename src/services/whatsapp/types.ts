@@ -19,8 +19,9 @@ export interface WhatsAppListSection {
 }
 
 export interface WhatsAppTemplateParameter {
-  type: "text" | "image";
+  type: "text" | "image" | "payload";
   text?: string;
+  payload?: string;
   image?: {
     id?: string;
     link?: string;

@@ -285,6 +285,18 @@ describe("WhatsApp Cloud API Integration & Conversational Bot", () => {
       ).toBe(false);
     });
 
+    it("rejects unsupported webhook object types in handleWhatsAppWebhookPayload", async () => {
+      const res = await handleWhatsAppWebhookPayload({
+        object: "page" as "whatsapp_business_account",
+        entry: [],
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toBe("Unsupported webhook object type");
+      }
+    });
+
     it("normalizes DRC phone numbers into international digits format", () => {
       expect(normalizeWhatsAppPhone("0991234567")).toBe("243991234567");
       expect(normalizeWhatsAppPhone("+243 991 234 567")).toBe("243991234567");
@@ -336,6 +348,8 @@ describe("WhatsApp Cloud API Integration & Conversational Bot", () => {
     });
 
     it("sends interactive 2-button price adjustment approval prompt", async () => {
+      const fetchSpy = vi.spyOn(global, "fetch");
+
       const res = await sendWhatsAppPriceAdjustmentPrompt({
         orderId: "ord-wa-100",
         orderCode: "ORD-20261105-4821",
@@ -350,6 +364,35 @@ describe("WhatsApp Cloud API Integration & Conversational Bot", () => {
         expect.objectContaining({
           templateKey: "price_adjusted",
         })
+      );
+
+      const lastCall = fetchSpy.mock.calls[fetchSpy.mock.calls.length - 1];
+      const sentPayload = JSON.parse(lastCall[1]?.body as string);
+      expect(sentPayload.template.components).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: "button",
+            sub_type: "quick_reply",
+            index: 0,
+            parameters: [
+              {
+                type: "payload",
+                payload: "ADJUSTMENT_APPROVE:ord-wa-100",
+              },
+            ],
+          }),
+          expect.objectContaining({
+            type: "button",
+            sub_type: "quick_reply",
+            index: 1,
+            parameters: [
+              {
+                type: "payload",
+                payload: "ADJUSTMENT_REJECT:ord-wa-100",
+              },
+            ],
+          }),
+        ])
       );
     });
 

@@ -1171,6 +1171,7 @@ export async function handleWhatsAppWebhookPayload(
 
   let processedMessages = 0;
   let processedStatuses = 0;
+  let processingFailure: string | null = null;
 
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
@@ -1194,9 +1195,15 @@ export async function handleWhatsAppWebhookPayload(
         });
         if (res.ok && res.value.handled) {
           processedMessages += 1;
+        } else if (!res.ok) {
+          processingFailure = res.error;
         }
       }
     }
+  }
+
+  if (processingFailure) {
+    return err(processingFailure);
   }
 
   return ok({ processedMessages, processedStatuses });

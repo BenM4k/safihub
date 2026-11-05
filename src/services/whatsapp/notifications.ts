@@ -271,7 +271,10 @@ export async function sendWhatsAppPriceAdjustmentPrompt(params: {
             sub_type: "quick_reply",
             index: 0,
             parameters: [
-              { type: "text", text: `ADJUSTMENT_APPROVE:${params.orderId}` },
+              {
+                type: "payload",
+                payload: `ADJUSTMENT_APPROVE:${params.orderId}`,
+              },
             ],
           },
           {
@@ -279,7 +282,10 @@ export async function sendWhatsAppPriceAdjustmentPrompt(params: {
             sub_type: "quick_reply",
             index: 1,
             parameters: [
-              { type: "text", text: `ADJUSTMENT_REJECT:${params.orderId}` },
+              {
+                type: "payload",
+                payload: `ADJUSTMENT_REJECT:${params.orderId}`,
+              },
             ],
           },
         ],

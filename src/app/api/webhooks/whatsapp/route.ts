@@ -59,7 +59,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const res = await handleWhatsAppWebhookPayload(payload);
     if (!res.ok) {
-      return NextResponse.json({ error: res.error }, { status: 400 });
+      const status =
+        res.error === "Unsupported webhook object type" ? 400 : 500;
+      return NextResponse.json({ error: res.error }, { status });
     }
 
     return NextResponse.json(
