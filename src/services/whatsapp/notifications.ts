@@ -21,6 +21,9 @@ import type {
   WhatsAppSendResult,
 } from "./types";
 
+/**
+ * Returns the sanitized application base URL for deep-linking.
+ */
 function getAppBaseUrl(): string {
   return (
     process.env.NEXT_PUBLIC_APP_URL ||
@@ -78,7 +81,9 @@ export async function sendWhatsAppOrderStatusUpdate(
     trackingUrl,
   });
 
-  const fullBody = `🧺 *SafiHub — ${rendered.title}*\n\n${rendered.body}\n\n🔗 Suivi : ${trackingUrl}`;
+  const trackingLabel =
+    locale === "sw" ? "🔗 Ufuatiliaji" : locale === "en" ? "🔗 Tracking" : "🔗 Suivi";
+  const fullBody = `🧺 *SafiHub — ${rendered.title}*\n\n${rendered.body}\n\n${trackingLabel} : ${trackingUrl}`;
   const inWindow = await isCustomerServiceWindowOpen(input.customerPhone);
 
   const waRes = inWindow
@@ -231,21 +236,54 @@ export async function sendWhatsAppPriceAdjustmentPrompt(params: {
     reason: params.reason,
   });
 
-  const waRes = await sendWhatsAppInteractiveButtons({
-    to: params.customerPhone,
-    headerText: "SafiHub Bukavu",
-    bodyText,
-    buttons: [
-      {
-        id: `ADJUSTMENT_APPROVE:${params.orderId}`,
-        title: copy.btnApproveAdjustment,
-      },
-      {
-        id: `ADJUSTMENT_REJECT:${params.orderId}`,
-        title: copy.btnRejectAdjustment,
-      },
-    ],
-  });
+  const inWindow = await isCustomerServiceWindowOpen(params.customerPhone);
+  const waRes = inWindow
+    ? await sendWhatsAppInteractiveButtons({
+        to: params.customerPhone,
+        headerText: "SafiHub Bukavu",
+        bodyText,
+        buttons: [
+          {
+            id: `ADJUSTMENT_APPROVE:${params.orderId}`,
+            title: copy.btnApproveAdjustment,
+          },
+          {
+            id: `ADJUSTMENT_REJECT:${params.orderId}`,
+            title: copy.btnRejectAdjustment,
+          },
+        ],
+      })
+    : await sendWhatsAppTemplateMessage({
+        to: params.customerPhone,
+        templateName: "safihub_price_adjustment_prompt",
+        localeCode: locale,
+        components: [
+          {
+            type: "body",
+            parameters: [
+              { type: "text", text: params.orderCode },
+              { type: "text", text: params.houseName },
+              { type: "text", text: diffFormatted },
+            ],
+          },
+          {
+            type: "button",
+            sub_type: "quick_reply",
+            index: 0,
+            parameters: [
+              { type: "text", text: `ADJUSTMENT_APPROVE:${params.orderId}` },
+            ],
+          },
+          {
+            type: "button",
+            sub_type: "quick_reply",
+            index: 1,
+            parameters: [
+              { type: "text", text: `ADJUSTMENT_REJECT:${params.orderId}` },
+            ],
+          },
+        ],
+      });
 
   if (!waRes.ok) {
     return err(waRes.error);
@@ -299,8 +337,10 @@ export async function sendWhatsAppBusinessSettlementNotice(
   );
 
   const inWindow = await isCustomerServiceWindowOpen(input.contactPhone);
+  const periodLabel =
+    locale === "sw" ? "Kipindi" : locale === "en" ? "Period" : "Période";
   const body = `💵 *${rendered.title}*\n\n${rendered.body}${
-    input.period ? `\n📅 Période : ${input.period}` : ""
+    input.period ? `\n📅 ${periodLabel} : ${input.period}` : ""
   }`;
 
   const waRes = inWindow
@@ -349,6 +389,7 @@ export async function sendWhatsAppConditionPhotoProof(params: {
   customerPhone: string;
   imageUrl: string;
   caption?: string;
+  locale?: "fr" | "sw" | "en";
 }): Promise<Result<WhatsAppSendResult, string>> {
   if (!params.customerPhone?.trim()) {
     return err("Customer phone number is required");
@@ -357,7 +398,13 @@ export async function sendWhatsAppConditionPhotoProof(params: {
     return err("Image URL is required");
   }
 
-  const defaultCaption = `📸 SafiHub — Photo de contrôle pour votre commande #${params.orderCode}`;
+  const locale = params.locale ?? "fr";
+  const defaultCaption =
+    locale === "sw"
+      ? `📸 SafiHub — Picha ya ukaguzi ya agizo lako #${params.orderCode}`
+      : locale === "en"
+        ? `📸 SafiHub — Inspection photo for your order #${params.orderCode}`
+        : `📸 SafiHub — Photo de contrôle pour votre commande #${params.orderCode}`;
 
   return sendWhatsAppImageMessage({
     to: params.customerPhone,

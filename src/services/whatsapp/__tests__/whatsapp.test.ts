@@ -79,6 +79,18 @@ describe("WhatsApp Cloud API Integration & Conversational Bot", () => {
     clearWhatsAppMemoryStores();
     vi.clearAllMocks();
 
+    vi.spyOn(global, "fetch").mockImplementation(async () => {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          messaging_product: "whatsapp",
+          contacts: [{ input: "243991234567", wa_id: "243991234567" }],
+          messages: [{ id: "wamid.mock_test_message_id_123" }],
+        }),
+      } as unknown as Response;
+    });
+
     mockCreateNotification.mockImplementation(async (input) => ({
       id: "notif-1",
       ...input,

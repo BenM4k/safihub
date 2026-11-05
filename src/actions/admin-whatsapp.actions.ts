@@ -38,6 +38,9 @@ const simulateBotSchema = z.object({
   value: z.string().optional(),
 });
 
+/**
+ * Server action allowing administrators to send test WhatsApp messages via the Cloud API.
+ */
 export async function sendAdminWhatsAppTestAction(
   rawInput: z.infer<typeof sendTestSchema>
 ): Promise<Result<ExecuteWhatsAppTestResult, string>> {
@@ -52,6 +55,9 @@ export async function sendAdminWhatsAppTestAction(
   return executeAdminWhatsAppTest(parsed.data);
 }
 
+/**
+ * Server action allowing administrators to simulate inbound WhatsApp conversational bot steps.
+ */
 export async function simulateAdminWhatsAppBotStepAction(
   rawInput: z.infer<typeof simulateBotSchema>
 ): Promise<Result<WhatsAppBotSession, string>> {

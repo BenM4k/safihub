@@ -12,6 +12,9 @@ import { getCurrentUser, type AuthenticatedUser } from "@/services/auth";
 import { getCachedNeighborhoods } from "@/lib/cached-data";
 import type { NeighborhoodRecord } from "@/dal";
 
+// instant = false: kept on purpose — homepage reads cookie-based locale (NEXT_LOCALE) and session
+export const instant = false;
+
 async function HeroWithNeighborhoods({
   neighborhoodsPromise,
   user,

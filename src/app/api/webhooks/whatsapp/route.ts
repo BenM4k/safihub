@@ -40,15 +40,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const rawBody = await request.text();
   const signatureHeader = request.headers.get("x-hub-signature-256");
 
-  // Enforce HMAC-SHA256 verification whenever WHATSAPP_APP_SECRET is configured
-  if (process.env.WHATSAPP_APP_SECRET) {
-    const isValid = verifyWhatsAppWebhookSignature(rawBody, signatureHeader);
-    if (!isValid) {
-      return NextResponse.json(
-        { error: "Invalid webhook signature" },
-        { status: 401 }
-      );
-    }
+  // Enforce HMAC-SHA256 verification (fail closed when WHATSAPP_APP_SECRET is missing or invalid)
+  const isValid = verifyWhatsAppWebhookSignature(rawBody, signatureHeader);
+  if (!isValid) {
+    return NextResponse.json(
+      { error: "Invalid webhook signature" },
+      { status: 401 }
+    );
   }
 
   let payload: WhatsAppWebhookPayload;
@@ -58,18 +56,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const res = await handleWhatsAppWebhookPayload(payload);
-  if (!res.ok) {
-    return NextResponse.json({ error: res.error }, { status: 400 });
-  }
+  try {
+    const res = await handleWhatsAppWebhookPayload(payload);
+    if (!res.ok) {
+      return NextResponse.json({ error: res.error }, { status: 400 });
+    }
 
-  return NextResponse.json(
-    {
-      status: "EVENT_RECEIVED",
-      processedMessages: res.value.processedMessages,
-      processedStatuses: res.value.processedStatuses,
-    },
-    { status: 200 }
-  );
+    return NextResponse.json(
+      {
+        status: "EVENT_RECEIVED",
+        processedMessages: res.value.processedMessages,
+        processedStatuses: res.value.processedStatuses,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to process webhook payload",
+      },
+      { status: 500 }
+    );
+  }
 }
 

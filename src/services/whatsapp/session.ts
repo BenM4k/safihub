@@ -10,10 +10,16 @@ const CUSTOMER_WINDOW_TTL_SECONDS = 24 * 60 * 60; // 24 hours
 
 let redisClient: Redis | null | undefined;
 
+/**
+ * Determines whether the current execution context is the automated Vitest test suite.
+ */
 function isTestEnv(): boolean {
   return process.env.NODE_ENV === "test";
 }
 
+/**
+ * Lazily initializes and returns the Upstash Redis client if credentials are configured.
+ */
 function getRedis(): Redis | null {
   if (isTestEnv()) return null;
   if (redisClient !== undefined) return redisClient;
@@ -33,6 +39,9 @@ const memorySessions = new Map<string, MemoryEntry<WhatsAppBotSession>>();
 const memoryDedupe = new Map<string, number>();
 const memoryWindows = new Map<string, number>();
 
+/**
+ * Creates an empty initial WhatsAppBotSession in IDLE step with default French locale.
+ */
 function createDefaultSession(phone: string): WhatsAppBotSession {
   const normalizedPhone = normalizeWhatsAppPhone(phone);
   return {
@@ -149,6 +158,26 @@ export async function claimInboundWhatsAppMessage(
   }
 
   return true;
+}
+
+/**
+ * Releases a claimed WAMID so a failed webhook processing attempt can be retried safely.
+ */
+export async function unclaimInboundWhatsAppMessage(
+  wamid: string
+): Promise<void> {
+  if (!wamid) return;
+  const key = `safihub:wa:wamid:${wamid}`;
+  memoryDedupe.delete(key);
+
+  const redis = getRedis();
+  if (redis) {
+    try {
+      await redis.del(key);
+    } catch {
+      // Ignore transient Redis errors
+    }
+  }
 }
 
 /**

@@ -1745,6 +1745,7 @@
       "sending": "Inatuma...",
       "lastResultTitle": "Jibu la Mwisho la Graph API",
       "messageIdLabel": "WAMID",
+      "recipientLabel": "Mpokeaji",
       "modeLabel": "Hali ya Utumaji",
       "modeLiveBadge": "Imetumwa kwa Meta Cloud API",
       "modeDryRunBadge": "Imeigwa (Dry-Run)",

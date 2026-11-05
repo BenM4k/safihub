@@ -159,7 +159,7 @@ export function WhatsAppTestSender() {
           </div>
           <div className="text-xs text-[#344054] space-y-1 font-mono">
             <div><strong>{t("messageIdLabel")}:</strong> {lastResult.messageId}</div>
-            <div><strong>To:</strong> +{lastResult.recipientPhone}</div>
+            <div><strong>{t("recipientLabel")}:</strong> +{lastResult.recipientPhone}</div>
           </div>
         </div>
       )}

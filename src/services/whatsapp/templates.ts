@@ -66,8 +66,17 @@ export interface BotCopyBundle {
   }) => string;
   btnApproveAdjustment: string;
   btnRejectAdjustment: string;
+  unknownCommandMsg: string;
+  orderNotFoundOrUnauthorized: string;
+  availableSlotsSectionTitle: string;
+  housePriceDescription: (minOrderCdf: string, minItemPriceCdf: string) => string;
+  cartEstimateError: string;
+  accountCreationError: string;
 }
 
+/**
+ * Formats an integer minor-units or CDF amount for WhatsApp message readability.
+ */
 export function formatCdfAmount(amount: number): string {
   return `${Math.round(amount).toLocaleString("fr-CD")} CDF`;
 }
@@ -137,6 +146,16 @@ export const WHATSAPP_BOT_COPY: Record<WhatsAppLocale, BotCopyBundle> = {
       `⚠️ *Ajustement de prix — Commande #${p.orderCode}*\n\nAprès réception et comptage chez *${p.houseName}*, un écart de *${p.diffAmountCdf}* a été constaté${p.reason ? ` (${p.reason})` : ""}.\n\nAcceptez-vous cet ajustement pour lancer le lavage ?`,
     btnApproveAdjustment: "Accepter",
     btnRejectAdjustment: "Refuser",
+    unknownCommandMsg:
+      "⚠️ Message non reconnu. Tapez *Bonjour* pour afficher le menu principal.",
+    orderNotFoundOrUnauthorized: "⚠️ Commande introuvable ou non autorisée.",
+    availableSlotsSectionTitle: "Créneaux disponibles",
+    housePriceDescription: (minOrder, minItem) =>
+      `Min: ${minOrder} • Dès ${minItem}`,
+    cartEstimateError:
+      "⚠️ Impossible d'estimer le montant du panier pour le moment. Veuillez réessayer.",
+    accountCreationError:
+      "⚠️ Impossible de créer votre compte client pour le moment. Veuillez réessayer.",
   },
   sw: {
     welcomeHeader: "🧺 Karibu SafiHub Bukavu",
@@ -200,6 +219,16 @@ export const WHATSAPP_BOT_COPY: Record<WhatsAppLocale, BotCopyBundle> = {
       `⚠️ *Marekebisho ya Bei — Agizo #${p.orderCode}*\n\nBaada ya kuhesabu nguo kwa *${p.houseName}*, kuna tofauti ya *${p.diffAmountCdf}*${p.reason ? ` (${p.reason})` : ""}.\n\nJe, unakubali marekebisho haya ili ufuaji uanze?`,
     btnApproveAdjustment: "Kubali",
     btnRejectAdjustment: "Kataa",
+    unknownCommandMsg:
+      "⚠️ Ujumbe haukueleweka. Andika *Jambo* ili kuona orodha kuu.",
+    orderNotFoundOrUnauthorized: "⚠️ Agizo halipatikani au halijaruhusiwa.",
+    availableSlotsSectionTitle: "Nafasi za muda zilizopo",
+    housePriceDescription: (minOrder, minItem) =>
+      `Kiwango cha chini: ${minOrder} • Kuanzia ${minItem}`,
+    cartEstimateError:
+      "⚠️ Haiwezekani kukadiria jumla ya kikapu kwa sasa. Tafadhali jaribu tena.",
+    accountCreationError:
+      "⚠️ Haiwezekani kufungua akaunti yako ya mteja kwa sasa. Tafadhali jaribu tena.",
   },
   en: {
     welcomeHeader: "🧺 Welcome to SafiHub Bukavu",
@@ -263,9 +292,22 @@ export const WHATSAPP_BOT_COPY: Record<WhatsAppLocale, BotCopyBundle> = {
       `⚠️ *Price Adjustment Required — Order #${p.orderCode}*\n\nAfter inspection at *${p.houseName}*, a difference of *${p.diffAmountCdf}* was recorded${p.reason ? ` (${p.reason})` : ""}.\n\nDo you approve this adjustment so washing can start?`,
     btnApproveAdjustment: "Approve",
     btnRejectAdjustment: "Decline",
+    unknownCommandMsg:
+      "⚠️ Unrecognized message. Type *Hello* to view the main menu.",
+    orderNotFoundOrUnauthorized: "⚠️ Order not found or unauthorized.",
+    availableSlotsSectionTitle: "Available time slots",
+    housePriceDescription: (minOrder, minItem) =>
+      `Min: ${minOrder} • From ${minItem}`,
+    cartEstimateError:
+      "⚠️ Could not calculate cart total at this time. Please try again.",
+    accountCreationError:
+      "⚠️ Could not set up your customer account. Please try again.",
   },
 };
 
+/**
+ * Retrieves the localized BotCopyBundle for a given WhatsAppLocale.
+ */
 export function getBotCopy(locale?: string): BotCopyBundle {
   if (locale === "sw") return WHATSAPP_BOT_COPY.sw;
   if (locale === "en") return WHATSAPP_BOT_COPY.en;

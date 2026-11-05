@@ -63,6 +63,9 @@ export interface ExecuteWhatsAppTestResult extends WhatsAppSendResult {
   sentAtIso: string;
 }
 
+/**
+ * Masks sensitive identifiers to display in administrative screens safely.
+ */
 function maskIdentifier(val: string | undefined): string | null {
   if (!val || !val.trim()) return null;
   const trimmed = val.trim();

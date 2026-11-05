@@ -1745,6 +1745,7 @@
       "sending": "Envoi en cours...",
       "lastResultTitle": "Dernière Réponse Graph API",
       "messageIdLabel": "WAMID",
+      "recipientLabel": "Destinataire",
       "modeLabel": "Mode d'exécution",
       "modeLiveBadge": "Envoyé via Meta Cloud API",
       "modeDryRunBadge": "Simulé localement (Dry-Run)",

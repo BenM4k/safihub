@@ -32,6 +32,7 @@ import {
   getWhatsAppBotSession,
   recordCustomerServiceWindowOpen,
   saveWhatsAppBotSession,
+  unclaimInboundWhatsAppMessage,
 } from "./session";
 import { formatCdfAmount, getBotCopy } from "./templates";
 import type {
@@ -58,6 +59,9 @@ const RESET_KEYWORDS = new Set([
   "reset",
 ]);
 
+/**
+ * Resolves the canonical SafiHub public base URL for customer links.
+ */
 function getAppBaseUrl(): string {
   return (
     process.env.NEXT_PUBLIC_APP_URL ||
@@ -66,6 +70,9 @@ function getAppBaseUrl(): string {
   ).replace(/\/$/, "");
 }
 
+/**
+ * Extracts action identifiers from interactive button/list replies or template quick-reply button payloads.
+ */
 function extractInteractiveActionId(message: WhatsAppInboundMessage): string | null {
   if (message.type === "interactive") {
     if (message.interactive?.type === "button_reply") {
@@ -81,11 +88,17 @@ function extractInteractiveActionId(message: WhatsAppInboundMessage): string | n
   return null;
 }
 
+/**
+ * Compares two phone numbers using normalized DRC international digits.
+ */
 function phonesMatch(phoneA: string | null | undefined, phoneB: string): boolean {
   if (!phoneA) return false;
   return normalizeWhatsAppPhone(phoneA) === normalizeWhatsAppPhone(phoneB);
 }
 
+/**
+ * Sends the top-level welcome greeting with action buttons (Order, Language toggle).
+ */
 async function sendWelcomePrompt(
   session: WhatsAppBotSession,
   senderPhoneNumberId?: string
@@ -107,6 +120,9 @@ async function sendWelcomePrompt(
   });
 }
 
+/**
+ * Prompts the customer to select their Bukavu neighborhood from a list picker.
+ */
 async function promptSelectNeighborhood(
   session: WhatsAppBotSession,
   senderPhoneNumberId?: string
@@ -146,6 +162,9 @@ async function promptSelectNeighborhood(
   });
 }
 
+/**
+ * Prompts the customer to select an eligible laundry house serving their neighborhood.
+ */
 async function promptSelectHouse(
   session: WhatsAppBotSession,
   neighborhoodId: string,
@@ -192,7 +211,10 @@ async function promptSelectHouse(
         rows: eligibleHouses.slice(0, 10).map((h) => ({
           id: `SELECT_HOUSE:${h.id}`,
           title: h.name,
-          description: `Min: ${formatCdfAmount(h.minimumOrderAmount)} • Dès ${formatCdfAmount(h.minItemPriceCdf)}`,
+          description: copy.housePriceDescription(
+            formatCdfAmount(h.minimumOrderAmount),
+            formatCdfAmount(h.minItemPriceCdf)
+          ),
         })),
       },
     ],
@@ -200,6 +222,9 @@ async function promptSelectHouse(
   });
 }
 
+/**
+ * Prompts the customer to choose a service type (e.g. Wash & Iron) offered by the chosen house.
+ */
 async function promptSelectService(
   session: WhatsAppBotSession,
   houseId: string,
@@ -245,6 +270,9 @@ async function promptSelectService(
   });
 }
 
+/**
+ * Prompts the customer to select an article from the catalogue.
+ */
 async function promptSelectItems(
   session: WhatsAppBotSession,
   serviceId: string,
@@ -309,6 +337,9 @@ async function promptSelectItems(
   });
 }
 
+/**
+ * Prompts the customer to select the quantity of an item using quick-reply buttons or text.
+ */
 async function promptSelectQuantity(
   session: WhatsAppBotSession,
   houseItemId: string,
@@ -361,6 +392,9 @@ async function promptSelectQuantity(
   });
 }
 
+/**
+ * Handles quantity selection for an item and updates the customer's cart.
+ */
 async function handleQuantityChosen(
   session: WhatsAppBotSession,
   quantity: number,
@@ -443,6 +477,9 @@ async function handleQuantityChosen(
   });
 }
 
+/**
+ * Prompts the customer to select a 2-hour pickup slot based on opening hours and courier dual-zone coverage.
+ */
 async function promptSelectSlot(
   session: WhatsAppBotSession,
   senderPhoneNumberId?: string
@@ -469,7 +506,7 @@ async function promptSelectSlot(
   if (!estimateRes.ok) {
     await sendWhatsAppTextMessage({
       to: session.phone,
-      body: estimateRes.error,
+      body: copy.cartEstimateError,
       senderPhoneNumberId,
     });
     return;
@@ -506,7 +543,7 @@ async function promptSelectSlot(
   if (candidateSlots.length === 0) {
     await sendWhatsAppTextMessage({
       to: session.phone,
-      body: slotsRes.reason || copy.noSlotsAvailable,
+      body: copy.noSlotsAvailable,
       senderPhoneNumberId,
     });
     return;
@@ -536,7 +573,7 @@ async function promptSelectSlot(
     buttonText: copy.selectSlotBtn,
     sections: [
       {
-        title: "Créneaux disponibles",
+        title: copy.availableSlotsSectionTitle,
         rows: slotOptions.map((opt) => ({
           id: `SELECT_SLOT:${opt.index}`,
           title: opt.label.slice(0, 24),
@@ -548,6 +585,9 @@ async function promptSelectSlot(
   });
 }
 
+/**
+ * Prompts the customer to provide their Bukavu street landmark or drop a WhatsApp GPS location pin.
+ */
 async function promptCaptureLandmark(
   session: WhatsAppBotSession,
   slotIndex: number,
@@ -577,6 +617,9 @@ async function promptCaptureLandmark(
   });
 }
 
+/**
+ * Recalculates final cart total and displays order confirmation buttons.
+ */
 async function promptOrderConfirmation(
   session: WhatsAppBotSession,
   landmarkText: string,
@@ -608,7 +651,7 @@ async function promptOrderConfirmation(
   if (!estimateRes.ok) {
     await sendWhatsAppTextMessage({
       to: session.phone,
-      body: estimateRes.error,
+      body: copy.cartEstimateError,
       senderPhoneNumberId,
     });
     return;
@@ -651,6 +694,9 @@ async function promptOrderConfirmation(
   });
 }
 
+/**
+ * Submits the conversational WhatsApp order to the canonical placeCustomerOrder service.
+ */
 async function finalizeWhatsAppOrder(
   session: WhatsAppBotSession,
   senderPhoneNumberId?: string
@@ -682,7 +728,7 @@ async function finalizeWhatsAppOrder(
     if (!guestRes.ok) {
       await sendWhatsAppTextMessage({
         to: session.phone,
-        body: `⚠️ ${guestRes.error}`,
+        body: copy.accountCreationError,
         senderPhoneNumberId,
       });
       return;
@@ -744,6 +790,9 @@ async function finalizeWhatsAppOrder(
   });
 }
 
+/**
+ * Handles customer quick-reply approvals or refusals for price adjustments (Domain Invariant #5).
+ */
 async function handlePriceAdjustmentAction(params: {
   action: "approve" | "reject";
   orderId: string;
@@ -756,7 +805,7 @@ async function handlePriceAdjustmentAction(params: {
   if (!order || !phonesMatch(order.customerPhone, params.senderPhone)) {
     await sendWhatsAppTextMessage({
       to: params.senderPhone,
-      body: "⚠️ Commande introuvable ou non autorisée.",
+      body: copy.orderNotFoundOrUnauthorized,
       senderPhoneNumberId: params.senderPhoneNumberId,
     });
     return;
@@ -822,17 +871,18 @@ export async function handleInboundWhatsAppMessage(params: {
     return ok({ handled: false, duplicate: true });
   }
 
-  // 2. Open 24h Customer Service Window & send read receipt + typing indicator
-  await recordCustomerServiceWindowOpen(message.from);
-  await markWhatsAppMessageReadAndTyping(message.id, senderPhoneNumberId).catch(
-    () => {}
-  );
+  try {
+    // 2. Open 24h Customer Service Window & send read receipt + typing indicator
+    await recordCustomerServiceWindowOpen(message.from);
+    await markWhatsAppMessageReadAndTyping(message.id, senderPhoneNumberId).catch(
+      () => {}
+    );
 
-  const session = await getWhatsAppBotSession(message.from);
-  if (contactName && !session.customerName) {
-    session.customerName = contactName;
-    await saveWhatsAppBotSession(session);
-  }
+    const session = await getWhatsAppBotSession(message.from);
+    if (contactName && !session.customerName) {
+      session.customerName = contactName;
+      await saveWhatsAppBotSession(session);
+    }
 
   // 3. Handle GPS Location Pin Drops
   if (message.type === "location" && message.location) {
@@ -1001,7 +1051,7 @@ export async function handleInboundWhatsAppMessage(params: {
   const rawText = message.text?.body?.trim() || "";
   const lowerText = rawText.toLowerCase();
 
-  if (!rawText || RESET_KEYWORDS.has(lowerText)) {
+  if (rawText && RESET_KEYWORDS.has(lowerText)) {
     await clearWhatsAppBotSession(session.phone);
     const freshSession = await getWhatsAppBotSession(session.phone);
     await sendWelcomePrompt(freshSession, senderPhoneNumberId);
@@ -1021,9 +1071,92 @@ export async function handleInboundWhatsAppMessage(params: {
     return ok({ handled: true });
   }
 
-  // Default fallback: show the welcome menu
-  await sendWelcomePrompt(session, senderPhoneNumberId);
-  return ok({ handled: true });
+    // Preserve the current session and replay the appropriate prompt
+    await replayCurrentStepPrompt(session, senderPhoneNumberId);
+    return ok({ handled: true });
+  } catch (error) {
+    await unclaimInboundWhatsAppMessage(message.id);
+    return err(
+      error instanceof Error ? error.message : "Failed to handle inbound message"
+    );
+  }
+}
+
+/**
+ * Replays the prompt corresponding to the customer's current session step without resetting state.
+ */
+async function replayCurrentStepPrompt(
+  session: WhatsAppBotSession,
+  senderPhoneNumberId?: string
+): Promise<void> {
+  const copy = getBotCopy(session.locale);
+  if (session.step === "IDLE") {
+    await sendWelcomePrompt(session, senderPhoneNumberId);
+    return;
+  }
+
+  await sendWhatsAppTextMessage({
+    to: session.phone,
+    body: copy.unknownCommandMsg,
+    senderPhoneNumberId,
+  });
+
+  switch (session.step) {
+    case "SELECTING_NEIGHBORHOOD":
+      await promptSelectNeighborhood(session, senderPhoneNumberId);
+      break;
+    case "SELECTING_HOUSE":
+      if (session.neighborhoodId) {
+        await promptSelectHouse(session, session.neighborhoodId, senderPhoneNumberId);
+      } else {
+        await promptSelectNeighborhood(session, senderPhoneNumberId);
+      }
+      break;
+    case "SELECTING_SERVICE":
+      if (session.houseId) {
+        await promptSelectService(session, session.houseId, senderPhoneNumberId);
+      } else {
+        await promptSelectNeighborhood(session, senderPhoneNumberId);
+      }
+      break;
+    case "SELECTING_ITEMS":
+      if (session.selectedServiceId) {
+        await promptSelectItems(session, session.selectedServiceId, senderPhoneNumberId);
+      } else if (session.houseId) {
+        await promptSelectService(session, session.houseId, senderPhoneNumberId);
+      } else {
+        await promptSelectNeighborhood(session, senderPhoneNumberId);
+      }
+      break;
+    case "SELECTING_QUANTITY":
+      if (session.pendingHouseItemId) {
+        await promptSelectQuantity(session, session.pendingHouseItemId, senderPhoneNumberId);
+      } else {
+        await promptSelectNeighborhood(session, senderPhoneNumberId);
+      }
+      break;
+    case "SELECTING_SLOT":
+      await promptSelectSlot(session, senderPhoneNumberId);
+      break;
+    case "CAPTURING_LANDMARK":
+      await sendWhatsAppTextMessage({
+        to: session.phone,
+        body: `${copy.captureLandmarkHeader}\n\n${copy.captureLandmarkBody(
+          session.neighborhoodName || "Bukavu"
+        )}`,
+        senderPhoneNumberId,
+      });
+      break;
+    case "CONFIRMING_ORDER":
+      if (session.landmark) {
+        await promptOrderConfirmation(session, session.landmark, senderPhoneNumberId);
+      } else {
+        await promptSelectNeighborhood(session, senderPhoneNumberId);
+      }
+      break;
+    default:
+      await sendWelcomePrompt(session, senderPhoneNumberId);
+  }
 }
 
 /**

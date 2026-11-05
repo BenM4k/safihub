@@ -9,6 +9,7 @@ import type {
 } from "./types";
 
 const DEFAULT_GRAPH_API_VERSION = "v23.0";
+const GRAPH_API_TIMEOUT_MS = 15000;
 
 /**
  * Normalizes a phone number into digits-only international format for WhatsApp Cloud API.
@@ -27,6 +28,9 @@ interface GraphApiCallOptions {
   body: Record<string, unknown>;
 }
 
+/**
+ * Executes a POST request to Meta WhatsApp Graph API with timeout and dry-run fallback.
+ */
 async function callWhatsAppGraphApi(
   options: GraphApiCallOptions
 ): Promise<Result<{ messageId: string; dryRun: boolean }, string>> {
@@ -52,6 +56,7 @@ async function callWhatsAppGraphApi(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(options.body),
+      signal: AbortSignal.timeout(GRAPH_API_TIMEOUT_MS),
     });
 
     const data = (await response.json().catch(() => ({}))) as {

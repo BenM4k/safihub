@@ -44,6 +44,9 @@ export type WhatsAppNotificationJobPayload =
       caption?: string;
     };
 
+/**
+ * Inngest durable function processing asynchronous WhatsApp notification requests.
+ */
 export const dispatchWhatsAppNotification = inngest.createFunction(
   {
     id: "dispatch-whatsapp-notification",
