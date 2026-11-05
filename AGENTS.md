@@ -73,12 +73,12 @@ src/
     partners/   # Public partner applications: /partners/apply
     courier/    # Courier PWA (role guard): active missions, cash held, offline sync
     admin/      # Operations console (admin guard): dispatch, manual entry, applications, cash, settlements
-    api/        # auth/[...all], inngest, storage presigned URLs
+    api/        # auth/[...all], inngest, storage presigned URLs, webhooks/whatsapp
   components/   # React components (<= 150-200 lines): ui/ (shadcn), customer/, house/, courier/, admin/
   actions/      # Server actions (Zod validation + auth check -> calls services)
-  services/     # Pure business logic & orchestration (order, pricing, coverage, cash, storage, auth)
+  services/     # Pure business logic & orchestration (order, pricing, coverage, cash, storage, auth, whatsapp)
   dal/          # Data Access Layer (THE ONLY layer importing Drizzle / db)
-  inngest/      # Background jobs: acceptance timer, auto-conforming reception, reminders
+  inngest/      # Background jobs: acceptance timer, auto-conforming reception, reminders, whatsapp notifications
   lib/          # Result (ok/err), cache tags ("use cache"), validations, Bukavu date/currency utils
   styles/       # Tailwind v4 design system: tokens, base, layout/controls/surfaces utilities
 ```

@@ -53,6 +53,7 @@ import {
 } from "@/services/order";
 import { getSignedUploadUrl, getStoragePublicUrl } from "@/lib/storage/r2-client";
 import type { OrderStatus } from "@/services/db/schema";
+import { notifyOrderStatusOnWhatsAppById } from "@/services/whatsapp";
 
 export async function getHouseBannerData(houseId: string) {
   try {
@@ -206,6 +207,11 @@ export async function acceptIncomingOrder(params: {
       return err("Order status has changed or could not be updated");
     }
 
+    notifyOrderStatusOnWhatsAppById({
+      orderId: params.orderId,
+      status: "order_accepted",
+    }).catch(() => {});
+
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to accept order");
@@ -255,6 +261,12 @@ export async function rejectIncomingOrder(params: {
     if (!updated) {
       return err("Order status has changed or could not be updated");
     }
+
+    notifyOrderStatusOnWhatsAppById({
+      orderId: params.orderId,
+      status: "order_rejected",
+      reason: params.reason.trim(),
+    }).catch(() => {});
 
     return ok(undefined);
   } catch (error) {
@@ -385,6 +397,14 @@ export async function submitHouseReception(params: {
       event: transitionRes.value.event,
     });
 
+    notifyOrderStatusOnWhatsAppById({
+      orderId: params.orderId,
+      status: receptionResult.hasPriceAdjustment ? "price_adjusted" : "washing",
+      diffAmountCdf: receptionResult.hasPriceAdjustment
+        ? receptionResult.adjustedItemsTotal - detail.itemsTotal
+        : undefined,
+    }).catch(() => {});
+
     return ok({
       hasPriceAdjustment: receptionResult.hasPriceAdjustment,
       newStatus: receptionResult.suggestedStatus,
@@ -432,6 +452,11 @@ export async function markOrderReady(params: {
     if (!updated) {
       return err("Order status has changed or could not be updated");
     }
+
+    notifyOrderStatusOnWhatsAppById({
+      orderId: params.orderId,
+      status: "ready",
+    }).catch(() => {});
 
     return ok(undefined);
   } catch (error) {

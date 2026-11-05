@@ -19,6 +19,7 @@ import {
   type CourierMissionDetail,
 } from "@/dal";
 import { trackOrderDelivered } from "@/services/analytics";
+import { notifyOrderStatusOnWhatsAppById } from "@/services/whatsapp";
 
 export interface CompletePickupInput {
   courierId: string;
@@ -136,6 +137,20 @@ export async function startPickupMissionService(
     if (!res.ok) {
       return err(res.error || "Failed to start pickup mission");
     }
+
+    if (typeof getCourierMissionDetail === "function") {
+      Promise.resolve(getCourierMissionDetail(courierId, missionId))
+        .then((detail) => {
+          if (detail?.mission?.orderId) {
+            return notifyOrderStatusOnWhatsAppById({
+              orderId: detail.mission.orderId,
+              status: "pickup_in_progress",
+            });
+          }
+        })
+        .catch(() => {});
+    }
+
     return ok({ missionId });
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to start pickup mission");
@@ -161,6 +176,24 @@ export async function completePickupMissionService(
 
     if (!res.ok) {
       return err(res.error || "Failed to complete pickup mission");
+    }
+
+    if (typeof getCourierMissionDetail === "function") {
+      const totalItems = input.items.reduce(
+        (acc, it) => acc + (it.pickupQuantity || 0),
+        0
+      );
+      Promise.resolve(getCourierMissionDetail(input.courierId, input.missionId))
+        .then((detail) => {
+          if (detail?.mission?.orderId) {
+            return notifyOrderStatusOnWhatsAppById({
+              orderId: detail.mission.orderId,
+              status: "picked_up",
+              itemCount: totalItems,
+            });
+          }
+        })
+        .catch(() => {});
     }
 
     return ok({
@@ -214,6 +247,21 @@ export async function startDeliveryMissionService(
     if (!res.ok) {
       return err(res.error || "Failed to start delivery mission");
     }
+
+    if (typeof getCourierMissionDetail === "function") {
+      Promise.resolve(getCourierMissionDetail(courierId, missionId))
+        .then((detail) => {
+          if (detail?.mission?.orderId) {
+            return notifyOrderStatusOnWhatsAppById({
+              orderId: detail.mission.orderId,
+              status: "delivery_in_progress",
+              verificationCode: detail.deliveryConfirmationCode ?? null,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+
     return ok({ missionId });
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to start delivery mission");
@@ -261,6 +309,11 @@ export async function completeDeliveryMissionService(
       trackOrderDelivered({
         orderId: res.orderId,
         ...(turnaroundMinutes !== undefined ? { turnaroundMinutes } : {}),
+      }).catch(() => {});
+
+      notifyOrderStatusOnWhatsAppById({
+        orderId: res.orderId,
+        status: "delivered",
       }).catch(() => {});
     }
 

@@ -157,3 +157,17 @@ SafiHub uses Next.js 16.3+ Cache Components with `"use cache"` and fine-grained 
   - `admin:cash`: Daily cash reconciliation records.
 - **Cached Fetchers (`src/lib/cached-data.ts`):** Top-level functions annotated with `"use cache"` and `cacheTag(...)`.
 - **Targeted Mutations:** Server actions use `revalidateTag(tag, "max")` to invalidate only the affected entities without busting entire route trees or using deprecated `revalidatePath`.
+
+
+---
+
+## 7. WhatsApp Cloud API & Conversational Ordering Bot
+
+- **Webhook Gateway (`src/app/api/webhooks/whatsapp/route.ts`):**
+  - `GET`: Validates Meta webhook subscription challenge (`hub.mode`, `hub.verify_token`, `hub.challenge`).
+  - `POST`: Enforces constant-time HMAC-SHA256 verification on `x-hub-signature-256` against `WHATSAPP_APP_SECRET`, deduplicates inbound messages by `wamid`, and dispatches events to `src/services/whatsapp/bot.ts`.
+- **Conversational State Machine (`src/services/whatsapp/`):**
+  - Guides customers through neighborhood selection $\rightarrow$ partner house selection $\rightarrow$ service & catalog item selection $\rightarrow$ dynamic pickup slot selection (`getCheckoutPickupSlots`, AC 20) $\rightarrow$ landmark / GPS pin capture $\rightarrow$ canonical checkout (`placeCustomerOrder` with `source: "whatsapp"`).
+  - Session state, inbound WAMID deduplication, and 24-hour Customer Service Window tracking are backed by `@upstash/redis` (`src/services/whatsapp/session.ts`) with in-memory fallback for local/test environments.
+- **Outbound Notifications & Interactive Approvals:**
+  - Automated order status updates, courier arrival alerts (with 4-digit delivery verification codes), interactive 2-button price adjustment approvals (`ADJUSTMENT_APPROVE` / `ADJUSTMENT_REJECT`), condition proof photo forwarding, and partner house settlement payout notices (`src/services/whatsapp/notifications.ts` & `src/inngest/functions/whatsapp-notifications.ts`).
