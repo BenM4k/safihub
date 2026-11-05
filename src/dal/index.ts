@@ -20,3 +20,4 @@ export * from "./partner-settlements.dal";
 export * from "./review.dal";
 export * from "./partner-onboarding.dal";
 export * from "./house-review.dal";
+export * from "./house-location.dal";

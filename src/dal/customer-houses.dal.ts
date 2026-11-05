@@ -4,6 +4,7 @@ import { db, schema } from "./db";
 import { toBukavuDateTime } from "@/services/availability/bukavu-time";
 import { filterCatalogueOutliers } from "@/services/catalog/outliers";
 import { normalizeStorageUrl } from "@/lib/storage-url";
+import { resolveHouseCoords } from "./house-location.dal";
 
 export interface CustomerHouseSummary {
   id: string;
@@ -36,7 +37,7 @@ export interface CustomerHouseSummary {
   imageUrl: string;
   coverImageUrl?: string | null;
   logoUrl?: string | null;
-  coords: { lat: number; lng: number };
+  coords: { lat: number; lng: number; isApproximate?: boolean };
   estimatedDeliveryFee?: number | null;
 }
 
@@ -87,6 +88,7 @@ export interface CustomerHouseDetailData {
     isActive?: boolean;
     isPaused?: boolean;
     reviewStatus?: "draft" | "pending_review" | "approved" | "needs_changes" | "suspended" | null;
+    coords?: { lat: number; lng: number; isApproximate?: boolean };
     ratingStats?: {
       reviewCount: number;
       averageRating: number | null;
@@ -113,19 +115,6 @@ export interface CustomerHouseDetailData {
     closesAt: string;
   }>;
 }
-
-export const BUKAVU_NEIGHBORHOOD_COORDS: Record<string, { lat: number; lng: number }> = {
-  "La Botte": { lat: -2.502, lng: 28.864 },
-  "Nguba": { lat: -2.528, lng: 28.871 },
-  "Muhumba": { lat: -2.515, lng: 28.868 },
-  "Nyarwizimya": { lat: -2.508, lng: 28.859 },
-  "Panzi": { lat: -2.545, lng: 28.865 },
-  "Kadutu Centre": { lat: -2.501, lng: 28.845 },
-  "Nyamugo": { lat: -2.493, lng: 28.848 },
-  "Cimpunda": { lat: -2.507, lng: 28.838 },
-  "Bagira Centre": { lat: -2.478, lng: 28.825 },
-  "Lumumba": { lat: -2.483, lng: 28.831 },
-};
 
 const HOUSE_STOCK_IMAGES: Record<string, string> = {
   "Pressing du Lac Kivu":
@@ -164,6 +153,11 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       isActive: schema.houses.isActive,
       isPaused: schema.houses.isPaused,
       pausedUntil: schema.houses.pausedUntil,
+      houseLat: sql<number | null>`ST_Y(${schema.houses.location})`,
+      houseLng: sql<number | null>`ST_X(${schema.houses.location})`,
+      centroidLat: sql<number | null>`ST_Y(${schema.neighborhoods.centroid})`,
+      centroidLng: sql<number | null>`ST_X(${schema.neighborhoods.centroid})`,
+      locationUpdatedAt: schema.houses.locationUpdatedAt,
     })
     .from(schema.houses)
     .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
@@ -248,7 +242,7 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
     });
   }
 
-  return rawHouses.map((h, index) => {
+  return rawHouses.map((h) => {
     const houseHrs = hoursByHouse.get(h.id) || [];
     const todayHrs = houseHrs.find((hr) => hr.weekday === bukavuNow.weekday);
 
@@ -270,9 +264,17 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
     const minPrice = minPriceByHouse.get(h.id);
     const minItemPriceCdf = minPrice !== undefined && minPrice < Infinity ? minPrice : 2500;
 
-    const coords = BUKAVU_NEIGHBORHOOD_COORDS[h.neighborhoodName] || {
-      lat: -2.5083 + (index * 0.004),
-      lng: 28.8608 + (index * 0.003),
+    const resolvedCoords = resolveHouseCoords({
+      houseLat: h.houseLat,
+      houseLng: h.houseLng,
+      centroidLat: h.centroidLat,
+      centroidLng: h.centroidLng,
+      locationUpdatedAt: h.locationUpdatedAt,
+    });
+    const coords = {
+      lat: resolvedCoords.lat,
+      lng: resolvedCoords.lng,
+      isApproximate: resolvedCoords.isApproximate,
     };
 
     const normalizedCover = normalizeStorageUrl(h.coverImageUrl);
@@ -336,6 +338,11 @@ export async function getCustomerHouseDetail(
       isActive: schema.houses.isActive,
       isPaused: schema.houses.isPaused,
       reviewStatus: schema.houses.reviewStatus,
+      houseLat: sql<number | null>`ST_Y(${schema.houses.location})`,
+      houseLng: sql<number | null>`ST_X(${schema.houses.location})`,
+      centroidLat: sql<number | null>`ST_Y(${schema.neighborhoods.centroid})`,
+      centroidLng: sql<number | null>`ST_X(${schema.neighborhoods.centroid})`,
+      locationUpdatedAt: schema.houses.locationUpdatedAt,
     })
     .from(schema.houses)
     .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
@@ -505,6 +512,13 @@ export async function getCustomerHouseDetail(
       : defaultGallery;
 
   const { validItems } = filterCatalogueOutliers(items);
+  const resolvedCoords = resolveHouseCoords({
+    houseLat: house.houseLat,
+    houseLng: house.houseLng,
+    centroidLat: house.centroidLat,
+    centroidLng: house.centroidLng,
+    locationUpdatedAt: house.locationUpdatedAt,
+  });
 
   return {
     house: {
@@ -534,6 +548,11 @@ export async function getCustomerHouseDetail(
       isActive: house.isActive,
       isPaused: house.isPaused,
       reviewStatus: house.reviewStatus,
+      coords: {
+        lat: resolvedCoords.lat,
+        lng: resolvedCoords.lng,
+        isApproximate: resolvedCoords.isApproximate,
+      },
       ratingStats: ratingStatsRow
         ? {
             reviewCount: ratingStatsRow.reviewCount,

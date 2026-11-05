@@ -28,7 +28,9 @@ import {
   updateNeighborhoodCoverageBatch,
   generateHouseAssetUploadUrlService,
   updateHouseImagesService,
+  updateHouseLocationService,
 } from "@/services/house";
+import { latLngSchema } from "@/lib/validations/location";
 
 import { normalizeStaffRole, type HouseStaffRole } from "@/services/auth/house-permissions";
 
@@ -1132,5 +1134,42 @@ export async function uploadHouseAssetDirectAction(
 
   return ok({ publicUrl, storageKey });
 }
+
+const updateHouseLocationSchema = z.object({
+  houseId: z.string().uuid().optional(),
+  coords: latLngSchema.nullable(),
+});
+
+export async function updateHouseLocationAction(input: {
+  houseId?: string;
+  coords: { lat: number; lng: number } | null;
+}): Promise<Result<void>> {
+  const parsed = updateHouseLocationSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Coordonnées invalides");
+  }
+
+  const authCtx = await getAuthenticatedHouseContext(parsed.data.houseId);
+  if (!authCtx.ok) return authCtx;
+
+  const roleCheck = requireHouseManagerOrOwner(authCtx.value);
+  if (!roleCheck.ok) return roleCheck;
+
+  const res = await updateHouseLocationService({
+    houseId: authCtx.value.houseId,
+    coords: parsed.data.coords,
+  });
+
+  if (res.ok) {
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidateTag(CACHE_TAGS.house(authCtx.value.houseId), "max");
+    revalidatePath("/partner", "layout");
+    revalidatePath(`/admin/houses/${authCtx.value.houseId}`);
+    revalidatePath("/houses");
+  }
+
+  return res;
+}
+
 
 

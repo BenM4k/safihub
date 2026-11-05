@@ -5,6 +5,7 @@ import { generateUniqueSlug } from "@/lib/slug";
 import { toBukavuDateTime } from "@/services/availability";
 import { err, ok, type Result } from "@/lib/result";
 import { normalizeStorageUrl } from "@/lib/storage-url";
+import { resolveHouseCoords } from "./house-location.dal";
 
 import type { HouseReviewStatus } from "@/services/db/schema";
 
@@ -38,6 +39,12 @@ export interface HouseRecord {
   isPaused: boolean;
   pausedUntil: Date | null;
   reviewStatus?: HouseReviewStatus | null;
+  coords?: {
+    lat: number;
+    lng: number;
+    isApproximate: boolean;
+    locationUpdatedAt: Date | null;
+  };
   createdAt: Date;
   updatedAt: Date | null;
 }
@@ -201,6 +208,11 @@ export async function getHouses(): Promise<HouseRecord[]> {
       isPaused: schema.houses.isPaused,
       pausedUntil: schema.houses.pausedUntil,
       reviewStatus: schema.houses.reviewStatus,
+      houseLat: sql<number | null>`ST_Y(${schema.houses.location})`,
+      houseLng: sql<number | null>`ST_X(${schema.houses.location})`,
+      centroidLat: sql<number | null>`ST_Y(${schema.neighborhoods.centroid})`,
+      centroidLng: sql<number | null>`ST_X(${schema.neighborhoods.centroid})`,
+      locationUpdatedAt: schema.houses.locationUpdatedAt,
       createdAt: schema.houses.createdAt,
       updatedAt: schema.houses.updatedAt,
     })
@@ -215,6 +227,13 @@ export async function getHouses(): Promise<HouseRecord[]> {
     ...r,
     coverImageUrl: normalizeStorageUrl(r.coverImageUrl),
     logoUrl: normalizeStorageUrl(r.logoUrl),
+    coords: resolveHouseCoords({
+      houseLat: r.houseLat,
+      houseLng: r.houseLng,
+      centroidLat: r.centroidLat,
+      centroidLng: r.centroidLng,
+      locationUpdatedAt: r.locationUpdatedAt,
+    }),
   }));
 }
 
@@ -241,6 +260,11 @@ export async function getHouseById(id: string): Promise<HouseRecord | null> {
       isPaused: schema.houses.isPaused,
       pausedUntil: schema.houses.pausedUntil,
       reviewStatus: schema.houses.reviewStatus,
+      houseLat: sql<number | null>`ST_Y(${schema.houses.location})`,
+      houseLng: sql<number | null>`ST_X(${schema.houses.location})`,
+      centroidLat: sql<number | null>`ST_Y(${schema.neighborhoods.centroid})`,
+      centroidLng: sql<number | null>`ST_X(${schema.neighborhoods.centroid})`,
+      locationUpdatedAt: schema.houses.locationUpdatedAt,
       createdAt: schema.houses.createdAt,
       updatedAt: schema.houses.updatedAt,
     })
@@ -257,6 +281,13 @@ export async function getHouseById(id: string): Promise<HouseRecord | null> {
     ...row,
     coverImageUrl: normalizeStorageUrl(row.coverImageUrl),
     logoUrl: normalizeStorageUrl(row.logoUrl),
+    coords: resolveHouseCoords({
+      houseLat: row.houseLat,
+      houseLng: row.houseLng,
+      centroidLat: row.centroidLat,
+      centroidLng: row.centroidLng,
+      locationUpdatedAt: row.locationUpdatedAt,
+    }),
   };
 }
 
@@ -285,6 +316,11 @@ export async function getHouseBySlug(
       isPaused: schema.houses.isPaused,
       pausedUntil: schema.houses.pausedUntil,
       reviewStatus: schema.houses.reviewStatus,
+      houseLat: sql<number | null>`ST_Y(${schema.houses.location})`,
+      houseLng: sql<number | null>`ST_X(${schema.houses.location})`,
+      centroidLat: sql<number | null>`ST_Y(${schema.neighborhoods.centroid})`,
+      centroidLng: sql<number | null>`ST_X(${schema.neighborhoods.centroid})`,
+      locationUpdatedAt: schema.houses.locationUpdatedAt,
       createdAt: schema.houses.createdAt,
       updatedAt: schema.houses.updatedAt,
     })
@@ -301,6 +337,13 @@ export async function getHouseBySlug(
     ...row,
     coverImageUrl: normalizeStorageUrl(row.coverImageUrl),
     logoUrl: normalizeStorageUrl(row.logoUrl),
+    coords: resolveHouseCoords({
+      houseLat: row.houseLat,
+      houseLng: row.houseLng,
+      centroidLat: row.centroidLat,
+      centroidLng: row.centroidLng,
+      locationUpdatedAt: row.locationUpdatedAt,
+    }),
   };
 }
 
