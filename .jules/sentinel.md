@@ -1,0 +1,4 @@
+## 2025-02-13 - Predictable PRNG in sensitive identifier generation
+**Vulnerability:** `Math.random()` was used to generate sensitive identifiers such as `deliveryConfirmationCode`, order suffixes, and manual order codes. `Math.random()` is not cryptographically secure, allowing attackers to predict the pseudo-random number generator's output sequence and guess codes, potentially bypassing verification mechanisms or inferring internal system state.
+**Learning:** Standard library random functions like `Math.random()` are often chosen for convenience but introduce severe predictability risks when used for security-critical functions like confirmation codes or order identifiers.
+**Prevention:** Enforce the use of cryptographically secure pseudo-random number generators (CSPRNG). Specifically, utilize `crypto.randomInt()` from the `node:crypto` module on the server side instead of `Math.random()` for any sensitive codes or tracking tokens.
