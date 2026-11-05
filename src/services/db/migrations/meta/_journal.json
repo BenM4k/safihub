@@ -43,6 +43,13 @@
       "when": 1793110000000,
       "tag": "0005_backfill_house_review_status",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793903103570,
+      "tag": "0006_postgis_house_locations",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  geometry,
   index,
   integer,
   pgEnum,
@@ -39,6 +40,8 @@ export const neighborhoods = pgTable(
     status: neighborhoodStatusEnum("status").notNull().default("not_served"),
     pauseReason: text("pause_reason"),
     pausedUntil: ts("paused_until"),
+    /** Geographic centroid (WGS84 lon/lat) used as fallback pin on maps. */
+    centroid: geometry("centroid", { type: "point", mode: "xy", srid: 4326 }),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -46,6 +49,11 @@ export const neighborhoods = pgTable(
   (t) => [
     index("neighborhoods_zone_idx").on(t.zoneId),
     index("neighborhoods_status_idx").on(t.status),
+    index("neighborhoods_centroid_gist_idx").using("gist", t.centroid),
+    check(
+      "neighborhoods_centroid_bukavu_bbox",
+      sql`${t.centroid} is null or ST_Within(${t.centroid}, ST_MakeEnvelope(28.75, -2.60, 28.95, -2.40, 4326))`
+    ),
   ]
 );
 

@@ -12,6 +12,7 @@ export default defineConfig({
   schema: "./src/services/db/schema/index.ts",
   out: "./src/services/db/migrations",
   dialect: "postgresql",
+  extensionsFilters: ["postgis"],
   dbCredentials: {
     url: databaseUrl,
   },
