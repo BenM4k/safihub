@@ -97,6 +97,20 @@ export const NOTIFICATION_TEMPLATES: Record<
       body: "Courier {courierName} is on the way to pick up your laundry.",
     },
   },
+  pickup_arrived: {
+    fr: {
+      title: "Coursier arrivé pour la collecte",
+      body: "Le coursier {courierName} est arrivé à votre adresse pour récupérer votre linge (commande #{orderIdShort}).",
+    },
+    sw: {
+      title: "Msafirishaji amefika kuchukua nguo",
+      body: "Msafirishaji {courierName} amefika kwako kuchukua nguo zako (agizo #{orderIdShort}).",
+    },
+    en: {
+      title: "Courier arrived for pickup",
+      body: "Courier {courierName} has arrived at your location to collect your laundry (order #{orderIdShort}).",
+    },
+  },
   picked_up: {
     fr: {
       title: "Linge collecté",
@@ -195,6 +209,20 @@ export const NOTIFICATION_TEMPLATES: Record<
       body: "Courier {courierName} is on the way to deliver your clean laundry.",
     },
   },
+  delivery_arrived: {
+    fr: {
+      title: "Coursier arrivé pour la livraison",
+      body: "Le coursier {courierName} est arrivé avec votre linge propre (#{orderIdShort}). Code de remise : {verificationCode}.",
+    },
+    sw: {
+      title: "Msafirishaji amefika kuwasilisha nguo",
+      body: "Msafirishaji {courierName} amefika na nguo zako safi (#{orderIdShort}). Nambari ya uthibitisho: {verificationCode}.",
+    },
+    en: {
+      title: "Courier arrived for delivery",
+      body: "Courier {courierName} has arrived with your clean laundry (#{orderIdShort}). Verification code: {verificationCode}.",
+    },
+  },
   delivered: {
     fr: {
       title: "Commande livrée",
@@ -263,6 +291,20 @@ export const NOTIFICATION_TEMPLATES: Record<
     en: {
       title: "Escalation alert",
       body: "Alert: Laundry house {houseName} has not responded for order #{orderIdShort} (75% time elapsed).",
+    },
+  },
+  partner_settlement_paid: {
+    fr: {
+      title: "Règlement pressing effectué",
+      body: "SafiHub Règlement : {houseName}, un paiement de {amount} {currency} (Réf: {reference}) vient d'être enregistré.",
+    },
+    sw: {
+      title: "Malipo ya dobi yamekamilika",
+      body: "Malipo ya SafiHub: {houseName}, malipo ya {amount} {currency} (Kumbukumbu: {reference}) yamerekodiwa.",
+    },
+    en: {
+      title: "Partner settlement paid",
+      body: "SafiHub Settlement: {houseName}, a payment of {amount} {currency} (Ref: {reference}) has been recorded.",
     },
   },
 };

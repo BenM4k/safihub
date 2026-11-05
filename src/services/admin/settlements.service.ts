@@ -1,17 +1,11 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
-import {
-  getHouseSettlementsOverview,
-  settleHouseBalance,
-  getCourierSettlementsOverview,
-  settleCourierPay,
-  getSettlementHistoryLogs,
-  reverseLedgerEntry,
-} from "@/dal";
+import * as dal from "@/dal";
+import { sendWhatsAppBusinessSettlementNotice } from "@/services/whatsapp";
 
 export async function getAdminHouseSettlements() {
   try {
-    const data = await getHouseSettlementsOverview();
+    const data = await dal.getHouseSettlementsOverview();
     return ok(data);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Erreur lors du chargement des règlements de pressings");
@@ -20,6 +14,8 @@ export async function getAdminHouseSettlements() {
 
 export async function settleAdminHouse(params: {
   houseId: string;
+  houseName?: string;
+  contactPhone?: string;
   amount: number;
   currency?: "CDF" | "USD";
   reference?: string;
@@ -36,7 +32,7 @@ export async function settleAdminHouse(params: {
       return err("Une référence ou un numéro de transaction est requis pour les règlements électroniques ou bancaires");
     }
 
-    const res = await settleHouseBalance({
+    const res = await dal.settleHouseBalance({
       houseId: params.houseId,
       amount: params.amount,
       currency: params.currency ?? "CDF",
@@ -48,6 +44,34 @@ export async function settleAdminHouse(params: {
     });
 
     if (!res.ok) return err(res.error || "Échec du règlement du pressing");
+
+    // Non-blocking WhatsApp notification to the partner laundry house
+    Promise.resolve()
+      .then(async () => {
+        let houseName = params.houseName;
+        let contactPhone = params.contactPhone;
+
+        if (!contactPhone && "getHouseById" in dal && typeof dal.getHouseById === "function") {
+          const house = await dal.getHouseById(params.houseId);
+          houseName = houseName || house?.name;
+          contactPhone = house?.contactPhone ?? undefined;
+        }
+
+        if (contactPhone) {
+          await sendWhatsAppBusinessSettlementNotice({
+            houseId: params.houseId,
+            houseName: houseName || "Pressing Partenaire",
+            contactPhone,
+            amount: params.amount,
+            currency: params.currency ?? "CDF",
+            reference: params.reference?.trim() || res.settlementId || "CASH",
+            method: params.method,
+            period: params.period,
+          });
+        }
+      })
+      .catch(() => {});
+
     return ok({ settlementId: res.settlementId, newBalanceCDF: res.newBalanceCDF });
   } catch (error) {
     return err(error instanceof Error ? error.message : "Erreur lors du règlement du pressing");
@@ -56,7 +80,7 @@ export async function settleAdminHouse(params: {
 
 export async function getAdminCourierSettlements() {
   try {
-    const data = await getCourierSettlementsOverview();
+    const data = await dal.getCourierSettlementsOverview();
     return ok(data);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Erreur lors du chargement des règlements de coursiers");
@@ -81,7 +105,7 @@ export async function settleAdminCourier(params: {
       return err("Une référence ou un numéro de transaction est requis pour les paiements électroniques ou bancaires");
     }
 
-    const res = await settleCourierPay({
+    const res = await dal.settleCourierPay({
       courierId: params.courierId,
       amount: params.amount,
       currency: params.currency ?? "CDF",
@@ -101,7 +125,7 @@ export async function settleAdminCourier(params: {
 
 export async function getAdminSettlementHistory(limit = 100) {
   try {
-    const data = await getSettlementHistoryLogs(limit);
+    const data = await dal.getSettlementHistoryLogs(limit);
     return ok(data);
   } catch (error) {
     return err(
@@ -121,7 +145,7 @@ export async function reverseAdminSettlement(params: {
       return err("Un motif d'annulation explicite (au moins 3 caractères) est obligatoire");
     }
 
-    const res = await reverseLedgerEntry({
+    const res = await dal.reverseLedgerEntry({
       entryId: params.settlementId,
       reason: params.reason.trim(),
       reversedBy: params.adminId,

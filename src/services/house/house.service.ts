@@ -28,6 +28,7 @@ import {
   getHouseOrdersRestricted,
   getHouseTodayOrdersCount,
   getHouseOrderEventsRestricted,
+  getOrderById,
   getOrderItems,
   recordCoverageExtensionTicket,
   saveReceptionCountTransaction,
@@ -53,6 +54,44 @@ import {
 } from "@/services/order";
 import { getSignedUploadUrl, getStoragePublicUrl } from "@/lib/storage/r2-client";
 import type { OrderStatus } from "@/services/db/schema";
+import { inngest } from "@/inngest";
+import type { NotificationTemplateKey } from "@/services/notifications/notifications.types";
+
+/**
+ * Dispatches an asynchronous, durable WhatsApp status notification event to Inngest.
+ */
+async function queueOrderStatusWhatsAppNotification(params: {
+  orderId: string;
+  status: NotificationTemplateKey;
+  diffAmountCdf?: number;
+  reason?: string;
+}): Promise<void> {
+  try {
+    const order = await getOrderById(params.orderId);
+    if (!order || !order.customerPhone) return;
+
+    await inngest.send({
+      name: "whatsapp/notification.requested",
+      data: {
+        kind: "order_status",
+        orderId: order.id,
+        orderCode: order.code,
+        trackingToken: order.trackingToken,
+        customerUserId: order.customerId,
+        customerPhone: order.customerPhone,
+        customerName: order.customerName ?? undefined,
+        houseName: order.houseName ?? undefined,
+        status: params.status,
+        amountCdf: order.totalDue,
+        diffAmountCdf: params.diffAmountCdf,
+        reason: params.reason,
+        verificationCode: order.deliveryConfirmationCode ?? null,
+      },
+    });
+  } catch {
+    // Non-blocking background event dispatch
+  }
+}
 
 export async function getHouseBannerData(houseId: string) {
   try {
@@ -206,6 +245,11 @@ export async function acceptIncomingOrder(params: {
       return err("Order status has changed or could not be updated");
     }
 
+    await queueOrderStatusWhatsAppNotification({
+      orderId: params.orderId,
+      status: "order_accepted",
+    });
+
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to accept order");
@@ -255,6 +299,12 @@ export async function rejectIncomingOrder(params: {
     if (!updated) {
       return err("Order status has changed or could not be updated");
     }
+
+    await queueOrderStatusWhatsAppNotification({
+      orderId: params.orderId,
+      status: "order_rejected",
+      reason: params.reason.trim(),
+    });
 
     return ok(undefined);
   } catch (error) {
@@ -385,6 +435,14 @@ export async function submitHouseReception(params: {
       event: transitionRes.value.event,
     });
 
+    await queueOrderStatusWhatsAppNotification({
+      orderId: params.orderId,
+      status: receptionResult.hasPriceAdjustment ? "price_adjusted" : "washing",
+      diffAmountCdf: receptionResult.hasPriceAdjustment
+        ? receptionResult.adjustedItemsTotal - detail.itemsTotal
+        : undefined,
+    });
+
     return ok({
       hasPriceAdjustment: receptionResult.hasPriceAdjustment,
       newStatus: receptionResult.suggestedStatus,
@@ -432,6 +490,11 @@ export async function markOrderReady(params: {
     if (!updated) {
       return err("Order status has changed or could not be updated");
     }
+
+    await queueOrderStatusWhatsAppNotification({
+      orderId: params.orderId,
+      status: "ready",
+    });
 
     return ok(undefined);
   } catch (error) {

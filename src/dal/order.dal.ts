@@ -2449,3 +2449,106 @@ export async function getActiveOrdersCountsByHouse(): Promise<
   }
   return result;
 }
+
+
+/**
+ * Finds the most recent active order for a given contact phone number.
+ */
+export async function getLatestActiveOrderByPhone(
+  phone: string
+): Promise<OrderDetailRecord | null> {
+  const normalized = phone.trim();
+  const withoutPlus = normalized.replace(/^\+/, "");
+  const withPlus = normalized.startsWith("+") ? normalized : `+${normalized}`;
+
+  const activeStatuses: OrderStatus[] = [
+    "awaiting_confirmation",
+    "created",
+    "accepted",
+    "pickup_assigned",
+    "pickup_in_progress",
+    "picked_up",
+    "received",
+    "price_adjusted",
+    "washing",
+    "ready",
+    "delivery_slot_confirmed",
+    "delivery_assigned",
+    "delivery_in_progress",
+  ];
+
+  const [found] = await db
+    .select({ id: schema.orders.id })
+    .from(schema.orders)
+    .where(
+      and(
+        inArray(schema.orders.contactPhone, [normalized, withoutPlus, withPlus]),
+        inArray(schema.orders.status, activeStatuses)
+      )
+    )
+    .orderBy(desc(schema.orders.createdAt))
+    .limit(1);
+
+  if (!found) return null;
+  return getOrderById(found.id);
+}
+
+/**
+ * Appends GPS coordinates from a WhatsApp location pin to an order's landmark
+ * and records an audit note event in order_events.
+ */
+export async function updateOrderLandmarkWithGps(params: {
+  orderId: string;
+  latitude: number;
+  longitude: number;
+  addressLabel?: string | null;
+  actorId?: string | null;
+}): Promise<Result<{ updatedLandmark: string }>> {
+  try {
+    const order = await getOrderById(params.orderId);
+    if (!order) {
+      return err("Commande introuvable");
+    }
+
+    const latFixed = params.latitude.toFixed(6);
+    const lngFixed = params.longitude.toFixed(6);
+    const gpsPinText = `GPS: ${latFixed}, ${lngFixed}${
+      params.addressLabel?.trim() ? ` (${params.addressLabel.trim()})` : ""
+    }`;
+
+    const baseLandmark = order.landmark.replace(/\s*\|\s*GPS:.*$/i, "").trim();
+    const updatedLandmark = `${baseLandmark} | ${gpsPinText}`;
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(schema.orders)
+        .set({
+          landmark: updatedLandmark,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.orders.id, params.orderId));
+
+      await tx.insert(schema.orderEvents).values({
+        orderId: params.orderId,
+        type: "note",
+        actorId: params.actorId ?? order.customerId,
+        actorRole: "customer",
+        note: `Localisation GPS partagée via WhatsApp (${gpsPinText})`,
+        payload: {
+          category: "whatsapp_gps_pin",
+          latitude: params.latitude,
+          longitude: params.longitude,
+          addressLabel: params.addressLabel ?? null,
+        },
+      });
+    });
+
+    return ok({ updatedLandmark });
+  } catch (error) {
+    return err(
+      error instanceof Error
+        ? error.message
+        : "Impossible de mettre à jour le repère GPS de la commande"
+    );
+  }
+}

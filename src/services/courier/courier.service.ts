@@ -11,6 +11,7 @@ import {
   getCourierCashOverview,
   getCourierHistory,
   getCourierMissionDetail,
+  getOrderById,
   startDeliveryMissionAtomic,
   startPickupMissionAtomic,
   type CourierAssignedMissionSummary,
@@ -19,6 +20,46 @@ import {
   type CourierMissionDetail,
 } from "@/dal";
 import { trackOrderDelivered } from "@/services/analytics";
+import { inngest } from "@/inngest";
+import type { NotificationTemplateKey } from "@/services/notifications/notifications.types";
+
+/**
+ * Dispatches an asynchronous WhatsApp order status notification event via Inngest.
+ */
+async function queueCourierOrderStatusWhatsAppNotification(params: {
+  orderId: string;
+  status: NotificationTemplateKey;
+  courierName?: string;
+  itemCount?: number;
+  verificationCode?: string | null;
+}): Promise<void> {
+  try {
+    const order = await getOrderById(params.orderId);
+    if (!order || !order.customerPhone) return;
+
+    await inngest.send({
+      name: "whatsapp/notification.requested",
+      data: {
+        kind: "order_status",
+        orderId: order.id,
+        orderCode: order.code,
+        trackingToken: order.trackingToken,
+        customerUserId: order.customerId,
+        customerPhone: order.customerPhone,
+        customerName: order.customerName ?? undefined,
+        houseName: order.houseName ?? undefined,
+        courierName: params.courierName,
+        status: params.status,
+        amountCdf: order.totalDue,
+        itemCount: params.itemCount,
+        verificationCode:
+          params.verificationCode ?? order.deliveryConfirmationCode ?? null,
+      },
+    });
+  } catch {
+    // Non-blocking background event dispatch
+  }
+}
 
 export interface CompletePickupInput {
   courierId: string;
@@ -136,6 +177,19 @@ export async function startPickupMissionService(
     if (!res.ok) {
       return err(res.error || "Failed to start pickup mission");
     }
+
+    if (typeof getCourierMissionDetail === "function") {
+      const detail = await getCourierMissionDetail(courierId, missionId).catch(
+        () => null
+      );
+      if (detail?.mission?.orderId) {
+        await queueCourierOrderStatusWhatsAppNotification({
+          orderId: detail.mission.orderId,
+          status: "pickup_in_progress",
+        });
+      }
+    }
+
     return ok({ missionId });
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to start pickup mission");
@@ -161,6 +215,24 @@ export async function completePickupMissionService(
 
     if (!res.ok) {
       return err(res.error || "Failed to complete pickup mission");
+    }
+
+    if (typeof getCourierMissionDetail === "function") {
+      const totalItems = input.items.reduce(
+        (acc, it) => acc + (it.pickupQuantity || 0),
+        0
+      );
+      const detail = await getCourierMissionDetail(
+        input.courierId,
+        input.missionId
+      ).catch(() => null);
+      if (detail?.mission?.orderId) {
+        await queueCourierOrderStatusWhatsAppNotification({
+          orderId: detail.mission.orderId,
+          status: "picked_up",
+          itemCount: totalItems,
+        });
+      }
     }
 
     return ok({
@@ -214,6 +286,18 @@ export async function startDeliveryMissionService(
     if (!res.ok) {
       return err(res.error || "Failed to start delivery mission");
     }
+
+    if (typeof getCourierMissionDetail === "function") {
+      const detail = await getCourierMissionDetail(courierId, missionId).catch(() => null);
+      if (detail?.mission?.orderId) {
+        await queueCourierOrderStatusWhatsAppNotification({
+          orderId: detail.mission.orderId,
+          status: "delivery_in_progress",
+          verificationCode: detail.deliveryConfirmationCode ?? null,
+        });
+      }
+    }
+
     return ok({ missionId });
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to start delivery mission");
@@ -262,6 +346,11 @@ export async function completeDeliveryMissionService(
         orderId: res.orderId,
         ...(turnaroundMinutes !== undefined ? { turnaroundMinutes } : {}),
       }).catch(() => {});
+
+      await queueCourierOrderStatusWhatsAppNotification({
+        orderId: res.orderId,
+        status: "delivered",
+      });
     }
 
     return ok({

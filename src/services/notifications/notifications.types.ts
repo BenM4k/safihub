@@ -9,6 +9,7 @@ export type NotificationTemplateKey =
   | "order_expired"
   | "pickup_assigned"
   | "pickup_in_progress"
+  | "pickup_arrived"
   | "picked_up"
   | "received"
   | "price_adjusted"
@@ -16,11 +17,13 @@ export type NotificationTemplateKey =
   | "ready"
   | "delivery_assigned"
   | "delivery_in_progress"
+  | "delivery_arrived"
   | "delivered"
   | "order_cancelled"
   | "order_disputed"
   | "house_acceptance_reminder"
-  | "admin_escalation_alert";
+  | "admin_escalation_alert"
+  | "partner_settlement_paid";
 
 export interface TemplateParams {
   orderId?: string;
@@ -34,6 +37,9 @@ export interface TemplateParams {
   reason?: string;
   customerName?: string;
   slotTime?: string;
+  verificationCode?: string;
+  reference?: string;
+  trackingUrl?: string;
   [key: string]: string | number | undefined;
 }
 
