@@ -34,3 +34,33 @@ export type LatLng = z.infer<typeof latLngSchema>;
 export function isWithinBukavuBounds(coords: { lat: number; lng: number }): boolean {
   return latLngSchema.safeParse(coords).success;
 }
+
+export const DEFAULT_NEARBY_RADIUS_KM = 5;
+export const NEARBY_RADIUS_OPTIONS_KM = [5, 10, 15] as const;
+export type NearbyRadiusKm = (typeof NEARBY_RADIUS_OPTIONS_KM)[number];
+
+
+/**
+ * Calculates great-circle distance in kilometers between two WGS84 points using the Haversine formula.
+ */
+export function calculateDistanceKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+): number {
+  const EARTH_RADIUS_KM = 6371;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+
+  const sinDLat = Math.sin(dLat / 2);
+  const sinDLng = Math.sin(dLng / 2);
+  const h =
+    sinDLat * sinDLat +
+    Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+
+  return 2 * EARTH_RADIUS_KM * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+

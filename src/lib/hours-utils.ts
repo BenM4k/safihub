@@ -44,9 +44,44 @@ export const WEEKDAY_DEFS = [
 ] as const;
 
 /**
- * Generate 24-hour time options with specified step in minutes (default 30 min).
- * Typically from 06:00 to 22:00 for daytime laundry houses.
+ * Formats a 24h "HH:MM" string into user-friendly time string (e.g. "18:00" -> "18h", "08:30" -> "8h30").
  */
+export function formatTimeDisplay(timeStr: string): string {
+  if (!timeStr) return "";
+  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return timeStr;
+  const hours = parseInt(match[1], 10);
+  const minutes = match[2];
+  if (minutes === "00") {
+    return `${hours}h`;
+  }
+  return `${hours}h${minutes}`;
+}
+
+/**
+ * Formats a range string like "08:00 - 18:00" into a concise and clean time string (e.g. "8h - 18h", "08:30 - 17:30" -> "8h30 - 17h30").
+ */
+export function formatHoursRangeDisplay(rangeStr: string): string {
+  if (!rangeStr) return "";
+  const parts = rangeStr.split("-").map((p) => p.trim());
+  if (parts.length === 2 && /^\d{1,2}:\d{2}/.test(parts[0]) && /^\d{1,2}:\d{2}/.test(parts[1])) {
+    return `${formatTimeDisplay(parts[0])} – ${formatTimeDisplay(parts[1])}`;
+  }
+  return rangeStr;
+}
+
+/**
+ * Extracts and formats the closing time from a todayHoursText string (e.g. "08:00 - 18:00" -> "18h").
+ */
+export function extractClosingTimeDisplay(todayHoursText: string): string | null {
+  if (!todayHoursText) return null;
+  const parts = todayHoursText.split("-").map((p) => p.trim());
+  if (parts.length === 2 && /^\d{1,2}:\d{2}/.test(parts[1])) {
+    return formatTimeDisplay(parts[1]);
+  }
+  return null;
+}
+
 export function generateTimeOptions(stepMinutes: number = 30, startHour = 6, endHour = 22): string[] {
   const options: string[] = [];
   const startMin = startHour * 60;

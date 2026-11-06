@@ -1,5 +1,6 @@
 import { Clock, ShieldCheck, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { PressingLocationCard } from "./pressing-location-card";
 
 interface WeeklyHour {
   weekday: number;
@@ -11,6 +12,14 @@ interface PressingPracticalInfoProps {
   weeklyHours: WeeklyHour[];
   description?: string | null;
   createdAt?: Date | null;
+  houseName?: string;
+  neighborhoodName?: string;
+  zoneName?: string;
+  coords?: {
+    lat: number;
+    lng: number;
+    isApproximate?: boolean;
+  };
 }
 
 const WEEKDAY_KEYS = [
@@ -27,6 +36,10 @@ export function PressingPracticalInfo({
   weeklyHours,
   description,
   createdAt,
+  houseName,
+  neighborhoodName,
+  zoneName,
+  coords,
 }: PressingPracticalInfoProps) {
   const t = useTranslations("customerHouses");
 
@@ -85,6 +98,16 @@ export function PressingPracticalInfo({
           })}
         </div>
       </div>
+
+      {/* Location & Interactive Map Card */}
+      {houseName && neighborhoodName && (
+        <PressingLocationCard
+          houseName={houseName}
+          neighborhoodName={neighborhoodName}
+          zoneName={zoneName}
+          coords={coords}
+        />
+      )}
 
       {/* Membership & Trust Tag */}
       {memberSinceFormatted && (

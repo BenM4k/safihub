@@ -1,10 +1,12 @@
 "use client";
 
+import { memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Clock, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CustomerHouseSummary } from "@/dal";
+import { AVATAR_BLUR_DATA_URL } from "@/lib/image-blur";
 import { HouseCardImage } from "./house-card-image";
 
 interface HouseCardProps {
@@ -13,7 +15,11 @@ interface HouseCardProps {
   onHover?: (id: string | null) => void;
 }
 
-export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
+export const HouseCard = memo(function HouseCard({
+  house,
+  isHighlighted,
+  onHover,
+}: HouseCardProps) {
   const t = useTranslations("customerHouses");
   const targetSlug = house.slug || house.id;
 
@@ -90,6 +96,10 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
                 src={house.logoUrl}
                 alt={`Logo ${house.name}`}
                 fill
+                loading="lazy"
+                decoding="async"
+                placeholder="blur"
+                blurDataURL={AVATAR_BLUR_DATA_URL}
                 sizes="24px"
                 className="object-contain"
               />
@@ -133,4 +143,4 @@ export function HouseCard({ house, isHighlighted, onHover }: HouseCardProps) {
       </div>
     </div>
   );
-}
+});

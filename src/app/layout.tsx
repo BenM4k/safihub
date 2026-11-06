@@ -4,7 +4,6 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
-import { RootShellFallback } from "@/components/common/root-shell-fallback";
 import { CustomerBottomNav } from "@/components/customer/customer-bottom-nav";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
@@ -60,7 +59,7 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col pb-16 md:pb-0">
-        <Suspense fallback={<RootShellFallback />}>
+        <Suspense fallback={null}>
           <LocaleProvider>{children}</LocaleProvider>
         </Suspense>
       </body>

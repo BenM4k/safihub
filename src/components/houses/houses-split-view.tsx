@@ -1,35 +1,59 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { Map, List } from "lucide-react";
 import { SearchTopBar } from "./search-top-bar";
 import { HousesListPanel } from "./houses-list-panel";
 import { BukavuInteractiveMap } from "./bukavu-interactive-map";
-import { FilterSheetDialog } from "./filter-sheet-dialog";
-import { SaveSearchDialog } from "./save-search-dialog";
+import { LocationPermissionModal } from "./location-permission-modal";
 import { useHousesFilterState } from "./use-houses-filter-state";
-import type { CustomerHousesPageData } from "@/services/house/customer-search.service";
+import type {
+  CustomerHouseSearchFilter,
+  CustomerHousesPageData,
+} from "@/services/house/customer-search.service";
+
+const FilterSheetDialog = dynamic(
+  () => import("./filter-sheet-dialog").then((mod) => mod.FilterSheetDialog),
+  { ssr: false }
+);
+
+const SaveSearchDialog = dynamic(
+  () => import("./save-search-dialog").then((mod) => mod.SaveSearchDialog),
+  { ssr: false }
+);
 
 interface HousesSplitViewProps {
   initialData: CustomerHousesPageData;
+  initialFilter?: CustomerHouseSearchFilter;
   initialNeighborhoodId?: string;
 }
 
-export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSplitViewProps) {
+export function HousesSplitView({
+  initialData,
+  initialFilter,
+  initialNeighborhoodId,
+}: HousesSplitViewProps) {
   const t = useTranslations("customerHouses");
   const {
     searchQuery,
     setSearchQuery,
     openNowOnly,
-    setOpenNowOnly,
+    handleToggleOpenNow,
     selectedService,
-    setSelectedService,
+    handleSelectService,
     maxTurnaround,
-    setMaxTurnaround,
+    handleSelectTurnaround,
     maxMinOrder,
-    setMaxMinOrder,
+    handleSelectMaxMinOrder,
+    userLocation,
+    radiusKm,
+    handleApplyNearbyRadius,
+    handleSelectRadiusKm,
+    handleClearRadiusFilter,
     currentSort,
-    setCurrentSort,
+    handleSelectSort,
+    isRefetching,
     viewMode,
     setViewMode,
     hoveredHouseId,
@@ -48,21 +72,28 @@ export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSp
     activeFiltersCount,
     hasActiveFilters,
     filteredHouses,
-  } = useHousesFilterState(initialData, initialNeighborhoodId);
+  } = useHousesFilterState(initialData, initialNeighborhoodId, initialFilter);
 
   return (
     <div className="flex flex-col h-[calc(100dvh-5rem)] bg-background overflow-hidden">
+      {/* First-visit app modal asking before browser geolocation permission */}
+      <LocationPermissionModal onLocationResolved={handleApplyNearbyRadius} />
+
       {/* Sticky Search Top Bar */}
       <SearchTopBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         openNowOnly={openNowOnly}
-        onToggleOpenNow={() => setOpenNowOnly((prev) => !prev)}
+        onToggleOpenNow={handleToggleOpenNow}
         selectedService={selectedService}
-        onSelectService={setSelectedService}
+        onSelectService={handleSelectService}
         availableServices={initialData.availableServices}
         activeNeighborhood={activeNeighborhood}
         onClearNeighborhood={handleClearNeighborhood}
+        radiusKm={radiusKm}
+        onSelectRadiusKm={handleSelectRadiusKm}
+        onClearRadiusFilter={handleClearRadiusFilter}
+        isRefetching={isRefetching}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onOpenAllFilters={() => setIsFilterSheetOpen(true)}
@@ -81,7 +112,7 @@ export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSp
           <HousesListPanel
             houses={filteredHouses}
             currentSort={currentSort}
-            onSortChange={setCurrentSort}
+            onSortChange={handleSelectSort}
             hasActiveFilters={hasActiveFilters}
             onClearFilters={handleClearFilters}
             activeNeighborhood={activeNeighborhood}
@@ -89,6 +120,7 @@ export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSp
             hoveredHouseId={hoveredHouseId}
             onHoverHouse={setHoveredHouseId}
             onRequestCoverage={() => setIsSaveSearchOpen(true)}
+            isRefetching={isRefetching}
           />
         </div>
 
@@ -104,6 +136,8 @@ export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSp
             onHoverHouse={setHoveredHouseId}
             selectedHouseId={selectedHouseId}
             onSelectHouse={setSelectedHouseId}
+            userLocation={userLocation}
+            enabled={viewMode !== "list"}
           />
         </div>
 
@@ -129,31 +163,37 @@ export function HousesSplitView({ initialData, initialNeighborhoodId }: HousesSp
         </div>
       </div>
 
-      {/* Filter and Save Search Dialogs */}
-      <FilterSheetDialog
-        isOpen={isFilterSheetOpen}
-        onClose={() => setIsFilterSheetOpen(false)}
-        neighborhoods={initialData.neighborhoods}
-        selectedNeighborhoodId={currentNeighborhoodId}
-        onSelectNeighborhood={handleSelectNeighborhood}
-        selectedService={selectedService}
-        onSelectService={setSelectedService}
-        availableServices={initialData.availableServices}
-        openNowOnly={openNowOnly}
-        onToggleOpenNow={() => setOpenNowOnly((prev) => !prev)}
-        maxTurnaround={maxTurnaround}
-        onSelectTurnaround={setMaxTurnaround}
-        maxMinOrder={maxMinOrder}
-        onSelectMaxMinOrder={setMaxMinOrder}
-        onResetFilters={handleClearFilters}
-      />
+      {/* Filter and Save Search Dialogs (mounted only when opened) */}
+      {isFilterSheetOpen && (
+        <FilterSheetDialog
+          isOpen={isFilterSheetOpen}
+          onClose={() => setIsFilterSheetOpen(false)}
+          neighborhoods={initialData.neighborhoods}
+          selectedNeighborhoodId={currentNeighborhoodId}
+          onSelectNeighborhood={handleSelectNeighborhood}
+          radiusKm={radiusKm}
+          onSelectRadiusKm={handleSelectRadiusKm}
+          selectedService={selectedService}
+          onSelectService={handleSelectService}
+          availableServices={initialData.availableServices}
+          openNowOnly={openNowOnly}
+          onToggleOpenNow={handleToggleOpenNow}
+          maxTurnaround={maxTurnaround}
+          onSelectTurnaround={handleSelectTurnaround}
+          maxMinOrder={maxMinOrder}
+          onSelectMaxMinOrder={handleSelectMaxMinOrder}
+          onResetFilters={handleClearFilters}
+        />
+      )}
 
-      <SaveSearchDialog
-        isOpen={isSaveSearchOpen}
-        onClose={() => setIsSaveSearchOpen(false)}
-        neighborhoods={initialData.neighborhoods}
-        selectedNeighborhoodId={currentNeighborhoodId}
-      />
+      {isSaveSearchOpen && (
+        <SaveSearchDialog
+          isOpen={isSaveSearchOpen}
+          onClose={() => setIsSaveSearchOpen(false)}
+          neighborhoods={initialData.neighborhoods}
+          selectedNeighborhoodId={currentNeighborhoodId}
+        />
+      )}
     </div>
   );
 }

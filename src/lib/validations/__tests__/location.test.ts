@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   BUKAVU_BOUNDS,
   BUKAVU_DEFAULT_CENTER,
+  calculateDistanceKm,
+  DEFAULT_NEARBY_RADIUS_KM,
   isWithinBukavuBounds,
   latLngSchema,
 } from "../location";
@@ -34,4 +36,19 @@ describe("location validation (Bukavu bounds)", () => {
       false
     );
   });
+
+  it("computes Haversine distance in kilometers for the 5 km nearby filter", () => {
+    const laBotte = { lat: -2.502, lng: 28.864 };
+    const nguba = { lat: -2.528, lng: 28.871 }; // ~2.99 km
+    const bagira = { lat: -2.478, lng: 28.825 }; // ~5.09 km
+
+    expect(calculateDistanceKm(laBotte, laBotte)).toBe(0);
+    expect(calculateDistanceKm(laBotte, nguba)).toBeLessThanOrEqual(
+      DEFAULT_NEARBY_RADIUS_KM
+    );
+    expect(calculateDistanceKm(laBotte, bagira)).toBeGreaterThan(
+      DEFAULT_NEARBY_RADIUS_KM
+    );
+  });
 });
+

@@ -6,6 +6,7 @@ import { Star, ShieldCheck, Flag, MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { reportReviewAction } from "@/actions/review.actions";
 import type { HouseReviewItem } from "@/dal/review.dal";
+import { DEFAULT_IMAGE_BLUR_DATA_URL } from "@/lib/image-blur";
 import { PressingLightbox } from "./pressing-lightbox";
 
 interface PressingReviewItemProps {
@@ -145,6 +146,10 @@ export function PressingReviewItem({ review, houseName }: PressingReviewItemProp
                 src={photoUrl}
                 alt={`Photo avis ${idx + 1}`}
                 fill
+                loading="lazy"
+                decoding="async"
+                placeholder="blur"
+                blurDataURL={DEFAULT_IMAGE_BLUR_DATA_URL}
                 sizes="64px"
                 className="object-cover"
               />

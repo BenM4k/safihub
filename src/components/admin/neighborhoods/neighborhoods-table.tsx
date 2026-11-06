@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { NeighborhoodCentroidDialog } from "./neighborhood-centroid-dialog";
 
 interface NeighborhoodsTableProps {
   neighborhoods: NeighborhoodRecord[];
@@ -70,6 +71,7 @@ export async function NeighborhoodsTable({
               <TableHead className="px-4 py-3 font-semibold text-foreground">{t("selectZone")}</TableHead>
               <TableHead className="px-4 py-3 font-semibold text-foreground">{t("status")}</TableHead>
               <TableHead className="px-4 py-3 font-semibold text-foreground">{t("pauseReason")}</TableHead>
+              <TableHead className="px-4 py-3 text-right font-semibold text-foreground">GPS</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -84,6 +86,13 @@ export async function NeighborhoodsTable({
                 <TableCell className="px-4 py-3">{statusBadge(n.status)}</TableCell>
                 <TableCell className="px-4 py-3 text-muted-foreground italic">
                   {n.pauseReason || "—"}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-right">
+                  <NeighborhoodCentroidDialog
+                    neighborhoodId={n.id}
+                    neighborhoodName={n.name}
+                    centroid={n.centroid}
+                  />
                 </TableCell>
               </TableRow>
             ))}

@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DEFAULT_IMAGE_BLUR_DATA_URL } from "@/lib/image-blur";
 
 interface PressingLightboxProps {
   photos: string[];
@@ -102,6 +103,8 @@ export function PressingLightbox({
             src={photos[currentIndex]}
             alt={`${title} - photo ${currentIndex + 1}`}
             fill
+            placeholder="blur"
+            blurDataURL={DEFAULT_IMAGE_BLUR_DATA_URL}
             sizes="(max-width: 1024px) 100vw, 1200px"
             className="object-contain"
             priority

@@ -1,165 +1,459 @@
-import { useState, useMemo, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import type { CustomerHousesPageData } from "@/services/house/customer-search.service";
+import {
+  useState,
+  useMemo,
+  useCallback,
+  useEffect,
+  useDeferredValue,
+  useTransition,
+} from "react";
+import { useRouter } from "next/navigation";
+import {
+  DEFAULT_NEARBY_RADIUS_KM,
+  type LatLng,
+} from "@/lib/validations/location";
+import {
+  getCachedUserCoords,
+  getSavedRadiusKm,
+  isRadiusFilterSavedActive,
+  saveCachedUserCoords,
+  setRadiusFilterSavedActive,
+  setSavedRadiusKm,
+} from "./location-permission-modal";
+import type {
+  CustomerHouseSearchFilter,
+  CustomerHousesPageData,
+} from "@/services/house/customer-search.service";
 
 export type HouseSortOption = "recommended" | "turnaround" | "price" | "rating";
 
+export interface HousesUrlParamsShape {
+  query?: string | null;
+  neighborhoodId?: string | null;
+  service?: string | null;
+  openNow?: boolean | null;
+  maxTurnaround?: number | null;
+  maxMinOrder?: number | null;
+  lat?: number | null;
+  lng?: number | null;
+  radiusKm?: number | null;
+  sort?: HouseSortOption | null;
+}
+
+export function buildHousesFilterUrl(
+  baseQueryString: string,
+  updates: Partial<HousesUrlParamsShape>
+): string {
+  const params = new URLSearchParams(baseQueryString);
+
+  const setOrDelete = (key: string, val: string | number | undefined | null) => {
+    if (val !== undefined && val !== null && String(val).trim() !== "") {
+      params.set(key, String(val));
+    } else {
+      params.delete(key);
+    }
+  };
+
+  if ("query" in updates) {
+    setOrDelete("query", updates.query?.trim() || null);
+  }
+  if ("neighborhoodId" in updates) {
+    setOrDelete("neighborhoodId", updates.neighborhoodId);
+  }
+  if ("service" in updates) {
+    setOrDelete("service", updates.service);
+  }
+  if ("openNow" in updates) {
+    setOrDelete("openNow", updates.openNow ? "1" : null);
+  }
+  if ("maxTurnaround" in updates) {
+    setOrDelete("maxTurnaround", updates.maxTurnaround);
+  }
+  if ("maxMinOrder" in updates) {
+    setOrDelete("maxMinOrder", updates.maxMinOrder);
+  }
+  if ("lat" in updates) {
+    setOrDelete(
+      "lat",
+      typeof updates.lat === "number" ? Number(updates.lat.toFixed(6)) : null
+    );
+  }
+  if ("lng" in updates) {
+    setOrDelete(
+      "lng",
+      typeof updates.lng === "number" ? Number(updates.lng.toFixed(6)) : null
+    );
+  }
+  if ("radiusKm" in updates) {
+    setOrDelete("radiusKm", updates.radiusKm);
+  }
+  if ("sort" in updates) {
+    setOrDelete(
+      "sort",
+      updates.sort && updates.sort !== "recommended" ? updates.sort : null
+    );
+  }
+
+  const qs = params.toString();
+  return qs ? `/houses?${qs}` : "/houses";
+}
+
 export function useHousesFilterState(
   initialData: CustomerHousesPageData,
-  initialNeighborhoodId?: string
+  initialNeighborhoodId?: string,
+  initialFilter?: CustomerHouseSearchFilter
 ) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [isRefetching, startTransition] = useTransition();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [openNowOnly, setOpenNowOnly] = useState(false);
-  const [selectedService, setSelectedService] = useState<string | null>(null);
-  const [maxTurnaround, setMaxTurnaround] = useState<number | null>(null);
-  const [maxMinOrder, setMaxMinOrder] = useState<number | null>(null);
-  const [currentSort, setCurrentSort] = useState<HouseSortOption>("recommended");
+  const [searchQuery, setSearchQueryState] = useState(
+    initialFilter?.query ?? ""
+  );
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
+  const [currentNeighborhoodId, setCurrentNeighborhoodId] = useState<
+    string | null
+  >(initialFilter?.neighborhoodId ?? initialNeighborhoodId ?? null);
+  const [openNowOnly, setOpenNowOnly] = useState(
+    Boolean(initialFilter?.openNow)
+  );
+  const [selectedService, setSelectedService] = useState<string | null>(
+    initialFilter?.serviceSlug ?? null
+  );
+  const [maxTurnaround, setMaxTurnaround] = useState<number | null>(
+    initialFilter?.maxTurnaround ?? null
+  );
+  const [maxMinOrder, setMaxMinOrder] = useState<number | null>(
+    initialFilter?.maxMinOrder ?? null
+  );
+  const [userLocation, setUserLocation] = useState<LatLng | null>(() => {
+    if (
+      typeof initialFilter?.lat === "number" &&
+      typeof initialFilter?.lng === "number"
+    ) {
+      return { lat: initialFilter.lat, lng: initialFilter.lng };
+    }
+    return getCachedUserCoords();
+  });
+  const [radiusKm, setRadiusKm] = useState<number | null>(() => {
+    if (typeof initialFilter?.radiusKm === "number") {
+      return initialFilter.radiusKm;
+    }
+    if (getCachedUserCoords() && isRadiusFilterSavedActive()) {
+      return getSavedRadiusKm() ?? DEFAULT_NEARBY_RADIUS_KM;
+    }
+    return null;
+  });
+  const [currentSort, setCurrentSort] = useState<HouseSortOption>(
+    initialFilter?.sort ?? "recommended"
+  );
+
+  // Sync local filter state when the server re-renders with updated initialFilter from URL params
+  const [prevInitialFilter, setPrevInitialFilter] = useState(initialFilter);
+  if (initialFilter !== prevInitialFilter) {
+    setPrevInitialFilter(initialFilter);
+    setCurrentNeighborhoodId(
+      initialFilter?.neighborhoodId ?? initialNeighborhoodId ?? null
+    );
+    setOpenNowOnly(Boolean(initialFilter?.openNow));
+    setSelectedService(initialFilter?.serviceSlug ?? null);
+    setMaxTurnaround(initialFilter?.maxTurnaround ?? null);
+    setMaxMinOrder(initialFilter?.maxMinOrder ?? null);
+    setCurrentSort(initialFilter?.sort ?? "recommended");
+    if (
+      typeof initialFilter?.lat === "number" &&
+      typeof initialFilter?.lng === "number" &&
+      typeof initialFilter?.radiusKm === "number"
+    ) {
+      setUserLocation({ lat: initialFilter.lat, lng: initialFilter.lng });
+      setRadiusKm(initialFilter.radiusKm);
+    } else {
+      setRadiusKm(null);
+    }
+  }
+
   const [viewMode, setViewMode] = useState<"split" | "list" | "map">("split");
   const [hoveredHouseId, setHoveredHouseId] = useState<string | null>(null);
   const [selectedHouseId, setSelectedHouseId] = useState<string | null>(null);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [isSaveSearchOpen, setIsSaveSearchOpen] = useState(false);
 
-  // Active neighborhood resolution
-  const currentNeighborhoodId =
-    searchParams.get("neighborhoodId") ?? initialNeighborhoodId ?? null;
+  const navigateWithFilters = useCallback(
+    (updates: Partial<HousesUrlParamsShape>) => {
+      if (typeof window === "undefined") return;
+      const nextUrl = buildHousesFilterUrl(window.location.search, updates);
+      startTransition(() => {
+        router.replace(nextUrl, { scroll: false });
+      });
+    },
+    [router]
+  );
+
+  // If the user previously consented to location in this session and navigated back to
+  // bare `/houses` without URL coordinates, restore their saved radius filter in the URL.
+  useEffect(() => {
+    if (
+      typeof initialFilter?.radiusKm !== "number" &&
+      isRadiusFilterSavedActive()
+    ) {
+      const savedCoords = getCachedUserCoords();
+      const savedRadius = getSavedRadiusKm() ?? DEFAULT_NEARBY_RADIUS_KM;
+      if (savedCoords) {
+        navigateWithFilters({
+          lat: savedCoords.lat,
+          lng: savedCoords.lng,
+          radiusKm: savedRadius,
+        });
+      }
+    }
+  }, [initialFilter?.radiusKm, navigateWithFilters]);
+
+  // Debounce text search query synchronization to URL params
+  useEffect(() => {
+    const currentUrlQuery = initialFilter?.query ?? "";
+    if (searchQuery.trim() === currentUrlQuery.trim()) return;
+
+    const timer = window.setTimeout(() => {
+      navigateWithFilters({ query: searchQuery.trim() || null });
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery, initialFilter?.query, navigateWithFilters]);
+
+  const setSearchQuery = useCallback((nextQuery: string) => {
+    setSearchQueryState(nextQuery);
+  }, []);
+
   const activeNeighborhood = useMemo(() => {
     if (!currentNeighborhoodId) return null;
     return (
-      initialData.neighborhoods.find((n) => n.id === currentNeighborhoodId) ?? null
+      initialData.neighborhoods.find((n) => n.id === currentNeighborhoodId) ??
+      null
     );
   }, [currentNeighborhoodId, initialData.neighborhoods]);
 
-  const handleClearNeighborhood = useCallback(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("neighborhoodId");
-    const qs = params.toString();
-    router.push(qs ? `/houses?${qs}` : "/houses");
-  }, [router, searchParams]);
-
   const handleSelectNeighborhood = useCallback(
     (neighborhoodId: string | null) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (neighborhoodId) {
-        params.set("neighborhoodId", neighborhoodId);
-      } else {
-        params.delete("neighborhoodId");
-      }
-      const qs = params.toString();
-      router.push(qs ? `/houses?${qs}` : "/houses");
+      setCurrentNeighborhoodId(neighborhoodId);
+      navigateWithFilters({ neighborhoodId });
     },
-    [router, searchParams]
+    [navigateWithFilters]
   );
 
+  const handleClearNeighborhood = useCallback(() => {
+    setCurrentNeighborhoodId(null);
+    navigateWithFilters({ neighborhoodId: null });
+  }, [navigateWithFilters]);
+
+  const handleToggleOpenNow = useCallback(() => {
+    setOpenNowOnly((prev) => {
+      const next = !prev;
+      navigateWithFilters({ openNow: next });
+      return next;
+    });
+  }, [navigateWithFilters]);
+
+  const handleSelectService = useCallback(
+    (slug: string | null) => {
+      setSelectedService(slug);
+      navigateWithFilters({ service: slug });
+    },
+    [navigateWithFilters]
+  );
+
+  const handleSelectTurnaround = useCallback(
+    (hours: number | null) => {
+      setMaxTurnaround(hours);
+      navigateWithFilters({ maxTurnaround: hours });
+    },
+    [navigateWithFilters]
+  );
+
+  const handleSelectMaxMinOrder = useCallback(
+    (amount: number | null) => {
+      setMaxMinOrder(amount);
+      navigateWithFilters({ maxMinOrder: amount });
+    },
+    [navigateWithFilters]
+  );
+
+  const handleSelectSort = useCallback(
+    (sort: HouseSortOption) => {
+      setCurrentSort(sort);
+      navigateWithFilters({ sort });
+    },
+    [navigateWithFilters]
+  );
+
+  const handleApplyNearbyRadius = useCallback(
+    (coords: LatLng, customRadiusKm: number = DEFAULT_NEARBY_RADIUS_KM) => {
+      setUserLocation(coords);
+      setRadiusKm(customRadiusKm);
+      setRadiusFilterSavedActive(true);
+      setSavedRadiusKm(customRadiusKm);
+      navigateWithFilters({
+        lat: coords.lat,
+        lng: coords.lng,
+        radiusKm: customRadiusKm,
+      });
+    },
+    [navigateWithFilters]
+  );
+
+  const handleSelectRadiusKm = useCallback(
+    (nextRadiusKm: number | null) => {
+      if (nextRadiusKm === null) {
+        setRadiusKm(null);
+        setRadiusFilterSavedActive(false);
+        setSavedRadiusKm(null);
+        navigateWithFilters({
+          lat: null,
+          lng: null,
+          radiusKm: null,
+        });
+        return;
+      }
+
+      const applyWithCoords = (coords: LatLng) => {
+        setUserLocation(coords);
+        setRadiusKm(nextRadiusKm);
+        setRadiusFilterSavedActive(true);
+        setSavedRadiusKm(nextRadiusKm);
+        navigateWithFilters({
+          lat: coords.lat,
+          lng: coords.lng,
+          radiusKm: nextRadiusKm,
+        });
+      };
+
+      const existingCoords = userLocation ?? getCachedUserCoords();
+      if (existingCoords) {
+        applyWithCoords(existingCoords);
+        return;
+      }
+
+      if (typeof navigator !== "undefined" && "geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const coords = {
+              lat: Number(pos.coords.latitude.toFixed(6)),
+              lng: Number(pos.coords.longitude.toFixed(6)),
+            };
+            saveCachedUserCoords(coords);
+            applyWithCoords(coords);
+          },
+          () => {
+            // Leave unchanged if browser denies geolocation
+          },
+          { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 }
+        );
+      }
+    },
+    [userLocation, navigateWithFilters]
+  );
+
+  const handleClearRadiusFilter = useCallback(() => {
+    setRadiusKm(null);
+    setRadiusFilterSavedActive(false);
+    setSavedRadiusKm(null);
+    navigateWithFilters({
+      lat: null,
+      lng: null,
+      radiusKm: null,
+    });
+  }, [navigateWithFilters]);
+
   const handleClearFilters = useCallback(() => {
-    setSearchQuery("");
+    setSearchQueryState("");
+    setCurrentNeighborhoodId(null);
     setOpenNowOnly(false);
     setSelectedService(null);
     setMaxTurnaround(null);
     setMaxMinOrder(null);
-    if (currentNeighborhoodId) {
-      handleClearNeighborhood();
-    }
-  }, [currentNeighborhoodId, handleClearNeighborhood]);
+    setRadiusKm(null);
+    setCurrentSort("recommended");
+    setRadiusFilterSavedActive(false);
+    setSavedRadiusKm(null);
+    navigateWithFilters({
+      query: null,
+      neighborhoodId: null,
+      service: null,
+      openNow: null,
+      maxTurnaround: null,
+      maxMinOrder: null,
+      lat: null,
+      lng: null,
+      radiusKm: null,
+      sort: null,
+    });
+  }, [navigateWithFilters]);
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (activeNeighborhood) count++;
+    if (radiusKm !== null) count++;
     if (openNowOnly) count++;
     if (selectedService) count++;
     if (maxTurnaround) count++;
     if (maxMinOrder) count++;
     return count;
-  }, [activeNeighborhood, openNowOnly, selectedService, maxTurnaround, maxMinOrder]);
+  }, [
+    activeNeighborhood,
+    radiusKm,
+    openNowOnly,
+    selectedService,
+    maxTurnaround,
+    maxMinOrder,
+  ]);
 
   const hasActiveFilters = Boolean(
     activeNeighborhood ||
-      searchQuery ||
+      radiusKm !== null ||
+      searchQuery.trim() ||
       openNowOnly ||
       selectedService ||
       maxTurnaround ||
       maxMinOrder
   );
 
+  // `initialData.houses` is already filtered & sorted on the server (including PostGIS `ST_DWithin` + `ST_Distance`).
+  // We only apply instant client-side text search filtering while the 300ms URL debounce is in flight.
   const filteredHouses = useMemo(() => {
-    let result = [...initialData.houses];
+    const serverHouses = initialData.houses;
+    const q = deferredSearchQuery.toLowerCase().trim();
+    const serverQuery = (initialFilter?.query ?? "").toLowerCase().trim();
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (h) =>
-          h.name.toLowerCase().includes(q) ||
-          h.neighborhoodName.toLowerCase().includes(q) ||
-          h.zoneName.toLowerCase().includes(q) ||
-          (h.addressNote && h.addressNote.toLowerCase().includes(q))
-      );
+    if (!q || q === serverQuery) {
+      return serverHouses;
     }
 
-    if (selectedService) {
-      result = result.filter((h) =>
-        h.availableServices.some((s) => s.slug === selectedService)
-      );
-    }
-
-    if (openNowOnly) {
-      result = result.filter((h) => h.isOpenNow);
-    }
-
-    if (maxTurnaround) {
-      result = result.filter((h) => h.turnaroundHours <= maxTurnaround);
-    }
-
-    if (maxMinOrder) {
-      result = result.filter((h) => h.minimumOrderAmount <= maxMinOrder);
-    }
-
-    switch (currentSort) {
-      case "turnaround":
-        result.sort((a, b) => a.turnaroundHours - b.turnaroundHours);
-        break;
-      case "price":
-        result.sort((a, b) => a.minItemPriceCdf - b.minItemPriceCdf);
-        break;
-      case "rating":
-        result.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-        break;
-      case "recommended":
-      default:
-        result.sort((a, b) => {
-          if (a.isOpenNow && !b.isOpenNow) return -1;
-          if (!a.isOpenNow && b.isOpenNow) return 1;
-          return (b.rating ?? 0) - (a.rating ?? 0);
-        });
-        break;
-    }
-
-    return result;
-  }, [
-    initialData.houses,
-    searchQuery,
-    selectedService,
-    openNowOnly,
-    maxTurnaround,
-    maxMinOrder,
-    currentSort,
-  ]);
+    return serverHouses.filter(
+      (h) =>
+        h.name.toLowerCase().includes(q) ||
+        h.neighborhoodName.toLowerCase().includes(q) ||
+        h.zoneName.toLowerCase().includes(q) ||
+        (h.addressNote && h.addressNote.toLowerCase().includes(q))
+    );
+  }, [initialData.houses, deferredSearchQuery, initialFilter?.query]);
 
   return {
     searchQuery,
     setSearchQuery,
     openNowOnly,
-    setOpenNowOnly,
+    handleToggleOpenNow,
     selectedService,
-    setSelectedService,
+    handleSelectService,
     maxTurnaround,
-    setMaxTurnaround,
+    handleSelectTurnaround,
     maxMinOrder,
-    setMaxMinOrder,
+    handleSelectMaxMinOrder,
+    userLocation,
+    radiusKm,
+    handleApplyNearbyRadius,
+    handleSelectRadiusKm,
+    handleClearRadiusFilter,
     currentSort,
-    setCurrentSort,
+    handleSelectSort,
+    isRefetching,
     viewMode,
     setViewMode,
     hoveredHouseId,

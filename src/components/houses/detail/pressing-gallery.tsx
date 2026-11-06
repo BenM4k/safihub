@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Images } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { DEFAULT_IMAGE_BLUR_DATA_URL } from "@/lib/image-blur";
 import { PressingLightbox } from "./pressing-lightbox";
 
 interface PressingGalleryProps {
@@ -56,6 +57,10 @@ export function PressingGallery({ photos, houseName }: PressingGalleryProps) {
                 src={url}
                 alt={`${houseName} - photo ${idx + 1}`}
                 fill
+                loading="lazy"
+                decoding="async"
+                placeholder="blur"
+                blurDataURL={DEFAULT_IMAGE_BLUR_DATA_URL}
                 sizes="(max-width: 640px) 50vw, 25vw"
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
               />

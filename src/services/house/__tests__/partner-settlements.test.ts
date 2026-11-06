@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   computePeriodBounds,
   maskPhoneNumber,
@@ -182,6 +182,15 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
         return chain as unknown as ReturnType<typeof db.select>;
       });
     }
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-10-15T12:00:00Z"));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
 
     it("allocates payouts to oldest delivered orders first and marks remaining as pending", async () => {
       const orders = [

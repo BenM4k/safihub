@@ -1,7 +1,12 @@
 import "server-only";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { BUKAVU_DEFAULT_CENTER, type LatLng } from "@/lib/validations/location";
+
+export interface NearbyHouseDistance {
+  houseId: string;
+  distanceMeters: number;
+}
 
 export interface ResolvedHouseCoordinates {
   lat: number;
@@ -100,3 +105,36 @@ export async function updateNeighborhoodCentroid(
 
   return updated.length > 0;
 }
+
+/**
+ * Uses PostGIS `ST_DWithin` and `ST_Distance` on `::geography` (WGS84 spheroid in meters)
+ * to find approved active laundry houses within `radiusMeters` of the user's coordinates.
+ */
+export async function findHousesWithinRadius(params: {
+  lat: number;
+  lng: number;
+  radiusMeters: number;
+}): Promise<NearbyHouseDistance[]> {
+  const userGeog = sql`ST_SetSRID(ST_MakePoint(${params.lng}, ${params.lat}), 4326)::geography`;
+  const houseGeog = sql`COALESCE(${schema.houses.location}, ${schema.neighborhoods.centroid})::geography`;
+
+  return db
+    .select({
+      houseId: schema.houses.id,
+      distanceMeters: sql<number>`ROUND(ST_Distance(${houseGeog}, ${userGeog}))::int`,
+    })
+    .from(schema.houses)
+    .innerJoin(
+      schema.neighborhoods,
+      eq(schema.houses.neighborhoodId, schema.neighborhoods.id)
+    )
+    .where(
+      and(
+        eq(schema.houses.isActive, true),
+        eq(schema.houses.reviewStatus, "approved"),
+        sql`ST_DWithin(${houseGeog}, ${userGeog}, ${params.radiusMeters})`
+      )
+    )
+    .orderBy(sql`ST_Distance(${houseGeog}, ${userGeog}) ASC`);
+}
+

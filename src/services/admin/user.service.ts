@@ -2,6 +2,7 @@ import "server-only";
 import { revalidateTag } from "next/cache";
 import { hashPassword } from "better-auth/crypto";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { clearSessionMemoryCache } from "@/services/auth/guards";
 import { err, ok, type Result } from "@/lib/result";
 import {
   blockAdminUserWithGuard,
@@ -68,6 +69,7 @@ export async function blockAdminUser(params: {
       isTargetActiveAdmin,
     });
     if (res.ok) {
+      clearSessionMemoryCache();
       revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
       revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
     }
@@ -105,6 +107,7 @@ export async function updateAdminUserRole(params: {
       isTargetActiveAdminDemotion,
     });
     if (res.ok) {
+      clearSessionMemoryCache();
       revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
       revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
     }
@@ -121,6 +124,7 @@ export async function unblockAdminUser(userId: string): Promise<Result<void>> {
       status: "active",
       banReason: null,
     });
+    clearSessionMemoryCache();
     revalidateTag(CACHE_TAGS.userSession(userId), { expire: 0 });
     revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
     return ok(undefined);
@@ -146,6 +150,7 @@ export async function resetAdminUserPassword(params: {
 
     // Revoke all active sessions immediately
     await deleteUserSessions(params.userId);
+    clearSessionMemoryCache();
     revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
     revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
 
