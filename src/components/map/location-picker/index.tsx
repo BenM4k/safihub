@@ -59,7 +59,16 @@ export function LocationPicker({
   } | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const { isLocating, geoError, setGeoError, requestGeolocation } =
+    useGeolocate((located) => {
+      setIsMapOpen(true);
+      setCoords(located);
+      setHasUnsavedPin(true);
+      setFeedback(null);
+    });
+
   const handleSelectCoords = (next: LatLng) => {
+    setGeoError(null);
     if (!isWithinBukavuBounds(next)) {
       setFeedback({ kind: "error", text: t("outsideBukavu") });
       return;
@@ -69,13 +78,8 @@ export function LocationPicker({
     setFeedback(null);
   };
 
-  const { isLocating, geoError, requestGeolocation } =
-    useGeolocate((located) => {
-      setIsMapOpen(true);
-      handleSelectCoords(located);
-    });
-
   const handleSavePin = () => {
+    setGeoError(null);
     setFeedback(null);
     startTransition(async () => {
       const res = await onSave(coords);
@@ -90,6 +94,7 @@ export function LocationPicker({
   };
 
   const handleResetToCentroid = () => {
+    setGeoError(null);
     setFeedback(null);
     startTransition(async () => {
       const res = await onSave(null);

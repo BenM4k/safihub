@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   DEFAULT_NEARBY_RADIUS_KM,
+  latLngSchema,
   type LatLng,
 } from "@/lib/validations/location";
 
@@ -159,6 +160,12 @@ export function LocationPermissionModal({
           lat: Number(pos.coords.latitude.toFixed(6)),
           lng: Number(pos.coords.longitude.toFixed(6)),
         };
+        const parsed = latLngSchema.safeParse(coords);
+        if (!parsed.success) {
+          setIsRequesting(false);
+          setErrorText(t("outsideBukavu"));
+          return;
+        }
         saveCachedUserCoords(coords);
         setIsRequesting(false);
         setOpen(false);

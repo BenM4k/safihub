@@ -7,8 +7,11 @@ import {
   useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   DEFAULT_NEARBY_RADIUS_KM,
+  latLngSchema,
   type LatLng,
 } from "@/lib/validations/location";
 import {
@@ -103,6 +106,7 @@ export function useHousesFilterState(
   initialFilter?: CustomerHouseSearchFilter
 ) {
   const router = useRouter();
+  const tMap = useTranslations("mapLocation");
   const [isRefetching, startTransition] = useTransition();
 
   const [searchQuery, setSearchQueryState] = useState(
@@ -132,14 +136,11 @@ export function useHousesFilterState(
     ) {
       return { lat: initialFilter.lat, lng: initialFilter.lng };
     }
-    return getCachedUserCoords();
+    return null;
   });
   const [radiusKm, setRadiusKm] = useState<number | null>(() => {
     if (typeof initialFilter?.radiusKm === "number") {
       return initialFilter.radiusKm;
-    }
-    if (getCachedUserCoords() && isRadiusFilterSavedActive()) {
-      return getSavedRadiusKm() ?? DEFAULT_NEARBY_RADIUS_KM;
     }
     return null;
   });
@@ -245,12 +246,10 @@ export function useHousesFilterState(
   }, [navigateWithFilters]);
 
   const handleToggleOpenNow = useCallback(() => {
-    setOpenNowOnly((prev) => {
-      const next = !prev;
-      navigateWithFilters({ openNow: next });
-      return next;
-    });
-  }, [navigateWithFilters]);
+    const next = !openNowOnly;
+    setOpenNowOnly(next);
+    navigateWithFilters({ openNow: next });
+  }, [openNowOnly, navigateWithFilters]);
 
   const handleSelectService = useCallback(
     (slug: string | null) => {
@@ -338,17 +337,22 @@ export function useHousesFilterState(
               lat: Number(pos.coords.latitude.toFixed(6)),
               lng: Number(pos.coords.longitude.toFixed(6)),
             };
+            const parsed = latLngSchema.safeParse(coords);
+            if (!parsed.success) {
+              toast.error(tMap("outsideBukavu"));
+              return;
+            }
             saveCachedUserCoords(coords);
             applyWithCoords(coords);
           },
           () => {
-            // Leave unchanged if browser denies geolocation
+            toast.error(tMap("geoDenied"));
           },
           { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 }
         );
       }
     },
-    [userLocation, navigateWithFilters]
+    [userLocation, navigateWithFilters, tMap]
   );
 
   const handleClearRadiusFilter = useCallback(() => {

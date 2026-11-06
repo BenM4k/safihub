@@ -7,6 +7,7 @@ import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { CustomerBottomNav } from "@/components/customer/customer-bottom-nav";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { Spinner } from "@/components/ui/spinner";
 import { DEFAULT_LOCALE } from "@/i18n/config";
 import "./globals.css";
 
@@ -40,6 +41,14 @@ async function LocaleProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+function RootLoadingFallback() {
+  return (
+    <div className="flex min-h-[50vh] w-full items-center justify-center p-6">
+      <Spinner className="size-8 text-primary" />
+    </div>
+  );
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -59,7 +68,7 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col pb-16 md:pb-0">
-        <Suspense fallback={null}>
+        <Suspense fallback={<RootLoadingFallback />}>
           <LocaleProvider>{children}</LocaleProvider>
         </Suspense>
       </body>

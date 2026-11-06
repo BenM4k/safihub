@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import type { CustomerHouseSummary } from "@/dal";
 import { MapSkeleton } from "@/components/map/map-skeleton";
 import { MapStyleToggle } from "@/components/map/map-style-toggle";
 import { useDeferUntilVisible } from "@/components/map/use-defer-until-visible";
-import type { MapSurfaceStyle } from "@/components/map/map-config";
+import { hasSatelliteStyleSupport, type MapSurfaceStyle } from "@/components/map/map-config";
 import { BUKAVU_DEFAULT_CENTER, type LatLng } from "@/lib/validations/location";
 import { MapHousePreview } from "./map-house-preview";
 
@@ -68,6 +68,22 @@ function computeMarkerOffsets(
   return offsets;
 }
 
+function subscribeLg(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const mql = window.matchMedia("(min-width: 1024px)");
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+
+function getSnapshotLg() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(min-width: 1024px)").matches;
+}
+
+function getServerSnapshotLg() {
+  return false;
+}
+
 export function BukavuInteractiveMap({
   houses,
   hoveredHouseId,
@@ -80,7 +96,10 @@ export function BukavuInteractiveMap({
   const t = useTranslations("customerHouses");
   const tMap = useTranslations("mapLocation");
   const [mapType, setMapType] = useState<MapSurfaceStyle>("map");
-  const { containerRef, isReady } = useDeferUntilVisible<HTMLDivElement>(enabled);
+  const isLg = useSyncExternalStore(subscribeLg, getSnapshotLg, getServerSnapshotLg);
+
+  const isMapEnabled = enabled || isLg;
+  const { containerRef, isReady } = useDeferUntilVisible<HTMLDivElement>(isMapEnabled);
 
   const activeHouse = houses.find(
     (h) => h.id === (hoveredHouseId || selectedHouseId)
@@ -112,17 +131,19 @@ export function BukavuInteractiveMap({
       className="relative w-full h-full min-h-[450px] bg-slate-900 overflow-hidden select-none"
     >
       {/* Top-right Map Style Toggle: Plan (OpenFreeMap) vs Satellite (MapTiler) */}
-      <div className="absolute top-4 right-4 z-20">
-        <MapStyleToggle
-          value={mapType}
-          onChange={setMapType}
-          planLabel={t("mapPlan")}
-          satelliteLabel={t("mapSatellite")}
-        />
-      </div>
+      {hasSatelliteStyleSupport() && (
+        <div className="absolute top-4 right-4 z-20">
+          <MapStyleToggle
+            value={mapType}
+            onChange={setMapType}
+            planLabel={t("mapPlan")}
+            satelliteLabel={t("mapSatellite")}
+          />
+        </div>
+      )}
 
       {/* Truly lazy-loaded MapLibre GL WebGL Canvas + Markers */}
-      {enabled && isReady ? (
+      {isMapEnabled && isReady ? (
         <DynamicBukavuMapCanvas
           houses={houses}
           markerOffsets={markerOffsets}

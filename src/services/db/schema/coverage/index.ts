@@ -52,7 +52,7 @@ export const neighborhoods = pgTable(
     index("neighborhoods_centroid_gist_idx").using("gist", t.centroid),
     check(
       "neighborhoods_centroid_bukavu_bbox",
-      sql`${t.centroid} is null or ST_Within(${t.centroid}, ST_MakeEnvelope(28.75, -2.60, 28.95, -2.40, 4326))`
+      sql`${t.centroid} is null or ST_Covers(ST_MakeEnvelope(28.75, -2.60, 28.95, -2.40, 4326), ${t.centroid})`
     ),
   ]
 );

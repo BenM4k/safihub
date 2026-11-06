@@ -1,7 +1,6 @@
 import "server-only";
 import { asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
-import { BUKAVU_DEFAULT_CENTER } from "@/lib/validations/location";
 
 export interface ZoneRecord {
   id: string;
@@ -119,10 +118,7 @@ export async function getNeighborhoods(): Promise<NeighborhoodRecord[]> {
             lat: Number(r.centroidLat.toFixed(6)),
             lng: Number(r.centroidLng.toFixed(6)),
           }
-        : {
-            lat: BUKAVU_DEFAULT_CENTER.lat,
-            lng: BUKAVU_DEFAULT_CENTER.lng,
-          },
+        : null,
   }));
 }
 

@@ -5,6 +5,11 @@ import { getCachedCustomerHousesData } from "@/lib/cached-data";
 import { HousesSplitView } from "@/components/houses/houses-split-view";
 import { HousesSearchSkeleton } from "@/components/houses/houses-search-skeleton";
 import type { CustomerHouseSearchFilter } from "@/services/house/customer-search.service";
+import {
+  latLngSchema,
+  NEARBY_RADIUS_OPTIONS_KM,
+  type NearbyRadiusKm,
+} from "@/lib/validations/location";
 
 export const metadata: Metadata = {
   title: "Trouver un Pressing à Bukavu | SafiHub",
@@ -40,9 +45,29 @@ function parseSearchFilter(
     getFirstParam(params.maxTurnaround)
   );
   const maxMinOrder = parseOptionalNumber(getFirstParam(params.maxMinOrder));
-  const lat = parseOptionalNumber(getFirstParam(params.lat));
-  const lng = parseOptionalNumber(getFirstParam(params.lng));
-  const radiusKm = parseOptionalNumber(getFirstParam(params.radiusKm));
+  const rawLat = parseOptionalNumber(getFirstParam(params.lat));
+  const rawLng = parseOptionalNumber(getFirstParam(params.lng));
+  const rawRadiusKm = parseOptionalNumber(getFirstParam(params.radiusKm));
+
+  let lat: number | undefined;
+  let lng: number | undefined;
+  let radiusKm: number | undefined;
+
+  if (
+    rawLat !== undefined &&
+    rawLng !== undefined &&
+    rawRadiusKm !== undefined
+  ) {
+    const parsedCoords = latLngSchema.safeParse({ lat: rawLat, lng: rawLng });
+    const isSupportedRadius = NEARBY_RADIUS_OPTIONS_KM.includes(
+      rawRadiusKm as NearbyRadiusKm
+    );
+    if (parsedCoords.success && isSupportedRadius) {
+      lat = Number(rawLat.toFixed(3));
+      lng = Number(rawLng.toFixed(3));
+      radiusKm = rawRadiusKm;
+    }
+  }
   const rawSort = getFirstParam(params.sort);
   const sort =
     rawSort === "turnaround" ||

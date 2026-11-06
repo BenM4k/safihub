@@ -5,8 +5,10 @@ import {
 } from "../user.service";
 import { listAdminCustomers } from "../customer.service";
 
-vi.mock("@/dal", () => {
+vi.mock("@/dal", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
+    ...actual,
     getAdminUsers: vi.fn(async (params?: { roles?: string[]; role?: string }) => {
       // Mock database records
       const allRecords = [

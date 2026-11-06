@@ -101,7 +101,7 @@ export const houses = pgTable(
     check("houses_min_order_non_negative", sql`${t.minimumOrderAmount} >= 0`),
     check(
       "houses_location_bukavu_bbox",
-      sql`${t.location} is null or ST_Within(${t.location}, ST_MakeEnvelope(28.75, -2.60, 28.95, -2.40, 4326))`
+      sql`${t.location} is null or ST_Covers(ST_MakeEnvelope(28.75, -2.60, 28.95, -2.40, 4326), ${t.location})`
     ),
   ]
 );
@@ -272,7 +272,7 @@ export const houseApplications = pgTable(
     ),
     check(
       "house_applications_location_bukavu_bbox",
-      sql`${t.location} is null or ST_Within(${t.location}, ST_MakeEnvelope(28.75, -2.60, 28.95, -2.40, 4326))`
+      sql`${t.location} is null or ST_Covers(ST_MakeEnvelope(28.75, -2.60, 28.95, -2.40, 4326), ${t.location})`
     ),
   ]
 );

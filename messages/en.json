@@ -3466,7 +3466,7 @@
     "centroidModalTitle": "Neighborhood center: {name}",
     "permissionModalTitle": "Find laundry houses near you?",
     "permissionModalDesc": "Would you like to share your current location to start with laundry houses within {radiusKm} km? You can reset this filter anytime for a wider view.",
-    "permissionModalPrivacyNote": "Your location is only used on your device to filter the map and is never stored.",
+    "permissionModalPrivacyNote": "Your location coordinates are sent to SafiHub to find nearby houses and may be retained in server-side caching.",
     "permissionModalAllow": "Yes, within {radiusKm} km",
     "permissionModalSkip": "No, show all of Bukavu",
     "nearbyRadiusChip": "Near me (≤ {radiusKm} km)",

@@ -3466,7 +3466,7 @@
     "centroidModalTitle": "Katikati ya mtaa: {name}",
     "permissionModalTitle": "Onyesha dobi zilizo karibu nawe?",
     "permissionModalDesc": "Je, ungependa kushiriki mahali ulipo sasa ili kuanza na dobi zilizo ndani ya km {radiusKm}? Unaweza kuondoa kichujio hiki wakati wowote ili kuona eneo kubwa zaidi.",
-    "permissionModalPrivacyNote": "Mahali ulipo panatumika tu kuchuja ramani kwenye kifaa chako na hapahifadhiwi.",
+    "permissionModalPrivacyNote": "Vipimo vya mahali ulipo vinatumwa SafiHub ili kupata maduka ya nguo yaliyo karibu na vinaweza kuhifadhiwa kwenye kache ya seva.",
     "permissionModalAllow": "Ndiyo, ndani ya km {radiusKm}",
     "permissionModalSkip": "Hapana, onyesha Bukavu yote",
     "nearbyRadiusChip": "Karibu nami (≤ km {radiusKm})",

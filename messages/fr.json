@@ -3466,7 +3466,7 @@
     "centroidModalTitle": "Centre du quartier : {name}",
     "permissionModalTitle": "Voir les pressings autour de vous ?",
     "permissionModalDesc": "Souhaitez-vous partager votre position actuelle pour afficher d'abord les pressings situés dans un rayon de {radiusKm} km ? Vous pourrez réinitialiser ce filtre à tout moment.",
-    "permissionModalPrivacyNote": "Votre position sert uniquement à filtrer la carte sur votre appareil et n'est jamais enregistrée.",
+    "permissionModalPrivacyNote": "Vos coordonnées géographiques sont transmises à SafiHub pour trouver les pressings à proximité et peuvent être conservées dans le cache serveur.",
     "permissionModalAllow": "Oui, dans un rayon de {radiusKm} km",
     "permissionModalSkip": "Non, voir tout Bukavu",
     "nearbyRadiusChip": "Autour de moi (≤ {radiusKm} km)",

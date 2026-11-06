@@ -3,7 +3,6 @@ import "server-only";
 import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
-import { connection } from "next/server";
 import { auth } from "./auth";
 import {
   checkUserHouseAccess,
@@ -296,12 +295,15 @@ interface CachedSessionUser {
 
 const SESSION_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes in-memory TTL
 const sessionMemoryCache = new Map<string, CachedSessionUser>();
+const inFlightLookups = new Map<string, Promise<AuthenticatedUser | null>>();
 
 export function clearSessionMemoryCache(sessionKey?: string): void {
   if (sessionKey) {
     sessionMemoryCache.delete(sessionKey);
+    inFlightLookups.delete(sessionKey);
   } else {
     sessionMemoryCache.clear();
+    inFlightLookups.clear();
   }
 }
 
@@ -338,22 +340,35 @@ async function resolveUserByCookieHeader(
     return cached;
   }
 
-  await connection();
-  try {
-    const reqHeaders = new Headers({ cookie: cookieHeader });
-    const session = await auth.api.getSession({ headers: reqHeaders });
-    if (!session?.user) {
-      setInSessionMemoryCache(cookieHeader, null);
+  const existingInFlight = inFlightLookups.get(cookieHeader);
+  if (existingInFlight) {
+    return existingInFlight;
+  }
+
+  const lookupPromise = (async () => {
+    try {
+      const reqHeaders = new Headers({ cookie: cookieHeader });
+      const session = await auth.api.getSession({ headers: reqHeaders });
+      if (!session?.user) {
+        setInSessionMemoryCache(cookieHeader, null);
+        return null;
+      }
+
+      const user = mapSessionToAuthenticatedUser(
+        session.user as Record<string, unknown>
+      );
+      setInSessionMemoryCache(cookieHeader, user);
+      return user;
+    } catch {
       return null;
     }
+  })();
 
-    const user = mapSessionToAuthenticatedUser(
-      session.user as Record<string, unknown>
-    );
-    setInSessionMemoryCache(cookieHeader, user);
-    return user;
-  } catch {
-    return null;
+  inFlightLookups.set(cookieHeader, lookupPromise);
+  try {
+    return await lookupPromise;
+  } finally {
+    inFlightLookups.delete(cookieHeader);
   }
 }
 
@@ -379,26 +394,31 @@ const getRequestCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
   }
 });
 
+export interface GetCurrentUserOptions {
+  headers?: Headers;
+  fresh?: boolean;
+}
+
 /**
  * Retrieves the currently authenticated user if a valid session exists.
  * Deduplicated per-request via React `cache()` and cached in-memory with a short TTL
- * to eliminate redundant auth queries during route transitions and filtering.
+ * for non-authorization request paths. Authorization and explicit-header checks bypass
+ * the in-memory cache and validate freshly with cookie cache disabled.
  * Returns null if unauthenticated, blocked, or banned.
  */
 export async function getCurrentUser(
-  options?: { headers?: Headers }
+  options?: GetCurrentUserOptions
 ): Promise<AuthenticatedUser | null> {
-  if (!options?.headers) {
+  if (!options?.headers && !options?.fresh) {
     return getRequestCurrentUser();
   }
 
   try {
-    const cookieHeader = options.headers.get("cookie");
-    if (cookieHeader && cookieHeader.includes("better-auth")) {
-      return await resolveUserByCookieHeader(cookieHeader);
-    }
-
-    const session = await auth.api.getSession({ headers: options.headers });
+    const reqHeaders = options?.headers ?? (await headers());
+    const session = await auth.api.getSession({
+      headers: reqHeaders,
+      query: { disableCookieCache: true },
+    });
     if (!session?.user) {
       return null;
     }
