@@ -14,6 +14,8 @@ import {
   updateAdminGlobalDistanceLimit,
   updateAdminHouseDistanceOverride,
 } from "@/services/admin";
+import { updateNeighborhoodCentroidService } from "@/services/house";
+import { latLngSchema } from "@/lib/validations/location";
 
 const createZoneSchema = z.object({
   name: z.string().min(1, "Nom de la zone requis"),
@@ -197,5 +199,38 @@ export async function notifyCoverageRequestsAction(phonesOrIds: string[]): Promi
   if (res.ok) {
     revalidatePath("/admin/coverage");
   }
+  return res;
+}
+
+const updateNeighborhoodCentroidSchema = z.object({
+  neighborhoodId: z.string().uuid("ID de quartier invalide"),
+  coords: latLngSchema.nullable(),
+});
+
+export async function updateNeighborhoodCentroidAction(input: {
+  neighborhoodId: string;
+  coords: { lat: number; lng: number } | null;
+}): Promise<Result<void>> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err(auth.error);
+
+  const parsed = updateNeighborhoodCentroidSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Coordonnées invalides");
+  }
+
+  const res = await updateNeighborhoodCentroidService({
+    neighborhoodId: parsed.data.neighborhoodId,
+    coords: parsed.data.coords,
+  });
+
+  if (res.ok) {
+    revalidateTag(CACHE_TAGS.coverageZones, "max");
+    revalidateTag(CACHE_TAGS.housesList, "max");
+    revalidatePath("/admin/neighborhoods");
+    revalidatePath("/admin/coverage");
+    revalidatePath("/houses");
+  }
+
   return res;
 }

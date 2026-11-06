@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Clock, MapPin, Ban, CheckCircle2, ShieldCheck, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { LocationPicker } from "@/components/map/location-picker";
+import { updateHouseLocationAction } from "@/actions/house.actions";
 import { cn } from "@/lib/utils";
 import type { AdminHouseRow } from "../types";
 
@@ -60,6 +62,13 @@ export function HouseTabInfo({ house, onToggleStatus }: HouseTabInfoProps) {
             <span className="font-mono text-[11px] text-foreground">{house.slug}</span>
           </p>
         </div>
+
+        <LocationPicker
+          initialCoords={house.coords}
+          onSave={(coords) =>
+            updateHouseLocationAction({ houseId: house.id, coords })
+          }
+        />
       </div>
 
       <Separator />

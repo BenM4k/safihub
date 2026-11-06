@@ -1,5 +1,6 @@
 import "server-only";
 import {
+  findHousesWithinRadius,
   getCustomerHouseDetail,
   getCustomerHousesList,
   getNeighborhoods,
@@ -8,6 +9,7 @@ import {
   type CustomerHouseDetailData,
   type CustomerHouseSummary,
   type NeighborhoodRecord,
+  type ZoneFeeRecord,
   type ZoneRecord,
 } from "@/dal";
 import { err, ok, type Result } from "@/lib/result";
@@ -19,6 +21,9 @@ export interface CustomerHouseSearchFilter {
   openNow?: boolean;
   maxTurnaround?: number;
   maxMinOrder?: number;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
   sort?: "recommended" | "turnaround" | "price" | "rating";
 }
 
@@ -26,20 +31,47 @@ export interface CustomerHousesPageData {
   houses: CustomerHouseSummary[];
   neighborhoods: NeighborhoodRecord[];
   zones: ZoneRecord[];
+  zoneFees?: ZoneFeeRecord[];
   availableServices: Array<{ slug: string; nameFr: string; nameSw: string }>;
 }
 
 export async function getCustomerHousesData(
   filter: CustomerHouseSearchFilter = {}
 ): Promise<CustomerHousesPageData> {
-  const [allHouses, neighborhoods, zones, zoneFees] = await Promise.all([
-    getCustomerHousesList(),
-    getNeighborhoods(),
-    getZones(),
-    getZoneFees(),
-  ]);
+  const hasRadiusFilter =
+    typeof filter.lat === "number" &&
+    Number.isFinite(filter.lat) &&
+    typeof filter.lng === "number" &&
+    Number.isFinite(filter.lng) &&
+    typeof filter.radiusKm === "number" &&
+    Number.isFinite(filter.radiusKm) &&
+    filter.radiusKm > 0;
+
+  const [allHouses, neighborhoods, zones, zoneFees, nearbyRows] =
+    await Promise.all([
+      getCustomerHousesList(),
+      getNeighborhoods(),
+      getZones(),
+      getZoneFees(),
+      hasRadiusFilter
+        ? findHousesWithinRadius({
+            lat: filter.lat!,
+            lng: filter.lng!,
+            radiusMeters: Math.round(Math.min(filter.radiusKm!, 50) * 1000),
+          })
+        : Promise.resolve(null),
+    ]);
 
   let filtered = [...allHouses];
+
+  const nearbyDistanceMap =
+    nearbyRows !== null
+      ? new Map(nearbyRows.map((row) => [row.houseId, row.distanceMeters]))
+      : null;
+
+  if (nearbyDistanceMap !== null) {
+    filtered = filtered.filter((h) => nearbyDistanceMap.has(h.id));
+  }
 
   if (filter.neighborhoodId) {
     const targetNeighborhood = neighborhoods.find(
@@ -106,10 +138,15 @@ export async function getCustomerHousesData(
       break;
     case "recommended":
     default:
-      // Prioritize open houses, then rating
+      // Prioritize open houses, then PostGIS distance when radius filter is active, then rating
       filtered.sort((a, b) => {
         if (a.isOpenNow && !b.isOpenNow) return -1;
         if (!a.isOpenNow && b.isOpenNow) return 1;
+        if (nearbyDistanceMap !== null) {
+          const distA = nearbyDistanceMap.get(a.id) ?? Infinity;
+          const distB = nearbyDistanceMap.get(b.id) ?? Infinity;
+          if (distA !== distB) return distA - distB;
+        }
         return (b.rating ?? 0) - (a.rating ?? 0);
       });
       break;
@@ -132,6 +169,7 @@ export async function getCustomerHousesData(
     houses: filtered,
     neighborhoods,
     zones,
+    zoneFees,
     availableServices: Array.from(serviceMap.values()),
   };
 }

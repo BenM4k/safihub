@@ -124,5 +124,6 @@ describe("Seed Data Fixtures", () => {
     expect(SEED_SETTINGS.defaultCommissionBps).toBe(2000);
     expect(SEED_SETTINGS.timezone).toBe("Africa/Lubumbashi");
     expect(SEED_USERS.some((u) => u.role === "admin")).toBe(true);
+    expect(SEED_USERS.every((u) => u.role === "admin")).toBe(true);
   });
 });

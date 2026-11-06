@@ -6,6 +6,8 @@ import { Heart, Share2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { normalizeStorageUrl } from "@/lib/storage-url";
+import { DEFAULT_IMAGE_BLUR_DATA_URL } from "@/lib/image-blur";
+import { extractClosingTimeDisplay, formatHoursRangeDisplay } from "@/lib/hours-utils";
 
 interface HouseCardImageProps {
   imageUrl: string;
@@ -24,6 +26,7 @@ export function HouseCardImage({
 }: HouseCardImageProps) {
   const t = useTranslations("customerHouses");
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const displayUrl = normalizeStorageUrl(imageUrl) || imageUrl;
 
   const handleShare = async (e: React.MouseEvent) => {
@@ -68,8 +71,15 @@ export function HouseCardImage({
         src={displayUrl}
         alt={name}
         fill
+        loading="lazy"
+        decoding="async"
+        placeholder="blur"
+        blurDataURL={DEFAULT_IMAGE_BLUR_DATA_URL}
+        onLoad={() => setIsLoaded(true)}
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        className="object-cover transition-transform duration-500 group-hover:scale-105"
+        className={`object-cover transition-all duration-500 group-hover:scale-105 ${
+          isLoaded ? "blur-0 scale-100" : "blur-md scale-105"
+        }`}
       />
 
       {/* Top-left Status Badge */}
@@ -77,12 +87,21 @@ export function HouseCardImage({
         {isOpenNow ? (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600/95 text-white shadow-2xs backdrop-blur-xs">
             <span className="size-1.5 rounded-full bg-white animate-pulse" />
-            <span>{t("openNow")}</span>
-            <span className="text-white/80 font-normal">({todayHoursText})</span>
+            <span>
+              {extractClosingTimeDisplay(todayHoursText)
+                ? t("openUntil", { time: extractClosingTimeDisplay(todayHoursText)! })
+                : t("openNow")}
+            </span>
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-900/90 text-white border border-white/20 shadow-2xs backdrop-blur-xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-900/90 text-white border border-white/20 shadow-2xs backdrop-blur-xs">
+            <span className="size-1.5 rounded-full bg-rose-400" />
             <span>{t("closed")}</span>
+            {todayHoursText && !todayHoursText.toLowerCase().includes("fermé") && (
+              <span className="text-white/70 font-normal">
+                ({formatHoursRangeDisplay(todayHoursText)})
+              </span>
+            )}
           </span>
         )}
       </div>

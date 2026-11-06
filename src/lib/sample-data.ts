@@ -19,26 +19,6 @@ export interface CollectionCategory {
   description: string;
 }
 
-export interface LaundryHouse {
-  id: string;
-  name: string;
-  neighborhood: string;
-  rating: number;
-  reviewCount: number;
-  turnaroundAvg: string;
-  badge: string;
-  isOpen: boolean;
-}
-
-export interface CoverageZone {
-  id: string;
-  commune: string;
-  neighborhoods: string[];
-  baseFeeCdf: number;
-  estimatedDeliveryMin: string;
-  courierAvailability: "Élevée" | "Normale" | "Sur demande";
-}
-
 export interface Testimonial {
   id: string;
   author: string;
@@ -192,76 +172,6 @@ export const SAMPLE_PRODUCTS: ProductItem[] = [
     fabric: "Tweed / Velours / Laine",
     description: "Brossage des fibres, assainissement à la vapeur sous pression et cintre en bois.",
     imageUrl: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80",
-  },
-];
-
-export const SAMPLE_HOUSES: LaundryHouse[] = [
-  {
-    id: "house-1",
-    name: "Pressing du Lac Kivu",
-    neighborhood: "Ibanda (La Botte)",
-    rating: 4.9,
-    reviewCount: 312,
-    turnaroundAvg: "24h express",
-    badge: "Partenaire Platine",
-    isOpen: true,
-  },
-  {
-    id: "house-2",
-    name: "Kivu Clean Express",
-    neighborhood: "Nguba",
-    rating: 4.8,
-    reviewCount: 240,
-    turnaroundAvg: "24h - 36h",
-    badge: "Certifié Éco-Doux",
-    isOpen: true,
-  },
-  {
-    id: "house-3",
-    name: "Étoile Pressing Kadutu",
-    neighborhood: "Kadutu Centre",
-    rating: 4.7,
-    reviewCount: 189,
-    turnaroundAvg: "24h - 48h",
-    badge: "Meilleur Rapport Prix",
-    isOpen: true,
-  },
-  {
-    id: "house-4",
-    name: "Blanchisserie Pro Muhumba",
-    neighborhood: "Muhumba Résidentiel",
-    rating: 4.95,
-    reviewCount: 420,
-    turnaroundAvg: "24h garanti",
-    badge: "Haute Blanchisserie",
-    isOpen: true,
-  },
-];
-
-export const SAMPLE_ZONES: CoverageZone[] = [
-  {
-    id: "zone-ibanda",
-    commune: "Commune d'Ibanda",
-    neighborhoods: ["La Botte", "Nguba", "Muhumba", "Nyarwizimya", "Panzi"],
-    baseFeeCdf: 2500,
-    estimatedDeliveryMin: "25 - 40 min",
-    courierAvailability: "Élevée",
-  },
-  {
-    id: "zone-kadutu",
-    commune: "Commune de Kadutu",
-    neighborhoods: ["Nkafu", "Kasali", "Cimpunda", "Kajangu"],
-    baseFeeCdf: 3000,
-    estimatedDeliveryMin: "35 - 50 min",
-    courierAvailability: "Normale",
-  },
-  {
-    id: "zone-bagira",
-    commune: "Commune de Bagira",
-    neighborhoods: ["Lumumba", "Nyakavogo", "Kasha", "Chai"],
-    baseFeeCdf: 4000,
-    estimatedDeliveryMin: "45 - 65 min",
-    courierAvailability: "Sur demande",
   },
 ];
 

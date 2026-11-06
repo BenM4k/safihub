@@ -1,5 +1,5 @@
 import "server-only";
-import { asc, desc, eq, inArray, or } from "drizzle-orm";
+import { asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 
 export interface ZoneRecord {
@@ -17,6 +17,7 @@ export interface NeighborhoodRecord {
   pauseReason: string | null;
   pausedUntil: Date | null;
   sortOrder: number;
+  centroid?: { lat: number; lng: number } | null;
 }
 
 export interface ZoneFeeRecord {
@@ -92,12 +93,33 @@ export async function getNeighborhoods(): Promise<NeighborhoodRecord[]> {
       pauseReason: schema.neighborhoods.pauseReason,
       pausedUntil: schema.neighborhoods.pausedUntil,
       sortOrder: schema.neighborhoods.sortOrder,
+      centroidLat: sql<number | null>`ST_Y(${schema.neighborhoods.centroid})`,
+      centroidLng: sql<number | null>`ST_X(${schema.neighborhoods.centroid})`,
     })
     .from(schema.neighborhoods)
     .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
     .orderBy(asc(schema.zones.name), asc(schema.neighborhoods.sortOrder), asc(schema.neighborhoods.name));
 
-  return rows;
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    zoneId: r.zoneId,
+    zoneName: r.zoneName,
+    status: r.status,
+    pauseReason: r.pauseReason,
+    pausedUntil: r.pausedUntil,
+    sortOrder: r.sortOrder,
+    centroid:
+      typeof r.centroidLat === "number" &&
+      Number.isFinite(r.centroidLat) &&
+      typeof r.centroidLng === "number" &&
+      Number.isFinite(r.centroidLng)
+        ? {
+            lat: Number(r.centroidLat.toFixed(6)),
+            lng: Number(r.centroidLng.toFixed(6)),
+          }
+        : null,
+  }));
 }
 
 export async function createNeighborhood(data: {
@@ -116,7 +138,15 @@ export async function createNeighborhood(data: {
       pauseReason: data.pauseReason ?? null,
       sortOrder: data.sortOrder ?? 0,
     })
-    .returning();
+    .returning({
+      id: schema.neighborhoods.id,
+      name: schema.neighborhoods.name,
+      zoneId: schema.neighborhoods.zoneId,
+      status: schema.neighborhoods.status,
+      pauseReason: schema.neighborhoods.pauseReason,
+      pausedUntil: schema.neighborhoods.pausedUntil,
+      sortOrder: schema.neighborhoods.sortOrder,
+    });
 
   return created!;
 }

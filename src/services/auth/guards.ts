@@ -288,38 +288,104 @@ function mapSessionToAuthenticatedUser(
   };
 }
 
+interface CachedSessionUser {
+  user: AuthenticatedUser | null;
+  expiresAt: number;
+}
+
+const SESSION_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes in-memory TTL
+const sessionMemoryCache = new Map<string, CachedSessionUser>();
+const inFlightLookups = new Map<string, Promise<AuthenticatedUser | null>>();
+
+export function clearSessionMemoryCache(sessionKey?: string): void {
+  if (sessionKey) {
+    sessionMemoryCache.delete(sessionKey);
+    inFlightLookups.delete(sessionKey);
+  } else {
+    sessionMemoryCache.clear();
+    inFlightLookups.clear();
+  }
+}
+
+function getFromSessionMemoryCache(key: string): AuthenticatedUser | null | undefined {
+  const entry = sessionMemoryCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() > entry.expiresAt) {
+    sessionMemoryCache.delete(key);
+    return undefined;
+  }
+  return entry.user;
+}
+
+function setInSessionMemoryCache(key: string, user: AuthenticatedUser | null): void {
+  if (sessionMemoryCache.size > 1000) {
+    const now = Date.now();
+    for (const [k, v] of sessionMemoryCache.entries()) {
+      if (now > v.expiresAt) {
+        sessionMemoryCache.delete(k);
+      }
+    }
+  }
+  sessionMemoryCache.set(key, {
+    user,
+    expiresAt: Date.now() + SESSION_CACHE_TTL_MS,
+  });
+}
+
 async function resolveUserByCookieHeader(
   cookieHeader: string
 ): Promise<AuthenticatedUser | null> {
-  try {
-    const reqHeaders = new Headers({ cookie: cookieHeader });
-    const session = await auth.api.getSession({ headers: reqHeaders });
-    if (!session?.user) {
+  const cached = getFromSessionMemoryCache(cookieHeader);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const existingInFlight = inFlightLookups.get(cookieHeader);
+  if (existingInFlight) {
+    return existingInFlight;
+  }
+
+  const lookupPromise = (async () => {
+    try {
+      const reqHeaders = new Headers({ cookie: cookieHeader });
+      const session = await auth.api.getSession({ headers: reqHeaders });
+      if (!session?.user) {
+        setInSessionMemoryCache(cookieHeader, null);
+        return null;
+      }
+
+      const user = mapSessionToAuthenticatedUser(
+        session.user as Record<string, unknown>
+      );
+      setInSessionMemoryCache(cookieHeader, user);
+      return user;
+    } catch {
       return null;
     }
+  })();
 
-    return mapSessionToAuthenticatedUser(
-      session.user as Record<string, unknown>
-    );
-  } catch {
-    return null;
+  inFlightLookups.set(cookieHeader, lookupPromise);
+  try {
+    return await lookupPromise;
+  } finally {
+    inFlightLookups.delete(cookieHeader);
   }
 }
 
 const getRequestCurrentUser = cache(async (): Promise<AuthenticatedUser | null> => {
   try {
     const cookieStore = await cookies();
-    const hasSessionCookie = cookieStore
+    const sessionCookies = cookieStore
       .getAll()
-      .some((c) => c.name.includes("better-auth.session_token"));
+      .filter((c) => c.name.includes("better-auth"));
 
-    if (!hasSessionCookie) {
+    if (sessionCookies.length === 0) {
       return null;
     }
 
-    const cookieHeader = cookieStore
-      .getAll()
+    const cookieHeader = sessionCookies
       .map((c) => `${c.name}=${c.value}`)
+      .sort()
       .join("; ");
 
     return await resolveUserByCookieHeader(cookieHeader);
@@ -328,21 +394,31 @@ const getRequestCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
   }
 });
 
+export interface GetCurrentUserOptions {
+  headers?: Headers;
+  fresh?: boolean;
+}
+
 /**
  * Retrieves the currently authenticated user if a valid session exists.
- * Deduplicated per-request via React `cache()`.
+ * Deduplicated per-request via React `cache()` and cached in-memory with a short TTL
+ * for non-authorization request paths. Authorization and explicit-header checks bypass
+ * the in-memory cache and validate freshly with cookie cache disabled.
  * Returns null if unauthenticated, blocked, or banned.
  */
 export async function getCurrentUser(
-  options?: { headers?: Headers }
+  options?: GetCurrentUserOptions
 ): Promise<AuthenticatedUser | null> {
-  if (!options?.headers) {
+  if (!options?.headers && !options?.fresh) {
     return getRequestCurrentUser();
   }
 
   try {
-    const session = await auth.api.getSession({ headers: options.headers });
-
+    const reqHeaders = options?.headers ?? (await headers());
+    const session = await auth.api.getSession({
+      headers: reqHeaders,
+      query: { disableCookieCache: true },
+    });
     if (!session?.user) {
       return null;
     }

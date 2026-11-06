@@ -1,9 +1,10 @@
 import "server-only";
-import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { toBukavuDateTime } from "@/services/availability/bukavu-time";
 import { filterCatalogueOutliers } from "@/services/catalog/outliers";
 import { normalizeStorageUrl } from "@/lib/storage-url";
+import { resolveHouseCoords } from "./house-location.dal";
 
 export interface CustomerHouseSummary {
   id: string;
@@ -36,7 +37,7 @@ export interface CustomerHouseSummary {
   imageUrl: string;
   coverImageUrl?: string | null;
   logoUrl?: string | null;
-  coords: { lat: number; lng: number };
+  coords: { lat: number; lng: number; isApproximate?: boolean };
   estimatedDeliveryFee?: number | null;
 }
 
@@ -87,6 +88,7 @@ export interface CustomerHouseDetailData {
     isActive?: boolean;
     isPaused?: boolean;
     reviewStatus?: "draft" | "pending_review" | "approved" | "needs_changes" | "suspended" | null;
+    coords?: { lat: number; lng: number; isApproximate?: boolean };
     ratingStats?: {
       reviewCount: number;
       averageRating: number | null;
@@ -114,30 +116,6 @@ export interface CustomerHouseDetailData {
   }>;
 }
 
-export const BUKAVU_NEIGHBORHOOD_COORDS: Record<string, { lat: number; lng: number }> = {
-  "La Botte": { lat: -2.502, lng: 28.864 },
-  "Nguba": { lat: -2.528, lng: 28.871 },
-  "Muhumba": { lat: -2.515, lng: 28.868 },
-  "Nyarwizimya": { lat: -2.508, lng: 28.859 },
-  "Panzi": { lat: -2.545, lng: 28.865 },
-  "Kadutu Centre": { lat: -2.501, lng: 28.845 },
-  "Nyamugo": { lat: -2.493, lng: 28.848 },
-  "Cimpunda": { lat: -2.507, lng: 28.838 },
-  "Bagira Centre": { lat: -2.478, lng: 28.825 },
-  "Lumumba": { lat: -2.483, lng: 28.831 },
-};
-
-const HOUSE_STOCK_IMAGES: Record<string, string> = {
-  "Pressing du Lac Kivu":
-    "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=800&q=80",
-  "Pressing Étoile de Kadutu":
-    "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=800&q=80",
-  "Kivu Clean Express":
-    "https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=800&q=80",
-  "Blanchisserie Pro Muhumba":
-    "https://images.unsplash.com/photo-1521656693074-0ef32e80a5d5?auto=format&fit=crop&w=800&q=80",
-};
-
 const DEFAULT_HOUSE_IMAGE =
   "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=800&q=80";
 
@@ -145,112 +123,147 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
   const now = new Date();
   const bukavuNow = toBukavuDateTime(now);
 
-  const rawHouses = await db
-    .select({
-      id: schema.houses.id,
-      name: schema.houses.name,
-      slug: schema.houses.slug,
-      neighborhoodId: schema.houses.neighborhoodId,
-      neighborhoodName: schema.neighborhoods.name,
-      zoneId: schema.neighborhoods.zoneId,
-      zoneName: schema.zones.name,
-      addressNote: schema.houses.addressNote,
-      coverImageUrl: schema.houses.coverImageUrl,
-      logoUrl: schema.houses.logoUrl,
-      minimumOrderAmount: schema.houses.minimumOrderAmount,
-      turnaroundHours: schema.houses.turnaroundHours,
-      dailyCapacity: schema.houses.dailyCapacity,
-      cutoffMinutes: schema.houses.cutoffMinutes,
-      isActive: schema.houses.isActive,
-      isPaused: schema.houses.isPaused,
-      pausedUntil: schema.houses.pausedUntil,
-    })
-    .from(schema.houses)
-    .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
-    .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
-    .where(
-      and(
-        eq(schema.houses.isActive, true),
-        eq(schema.houses.reviewStatus, "approved")
-      )
-    )
-    .orderBy(asc(schema.houses.name));
+  const approvedActiveHouseCondition = and(
+    eq(schema.houses.isActive, true),
+    eq(schema.houses.reviewStatus, "approved")
+  );
+
+  const [rawHouses, todayHoursRows, allCoverage, aggregatedHouseServices] =
+    await Promise.all([
+      db
+        .select({
+          id: schema.houses.id,
+          name: schema.houses.name,
+          slug: schema.houses.slug,
+          neighborhoodId: schema.houses.neighborhoodId,
+          neighborhoodName: schema.neighborhoods.name,
+          zoneId: schema.neighborhoods.zoneId,
+          zoneName: schema.zones.name,
+          addressNote: schema.houses.addressNote,
+          coverImageUrl: schema.houses.coverImageUrl,
+          logoUrl: schema.houses.logoUrl,
+          minimumOrderAmount: schema.houses.minimumOrderAmount,
+          turnaroundHours: schema.houses.turnaroundHours,
+          dailyCapacity: schema.houses.dailyCapacity,
+          cutoffMinutes: schema.houses.cutoffMinutes,
+          isActive: schema.houses.isActive,
+          isPaused: schema.houses.isPaused,
+          pausedUntil: schema.houses.pausedUntil,
+          houseLat: sql<number | null>`ST_Y(${schema.houses.location})`,
+          houseLng: sql<number | null>`ST_X(${schema.houses.location})`,
+          centroidLat: sql<number | null>`ST_Y(${schema.neighborhoods.centroid})`,
+          centroidLng: sql<number | null>`ST_X(${schema.neighborhoods.centroid})`,
+          locationUpdatedAt: schema.houses.locationUpdatedAt,
+        })
+        .from(schema.houses)
+        .innerJoin(
+          schema.neighborhoods,
+          eq(schema.houses.neighborhoodId, schema.neighborhoods.id)
+        )
+        .innerJoin(schema.zones, eq(schema.neighborhoods.zoneId, schema.zones.id))
+        .where(approvedActiveHouseCondition)
+        .orderBy(asc(schema.houses.name)),
+      db
+        .select({
+          houseId: schema.houseHours.houseId,
+          opensAt: schema.houseHours.opensAt,
+          closesAt: schema.houseHours.closesAt,
+        })
+        .from(schema.houseHours)
+        .innerJoin(
+          schema.houses,
+          eq(schema.houseHours.houseId, schema.houses.id)
+        )
+        .where(
+          and(
+            approvedActiveHouseCondition,
+            eq(schema.houseHours.weekday, bukavuNow.weekday)
+          )
+        ),
+      db
+        .select({
+          houseId: schema.houseCoverage.houseId,
+          neighborhoodId: schema.houseCoverage.neighborhoodId,
+        })
+        .from(schema.houseCoverage)
+        .innerJoin(
+          schema.houses,
+          eq(schema.houseCoverage.houseId, schema.houses.id)
+        )
+        .where(
+          and(
+            approvedActiveHouseCondition,
+            eq(schema.houseCoverage.isActive, true)
+          )
+        ),
+      db
+        .select({
+          houseId: schema.houseItems.houseId,
+          serviceId: schema.services.id,
+          serviceSlug: schema.services.slug,
+          serviceNameFr: schema.services.nameFr,
+          serviceNameSw: schema.services.nameSw,
+          minPrice: sql<number>`MIN(${schema.houseItems.price})::int`,
+        })
+        .from(schema.houseItems)
+        .innerJoin(
+          schema.houses,
+          eq(schema.houseItems.houseId, schema.houses.id)
+        )
+        .innerJoin(
+          schema.services,
+          eq(schema.houseItems.serviceId, schema.services.id)
+        )
+        .where(
+          and(
+            approvedActiveHouseCondition,
+            eq(schema.houseItems.isActive, true)
+          )
+        )
+        .groupBy(
+          schema.houseItems.houseId,
+          schema.services.id,
+          schema.services.slug,
+          schema.services.nameFr,
+          schema.services.nameSw
+        ),
+    ]);
 
   if (rawHouses.length === 0) return [];
 
-  const houseIds = rawHouses.map((h) => h.id);
-
-  const [allHours, allCoverage, allHouseItems] = await Promise.all([
-    db
-      .select()
-      .from(schema.houseHours)
-      .where(inArray(schema.houseHours.houseId, houseIds)),
-    db
-      .select({
-        houseId: schema.houseCoverage.houseId,
-        neighborhoodId: schema.houseCoverage.neighborhoodId,
-        isActive: schema.houseCoverage.isActive,
-      })
-      .from(schema.houseCoverage)
-      .where(inArray(schema.houseCoverage.houseId, houseIds)),
-    db
-      .select({
-        houseId: schema.houseItems.houseId,
-        serviceId: schema.services.id,
-        serviceSlug: schema.services.slug,
-        serviceNameFr: schema.services.nameFr,
-        serviceNameSw: schema.services.nameSw,
-        price: schema.houseItems.price,
-        isActive: schema.houseItems.isActive,
-      })
-      .from(schema.houseItems)
-      .innerJoin(schema.services, eq(schema.houseItems.serviceId, schema.services.id))
-      .where(inArray(schema.houseItems.houseId, houseIds)),
-  ]);
-
-  const hoursByHouse = new Map<string, typeof allHours>();
-  for (const hr of allHours) {
-    const list = hoursByHouse.get(hr.houseId) || [];
-    list.push(hr);
-    hoursByHouse.set(hr.houseId, list);
+  const todayHoursByHouse = new Map<string, (typeof todayHoursRows)[number]>();
+  for (const hr of todayHoursRows) {
+    todayHoursByHouse.set(hr.houseId, hr);
   }
 
   const coverageByHouse = new Map<string, string[]>();
   for (const cov of allCoverage) {
-    if (cov.isActive) {
-      const list = coverageByHouse.get(cov.houseId) || [];
-      list.push(cov.neighborhoodId);
-      coverageByHouse.set(cov.houseId, list);
-    }
+    const list = coverageByHouse.get(cov.houseId) || [];
+    list.push(cov.neighborhoodId);
+    coverageByHouse.set(cov.houseId, list);
   }
 
-  const servicesByHouse = new Map<string, Map<string, { id: string; slug: string; nameFr: string; nameSw: string }>>();
+  const servicesByHouse = new Map<string, Array<{ id: string; slug: string; nameFr: string; nameSw: string }>>();
   const minPriceByHouse = new Map<string, number>();
 
-  for (const hi of allHouseItems) {
-    if (!hi.isActive) continue;
-
-    const currentMin = minPriceByHouse.get(hi.houseId) ?? Infinity;
-    if (hi.price < currentMin) {
-      minPriceByHouse.set(hi.houseId, hi.price);
+  for (const row of aggregatedHouseServices) {
+    const currentMin = minPriceByHouse.get(row.houseId) ?? Infinity;
+    if (row.minPrice < currentMin) {
+      minPriceByHouse.set(row.houseId, row.minPrice);
     }
 
-    let svcMap = servicesByHouse.get(hi.houseId);
-    if (!svcMap) {
-      svcMap = new Map();
-      servicesByHouse.set(hi.houseId, svcMap);
-    }
-    svcMap.set(hi.serviceId, {
-      id: hi.serviceId,
-      slug: hi.serviceSlug,
-      nameFr: hi.serviceNameFr,
-      nameSw: hi.serviceNameSw,
+    const svcList = servicesByHouse.get(row.houseId) || [];
+    svcList.push({
+      id: row.serviceId,
+      slug: row.serviceSlug,
+      nameFr: row.serviceNameFr,
+      nameSw: row.serviceNameSw,
     });
+    servicesByHouse.set(row.houseId, svcList);
   }
 
-  return rawHouses.map((h, index) => {
-    const houseHrs = hoursByHouse.get(h.id) || [];
-    const todayHrs = houseHrs.find((hr) => hr.weekday === bukavuNow.weekday);
+  return rawHouses.map((h) => {
+    const todayHrs = todayHoursByHouse.get(h.id);
 
     let isOpenNow = false;
     let todayHoursText = "Fermé aujourd'hui";
@@ -266,18 +279,26 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       isOpenNow = currentHm >= opensHm && currentHm < closesHm;
     }
 
-    const services = Array.from(servicesByHouse.get(h.id)?.values() || []);
+    const services = servicesByHouse.get(h.id) || [];
     const minPrice = minPriceByHouse.get(h.id);
     const minItemPriceCdf = minPrice !== undefined && minPrice < Infinity ? minPrice : 2500;
 
-    const coords = BUKAVU_NEIGHBORHOOD_COORDS[h.neighborhoodName] || {
-      lat: -2.5083 + (index * 0.004),
-      lng: 28.8608 + (index * 0.003),
+    const resolvedCoords = resolveHouseCoords({
+      houseLat: h.houseLat,
+      houseLng: h.houseLng,
+      centroidLat: h.centroidLat,
+      centroidLng: h.centroidLng,
+      locationUpdatedAt: h.locationUpdatedAt,
+    });
+    const coords = {
+      lat: resolvedCoords.lat,
+      lng: resolvedCoords.lng,
+      isApproximate: resolvedCoords.isApproximate,
     };
 
     const normalizedCover = normalizeStorageUrl(h.coverImageUrl);
     const normalizedLogo = normalizeStorageUrl(h.logoUrl);
-    const imageUrl = normalizedCover || HOUSE_STOCK_IMAGES[h.name] || DEFAULT_HOUSE_IMAGE;
+    const imageUrl = normalizedCover || DEFAULT_HOUSE_IMAGE;
 
     return {
       id: h.id,
@@ -336,6 +357,11 @@ export async function getCustomerHouseDetail(
       isActive: schema.houses.isActive,
       isPaused: schema.houses.isPaused,
       reviewStatus: schema.houses.reviewStatus,
+      houseLat: sql<number | null>`ST_Y(${schema.houses.location})`,
+      houseLng: sql<number | null>`ST_X(${schema.houses.location})`,
+      centroidLat: sql<number | null>`ST_Y(${schema.neighborhoods.centroid})`,
+      centroidLng: sql<number | null>`ST_X(${schema.neighborhoods.centroid})`,
+      locationUpdatedAt: schema.houses.locationUpdatedAt,
     })
     .from(schema.houses)
     .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
@@ -484,7 +510,7 @@ export async function getCustomerHouseDetail(
 
   const normalizedCover = normalizeStorageUrl(house.coverImageUrl);
   const normalizedLogo = normalizeStorageUrl(house.logoUrl);
-  const imageUrl = normalizedCover || HOUSE_STOCK_IMAGES[house.name] || DEFAULT_HOUSE_IMAGE;
+  const imageUrl = normalizedCover || DEFAULT_HOUSE_IMAGE;
   const reviewCount = ratingStatsRow?.reviewCount ?? 0;
   // Threshold: below 3 reviews, rating is null so the UI displays "Nouveau"
   const rating =
@@ -505,6 +531,13 @@ export async function getCustomerHouseDetail(
       : defaultGallery;
 
   const { validItems } = filterCatalogueOutliers(items);
+  const resolvedCoords = resolveHouseCoords({
+    houseLat: house.houseLat,
+    houseLng: house.houseLng,
+    centroidLat: house.centroidLat,
+    centroidLng: house.centroidLng,
+    locationUpdatedAt: house.locationUpdatedAt,
+  });
 
   return {
     house: {
@@ -534,6 +567,11 @@ export async function getCustomerHouseDetail(
       isActive: house.isActive,
       isPaused: house.isPaused,
       reviewStatus: house.reviewStatus,
+      coords: {
+        lat: resolvedCoords.lat,
+        lng: resolvedCoords.lng,
+        isApproximate: resolvedCoords.isApproximate,
+      },
       ratingStats: ratingStatsRow
         ? {
             reviewCount: ratingStatsRow.reviewCount,

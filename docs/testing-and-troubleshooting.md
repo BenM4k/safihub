@@ -207,3 +207,12 @@ Each acceptance criterion from the product specification is mapped to an automat
 - **Trap:** Setting `status: "active"` when mocking `NeighborhoodData` fails TypeScript compilation because `NeighborhoodStatus` is strictly `"served" | "paused" | "not_served"`.
 - **Fix:** Use `"served"` for active operational neighborhoods in mock test contexts.
 
+### 33. PostGIS Extension Filter & Coordinate Order (`xy` = `[lng, lat]`)
+- **Trap:** Running `drizzle-kit generate` with PostGIS enabled without `extensionsFilters: ["postgis"]` causes Drizzle Kit to introspect PostGIS system tables (`spatial_ref_sys`). Additionally, passing `(lat, lng)` to `ST_MakePoint` or Drizzle's `geometry(..., { mode: "xy" })` transposes coordinates into the Indian Ocean.
+- **Fix:** Keep `extensionsFilters: ["postgis"]` in `drizzle.config.ts`. Always pass `(longitude, latitude)` (`x = lng`, `y = lat`) to `ST_MakePoint(lng, lat)` and read `ST_Y(geom)` for latitude and `ST_X(geom)` for longitude.
+
+### 34. MapLibre GL Dynamic Import & Worker URL Under Next.js 16 Turbopack
+- **Trap:** Importing `maplibre-gl` at the top level of a Server Component or calling `next/dynamic(..., { ssr: false })` inside a Server Component breaks prerendering under `cacheComponents: true` and ships ~230 KB of WebGL JS in the initial bundle. Additionally, MapLibre GL v6 resolves its Web Worker via `new URL("./maplibre-gl-worker.mjs", import.meta.url)` (using a dynamic template string), which Turbopack does not emit into `/_next/static/chunks/`, causing `Worker failed to load. Check that the worker URL is correct.` at runtime.
+- **Fix:** Isolate `next/dynamic(() => import("./base-map"), { ssr: false })` inside a `"use client"` wrapper (`src/components/map/lazy-map.tsx`), serve `public/maplibre-gl-worker.mjs`, and call the named export `setWorkerUrl("/maplibre-gl-worker.mjs")` from `"maplibre-gl"` in `src/components/map/base-map.tsx` (MapLibre GL v6 ESM has named exports only, no default export).
+
+

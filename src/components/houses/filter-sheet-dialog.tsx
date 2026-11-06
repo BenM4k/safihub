@@ -17,6 +17,8 @@ interface FilterSheetDialogProps {
   neighborhoods?: NeighborhoodRecord[];
   selectedNeighborhoodId?: string | null;
   onSelectNeighborhood?: (id: string | null) => void;
+  radiusKm?: number | null;
+  onSelectRadiusKm?: (radiusKm: number | null) => void;
   selectedService: string | null;
   onSelectService: (slug: string | null) => void;
   availableServices: Array<{ slug: string; nameFr: string; nameSw: string }>;
@@ -35,6 +37,8 @@ export function FilterSheetDialog({
   neighborhoods,
   selectedNeighborhoodId,
   onSelectNeighborhood,
+  radiusKm,
+  onSelectRadiusKm,
   selectedService,
   onSelectService,
   availableServices,
@@ -62,6 +66,8 @@ export function FilterSheetDialog({
           neighborhoods={neighborhoods}
           selectedNeighborhoodId={selectedNeighborhoodId}
           onSelectNeighborhood={onSelectNeighborhood}
+          radiusKm={radiusKm}
+          onSelectRadiusKm={onSelectRadiusKm}
           selectedService={selectedService}
           onSelectService={onSelectService}
           availableServices={availableServices}

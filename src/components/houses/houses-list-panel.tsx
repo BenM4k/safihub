@@ -21,6 +21,7 @@ interface HousesListPanelProps {
   hoveredHouseId: string | null;
   onHoverHouse: (id: string | null) => void;
   onRequestCoverage: () => void;
+  isRefetching?: boolean;
 }
 
 export function HousesListPanel({
@@ -34,8 +35,10 @@ export function HousesListPanel({
   hoveredHouseId,
   onHoverHouse,
   onRequestCoverage,
+  isRefetching,
 }: HousesListPanelProps) {
   const t = useTranslations("customerHouses");
+  const tMap = useTranslations("mapLocation");
 
   // Track previous houses to reset pagination during render without an extra effect cycle
   const [prevHouses, setPrevHouses] = useState(houses);
@@ -80,7 +83,11 @@ export function HousesListPanel({
   const visibleHouses = houses.slice(0, effectiveVisibleCount);
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto px-4 sm:px-6 py-5">
+    <div
+      data-pending={isRefetching ? "" : undefined}
+      aria-busy={isRefetching || undefined}
+      className="group/houses flex-1 flex flex-col h-full overflow-y-auto px-4 sm:px-6 py-5 relative"
+    >
       <HousesResultsHeader
         totalCount={houses.length}
         currentSort={currentSort}
@@ -91,8 +98,19 @@ export function HousesListPanel({
         onClearNeighborhood={onClearNeighborhood}
       />
 
+      {isRefetching && (
+        <div
+          className="mb-3 inline-flex items-center gap-2 self-start px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold animate-fade-in"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2 className="size-3.5 animate-spin shrink-0" />
+          <span>{tMap("refetchingHouses")}</span>
+        </div>
+      )}
+
       {houses.length === 0 ? (
-        <div className="my-auto py-12 px-4 text-center max-w-md mx-auto">
+        <div className="my-auto py-12 px-4 text-center max-w-md mx-auto transition-opacity duration-200 group-data-[pending]/houses:opacity-60 group-data-[pending]/houses:pointer-events-none">
           <div className="size-16 rounded-2xl bg-muted border border-border text-muted-foreground flex items-center justify-center mx-auto mb-4">
             <SearchX className="size-8" />
           </div>
@@ -128,7 +146,7 @@ export function HousesListPanel({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 transition-opacity duration-200 group-data-[pending]/houses:opacity-60 group-data-[pending]/houses:pointer-events-none">
             {visibleHouses.map((house) => (
               <HouseCard
                 key={house.id}

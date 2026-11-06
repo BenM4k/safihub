@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { MapPin } from "lucide-react";
+import { LocateFixed, MapPin } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -11,12 +11,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { NEARBY_RADIUS_OPTIONS_KM } from "@/lib/validations/location";
 import type { NeighborhoodRecord } from "@/dal";
 
 interface FilterSheetSectionsProps {
   neighborhoods?: NeighborhoodRecord[];
   selectedNeighborhoodId?: string | null;
   onSelectNeighborhood?: (id: string | null) => void;
+  radiusKm?: number | null;
+  onSelectRadiusKm?: (radiusKm: number | null) => void;
   selectedService: string | null;
   onSelectService: (slug: string | null) => void;
   availableServices: Array<{ slug: string; nameFr: string; nameSw: string }>;
@@ -32,6 +35,8 @@ export function FilterSheetSections({
   neighborhoods,
   selectedNeighborhoodId,
   onSelectNeighborhood,
+  radiusKm,
+  onSelectRadiusKm,
   selectedService,
   onSelectService,
   availableServices,
@@ -43,9 +48,46 @@ export function FilterSheetSections({
   onSelectMaxMinOrder,
 }: FilterSheetSectionsProps) {
   const t = useTranslations("customerHouses");
+  const tMap = useTranslations("mapLocation");
 
   return (
     <div className="flex-1 overflow-y-auto py-5 space-y-6">
+      {/* Distance Around Me Section (5 km / 10 km / 15 km) */}
+      {onSelectRadiusKm && (
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2.5">
+            <LocateFixed className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>{tMap("distanceFilterLabel")}</span>
+          </label>
+          <div className="grid grid-cols-4 gap-2">
+            <button
+              type="button"
+              onClick={() => onSelectRadiusKm(null)}
+              className={`py-2 px-2.5 rounded-xl border text-xs font-bold transition text-center cursor-pointer ${
+                radiusKm === null || radiusKm === undefined
+                  ? "border-primary bg-primary text-white"
+                  : "border-border bg-card text-foreground hover:bg-muted"
+              }`}
+            >
+              {tMap("distanceAll")}
+            </button>
+            {NEARBY_RADIUS_OPTIONS_KM.map((optKm) => (
+              <button
+                key={optKm}
+                type="button"
+                onClick={() => onSelectRadiusKm(optKm)}
+                className={`py-2 px-2.5 rounded-xl border text-xs font-bold transition text-center cursor-pointer ${
+                  radiusKm === optKm
+                    ? "border-emerald-600 bg-emerald-600 text-white"
+                    : "border-border bg-card text-foreground hover:bg-muted"
+                }`}
+              >
+                {tMap("distanceOptionKm", { radiusKm: optKm })}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {/* Neighborhood Section */}
       {neighborhoods && neighborhoods.length > 0 && onSelectNeighborhood && (
         <div>

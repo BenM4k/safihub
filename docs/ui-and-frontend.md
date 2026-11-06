@@ -146,8 +146,8 @@ Faithful reproduction of `public/ref/house-search.png`:
 - **Top Search & Filter Bar:** Search input by neighborhood/commune, filter pills (Services, Max Price / Min Order, Turnaround, Open Now toggle), "All filters" sheet, "List / Map" view toggle, and "Save search" / neighborhood opening alert dialog.
 - **Split-View Architecture:**
   - **Left Panel (Cards Grid):** Proposes multiple verified laundry houses matching filters with storefront photos, live opening badges, minimum order in CDF, specs row (turnaround hours, daily capacity, rating $\ge 4.8\bigstar$), and direct link to service selection.
-  - **Right Panel (Interactive Bukavu Map):** Topo/Satellite styled map showing Lake Kivu shoreline, Bukavu communes (Ibanda, Kadutu, Bagira), "Draw" filter area button, zoom controls, and interactive price-pin markers at real neighborhood coordinates. Clicking a marker highlights the corresponding card and opens a floating preview card.
-- **Mobile First:** On viewports $< 1024$px, a floating bottom pill button toggles between Card List and Map view seamlessly.
+  - **Right Panel (Interactive Bukavu Map):** Lazy-loaded MapLibre GL WebGL vector map (`react-map-gl/maplibre`) backed by OpenFreeMap (Plan) and optional MapTiler (Satellite), bounded to Bukavu (`ST_MakeEnvelope(28.75,-2.60,28.95,-2.40,4326)`). Displays price-pin markers at PostGIS coordinates (`COALESCE(houses.location, neighborhoods.centroid)`). Clicking a marker highlights the corresponding card and opens a floating preview card.
+- **Mobile First:** On viewports $< 1024$px, a floating bottom pill button toggles between Card List and Map view seamlessly; MapLibre JS/CSS is not downloaded on mobile until the user switches to Map view.
 
 ### 2. Service & Item Selection (`/houses/[houseId]`)
 - **House Profile Header:** Banner, neighborhood, rating, today's opening hours, turnaround guarantee, minimum order amount, and back link to `/houses`.

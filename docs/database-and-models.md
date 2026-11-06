@@ -41,7 +41,7 @@ SafiHub's 28 core domain tables are modularized across seven schema files:
 ### 3. Laundry Houses (`schema/house.ts`)
 | Table | Key Columns | Purpose |
 | :--- | :--- | :--- |
-| `houses` | `id`, `name`, `neighborhoodId`, `commissionRate`, `minOrderAmount`, `cutoffMinutes`, `turnaroundHours`, `dailyCapacity`, `maxDistanceLevel`, `isOpen`, `active`, `reviewStatus`, `submittedAt`, `submittedBy`, `reviewedAt`, `reviewedBy`, `reviewNote` | Laundry facility entity with operational rules, capacity limits, and admin approval review lifecycle (`draft`, `pending_review`, `approved`, `needs_changes`, `suspended`). |
+| `houses` | `id`, `name`, `neighborhoodId`, `location` (`geometry(Point,4326)`), `locationUpdatedAt`, `commissionRate`, `minOrderAmount`, `cutoffMinutes`, `turnaroundHours`, `dailyCapacity`, `maxDistanceLevel`, `isOpen`, `active`, `reviewStatus`, `submittedAt`, `submittedBy`, `reviewedAt`, `reviewedBy`, `reviewNote` | Laundry facility entity with operational rules, capacity limits, optional PostGIS coordinates (falling back to `neighborhoods.centroid`), and admin approval review lifecycle (`draft`, `pending_review`, `approved`, `needs_changes`, `suspended`). |
 | `house_members` | `id`, `houseId`, `userId`, `role` | Links staff accounts to a specific laundry house. |
 | `house_hours` | `id`, `houseId`, `weekday`, `openTime`, `closeTime` | Weekly opening hours schedule per house (weekday 0=Sunday to 6=Saturday). |
 | `house_closures` | `id`, `houseId`, `startDate`, `endDate`, `reason` | Temporary closures (public holidays, scheduled maintenance, power outages). |
@@ -54,7 +54,7 @@ SafiHub's 28 core domain tables are modularized across seven schema files:
 | Table | Key Columns | Purpose |
 | :--- | :--- | :--- |
 | `zones` | `id`, `name`, `code`, `active` | Delivery zones grouping neighborhoods (e.g. Zone Ibanda, Zone Kadutu, Zone Bagira). |
-| `neighborhoods` | `id`, `zoneId`, `name`, `status`, `pauseReason` | Neighborhood entities with status (`served`, `paused`, `not_served`). |
+| `neighborhoods` | `id`, `zoneId`, `name`, `status`, `pauseReason`, `centroid` (`geometry(Point,4326)`) | Neighborhood entities with status (`served`, `paused`, `not_served`) and PostGIS WGS84 centroid fallback for map pins. |
 | `house_coverage` | `id`, `houseId`, `neighborhoodId`, `active`, `pausedUntil` | Explicit neighborhoods a partner house agrees to serve within its allowed distance limit. |
 | `courier_zones` | `id`, `courierId`, `zoneId` | Geographic zones assigned to a courier for pickup and delivery missions. |
 | `zone_fees` | `id`, `customerZoneId`, `houseZoneId`, `deliveryFee`, `distanceLevel` | Matrix defining delivery fee (integer CDF) and distance level (1=same, 2=neighbor, 3=far) between zones. |

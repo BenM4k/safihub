@@ -153,6 +153,10 @@ export function HouseCatalogueView({
               weeklyHours={data.weeklyHours}
               description={data.house.description}
               createdAt={data.house.createdAt}
+              houseName={data.house.name}
+              neighborhoodName={data.house.neighborhoodName}
+              zoneName={data.house.zoneName}
+              coords={data.house.coords}
             />
 
             {/* Customer Reviews Section */}

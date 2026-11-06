@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   date,
+  geometry,
   index,
   integer,
   jsonb,
@@ -54,6 +55,9 @@ export const houses = pgTable(
       .references(() => neighborhoods.id),
     /** Address note for couriers and the admin. Never shown to customers beyond the neighborhood. */
     addressNote: text("address_note"),
+    /** Exact PostGIS Point (WGS84 lon/lat) when confirmed by partner or admin. */
+    location: geometry("location", { type: "point", mode: "xy", srid: 4326 }),
+    locationUpdatedAt: ts("location_updated_at"),
     contactPhone: text("contact_phone"),
     coverImageUrl: text("cover_image_url"),
     logoUrl: text("logo_url"),
@@ -89,11 +93,16 @@ export const houses = pgTable(
     uniqueIndex("houses_slug_unique").on(t.slug),
     index("houses_neighborhood_idx").on(t.neighborhoodId),
     index("houses_review_status_idx").on(t.reviewStatus),
+    index("houses_location_gist_idx").using("gist", t.location),
     check(
       "houses_commission_range",
       sql`${t.commissionBps} is null or (${t.commissionBps} between 0 and 10000)`
     ),
     check("houses_min_order_non_negative", sql`${t.minimumOrderAmount} >= 0`),
+    check(
+      "houses_location_bukavu_bbox",
+      sql`${t.location} is null or ST_Covers(ST_MakeEnvelope(28.75, -2.60, 28.95, -2.40, 4326), ${t.location})`
+    ),
   ]
 );
 
@@ -242,6 +251,8 @@ export const houseApplications = pgTable(
     /** Free text when the neighborhood is not in the list. */
     neighborhoodText: text("neighborhood_text"),
     addressNote: text("address_note"),
+    /** Optional PostGIS Point (WGS84 lon/lat) placed on the application form. */
+    location: geometry("location", { type: "point", mode: "xy", srid: 4326 }),
     servicesNote: text("services_note"),
     hoursNote: text("hours_note"),
     message: text("message"),
@@ -258,6 +269,10 @@ export const houseApplications = pgTable(
     check(
       "house_applications_place_given",
       sql`${t.neighborhoodId} is not null or ${t.neighborhoodText} is not null`
+    ),
+    check(
+      "house_applications_location_bukavu_bbox",
+      sql`${t.location} is null or ST_Covers(ST_MakeEnvelope(28.75, -2.60, 28.95, -2.40, 4326), ${t.location})`
     ),
   ]
 );

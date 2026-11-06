@@ -102,6 +102,8 @@ export function ProfilTab({ house, onDirtyChange }: ProfilTabProps) {
 
       {/* 3. Contact & Localisation */}
       <ContactLocationCard
+        houseId={house.id}
+        initialCoords={house.coords}
         contactPhone={contactPhone}
         whatsAppPhone=""
         addressNote={addressNote}

@@ -1,5 +1,9 @@
 import Image from "next/image";
 import { normalizeStorageUrl } from "@/lib/storage-url";
+import {
+  AVATAR_BLUR_DATA_URL,
+  DEFAULT_IMAGE_BLUR_DATA_URL,
+} from "@/lib/image-blur";
 
 interface PressingBannerProps {
   name: string;
@@ -28,6 +32,8 @@ export function PressingBanner({ name, coverImageUrl, logoUrl }: PressingBannerP
             alt={`Photo de couverture du pressing ${name} à Bukavu`}
             fill
             priority
+            placeholder="blur"
+            blurDataURL={DEFAULT_IMAGE_BLUR_DATA_URL}
             sizes="(max-width: 768px) 100vw, 1280px"
             className="object-cover object-center"
           />
@@ -49,6 +55,10 @@ export function PressingBanner({ name, coverImageUrl, logoUrl }: PressingBannerP
                 src={displayLogoUrl}
                 alt={`Logo ${name}`}
                 fill
+                loading="lazy"
+                decoding="async"
+                placeholder="blur"
+                blurDataURL={AVATAR_BLUR_DATA_URL}
                 sizes="112px"
                 className="object-contain"
               />

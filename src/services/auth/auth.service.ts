@@ -17,9 +17,11 @@ import {
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { rateLimitLogin, rateLimitRegistration } from "@/services/abuse";
 import { err, ok, type Result } from "@/lib/result";
+import { clearSessionMemoryCache } from "./guards";
 import type { UserRole } from "./permissions";
 
 function safeRevalidateAuthCache(userId?: string): void {
+  clearSessionMemoryCache();
   try {
     revalidateTag(CACHE_TAGS.authSessions, "max");
     if (userId) {

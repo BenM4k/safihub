@@ -1,10 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Minus, Pencil } from "lucide-react";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import type { CustomerHouseSummary } from "@/dal";
+import { MapSkeleton } from "@/components/map/map-skeleton";
+import { MapStyleToggle } from "@/components/map/map-style-toggle";
+import { useDeferUntilVisible } from "@/components/map/use-defer-until-visible";
+import { hasSatelliteStyleSupport, type MapSurfaceStyle } from "@/components/map/map-config";
+import { BUKAVU_DEFAULT_CENTER, type LatLng } from "@/lib/validations/location";
 import { MapHousePreview } from "./map-house-preview";
+
+const DynamicBukavuMapCanvas = dynamic(
+  () =>
+    import("./map/bukavu-map-canvas").then((mod) => mod.BukavuMapCanvas),
+  {
+    ssr: false,
+    loading: () => <MapSkeleton />,
+  }
+);
 
 interface BukavuInteractiveMapProps {
   houses: CustomerHouseSummary[];
@@ -12,6 +26,62 @@ interface BukavuInteractiveMapProps {
   onHoverHouse: (id: string | null) => void;
   selectedHouseId: string | null;
   onSelectHouse: (id: string | null) => void;
+  userLocation?: LatLng | null;
+  enabled?: boolean;
+}
+
+/**
+ * Computes tiny spiral offsets for houses that share identical coordinates (e.g. same neighborhood centroid)
+ * so price markers remain individually clickable without mutating stored coordinates.
+ */
+function computeMarkerOffsets(
+  houses: CustomerHouseSummary[]
+): Map<string, { offsetLat: number; offsetLng: number }> {
+  const byCoordKey = new Map<string, CustomerHouseSummary[]>();
+  for (const h of houses) {
+    const key = `${h.coords.lat.toFixed(4)}_${h.coords.lng.toFixed(4)}`;
+    const group = byCoordKey.get(key) ?? [];
+    group.push(h);
+    byCoordKey.set(key, group);
+  }
+
+  const offsets = new Map<string, { offsetLat: number; offsetLng: number }>();
+  for (const group of byCoordKey.values()) {
+    if (group.length === 1) {
+      offsets.set(group[0].id, { offsetLat: 0, offsetLng: 0 });
+      continue;
+    }
+    group.forEach((house, idx) => {
+      if (idx === 0) {
+        offsets.set(house.id, { offsetLat: 0, offsetLng: 0 });
+        return;
+      }
+      const angle = (idx * 2 * Math.PI) / Math.min(group.length, 8);
+      const ring = Math.ceil(idx / 8);
+      const radius = 0.00055 * ring;
+      offsets.set(house.id, {
+        offsetLat: Number((Math.sin(angle) * radius).toFixed(6)),
+        offsetLng: Number((Math.cos(angle) * radius).toFixed(6)),
+      });
+    });
+  }
+  return offsets;
+}
+
+function subscribeLg(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const mql = window.matchMedia("(min-width: 1024px)");
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+
+function getSnapshotLg() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(min-width: 1024px)").matches;
+}
+
+function getServerSnapshotLg() {
+  return false;
 }
 
 export function BukavuInteractiveMap({
@@ -20,171 +90,85 @@ export function BukavuInteractiveMap({
   onHoverHouse,
   selectedHouseId,
   onSelectHouse,
+  userLocation,
+  enabled = true,
 }: BukavuInteractiveMapProps) {
   const t = useTranslations("customerHouses");
-  const [mapType, setMapType] = useState<"map" | "satellite">("satellite");
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const tMap = useTranslations("mapLocation");
+  const [mapType, setMapType] = useState<MapSurfaceStyle>("map");
+  const isLg = useSyncExternalStore(subscribeLg, getSnapshotLg, getServerSnapshotLg);
 
-  const activeHouse = houses.find((h) => h.id === (selectedHouseId || hoveredHouseId));
+  const isMapEnabled = enabled || isLg;
+  const { containerRef, isReady } = useDeferUntilVisible<HTMLDivElement>(isMapEnabled);
 
-  // Map coordinates normalization for Bukavu viewport:
-  // Center: ~ -2.510, 28.855
-  // Lat span: -2.47 (North / Bagira) to -2.55 (South / Panzi) -> delta ~0.08
-  // Lng span: 28.81 (West) to 28.88 (East / Lake) -> delta ~0.07
-  const getMapPositionPercent = (lat: number, lng: number) => {
-    const minLat = -2.55;
-    const maxLat = -2.47;
-    const minLng = 28.81;
-    const maxLng = 28.88;
+  const activeHouse = houses.find(
+    (h) => h.id === (hoveredHouseId || selectedHouseId)
+  );
 
-    const x = Math.max(8, Math.min(92, ((lng - minLng) / (maxLng - minLng)) * 100));
-    // Invert Y because latitude increases North, but CSS top increases South
-    const y = Math.max(8, Math.min(92, ((maxLat - lat) / (maxLat - minLat)) * 100));
+  const markerOffsets = useMemo(() => computeMarkerOffsets(houses), [houses]);
 
-    return { left: `${x}%`, top: `${y}%` };
-  };
+  const initialCenter = useMemo(() => {
+    if (userLocation) {
+      return userLocation;
+    }
+    if (houses.length === 0) return BUKAVU_DEFAULT_CENTER;
+    const sum = houses.reduce(
+      (acc, h) => ({
+        lat: acc.lat + h.coords.lat,
+        lng: acc.lng + h.coords.lng,
+      }),
+      { lat: 0, lng: 0 }
+    );
+    return {
+      lat: sum.lat / houses.length,
+      lng: sum.lng / houses.length,
+    };
+  }, [houses, userLocation]);
 
   return (
-    <div className="relative w-full h-full min-h-[450px] bg-slate-900 overflow-hidden select-none">
-      {/* Map Background Layer: Styled Satellite / Topo Surface */}
-      <div
-        className={`absolute inset-0 transition-all duration-700 ${
-          mapType === "satellite"
-            ? "bg-[#182a38] opacity-100"
-            : "bg-[#e5e9ec] dark:bg-[#131b26] opacity-100"
-        }`}
-        style={{
-          transform: `scale(${zoomLevel})`,
-          transformOrigin: "center center",
-        }}
-      >
-        {/* Lake Kivu representation */}
-        <div
-          className={`absolute top-0 right-0 w-[55%] h-[65%] rounded-bl-[120px] transition-colors ${
-            mapType === "satellite" ? "bg-[#0b1f33]/90" : "bg-[#a5c9eb] dark:bg-[#0b1f33]/90"
-          }`}
-        >
-          <div className="absolute top-8 right-8 text-[11px] font-bold tracking-widest uppercase opacity-40 text-cyan-200">
-            Lac Kivu (Bukavu)
-          </div>
+    <div
+      ref={containerRef}
+      className="relative w-full h-full min-h-[450px] bg-slate-900 overflow-hidden select-none"
+    >
+      {/* Top-right Map Style Toggle: Plan (OpenFreeMap) vs Satellite (MapTiler) */}
+      {hasSatelliteStyleSupport() && (
+        <div className="absolute top-4 right-4 z-20">
+          <MapStyleToggle
+            value={mapType}
+            onChange={setMapType}
+            planLabel={t("mapPlan")}
+            satelliteLabel={t("mapSatellite")}
+          />
         </div>
+      )}
 
-        {/* Shoreline & Topo Grid */}
-        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px]" />
+      {/* Truly lazy-loaded MapLibre GL WebGL Canvas + Markers */}
+      {isMapEnabled && isReady ? (
+        <DynamicBukavuMapCanvas
+          houses={houses}
+          markerOffsets={markerOffsets}
+          center={initialCenter}
+          styleMode={mapType}
+          hoveredHouseId={hoveredHouseId}
+          selectedHouseId={selectedHouseId}
+          onHoverHouse={onHoverHouse}
+          onSelectHouse={onSelectHouse}
+          userLocation={userLocation}
+          yourPositionLabel={tMap("yourPositionLabel")}
+        />
+      ) : (
+        <MapSkeleton label={tMap("loadingMap")} />
+      )}
 
-        {/* Bukavu Communes Boundary Labels */}
-        <div className="absolute top-[28%] left-[16%] text-[10px] font-bold tracking-wider uppercase text-white/40">
-          Commune de Bagira
-        </div>
-        <div className="absolute top-[52%] left-[28%] text-[10px] font-bold tracking-wider uppercase text-white/40">
-          Commune de Kadutu
-        </div>
-        <div className="absolute top-[68%] left-[48%] text-[10px] font-bold tracking-wider uppercase text-white/40">
-          Commune d&apos;Ibanda
-        </div>
-      </div>
-
-      {/* Top Map Controls: Draw and Satellite/Map Segmented */}
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setIsDrawing((prev) => !prev)}
-          className={`h-8 px-3 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer ${
-            isDrawing
-              ? "bg-primary text-white"
-              : "bg-card/95 border border-border text-foreground hover:bg-card"
-          }`}
-        >
-          <Pencil className="size-3.5" />
-          <span>{t("drawArea")}</span>
-        </button>
-      </div>
-
-      <div className="absolute top-4 right-4 z-20">
-        <div className="inline-flex p-0.5 bg-card/95 border border-border backdrop-blur-md shadow-md rounded-full text-xs font-bold text-foreground">
-          <button
-            type="button"
-            onClick={() => setMapType("map")}
-            className={`px-3 py-1 rounded-full transition cursor-pointer ${
-              mapType === "map" ? "bg-primary text-white shadow-2xs" : "hover:text-primary"
-            }`}
-          >
-            {t("mapPlan")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setMapType("satellite")}
-            className={`px-3 py-1 rounded-full transition cursor-pointer ${
-              mapType === "satellite" ? "bg-primary text-white shadow-2xs" : "hover:text-primary"
-            }`}
-          >
-            {t("mapSatellite")}
-          </button>
-        </div>
-      </div>
-
-      {/* Bottom-left Zoom Controls */}
-      <div className="absolute bottom-6 left-4 z-20 flex flex-col gap-1.5">
-        <button
-          type="button"
-          onClick={() => setZoomLevel((z) => Math.min(1.4, z + 0.1))}
-          className="size-8 rounded-full bg-card/95 border border-border backdrop-blur-md shadow-md text-foreground flex items-center justify-center hover:bg-card transition cursor-pointer"
-          aria-label={t("zoomIn")}
-        >
-          <Plus className="size-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setZoomLevel((z) => Math.max(0.8, z - 0.1))}
-          className="size-8 rounded-full bg-card/95 border border-border backdrop-blur-md shadow-md text-foreground flex items-center justify-center hover:bg-card transition cursor-pointer"
-          aria-label={t("zoomOut")}
-        >
-          <Minus className="size-4" />
-        </button>
-      </div>
-
-      {/* House Markers on Bukavu coordinates */}
-      <div className="absolute inset-0 z-10 pointer-events-none">
-        {houses.map((house) => {
-          const pos = getMapPositionPercent(house.coords.lat, house.coords.lng);
-          const isSelected = house.id === (selectedHouseId || hoveredHouseId);
-
-          return (
-            <div
-              key={house.id}
-              style={{ left: pos.left, top: pos.top }}
-              className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto transition-transform duration-200"
-            >
-              <button
-                type="button"
-                onClick={() => onSelectHouse(house.id === selectedHouseId ? null : house.id)}
-                onMouseEnter={() => onHoverHouse(house.id)}
-                onMouseLeave={() => onHoverHouse(null)}
-                className={`group flex items-center gap-1 px-2.5 py-1 rounded-full font-black text-xs shadow-lg transition-all transform cursor-pointer ${
-                  isSelected
-                    ? "bg-primary text-white scale-115 ring-4 ring-primary/30 z-30"
-                    : "bg-card text-foreground border border-border hover:scale-105 hover:bg-muted z-20"
-                }`}
-              >
-                <span className="size-1.5 rounded-full bg-emerald-500" />
-                <span>
-                  {house.minimumOrderAmount > 0
-                    ? `${Math.round(house.minimumOrderAmount / 1000)}k`
-                    : `${Math.round(house.minItemPriceCdf / 1000)}k`}
-                </span>
-                <span className="text-[10px] opacity-75 font-semibold">CDF</span>
-              </button>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Active House Preview Popup at Bottom Right matching Zillow/Airbnb style */}
+      {/* Active House Preview Popup at Bottom Right */}
       {activeHouse && (
         <MapHousePreview
+          key={activeHouse.id}
           activeHouse={activeHouse}
-          onClose={() => onSelectHouse(null)}
+          onClose={() => {
+            onSelectHouse(null);
+            onHoverHouse(null);
+          }}
         />
       )}
     </div>

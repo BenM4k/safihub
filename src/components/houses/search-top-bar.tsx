@@ -1,8 +1,21 @@
 "use client";
 
-import { Search, SlidersHorizontal, Map, List, Bookmark, Clock, Check, MapPin, X } from "lucide-react";
+import {
+  Search,
+  SlidersHorizontal,
+  Map,
+  List,
+  Bookmark,
+  Clock,
+  Check,
+  MapPin,
+  LocateFixed,
+  Loader2,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { NEARBY_RADIUS_OPTIONS_KM } from "@/lib/validations/location";
 
 interface SearchTopBarProps {
   searchQuery: string;
@@ -14,6 +27,10 @@ interface SearchTopBarProps {
   availableServices: Array<{ slug: string; nameFr: string; nameSw: string }>;
   activeNeighborhood?: { id: string; name: string } | null;
   onClearNeighborhood?: () => void;
+  radiusKm?: number | null;
+  onSelectRadiusKm?: (radiusKm: number | null) => void;
+  onClearRadiusFilter?: () => void;
+  isRefetching?: boolean;
   viewMode: "split" | "list" | "map";
   onViewModeChange: (mode: "split" | "list" | "map") => void;
   onOpenAllFilters: () => void;
@@ -31,6 +48,10 @@ export function SearchTopBar({
   availableServices,
   activeNeighborhood,
   onClearNeighborhood,
+  radiusKm,
+  onSelectRadiusKm,
+  onClearRadiusFilter,
+  isRefetching,
   viewMode,
   onViewModeChange,
   onOpenAllFilters,
@@ -38,6 +59,7 @@ export function SearchTopBar({
   activeFiltersCount,
 }: SearchTopBarProps) {
   const t = useTranslations("customerHouses");
+  const tMap = useTranslations("mapLocation");
 
   return (
     <div className="w-full bg-card/95 backdrop-blur-md border-b border-border px-4 sm:px-6 py-3 sticky top-0 z-30 shadow-2xs">
@@ -52,9 +74,56 @@ export function SearchTopBar({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={t("searchPlaceholder")}
-              className="w-full pl-9 pr-4 py-2 text-base bg-muted/60 dark:bg-card border border-border rounded-full text-foreground placeholder:text-muted-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+              className="w-full pl-9 pr-9 py-2 text-base bg-muted/60 dark:bg-card border border-border rounded-full text-foreground placeholder:text-muted-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
             />
+            {isRefetching && (
+              <Loader2
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 animate-spin text-primary"
+                aria-label={tMap("refetchingHouses")}
+              />
+            )}
           </div>
+
+          {/* Active GPS radius filter pill with 5 / 10 / 15 km quick selector */}
+          {radiusKm !== null && radiusKm !== undefined && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 shadow-2xs shrink-0 animate-fade-in">
+              <LocateFixed className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              {onSelectRadiusKm ? (
+                <div className="inline-flex items-center gap-0.5">
+                  {NEARBY_RADIUS_OPTIONS_KM.map((optKm) => {
+                    const isActive = radiusKm === optKm;
+                    return (
+                      <button
+                        key={optKm}
+                        type="button"
+                        onClick={() => onSelectRadiusKm(optKm)}
+                        className={`px-2 py-0.5 rounded-full text-[11px] font-bold transition cursor-pointer ${
+                          isActive
+                            ? "bg-emerald-600 text-white shadow-2xs"
+                            : "text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20"
+                        }`}
+                      >
+                        {optKm} km
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <span>{tMap("nearbyRadiusChip", { radiusKm })}</span>
+              )}
+              {onClearRadiusFilter && (
+                <button
+                  type="button"
+                  onClick={onClearRadiusFilter}
+                  className="size-4 rounded-full hover:bg-emerald-500/20 flex items-center justify-center transition cursor-pointer text-emerald-700 dark:text-emerald-300"
+                  aria-label={tMap("clearRadiusFilter")}
+                  title={tMap("clearRadiusFilter")}
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Active neighborhood filter badge */}
           {activeNeighborhood && (

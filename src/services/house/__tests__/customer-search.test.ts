@@ -132,6 +132,18 @@ vi.mock("@/dal", async (importOriginal) => {
     getCustomerHousesList: vi.fn(async () => MOCK_HOUSES),
     getNeighborhoods: vi.fn(async () => MOCK_NEIGHBORHOODS),
     getZones: vi.fn(async () => MOCK_ZONES),
+    getZoneFees: vi.fn(async () => []),
+    findHousesWithinRadius: vi.fn(
+      async (params: { lat: number; lng: number; radiusMeters: number }) => {
+        if (params.radiusMeters <= 5000) {
+          return [{ houseId: "house-1", distanceMeters: 420 }];
+        }
+        return [
+          { houseId: "house-2", distanceMeters: 180 },
+          { houseId: "house-1", distanceMeters: 420 },
+        ];
+      }
+    ),
     getCustomerHouseDetail: vi.fn(async (houseId: string) => {
       if (houseId === "house-1") return MOCK_HOUSE_DETAIL;
       return null;
@@ -180,6 +192,26 @@ describe("Customer House Search & Service Selection (Phase 4)", () => {
   it("sorts houses by price ascending", async () => {
     const data = await getCustomerHousesData({ sort: "price" });
     expect(data.houses[0].minItemPriceCdf).toBeLessThanOrEqual(data.houses[1].minItemPriceCdf);
+  });
+
+  it("filters houses by PostGIS radius (5 km / 10 km / 15 km) and restores all houses when cleared", async () => {
+    const within5Km = await getCustomerHousesData({
+      lat: -2.502,
+      lng: 28.864,
+      radiusKm: 5,
+    });
+    expect(within5Km.houses).toHaveLength(1);
+    expect(within5Km.houses[0].id).toBe("house-1");
+
+    const within10Km = await getCustomerHousesData({
+      lat: -2.502,
+      lng: 28.864,
+      radiusKm: 10,
+    });
+    expect(within10Km.houses).toHaveLength(2);
+
+    const cleared = await getCustomerHousesData({});
+    expect(cleared.houses).toHaveLength(2);
   });
 
   it("retrieves house profile and services for a selected house", async () => {

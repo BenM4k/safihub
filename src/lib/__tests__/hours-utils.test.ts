@@ -11,6 +11,9 @@ import {
   computeLiveStatus,
   computeTimerExample,
   checkClosureOverlap,
+  formatTimeDisplay,
+  formatHoursRangeDisplay,
+  extractClosingTimeDisplay,
   type DaySchedule,
 } from "../hours-utils";
 import { getDrcHolidaysForYear } from "../drc-holidays";
@@ -179,6 +182,29 @@ describe("hours-utils", () => {
       expect(holidays.some((h) => h.name === "Noël" && h.date === "2026-12-25")).toBe(true);
       expect(holidays.some((h) => h.name === "Nouvel An" && h.date === "2026-01-01")).toBe(true);
       expect(holidays.some((h) => h.name.includes("Kimbangu") && h.date === "2026-04-06")).toBe(true);
+    });
+  });
+
+  describe("formatTimeDisplay, formatHoursRangeDisplay and extractClosingTimeDisplay", () => {
+    it("formats 24h time strings nicely with 'h'", () => {
+      expect(formatTimeDisplay("18:00")).toBe("18h");
+      expect(formatTimeDisplay("08:00")).toBe("8h");
+      expect(formatTimeDisplay("08:30")).toBe("8h30");
+      expect(formatTimeDisplay("17:45")).toBe("17h45");
+      expect(formatTimeDisplay("")).toBe("");
+    });
+
+    it("formats hours ranges nicely", () => {
+      expect(formatHoursRangeDisplay("08:00 - 18:00")).toBe("8h – 18h");
+      expect(formatHoursRangeDisplay("07:30 - 17:30")).toBe("7h30 – 17h30");
+      expect(formatHoursRangeDisplay("Fermé aujourd'hui")).toBe("Fermé aujourd'hui");
+    });
+
+    it("extracts and formats closing time from range strings", () => {
+      expect(extractClosingTimeDisplay("08:00 - 18:00")).toBe("18h");
+      expect(extractClosingTimeDisplay("08:00 - 18:30")).toBe("18h30");
+      expect(extractClosingTimeDisplay("Fermé aujourd'hui")).toBeNull();
+      expect(extractClosingTimeDisplay("")).toBeNull();
     });
   });
 });

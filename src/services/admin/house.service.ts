@@ -281,17 +281,6 @@ export async function unlinkAdminHouseStaffUser(params: {
   }
 }
 
-const HOUSE_STOCK_IMAGES: Record<string, string> = {
-  "Pressing du Lac Kivu":
-    "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=800&q=80",
-  "Pressing Étoile de Kadutu":
-    "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=800&q=80",
-  "Kivu Clean Express":
-    "https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=800&q=80",
-  "Blanchisserie Pro Muhumba":
-    "https://images.unsplash.com/photo-1521656693074-0ef32e80a5d5?auto=format&fit=crop&w=800&q=80",
-};
-
 const DEFAULT_HOUSE_IMAGE =
   "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=800&q=80";
 
@@ -381,7 +370,7 @@ export async function listAdminHousesEnriched(): Promise<
 
       const activeOrdersCount = activeOrdersCounts[house.id] ?? 0;
       const balanceOwedCDF = settlementsMap.get(house.id) ?? 0;
-      const imageUrl = HOUSE_STOCK_IMAGES[house.name] || DEFAULT_HOUSE_IMAGE;
+      const imageUrl = house.coverImageUrl || house.logoUrl || DEFAULT_HOUSE_IMAGE;
 
       return {
         ...house,
