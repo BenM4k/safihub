@@ -329,7 +329,7 @@ export function clearSessionMemoryCache(sessionKey?: string): void {
 function getFromSessionMemoryCache(key: string): AuthenticatedUser | null | undefined {
   const entry = sessionMemoryCache.get(key);
   if (!entry) return undefined;
-  if (Date.now() > entry.expiresAt) {
+  if (performance.now() > entry.expiresAt) {
     sessionMemoryCache.delete(key);
     return undefined;
   }
@@ -338,7 +338,7 @@ function getFromSessionMemoryCache(key: string): AuthenticatedUser | null | unde
 
 function setInSessionMemoryCache(key: string, user: AuthenticatedUser | null): void {
   if (sessionMemoryCache.size > 1000) {
-    const now = Date.now();
+    const now = performance.now();
     for (const [k, v] of sessionMemoryCache.entries()) {
       if (now > v.expiresAt) {
         sessionMemoryCache.delete(k);
@@ -347,7 +347,7 @@ function setInSessionMemoryCache(key: string, user: AuthenticatedUser | null): v
   }
   sessionMemoryCache.set(key, {
     user,
-    expiresAt: Date.now() + SESSION_CACHE_TTL_MS,
+    expiresAt: performance.now() + SESSION_CACHE_TTL_MS,
   });
 }
 

@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { HeroSection } from "@/components/home/hero/hero-section";
+import { HeroSkeleton } from "@/components/home/hero/hero-skeleton";
 import { TrustBanner } from "@/components/home/trust-banner/trust-banner";
 import { ServicesTabs } from "@/components/home/services-tabs/services-tabs";
 import { HowItWorks } from "@/components/home/how-it-works/how-it-works";
@@ -42,10 +44,11 @@ async function HomeUserSections({
 }: {
   neighborhoodsPromise: Promise<NeighborhoodRecord[]>;
 }) {
+  await connection();
   const user = await getCurrentUser();
   return (
     <>
-      <Suspense fallback={<HeroSection user={user} />}>
+      <Suspense fallback={<HeroSkeleton />}>
         <HeroWithNeighborhoods
           neighborhoodsPromise={neighborhoodsPromise}
           user={user}
@@ -79,12 +82,7 @@ export default function HomePage() {
         <Suspense
           fallback={
             <>
-              <Suspense fallback={<HeroSection user={null} />}>
-                <HeroWithNeighborhoods
-                  neighborhoodsPromise={neighborhoodsPromise}
-                  user={null}
-                />
-              </Suspense>
+              <HeroSkeleton />
               <TrustBanner user={null} />
               <ServicesTabs user={null} />
             </>

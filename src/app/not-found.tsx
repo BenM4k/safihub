@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Metadata } from "next";
 import { constructMetadata } from "@/lib/seo";
+import { SAFIHUB_SUPPORT_WHATSAPP } from "@/lib/support-config";
 
 export const metadata: Metadata = constructMetadata({
   title: "Page Introuvable (404)",
@@ -154,10 +155,10 @@ export default function NotFound() {
             <span>
               {t("supportContact")}{" "}
               <a
-                href="tel:+243999000123"
+                href={`tel:+${SAFIHUB_SUPPORT_WHATSAPP}`}
                 className="font-bold text-heading hover:text-primary underline underline-offset-2 transition-colors ml-1"
               >
-                +243 999 000 123
+                +{SAFIHUB_SUPPORT_WHATSAPP.slice(0, 3)} {SAFIHUB_SUPPORT_WHATSAPP.slice(3, 6)} {SAFIHUB_SUPPORT_WHATSAPP.slice(6, 9)} {SAFIHUB_SUPPORT_WHATSAPP.slice(9)}
               </a>
             </span>
           </div>

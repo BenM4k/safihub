@@ -45,9 +45,14 @@ export function Testimonials() {
     <section className="min-h-screen flex flex-col justify-center py-16 md:py-24 border-t border-border bg-background overflow-hidden">
       <div className="container-page flex flex-col items-center">
         {/* Section title matching reference */}
-        <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-heading text-center mb-12 tracking-tight">
-          Témoignages
-        </h2>
+        <div className="text-center mb-12 space-y-2">
+          <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-heading tracking-tight">
+            Témoignages & Retours Pilotes
+          </h2>
+          <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
+            Avis recueillis auprès de nos premiers utilisateurs et ménages à Ibanda, Kadutu et Bagira.
+          </p>
+        </div>
 
         {/* Testimonial slider view with side peek cards */}
         <div className="relative w-full max-w-7xl flex items-center justify-center gap-5 sm:gap-6">
@@ -91,21 +96,18 @@ export function Testimonials() {
             {/* Bottom row: Author on left, Company badge on right */}
             <div className="flex items-center justify-between pt-4 border-t border-border">
               <div className="flex items-center gap-3">
-                <div className="relative size-11 rounded-full overflow-hidden border border-border shrink-0">
-                  <Image
-                    src={current.avatarUrl}
-                    alt={current.author}
-                    fill
-                    sizes="44px"
-                    className="object-cover"
-                  />
+                <div className="size-11 rounded-full bg-primary/10 text-primary border border-primary/25 flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs">
+                  {current.author
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-heading leading-tight">
                     {current.author}
                   </h4>
                   <p className="text-xs text-muted-foreground">
-                    {current.role}
+                    {current.role} • Client vérifié
                   </p>
                 </div>
               </div>

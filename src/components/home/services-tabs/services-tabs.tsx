@@ -113,7 +113,7 @@ export function ServicesTabs({ user }: { user?: AuthenticatedUser | null } = {})
                     src={activeTab.imageUrl}
                     alt={activeTab.title}
                     fill
-                    sizes="(max-width: 1024px) 100vw, 400px"
+                    sizes="(max-width: 640px) 90vw, (max-width: 1024px) 500px, 450px"
                     className="object-cover"
                   />
                 </div>

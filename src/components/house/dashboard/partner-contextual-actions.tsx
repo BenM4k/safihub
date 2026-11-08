@@ -11,6 +11,7 @@ import {
 import { useTranslations } from "next-intl";
 import { Separator } from "@/components/ui/separator";
 import { usePartnerPause } from "./partner-dashboard-interactive";
+import { getSupportWhatsAppUrl } from "@/lib/support-config";
 
 interface PartnerContextualActionsProps {
   houseSlug: string;
@@ -60,7 +61,7 @@ export function PartnerContextualActions({
     },
     {
       id: "support",
-      href: "https://wa.me/243999000123?text=Bonjour%20SafiHub%20Support%2C%20j%27ai%20besoin%20d%27assistance%20concernant%20mon%20pressing.",
+      href: getSupportWhatsAppUrl("Bonjour SafiHub Support, j'ai besoin d'assistance concernant mon pressing."),
       external: true,
       icon: PhoneCall,
       iconBg: "bg-success-soft text-success",

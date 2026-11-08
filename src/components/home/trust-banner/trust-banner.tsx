@@ -17,34 +17,34 @@ export function TrustBanner({ user }: { user?: AuthenticatedUser | null } = {}) 
           ? tHero("ctaHouse")
           : tHero("ctaOrder");
 
-  const partners = [
-    { name: "Hôtel du Lac Kivu", role: "Hôtellerie" },
-    { name: "Clinique de Muhumba", role: "Médical" },
-    { name: "Kivu Lodge Resort", role: "Tourisme" },
-    { name: "Banque Trust RDC", role: "Finance" },
-    { name: "Bukavu Business Center", role: "Entreprises" },
+  const sectors = [
+    { name: "Hôtellerie & Hébergement", role: "Draps, serviettes, nappes" },
+    { name: "Cliniques & Cabinets", role: "Blouses & textiles médicaux" },
+    { name: "Bureaux & Banques", role: "Uniformes & costumes" },
+    { name: "Restaurants & Cafés", role: "Tabliers & linge de table" },
+    { name: "Particuliers & Familles", role: "Vêtements du quotidien & délicats" },
   ];
 
   return (
     <section className="min-h-screen flex flex-col justify-center py-16 md:py-24 border-t border-border bg-background overflow-hidden">
       <div className="container-page flex flex-col gap-14 md:gap-20">
-        {/* Top: Trusted by partners bar with dividers (from reference trust.png) */}
+        {/* Top: Sectors & professional solutions bar with dividers */}
         <div>
           <p className="text-sm sm:text-base font-bold text-primary mb-6 text-center lg:text-left">
-            Partenaires de confiance & entreprises à Bukavu
+            Secteurs pris en charge & solutions linge à Bukavu
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-y border-border divide-y sm:divide-y-0 sm:divide-x divide-border py-4 sm:py-6">
-            {partners.map((partner, index) => (
+            {sectors.map((sector, index) => (
               <div
                 key={index}
                 className="flex flex-col items-center justify-center p-3 text-center"
               >
-                <span className="font-display font-extrabold text-base sm:text-lg text-heading tracking-tight">
-                  {partner.name}
+                <span className="font-display font-extrabold text-sm sm:text-base text-heading tracking-tight">
+                  {sector.name}
                 </span>
-                <span className="text-[11px] text-muted-foreground font-medium">
-                  {partner.role}
+                <span className="text-[11px] text-muted-foreground font-medium mt-0.5">
+                  {sector.role}
                 </span>
               </div>
             ))}

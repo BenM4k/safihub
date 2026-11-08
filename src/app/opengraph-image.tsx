@@ -1,4 +1,6 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 export const alt = "SafiHub — Pressing & Blanchisserie à Bukavu";
 export const size = {
@@ -7,7 +9,15 @@ export const size = {
 };
 export const contentType = "image/png";
 
-export default function Image() {
+export default async function Image() {
+  let logoBase64 = "";
+  try {
+    const logoBuffer = await readFile(join(process.cwd(), "public", "logo-dark.png"));
+    logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+  } catch {
+    logoBase64 = "";
+  }
+
   return new ImageResponse(
     (
       <div
@@ -23,7 +33,7 @@ export default function Image() {
           color: "#FFFFFF",
         }}
       >
-        {/* Top Header: Brand & Location */}
+        {/* Top Header: Brand Logo & City Badge */}
         <div
           style={{
             display: "flex",
@@ -32,31 +42,43 @@ export default function Image() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "12px",
-                backgroundColor: "#2824D5",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "26px",
-                fontWeight: "bold",
-                color: "#FFFFFF",
-              }}
-            >
-              S
-            </div>
+            {logoBase64 ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoBase64}
+                width={52}
+                height={52}
+                style={{ objectFit: "contain" }}
+                alt="SafiHub Logo"
+              />
+            ) : (
+              <div
+                style={{
+                  width: "52px",
+                  height: "52px",
+                  borderRadius: "14px",
+                  backgroundColor: "#2824D5",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "26px",
+                  fontWeight: "bold",
+                  color: "#FFFFFF",
+                }}
+              >
+                S
+              </div>
+            )}
             <span
               style={{
                 fontSize: "36px",
-                fontWeight: "800",
+                fontWeight: "900",
                 letterSpacing: "-0.03em",
                 color: "#FFFFFF",
+                display: "flex",
               }}
             >
-              SafiHub
+              Safi<span style={{ color: "#38BDF8" }}>Hub</span>
             </span>
           </div>
 
@@ -78,20 +100,19 @@ export default function Image() {
           </div>
         </div>
 
-        {/* Main Center Headline */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* Main Center Headline: Short, Punchy, High Impact */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
           <h1
             style={{
-              fontSize: "56px",
-              lineHeight: 1.15,
+              fontSize: "64px",
+              lineHeight: 1.1,
               fontWeight: "900",
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.03em",
               color: "#FFFFFF",
               margin: 0,
             }}
           >
-            Pressing & Blanchisserie <br />
-            à la demande à domicile
+            Le Pressing Moderne <span style={{ color: "#38BDF8" }}>à Bukavu</span>
           </h1>
           <p
             style={{
@@ -102,8 +123,8 @@ export default function Image() {
               lineHeight: 1.4,
             }}
           >
-            Collecte et livraison en 24h-48h. Double comptage au seuil, photos
-            {" d'état "}et paiement en espèces CDF ou USD.
+            Collecte & livraison à domicile en 24h à 48h. Double comptage au seuil
+            et paiement Cash on Delivery CDF ou USD.
           </p>
         </div>
 
@@ -112,9 +133,9 @@ export default function Image() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "24px",
+            gap: "28px",
             borderTop: "1px solid rgba(148, 163, 184, 0.2)",
-            paddingTop: "32px",
+            paddingTop: "28px",
           }}
         >
           <div
@@ -124,7 +145,7 @@ export default function Image() {
               gap: "10px",
               color: "#CBD5E1",
               fontSize: "18px",
-              fontWeight: "500",
+              fontWeight: "600",
             }}
           >
             <svg
@@ -139,7 +160,7 @@ export default function Image() {
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            <span>Collecte 24h/48h</span>
+            <span>Collecte 24h-48h</span>
           </div>
           <div
             style={{
@@ -148,7 +169,7 @@ export default function Image() {
               gap: "10px",
               color: "#CBD5E1",
               fontSize: "18px",
-              fontWeight: "500",
+              fontWeight: "600",
             }}
           >
             <svg
@@ -163,7 +184,7 @@ export default function Image() {
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            <span>Contrôle contradictoire</span>
+            <span>Contrôle au seuil</span>
           </div>
           <div
             style={{
@@ -172,7 +193,7 @@ export default function Image() {
               gap: "10px",
               color: "#CBD5E1",
               fontSize: "18px",
-              fontWeight: "500",
+              fontWeight: "600",
             }}
           >
             <svg
@@ -197,4 +218,3 @@ export default function Image() {
     }
   );
 }
-

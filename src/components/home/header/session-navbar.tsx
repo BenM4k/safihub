@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { connection } from "next/server";
 import { BrandLogoMark } from "@/components/common/brand-logo";
 import { getCurrentUser } from "@/services/auth";
 import { Navbar } from "./navbar";
@@ -54,6 +55,7 @@ async function AuthenticatedNavbar({
 }: {
   variant: "transparent" | "solid";
 }) {
+  await connection();
   const user = await getCurrentUser();
   return <Navbar variant={variant} user={user} />;
 }

@@ -68,7 +68,7 @@ export function HeroStatusCard() {
                   className="object-cover"
                 />
                 <span className="absolute bottom-1 left-1.5 text-[9px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded">
-                  Pressing du Lac
+                  Atelier Partenaire
                 </span>
               </div>
 
@@ -82,7 +82,7 @@ export function HeroStatusCard() {
                   className="object-cover"
                 />
                 <span className="absolute bottom-1 left-1.5 text-[9px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded">
-                  Coursier Christian
+                  Coursier SafiHub
                 </span>
               </div>
             </div>

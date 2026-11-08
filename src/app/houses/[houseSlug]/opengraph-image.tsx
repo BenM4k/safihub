@@ -1,4 +1,6 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { getCachedCustomerHouseProfile } from "@/lib/cached-data";
 
 export const size = {
@@ -15,6 +17,14 @@ export default async function Image({
   const { houseSlug } = await params;
   const res = await getCachedCustomerHouseProfile(houseSlug);
   const house = res.ok ? res.value.house : null;
+
+  let logoBase64 = "";
+  try {
+    const logoBuffer = await readFile(join(process.cwd(), "public", "logo-dark.png"));
+    logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+  } catch {
+    logoBase64 = "";
+  }
 
   const houseName = house?.name || "Pressing Partenaire";
   const neighborhood = house?.neighborhoodName || "Bukavu";
@@ -48,31 +58,43 @@ export default async function Image({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <div
-              style={{
-                width: "44px",
-                height: "44px",
-                borderRadius: "10px",
-                backgroundColor: "#2824D5",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "24px",
-                fontWeight: "bold",
-                color: "#FFFFFF",
-              }}
-            >
-              S
-            </div>
+            {logoBase64 ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoBase64}
+                width={44}
+                height={44}
+                style={{ objectFit: "contain" }}
+                alt="SafiHub Logo"
+              />
+            ) : (
+              <div
+                style={{
+                  width: "44px",
+                  height: "44px",
+                  borderRadius: "10px",
+                  backgroundColor: "#2824D5",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: "#FFFFFF",
+                }}
+              >
+                S
+              </div>
+            )}
             <span
               style={{
                 fontSize: "28px",
                 fontWeight: "800",
                 letterSpacing: "-0.02em",
                 color: "#FFFFFF",
+                display: "flex",
               }}
             >
-              SafiHub Bukavu
+              Safi<span style={{ color: "#38BDF8" }}>Hub</span> Bukavu
             </span>
           </div>
 

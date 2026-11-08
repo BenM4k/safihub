@@ -1,5 +1,5 @@
 export const SAFIHUB_SUPPORT_WHATSAPP =
-  process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || "243999000123";
+  process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || "243970820000";
 
 /**
  * Builds a WhatsApp deep-link URL for SafiHub customer and partner support.
