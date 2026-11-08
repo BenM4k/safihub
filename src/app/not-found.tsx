@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   ArrowLeft,
-  Sparkles,
   MapPin,
   Store,
   ShoppingBag,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SessionNavbar } from "@/components/home/header/session-navbar";
+import { BrandLogoMark } from "@/components/common/brand-logo";
 import { Footer } from "@/components/home/footer/footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -73,8 +73,8 @@ export default function NotFound() {
               404
             </span>
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="size-16 sm:size-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-xs">
-                <Sparkles className="size-8 sm:size-10 fill-primary/20" />
+              <div className="size-16 sm:size-20 rounded-2xl bg-card border border-border flex items-center justify-center shadow-xs">
+                <BrandLogoMark size="lg" />
               </div>
             </div>
           </div>

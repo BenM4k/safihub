@@ -90,6 +90,7 @@ describe("Transactional Email Service & Templates", () => {
       expect(email.to).toBe("customer@example.com");
       expect(email.subject).toContain("Confirmez votre adresse email");
       expect(email.html).toContain("#2824D5"); // SafiHub Royal Indigo brand color
+      expect(email.html).toContain("/logo.png"); // SafiHub Brand Logo inside email
       expect(email.html).not.toContain("<script>");
       expect(email.html).toContain("&lt;script&gt;");
       expect(email.html).toContain("Vérifier mon adresse email");

@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import * as Sentry from "@sentry/nextjs";
-import { Sparkles, RefreshCw, Home, ShieldAlert } from "lucide-react";
+import { RefreshCw, Home, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { BrandLogoMark } from "@/components/common/brand-logo";
 import fr from "../../messages/fr.json";
 import en from "../../messages/en.json";
 import sw from "../../messages/sw.json";
@@ -41,17 +42,16 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
 
 
   const t = ERROR_TRANSLATIONS[locale].errors;
-  const tCommon = ERROR_TRANSLATIONS[locale].common;
 
   return (
     <html lang={locale} className="h-full font-sans antialiased">
       <body className="flex min-h-full flex-col bg-slate-50 text-slate-900 justify-center items-center p-4 sm:p-6">
         <div className="w-full max-w-lg p-6 sm:p-10 rounded-3xl bg-white border border-slate-200/90 shadow-lg text-center flex flex-col items-center">
           {/* Brand header */}
-          <div className="flex items-center gap-2 mb-8">
-            <Sparkles className="size-6 text-brand-600 fill-brand-600" />
-            <span className="font-black text-2xl tracking-tight text-ink-900">
-              {tCommon.brand}<span className="text-brand-600">.</span>
+          <div className="flex items-center gap-2.5 mb-8">
+            <BrandLogoMark size="md" variant="light" />
+            <span className="font-display font-black text-2xl tracking-tight text-ink-900">
+              Safi<span className="text-brand-600">Hub</span>
             </span>
           </div>
 

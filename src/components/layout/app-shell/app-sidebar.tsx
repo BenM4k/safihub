@@ -3,8 +3,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, ChevronRight, Store } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandLogoMark } from "@/components/common/brand-logo";
 import type { AppShellNavGroup } from "./types";
 
 interface AppSidebarProps {
@@ -52,13 +53,17 @@ export function AppSidebar({
             className="flex items-center gap-2.5 min-w-0 group"
             title={`${brandTitle} — ${brandSubtitle}`}
           >
-            <div className="size-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-black text-sm shadow-xs shrink-0 group-hover:bg-primary-hover transition">
-              <Store className="size-5" />
-            </div>
+            <BrandLogoMark size="md" className="shrink-0" />
             {!isCollapsed && (
               <div className="flex flex-col min-w-0 transition-opacity duration-150">
                 <span className="font-display font-black text-base tracking-tight text-heading block leading-tight">
-                  {brandTitle}
+                  {brandTitle === "SafiHub" ? (
+                    <>
+                      Safi<span className="text-primary">Hub</span>
+                    </>
+                  ) : (
+                    brandTitle
+                  )}
                 </span>
                 <span className="text-[11px] font-semibold text-primary leading-none">
                   {brandSubtitle}

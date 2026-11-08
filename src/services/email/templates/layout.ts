@@ -1,5 +1,5 @@
 import "server-only";
-import { getEmailDomain } from "../domain";
+import { getAppBaseUrl, getEmailDomain } from "../domain";
 
 /**
  * Escapes unsafe HTML characters to prevent XSS in email bodies.
@@ -36,6 +36,7 @@ const BADGE_STYLES = {
  */
 export function renderEmailLayout(options: EmailLayoutOptions): string {
   const domain = getEmailDomain();
+  const baseUrl = getAppBaseUrl();
   const safeTitle = escapeHtml(options.title);
   const safePreheader = options.preheader ? escapeHtml(options.preheader) : "";
 
@@ -63,7 +64,16 @@ export function renderEmailLayout(options: EmailLayoutOptions): string {
   <div style="max-width: 560px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);">
     <!-- Brand Header -->
     <div style="padding: 28px 32px 20px 32px; border-bottom: 1px solid #F2F4F7; text-align: center;">
-      <h1 style="color: #2824D5; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">SafiHub</h1>
+      <a href="${baseUrl}" target="_blank" style="text-decoration: none; display: inline-block;">
+        <img
+          src="${baseUrl}/logo.png"
+          alt="SafiHub"
+          width="48"
+          height="48"
+          style="display: block; margin: 0 auto 10px auto; width: 48px; height: 48px; border: 0; outline: none; text-decoration: none;"
+        />
+      </a>
+      <h1 style="color: #101828; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">Safi<span style="color: #2824D5;">Hub</span></h1>
       <p style="color: #667085; font-size: 13px; margin: 4px 0 0 0; font-weight: 400;">Pressing &amp; Blanchisserie à Bukavu</p>
     </div>
 

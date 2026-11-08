@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { BrandLogoMark } from "@/components/common/brand-logo";
 import { FooterSocial } from "./footer-social";
 
 export function Footer() {
@@ -10,10 +10,10 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-16 xl:gap-20">
           {/* Left Column: Logo + Dark Follow us box */}
           <div className="lg:col-span-2 stack gap-5">
-            <Link href="/" className="flex items-center gap-2 group">
-              <Sparkles className="size-6 text-primary fill-primary" />
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <BrandLogoMark size="md" variant="dark" />
               <span className="font-display font-black text-2xl tracking-tight text-white">
-                SafiHub<span className="text-primary">.</span>
+                Safi<span className="text-primary">Hub</span>
               </span>
             </Link>
 

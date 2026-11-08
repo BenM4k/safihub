@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { getSignedUploadUrl, getSignedDownloadUrl } from "@/lib/storage/r2-client";
-import { projectHouseFacingOrder } from "@/dal";
+import { projectHouseFacingOrder, db, schema } from "@/dal";
+import { eq } from "drizzle-orm";
 import { requireRole, requireHouseAccess } from "../guards";
 import { registerCustomer } from "../auth.service";
 import { auth } from "../auth";
@@ -13,6 +14,11 @@ describe("Phase 11.3: Security Pass & Authorization Integrity", () => {
     email: string,
     password = "Password123!"
   ): Promise<Headers> {
+    await db
+      .update(schema.user)
+      .set({ emailVerified: true })
+      .where(eq(schema.user.email, email));
+
     const res = await auth.api.signInEmail({
       body: { email, password },
       asResponse: true,

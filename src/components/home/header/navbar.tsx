@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { BrandLogoMark } from "@/components/common/brand-logo";
 import { useTranslations } from "next-intl";
 import { MobileNav } from "./mobile-nav";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,6 @@ interface NavbarProps {
 export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
   const isSolid = variant === "solid";
   const tNav = useTranslations("nav");
-  const tCommon = useTranslations("common");
 
   const cta = getRoleCta(user);
   const ctaHref = cta.roleKey === "guest" || cta.roleKey === "customer" ? "/#catalogue" : cta.href;
@@ -40,14 +39,11 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
       }
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between gap-4 pointer-events-auto">
-        {/* Brand logo: star/asterisk mark + SafiHub on far left */}
-        <Link href="/" className="flex items-center gap-2 group shrink-0">
-          <div className="text-primary flex items-center justify-center">
-            <Sparkles className="size-6 text-primary fill-primary" />
-          </div>
+        {/* Brand logo: SafiHub ribbon mark + brand text (Safi + primary Hub) */}
+        <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+          <BrandLogoMark size="md" />
           <span className="font-display font-black text-2xl tracking-tight text-heading">
-            {tCommon("brand")}
-            <span className="text-primary">.</span>
+            Safi<span className="text-primary">Hub</span>
           </span>
         </Link>
 

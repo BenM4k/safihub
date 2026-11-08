@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { BrandLogoMark } from "@/components/common/brand-logo";
 import { getCurrentUser } from "@/services/auth";
 import { Navbar } from "./navbar";
 import type { AuthenticatedUser } from "@/services/auth/guards";
@@ -30,12 +30,10 @@ function NavbarStaticFallback({
       }
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between gap-4 pointer-events-auto">
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="text-primary flex items-center justify-center">
-            <Sparkles className="size-6 text-primary fill-primary" />
-          </div>
+        <Link href="/" className="flex items-center gap-2.5 shrink-0">
+          <BrandLogoMark size="md" />
           <span className="font-display font-black text-2xl tracking-tight text-heading">
-            SafiHub<span className="text-primary">.</span>
+            Safi<span className="text-primary">Hub</span>
           </span>
         </Link>
         <div className="hidden md:flex items-center gap-2 bg-slate-100/70 dark:bg-white/5 rounded-full px-4 py-2">

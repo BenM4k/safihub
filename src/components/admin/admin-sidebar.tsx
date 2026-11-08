@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { logoutAction } from "@/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/admin/shared/status-badge";
+import { BrandLogoMark } from "@/components/common/brand-logo";
 
 interface NavItem {
   href: string;
@@ -102,12 +103,10 @@ export function AdminSidebar({
       <div className="flex flex-col flex-1 overflow-y-auto p-4 gap-6">
         {/* Brand header */}
         <div className="flex items-center gap-2.5 px-2 py-1">
-          <div className="size-8 rounded-xl bg-primary text-white flex items-center justify-center font-black text-sm shadow-xs">
-            S
-          </div>
+          <BrandLogoMark size="md" />
           <div className="flex flex-col min-w-0">
             <span className="font-display font-black text-base tracking-tight text-heading block leading-none">
-              SafiHub
+              Safi<span className="text-primary">Hub</span>
             </span>
             <div className="mt-1">
               <StatusBadge
