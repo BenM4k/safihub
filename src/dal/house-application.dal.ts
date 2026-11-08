@@ -289,6 +289,7 @@ export async function approveHouseApplicationTransaction(params: {
         isGuest: false,
         status: "active",
         banned: false,
+        emailVerified: false,
       });
     }
 

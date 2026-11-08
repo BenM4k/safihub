@@ -205,6 +205,9 @@ export async function loginCustomer(
     if (userRecord && (userRecord.status === "blocked" || userRecord.banned)) {
       return err("Account is blocked. Please contact support.");
     }
+    if (userRecord && !userRecord.isGuest && !userRecord.emailVerified) {
+      return err("EMAIL_NOT_VERIFIED");
+    }
 
     return ok({
       user: authResult.user as unknown as Record<string, unknown>,
@@ -212,6 +215,13 @@ export async function loginCustomer(
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
+    if (
+      msg.includes("EMAIL_NOT_VERIFIED") ||
+      msg.includes("Email not verified") ||
+      msg.includes("email_not_verified")
+    ) {
+      return err("EMAIL_NOT_VERIFIED");
+    }
     if (
       msg.includes("blocked") ||
       msg.includes("banned") ||

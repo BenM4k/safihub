@@ -250,6 +250,9 @@
     "signUp": "Jisajili",
     "logout": "Toka",
     "registeredSuccess": "Akaunti yako imeundwa kwa mafanikio! Ingia hapa chini.",
+    "registeredVerifyNotice": "Akaunti yako imeundwa kwa mafanikio! Tafadhali thibitisha barua pepe yako kwa kubofya kiungo ulichotumiwa kabla ya kuingia.",
+    "emailVerifiedSuccess": "Barua pepe yako imethibitishwa kwa mafanikio! Sasa unaweza kuingia kwenye akaunti yako.",
+    "emailNotVerifiedAlert": "Barua pepe yako haijathibitishwa. Kiungo kipya cha uthibitisho kimetumwa kwa barua pepe yako. Tafadhali angalia kikasha chako.",
     "resetSuccess": "Nenosiri lako limewekwa upya kwa mafanikio! Ingia sasa.",
     "registerTitle": "Fungua Akaunti ya SafiHub",
     "registerSubtitle": "Agiza huduma ya dobi ya nyumbani huko Bukavu",
@@ -308,6 +311,8 @@
       "accountBlocked": "Akaunti imezuiwa. Tafadhali wasiliana na huduma kwa wateja.",
       "invalidCredentials": "Barua pepe au nenosiri si sahihi.",
       "rateLimited": "Majaribio mengi mno. Tafadhali jaribu tena baadaye.",
+      "emailNotVerified": "Barua pepe yako bado haijathibitishwa. Kiungo kipya cha uthibitisho kimetumwa kwa barua pepe yako.",
+      "invalidVerificationToken": "Kiungo cha uthibitisho si sahihi au kimeisha muda wake. Tafadhali jaribu kuingia ili kupokea kiungo kipya.",
       "phoneBlocked": "Nambari hii ya simu imezuiwa na haiwezi kusajiliwa tena."
     }
   },

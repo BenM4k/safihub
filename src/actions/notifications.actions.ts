@@ -19,7 +19,7 @@ export async function getUserNotificationsAction(
   limit = 50,
   offset = 0
 ): Promise<NotificationsActionResult<{ items: NotificationRecord[]; unreadCount: number }>> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { ok: false, error: "Unauthorized" };
   }
@@ -39,7 +39,7 @@ export async function getUserNotificationsAction(
 export async function markNotificationReadAction(
   notificationId: string
 ): Promise<NotificationsActionResult<boolean>> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { ok: false, error: "Unauthorized" };
   }
@@ -56,7 +56,7 @@ export async function markNotificationReadAction(
 export async function markAllNotificationsReadAction(): Promise<
   NotificationsActionResult<number>
 > {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { ok: false, error: "Unauthorized" };
   }

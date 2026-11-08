@@ -1,5 +1,6 @@
 import { serve } from "inngest/next";
 import {
+  dispatchEmailNotification,
   dispatchWhatsAppNotification,
   inngest,
   pruneExpiredPhotos,
@@ -7,5 +8,9 @@ import {
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [pruneExpiredPhotos, dispatchWhatsAppNotification],
+  functions: [
+    pruneExpiredPhotos,
+    dispatchWhatsAppNotification,
+    dispatchEmailNotification,
+  ],
 });

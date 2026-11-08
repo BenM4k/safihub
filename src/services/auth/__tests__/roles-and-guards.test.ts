@@ -15,6 +15,7 @@ import {
 import { getRoleCta } from "@/lib/role-cta";
 import { auth } from "../auth";
 import { addHouseMember, db, schema } from "@/dal";
+import { eq } from "drizzle-orm";
 
 describe("Roles, Permissions & Area Guards", () => {
   const uniqueId = () => Math.random().toString(36).substring(2, 9);
@@ -24,6 +25,11 @@ describe("Roles, Permissions & Area Guards", () => {
     email: string,
     password = "Password123!"
   ): Promise<Headers> {
+    await db
+      .update(schema.user)
+      .set({ emailVerified: true })
+      .where(eq(schema.user.email, email));
+
     const res = await auth.api.signInEmail({
       body: { email, password },
       asResponse: true,
@@ -172,6 +178,48 @@ describe("Roles, Permissions & Area Guards", () => {
       expect(courierCheck.ok).toBe(false);
     });
 
+    it("strictly blocks unverified accounts from passing requireRole even if session cookie exists", async () => {
+      const email = `unverified-guard-${uniqueId()}@safihub.cd`;
+      const password = "Password123!";
+      const reg = await registerCustomer({
+        name: "Unverified Person",
+        email,
+        password,
+        phone: `+24399${Math.floor(1000000 + Math.random() * 9000000)}`,
+        consent: true,
+      });
+      expect(reg.ok).toBe(true);
+
+      // Temporarily mark email as verified to create authentic signed session cookie
+      await db
+        .update(schema.user)
+        .set({ emailVerified: true })
+        .where(eq(schema.user.email, email));
+
+      const res = await auth.api.signInEmail({
+        body: { email, password },
+        asResponse: true,
+      });
+      const setCookie = res.headers.get("set-cookie");
+      const headers = new Headers();
+      if (setCookie) {
+        headers.set("cookie", setCookie);
+      }
+
+      // Reset emailVerified back to false to simulate unverified account with existing session
+      await db
+        .update(schema.user)
+        .set({ emailVerified: false })
+        .where(eq(schema.user.email, email));
+
+      // Guard check must fail with verification error
+      const guardCheck = await requireRole(["customer"], { headers });
+      expect(guardCheck.ok).toBe(false);
+      if (!guardCheck.ok) {
+        expect(guardCheck.error).toContain("Email address is not verified");
+      }
+    });
+
     it("admin reaches admin area, courier area, and has global override for any house", async () => {
       const adminEmail = `admin-super-${uniqueId()}@safihub.cd`;
       const password = "Password123!";
@@ -228,6 +276,12 @@ describe("Roles, Permissions & Area Guards", () => {
       expect(reg.ok).toBe(true);
       if (!reg.ok) return;
       const targetUserId = reg.value.user.id as string;
+
+      // Verify email so account can sign in while active
+      await db
+        .update(schema.user)
+        .set({ emailVerified: true })
+        .where(eq(schema.user.email, email));
 
       // 2. Can sign in while active
       const firstLogin = await loginCustomer({ email, password });

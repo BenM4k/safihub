@@ -22,6 +22,7 @@ import {
 import { trackOrderDelivered } from "@/services/analytics";
 import { inngest } from "@/inngest";
 import type { NotificationTemplateKey } from "@/services/notifications/notifications.types";
+import { getAppBaseUrl, queueEmailNotification } from "@/services/email";
 
 /**
  * Dispatches an asynchronous WhatsApp order status notification event via Inngest.
@@ -35,27 +36,56 @@ async function queueCourierOrderStatusWhatsAppNotification(params: {
 }): Promise<void> {
   try {
     const order = await getOrderById(params.orderId);
-    if (!order || !order.customerPhone) return;
+    if (!order) return;
 
-    await inngest.send({
-      name: "whatsapp/notification.requested",
-      data: {
-        kind: "order_status",
+    if (order.customerPhone) {
+      await inngest.send({
+        name: "whatsapp/notification.requested",
+        data: {
+          kind: "order_status",
+          orderId: order.id,
+          orderCode: order.code,
+          trackingToken: order.trackingToken,
+          customerUserId: order.customerId,
+          customerPhone: order.customerPhone,
+          customerName: order.customerName ?? undefined,
+          houseName: order.houseName ?? undefined,
+          courierName: params.courierName,
+          status: params.status,
+          amountCdf: order.totalDue,
+          itemCount: params.itemCount,
+          verificationCode:
+            params.verificationCode ?? order.deliveryConfirmationCode ?? null,
+        },
+      });
+    }
+
+    if (
+      params.status === "delivered" &&
+      !order.isCustomerGuest &&
+      order.customerEmail &&
+      order.customerEmail.includes("@")
+    ) {
+      const rateNumber = order.exchangeRateUsed ? Number(order.exchangeRateUsed) : null;
+      const isValidRate =
+        typeof rateNumber === "number" && Number.isFinite(rateNumber) && rateNumber > 0;
+      const isUsd = order.paymentCurrency === "USD" && isValidRate;
+      const totalPaidUsd = isUsd && rateNumber ? Number((order.totalDue / rateNumber).toFixed(2)) : null;
+      const exchangeRate = isUsd ? rateNumber : null;
+
+      await queueEmailNotification({
+        kind: "order_delivered_receipt",
         orderId: order.id,
+        email: order.customerEmail,
+        customerName: order.customerName || "Client",
         orderCode: order.code,
-        trackingToken: order.trackingToken,
-        customerUserId: order.customerId,
-        customerPhone: order.customerPhone,
-        customerName: order.customerName ?? undefined,
-        houseName: order.houseName ?? undefined,
-        courierName: params.courierName,
-        status: params.status,
-        amountCdf: order.totalDue,
-        itemCount: params.itemCount,
-        verificationCode:
-          params.verificationCode ?? order.deliveryConfirmationCode ?? null,
-      },
-    });
+        houseName: order.houseName || "Pressing Partenaire",
+        totalPaidCdf: order.totalDue,
+        totalPaidUsd,
+        exchangeRate,
+        trackingUrl: `${getAppBaseUrl()}/track/${order.trackingToken}`,
+      }).catch(() => {});
+    }
   } catch {
     // Non-blocking background event dispatch
   }

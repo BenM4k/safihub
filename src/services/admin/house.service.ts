@@ -18,6 +18,7 @@ import {
   getHouseHours,
   getHouses,
   getHouseStaff,
+  getUserById,
   getMasterFabrics,
   getMasterItems,
   getNeighborhoods,
@@ -39,6 +40,7 @@ import {
   type NeighborhoodRecord,
 } from "@/dal";
 import { toBukavuDateTime } from "@/services/availability/bukavu-time";
+import { queueEmailNotification } from "@/services/email";
 import type { AdminHouseRow, HouseOperationalStatus } from "@/components/admin/houses/types";
 
 export interface HouseDetailFull {
@@ -263,6 +265,27 @@ export async function linkAdminHouseStaffUser(params: {
 }): Promise<Result<void>> {
   try {
     await addHouseMember(params);
+    try {
+      const [house, user] = await Promise.all([
+        getHouseById(params.houseId),
+        getUserById(params.userId),
+      ]);
+      if (house && user?.email) {
+        void queueEmailNotification({
+          kind: "house_staff_linked",
+          houseId: house.id,
+          email: user.email,
+          userName: user.name,
+          houseName: house.name,
+          houseSlug: house.slug,
+          eventId: `${params.userId}-${Date.now()}`,
+        }).catch((err) => {
+          console.error("[linkAdminHouseStaffUser] Email queue warning:", err);
+        });
+      }
+    } catch (notifyErr) {
+      console.error("[linkAdminHouseStaffUser] Failed to dispatch staff linked notification:", notifyErr);
+    }
     return ok(undefined);
   } catch (error) {
     return err(error instanceof Error ? error.message : "Failed to link staff member");
@@ -423,6 +446,33 @@ export async function toggleAdminHouseActiveStatus(params: {
       adminId: params.adminId,
       timestamp: new Date().toISOString(),
     });
+
+    try {
+      const [house, staffMembers] = await Promise.all([
+        getHouseById(params.houseId),
+        getHouseStaff(params.houseId),
+      ]);
+
+      if (house && staffMembers.length > 0) {
+        for (const member of staffMembers) {
+          if (!member.email) continue;
+          void queueEmailNotification({
+            kind: "house_status_changed",
+            houseId: house.id,
+            email: member.email,
+            houseName: house.name,
+            isActive: params.isActive,
+            reason: params.reason,
+            eventId: `${params.houseId}-${params.isActive}-${Date.now()}`,
+          }).catch((err) => {
+            console.error("[toggleAdminHouseActiveStatus] Email queue warning:", err);
+          });
+        }
+      }
+    } catch (notifyErr) {
+      console.error("[toggleAdminHouseActiveStatus] Failed to dispatch house status notification:", notifyErr);
+    }
+
     return ok(undefined);
   } catch (error) {
     return err(

@@ -46,6 +46,7 @@ export interface CheckoutInput {
 
 export interface MasterCatalogItem {
   id: string;
+  name?: string;
   isActive: boolean;
 }
 

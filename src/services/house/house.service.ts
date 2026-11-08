@@ -56,6 +56,7 @@ import { getSignedUploadUrl, getStoragePublicUrl } from "@/lib/storage/r2-client
 import type { OrderStatus } from "@/services/db/schema";
 import { inngest } from "@/inngest";
 import type { NotificationTemplateKey } from "@/services/notifications/notifications.types";
+import { getAppBaseUrl, queueEmailNotification } from "@/services/email";
 
 /**
  * Dispatches an asynchronous, durable WhatsApp status notification event to Inngest.
@@ -68,26 +69,51 @@ async function queueOrderStatusWhatsAppNotification(params: {
 }): Promise<void> {
   try {
     const order = await getOrderById(params.orderId);
-    if (!order || !order.customerPhone) return;
+    if (!order) return;
 
-    await inngest.send({
-      name: "whatsapp/notification.requested",
-      data: {
-        kind: "order_status",
+    if (order.customerPhone) {
+      await inngest.send({
+        name: "whatsapp/notification.requested",
+        data: {
+          kind: "order_status",
+          orderId: order.id,
+          orderCode: order.code,
+          trackingToken: order.trackingToken,
+          customerUserId: order.customerId,
+          customerPhone: order.customerPhone,
+          customerName: order.customerName ?? undefined,
+          houseName: order.houseName ?? undefined,
+          status: params.status,
+          amountCdf: order.totalDue,
+          diffAmountCdf: params.diffAmountCdf,
+          reason: params.reason,
+          verificationCode: order.deliveryConfirmationCode ?? null,
+        },
+      });
+    }
+
+    if (
+      params.status === "price_adjusted" &&
+      !order.isCustomerGuest &&
+      order.customerEmail &&
+      order.customerEmail.includes("@")
+    ) {
+      const diffCdf = params.diffAmountCdf ?? 0;
+      await queueEmailNotification({
+        kind: "order_adjustment_prompt",
         orderId: order.id,
+        email: order.customerEmail,
+        customerName: order.customerName || "Client",
         orderCode: order.code,
-        trackingToken: order.trackingToken,
-        customerUserId: order.customerId,
-        customerPhone: order.customerPhone,
-        customerName: order.customerName ?? undefined,
-        houseName: order.houseName ?? undefined,
-        status: params.status,
-        amountCdf: order.totalDue,
-        diffAmountCdf: params.diffAmountCdf,
-        reason: params.reason,
-        verificationCode: order.deliveryConfirmationCode ?? null,
-      },
-    });
+        houseName: order.houseName || "Pressing Partenaire",
+        diffAmountCdf: diffCdf,
+        newTotalAmountCdf: order.totalDue,
+        reason:
+          params.reason ||
+          "Ajustement de conformité après réception et comptage en atelier",
+        approvalUrl: `${getAppBaseUrl()}/track/${order.trackingToken}`,
+      }).catch(() => {});
+    }
   } catch {
     // Non-blocking background event dispatch
   }

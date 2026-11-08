@@ -12,7 +12,11 @@ import {
 import { getNeighborhoods } from "@/dal/coverage.dal";
 import { generateUniqueSlug } from "@/lib/slug";
 import { generateSecurePassword } from "@/lib/user-guardrails";
-import { sendPartnerInvitationEmail } from "@/services/email";
+import {
+  getAppBaseUrl,
+  queueEmailNotification,
+  sendPartnerInvitationEmail,
+} from "@/services/email";
 import type { ApplicationStatus } from "@/services/db/schema";
 
 export async function listAdminPartnerApplications(params?: {
@@ -129,20 +133,24 @@ export async function approvePartnerApplication(params: {
       },
     });
 
-    // Send invitation email with direct login link
-    const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+    const passwordApplied = result.passwordApplied ?? result.isNewAccount;
+
+    // Queue idempotent background invitation email with direct login link and temporary credentials
+    const baseUrl = getAppBaseUrl();
     const inviteUrl = `${baseUrl}/login`;
 
-    await sendPartnerInvitationEmail({
+    // Send credential-bearing invitation directly outside queueEmailNotification
+    // to prevent storing plaintext credentials in the durable Inngest event store.
+    void sendPartnerInvitationEmail({
       email: application.email,
       contactName: application.contactName,
       houseName: application.houseName,
       inviteUrl,
+      temporaryPassword: passwordApplied ? plainPassword : undefined,
     }).catch((err) => {
-      console.error("[approvePartnerApplication] Email dispatch warning:", err);
+      console.error("[approvePartnerApplication] Direct email delivery warning:", err);
     });
 
-    const passwordApplied = result.passwordApplied ?? result.isNewAccount;
     return ok({
       houseId: result.houseId,
       houseSlug: result.houseSlug,
@@ -186,6 +194,17 @@ export async function rejectPartnerApplication(params: {
       adminNote: params.adminNote.trim(),
       reviewedBy: params.adminUserId,
       reviewedAt: new Date(),
+    });
+
+    void queueEmailNotification({
+      kind: "partner_application_rejected",
+      applicationId: application.id,
+      email: application.email,
+      contactName: application.contactName,
+      houseName: application.houseName,
+      adminNote: params.adminNote.trim(),
+    }).catch((err) => {
+      console.error("[rejectPartnerApplication] Email queue warning:", err);
     });
 
     return ok(undefined);

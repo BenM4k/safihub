@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { getCurrentUser } from "@/services/auth";
 import { createGuestUser, isPhoneOrEmailBlocked } from "@/dal/auth.dal";
 import { rateLimitCheckout } from "@/services/abuse";
@@ -67,7 +68,31 @@ export async function getCartEstimateAction(
 export async function checkoutOrderAction(
   input: Omit<CheckoutInput, "customerId"> & { customerName?: string }
 ): Promise<CheckoutActionResult> {
-  const user = await getCurrentUser();
+  const cookieStore = await cookies();
+  const hasSessionCookie = Boolean(
+    cookieStore.get("better-auth.session_token") ||
+    cookieStore.get("__Secure-better-auth.session_token")
+  );
+
+  let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
+  try {
+    user = await getCurrentUser({ fresh: true });
+  } catch {
+    return {
+      success: false,
+      error: "Erreur lors de la vérification de votre session. Veuillez réessayer.",
+      failureCode: "AUTH_REQUIRED",
+    };
+  }
+
+  if (hasSessionCookie && !user) {
+    return {
+      success: false,
+      error: "Votre session a expiré ou est invalide. Veuillez vous reconnecter.",
+      failureCode: "AUTH_REQUIRED",
+    };
+  }
+
   let customerId = user?.id;
 
   // Task 10.1: Rate limiting on checkout
@@ -134,7 +159,7 @@ export async function cancelOrderAction(
   orderId: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: "Vous devez être connecté pour annuler." };
   }
@@ -155,7 +180,7 @@ export async function approvePriceAdjustmentAction(
   method: "app" | "tracking_link" = "app",
   trackingToken?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (method === "app" && !user) {
     return { success: false, error: "Vous devez être connecté pour valider cet ajustement." };
   }
@@ -180,7 +205,7 @@ export async function declinePriceAdjustmentAction(
   reason?: string,
   trackingToken?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (method === "app" && !user) {
     return { success: false, error: "Vous devez être connecté pour refuser cet ajustement." };
   }
@@ -206,7 +231,7 @@ export async function confirmDeliverySlotAction(
   method: "app" | "tracking_link" = "app",
   trackingToken?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (method === "app" && !user) {
     return { success: false, error: "Vous devez être connecté pour confirmer le créneau." };
   }
@@ -246,7 +271,7 @@ export async function openDisputeAction(
   orderId: string,
   formData: FormData
 ): Promise<{ success: boolean; disputeId?: string; error?: string }> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: "Vous devez être connecté pour ouvrir un litige." };
   }
@@ -300,7 +325,7 @@ export interface ReorderPastOrderActionResult {
 export async function reorderPastOrderAction(
   orderId: string
 ): Promise<ReorderPastOrderActionResult> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return {
       success: false,

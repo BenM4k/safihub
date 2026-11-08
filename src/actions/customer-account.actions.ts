@@ -23,7 +23,7 @@ export async function updateProfileAction(
   formData: FormData
 ): Promise<AccountActionState> {
   const t = await getTranslations("account");
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: t("unauthorized") };
   }
@@ -50,7 +50,7 @@ export async function createAddressAction(
   formData: FormData
 ): Promise<AccountActionState> {
   const t = await getTranslations("account");
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: t("unauthorized") };
   }
@@ -82,7 +82,7 @@ export async function updateAddressAction(
   formData: FormData
 ): Promise<AccountActionState> {
   const t = await getTranslations("account");
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: t("unauthorized") };
   }
@@ -113,7 +113,7 @@ export async function deleteAddressAction(
   addressId: string
 ): Promise<AccountActionState> {
   const t = await getTranslations("account");
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: t("unauthorized") };
   }
@@ -131,7 +131,7 @@ export async function setDefaultAddressAction(
   addressId: string
 ): Promise<AccountActionState> {
   const t = await getTranslations("account");
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: t("unauthorized") };
   }

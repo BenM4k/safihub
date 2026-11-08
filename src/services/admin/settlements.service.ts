@@ -2,6 +2,7 @@ import "server-only";
 import { err, ok, type Result } from "@/lib/result";
 import * as dal from "@/dal";
 import { sendWhatsAppBusinessSettlementNotice } from "@/services/whatsapp";
+import { queueEmailNotification } from "@/services/email";
 
 export async function getAdminHouseSettlements() {
   try {
@@ -68,6 +69,22 @@ export async function settleAdminHouse(params: {
             method: params.method,
             period: params.period,
           });
+        }
+
+        // Idempotent background email notification to house manager/owner
+        const staff = await dal.getHouseStaff(params.houseId).catch(() => []);
+        const primaryRecipient = staff.find((s) => s.email && s.email.includes("@")) || null;
+        if (primaryRecipient?.email) {
+          const payoutCdf = res.amountCDF ?? (params.currency === "CDF" ? params.amount : undefined);
+          if (typeof payoutCdf === "number") {
+            await queueEmailNotification({
+              kind: "house_settlement_disbursed",
+              settlementId: res.settlementId || params.reference?.trim() || `settle-${Date.now()}`,
+              email: primaryRecipient.email,
+              houseName: houseName || "Pressing Partenaire",
+              netPayoutAmountCdf: payoutCdf,
+            }).catch(() => {});
+          }
         }
       })
       .catch(() => {});

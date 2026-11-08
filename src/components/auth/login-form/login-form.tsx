@@ -25,19 +25,63 @@ function LoginSuccessBanner() {
   const t = useTranslations("auth");
 
   const isRegistered = searchParams.get("registered") === "true";
+  const isUnverified =
+    searchParams.get("unverified") === "true" || searchParams.get("error") === "unverified";
+  const isVerified = searchParams.get("verified") === "true";
   const isReset = searchParams.get("reset") === "true";
+  const isInvalidToken =
+    searchParams.get("error") === "invalid_token" ||
+    searchParams.get("error") === "TOKEN_EXPIRED" ||
+    searchParams.get("error") === "INVALID_TOKEN";
 
-  if (!isRegistered && !isReset) return null;
+  if (isInvalidToken) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="size-4" />
+        <AlertDescription>{t("validation.invalidVerificationToken")}</AlertDescription>
+      </Alert>
+    );
+  }
 
-  return (
-    <Alert variant="success" className="mb-4">
-      <CheckCircle2 className="size-4" />
-      <AlertDescription>
-        {isRegistered && t("registeredSuccess")}
-        {isReset && t("resetSuccess")}
-      </AlertDescription>
-    </Alert>
-  );
+  if (isUnverified) {
+    return (
+      <Alert variant="default" className="mb-4 border-amber-200 bg-amber-50 text-amber-900 [&>svg]:text-amber-600">
+        <AlertCircle className="size-4" />
+        <AlertDescription>
+          {isRegistered ? t("registeredVerifyNotice") : t("emailNotVerifiedAlert")}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isVerified) {
+    return (
+      <Alert variant="success" className="mb-4">
+        <CheckCircle2 className="size-4" />
+        <AlertDescription>{t("emailVerifiedSuccess")}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isReset) {
+    return (
+      <Alert variant="success" className="mb-4">
+        <CheckCircle2 className="size-4" />
+        <AlertDescription>{t("resetSuccess")}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isRegistered) {
+    return (
+      <Alert variant="success" className="mb-4">
+        <CheckCircle2 className="size-4" />
+        <AlertDescription>{t("registeredSuccess")}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  return null;
 }
 
 export function LoginForm() {

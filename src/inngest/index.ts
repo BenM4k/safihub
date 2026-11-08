@@ -4,3 +4,7 @@ export {
   dispatchWhatsAppNotification,
   type WhatsAppNotificationJobPayload,
 } from "./functions/whatsapp-notifications";
+export {
+  dispatchEmailNotification,
+  type EmailNotificationJobPayload,
+} from "./functions/email-notifications";
