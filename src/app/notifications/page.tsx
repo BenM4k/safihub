@@ -1,9 +1,17 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/services/auth";
 import { getUserInbox } from "@/services/notifications";
 import { NotificationsView } from "@/components/notifications/notifications-view";
 import { Navbar } from "@/components/home/header/navbar";
 import { Footer } from "@/components/home/footer";
+import { constructMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = constructMetadata({
+  title: "Centre de Notifications",
+  description: "Consultez les mises à jour et alertes relatives à vos commandes SafiHub.",
+  noIndex: true,
+});
 
 // instant = false: kept on purpose — authenticated user notifications inbox
 export const instant = false;

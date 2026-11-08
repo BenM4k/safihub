@@ -16,16 +16,18 @@ import { DeliverySlotConfirmationCard } from "@/components/orders/detail/deliver
 import { OrderDetailSkeleton } from "@/components/orders/detail/order-detail-skeleton";
 import { DeliveryCodeBadge } from "@/components/track/delivery-code-badge";
 import { OrderPhotosGallery } from "@/components/photos/order-photos-gallery";
+import { constructMetadata } from "@/lib/seo";
 
 interface TrackOrderPageProps {
   params: Promise<{ token: string }>;
 }
 
-export const metadata: Metadata = {
-  title: "Suivi de votre commande — SafiHub",
+export const metadata: Metadata = constructMetadata({
+  title: "Suivi de votre Commande",
   description:
     "Suivez en direct l'avancement du traitement et de la livraison de votre commande de pressing à Bukavu.",
-};
+  noIndex: true,
+});
 
 async function TrackOrderContent({ params }: TrackOrderPageProps) {
   const [{ token }, t] = await Promise.all([params, getTranslations("track")]);

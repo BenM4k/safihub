@@ -16,6 +16,14 @@ import { BrandLogoMark } from "@/components/common/brand-logo";
 import { Footer } from "@/components/home/footer/footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { Metadata } from "next";
+import { constructMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = constructMetadata({
+  title: "Page Introuvable (404)",
+  description: "La page que vous recherchez n'existe pas ou a été déplacée.",
+  noIndex: true,
+});
 
 export default function NotFound() {
   const t = useTranslations("notFound");

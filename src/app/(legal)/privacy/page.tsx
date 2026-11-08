@@ -4,12 +4,14 @@ import { PrivacyDataCollected } from "@/components/legal/privacy/privacy-data-co
 import { PrivacyFirewall } from "@/components/legal/privacy/privacy-firewall";
 import { PrivacyPhotosMedia } from "@/components/legal/privacy/privacy-photos-media";
 import { PrivacyRightsRetention } from "@/components/legal/privacy/privacy-rights-retention";
+import { constructMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Politique de Confidentialité — SafiHub Bukavu",
+export const metadata: Metadata = constructMetadata({
+  title: "Politique de Confidentialité",
   description:
     "Protection de vos données chez SafiHub à Bukavu : pare-feu de confidentialité client, photos de linge sécurisées sans visages, et purge sous 90 jours.",
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

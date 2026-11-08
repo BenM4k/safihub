@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { guardHouseRoute } from "@/services/auth";
 import {
@@ -8,6 +9,13 @@ import {
   getPartnerOnboarding,
 } from "@/dal";
 import { PartnerShell } from "@/components/house/partner-shell";
+import { constructMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = constructMetadata({
+  title: "Atelier Partenaire",
+  description: "Tableau de bord de gestion de pressing SafiHub.",
+  noIndex: true,
+});
 
 // instant = false: kept on purpose — authenticated partner house workspace
 export const instant = false;

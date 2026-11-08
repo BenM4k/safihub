@@ -8,12 +8,15 @@ import { PartnerBenefits } from "@/components/partner/partner-benefits";
 import { PartnerApplySkeleton } from "@/components/partner/partner-apply-skeleton";
 import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { Footer } from "@/components/home/footer/footer";
+import { constructMetadata } from "@/lib/seo";
+import { createBreadcrumbJsonLd } from "@/lib/json-ld";
 
-export const metadata: Metadata = {
-  title: "Devenir Pressing Partenaire | SafiHub Bukavu",
+export const metadata: Metadata = constructMetadata({
+  title: "Devenir Pressing Partenaire à Bukavu",
   description:
-    "Rejoignez le réseau de pressings et blanchisseries certifiés de Bukavu.",
-};
+    "Rejoignez le réseau des pressings et blanchisseries certifiés à Bukavu. Augmentez vos commandes quotidiennes avec notre flotte de coursiers dédiée.",
+  path: "/partners/apply",
+});
 
 async function PartnerApplyContent() {
   const [t, neighborhoods] = await Promise.all([
@@ -56,8 +59,17 @@ async function PartnerApplyContent() {
 }
 
 export default function PartnerApplyPage() {
+  const breadcrumbsJsonLd = createBreadcrumbJsonLd([
+    { name: "Accueil", path: "/" },
+    { name: "Devenir Partenaire", path: "/partners/apply" },
+  ]);
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50/50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }}
+      />
       <SessionNavbar variant="solid" />
       <main className="flex-1 py-12 sm:py-16">
         <Suspense fallback={<PartnerApplySkeleton />}>

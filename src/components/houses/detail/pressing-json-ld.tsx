@@ -1,4 +1,5 @@
 import type { CustomerHouseDetailData } from "@/dal";
+import { createBreadcrumbJsonLd } from "@/lib/json-ld";
 
 interface PressingJsonLdProps {
   house: CustomerHouseDetailData["house"];
@@ -33,10 +34,22 @@ export function PressingJsonLd({ house, url }: PressingJsonLdProps) {
     };
   }
 
+  const breadcrumbs = createBreadcrumbJsonLd([
+    { name: "Accueil", path: "/" },
+    { name: "Pressings", path: "/houses" },
+    { name: house.name, path: `/houses/${house.slug}` },
+  ]);
+
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+      />
+    </>
   );
 }

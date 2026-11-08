@@ -7,12 +7,14 @@ import { getCustomerAddresses } from "@/dal";
 import { getCachedNeighborhoods } from "@/lib/cached-data";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { CheckoutSkeleton } from "@/components/checkout/checkout-skeleton";
+import { constructMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Commander votre pressing | SafiHub Bukavu",
+export const metadata: Metadata = constructMetadata({
+  title: "Commander votre Pressing",
   description:
     "Finalisez votre commande de pressing à Bukavu avec collecte et livraison à domicile.",
-};
+  noIndex: true,
+});
 
 async function CheckoutContent() {
   const user = await getCurrentUser();

@@ -6,11 +6,14 @@ import {
   PartnerChooserAdmin,
   PartnerChooserEmpty,
 } from "@/components/house/chooser";
+import type { Metadata } from "next";
+import { constructMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Espace Partenaire — SafiHub",
+export const metadata: Metadata = constructMetadata({
+  title: "Espace Partenaire Pressing",
   description: "Sélectionnez votre atelier de pressing pour accéder à votre tableau de bord.",
-};
+  noIndex: true,
+});
 
 // instant = false: kept on purpose — authenticated partner chooser route
 export const instant = false;

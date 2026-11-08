@@ -10,12 +10,15 @@ import {
   NEARBY_RADIUS_OPTIONS_KM,
   type NearbyRadiusKm,
 } from "@/lib/validations/location";
+import { constructMetadata } from "@/lib/seo";
+import { createBreadcrumbJsonLd } from "@/lib/json-ld";
 
-export const metadata: Metadata = {
-  title: "Trouver un Pressing à Bukavu | SafiHub",
+export const metadata: Metadata = constructMetadata({
+  title: "Trouver un Pressing à Bukavu — Comparateur & Tarifs",
   description:
-    "Recherchez et comparez les meilleures maisons de pressing à Bukavu par quartier, tarifs et délais de livraison.",
-};
+    "Recherchez et comparez les meilleures maisons de pressing à Bukavu par quartier, tarifs et délais de livraison à domicile.",
+  path: "/houses",
+});
 
 type SearchParamsInput = Promise<Record<string, string | string[] | undefined>>;
 
@@ -114,8 +117,17 @@ export default function CustomerHousesPage({
 }: {
   searchParams: SearchParamsInput;
 }) {
+  const breadcrumbsJsonLd = createBreadcrumbJsonLd([
+    { name: "Accueil", path: "/" },
+    { name: "Pressings", path: "/houses" },
+  ]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }}
+      />
       <SessionNavbar variant="solid" />
       <main className="flex-1 overflow-hidden">
         <Suspense fallback={<HousesSearchSkeleton />}>

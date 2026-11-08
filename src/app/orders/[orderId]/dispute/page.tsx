@@ -4,15 +4,23 @@ import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/services/auth";
 import { getCustomerOrderDetail } from "@/services/order";
 import { DisputeForm } from "@/components/disputes/dispute-form";
+import type { Metadata } from "next";
+import { constructMetadata } from "@/lib/seo";
 
 interface OrderDisputePageProps {
   params: Promise<{ orderId: string }>;
 }
 
-export const metadata = {
-  title: "Déclarer un litige — SafiHub",
-  description: "Formulaire de déclaration de litige pour une commande de pressing.",
-};
+export async function generateMetadata({
+  params,
+}: OrderDisputePageProps): Promise<Metadata> {
+  const { orderId } = await params;
+  return constructMetadata({
+    title: `Litige sur Commande #${orderId.slice(0, 8)}`,
+    description: "Formulaire de déclaration de litige pour une commande de pressing.",
+    noIndex: true,
+  });
+}
 
 // instant = false: kept on purpose — authenticated customer order dispute form
 export const instant = false;

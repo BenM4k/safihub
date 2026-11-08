@@ -7,12 +7,14 @@ import { ConsentPolicyHero } from "@/components/legal/consent/consent-policy-her
 import { ConsentCaptureRules } from "@/components/legal/consent/consent-capture-rules";
 import { ConsentStorageLifecycle } from "@/components/legal/consent/consent-storage-lifecycle";
 import { ConsentCustomerRights } from "@/components/legal/consent/consent-customer-rights";
+import { constructMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Consentement & Charte Photo — SafiHub Bukavu",
+export const metadata: Metadata = constructMetadata({
+  title: "Consentement & Charte Photos",
   description:
     "Politique de prise de vue et de conservation des photos d'état du linge et de preuve de livraison sur SafiHub à Bukavu (RDC).",
-};
+  path: "/consent",
+});
 
 async function PhotoConsentContent() {
   const t = await getTranslations("consentPage");

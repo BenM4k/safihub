@@ -4,12 +4,14 @@ import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { Footer } from "@/components/home/footer/footer";
 import { CartView } from "@/components/cart/cart-view";
 import { CartSkeleton } from "@/components/cart/cart-skeleton";
+import { constructMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Mon panier | SafiHub",
+export const metadata: Metadata = constructMetadata({
+  title: "Mon Panier",
   description:
     "Vérifiez vos articles de pressing et validez votre commande à Bukavu.",
-};
+  noIndex: true,
+});
 
 export default function CartPage() {
   return (

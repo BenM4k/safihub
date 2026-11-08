@@ -1,7 +1,15 @@
 import { ReactNode } from "react";
+import type { Metadata } from "next";
 import { guardAdminRoute } from "@/services/auth";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { constructMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = constructMetadata({
+  title: "Console Opérations Admin",
+  description: "Console d'administration SafiHub Bukavu.",
+  noIndex: true,
+});
 
 // instant = false: kept on purpose — authenticated admin operations console
 export const instant = false;

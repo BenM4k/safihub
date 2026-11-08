@@ -4,12 +4,14 @@ import { SecurityOverviewArch } from "@/components/legal/security/security-overv
 import { SecurityCashLedger } from "@/components/legal/security/security-cash-ledger";
 import { SecurityOfflineAntiFraud } from "@/components/legal/security/security-offline-anti-fraud";
 import { SecurityVulnerabilityDisclosure } from "@/components/legal/security/security-vulnerability-disclosure";
+import { constructMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Sécurité & Protection des Données — SafiHub Bukavu",
+export const metadata: Metadata = constructMetadata({
+  title: "Sécurité & Protection des Données",
   description:
     "Normes de sécurité de SafiHub à Bukavu : chiffrement des flux, intégrité financière avec grand livre append-only, et tolérance hors-ligne anti-fraude.",
-};
+  path: "/security",
+});
 
 export default function SecurityPage() {
   return (

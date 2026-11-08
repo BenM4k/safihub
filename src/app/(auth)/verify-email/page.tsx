@@ -1,4 +1,12 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { constructMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = constructMetadata({
+  title: "Vérification de l'Adresse E-mail",
+  description: "Vérification sécurisée de votre compte SafiHub.",
+  noIndex: true,
+});
 
 interface VerifyEmailPageProps {
   searchParams: Promise<{

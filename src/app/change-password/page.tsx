@@ -4,11 +4,15 @@ import { getUserHouseMemberships } from "@/dal";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { AuthLogo } from "@/components/auth/auth-logo";
 import { ShieldCheck } from "lucide-react";
+import type { Metadata } from "next";
+import { constructMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Changer votre mot de passe — SafiHub",
-  description: "Première connexion : définissez votre mot de passe personnel pour sécuriser votre compte.",
-};
+export const metadata: Metadata = constructMetadata({
+  title: "Changer votre Mot de Passe",
+  description:
+    "Première connexion : définissez votre mot de passe personnel pour sécuriser votre compte.",
+  noIndex: true,
+});
 
 // instant = false: kept on purpose — authenticated password change screen
 export const instant = false;

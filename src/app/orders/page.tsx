@@ -4,13 +4,17 @@ import { getCustomerOrdersList } from "@/services/order";
 import { OrdersListView } from "@/components/orders/orders-list-view";
 import Link from "next/link";
 import { ArrowLeft, Plus } from "lucide-react";
+import type { Metadata } from "next";
 import { Navbar } from "@/components/home/header/navbar";
 import { Footer } from "@/components/home/footer/footer";
+import { constructMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Mes commandes — SafiHub",
-  description: "Suivez l'historique et l'avancement de vos commandes de pressing.",
-};
+export const metadata: Metadata = constructMetadata({
+  title: "Mes Commandes",
+  description:
+    "Suivez l'historique et l'avancement de vos commandes de pressing.",
+  noIndex: true,
+});
 
 // instant = false: kept on purpose — authenticated customer orders list
 export const instant = false;

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { SessionNavbar } from "@/components/home/header/session-navbar";
 import { HeroSection } from "@/components/home/hero/hero-section";
 import { TrustBanner } from "@/components/home/trust-banner/trust-banner";
@@ -11,6 +12,16 @@ import { Footer } from "@/components/home/footer/footer";
 import { getCurrentUser, type AuthenticatedUser } from "@/services/auth";
 import { getCachedNeighborhoods } from "@/lib/cached-data";
 import type { NeighborhoodRecord } from "@/dal";
+import { constructMetadata } from "@/lib/seo";
+import { createFaqJsonLd } from "@/lib/json-ld";
+import { SAMPLE_FAQS } from "@/lib/sample-data";
+
+export const metadata: Metadata = constructMetadata({
+  title: "SafiHub — Pressing & Blanchisserie à Domicile à Bukavu",
+  description:
+    "Commandez votre pressing en ligne à Bukavu. Collecte et livraison à domicile en 24h-48h, comptage contradictoire au seuil et paiement Cash on Delivery en CDF ou USD.",
+  path: "/",
+});
 
 // instant = false: kept on purpose — homepage reads cookie-based locale (NEXT_LOCALE) and session
 export const instant = false;
@@ -55,9 +66,14 @@ async function HomeUserSections({
  */
 export default function HomePage() {
   const neighborhoodsPromise = getCachedNeighborhoods();
+  const faqJsonLd = createFaqJsonLd(SAMPLE_FAQS);
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary-soft selection:text-primary">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <SessionNavbar />
       <main className="flex-1">
         <Suspense

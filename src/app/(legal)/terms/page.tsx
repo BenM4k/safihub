@@ -4,12 +4,14 @@ import { TermsDefinitions } from "@/components/legal/terms/terms-definitions";
 import { TermsOrderLifecycle } from "@/components/legal/terms/terms-order-lifecycle";
 import { TermsPricingPayment } from "@/components/legal/terms/terms-pricing-payment";
 import { TermsLiabilityDisputes } from "@/components/legal/terms/terms-liability-disputes";
+import { constructMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Conditions Générales d'Utilisation — SafiHub Bukavu",
+export const metadata: Metadata = constructMetadata({
+  title: "Conditions Générales d'Utilisation",
   description:
     "Conditions générales de la plateforme SafiHub à Bukavu : commandes, double comptage au seuil, tarification bidevise CDF/USD, responsabilités et garanties.",
-};
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

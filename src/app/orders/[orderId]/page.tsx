@@ -16,9 +16,22 @@ import { PriceAdjustmentCard } from "@/components/orders/detail/price-adjustment
 import { DeliverySlotConfirmationCard } from "@/components/orders/detail/delivery-slot-confirmation-card";
 import { ReorderDetailButton } from "@/components/orders/detail/reorder-detail-button";
 import { OrderPhotosGallery } from "@/components/photos/order-photos-gallery";
+import type { Metadata } from "next";
+import { constructMetadata } from "@/lib/seo";
 
 interface OrderDetailPageProps {
   params: Promise<{ orderId: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: OrderDetailPageProps): Promise<Metadata> {
+  const { orderId } = await params;
+  return constructMetadata({
+    title: `Détail Commande #${orderId.slice(0, 8)}`,
+    description: "Consultez l'état et l'avancement de votre commande de pressing.",
+    noIndex: true,
+  });
 }
 
 // instant = false: kept on purpose — authenticated customer order detail

@@ -1,8 +1,16 @@
 import { ReactNode } from "react";
+import type { Metadata } from "next";
 import { guardCourierRoute } from "@/services/auth";
 import { CourierHeader } from "@/components/courier/courier-header";
 import { CourierNavTabs } from "@/components/courier/courier-nav-tabs";
 import { CourierPwaRegistrar } from "@/components/courier/courier-pwa-registrar";
+import { constructMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = constructMetadata({
+  title: "Espace Coursier",
+  description: "Application mobile de collecte et livraison SafiHub pour coursiers.",
+  noIndex: true,
+});
 
 // instant = false: kept on purpose — authenticated courier workspace
 export const instant = false;

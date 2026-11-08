@@ -39,22 +39,33 @@ export async function generateMetadata({
   }
 
   const { house } = res.value;
-  const cover = house.coverImageUrl || house.imageUrl;
-  const title = `${house.name} - Services & Tarifs | SafiHub Bukavu`;
-  const description = `Consultez les tarifs de pressing, lavage et repassage de ${house.name} à ${house.neighborhoodName}, Bukavu. Délais garantis et paiement à la livraison.`;
   const baseUrl = getAppBaseUrl();
   const pageUrl = `${baseUrl}/houses/${house.slug}`;
+  const cover =
+    house.coverImageUrl ||
+    house.imageUrl ||
+    `${baseUrl}/houses/${house.slug}/opengraph-image`;
+  const title = `${house.name} — Tarifs & Services Pressing à Bukavu`;
+  const description = `Consultez les tarifs de pressing, lavage et repassage de ${house.name} à ${house.neighborhoodName}, Bukavu. Délais garantis et paiement à la livraison.`;
 
   return {
     title,
     description,
     alternates: {
       canonical: pageUrl,
+      languages: {
+        "fr-CD": pageUrl,
+        "sw-CD": pageUrl,
+        "en-US": pageUrl,
+      },
     },
     openGraph: {
       title,
       description,
       url: pageUrl,
+      siteName: "SafiHub",
+      locale: "fr_CD",
+      alternateLocale: ["sw_CD", "en_US"],
       type: "website",
       images: [
         {
@@ -70,6 +81,15 @@ export async function generateMetadata({
       title,
       description,
       images: [cover],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+      },
     },
   };
 }

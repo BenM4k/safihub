@@ -9,11 +9,13 @@ import { getNeighborhoods } from "@/dal";
 import { ProfileForm } from "@/components/account/profile-form";
 import { AddressesList } from "@/components/account/addresses-list";
 import { ConsentsHistory } from "@/components/account/consents-history";
+import { constructMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Mon compte | SafiHub Bukavu",
+export const metadata: Metadata = constructMetadata({
+  title: "Mon Compte Client",
   description: "Gérez votre profil, vos adresses et vos préférences SafiHub.",
-};
+  noIndex: true,
+});
 
 // instant = false: kept on purpose — authenticated customer account page
 export const instant = false;
