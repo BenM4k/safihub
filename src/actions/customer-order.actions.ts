@@ -67,7 +67,7 @@ export async function getCartEstimateAction(
 export async function checkoutOrderAction(
   input: Omit<CheckoutInput, "customerId"> & { customerName?: string }
 ): Promise<CheckoutActionResult> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   let customerId = user?.id;
 
   // Task 10.1: Rate limiting on checkout
@@ -134,7 +134,7 @@ export async function cancelOrderAction(
   orderId: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: "Vous devez être connecté pour annuler." };
   }
@@ -155,7 +155,7 @@ export async function approvePriceAdjustmentAction(
   method: "app" | "tracking_link" = "app",
   trackingToken?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (method === "app" && !user) {
     return { success: false, error: "Vous devez être connecté pour valider cet ajustement." };
   }
@@ -180,7 +180,7 @@ export async function declinePriceAdjustmentAction(
   reason?: string,
   trackingToken?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (method === "app" && !user) {
     return { success: false, error: "Vous devez être connecté pour refuser cet ajustement." };
   }
@@ -206,7 +206,7 @@ export async function confirmDeliverySlotAction(
   method: "app" | "tracking_link" = "app",
   trackingToken?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (method === "app" && !user) {
     return { success: false, error: "Vous devez être connecté pour confirmer le créneau." };
   }
@@ -246,7 +246,7 @@ export async function openDisputeAction(
   orderId: string,
   formData: FormData
 ): Promise<{ success: boolean; disputeId?: string; error?: string }> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: "Vous devez être connecté pour ouvrir un litige." };
   }
@@ -300,7 +300,7 @@ export interface ReorderPastOrderActionResult {
 export async function reorderPastOrderAction(
   orderId: string
 ): Promise<ReorderPastOrderActionResult> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return {
       success: false,

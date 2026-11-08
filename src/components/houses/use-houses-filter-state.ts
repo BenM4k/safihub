@@ -350,6 +350,8 @@ export function useHousesFilterState(
           },
           { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 }
         );
+      } else {
+        toast.error(tMap("geoUnsupported"));
       }
     },
     [userLocation, navigateWithFilters, tMap]

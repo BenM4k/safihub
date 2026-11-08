@@ -51,7 +51,7 @@ export async function getPhotoUploadUrlAction(
     expiresInSeconds: number;
   }>
 > {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return err("Veuillez vous connecter pour téléverser une photo");
   }
@@ -76,7 +76,7 @@ export async function getPhotoUploadUrlAction(
 export async function recordPhotoUploadAction(
   input: z.infer<typeof recordPhotoSchema>
 ): Promise<Result<{ photoId: string; storageKey: string }>> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return err("Veuillez vous connecter pour enregistrer cette photo");
   }
@@ -118,7 +118,7 @@ export async function getPhotoDownloadUrlAction(
     expiresInSeconds: number;
   }>
 > {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
 
   const parsed = downloadUrlSchema.safeParse(input);
   if (!parsed.success) {
@@ -138,7 +138,7 @@ export async function getPhotoDownloadUrlAction(
 export async function getOrderPhotosWithSignedUrlsAction(
   input: z.infer<typeof orderPhotosQuerySchema>
 ): Promise<Result<PhotoWithSignedUrl[]>> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
 
   const parsed = orderPhotosQuerySchema.safeParse(input);
   if (!parsed.success) {

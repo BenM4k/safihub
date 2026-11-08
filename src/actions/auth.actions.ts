@@ -57,7 +57,9 @@ export async function loginAction(
 
   if (!res.ok) {
     let errorMsg = res.error;
-    if (res.error === "Account is blocked. Please contact support.") {
+    if (res.error === "EMAIL_NOT_VERIFIED") {
+      errorMsg = t("validation.emailNotVerified");
+    } else if (res.error === "Account is blocked. Please contact support.") {
       errorMsg = t("validation.accountBlocked");
     } else if (res.error === "Invalid email or password.") {
       errorMsg = t("validation.invalidCredentials");
@@ -126,7 +128,7 @@ export async function registerAction(
     };
   }
 
-  redirect("/login?registered=true");
+  redirect("/login?registered=true&unverified=true");
 }
 
 export async function logoutAction(): Promise<void> {

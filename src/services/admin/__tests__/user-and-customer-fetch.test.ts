@@ -5,10 +5,12 @@ import {
 } from "../user.service";
 import { listAdminCustomers } from "../customer.service";
 
-vi.mock("@/dal", async (importOriginal) => {
-  const actual = await importOriginal<Record<string, unknown>>();
+vi.mock("@/services/auth/guards", () => ({
+  clearSessionMemoryCache: vi.fn(),
+}));
+
+vi.mock("@/dal", () => {
   return {
-    ...actual,
     getAdminUsers: vi.fn(async (params?: { roles?: string[]; role?: string }) => {
       // Mock database records
       const allRecords = [
@@ -52,6 +54,11 @@ vi.mock("@/dal", async (importOriginal) => {
     blockUserAndRevokeSessions: vi.fn(),
     updateUserRoleAndStatus: vi.fn(),
     mergeGuestUser: vi.fn(),
+    blockAdminUserWithGuard: vi.fn(),
+    updateUserRoleWithHouseAndGuard: vi.fn(),
+    createStaffAccountTransaction: vi.fn(),
+    deleteUserSessions: vi.fn(),
+    setUserPasswordCredential: vi.fn(),
   };
 });
 

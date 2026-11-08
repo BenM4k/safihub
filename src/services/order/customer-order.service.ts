@@ -7,6 +7,7 @@ import {
   getOrderEvents,
   getOrderItems,
   getOrderByTrackingToken,
+  getUserById,
   insertOrderWithDetails,
   transitionOrderStatusAtomic,
   updateOrderDeliverySlot,
@@ -27,6 +28,7 @@ import {
 import { computeAcceptanceDeadlines } from "./deadlines";
 import { transitionOrder } from "./transitions";
 import { trackOrderCancelled, trackOrderPlaced } from "@/services/analytics";
+import { getAppBaseUrl, queueEmailNotification } from "@/services/email";
 export interface CartEstimateResult {
   items: Array<{
     houseItemId: string;
@@ -240,6 +242,34 @@ export async function placeCustomerOrder(
     amount: payload.totalDue,
     currency: "CDF",
   }).catch(() => {});
+
+  // Queue idempotent order confirmation email in background
+  getUserById(input.customerId)
+    .then((customer) => {
+      if (customer?.email && !customer.isGuest) {
+        const baseUrl = getAppBaseUrl();
+        return queueEmailNotification({
+          kind: "order_confirmation",
+          orderId: created.orderId,
+          email: customer.email,
+          customerName: customer.name || "Client SafiHub",
+          orderCode,
+          houseName: context.houses.get(input.houseId)?.name || "Pressing Partenaire",
+          pickupWindow: `${new Date(input.pickupSlot.start).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} - ${new Date(input.pickupSlot.end).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`,
+          deliveryAddress: input.landmark || "Bukavu",
+          items: input.items.map((i) => ({
+            name: `Article (${i.itemId.slice(0, 8)})`,
+            quantity: i.quantity,
+            priceCdf: i.expectedUnitPrice,
+          })),
+          totalAmountCdf: payload.totalDue,
+          trackingUrl: `${baseUrl}/track/${trackingToken}`,
+        });
+      }
+    })
+    .catch((err) => {
+      console.error("[placeCustomerOrder] Failed to queue order confirmation email:", err);
+    });
 
   return ok(created);
 }

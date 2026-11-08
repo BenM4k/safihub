@@ -82,6 +82,10 @@ export async function createZone(data: {
   return created!;
 }
 
+/**
+ * Retrieves all Bukavu neighborhoods with their associated zone details and PostGIS centroids.
+ * Neighborhoods without defined coordinates return `null` for `centroid`.
+ */
 export async function getNeighborhoods(): Promise<NeighborhoodRecord[]> {
   const rows = await db
     .select({

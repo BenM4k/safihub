@@ -102,17 +102,25 @@ describe("Better Auth & Customer Authentication", () => {
   });
 
   describe("Login and Sign Out Flow", () => {
-    it("authenticates a registered user with correct credentials and rejects invalid passwords", async () => {
+    it("enforces email verification before login and authenticates verified users", async () => {
       const email = `login-${uniqueId()}@safihub.cd`;
       const password = "ValidPassword123!";
 
-      await registerCustomer({
+      const reg = await registerCustomer({
         name: "Login User",
         email,
         password,
         phone: "+243993334444",
         consent: true,
       });
+      expect(reg.ok).toBe(true);
+
+      // Verify that registration sent an email verification link
+      const emails = getSentEmails();
+      const verifyEmail = emails.find(
+        (e) => e.to === email && e.subject.includes("Confirmez votre adresse email")
+      );
+      expect(verifyEmail).toBeDefined();
 
       // Attempt login with wrong password
       const badLogin = await loginCustomer({
@@ -121,7 +129,23 @@ describe("Better Auth & Customer Authentication", () => {
       });
       expect(badLogin.ok).toBe(false);
 
-      // Attempt login with valid password
+      // Attempt login before email verification: must be blocked!
+      const unverifiedLogin = await loginCustomer({
+        email,
+        password,
+      });
+      expect(unverifiedLogin.ok).toBe(false);
+      if (!unverifiedLogin.ok) {
+        expect(unverifiedLogin.error).toBe("EMAIL_NOT_VERIFIED");
+      }
+
+      // Verify email in database (simulating user clicking verification link)
+      await db
+        .update(schema.user)
+        .set({ emailVerified: true })
+        .where(eq(schema.user.email, email));
+
+      // Attempt login after email verification: must succeed!
       const goodLogin = await loginCustomer({
         email,
         password,
@@ -151,6 +175,12 @@ describe("Better Auth & Customer Authentication", () => {
         consent: true,
       });
 
+      // Verify user's email first
+      await db
+        .update(schema.user)
+        .set({ emailVerified: true })
+        .where(eq(schema.user.email, email));
+
       const requestRes = await requestPasswordReset({
         email,
         redirectTo: "http://localhost:3000/reset-password",
@@ -160,7 +190,9 @@ describe("Better Auth & Customer Authentication", () => {
 
       const emails = getSentEmails();
       expect(emails.length).toBeGreaterThanOrEqual(1);
-      const resetEmail = emails.find((e) => e.to === email);
+      const resetEmail = emails.find(
+        (e) => e.to === email && e.subject.includes("Réinitialisation")
+      );
       expect(resetEmail).toBeDefined();
       expect(resetEmail?.subject).toContain("Réinitialisation");
       expect(resetEmail?.text).toContain("token=");
@@ -203,6 +235,12 @@ describe("Better Auth & Customer Authentication", () => {
 
       const targetUserId = reg.value.user.id as string;
       const adminUserId = "usr_admin_001"; // seeded admin user
+
+      // Verify user's email
+      await db
+        .update(schema.user)
+        .set({ emailVerified: true })
+        .where(eq(schema.user.email, email));
 
       const adminResetRes = await adminResetUserPassword({
         adminUserId,

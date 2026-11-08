@@ -20,6 +20,7 @@ export interface AuthenticatedUser {
   role: UserRole;
   status: string;
   isGuest: boolean;
+  emailVerified?: boolean;
   contactPhone?: string | null;
   mustChangePassword?: boolean;
 }
@@ -79,6 +80,8 @@ export async function requireRole(
   const userStatus = (rawUser.status as string) || "active";
   const isBanned = Boolean(rawUser.banned);
 
+  const isEmailVerified = Boolean(rawUser.emailVerified);
+
   const authUser: AuthenticatedUser = {
     id: session.user.id,
     email: session.user.email,
@@ -86,6 +89,7 @@ export async function requireRole(
     role: userRole,
     status: userStatus,
     isGuest: Boolean(rawUser.isGuest),
+    emailVerified: isEmailVerified,
     contactPhone: (rawUser.contactPhone as string) || null,
     mustChangePassword: Boolean(rawUser.mustChangePassword),
   };
@@ -96,6 +100,14 @@ export async function requireRole(
       redirect("/login?error=blocked");
     }
     return err("Forbidden: Account is blocked.");
+  }
+
+  // Enforce mandatory email verification for all non-guest users
+  if (!authUser.isGuest && !isEmailVerified) {
+    if (options?.redirectIfUnauthorized) {
+      redirect("/login?error=unverified");
+    }
+    return err("Forbidden: Email address is not verified.");
   }
 
   const rolesArray = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
@@ -283,6 +295,7 @@ function mapSessionToAuthenticatedUser(
     role: userRole,
     status: userStatus,
     isGuest: Boolean(rawSessionUser.isGuest),
+    emailVerified: Boolean(rawSessionUser.emailVerified),
     contactPhone: (rawSessionUser.contactPhone as string) || null,
     mustChangePassword: Boolean(rawSessionUser.mustChangePassword),
   };
@@ -296,8 +309,14 @@ interface CachedSessionUser {
 const SESSION_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes in-memory TTL
 const sessionMemoryCache = new Map<string, CachedSessionUser>();
 const inFlightLookups = new Map<string, Promise<AuthenticatedUser | null>>();
+let cacheGeneration = 0;
 
+/**
+ * Clears the process-local in-memory session cache and cancels in-flight resolution effects.
+ * Increments the cache generation counter so in-flight lookups do not repopulate invalidated sessions.
+ */
 export function clearSessionMemoryCache(sessionKey?: string): void {
+  cacheGeneration++;
   if (sessionKey) {
     sessionMemoryCache.delete(sessionKey);
     inFlightLookups.delete(sessionKey);
@@ -332,6 +351,10 @@ function setInSessionMemoryCache(key: string, user: AuthenticatedUser | null): v
   });
 }
 
+/**
+ * Resolves an authenticated user from Better Auth using the request cookie header.
+ * Deduplicates concurrent lookups using an in-flight map and checks generation on completion.
+ */
 async function resolveUserByCookieHeader(
   cookieHeader: string
 ): Promise<AuthenticatedUser | null> {
@@ -345,19 +368,25 @@ async function resolveUserByCookieHeader(
     return existingInFlight;
   }
 
+  const startGeneration = cacheGeneration;
+
   const lookupPromise = (async () => {
     try {
       const reqHeaders = new Headers({ cookie: cookieHeader });
       const session = await auth.api.getSession({ headers: reqHeaders });
       if (!session?.user) {
-        setInSessionMemoryCache(cookieHeader, null);
+        if (cacheGeneration === startGeneration) {
+          setInSessionMemoryCache(cookieHeader, null);
+        }
         return null;
       }
 
       const user = mapSessionToAuthenticatedUser(
         session.user as Record<string, unknown>
       );
-      setInSessionMemoryCache(cookieHeader, user);
+      if (cacheGeneration === startGeneration) {
+        setInSessionMemoryCache(cookieHeader, user);
+      }
       return user;
     } catch {
       return null;
@@ -368,7 +397,9 @@ async function resolveUserByCookieHeader(
   try {
     return await lookupPromise;
   } finally {
-    inFlightLookups.delete(cookieHeader);
+    if (inFlightLookups.get(cookieHeader) === lookupPromise) {
+      inFlightLookups.delete(cookieHeader);
+    }
   }
 }
 

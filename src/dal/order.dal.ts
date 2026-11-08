@@ -59,6 +59,7 @@ export interface OrderListItemRecord {
 }
 
 export interface OrderDetailRecord extends OrderListItemRecord {
+  customerEmail?: string | null;
   landmark: string;
   deliverySlotStart: Date | null;
   deliverySlotEnd: Date | null;
@@ -148,6 +149,7 @@ export async function getOrders(filters?: {
       trackingToken: schema.orders.trackingToken,
       customerId: schema.orders.customerId,
       customerName: schema.user.name,
+      customerEmail: schema.user.email,
       customerPhone: schema.orders.contactPhone,
       houseId: schema.orders.houseId,
       houseName: schema.houses.name,
@@ -196,6 +198,7 @@ export async function getOrderById(
       trackingToken: schema.orders.trackingToken,
       customerId: schema.orders.customerId,
       customerName: schema.user.name,
+      customerEmail: schema.user.email,
       customerPhone: schema.orders.contactPhone,
       houseId: schema.orders.houseId,
       houseName: schema.houses.name,
@@ -2025,6 +2028,7 @@ export async function getCustomerOrders(
       trackingToken: schema.orders.trackingToken,
       customerId: schema.orders.customerId,
       customerName: schema.user.name,
+      customerEmail: schema.user.email,
       customerPhone: schema.orders.contactPhone,
       houseId: schema.orders.houseId,
       houseName: schema.houses.name,
@@ -2065,6 +2069,7 @@ export async function getOrderByTrackingToken(
       trackingToken: schema.orders.trackingToken,
       customerId: schema.orders.customerId,
       customerName: schema.user.name,
+      customerEmail: schema.user.email,
       customerPhone: schema.orders.contactPhone,
       houseId: schema.orders.houseId,
       houseName: schema.houses.name,

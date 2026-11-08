@@ -70,7 +70,9 @@ vi.mock("@/services/abuse/rate-limiter", () => ({
 }));
 
 vi.mock("@/services/email", () => ({
-  sendPartnerInvitationEmail: vi.fn(async () => {}),
+  sendPartnerInvitationEmail: vi.fn(async () => ({ success: true, id: "msg_123" })),
+  sendPartnerRejectionEmail: vi.fn(async () => ({ success: true, id: "msg_124" })),
+  queueEmailNotification: vi.fn(async () => ({ success: true, eventId: "evt_123" })),
 }));
 
 describe("Partner Application Pipeline", () => {

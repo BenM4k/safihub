@@ -250,6 +250,9 @@
     "signUp": "S'inscrire",
     "logout": "Se déconnecter",
     "registeredSuccess": "Votre compte a été créé avec succès ! Connectez-vous ci-dessous.",
+    "registeredVerifyNotice": "Votre compte a été créé avec succès ! Veuillez confirmer votre adresse email en cliquant sur le lien reçu avant de vous connecter.",
+    "emailVerifiedSuccess": "Votre adresse email a été vérifiée avec succès ! Vous pouvez maintenant vous connecter à votre compte.",
+    "emailNotVerifiedAlert": "Votre adresse email n'est pas vérifiée. Un nouveau lien de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception.",
     "resetSuccess": "Votre mot de passe a été réinitialisé avec succès ! Connectez-vous.",
     "registerTitle": "Créer un compte SafiHub",
     "registerSubtitle": "Commandez votre pressing à domicile à Bukavu",
@@ -308,6 +311,8 @@
       "accountBlocked": "Le compte est bloqué. Veuillez contacter le support.",
       "invalidCredentials": "Email ou mot de passe incorrect.",
       "rateLimited": "Trop de tentatives. Veuillez réessayer plus tard.",
+      "emailNotVerified": "Votre adresse email n'a pas encore été vérifiée. Un nouveau lien d'activation vous a été envoyé par email.",
+      "invalidVerificationToken": "Le lien de confirmation est invalide ou a expiré. Veuillez tenter de vous connecter pour recevoir un nouveau lien.",
       "phoneBlocked": "Ce numéro de téléphone est bloqué et ne peut pas être réenregistré."
     }
   },

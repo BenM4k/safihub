@@ -68,6 +68,9 @@ function computeMarkerOffsets(
   return offsets;
 }
 
+/**
+ * Subscribes to the desktop `lg` (1024px) media query breakpoint.
+ */
 function subscribeLg(callback: () => void) {
   if (typeof window === "undefined") return () => {};
   const mql = window.matchMedia("(min-width: 1024px)");
@@ -75,15 +78,25 @@ function subscribeLg(callback: () => void) {
   return () => mql.removeEventListener("change", callback);
 }
 
+/**
+ * Returns whether the client viewport matches the `lg` (1024px) breakpoint.
+ */
 function getSnapshotLg() {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(min-width: 1024px)").matches;
 }
 
+/**
+ * Server snapshot for the `lg` breakpoint (defaults to mobile/tablet shell).
+ */
 function getServerSnapshotLg() {
   return false;
 }
 
+/**
+ * Interactive Bukavu MapLibre GL map with custom house markers, radius boundaries,
+ * and bottom-sheet house preview cards.
+ */
 export function BukavuInteractiveMap({
   houses,
   hoveredHouseId,

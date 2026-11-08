@@ -4,7 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
 import { nextCookies } from "better-auth/next-js";
 import { db, schema } from "@/dal";
-import { sendPasswordResetEmail } from "@/services/email";
+import { sendPasswordResetEmail, sendVerificationEmail } from "@/services/email";
 
 import { ac, roles } from "./permissions";
 
@@ -52,8 +52,23 @@ export const auth = betterAuth({
       maxAge: 5 * 60, // 5 minutes signed cookie cache to avoid DB round-trips on refreshes
     },
   },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url, token }) => {
+      await sendVerificationEmail({
+        email: user.email,
+        name: user.name,
+        verificationUrl: url,
+        token,
+      });
+    },
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
+  },
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+    autoSignIn: false,
     sendResetPassword: async ({ user, url, token }) => {
       await sendPasswordResetEmail({
         email: user.email,
@@ -102,6 +117,9 @@ export const auth = betterAuth({
           });
           if (userRecord?.status === "blocked" || userRecord?.banned) {
             throw new Error("Account is blocked. Please contact support.");
+          }
+          if (userRecord && !userRecord.isGuest && !userRecord.emailVerified) {
+            throw new Error("EMAIL_NOT_VERIFIED");
           }
         },
       },

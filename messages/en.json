@@ -250,6 +250,9 @@
     "signUp": "Sign Up",
     "logout": "Log Out",
     "registeredSuccess": "Your account has been created successfully! Please sign in below.",
+    "registeredVerifyNotice": "Your account has been created successfully! Please verify your email address by clicking the link sent to your inbox before signing in.",
+    "emailVerifiedSuccess": "Your email address has been verified successfully! You can now sign in to your account.",
+    "emailNotVerifiedAlert": "Your email address is not verified. A new confirmation link has been sent to your email. Please check your inbox.",
     "resetSuccess": "Your password has been reset successfully! Please sign in.",
     "registerTitle": "Create a SafiHub Account",
     "registerSubtitle": "Order laundry pickup & delivery in Bukavu",
@@ -308,6 +311,8 @@
       "accountBlocked": "Account is blocked. Please contact support.",
       "invalidCredentials": "Invalid email or password.",
       "rateLimited": "Too many attempts. Please try again later.",
+      "emailNotVerified": "Your email address has not been verified yet. A new verification link has been sent to your email.",
+      "invalidVerificationToken": "The verification link is invalid or has expired. Please try signing in to receive a new link.",
       "phoneBlocked": "This phone number is blocked and cannot re-register."
     }
   },

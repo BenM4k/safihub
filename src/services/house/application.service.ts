@@ -7,6 +7,7 @@ import {
 } from "@/dal/house-application.dal";
 import { rateLimitPartnerApplication } from "@/services/abuse/rate-limiter";
 import { partnerApplicationSchema } from "@/lib/validations/partner-application.schema";
+import { queueEmailNotification } from "@/services/email";
 
 export async function submitPartnerApplication(params: {
   houseName: string;
@@ -62,6 +63,16 @@ export async function submitPartnerApplication(params: {
       servicesNote: parsed.data.servicesNote || null,
       hoursNote: parsed.data.hoursNote || null,
       message: parsed.data.message || null,
+    });
+
+    void queueEmailNotification({
+      kind: "partner_application_received",
+      applicationId: application.id,
+      email: application.email,
+      contactName: application.contactName,
+      houseName: application.houseName,
+    }).catch((err) => {
+      console.error("[submitPartnerApplication] Failed to queue email notification:", err);
     });
 
     return ok(application);

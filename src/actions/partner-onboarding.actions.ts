@@ -24,7 +24,7 @@ const stepUpdateSchema = z.object({
 export async function updateOnboardingStepAction(
   params: z.input<typeof stepUpdateSchema>
 ): Promise<Result<{ status: PartnerOnboardingStatus; lastStepId: string | null }>> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return err("Session expirée.");
   }
@@ -64,7 +64,7 @@ export async function skipOnboardingTourAction(params?: {
   tourId?: string;
   stepId?: string;
 }): Promise<Result<{ success: boolean }>> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return err("Session expirée.");
   }
@@ -89,7 +89,7 @@ export async function skipOnboardingTourAction(params?: {
 export async function resetOnboardingTourAction(params?: {
   tourId?: string;
 }): Promise<Result<{ success: boolean }>> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return err("Session expirée.");
   }
@@ -115,7 +115,7 @@ export async function resetOnboardingTourAction(params?: {
 export async function recordOnboardingReminderAction(params?: {
   tourId?: string;
 }): Promise<Result<{ reminderCount: number; status: PartnerOnboardingStatus }>> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return err("Session expirée.");
   }

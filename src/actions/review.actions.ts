@@ -52,7 +52,7 @@ const ModerateReviewSchema = z.object({
 });
 
 export async function submitReviewAction(rawInput: unknown) {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: "Vous devez être connecté pour laisser un avis." };
   }
@@ -74,7 +74,7 @@ export async function submitReviewAction(rawInput: unknown) {
 }
 
 export async function submitReviewReplyAction(rawInput: unknown) {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: "Non authentifié." };
   }
@@ -96,7 +96,7 @@ export async function submitReviewReplyAction(rawInput: unknown) {
 }
 
 export async function reportReviewAction(rawInput: unknown) {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return { success: false, error: "Non authentifié." };
   }
@@ -115,7 +115,7 @@ export async function reportReviewAction(rawInput: unknown) {
 }
 
 export async function moderateReviewAction(rawInput: unknown) {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user || user.role !== "admin") {
     return { success: false, error: "Action réservée aux administrateurs." };
   }

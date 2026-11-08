@@ -32,7 +32,7 @@ export const changePasswordSchema = z
 export async function changeForcedPasswordAction(
   formData: FormData,
 ): Promise<Result<{ redirectUrl: string }>> {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser({ fresh: true });
   if (!user) {
     return err("Session expirée. Veuillez vous reconnecter.");
   }
