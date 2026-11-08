@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { getCurrentUser } from "@/services/auth";
 import { createGuestUser, isPhoneOrEmailBlocked } from "@/dal/auth.dal";
 import { rateLimitCheckout } from "@/services/abuse";
@@ -67,7 +68,31 @@ export async function getCartEstimateAction(
 export async function checkoutOrderAction(
   input: Omit<CheckoutInput, "customerId"> & { customerName?: string }
 ): Promise<CheckoutActionResult> {
-  const user = await getCurrentUser({ fresh: true });
+  const cookieStore = await cookies();
+  const hasSessionCookie = Boolean(
+    cookieStore.get("better-auth.session_token") ||
+    cookieStore.get("__Secure-better-auth.session_token")
+  );
+
+  let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
+  try {
+    user = await getCurrentUser({ fresh: true });
+  } catch {
+    return {
+      success: false,
+      error: "Erreur lors de la vérification de votre session. Veuillez réessayer.",
+      failureCode: "AUTH_REQUIRED",
+    };
+  }
+
+  if (hasSessionCookie && !user) {
+    return {
+      success: false,
+      error: "Votre session a expiré ou est invalide. Veuillez vous reconnecter.",
+      failureCode: "AUTH_REQUIRED",
+    };
+  }
+
   let customerId = user?.id;
 
   // Task 10.1: Rate limiting on checkout

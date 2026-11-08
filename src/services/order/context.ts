@@ -66,9 +66,9 @@ export async function buildOrderValidationContext(scope?: {
     neighborhoodsMap.set(n.id, n);
   }
 
-  const servicesMap = new Map(dbServices.map((s) => [s.id, { id: s.id, isActive: s.isActive }]));
-  const itemsMap = new Map(dbItems.map((i) => [i.id, { id: i.id, isActive: i.isActive }]));
-  const fabricsMap = new Map(dbFabrics.map((f) => [f.id, { id: f.id, isActive: f.isActive }]));
+  const servicesMap = new Map(dbServices.map((s) => [s.id, { id: s.id, name: s.name, isActive: s.isActive }]));
+  const itemsMap = new Map(dbItems.map((i) => [i.id, { id: i.id, name: i.name, isActive: i.isActive }]));
+  const fabricsMap = new Map(dbFabrics.map((f) => [f.id, { id: f.id, name: f.name, isActive: f.isActive }]));
 
   return {
     existingOrders: validationData.existingOrders,

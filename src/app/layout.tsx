@@ -41,18 +41,10 @@ async function LocaleProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * Synchronous fallback shell rendered while the RootLayout Suspense boundary resolves.
- * Provides accessible loading state across supported locales (French, Swahili, English)
- * before the locale provider and translations initialize.
- */
 function RootLoadingFallback() {
   return (
     <div className="flex min-h-[50vh] w-full items-center justify-center p-6">
-      <Spinner
-        className="size-8 text-primary"
-        aria-label="Chargement... / Inapakia... / Loading..."
-      />
+      <Spinner className="size-8 text-primary" />
     </div>
   );
 }

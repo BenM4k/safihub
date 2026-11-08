@@ -1,24 +1,8 @@
 import "server-only";
+import { getAppBaseUrl } from "@/lib/app-url";
 
+export { getAppBaseUrl };
 export type EmailSenderType = "contact" | "sales" | "support" | "partners" | "noreply";
-
-/**
- * Resolves the public base URL of the application for email links (tracking, CTA buttons, auth tokens).
- * Priority order:
- * 1. NEXT_PUBLIC_APP_URL
- * 2. BETTER_AUTH_URL
- * 3. https://${EMAIL_DOMAIN} (fallback to https://safihub.online)
- */
-export function getAppBaseUrl(): string {
-  const candidate =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.BETTER_AUTH_URL?.trim() ||
-    (process.env.EMAIL_DOMAIN?.trim()
-      ? `https://${process.env.EMAIL_DOMAIN.trim()}`
-      : "https://safihub.online");
-
-  return candidate.replace(/\/+$/, "");
-}
 
 /**
  * Returns the active domain for transactional emails.

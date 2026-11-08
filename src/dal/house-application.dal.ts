@@ -275,7 +275,7 @@ export async function approveHouseApplicationTransaction(params: {
       userId = existingUser.id;
       await tx
         .update(schema.user)
-        .set({ role: "house", emailVerified: true, updatedAt: new Date() })
+        .set({ role: "house", updatedAt: new Date() })
         .where(eq(schema.user.id, userId));
     } else {
       userId = params.user.id;
@@ -289,7 +289,7 @@ export async function approveHouseApplicationTransaction(params: {
         isGuest: false,
         status: "active",
         banned: false,
-        emailVerified: true,
+        emailVerified: false,
       });
     }
 

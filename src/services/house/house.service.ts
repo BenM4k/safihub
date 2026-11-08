@@ -94,6 +94,7 @@ async function queueOrderStatusWhatsAppNotification(params: {
 
     if (
       params.status === "price_adjusted" &&
+      !order.isCustomerGuest &&
       order.customerEmail &&
       order.customerEmail.includes("@")
     ) {

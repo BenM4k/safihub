@@ -70,6 +70,7 @@ vi.mock("@/services/abuse/rate-limiter", () => ({
 }));
 
 vi.mock("@/services/email", () => ({
+  getAppBaseUrl: vi.fn(() => "http://localhost:3000"),
   sendPartnerInvitationEmail: vi.fn(async () => ({ success: true, id: "msg_123" })),
   sendPartnerRejectionEmail: vi.fn(async () => ({ success: true, id: "msg_124" })),
   queueEmailNotification: vi.fn(async () => ({ success: true, eventId: "evt_123" })),

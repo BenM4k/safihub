@@ -244,32 +244,53 @@ export async function placeCustomerOrder(
   }).catch(() => {});
 
   // Queue idempotent order confirmation email in background
-  getUserById(input.customerId)
-    .then((customer) => {
-      if (customer?.email && !customer.isGuest) {
-        const baseUrl = getAppBaseUrl();
-        return queueEmailNotification({
-          kind: "order_confirmation",
-          orderId: created.orderId,
-          email: customer.email,
-          customerName: customer.name || "Client SafiHub",
-          orderCode,
-          houseName: context.houses.get(input.houseId)?.name || "Pressing Partenaire",
-          pickupWindow: `${new Date(input.pickupSlot.start).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} - ${new Date(input.pickupSlot.end).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`,
-          deliveryAddress: input.landmark || "Bukavu",
-          items: input.items.map((i) => ({
-            name: `Article (${i.itemId.slice(0, 8)})`,
+  try {
+    const customer = await getUserById(input.customerId);
+    if (customer?.email && !customer.isGuest) {
+      const baseUrl = getAppBaseUrl();
+      const pickupStartStr = new Date(input.pickupSlot.start).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Africa/Lubumbashi",
+      });
+      const pickupEndStr = new Date(input.pickupSlot.end).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Africa/Lubumbashi",
+      });
+
+      const items = input.items
+        .map((i) => {
+          const itemInfo = context.masterItems.get(i.itemId);
+          const serviceInfo = context.masterServices.get(i.serviceId);
+          const itemName = itemInfo?.name;
+          if (!itemName) return null;
+          const displayName = serviceInfo?.name ? `${itemName} (${serviceInfo.name})` : itemName;
+          return {
+            name: displayName,
             quantity: i.quantity,
             priceCdf: i.expectedUnitPrice,
-          })),
-          totalAmountCdf: payload.totalDue,
-          trackingUrl: `${baseUrl}/track/${trackingToken}`,
-        });
-      }
-    })
-    .catch((err) => {
-      console.error("[placeCustomerOrder] Failed to queue order confirmation email:", err);
-    });
+          };
+        })
+        .filter((i): i is NonNullable<typeof i> => i !== null);
+
+      await queueEmailNotification({
+        kind: "order_confirmation",
+        orderId: created.orderId,
+        email: customer.email,
+        customerName: customer.name || "Client SafiHub",
+        orderCode,
+        houseName: context.houses.get(input.houseId)?.name || "Pressing Partenaire",
+        pickupWindow: `${pickupStartStr} - ${pickupEndStr}`,
+        deliveryAddress: input.landmark || "Bukavu",
+        items,
+        totalAmountCdf: payload.totalDue,
+        trackingUrl: `${baseUrl}/track/${trackingToken}`,
+      });
+    }
+  } catch (err) {
+    console.error("[placeCustomerOrder] Failed to queue order confirmation email:", err);
+  }
 
   return ok(created);
 }

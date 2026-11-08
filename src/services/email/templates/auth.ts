@@ -35,7 +35,7 @@ Pour activer votre compte et commencer à commander votre pressing à domicile, 
 ${targetUrl}
 
 ${token ? `Code de vérification : ${token}\n` : ""}
-Ce lien expirera dans 24 heures. Si vous n'êtes pas à l'origine de cette inscription, vous pouvez ignorer ce message.
+Ce lien expirera dans 1 heure. Si vous n'êtes pas à l'origine de cette inscription, vous pouvez ignorer ce message.
 
 L'équipe SafiHub Bukavu`;
 
@@ -63,7 +63,7 @@ L'équipe SafiHub Bukavu`;
 
     <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #F2F4F7;">
       <p style="font-size: 12px; color: #98A2B3; margin: 0;">
-        Ce lien expirera dans 24 heures. Si vous n'avez pas créé de compte SafiHub, vous pouvez ignorer cet e-mail.
+        Ce lien expirera dans 1 heure. Si vous n'avez pas créé de compte SafiHub, vous pouvez ignorer cet e-mail.
       </p>
     </div>
   `;

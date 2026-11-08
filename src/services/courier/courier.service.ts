@@ -62,11 +62,17 @@ async function queueCourierOrderStatusWhatsAppNotification(params: {
 
     if (
       params.status === "delivered" &&
+      !order.isCustomerGuest &&
       order.customerEmail &&
       order.customerEmail.includes("@")
     ) {
-      const rate = Number(order.exchangeRateUsed) || 2800;
-      const totalPaidUsd = Number((order.totalDue / rate).toFixed(2));
+      const rateNumber = order.exchangeRateUsed ? Number(order.exchangeRateUsed) : null;
+      const isValidRate =
+        typeof rateNumber === "number" && Number.isFinite(rateNumber) && rateNumber > 0;
+      const isUsd = order.paymentCurrency === "USD" && isValidRate;
+      const totalPaidUsd = isUsd && rateNumber ? Number((order.totalDue / rateNumber).toFixed(2)) : null;
+      const exchangeRate = isUsd ? rateNumber : null;
+
       await queueEmailNotification({
         kind: "order_delivered_receipt",
         orderId: order.id,
@@ -76,7 +82,7 @@ async function queueCourierOrderStatusWhatsAppNotification(params: {
         houseName: order.houseName || "Pressing Partenaire",
         totalPaidCdf: order.totalDue,
         totalPaidUsd,
-        exchangeRate: rate,
+        exchangeRate,
         trackingUrl: `${getAppBaseUrl()}/track/${order.trackingToken}`,
       }).catch(() => {});
     }

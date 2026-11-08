@@ -84,26 +84,50 @@ export async function sendHouseSettlementEmail({
   email: string;
   houseName: string;
   netPayoutAmountCdf: number;
-  commissionAmountCdf: number;
-  ordersCount: number;
+  commissionAmountCdf?: number;
+  ordersCount?: number;
   settlementId: string;
 }): Promise<{ id: string; success: boolean; error?: string }> {
   const safeHouse = escapeHtml(houseName);
   const formattedPayout = new Intl.NumberFormat("fr-CD").format(netPayoutAmountCdf);
-  const formattedCommission = new Intl.NumberFormat("fr-CD").format(commissionAmountCdf);
+  const formattedCommission =
+    typeof commissionAmountCdf === "number"
+      ? new Intl.NumberFormat("fr-CD").format(commissionAmountCdf)
+      : null;
 
   const subject = `SafiHub — Relevé de versement pour l'atelier "${houseName}"`;
 
-  const text = `Bonjour,
+  const textLines = [
+    "Bonjour,",
+    "",
+    `Un règlement de versement SafiHub a été émis pour votre atelier "${houseName}" :`,
+    "",
+    `- Référence règlement : ${settlementId}`,
+  ];
+  if (typeof ordersCount === "number") {
+    textLines.push(`- Commandes traitées : ${ordersCount}`);
+  }
+  if (formattedCommission !== null) {
+    textLines.push(`- Commission plateforme : ${formattedCommission} CDF`);
+  }
+  textLines.push(`- Montant net versé : ${formattedPayout} CDF`, "", "L'équipe SafiHub Bukavu");
+  const text = textLines.join("\n");
 
-Un règlement de versement SafiHub a été émis pour votre atelier "${houseName}" :
+  const ordersRow =
+    typeof ordersCount === "number"
+      ? `<tr>
+          <td style="color: #475467; padding: 4px 0;">Commandes clôturées :</td>
+          <td style="font-weight: 600; color: #101828;">${ordersCount}</td>
+        </tr>`
+      : "";
 
-- Référence règlement : ${settlementId}
-- Commandes traitées : ${ordersCount}
-- Commission plateforme : ${formattedCommission} CDF
-- Montant net versé : ${formattedPayout} CDF
-
-L'équipe SafiHub Bukavu`;
+  const commissionRow =
+    formattedCommission !== null
+      ? `<tr>
+          <td style="color: #475467; padding: 4px 0;">Commission SafiHub :</td>
+          <td style="color: #475467;">${formattedCommission} CDF</td>
+        </tr>`
+      : "";
 
   const contentHtml = `
     <h2 style="font-size: 18px; margin: 0 0 16px 0; color: #101828; font-weight: 700;">
@@ -122,14 +146,8 @@ L'équipe SafiHub Bukavu`;
           <td style="color: #475467; padding: 4px 0;">Référence :</td>
           <td style="font-weight: 600; color: #101828;">${escapeHtml(settlementId)}</td>
         </tr>
-        <tr>
-          <td style="color: #475467; padding: 4px 0;">Commandes clôturées :</td>
-          <td style="font-weight: 600; color: #101828;">${ordersCount}</td>
-        </tr>
-        <tr>
-          <td style="color: #475467; padding: 4px 0;">Commission SafiHub :</td>
-          <td style="color: #475467;">${formattedCommission} CDF</td>
-        </tr>
+        ${ordersRow}
+        ${commissionRow}
         <tr style="border-top: 1px solid #A6F4C5;">
           <td style="padding-top: 8px; font-weight: 700; color: #027A48;">Montant net versé :</td>
           <td style="padding-top: 8px; font-weight: 700; color: #027A48; font-size: 15px;">${formattedPayout} CDF</td>

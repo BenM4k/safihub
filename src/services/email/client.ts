@@ -62,6 +62,11 @@ export async function sendEmail({
 
   const resendApiKey = process.env.RESEND_API_KEY;
 
+  if (process.env.NODE_ENV === "production" && !resendApiKey) {
+    console.error("[Email Service] RESEND_API_KEY is not configured in production");
+    return { id: emailId, success: false, error: "RESEND_API_KEY is not configured" };
+  }
+
   if (resendApiKey && process.env.NODE_ENV !== "test") {
     try {
       const response = await fetch("https://api.resend.com/emails", {
@@ -77,6 +82,7 @@ export async function sendEmail({
           html,
           text,
         }),
+        signal: AbortSignal.timeout(10_000),
       });
 
       if (!response.ok) {

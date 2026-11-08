@@ -58,8 +58,17 @@ describe("Transactional Email Service & Templates", () => {
         delete process.env.NEXT_PUBLIC_APP_URL;
         expect(getAppBaseUrl()).toBe("https://auth.safihub.online");
       } finally {
-        process.env.NEXT_PUBLIC_APP_URL = originalNext;
-        process.env.BETTER_AUTH_URL = originalAuth;
+        if (originalNext === undefined) {
+          delete process.env.NEXT_PUBLIC_APP_URL;
+        } else {
+          process.env.NEXT_PUBLIC_APP_URL = originalNext;
+        }
+
+        if (originalAuth === undefined) {
+          delete process.env.BETTER_AUTH_URL;
+        } else {
+          process.env.BETTER_AUTH_URL = originalAuth;
+        }
       }
     });
   });

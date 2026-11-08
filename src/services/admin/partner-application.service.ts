@@ -15,6 +15,7 @@ import { generateSecurePassword } from "@/lib/user-guardrails";
 import {
   getAppBaseUrl,
   queueEmailNotification,
+  sendPartnerInvitationEmail,
 } from "@/services/email";
 import type { ApplicationStatus } from "@/services/db/schema";
 
@@ -138,16 +139,16 @@ export async function approvePartnerApplication(params: {
     const baseUrl = getAppBaseUrl();
     const inviteUrl = `${baseUrl}/login`;
 
-    void queueEmailNotification({
-      kind: "partner_application_approved",
-      applicationId: application.id,
+    // Send credential-bearing invitation directly outside queueEmailNotification
+    // to prevent storing plaintext credentials in the durable Inngest event store.
+    void sendPartnerInvitationEmail({
       email: application.email,
       contactName: application.contactName,
       houseName: application.houseName,
       inviteUrl,
       temporaryPassword: passwordApplied ? plainPassword : undefined,
     }).catch((err) => {
-      console.error("[approvePartnerApplication] Email queue warning:", err);
+      console.error("[approvePartnerApplication] Direct email delivery warning:", err);
     });
 
     return ok({

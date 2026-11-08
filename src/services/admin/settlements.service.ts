@@ -75,15 +75,16 @@ export async function settleAdminHouse(params: {
         const staff = await dal.getHouseStaff(params.houseId).catch(() => []);
         const primaryRecipient = staff.find((s) => s.email && s.email.includes("@")) || null;
         if (primaryRecipient?.email) {
-          await queueEmailNotification({
-            kind: "house_settlement_disbursed",
-            settlementId: res.settlementId || params.reference?.trim() || `settle-${Date.now()}`,
-            email: primaryRecipient.email,
-            houseName: houseName || "Pressing Partenaire",
-            netPayoutAmountCdf: params.currency === "USD" ? params.amount * 2800 : params.amount,
-            commissionAmountCdf: 0,
-            ordersCount: 1,
-          }).catch(() => {});
+          const payoutCdf = res.amountCDF ?? (params.currency === "CDF" ? params.amount : undefined);
+          if (typeof payoutCdf === "number") {
+            await queueEmailNotification({
+              kind: "house_settlement_disbursed",
+              settlementId: res.settlementId || params.reference?.trim() || `settle-${Date.now()}`,
+              email: primaryRecipient.email,
+              houseName: houseName || "Pressing Partenaire",
+              netPayoutAmountCdf: payoutCdf,
+            }).catch(() => {});
+          }
         }
       })
       .catch(() => {});

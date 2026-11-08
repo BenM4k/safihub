@@ -63,7 +63,6 @@ export type EmailNotificationJobPayload =
       contactName: string;
       houseName: string;
       inviteUrl: string;
-      temporaryPassword?: string;
     }
   | {
       kind: "partner_application_rejected";
@@ -80,6 +79,7 @@ export type EmailNotificationJobPayload =
       houseName: string;
       isActive: boolean;
       reason?: string;
+      eventId?: string;
     }
   | {
       kind: "house_staff_linked";
@@ -88,6 +88,7 @@ export type EmailNotificationJobPayload =
       userName: string;
       houseName: string;
       houseSlug: string;
+      eventId?: string;
     }
   | {
       kind: "house_settlement_disbursed";
@@ -95,8 +96,8 @@ export type EmailNotificationJobPayload =
       email: string;
       houseName: string;
       netPayoutAmountCdf: number;
-      commissionAmountCdf: number;
-      ordersCount: number;
+      commissionAmountCdf?: number;
+      ordersCount?: number;
     };
 
 /**

@@ -1539,7 +1539,7 @@ export async function settleHouseBalance(params: {
   period?: string;
   note?: string;
   adminId?: string;
-}): Promise<{ ok: boolean; settlementId?: string; newBalanceCDF: number; error?: string }> {
+}): Promise<{ ok: boolean; settlementId?: string; amountCDF?: number; newBalanceCDF: number; error?: string }> {
   return await db.transaction(async (tx) => {
     // 1. Lock house row to serialize settlements per house
     const [house] = await tx
@@ -1641,6 +1641,7 @@ export async function settleHouseBalance(params: {
     return {
       ok: true,
       settlementId: entry.id,
+      amountCDF: amountInCDF,
       newBalanceCDF: currentBalanceCDF - amountInCDF,
     };
   });
@@ -1854,7 +1855,7 @@ export async function settleCourierPay(params: {
   period?: string;
   note?: string;
   adminId?: string;
-}): Promise<{ ok: boolean; settlementId?: string; newBalanceCDF: number; error?: string }> {
+}): Promise<{ ok: boolean; settlementId?: string; amountCDF?: number; newBalanceCDF: number; error?: string }> {
   return await db.transaction(async (tx) => {
     // 1. Lock courier profile row to serialize settlements per courier
     const [profile] = await tx
@@ -1956,6 +1957,7 @@ export async function settleCourierPay(params: {
     return {
       ok: true,
       settlementId: entry.id,
+      amountCDF: amountInCDF,
       newBalanceCDF: currentBalanceCDF - amountInCDF,
     };
   });

@@ -13,6 +13,10 @@ import {
   sendPartnerRejectionEmail,
 } from "./index";
 
+/**
+ * Constructs a deterministic 24-hour idempotency key for Inngest event deduplication.
+ * Ensures that retries of identical operations do not generate duplicate emails.
+ */
 export function buildIdempotentEmailKey(payload: EmailNotificationJobPayload): string {
   switch (payload.kind) {
     case "order_confirmation":
@@ -28,9 +32,9 @@ export function buildIdempotentEmailKey(payload: EmailNotificationJobPayload): s
     case "partner_application_rejected":
       return `email-partner-app-rejected-${payload.applicationId}`;
     case "house_status_changed":
-      return `email-house-status-${payload.houseId}-${payload.email}-${payload.isActive}`;
+      return `email-house-status-${payload.houseId}-${payload.email}-${payload.eventId || (payload.isActive ? "active" : "inactive")}`;
     case "house_staff_linked":
-      return `email-house-staff-${payload.houseId}-${payload.email}`;
+      return `email-house-staff-${payload.houseId}-${payload.email}-${payload.eventId || "linked"}`;
     case "house_settlement_disbursed":
       return `email-house-settlement-${payload.settlementId}`;
   }

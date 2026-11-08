@@ -1,6 +1,9 @@
 import "server-only";
 import { getEmailDomain } from "../domain";
 
+/**
+ * Escapes unsafe HTML characters to prevent XSS in email bodies.
+ */
 export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -27,6 +30,10 @@ const BADGE_STYLES = {
   destructive: "background-color: #FEF3F2; color: #D92D20; border: 1px solid #FECDCA;",
 };
 
+/**
+ * Wraps content in the SafiHub standard transactional email layout.
+ * Conforms to brand guide design tokens: Royal Indigo (#2824D5), slate neutrals, solid buttons.
+ */
 export function renderEmailLayout(options: EmailLayoutOptions): string {
   const domain = getEmailDomain();
   const safeTitle = escapeHtml(options.title);
