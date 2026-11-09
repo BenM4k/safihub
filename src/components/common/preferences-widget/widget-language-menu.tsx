@@ -50,7 +50,7 @@ export function WidgetLanguageMenu({
   };
 
   return (
-    <div className="p-3 bg-slate-50/70 dark:bg-white/[0.03] border-b border-slate-100 dark:border-white/10 animate-in fade-in duration-150">
+    <div className="p-3 bg-slate-50/70 dark:bg-white/[0.03] border-b border-slate-100 dark:border-white/10 animate-in fade-in-0 slide-in-from-top-2 duration-300 ease-out">
       <div className="flex items-center justify-between pb-2 mb-1 border-b border-slate-200/60 dark:border-white/5">
         <span className="text-xs font-bold text-heading">
           {t("languageHeader")}

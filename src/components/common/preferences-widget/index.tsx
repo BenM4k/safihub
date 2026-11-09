@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { UserCheck, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { AppLocale } from "@/i18n/config";
 import { usePreferences } from "./use-preferences";
 import { WidgetHeader } from "./widget-header";
@@ -16,8 +17,26 @@ export function PreferencesWidget() {
   const t = useTranslations("preferences");
   const currentLocale = useLocale() as AppLocale;
   const [isOpen, setIsOpen] = useState(false);
+  const [isRendered, setIsRendered] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const closeWidget = useCallback(() => {
+    setIsOpen(false);
+    setIsLanguageMenuOpen(false);
+  }, []);
+
+  const toggleWidget = useCallback(() => {
+    setIsOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setIsRendered(true);
+      } else {
+        setIsLanguageMenuOpen(false);
+      }
+      return next;
+    });
+  }, []);
 
   const {
     preferences,
@@ -36,10 +55,9 @@ export function PreferencesWidget() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.altKey && (event.key === "a" || event.key === "A")) {
         event.preventDefault();
-        setIsOpen((prev) => !prev);
+        toggleWidget();
       } else if (event.key === "Escape" && isOpen) {
-        setIsOpen(false);
-        setIsLanguageMenuOpen(false);
+        closeWidget();
       }
     }
 
@@ -48,8 +66,7 @@ export function PreferencesWidget() {
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
       ) {
-        setIsOpen(false);
-        setIsLanguageMenuOpen(false);
+        closeWidget();
       }
     }
 
@@ -62,12 +79,7 @@ export function PreferencesWidget() {
       window.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen]);
-
-  const handleClose = () => {
-    setIsOpen(false);
-    setIsLanguageMenuOpen(false);
-  };
+  }, [closeWidget, isOpen, toggleWidget]);
 
   return (
     <div
@@ -75,18 +87,29 @@ export function PreferencesWidget() {
       className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 print:hidden"
     >
       {/* Floating Popover Panel */}
-      {isOpen && (
+      {isRendered && (
         <div
           role="dialog"
           aria-label={t("title")}
-          className="absolute bottom-16 right-0 mb-2 w-[calc(100vw-2rem)] sm:w-[380px] max-h-[min(82vh,680px)] rounded-3xl bg-white dark:bg-[#101828] border border-slate-200/90 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden transition-all animate-in fade-in zoom-in-95"
+          data-state={isOpen ? "open" : "closed"}
+          onAnimationEnd={(e) => {
+            if (e.target === e.currentTarget && !isOpen) {
+              setIsRendered(false);
+            }
+          }}
+          className={cn(
+            "absolute bottom-16 right-0 mb-2 w-[calc(100vw-2rem)] sm:w-[380px] max-h-[min(82vh,680px)] rounded-3xl bg-white dark:bg-[#101828] border border-slate-200/90 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden origin-bottom-right duration-300",
+            isOpen
+              ? "animate-in fade-in-0 zoom-in-90 slide-in-from-bottom-4 ease-out"
+              : "animate-out fade-out-0 zoom-out-90 slide-out-to-bottom-4 ease-in pointer-events-none fill-mode-forwards"
+          )}
         >
           {/* Header */}
           <WidgetHeader
             currentLocale={currentLocale}
             isLanguageMenuOpen={isLanguageMenuOpen}
             onToggleLanguageMenu={() => setIsLanguageMenuOpen((prev) => !prev)}
-            onClose={handleClose}
+            onClose={closeWidget}
           />
 
           {/* Conditional Language Switcher Menu */}
@@ -129,7 +152,7 @@ export function PreferencesWidget() {
       {/* Floating Circular Trigger / Toggle Button */}
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={toggleWidget}
         aria-label={isOpen ? t("close") : t("open")}
         aria-expanded={isOpen}
         aria-haspopup="dialog"

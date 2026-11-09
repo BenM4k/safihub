@@ -35,7 +35,7 @@ async function PartnerApplyContent() {
         <h1 className="text-3xl sm:text-4xl font-extrabold text-heading tracking-tight">
           {t("title")}
         </h1>
-        <p className="text-sm sm:text-base text-ink-600 leading-relaxed">
+        <p className="text-sm sm:text-base text-ink-600 dark:text-muted-foreground leading-relaxed">
           {t("subtitle")}
         </p>
       </div>
@@ -50,7 +50,7 @@ async function PartnerApplyContent() {
             }))}
           />
         </div>
-        <aside className="lg:col-span-1">
+        <aside className="lg:col-span-1 lg:sticky lg:top-28">
           <PartnerBenefits />
         </aside>
       </div>
@@ -65,7 +65,7 @@ export default function PartnerApplyPage() {
   ]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/50">
+    <div className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-background">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }}

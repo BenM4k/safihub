@@ -3,15 +3,13 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, AlertCircle, Loader2, Building2 } from "lucide-react";
+import { CheckCircle2, AlertCircle, Loader2, Send, ShieldCheck, Sparkles } from "lucide-react";
 import {
   submitPartnerApplicationAction,
   type PartnerApplicationActionState,
 } from "@/actions/partner-application.actions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { PartnerApplicationFields } from "./partner-application-fields";
 
 interface PartnerApplicationFormProps {
   neighborhoods: { id: string; name: string }[];
@@ -30,18 +28,18 @@ export function PartnerApplicationForm({ neighborhoods }: PartnerApplicationForm
 
   if (state.success) {
     return (
-      <div className="bg-white rounded-2xl border border-emerald-100 p-8 shadow-sm text-center stack items-center gap-4">
-        <div className="size-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-          <CheckCircle2 className="size-8" />
+      <div className="bg-white dark:bg-card rounded-2xl border border-emerald-200 dark:border-emerald-900/60 p-8 sm:p-10 shadow-xs text-center flex flex-col items-center gap-4">
+        <div className="size-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
+          <CheckCircle2 className="size-9" />
         </div>
-        <h3 className="text-xl font-bold text-heading">{t("successTitle")}</h3>
-        <p className="text-sm text-ink-600 max-w-md leading-relaxed">
+        <h3 className="text-xl sm:text-2xl font-bold text-heading">{t("successTitle")}</h3>
+        <p className="text-sm sm:text-base text-ink-600 dark:text-muted-foreground max-w-md leading-relaxed">
           {state.message || t("successMessage")}
         </p>
         <div className="pt-4 flex flex-col sm:flex-row items-center gap-3">
           <Link
             href="/"
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors shadow-xs"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors shadow-xs"
           >
             {t("backHome")}
           </Link>
@@ -51,159 +49,69 @@ export function PartnerApplicationForm({ neighborhoods }: PartnerApplicationForm
   }
 
   return (
-    <form action={formAction} className="bg-white rounded-2xl border border-border p-6 sm:p-8 shadow-xs stack gap-6">
+    <form
+      action={formAction}
+      className="bg-white dark:bg-card rounded-2xl border border-border p-6 sm:p-8 shadow-xs flex flex-col gap-7"
+    >
+      {/* Form Card Header */}
+      <div className="flex items-center justify-between pb-2 border-b border-border/70">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Sparkles className="size-5" />
+          </div>
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-heading">
+              Dossier d&apos;Adhésion Pressing
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Formulaire officiel pour blanchisseries et pressings certifiés
+            </p>
+          </div>
+        </div>
+        <span className="hidden sm:inline-flex text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-muted-foreground">
+          Bukavu, RDC
+        </span>
+      </div>
+
       {state.error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-start gap-3">
-          <AlertCircle className="size-5 shrink-0 text-rose-600 mt-0.5" />
+        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 text-sm flex items-start gap-3">
+          <AlertCircle className="size-5 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
           <span>{state.error}</span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div className="space-y-1.5">
-          <Label htmlFor="houseName" className="text-xs font-bold uppercase tracking-wider text-ink-600">
-            {t("houseNameLabel")} *
-          </Label>
-          <Input
-            id="houseName"
-            name="houseName"
-            required
-            placeholder={t("houseNamePlaceholder")}
-            disabled={isPending}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="contactName" className="text-xs font-bold uppercase tracking-wider text-ink-600">
-            {t("applicantNameLabel")} *
-          </Label>
-          <Input
-            id="contactName"
-            name="contactName"
-            required
-            placeholder={t("applicantNamePlaceholder")}
-            disabled={isPending}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-ink-600">
-            {t("phoneLabel")} *
-          </Label>
-          <Input
-            id="phone"
-            name="phone"
-            type="tel"
-            required
-            placeholder={t("phonePlaceholder")}
-            disabled={isPending}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-ink-600">
-            {t("emailLabel")} *
-          </Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            required
-            placeholder={t("emailPlaceholder")}
-            disabled={isPending}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div className="space-y-1.5">
-          <Label htmlFor="neighborhoodId" className="text-xs font-bold uppercase tracking-wider text-ink-600">
-            {t("neighborhoodLabel")}
-          </Label>
-          <select
-            id="neighborhoodId"
-            name="neighborhoodId"
-            disabled={isPending}
-            className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            <option value="">{t("selectNeighborhood")}</option>
-            {neighborhoods.map((n) => (
-              <option key={n.id} value={n.id}>
-                {n.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="neighborhoodText" className="text-xs font-bold uppercase tracking-wider text-ink-600">
-            {t("addressLabel")}
-          </Label>
-          <Input
-            id="neighborhoodText"
-            name="neighborhoodText"
-            placeholder={t("addressPlaceholder")}
-            disabled={isPending}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div className="space-y-1.5">
-          <Label htmlFor="servicesNote" className="text-xs font-bold uppercase tracking-wider text-ink-600">
-            {t("waterSupplyLabel")}
-          </Label>
-          <Input
-            id="servicesNote"
-            name="servicesNote"
-            placeholder={t("waterSupplyPlaceholder")}
-            disabled={isPending}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="hoursNote" className="text-xs font-bold uppercase tracking-wider text-ink-600">
-            {t("electricitySupplyLabel")}
-          </Label>
-          <Input
-            id="hoursNote"
-            name="hoursNote"
-            placeholder={t("electricitySupplyPlaceholder")}
-            disabled={isPending}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="message" className="text-xs font-bold uppercase tracking-wider text-ink-600">
-          {t("notesLabel")}
-        </Label>
-        <Textarea
-          id="message"
-          name="message"
-          rows={3}
-          placeholder={t("notesPlaceholder")}
-          disabled={isPending}
-        />
-      </div>
-
-      <Button
-        type="submit"
+      {/* Structured Sections */}
+      <PartnerApplicationFields
+        neighborhoods={neighborhoods}
         disabled={isPending}
-        className="w-full h-11 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl text-sm transition-all shadow-xs flex items-center justify-center gap-2"
-      >
-        {isPending ? (
-          <>
-            <Loader2 className="size-4 animate-spin" />
-            <span>{t("submitting")}</span>
-          </>
-        ) : (
-          <>
-            <Building2 className="size-4" />
-            <span>{t("submitButton")}</span>
-          </>
-        )}
-      </Button>
+        t={t}
+      />
+
+      {/* Form Action & Trust Footnote */}
+      <div className="pt-2 flex flex-col gap-3.5 border-t border-border/70">
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="w-full min-h-12 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl text-base transition-all shadow-xs flex items-center justify-center gap-2"
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              <span>{t("submitting")}</span>
+            </>
+          ) : (
+            <>
+              <Send className="size-4" />
+              <span>{t("submitButton")}</span>
+            </>
+          )}
+        </Button>
+
+        <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+          <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <span>Dossier confidentiel • Examen sous 24-48h à Bukavu • Sans engagement</span>
+        </p>
+      </div>
     </form>
   );
 }

@@ -23,7 +23,7 @@ export async function PartnerBenefits() {
   ];
 
   return (
-    <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 sm:p-8 stack gap-6">
+    <div className="bg-white dark:bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-xs stack gap-6">
       <h3 className="font-bold text-heading text-lg tracking-tight">
         {t("benefitsTitle")}
       </h3>
@@ -37,7 +37,7 @@ export async function PartnerBenefits() {
               </div>
               <div className="space-y-1">
                 <h4 className="font-semibold text-sm text-heading">{b.title}</h4>
-                <p className="text-xs text-ink-600 leading-relaxed">{b.desc}</p>
+                <p className="text-xs text-ink-600 dark:text-muted-foreground leading-relaxed">{b.desc}</p>
               </div>
             </div>
           );

@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
 import { Spinner } from "@/components/ui/spinner";
 import { ClientShellAddons } from "@/components/common/client-shell-addons";
 import { DEFAULT_LOCALE } from "@/i18n/config";
@@ -123,10 +124,18 @@ async function LocaleProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <NextIntlClientProvider locale={locale} messages={clientMessages}>
-      <TooltipProvider>
-        {children}
-        <ClientShellAddons />
-      </TooltipProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        storageKey="safihub_theme"
+        disableTransitionOnChange
+      >
+        <TooltipProvider>
+          {children}
+          <ClientShellAddons />
+        </TooltipProvider>
+      </ThemeProvider>
     </NextIntlClientProvider>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTheme } from "next-themes";
 import {
   type UserPreferences,
   type ThemeMode,
@@ -44,6 +45,7 @@ function applyDomClasses(prefs: UserPreferences) {
 }
 
 export function usePreferences() {
+  const { theme: nextTheme, setTheme: setNextTheme } = useTheme();
   const [preferences, setPreferences] =
     useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -51,6 +53,11 @@ export function usePreferences() {
     textSize: TextSize;
     highContrast: boolean;
   } | null>(null);
+
+  const effectiveTheme: ThemeMode =
+    nextTheme === "dark" || nextTheme === "light" || nextTheme === "system"
+      ? (nextTheme as ThemeMode)
+      : preferences.theme;
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -114,9 +121,10 @@ export function usePreferences() {
 
   const setTheme = useCallback(
     (theme: ThemeMode) => {
+      setNextTheme(theme);
       savePreferences({ ...preferences, theme });
     },
-    [preferences, savePreferences]
+    [preferences, savePreferences, setNextTheme]
   );
 
   const setTextSize = useCallback(
@@ -214,11 +222,15 @@ export function usePreferences() {
     } catch {
       // localStorage may fail in private mode
     }
+    setNextTheme("system");
     savePreferences(DEFAULT_PREFERENCES);
-  }, [savePreferences]);
+  }, [savePreferences, setNextTheme]);
 
   return {
-    preferences,
+    preferences: {
+      ...preferences,
+      theme: effectiveTheme,
+    },
     isLoaded,
     setTheme,
     setTextSize,
