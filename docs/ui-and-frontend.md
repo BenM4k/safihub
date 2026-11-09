@@ -155,3 +155,63 @@ Faithful reproduction of `public/ref/house-search.png`:
 - **Service Tabs:** "All Services", "Lavage & Pliage", "Repassage uniquement", "Nettoyage à sec", "Express (24h)".
 - **Item Grid:** Grouped by garment category with item name, fabric pill, unit prices in CDF & USD, and quantity steppers (`[-] count [+]`). Non-accepted items are disabled with an exclusion badge.
 - **Single-House Cart Drawer:** Sticky floating bottom bar tracking cart count, subtotal, and live progress toward the house's minimum order threshold with "Order Now" action.
+
+---
+
+## 10. Core Web Vitals, PageSpeed & Chunk-Splitting Architecture
+
+To maintain high PageSpeed Insights scores (90+ mobile & desktop) and adhere to Locked-In Invariant 11 across all customer, courier, partner, and admin routes, SafiHub enforces five core performance patterns:
+
+### 1. Translation Bundle Isolation via Nested Providers
+- **Problem:** Monolithic `messages/{fr,en,sw}.json` translation dictionaries exceed 460KB uncompressed, with `admin` (~63KB) and `house` (~47KB) portal namespaces making up >70% of the payload. Sending them on public routes severely degrades initial mobile parse and execute times.
+- **Pattern:**
+  - `src/app/layout.tsx` strips `admin` and `house` from the root client dictionary, transferring only ~107KB to public customer routes (>76% reduction).
+  - `src/app/admin/layout.tsx` and `src/app/partner/layout.tsx` inject their respective namespaces via nested `<NextIntlClientProvider messages={{ admin: ... }} />`.
+  - Non-critical client-only shell widgets (`CustomerBottomNav`, `LanguageSwitcher`, `Toaster`) are isolated in `src/components/common/client-shell-addons.tsx` and loaded dynamically (`ssr: false`).
+
+### 2. On-Demand Dynamic Modal & Sheet Splitting
+- **Problem:** Static imports of dialogs, drawers, and modal sheets cause React to include heavy form libraries, date pickers, and mutation actions in the initial page chunk, executing hydration work even when the dialog is closed.
+- **Pattern:**
+  - Non-immediate overlays MUST be imported dynamically:
+    ```tsx
+    const RequestItemDialog = dynamic(
+      () => import("./request-item-dialog").then((m) => m.RequestItemDialog),
+      { ssr: false }
+    );
+    ```
+  - Overlays MUST be guarded by open state:
+    ```tsx
+    {isOpen && <RequestItemDialog isOpen={isOpen} onClose={() => setIsOpen(false)} />}
+    ```
+  - Standardized across all workspaces:
+    - **Partner:** `RequestItemDialog`, `BulkToolsModal`, `SaveConfirmDialog`, `DeselectImpactDialog`, `ZeroCoverageDialog`, `CoverageExtensionTicketDialog`, `ClosureModal`, `HolidaysImportModal`, `PartnerOrderDetailSheet`, `PartnerOrderTicketDialog`, `PartnerOrderRejectDialog`, `PartnerOrderIssueDialog`, `ExclusionSheet`, `InviteModal`, `PayoutDetailSheet`, `SupportTicketDialog`, `StatementModal`, `PayoutReceiptModal`.
+    - **Customer:** `PressingLightbox`, `PressingReviewFormDialog`, `SwitchHouseDialog`, `PriceChangeModal`.
+    - **Admin:** `OrderDetailsSheet`, `OrderReassignDialog`, `OrderCancelDialog`, `DispatchOrderDetailsSheet`, `DispatchCallOutcomeModal`, `DispatchReassignDialog`, `NeighborhoodCentroidDialog`.
+    - **Courier:** `ConflictResolutionDialog`, `PickupFailureDialog`, `DeliveryFailureDialog`.
+
+### 3. Immediate LCP Discovery & Next.js `<Image>` Mandate
+- **Problem:** Unoptimized raw `<img>` tags or lazy-loaded hero images cause high Largest Contentful Paint (LCP) delays, layout shifts, and wasted bandwidth on 3G networks.
+- **Pattern:**
+  - The primary above-the-fold image on any route MUST use Next.js `<Image>` with `priority` and responsive `sizes`:
+    ```tsx
+    <Image
+      src={coverUrl}
+      alt={title}
+      fill
+      priority
+      sizes="(max-width: 768px) 100vw, 1200px"
+      className="object-cover"
+    />
+    ```
+  - Next.js automatically emits a high-priority `<link rel="preload" as="image">` in the document `<head>`, enabling the browser to begin fetching the LCP asset before the client JS bundle has even loaded or parsed.
+  - Raw `<img>` elements are strictly banned except inside `@vercel/og` Satori image templates and HTML email templates.
+
+### 4. Heavy Third-Party & WebGL Library Isolation
+- **MapLibre GL (~1.1MB bundle + CSS):** Must never be imported statically on initial page loads.
+  - On `/houses`: Defer MapLibre inside `BukavuInteractiveMap` (`ssr: false` with fallback `<MapSkeleton />`), preventing it from blocking the cards list paint.
+  - On `/settings` and `/admin/houses`: Defer `LocationPicker` (`ssr: false`), preventing MapLibre from being bundled into general account/house settings.
+- **Driver.js & Tour Runners:** Dynamically import `PartnerTourRunner` (`ssr: false`) to avoid blocking partner workspace hydration with onboarding tour logic.
+
+### 5. Elimination of Forced Reflows
+- Never read geometric DOM properties (`offsetWidth`, `getBoundingClientRect`, `offsetHeight`) inside arbitrary layout timers (e.g. `setTimeout(..., 150)`).
+- When scheduling layout measurements or post-mount checks, use `requestIdleCallback` (with a `setTimeout` fallback for non-supporting browsers) so measurements execute only after styles, web fonts, and layouts have stabilized without causing layout thrashing.

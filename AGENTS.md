@@ -58,6 +58,11 @@ These domain rules govern all business logic in SafiHub and must never be violat
 8. **Courier Offline First:** Courier mission execution (counts, photos, cash) must function offline (Zustand + IndexedDB) and replay safely on reconnection.
 9. **Mandatory Multilingual Coverage (FR/EN/SW):** Every user-facing UI element, route, feature, modal, toast, and error message must be localized across French (`fr`), English (`en`), and Swahili (`sw`) using `next-intl`. Key parity across `messages/{fr,en,sw}.json` is strictly maintained and type-checked via `IntlMessages`. The locale is persisted in a cookie (`NEXT_LOCALE`) toggled via a bottom-right floating circular widget.
 10. **Dual-Zone Courier Coverage & Dynamic Slot Feasibility (AC 20):** A courier serves a house by covering both the house's facility zone and the customer's delivery zone in `courier_zones`. Pickup slots are dynamically generated on the server (4 standard Bukavu windows: 08–10, 10–12, 14–16, 16–18) and only offered when at least one active on-shift courier covers both zones.
+11. **Core Web Vitals & Lazy Hydration Mandate:**
+   - **Translation Bundle Isolation:** Bulky portal translation namespaces (`admin` ~63KB, `house` ~47KB) MUST NOT be loaded into the root client messages dictionary. Sub-layouts (`/admin/layout.tsx`, `/partner/layout.tsx`) provide them via nested `NextIntlClientProvider`, reducing the client translation bundle by >76% for public routes.
+   - **On-Demand Dialog Splitting:** Non-immediate modals, dialogs, drawers, and sheets MUST be dynamically imported with `next/dynamic` (`{ ssr: false }`) and conditionally rendered with state guards (`{isOpen && <DynamicModal ... />}`). Never mount inactive modals into the DOM tree.
+   - **LCP Image Preloading:** Above-the-fold hero and card images MUST use Next.js `<Image priority sizes="..." />` to emit immediate `<link rel="preload" as="image">` tags in the HTML `<head>`. Raw `<img>` elements are forbidden outside of Satori OG generators and email HTML templates.
+   - **Heavy Library Deferral:** Heavy third-party bundles (e.g. MapLibre GL ~1.1MB, `driver.js`) must never load into the SSR critical path or block initial hydration; they must be deferred behind explicit user action or `requestIdleCallback`. No layout timers (`setTimeout`) that cause forced DOM reflows.
 
 
 ---

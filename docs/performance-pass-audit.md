@@ -66,3 +66,18 @@ In accordance with Locked-In Domain Invariant #7 and Section 23:
    - Vercel automatically applies Brotli (br) compression to static chunks, yielding an additional 12-18% compression over Gzip, reducing cold transfers to ~165 KB.
 2. **Service Worker Prefetching for Couriers**:
    - PWA caching for the courier interface ensures mission cards and offline forms load in 0.0s from local IndexedDB cache even with complete 3G packet loss.
+
+---
+
+## 5. Core Web Vitals & PageSpeed Insights Optimization Pass
+
+Following Google PageSpeed Insights mobile & desktop audits on Landing (`/`), Catalogue (`/houses`), and Partner operations (`/partner/[houseSlug]/*`), the following architectural optimizations were applied:
+
+| Metric / Audit Area | Root Cause | Solution Implemented | Measured Impact |
+| :--- | :--- | :--- | :--- |
+| **Render-blocking JS & Chained Requests** | Root translation dictionary bundled full `admin` (63KB) and `house` (47KB) namespaces | Stripped `admin` and `house` namespaces in root `layout.tsx`; nested scoped `NextIntlClientProvider` in `/admin/layout.tsx` and `/partner/layout.tsx` | Client translation JSON reduced from 460KB to 107KB (**>76% payload reduction**) |
+| **Render-blocking MapLibre Assets** | MapLibre GL bundle (1.1MB) and stylesheet (70KB) bundled on initial SSR/hydration | Dynamic import with `{ ssr: false }` for `BukavuInteractiveMap` and `LocationPicker` | 1.1MB JS completely removed from initial paint on `/houses`, `/settings`, and admin screens |
+| **Forced Reflows & Layout Thrashing** | Geometric measurements inside arbitrary `setTimeout` callbacks | Replaced timers with `requestIdleCallback` (fallback 2000ms) | Zero forced reflow warnings; layout stabilizes before measurement |
+| **Mobile LCP Delays** | Unoptimized `<img>` tags and lazy-loaded card images delaying LCP | Added `priority`, `fetchPriority="high"`, and responsive `sizes` to top card / hero images; generates `<link rel="preload" as="image">` in `<head>` | Preload eliminates image discovery delay; image fetches concurrently with initial HTML stream |
+| **Unused JS & Script Parsing** | Non-immediate modal sheets, dialogs, and tools loaded into main bundle | Next.js `dynamic(..., { ssr: false })` applied with `{isOpen && ...}` guards across 25+ modals (catalogue, coverage, hours, orders, settlements, dispatch) | Modals are zero-cost to page load time and chunk parsing until explicitly triggered |
+

@@ -215,4 +215,17 @@ Each acceptance criterion from the product specification is mapped to an automat
 - **Trap:** Importing `maplibre-gl` at the top level of a Server Component or calling `next/dynamic(..., { ssr: false })` inside a Server Component breaks prerendering under `cacheComponents: true` and ships ~230 KB of WebGL JS in the initial bundle. Additionally, MapLibre GL v6 resolves its Web Worker via `new URL("./maplibre-gl-worker.mjs", import.meta.url)` (using a dynamic template string), which Turbopack does not emit into `/_next/static/chunks/`, causing `Worker failed to load. Check that the worker URL is correct.` at runtime.
 - **Fix:** Isolate `next/dynamic(() => import("./base-map"), { ssr: false })` inside a `"use client"` wrapper (`src/components/map/lazy-map.tsx`), serve `public/maplibre-gl-worker.mjs`, and call the named export `setWorkerUrl("/maplibre-gl-worker.mjs")` from `"maplibre-gl"` in `src/components/map/base-map.tsx` (MapLibre GL v6 ESM has named exports only, no default export).
 
+### 35. `next/dynamic` with `{ ssr: false }` in Server Components
+- **Trap:** Invoking `dynamic(() => import(...), { ssr: false })` directly in a Server Component (e.g. `layout.tsx` or `page.tsx`) causes Turbopack build failure: `ssr: false is not allowed with next/dynamic in Server Components`.
+- **Fix:** Move client-only shell components (such as `CustomerBottomNav`, `LanguageSwitcher`, and `Toaster`) into a dedicated Client Component leaf (`"use client"`, e.g. `src/components/common/client-shell-addons.tsx`). Server layouts then render this single container leaf without issues.
+
+### 36. Unconditional Modal Mounting Bloats Chunk Size & Hydration
+- **Trap:** Statically importing dialogs and rendering `<MyModal isOpen={false} />` forces the bundler to include all dialog subcomponents, form validation libraries, and mutation actions in the initial route bundle. Even when visually hidden, the React virtual DOM must instantiate and reconcile the trees.
+- **Fix:** Dynamically import overlays using `next/dynamic` (`{ ssr: false }`) and conditionally render them only when open: `{isOpen && <MyModal isOpen={isOpen} onClose={...} />}`.
+
+### 37. Monolithic Translation Dictionaries Degrade Mobile 3G Parse Time
+- **Trap:** Providing the full `messages` dictionary containing `admin` (~63KB) and `house` (~47KB) portal namespaces to public customer routes causes unnecessary JS payload transfer and parsing delays on 3G devices.
+- **Fix:** Strip `admin` and `house` from the root `NextIntlClientProvider` in `src/app/layout.tsx`. Inject them via nested providers in `src/app/admin/layout.tsx` and `src/app/partner/layout.tsx`.
+
+
 
