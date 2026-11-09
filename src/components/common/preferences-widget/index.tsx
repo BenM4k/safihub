@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { UserCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AppLocale } from "@/i18n/config";
+import { shouldShowCustomerBottomNav } from "@/components/customer/customer-bottom-nav";
 import { usePreferences } from "./use-preferences";
 import { WidgetHeader } from "./widget-header";
 import { WidgetLanguageMenu } from "./widget-language-menu";
@@ -14,10 +16,11 @@ import { WidgetCookies } from "./widget-cookies";
 import { WidgetFooter } from "./widget-footer";
 
 export function PreferencesWidget() {
+  const pathname = usePathname() || "";
+  const hasBottomNav = shouldShowCustomerBottomNav(pathname);
   const t = useTranslations("preferences");
   const currentLocale = useLocale() as AppLocale;
   const [isOpen, setIsOpen] = useState(false);
-  const [isRendered, setIsRendered] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -29,9 +32,7 @@ export function PreferencesWidget() {
   const toggleWidget = useCallback(() => {
     setIsOpen((prev) => {
       const next = !prev;
-      if (next) {
-        setIsRendered(true);
-      } else {
+      if (!next) {
         setIsLanguageMenuOpen(false);
       }
       return next;
@@ -84,25 +85,17 @@ export function PreferencesWidget() {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 print:hidden"
+      className={cn(
+        "fixed right-4 md:bottom-6 md:right-6 z-50 print:hidden",
+        hasBottomNav ? "bottom-[4.25rem]" : "bottom-5"
+      )}
     >
       {/* Floating Popover Panel */}
-      {isRendered && (
+      {isOpen && (
         <div
           role="dialog"
           aria-label={t("title")}
-          data-state={isOpen ? "open" : "closed"}
-          onAnimationEnd={(e) => {
-            if (e.target === e.currentTarget && !isOpen) {
-              setIsRendered(false);
-            }
-          }}
-          className={cn(
-            "absolute bottom-16 right-0 mb-2 w-[calc(100vw-2rem)] sm:w-[380px] max-h-[min(82vh,680px)] rounded-3xl bg-white dark:bg-[#101828] border border-slate-200/90 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden origin-bottom-right duration-300",
-            isOpen
-              ? "animate-in fade-in-0 zoom-in-90 slide-in-from-bottom-4 ease-out"
-              : "animate-out fade-out-0 zoom-out-90 slide-out-to-bottom-4 ease-in pointer-events-none fill-mode-forwards"
-          )}
+          className="absolute bottom-16 right-0 mb-2 w-[calc(100vw-2rem)] sm:w-[380px] max-h-[min(82vh,680px)] rounded-3xl bg-white dark:bg-[#101828] border border-slate-200/90 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden origin-bottom-right duration-300 ease-out animate-in fade-in-0 zoom-in-90 slide-in-from-bottom-4"
         >
           {/* Header */}
           <WidgetHeader

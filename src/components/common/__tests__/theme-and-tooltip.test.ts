@@ -22,19 +22,17 @@ describe("Tooltip Responsive & Overflow Safeguards", () => {
   });
 });
 
-describe("ClientShellAddons Preferences Widget Animation Parity", () => {
+describe("ClientShellAddons Preferences Widget Mobile Positioning & Enter Animation", () => {
   const widgetPath = path.resolve(process.cwd(), "src/components/common/preferences-widget/index.tsx");
 
-  it("verifies symmetrical enter and exit animations with matching duration and origin", () => {
+  it("verifies mobile downward positioning and smooth enter animation without exit delay", () => {
     const content = fs.readFileSync(widgetPath, "utf-8");
     // Enter animation: fade-in, zoom-in, slide-in from bottom, ease-out
-    expect(content).toContain("animate-in fade-in-0 zoom-in-90 slide-in-from-bottom-4 ease-out");
-    // Exit animation: fade-out, zoom-out, slide-out to bottom, ease-in
-    expect(content).toContain("animate-out fade-out-0 zoom-out-90 slide-out-to-bottom-4 ease-in");
-    // Symmetrical duration & origin
-    expect(content).toContain("origin-bottom-right duration-300");
-    // onAnimationEnd unmounting guard
-    expect(content).toContain("onAnimationEnd");
+    expect(content).toContain("origin-bottom-right duration-300 ease-out animate-in fade-in-0 zoom-in-90 slide-in-from-bottom-4");
+    // No exit animation
+    expect(content).not.toContain("animate-out");
+    // Downward positioning on mobile
+    expect(content).toContain('hasBottomNav ? "bottom-[4.25rem]" : "bottom-5"');
   });
 });
 
