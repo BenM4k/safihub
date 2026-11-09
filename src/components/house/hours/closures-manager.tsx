@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useTransition } from "react";
 import { PlusCircle, Sparkles, AlertCircle, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -12,10 +13,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared";
 import { ClosuresList } from "./closures-list";
-import { ClosureModal } from "./closure-modal";
-import { HolidaysImportModal } from "./holidays-import-modal";
 import { getClosureStatus, type ClosureItem } from "@/lib/hours-utils";
 import type { HouseClosureRecord } from "@/dal";
+
+const ClosureModal = dynamic(
+  () => import("./closure-modal").then((m) => m.ClosureModal),
+  { ssr: false }
+);
+
+const HolidaysImportModal = dynamic(
+  () => import("./holidays-import-modal").then((m) => m.HolidaysImportModal),
+  { ssr: false }
+);
 
 interface ClosuresManagerProps {
   closures: HouseClosureRecord[];
@@ -163,23 +172,27 @@ export function ClosuresManager({
         onAddClosure={() => setIsAddModalOpen(true)}
       />
 
-      <ClosureModal
-        isOpen={isAddModalOpen}
-        onClose={() => {
-          setIsAddModalOpen(false);
-          setEditingClosure(null);
-        }}
-        closureToEdit={editingClosure}
-        existingClosures={closuresList}
-        waitingOrdersCount={waitingOrdersCount}
-        onSave={handleSaveClosure}
-      />
+      {(isAddModalOpen || editingClosure) && (
+        <ClosureModal
+          isOpen={isAddModalOpen || Boolean(editingClosure)}
+          onClose={() => {
+            setIsAddModalOpen(false);
+            setEditingClosure(null);
+          }}
+          closureToEdit={editingClosure}
+          existingClosures={closuresList}
+          waitingOrdersCount={waitingOrdersCount}
+          onSave={handleSaveClosure}
+        />
+      )}
 
-      <HolidaysImportModal
-        isOpen={isHolidaysModalOpen}
-        onClose={() => setIsHolidaysModalOpen(false)}
-        onImport={handleImportHolidays}
-      />
+      {isHolidaysModalOpen && (
+        <HolidaysImportModal
+          isOpen={isHolidaysModalOpen}
+          onClose={() => setIsHolidaysModalOpen(false)}
+          onImport={handleImportHolidays}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={Boolean(deletingClosureId)}

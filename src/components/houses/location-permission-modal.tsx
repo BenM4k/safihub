@@ -126,8 +126,23 @@ export function LocationPermissionModal({
       // Ignore storage access errors in strict privacy mode
     }
 
-    const timer = window.setTimeout(() => setOpen(true), 150);
-    return () => window.clearTimeout(timer);
+    let idleId: number | null = null;
+    let timeoutId: number | null = null;
+
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(() => setOpen(true), { timeout: 3000 });
+    } else {
+      timeoutId = window.setTimeout(() => setOpen(true), 2000);
+    }
+
+    return () => {
+      if (idleId !== null && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   const markPromptSeen = () => {

@@ -1,13 +1,18 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import dynamic from "next/dynamic";
 import { Check, AlertTriangle, Play, XCircle } from "lucide-react";
 import type { CourierMissionDetail } from "@/dal";
 import { Button } from "@/components/ui/button";
-import { PickupFailureDialog } from "./pickup-failure-dialog";
 import { PickupItemRow } from "./pickup-item-row";
 import { PickupDiscrepancyCard } from "./pickup-discrepancy-card";
 import { usePickupChecklist } from "./use-pickup-checklist";
+
+const PickupFailureDialog = dynamic(
+  () => import("./pickup-failure-dialog").then((m) => m.PickupFailureDialog),
+  { ssr: false }
+);
 
 interface PickupChecklistProps {
   detail: CourierMissionDetail;
@@ -122,12 +127,14 @@ export function PickupChecklist({ detail }: PickupChecklistProps) {
         </Button>
       </div>
 
-      <PickupFailureDialog
-        isOpen={showFailureModal}
-        onClose={() => setShowFailureModal(false)}
-        onSubmit={handleFailPickup}
-        isSubmitting={isPending}
-      />
+      {showFailureModal && (
+        <PickupFailureDialog
+          isOpen={showFailureModal}
+          onClose={() => setShowFailureModal(false)}
+          onSubmit={handleFailPickup}
+          isSubmitting={isPending}
+        />
+      )}
     </div>
   );
 }

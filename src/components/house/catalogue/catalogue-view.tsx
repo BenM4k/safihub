@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import type { HouseCatalogueItemRecord } from "@/dal";
@@ -12,8 +13,16 @@ import { CatalogueToolbar } from "./catalogue-toolbar";
 import { DesktopPricingGrid } from "./desktop-pricing-grid";
 import { MobileArticleAccordion } from "./mobile-article-accordion";
 import { StickySaveBar } from "./sticky-save-bar";
-import { SaveConfirmDialog } from "./save-confirm-dialog";
-import { BulkToolsModal } from "./bulk-tools-modal";
+
+const SaveConfirmDialog = dynamic(
+  () => import("./save-confirm-dialog").then((m) => m.SaveConfirmDialog),
+  { ssr: false }
+);
+
+const BulkToolsModal = dynamic(
+  () => import("./bulk-tools-modal").then((m) => m.BulkToolsModal),
+  { ssr: false }
+);
 
 interface CatalogueViewProps {
   items: HouseCatalogueItemRecord[];
@@ -140,32 +149,36 @@ export function CatalogueView({
         onSave={() => setShowConfirmModal(true)}
       />
 
-      <SaveConfirmDialog
-        isOpen={showConfirmModal}
-        diffs={diffs}
-        isSaving={isPending}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={() => handleBatchSave(() => setShowConfirmModal(false))}
-      />
+      {showConfirmModal && (
+        <SaveConfirmDialog
+          isOpen={showConfirmModal}
+          diffs={diffs}
+          isSaving={isPending}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={() => handleBatchSave(() => setShowConfirmModal(false))}
+        />
+      )}
 
-      <BulkToolsModal
-        isOpen={showBulkModal}
-        onClose={() => setShowBulkModal(false)}
-        services={services}
-        activeServiceId={activeServiceId}
-        selectedArticlesCount={selectedArticleIds.size}
-        totalFilteredArticlesCount={totalFilteredArticles}
-        onCopyFromService={(srcId) => copyServicePrices(srcId, activeServiceId)}
-        onAdjustPercentage={(pct) => adjustPercentage(getTargetCells(), pct)}
-        onSetFixedPrice={(px) => setFixedPrice(getTargetCells(), px)}
-        onToggleOffered={(offer) => toggleOffered(getTargetCells(), offer)}
-        onSelectAllArticles={() => {
-          const allIds = new Set<string>();
-          filteredCategoryGroups.forEach((cat) => cat.articles.forEach((a) => allIds.add(a.id)));
-          setSelectedArticleIds(allIds);
-        }}
-        onDeselectAllArticles={() => setSelectedArticleIds(new Set())}
-      />
+      {showBulkModal && (
+        <BulkToolsModal
+          isOpen={showBulkModal}
+          onClose={() => setShowBulkModal(false)}
+          services={services}
+          activeServiceId={activeServiceId}
+          selectedArticlesCount={selectedArticleIds.size}
+          totalFilteredArticlesCount={totalFilteredArticles}
+          onCopyFromService={(srcId) => copyServicePrices(srcId, activeServiceId)}
+          onAdjustPercentage={(pct) => adjustPercentage(getTargetCells(), pct)}
+          onSetFixedPrice={(px) => setFixedPrice(getTargetCells(), px)}
+          onToggleOffered={(offer) => toggleOffered(getTargetCells(), offer)}
+          onSelectAllArticles={() => {
+            const allIds = new Set<string>();
+            filteredCategoryGroups.forEach((cat) => cat.articles.forEach((a) => allIds.add(a.id)));
+            setSelectedArticleIds(allIds);
+          }}
+          onDeselectAllArticles={() => setSelectedArticleIds(new Set())}
+        />
+      )}
     </div>
   );
 }

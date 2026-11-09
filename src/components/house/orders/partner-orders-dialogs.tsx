@@ -1,10 +1,39 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { PartnerOrderListItemDTO } from "@/dal/partner-order.dal";
-import { PartnerOrderDetailSheet } from "./partner-order-detail-sheet";
-import { PartnerOrderRejectDialog } from "./partner-order-reject-dialog";
-import { PartnerOrderIssueDialog } from "./partner-order-issue-dialog";
-import { PartnerOrderTicketDialog } from "./partner-order-ticket-dialog";
+
+const PartnerOrderDetailSheet = dynamic(
+  () =>
+    import("./partner-order-detail-sheet").then(
+      (m) => m.PartnerOrderDetailSheet
+    ),
+  { ssr: false }
+);
+
+const PartnerOrderRejectDialog = dynamic(
+  () =>
+    import("./partner-order-reject-dialog").then(
+      (m) => m.PartnerOrderRejectDialog
+    ),
+  { ssr: false }
+);
+
+const PartnerOrderIssueDialog = dynamic(
+  () =>
+    import("./partner-order-issue-dialog").then(
+      (m) => m.PartnerOrderIssueDialog
+    ),
+  { ssr: false }
+);
+
+const PartnerOrderTicketDialog = dynamic(
+  () =>
+    import("./partner-order-ticket-dialog").then(
+      (m) => m.PartnerOrderTicketDialog
+    ),
+  { ssr: false }
+);
 
 interface PartnerOrdersDialogsProps {
   houseSlug: string;
@@ -35,32 +64,40 @@ export function PartnerOrdersDialogs({
 }: PartnerOrdersDialogsProps) {
   return (
     <>
-      <PartnerOrderDetailSheet
-        order={detailOrder}
-        houseSlug={houseSlug}
-        isOpen={Boolean(detailOrder)}
-        onClose={() => setDetailOrder(null)}
-      />
+      {detailOrder && (
+        <PartnerOrderDetailSheet
+          order={detailOrder}
+          houseSlug={houseSlug}
+          isOpen={Boolean(detailOrder)}
+          onClose={() => setDetailOrder(null)}
+        />
+      )}
 
-      <PartnerOrderTicketDialog
-        order={ticketOrder}
-        isOpen={Boolean(ticketOrder)}
-        onClose={() => setTicketOrder(null)}
-      />
+      {ticketOrder && (
+        <PartnerOrderTicketDialog
+          order={ticketOrder}
+          isOpen={Boolean(ticketOrder)}
+          onClose={() => setTicketOrder(null)}
+        />
+      )}
 
-      <PartnerOrderRejectDialog
-        order={rejectOrder}
-        isOpen={Boolean(rejectOrder)}
-        onClose={() => setRejectOrder(null)}
-        onConfirm={onReject}
-      />
+      {rejectOrder && (
+        <PartnerOrderRejectDialog
+          order={rejectOrder}
+          isOpen={Boolean(rejectOrder)}
+          onClose={() => setRejectOrder(null)}
+          onConfirm={onReject}
+        />
+      )}
 
-      <PartnerOrderIssueDialog
-        order={issueOrder}
-        isOpen={Boolean(issueOrder)}
-        onClose={() => setIssueOrder(null)}
-        onConfirm={onReportIssue}
-      />
+      {issueOrder && (
+        <PartnerOrderIssueDialog
+          order={issueOrder}
+          isOpen={Boolean(issueOrder)}
+          onClose={() => setIssueOrder(null)}
+          onConfirm={onReportIssue}
+        />
+      )}
     </>
   );
 }

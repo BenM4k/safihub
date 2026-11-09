@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import { AlertCircle, Ban, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ConfirmDialog } from "@/components/shared";
 import { deleteHouseExclusionAction } from "@/actions/house.actions";
-import { ExclusionSheet } from "./exclusion-sheet";
 import { ExclusionItemCard } from "./exclusions/exclusion-item-card";
 import { CustomerPreviewCard } from "./exclusions/customer-preview-card";
 import type {
@@ -15,6 +14,16 @@ import type {
   MasterFabricRecord,
   HouseCatalogueItemRecord,
 } from "@/dal";
+
+const ExclusionSheet = dynamic(
+  () => import("./exclusion-sheet").then((m) => m.ExclusionSheet),
+  { ssr: false }
+);
+
+const ConfirmDialog = dynamic(
+  () => import("@/components/shared").then((m) => m.ConfirmDialog),
+  { ssr: false }
+);
 
 interface ExclusionsTabProps {
   houseId: string;
@@ -145,27 +154,31 @@ export function ExclusionsTab({
       <CustomerPreviewCard exclusions={exclusions} />
 
       {/* Add / Edit Exclusion Sheet */}
-      <ExclusionSheet
-        isOpen={isSheetOpen}
-        onClose={() => setIsSheetOpen(false)}
-        houseId={houseId}
-        masterItems={masterItems}
-        masterFabrics={masterFabrics}
-        existingExclusions={exclusions}
-        initialExclusion={editingExclusion}
-      />
+      {isSheetOpen && (
+        <ExclusionSheet
+          isOpen={isSheetOpen}
+          onClose={() => setIsSheetOpen(false)}
+          houseId={houseId}
+          masterItems={masterItems}
+          masterFabrics={masterFabrics}
+          existingExclusions={exclusions}
+          initialExclusion={editingExclusion}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={Boolean(exclusionToDelete)}
-        onClose={() => setExclusionToDelete(null)}
-        onConfirm={async () => handleDeleteConfirm()}
-        title="Supprimer l'exclusion de traitement"
-        description="Êtes-vous sûr de vouloir supprimer cette règle d'exclusion ? Les clients pourront à nouveau commander cet article auprès de votre pressing."
-        confirmLabel="Supprimer la règle"
-        cancelLabel="Conserver"
-        variant="destructive"
-      />
+      {exclusionToDelete && (
+        <ConfirmDialog
+          isOpen={Boolean(exclusionToDelete)}
+          onClose={() => setExclusionToDelete(null)}
+          onConfirm={async () => handleDeleteConfirm()}
+          title="Supprimer l'exclusion de traitement"
+          description="Êtes-vous sûr de vouloir supprimer cette règle d'exclusion ? Les clients pourront à nouveau commander cet article auprès de votre pressing."
+          confirmLabel="Supprimer la règle"
+          cancelLabel="Conserver"
+          variant="destructive"
+        />
+      )}
     </div>
   );
 }

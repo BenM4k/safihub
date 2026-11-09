@@ -1,15 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { AlertCircle, AlertTriangle, Check, Loader2, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ConfirmDialog } from "@/components/shared";
 import { ScheduleRow } from "./schedule-row";
 import { SchedulePresets } from "./schedule-presets";
 import { useHoursEditorState } from "./use-hours-editor-state";
 import { WEEKDAY_DEFS, type DaySchedule } from "@/lib/hours-utils";
 import type { HouseHourRecord } from "@/dal";
+
+const ConfirmDialog = dynamic(
+  () => import("@/components/shared").then((m) => m.ConfirmDialog),
+  { ssr: false }
+);
 
 interface HoursEditorProps {
   initialHours: HouseHourRecord[];
@@ -148,19 +153,21 @@ export function HoursEditor({
         </div>
       </form>
 
-      <ConfirmDialog
-        isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        onConfirm={async () => {
-          setIsConfirmOpen(false);
-          executeSave();
-        }}
-        title={t("confirmPendingOrdersTitle")}
-        description={t("confirmPendingOrdersDesc", { count: waitingOrdersCount })}
-        confirmLabel={t("confirmAndSave")}
-        cancelLabel={t("cancel")}
-        variant="primary"
-      />
+      {isConfirmOpen && (
+        <ConfirmDialog
+          isOpen={isConfirmOpen}
+          onClose={() => setIsConfirmOpen(false)}
+          onConfirm={async () => {
+            setIsConfirmOpen(false);
+            executeSave();
+          }}
+          title={t("confirmPendingOrdersTitle")}
+          description={t("confirmPendingOrdersDesc", { count: waitingOrdersCount })}
+          confirmLabel={t("confirmAndSave")}
+          cancelLabel={t("cancel")}
+          variant="primary"
+        />
+      )}
     </div>
   );
 }

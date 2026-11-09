@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Images } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DEFAULT_IMAGE_BLUR_DATA_URL } from "@/lib/image-blur";
-import { PressingLightbox } from "./pressing-lightbox";
+
+const PressingLightbox = dynamic(
+  () => import("./pressing-lightbox").then((m) => m.PressingLightbox),
+  { ssr: false }
+);
 
 interface PressingGalleryProps {
   photos: string[];
@@ -74,14 +79,16 @@ export function PressingGallery({ photos, houseName }: PressingGalleryProps) {
         </div>
       </div>
 
-      <PressingLightbox
-        photos={photos}
-        currentIndex={currentIndex}
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        onNavigate={setCurrentIndex}
-        title={houseName}
-      />
+      {isOpen && (
+        <PressingLightbox
+          photos={photos}
+          currentIndex={currentIndex}
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onNavigate={setCurrentIndex}
+          title={houseName}
+        />
+      )}
     </div>
   );
 }

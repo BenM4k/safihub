@@ -1,10 +1,8 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useTransition } from "react";
 import { toggleHousePauseAction } from "@/actions/house.actions";
-import { BannerUploadModal } from "./banner-upload-modal";
-import { LogoUploadModal } from "./logo-upload-modal";
-import { PartnerPauseDialog } from "./partner-pause-dialog";
 import { PartnerBannerCover } from "./partner-banner-cover";
 import { PartnerBannerPhotoNudge } from "./partner-banner-nudge";
 import { PartnerBannerActions } from "./partner-banner-actions";
@@ -12,6 +10,21 @@ import { PartnerBannerIdentity } from "./partner-banner-identity";
 import { usePartnerBannerCover } from "./use-partner-banner-cover";
 import { usePartnerBannerModals } from "./use-partner-banner-modals";
 import { usePartnerPause } from "./partner-dashboard-interactive";
+
+const BannerUploadModal = dynamic(
+  () => import("./banner-upload-modal").then((mod) => mod.BannerUploadModal),
+  { ssr: false }
+);
+
+const LogoUploadModal = dynamic(
+  () => import("./logo-upload-modal").then((mod) => mod.LogoUploadModal),
+  { ssr: false }
+);
+
+const PartnerPauseDialog = dynamic(
+  () => import("./partner-pause-dialog").then((mod) => mod.PartnerPauseDialog),
+  { ssr: false }
+);
 
 interface PartnerBannerProps {
   house: {
@@ -157,33 +170,39 @@ export function PartnerBanner({
         </div>
       </div>
 
-      <BannerUploadModal
-        isOpen={isUploadOpen}
-        onClose={handleCloseCoverModal}
-        houseId={house.id}
-        houseName={house.name}
-        initialPreviewUrl={stagedPreviewUrl}
-        initialFile={stagedFile}
-        onSavePhoto={saveCover}
-      />
+      {isUploadOpen && (
+        <BannerUploadModal
+          isOpen={isUploadOpen}
+          onClose={handleCloseCoverModal}
+          houseId={house.id}
+          houseName={house.name}
+          initialPreviewUrl={stagedPreviewUrl}
+          initialFile={stagedFile}
+          onSavePhoto={saveCover}
+        />
+      )}
 
-      <LogoUploadModal
-        isOpen={isLogoUploadOpen}
-        onClose={() => setIsLogoUploadOpen(false)}
-        houseId={house.id}
-        houseName={house.name}
-        currentLogoUrl={currentLogoUrl}
-        onSaveLogo={(newLogoUrl) => setCurrentLogoUrl(newLogoUrl)}
-      />
+      {isLogoUploadOpen && (
+        <LogoUploadModal
+          isOpen={isLogoUploadOpen}
+          onClose={() => setIsLogoUploadOpen(false)}
+          houseId={house.id}
+          houseName={house.name}
+          currentLogoUrl={currentLogoUrl}
+          onSaveLogo={(newLogoUrl) => setCurrentLogoUrl(newLogoUrl)}
+        />
+      )}
 
-      <PartnerPauseDialog
-        isOpen={isPauseDialogOpen}
-        onClose={handleClosePause}
-        isPaused={isPausedState}
-        onConfirm={() => handleTogglePause(!isPausedState)}
-        isPending={isPending}
-        houseName={house.name}
-      />
+      {isPauseDialogOpen && (
+        <PartnerPauseDialog
+          isOpen={isPauseDialogOpen}
+          onClose={handleClosePause}
+          isPaused={isPausedState}
+          onConfirm={() => handleTogglePause(!isPausedState)}
+          isPending={isPending}
+          houseName={house.name}
+        />
+      )}
     </>
   );
 }

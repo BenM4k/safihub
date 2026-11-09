@@ -1,13 +1,18 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import dynamic from "next/dynamic";
 import { Play, CheckCircle2, XCircle, AlertTriangle, KeyRound } from "lucide-react";
 import type { CourierMissionDetail } from "@/dal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DeliveryFailureDialog } from "./delivery-failure-dialog";
 import { DeliveryCashCard } from "./delivery-cash-card";
 import { useDeliveryForm } from "./use-delivery-form";
+
+const DeliveryFailureDialog = dynamic(
+  () => import("./delivery-failure-dialog").then((m) => m.DeliveryFailureDialog),
+  { ssr: false }
+);
 
 interface DeliveryCompletionFormProps {
   detail: CourierMissionDetail;
@@ -131,12 +136,14 @@ export function DeliveryCompletionForm({
         </div>
       </form>
 
-      <DeliveryFailureDialog
-        isOpen={showFailureModal}
-        onClose={() => setShowFailureModal(false)}
-        onSubmit={handleFailDelivery}
-        isSubmitting={isPending}
-      />
+      {showFailureModal && (
+        <DeliveryFailureDialog
+          isOpen={showFailureModal}
+          onClose={() => setShowFailureModal(false)}
+          onSubmit={handleFailDelivery}
+          isSubmitting={isPending}
+        />
+      )}
     </div>
   );
 }

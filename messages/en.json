@@ -172,7 +172,11 @@
   },
   "faq": {
     "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about our turnaround times, pricing, payment methods, and coverage."
+    "subtitle": "Everything you need to know about our turnaround times, pricing, payment methods, and coverage.",
+    "seeAll": "See all FAQs",
+    "contactTitle": "Get in touch with our team",
+    "contactSubtitle": "A specific question for your hotel or laundry? Response in under 15 minutes.",
+    "contactCta": "WhatsApp Support"
   },
   "footer": {
     "brandDesc": "The premier on-demand laundry and dry-cleaning platform in Bukavu, DRC.",

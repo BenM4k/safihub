@@ -1,14 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { AlertCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { ConfirmDialog } from "@/components/shared";
 import { normalizeStaffRole, validateMemberActionGuardrails } from "@/services/auth/house-permissions";
 import { MembersListCard } from "./equipe/members-list-card";
-import { InviteModal } from "./equipe/invite-modal";
 import { PermissionsCard } from "./equipe/permissions-card";
 import type { HouseStaffMemberRecord } from "@/dal";
+
+const InviteModal = dynamic(
+  () => import("./equipe/invite-modal").then((m) => m.InviteModal),
+  { ssr: false }
+);
+
+const ConfirmDialog = dynamic(
+  () => import("@/components/shared").then((m) => m.ConfirmDialog),
+  { ssr: false }
+);
 
 interface EquipeTabProps {
   staff: HouseStaffMemberRecord[];
@@ -72,25 +81,29 @@ export function EquipeTab({ staff, currentUserId, currentUserRole }: EquipeTabPr
       <PermissionsCard />
 
       {/* Invite Modal */}
-      <InviteModal
-        isOpen={isInviteOpen}
-        onClose={() => setIsInviteOpen(false)}
-        onInvite={handleInvite}
-      />
+      {isInviteOpen && (
+        <InviteModal
+          isOpen={isInviteOpen}
+          onClose={() => setIsInviteOpen(false)}
+          onInvite={handleInvite}
+        />
+      )}
 
       {/* Confirm Remove Dialog */}
-      <ConfirmDialog
-        isOpen={Boolean(memberToRemove)}
-        onClose={() => setMemberToRemove(null)}
-        onConfirm={async () => {
-          setMemberToRemove(null);
-        }}
-        title="Retirer le collaborateur"
-        description={`Êtes-vous sûr de vouloir retirer ${memberToRemove?.name} de l'équipe du pressing ? Cette personne perdra immédiatement son accès au portail.`}
-        confirmLabel="Retirer le membre"
-        cancelLabel="Annuler"
-        variant="destructive"
-      />
+      {memberToRemove && (
+        <ConfirmDialog
+          isOpen={Boolean(memberToRemove)}
+          onClose={() => setMemberToRemove(null)}
+          onConfirm={async () => {
+            setMemberToRemove(null);
+          }}
+          title="Retirer le collaborateur"
+          description={`Êtes-vous sûr de vouloir retirer ${memberToRemove?.name} de l'équipe du pressing ? Cette personne perdra immédiatement son accès au portail.`}
+          confirmLabel="Retirer le membre"
+          cancelLabel="Annuler"
+          variant="destructive"
+        />
+      )}
     </div>
   );
 }

@@ -64,6 +64,7 @@ export function HeroStatusCard() {
                   src="https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=300&q=80"
                   alt="Pressing"
                   fill
+                  priority
                   sizes="140px"
                   className="object-cover"
                 />
@@ -78,6 +79,7 @@ export function HeroStatusCard() {
                   src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80"
                   alt="Coursier"
                   fill
+                  priority
                   sizes="140px"
                   className="object-cover"
                 />

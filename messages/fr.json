@@ -172,7 +172,11 @@
   },
   "faq": {
     "title": "Questions fréquentes",
-    "subtitle": "Tout ce que vous devez savoir sur nos services, délais, paiements et zones de couverture."
+    "subtitle": "Tout ce que vous devez savoir sur nos services, délais, paiements et zones de couverture.",
+    "seeAll": "Voir toutes les FAQ",
+    "contactTitle": "Prenez contact avec notre équipe",
+    "contactSubtitle": "Une question spécifique pour votre hôtel ou votre linge ? Réponse en moins de 15 min.",
+    "contactCta": "Assistance WhatsApp"
   },
   "footer": {
     "brandDesc": "La première plateforme de blanchisserie et pressing à la demande à Bukavu, RDC.",

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { formatDateTime } from "@/lib/order-formatters";
 import {
@@ -74,9 +75,12 @@ export function UsersTableRow({
       <TableCell className="px-4 py-3.5 whitespace-nowrap">
         <div className="flex items-center gap-3">
           {user.image ? (
-            <img
+            <Image
               src={user.image}
               alt={user.name}
+              width={36}
+              height={36}
+              unoptimized
               className="size-9 rounded-full object-cover border border-border shrink-0"
             />
           ) : (

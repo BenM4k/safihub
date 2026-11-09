@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { Inbox } from "lucide-react";
 import type { CourierAssignedMissionSummary } from "@/dal";
@@ -8,7 +9,14 @@ import { useCourierStore } from "@/lib/stores/courier-store";
 import { acceptMissionAction } from "@/actions/courier.actions";
 import { MissionCard } from "./mission-card";
 import { CourierSyncBanner } from "./courier-sync-banner";
-import { ConflictResolutionDialog } from "./conflict-resolution-dialog";
+
+const ConflictResolutionDialog = dynamic(
+  () =>
+    import("./conflict-resolution-dialog").then(
+      (m) => m.ConflictResolutionDialog
+    ),
+  { ssr: false }
+);
 
 interface MissionListViewProps {
   initialMissions: CourierAssignedMissionSummary[];
@@ -142,10 +150,12 @@ export function MissionListView({ initialMissions }: MissionListViewProps) {
         </div>
       )}
 
-      <ConflictResolutionDialog
-        isOpen={showConflictsModal}
-        onClose={() => setShowConflictsModal(false)}
-      />
+      {showConflictsModal && (
+        <ConflictResolutionDialog
+          isOpen={showConflictsModal}
+          onClose={() => setShowConflictsModal(false)}
+        />
+      )}
     </div>
   );
 }

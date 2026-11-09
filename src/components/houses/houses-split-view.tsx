@@ -5,13 +5,31 @@ import { useTranslations } from "next-intl";
 import { Map, List } from "lucide-react";
 import { SearchTopBar } from "./search-top-bar";
 import { HousesListPanel } from "./houses-list-panel";
-import { BukavuInteractiveMap } from "./bukavu-interactive-map";
-import { LocationPermissionModal } from "./location-permission-modal";
+import { MapSkeleton } from "@/components/map/map-skeleton";
 import { useHousesFilterState } from "./use-houses-filter-state";
 import type {
   CustomerHouseSearchFilter,
   CustomerHousesPageData,
 } from "@/services/house/customer-search.service";
+
+const BukavuInteractiveMap = dynamic(
+  () =>
+    import("./bukavu-interactive-map").then(
+      (mod) => mod.BukavuInteractiveMap
+    ),
+  {
+    ssr: false,
+    loading: () => <MapSkeleton />,
+  }
+);
+
+const LocationPermissionModal = dynamic(
+  () =>
+    import("./location-permission-modal").then(
+      (mod) => mod.LocationPermissionModal
+    ),
+  { ssr: false }
+);
 
 const FilterSheetDialog = dynamic(
   () => import("./filter-sheet-dialog").then((mod) => mod.FilterSheetDialog),

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import {
   Calendar,
@@ -53,9 +54,12 @@ export function UserTabProfile({ user }: UserTabProfileProps) {
       <div className="rounded-xl bg-card space-y-4">
         <div className="flex items-center gap-3">
           {user.image ? (
-            <img
+            <Image
               src={user.image}
               alt={user.name}
+              width={56}
+              height={56}
+              unoptimized
               className="size-14 rounded-full object-cover border border-border shrink-0"
             />
           ) : (

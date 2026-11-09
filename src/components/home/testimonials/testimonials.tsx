@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Star } from "lucide-react";
 import { SAMPLE_TESTIMONIALS } from "@/lib/sample-data";
 

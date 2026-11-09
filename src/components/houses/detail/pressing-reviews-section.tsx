@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { MessageSquarePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -8,7 +9,14 @@ import { Button } from "@/components/ui/button";
 import { PressingReviewItem } from "./pressing-review-item";
 import { PressingReviewsSummary } from "./pressing-reviews-summary";
 import { PressingReviewsFilterBar } from "./pressing-reviews-filter-bar";
-import { PressingReviewFormDialog } from "./pressing-review-form-dialog";
+
+const PressingReviewFormDialog = dynamic(
+  () =>
+    import("./pressing-review-form-dialog").then(
+      (m) => m.PressingReviewFormDialog
+    ),
+  { ssr: false }
+);
 import type { HouseReviewItem, HouseReviewStatsData } from "@/dal/review.dal";
 
 interface PressingReviewsSectionProps {
@@ -153,17 +161,19 @@ export function PressingReviewsSection({
       )}
 
       {/* Review Dialog */}
-      <PressingReviewFormDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        houseId={houseId}
-        houseName={houseName}
-        eligibleOrders={eligibleOrders}
-        onReviewSubmitted={() => {
-          // Re-fetch or refresh
-          router.refresh();
-        }}
-      />
+      {isDialogOpen && (
+        <PressingReviewFormDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          houseId={houseId}
+          houseName={houseName}
+          eligibleOrders={eligibleOrders}
+          onReviewSubmitted={() => {
+            // Re-fetch or refresh
+            router.refresh();
+          }}
+        />
+      )}
     </section>
   );
 }

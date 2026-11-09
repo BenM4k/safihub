@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { AlertCircle } from "lucide-react";
 import { CheckoutPickupDetails } from "./checkout-pickup-details";
-import { PriceChangeModal } from "./price-change-modal";
 import { CheckoutSummary } from "./checkout-summary";
 import { CheckoutHeader } from "./checkout-header";
 import { EmptyCartView } from "./empty-cart-view";
@@ -13,6 +13,11 @@ import { useCheckoutSubmit } from "./use-checkout-submit";
 import { useCartHydrated } from "@/lib/stores/use-cart-hydrated";
 import type { CustomerAddressRecord, NeighborhoodRecord } from "@/dal";
 import type { TimeSlot } from "@/services/availability";
+
+const PriceChangeModal = dynamic(
+  () => import("./price-change-modal").then((m) => m.PriceChangeModal),
+  { ssr: false }
+);
 
 interface CheckoutFormProps {
   user?: {
@@ -107,12 +112,14 @@ export function CheckoutForm({
 
   return (
     <form onSubmit={submitOrder} className="max-w-6xl mx-auto w-full space-y-6 flex-1 flex flex-col">
-      <PriceChangeModal
-        isOpen={Boolean(priceChangeDetails)}
-        details={priceChangeDetails || undefined}
-        onConfirm={handleAcceptPriceChange}
-        onCancel={() => setPriceChangeDetails(null)}
-      />
+      {priceChangeDetails && (
+        <PriceChangeModal
+          isOpen={Boolean(priceChangeDetails)}
+          details={priceChangeDetails}
+          onConfirm={handleAcceptPriceChange}
+          onCancel={() => setPriceChangeDetails(null)}
+        />
+      )}
 
       <CheckoutHeader houseName={cart.houseName || ""} />
 

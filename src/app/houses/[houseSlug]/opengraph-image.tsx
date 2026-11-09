@@ -59,7 +59,6 @@ export default async function Image({
         >
           <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
             {logoBase64 ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logoBase64}
                 width={44}

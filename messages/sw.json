@@ -172,7 +172,11 @@
   },
   "faq": {
     "title": "Maswali ya Mara kwa Mara",
-    "subtitle": "Kila unachopaswa kujua kuhusu huduma zetu, muda, malipo na maeneo tunayofika."
+    "subtitle": "Kila unachopaswa kujua kuhusu huduma zetu, muda, malipo na maeneo tunayofika.",
+    "seeAll": "Tazama maswali yote ya FAQ",
+    "contactTitle": "Wasiliana na timu yetu",
+    "contactSubtitle": "Swali maalum kwa hoteli au nguo zako? Jibu kwa chini ya dakika 15.",
+    "contactCta": "Usaidizi wa WhatsApp"
   },
   "footer": {
     "brandDesc": "Jukwaa la kwanza la huduma ya dobi ya kisasa kwa ombi mjini Bukavu, DRC.",

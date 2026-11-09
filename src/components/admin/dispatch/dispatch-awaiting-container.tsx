@@ -1,15 +1,35 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { DispatchAwaitingToolbar } from "./dispatch-awaiting-toolbar";
 import { DispatchAwaitingEmpty } from "./dispatch-awaiting-empty";
 import { DispatchAwaitingPagination } from "./dispatch-awaiting-pagination";
 import { DispatchPressingGroupCard } from "./dispatch-pressing-group-card";
 import { DispatchOrderRow } from "./dispatch-order-row";
-import { DispatchOrderDetailsSheet } from "./dispatch-order-details-sheet";
-import { DispatchCallOutcomeModal } from "./dispatch-call-outcome-modal";
-import { DispatchReassignDialog } from "./dispatch-reassign-dialog";
 import { useDispatchModals } from "./use-dispatch-modals";
+
+const DispatchOrderDetailsSheet = dynamic(
+  () =>
+    import("./dispatch-order-details-sheet").then(
+      (m) => m.DispatchOrderDetailsSheet
+    ),
+  { ssr: false }
+);
+
+const DispatchCallOutcomeModal = dynamic(
+  () =>
+    import("./dispatch-call-outcome-modal").then(
+      (m) => m.DispatchCallOutcomeModal
+    ),
+  { ssr: false }
+);
+
+const DispatchReassignDialog = dynamic(
+  () =>
+    import("./dispatch-reassign-dialog").then((m) => m.DispatchReassignDialog),
+  { ssr: false }
+);
 import {
   filterAndSortGroups,
   filterAndSortOrders,
@@ -142,33 +162,39 @@ export function DispatchAwaitingContainer({
         onPageChange={setPage}
       />
 
-      <DispatchOrderDetailsSheet
-        order={selectedOrderForDetails}
-        onClose={() => setSelectedOrderForDetails(null)}
-        onOpenOutcomeModal={openOrderOutcome}
-        onOpenReassignDialog={openReassign}
-      />
+      {selectedOrderForDetails && (
+        <DispatchOrderDetailsSheet
+          order={selectedOrderForDetails}
+          onClose={() => setSelectedOrderForDetails(null)}
+          onOpenOutcomeModal={openOrderOutcome}
+          onOpenReassignDialog={openReassign}
+        />
+      )}
 
-      <DispatchCallOutcomeModal
-        isOpen={outcomeModal.isOpen}
-        onClose={closeOutcomeModal}
-        pressingId={outcomeModal.pressingId}
-        pressingName={outcomeModal.pressingName}
-        orderIds={outcomeModal.orderIds}
-        channel={outcomeModal.channel}
-        onSuccess={onRefresh}
-      />
+      {outcomeModal.isOpen && (
+        <DispatchCallOutcomeModal
+          isOpen={outcomeModal.isOpen}
+          onClose={closeOutcomeModal}
+          pressingId={outcomeModal.pressingId}
+          pressingName={outcomeModal.pressingName}
+          orderIds={outcomeModal.orderIds}
+          channel={outcomeModal.channel}
+          onSuccess={onRefresh}
+        />
+      )}
 
-      <DispatchReassignDialog
-        isOpen={reassignModal.isOpen}
-        onClose={closeReassignModal}
-        orderId={reassignModal.orderId}
-        orderCode={reassignModal.orderCode}
-        currentHouseId={reassignModal.currentHouseId}
-        currentHouseName={reassignModal.currentHouseName}
-        availablePressings={availablePressings}
-        onSuccess={onRefresh}
-      />
+      {reassignModal.isOpen && (
+        <DispatchReassignDialog
+          isOpen={reassignModal.isOpen}
+          onClose={closeReassignModal}
+          orderId={reassignModal.orderId}
+          orderCode={reassignModal.orderCode}
+          currentHouseId={reassignModal.currentHouseId}
+          currentHouseName={reassignModal.currentHouseName}
+          availablePressings={availablePressings}
+          onSuccess={onRefresh}
+        />
+      )}
     </div>
   );
 }

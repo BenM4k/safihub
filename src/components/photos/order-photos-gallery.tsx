@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Image as ImageIcon, X, ExternalLink, ShieldAlert } from "lucide-react";
 import type { PhotoWithSignedUrl } from "@/services/storage";
@@ -71,13 +72,15 @@ export function OrderPhotosGallery({
                 key={photo.id}
                 type="button"
                 onClick={() => setSelectedPhoto(photo)}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 hover:opacity-90 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 hover:opacity-90 focus:outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={photo.downloadUrl}
                   alt={t("photoAlt")}
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 33vw, 120px"
+                  unoptimized
+                  className="object-cover transition-transform group-hover:scale-105"
                   loading="lazy"
                 />
               </button>
@@ -97,13 +100,15 @@ export function OrderPhotosGallery({
                 key={photo.id}
                 type="button"
                 onClick={() => setSelectedPhoto(photo)}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 hover:opacity-90 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 hover:opacity-90 focus:outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={photo.downloadUrl}
                   alt={t("deliveryProofAlt")}
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 33vw, 120px"
+                  unoptimized
+                  className="object-cover transition-transform group-hover:scale-105"
                   loading="lazy"
                 />
               </button>
@@ -123,13 +128,15 @@ export function OrderPhotosGallery({
                 key={photo.id}
                 type="button"
                 onClick={() => setSelectedPhoto(photo)}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 hover:opacity-90 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 hover:opacity-90 focus:outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={photo.downloadUrl}
                   alt={t("disputePhotoAlt")}
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 33vw, 120px"
+                  unoptimized
+                  className="object-cover transition-transform group-hover:scale-105"
                   loading="lazy"
                 />
               </button>
@@ -182,11 +189,13 @@ export function OrderPhotosGallery({
               </div>
             </div>
 
-            <div className="max-h-[75vh] flex items-center justify-center bg-black/40 rounded-xl overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+            <div className="relative max-h-[75vh] min-h-[200px] flex items-center justify-center bg-black/40 rounded-xl overflow-hidden p-2">
+              <Image
                 src={selectedPhoto.downloadUrl}
                 alt={t("photoAlt")}
+                width={800}
+                height={800}
+                unoptimized
                 className="max-h-[70vh] w-auto object-contain"
               />
             </div>

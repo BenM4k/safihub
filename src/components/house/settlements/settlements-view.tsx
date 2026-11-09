@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PackageCheck, Receipt } from "lucide-react";
@@ -15,12 +16,29 @@ import { PeriodKpiRow } from "./period-kpi-row";
 import { PeriodSelectorToolbar } from "./period-selector-toolbar";
 import { DeliveredOrdersTable } from "./delivered-orders-table";
 import { PayoutsTable } from "./payouts-table";
-import { PayoutDetailSheet } from "./payout-detail-sheet";
-import { SupportTicketDialog, type SupportTicketTarget } from "./support-ticket-dialog";
+import type { SupportTicketTarget } from "./support-ticket-dialog";
 import { HowItWorksCard } from "./how-it-works-card";
-import { StatementModal } from "./statement-modal";
-import { PayoutReceiptModal } from "./payout-receipt-modal";
 import { buildSettlementsCsv } from "./settlements-csv";
+
+const PayoutDetailSheet = dynamic(
+  () => import("./payout-detail-sheet").then((m) => m.PayoutDetailSheet),
+  { ssr: false }
+);
+
+const SupportTicketDialog = dynamic(
+  () => import("./support-ticket-dialog").then((m) => m.SupportTicketDialog),
+  { ssr: false }
+);
+
+const StatementModal = dynamic(
+  () => import("./statement-modal").then((m) => m.StatementModal),
+  { ssr: false }
+);
+
+const PayoutReceiptModal = dynamic(
+  () => import("./payout-receipt-modal").then((m) => m.PayoutReceiptModal),
+  { ssr: false }
+);
 
 interface SettlementsViewProps {
   data: PartnerSettlementsPageData;
@@ -155,36 +173,44 @@ export function SettlementsView({ data }: SettlementsViewProps) {
       />
 
       {/* Payout Detail Side Panel (Sheet) */}
-      <PayoutDetailSheet
-        payout={selectedPayout}
-        onClose={() => setSelectedPayout(null)}
-        houseSlug={data.houseSlug}
-        onOpenReportDialog={handleOpenPayoutReport}
-        onOpenReceiptModal={handleOpenReceiptModal}
-      />
+      {selectedPayout && (
+        <PayoutDetailSheet
+          payout={selectedPayout}
+          onClose={() => setSelectedPayout(null)}
+          houseSlug={data.houseSlug}
+          onOpenReportDialog={handleOpenPayoutReport}
+          onOpenReceiptModal={handleOpenReceiptModal}
+        />
+      )}
 
       {/* Problem Reporting Support Ticket Dialog */}
-      <SupportTicketDialog
-        target={ticketTarget}
-        onClose={() => setTicketTarget(null)}
-        houseSlug={data.houseSlug}
-      />
+      {ticketTarget && (
+        <SupportTicketDialog
+          target={ticketTarget}
+          onClose={() => setTicketTarget(null)}
+          houseSlug={data.houseSlug}
+        />
+      )}
 
       {/* Relevé de Compte Modal */}
-      <StatementModal
-        isOpen={isStatementModalOpen}
-        onClose={() => setIsStatementModalOpen(false)}
-        data={data}
-      />
+      {isStatementModalOpen && (
+        <StatementModal
+          isOpen={isStatementModalOpen}
+          onClose={() => setIsStatementModalOpen(false)}
+          data={data}
+        />
+      )}
 
       {/* Official Payout Receipt Modal */}
-      <PayoutReceiptModal
-        isOpen={Boolean(receiptPayout)}
-        onClose={() => setReceiptPayout(null)}
-        payout={receiptPayout}
-        houseName={data.houseName}
-        maskedAccount={data.hero.maskedAccount}
-      />
+      {receiptPayout && (
+        <PayoutReceiptModal
+          isOpen={Boolean(receiptPayout)}
+          onClose={() => setReceiptPayout(null)}
+          payout={receiptPayout}
+          houseName={data.houseName}
+          maskedAccount={data.hero.maskedAccount}
+        />
+      )}
     </div>
   );
 }

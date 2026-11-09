@@ -147,10 +147,11 @@ export function HousesListPanel({
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 transition-opacity duration-200 group-data-[pending]/houses:opacity-60 group-data-[pending]/houses:pointer-events-none">
-            {visibleHouses.map((house) => (
+            {visibleHouses.map((house, idx) => (
               <HouseCard
                 key={house.id}
                 house={house}
+                priority={idx === 0}
                 isHighlighted={hoveredHouseId === house.id}
                 onHover={onHoverHouse}
               />

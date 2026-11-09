@@ -15,6 +15,7 @@ interface HouseCardImageProps {
   isOpenNow: boolean;
   todayHoursText: string;
   targetSlug: string;
+  priority?: boolean;
 }
 
 export function HouseCardImage({
@@ -23,6 +24,7 @@ export function HouseCardImage({
   isOpenNow,
   todayHoursText,
   targetSlug,
+  priority = false,
 }: HouseCardImageProps) {
   const t = useTranslations("customerHouses");
   const [isFavorited, setIsFavorited] = useState(false);
@@ -71,7 +73,9 @@ export function HouseCardImage({
         src={displayUrl}
         alt={name}
         fill
-        loading="lazy"
+        priority={priority}
+        loading={priority ? undefined : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
         decoding="async"
         placeholder="blur"
         blurDataURL={DEFAULT_IMAGE_BLUR_DATA_URL}

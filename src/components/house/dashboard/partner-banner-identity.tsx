@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Star, Camera } from "lucide-react";
 import { normalizeStorageUrl } from "@/lib/storage-url";
 
@@ -34,11 +35,12 @@ export function PartnerBannerIdentity({
       <div className="relative group aspect-square self-stretch shrink-0 min-w-[3.75rem] max-w-[5rem] rounded-2xl bg-card p-1 shadow-card border-2 border-card overflow-hidden flex items-center justify-center">
         <div className="size-full rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-black text-xl sm:text-2xl font-display shadow-xs relative overflow-hidden">
           {displayLogoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={displayLogoUrl}
               alt={`Logo ${name}`}
-              className="size-full object-cover rounded-xl"
+              fill
+              sizes="80px"
+              className="object-cover rounded-xl"
             />
           ) : (
             <span>{initials}</span>

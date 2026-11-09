@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { LocationPicker } from "@/components/map/location-picker";
 import { updateNeighborhoodCentroidAction } from "@/actions/admin-coverage.actions";
+
+const LocationPicker = dynamic(
+  () => import("@/components/map/location-picker").then((m) => m.LocationPicker),
+  { ssr: false }
+);
 
 interface NeighborhoodCentroidDialogProps {
   neighborhoodId: string;
@@ -47,14 +52,16 @@ export function NeighborhoodCentroidDialog({
             {t("centroidModalTitle", { name: neighborhoodName })}
           </DialogTitle>
         </DialogHeader>
-        <LocationPicker
-          initialCoords={
-            centroid ? { ...centroid, isApproximate: false } : null
-          }
-          onSave={(coords) =>
-            updateNeighborhoodCentroidAction({ neighborhoodId, coords })
-          }
-        />
+        {open && (
+          <LocationPicker
+            initialCoords={
+              centroid ? { ...centroid, isApproximate: false } : null
+            }
+            onSave={(coords) =>
+              updateNeighborhoodCentroidAction({ neighborhoodId, coords })
+            }
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -1,13 +1,18 @@
 "use client";
 
 import { MapPin } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { formatPhone } from "@/lib/order-formatters";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { LocationPicker } from "@/components/map/location-picker";
 import { updateHouseLocationAction } from "@/actions/house.actions";
+
+const LocationPicker = dynamic(
+  () => import("@/components/map/location-picker").then((m) => m.LocationPicker),
+  { ssr: false }
+);
 
 interface ContactLocationCardProps {
   houseId: string;

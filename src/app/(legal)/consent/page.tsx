@@ -36,7 +36,9 @@ async function PhotoConsentContent() {
 
 export default function PhotoConsentPage() {
   return (
-    <Suspense fallback={<LegalPageSkeleton activeTabLabel="Consentement Photos" />}>
+    <Suspense
+      fallback={<LegalPageSkeleton activeTabLabel="Consentement Photos" />}
+    >
       <PhotoConsentContent />
     </Suspense>
   );

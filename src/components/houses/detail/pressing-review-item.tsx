@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Star, ShieldCheck, Flag, MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { reportReviewAction } from "@/actions/review.actions";
 import type { HouseReviewItem } from "@/dal/review.dal";
 import { DEFAULT_IMAGE_BLUR_DATA_URL } from "@/lib/image-blur";
-import { PressingLightbox } from "./pressing-lightbox";
+
+const PressingLightbox = dynamic(
+  () => import("./pressing-lightbox").then((m) => m.PressingLightbox),
+  { ssr: false }
+);
 
 interface PressingReviewItemProps {
   review: HouseReviewItem;

@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { AlertCircle, Check, RotateCcw } from "lucide-react";
@@ -11,11 +12,23 @@ import { DeliveryPerimeterCard } from "./delivery-perimeter-card";
 import { CoverageFilterBar } from "./coverage-filter-bar";
 import { CommuneGroupCard } from "./commune-group-card";
 import { CoverageSaveBar } from "./coverage-save-bar";
-import { DeselectImpactDialog } from "./deselect-impact-dialog";
-import { ZeroCoverageDialog } from "./zero-coverage-dialog";
-import { CoverageExtensionTicketDialog } from "./coverage-extension-ticket-dialog";
 import { useCoverageState } from "./use-coverage-state";
 import { useCoverageFilters } from "./use-coverage-filters";
+
+const DeselectImpactDialog = dynamic(
+  () => import("./deselect-impact-dialog").then((m) => m.DeselectImpactDialog),
+  { ssr: false }
+);
+
+const ZeroCoverageDialog = dynamic(
+  () => import("./zero-coverage-dialog").then((m) => m.ZeroCoverageDialog),
+  { ssr: false }
+);
+
+const CoverageExtensionTicketDialog = dynamic(
+  () => import("./coverage-extension-ticket-dialog").then((m) => m.CoverageExtensionTicketDialog),
+  { ssr: false }
+);
 
 interface CoverageManagerProps {
   coverageData: HouseCoverageWithLimitsData;
@@ -156,29 +169,35 @@ export function CoverageManager({ coverageData }: CoverageManagerProps) {
       />
 
       {/* 6. Active Orders Safeguard Dialog */}
-      <DeselectImpactDialog
-        isOpen={impactTarget !== null}
-        neighborhoodName={impactTarget?.neighborhoodName ?? ""}
-        activeOrdersCount={impactTarget?.activeOrdersCount ?? 0}
-        onConfirm={confirmImpactDeselect}
-        onCancel={cancelImpactDeselect}
-      />
+      {impactTarget !== null && (
+        <DeselectImpactDialog
+          isOpen={impactTarget !== null}
+          neighborhoodName={impactTarget?.neighborhoodName ?? ""}
+          activeOrdersCount={impactTarget?.activeOrdersCount ?? 0}
+          onConfirm={confirmImpactDeselect}
+          onCancel={cancelImpactDeselect}
+        />
+      )}
 
       {/* 7. Zero Coverage Warning Dialog */}
-      <ZeroCoverageDialog
-        isOpen={showZeroModal}
-        isSaving={isSaving}
-        onConfirm={() => triggerSave(true)}
-        onCancel={() => setShowZeroModal(false)}
-      />
+      {showZeroModal && (
+        <ZeroCoverageDialog
+          isOpen={showZeroModal}
+          isSaving={isSaving}
+          onConfirm={() => triggerSave(true)}
+          onCancel={() => setShowZeroModal(false)}
+        />
+      )}
 
       {/* 8. Internal Coverage Extension Support Ticket Dialog */}
-      <CoverageExtensionTicketDialog
-        isOpen={isExtensionDialogOpen}
-        effectiveMaxDistance={coverageData.effectiveMaxDistanceLevel}
-        houseId={coverageData.houseId}
-        onClose={() => setIsExtensionDialogOpen(false)}
-      />
+      {isExtensionDialogOpen && (
+        <CoverageExtensionTicketDialog
+          isOpen={isExtensionDialogOpen}
+          effectiveMaxDistance={coverageData.effectiveMaxDistanceLevel}
+          houseId={coverageData.houseId}
+          onClose={() => setIsExtensionDialogOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Camera } from "lucide-react";
 import { normalizeStorageUrl } from "@/lib/storage-url";
 
@@ -21,12 +22,13 @@ export function PartnerBannerCover({
   return (
     <div className="relative w-full h-52 sm:h-64 md:h-72 lg:h-80 bg-surface border-b border-border overflow-hidden flex items-center justify-center">
       {displayCoverUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src={displayCoverUrl}
           alt={`Photo de l'établissement ${houseName}`}
-          className="w-full h-full object-cover"
-          loading="lazy"
+          fill
+          priority
+          sizes="(max-width: 1024px) 100vw, 1200px"
+          className="object-cover"
         />
       ) : (
         <div className="flex flex-col items-center justify-center p-4 text-center">

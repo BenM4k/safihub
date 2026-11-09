@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useRef, useTransition } from "react";
 import { Upload, Trash2, Loader2, Image as ImageIcon, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -160,11 +161,12 @@ export function CoverPhotoSection({
 
       <div className="aspect-[4/1] w-full rounded-2xl overflow-hidden border border-border bg-muted/40 relative flex items-center justify-center">
         {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={coverUrl}
             alt={t("coverAlt")}
-            className="size-full object-cover"
+            fill
+            sizes="(max-width: 1024px) 100vw, 800px"
+            className="object-cover"
           />
         ) : (
           <div className="flex flex-col items-center justify-center gap-1.5 text-muted-foreground/60 p-4 text-center">

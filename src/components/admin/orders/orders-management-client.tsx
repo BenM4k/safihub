@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { OrderListItemRecord } from "@/dal";
 import { exportOrdersToCSV } from "@/lib/order-formatters";
@@ -9,10 +10,22 @@ import { OrdersFilterBar } from "./orders-filter-bar";
 import { OrdersBulkActions } from "./orders-bulk-actions";
 import { OrdersDataTable } from "./orders-data-table";
 import { OrdersPagination } from "./orders-pagination";
-import { OrderDetailsSheet } from "./order-details-sheet";
-import { OrderReassignDialog } from "./order-reassign-dialog";
-import { OrderCancelDialog } from "./order-cancel-dialog";
 import { useOrdersFilter } from "./use-orders-filter";
+
+const OrderDetailsSheet = dynamic(
+  () => import("./order-details-sheet").then((m) => m.OrderDetailsSheet),
+  { ssr: false }
+);
+
+const OrderReassignDialog = dynamic(
+  () => import("./order-reassign-dialog").then((m) => m.OrderReassignDialog),
+  { ssr: false }
+);
+
+const OrderCancelDialog = dynamic(
+  () => import("./order-cancel-dialog").then((m) => m.OrderCancelDialog),
+  { ssr: false }
+);
 
 interface OrdersManagementClientProps {
   initialOrders: OrderListItemRecord[];
@@ -140,32 +153,38 @@ export function OrdersManagementClient({
       />
 
       {/* 6. Details Sheet (Audit Timeline + On-Behalf Actions) */}
-      <OrderDetailsSheet
-        order={detailsOrder}
-        onClose={() => setDetailsOrder(null)}
-        onOpenReassign={(o) => {
-          setDetailsOrder(null);
-          setReassignOrder(o);
-        }}
-        onOpenCancel={(o) => {
-          setDetailsOrder(null);
-          setCancelOrder(o);
-        }}
-      />
+      {detailsOrder && (
+        <OrderDetailsSheet
+          order={detailsOrder}
+          onClose={() => setDetailsOrder(null)}
+          onOpenReassign={(o) => {
+            setDetailsOrder(null);
+            setReassignOrder(o);
+          }}
+          onOpenCancel={(o) => {
+            setDetailsOrder(null);
+            setCancelOrder(o);
+          }}
+        />
+      )}
 
       {/* 7. Dialogs */}
-      <OrderReassignDialog
-        order={reassignOrder}
-        houses={houses}
-        onClose={() => setReassignOrder(null)}
-        onSuccess={handleActionSuccess}
-      />
+      {reassignOrder && (
+        <OrderReassignDialog
+          order={reassignOrder}
+          houses={houses}
+          onClose={() => setReassignOrder(null)}
+          onSuccess={handleActionSuccess}
+        />
+      )}
 
-      <OrderCancelDialog
-        order={cancelOrder}
-        onClose={() => setCancelOrder(null)}
-        onSuccess={handleActionSuccess}
-      />
+      {cancelOrder && (
+        <OrderCancelDialog
+          order={cancelOrder}
+          onClose={() => setCancelOrder(null)}
+          onSuccess={handleActionSuccess}
+        />
+      )}
     </div>
   );
 }

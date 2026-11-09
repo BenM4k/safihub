@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Suspense, type ReactNode } from "react";
 import {
   LayoutDashboard,
@@ -21,13 +22,20 @@ import { HouseSwitcher } from "./house-switcher";
 import { usePartnerSound } from "./use-partner-sound";
 import { PartnerHelpMenu } from "./partner-help-menu";
 import { ChecklistCompactIndicator } from "./onboarding/checklist-compact-indicator";
-import { PartnerTourRunner } from "./tour/partner-tour-runner";
 import type {
   HouseChecklistDerivation,
   HouseMembershipInfo,
   PartnerOnboardingData,
 } from "@/dal";
 import { useTranslations } from "next-intl";
+
+const PartnerTourRunner = dynamic(
+  () =>
+    import("./tour/partner-tour-runner").then(
+      (mod) => mod.PartnerTourRunner
+    ),
+  { ssr: false }
+);
 
 interface PartnerShellProps {
   houseSlug: string;

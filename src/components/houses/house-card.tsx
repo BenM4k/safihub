@@ -12,12 +12,14 @@ import { HouseCardImage } from "./house-card-image";
 interface HouseCardProps {
   house: CustomerHouseSummary;
   isHighlighted?: boolean;
+  priority?: boolean;
   onHover?: (id: string | null) => void;
 }
 
 export const HouseCard = memo(function HouseCard({
   house,
   isHighlighted,
+  priority = false,
   onHover,
 }: HouseCardProps) {
   const t = useTranslations("customerHouses");
@@ -40,6 +42,7 @@ export const HouseCard = memo(function HouseCard({
         isOpenNow={house.isOpenNow}
         todayHoursText={house.todayHoursText}
         targetSlug={targetSlug}
+        priority={priority}
       />
 
       {/* Card Content Body */}

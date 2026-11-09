@@ -1,8 +1,16 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { SwitchHouseDialog } from "@/components/cart/switch-house-dialog";
+
+const SwitchHouseDialog = dynamic(
+  () =>
+    import("@/components/cart/switch-house-dialog").then(
+      (m) => m.SwitchHouseDialog
+    ),
+  { ssr: false }
+);
 import { useCartHydrated } from "@/lib/stores/use-cart-hydrated";
 import { PressingBanner } from "./pressing-banner";
 import { PressingIdentityHeader } from "./pressing-identity-header";

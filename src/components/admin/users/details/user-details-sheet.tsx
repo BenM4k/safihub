@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Activity, Shield, User } from "lucide-react";
 import {
@@ -64,9 +65,12 @@ export function UserDetailsSheet({
         {/* Header */}
         <SheetHeader className="flex flex-row items-center gap-3.5 px-6 py-4 border-b border-border bg-muted/20 shrink-0 space-y-0 text-left">
           {user.image ? (
-            <img
+            <Image
               src={user.image}
               alt={user.name}
+              width={48}
+              height={48}
+              unoptimized
               className="size-12 rounded-full object-cover border border-border shrink-0"
             />
           ) : (

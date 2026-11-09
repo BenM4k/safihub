@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useRef, useTransition } from "react";
 import { Upload, Trash2, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -169,13 +170,14 @@ export function LogoPhotoSection({
       )}
 
       <div className="flex items-center gap-4">
-        <div className="size-20 rounded-2xl overflow-hidden border-2 border-border/80 shadow-xs bg-muted/40 shrink-0 flex items-center justify-center">
+        <div className="relative size-20 rounded-2xl overflow-hidden border-2 border-border/80 shadow-xs bg-muted/40 shrink-0 flex items-center justify-center">
           {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={logoUrl}
               alt={`Logo ${houseName}`}
-              className="size-full object-cover"
+              fill
+              sizes="80px"
+              className="object-cover"
             />
           ) : (
             <div className="size-full bg-primary text-primary-foreground flex items-center justify-center font-black text-xl font-display">

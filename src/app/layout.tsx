@@ -3,11 +3,9 @@ import { Suspense } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
-import { LanguageSwitcher } from "@/components/common/language-switcher";
-import { CustomerBottomNav } from "@/components/customer/customer-bottom-nav";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "@/components/ui/sonner";
 import { Spinner } from "@/components/ui/spinner";
+import { ClientShellAddons } from "@/components/common/client-shell-addons";
 import { DEFAULT_LOCALE } from "@/i18n/config";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { createOrganizationJsonLd, createWebSiteJsonLd } from "@/lib/json-ld";
@@ -16,7 +14,7 @@ import "./globals.css";
 // One variable font for display + body keeps the payload small on 3G.
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin"],
   display: "swap",
 });
 
@@ -117,15 +115,17 @@ export const metadata: Metadata = {
 async function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
 
+  // Strip massive admin and house portal translation namespaces (~110KB JSON) from customer pages.
+  // Their dedicated layouts (AdminLayout and PartnerLayout) provide them via nested NextIntlClientProvider.
+  const clientMessages = { ...(messages as Record<string, unknown>) };
+  delete clientMessages.admin;
+  delete clientMessages.house;
+
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={clientMessages}>
       <TooltipProvider>
         {children}
-        <Suspense fallback={null}>
-          <CustomerBottomNav />
-        </Suspense>
-        <LanguageSwitcher />
-        <Toaster position="bottom-center" />
+        <ClientShellAddons />
       </TooltipProvider>
     </NextIntlClientProvider>
   );
