@@ -1,0 +1,4 @@
+## 2025-02-14 - Insecure Random Number Generation
+**Vulnerability:** Weak random number generation using `Math.random()` to generate codes, IDs, and offline tokens.
+**Learning:** `Math.random()` provides cryptographically insecure randomness, which makes brute forcing tokens, suffixes, and unique IDs easier. However, client-side identifiers (e.g. offline queue IDs) that are not security-sensitive and require robustness on non-secure origins shouldn't be unconditionally switched to `crypto.randomUUID()` because it might be undefined on those environments.
+**Prevention:** Use Node.js's native `node:crypto` (`crypto.randomInt`, `crypto.randomBytes`) for server-side generation, and the global `crypto` Web API (`crypto.randomUUID()`) for client-side generation when appropriate, but maintain fallback to `Math.random()` when the token is not security-sensitive to ensure robustness.
