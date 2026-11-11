@@ -54,8 +54,11 @@ export async function uploadPickupConditionPhoto({
 
       if (!recordRes.ok) return err(recordRes.error);
     } else {
+      const randomPart = typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID().substring(0, 5)
+        : Math.random().toString(36).substring(2, 7);
       await enqueueOfflinePhoto({
-        id: `offline_photo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        id: `offline_photo_${Date.now()}_${randomPart}`,
         orderId,
         orderItemId,
         missionId,
