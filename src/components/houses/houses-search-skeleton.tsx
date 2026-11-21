@@ -62,42 +62,41 @@ export function HousesSearchSkeleton() {
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="flex flex-col rounded-2xl bg-card border border-border overflow-hidden"
+                className="relative flex flex-col justify-between min-h-[300px] sm:min-h-[320px] rounded-2xl bg-muted border border-border overflow-hidden p-4"
               >
-                {/* Image aspect ratio 16/10 on mobile, 16/9 on sm+ */}
-                <Skeleton className="w-full aspect-[16/10] sm:aspect-[16/9] rounded-none" />
-
-                {/* Card Content Body */}
-                <div className="p-4 flex flex-col flex-1 space-y-2.5">
-                  {/* Price & delivery fee */}
-                  <div className="flex items-baseline justify-between gap-2">
-                    <Skeleton className="h-6 w-32 rounded-md" />
-                    <Skeleton className="h-5 w-24 rounded-md" />
+                {/* Top Status & Quick Actions */}
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-6 w-28 rounded-full" />
+                  <div className="flex items-center gap-1.5">
+                    <Skeleton className="size-8 rounded-full" />
+                    <Skeleton className="size-8 rounded-full" />
                   </div>
+                </div>
 
-                  {/* Specs row */}
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-20 rounded-md" />
-                    <Skeleton className="h-4 w-24 rounded-md" />
-                    <Skeleton className="h-4 w-16 rounded-md" />
-                  </div>
-
-                  {/* House Name & Logo */}
-                  <div className="flex items-center gap-2 pt-0.5">
-                    <Skeleton className="size-6 rounded-full shrink-0" />
-                    <Skeleton className="h-5 w-36 rounded-md" />
-                  </div>
-
-                  {/* Address & Zone */}
-                  <Skeleton className="h-3.5 w-48 rounded-md" />
-
-                  {/* Services badges & CTA */}
-                  <div className="mt-auto pt-3 border-t border-border flex items-center justify-between gap-2">
-                    <div className="flex gap-1">
-                      <Skeleton className="h-5 w-16 rounded-md" />
-                      <Skeleton className="h-5 w-16 rounded-md" />
+                {/* Bottom Details Overlay */}
+                <div className="mt-auto space-y-3">
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5 flex-1">
+                      <Skeleton className="size-10 rounded-xl shrink-0" />
+                      <div className="space-y-1.5 flex-1">
+                        <Skeleton className="h-5 w-36 rounded-md" />
+                        <Skeleton className="h-3.5 w-44 rounded-md" />
+                      </div>
                     </div>
-                    <Skeleton className="h-4 w-20 rounded-md" />
+                    <Skeleton className="h-5 w-14 rounded-full shrink-0" />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-3.5 w-20 rounded-md" />
+                    <Skeleton className="h-3.5 w-24 rounded-md" />
+                  </div>
+
+                  <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                    </div>
+                    <Skeleton className="h-7 w-28 rounded-xl" />
                   </div>
                 </div>
               </div>

@@ -7,7 +7,10 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { normalizeStorageUrl } from "@/lib/storage-url";
 import { DEFAULT_IMAGE_BLUR_DATA_URL } from "@/lib/image-blur";
-import { extractClosingTimeDisplay, formatHoursRangeDisplay } from "@/lib/hours-utils";
+import {
+  extractClosingTimeDisplay,
+  formatHoursRangeDisplay,
+} from "@/lib/hours-utils";
 
 interface HouseCardImageProps {
   imageUrl: string;
@@ -18,6 +21,10 @@ interface HouseCardImageProps {
   priority?: boolean;
 }
 
+/**
+ * Full-bleed background cover photo with contrast scrim, top-left open status
+ * pill, and top-right favorite/share actions for a partner house card.
+ */
 export function HouseCardImage({
   imageUrl,
   name,
@@ -68,7 +75,8 @@ export function HouseCardImage({
   };
 
   return (
-    <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+    <>
+      {/* Full-bleed Background Image */}
       <Image
         src={displayUrl}
         alt={name}
@@ -86,53 +94,61 @@ export function HouseCardImage({
         }`}
       />
 
-      {/* Top-left Status Badge */}
-      <div className="absolute top-3 left-3 z-10">
+      {/* Multi-stop Scrim for WCAG-AA+ Contrast Even on Pure White Images */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(2,6,23,0.96)_0%,rgba(2,6,23,0.88)_40%,rgba(2,6,23,0.5)_68%,rgba(2,6,23,0.34)_100%)] transition-opacity duration-300"
+      />
+
+      {/* Top Overlay Bar: Status Badge & Quick Actions */}
+      <div className="relative z-20 flex items-start justify-between gap-2 p-3.5">
         {isOpenNow ? (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600/95 text-white shadow-2xs backdrop-blur-xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600/95 text-white shadow-md backdrop-blur-md border border-white/20">
             <span className="size-1.5 rounded-full bg-white animate-pulse" />
             <span>
               {extractClosingTimeDisplay(todayHoursText)
-                ? t("openUntil", { time: extractClosingTimeDisplay(todayHoursText)! })
+                ? t("openUntil", {
+                    time: extractClosingTimeDisplay(todayHoursText)!,
+                  })
                 : t("openNow")}
             </span>
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-900/90 text-white border border-white/20 shadow-2xs backdrop-blur-xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-950/80 text-white border border-white/20 shadow-md backdrop-blur-md">
             <span className="size-1.5 rounded-full bg-rose-400" />
             <span>{t("closed")}</span>
-            {todayHoursText && !todayHoursText.toLowerCase().includes("fermé") && (
-              <span className="text-white/70 font-normal">
-                ({formatHoursRangeDisplay(todayHoursText)})
-              </span>
-            )}
+            {todayHoursText &&
+              !todayHoursText.toLowerCase().includes("fermé") && (
+                <span className="text-white/80 font-normal">
+                  ({formatHoursRangeDisplay(todayHoursText)})
+                </span>
+              )}
           </span>
         )}
-      </div>
 
-      {/* Top-right Actions: Heart & Share Buttons */}
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={handleFavorite}
-          aria-label="Ajouter aux favoris"
-          className="size-8 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-md text-white border border-white/20 flex items-center justify-center transition cursor-pointer"
-        >
-          <Heart
-            className={`size-4 transition ${
-              isFavorited ? "fill-rose-500 text-rose-500" : "text-white"
-            }`}
-          />
-        </button>
-        <button
-          type="button"
-          onClick={handleShare}
-          aria-label="Partager ce pressing"
-          className="size-8 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-md text-white border border-white/20 flex items-center justify-center transition cursor-pointer"
-        >
-          <Share2 className="size-3.5" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handleFavorite}
+            aria-label="Ajouter aux favoris"
+            className="size-8 rounded-full bg-slate-950/65 hover:bg-slate-950/85 backdrop-blur-md text-white border border-white/20 shadow-md flex items-center justify-center transition cursor-pointer"
+          >
+            <Heart
+              className={`size-4 transition ${
+                isFavorited ? "fill-rose-500 text-rose-500" : "text-white"
+              }`}
+            />
+          </button>
+          <button
+            type="button"
+            onClick={handleShare}
+            aria-label="Partager ce pressing"
+            className="size-8 rounded-full bg-slate-950/65 hover:bg-slate-950/85 backdrop-blur-md text-white border border-white/20 shadow-md flex items-center justify-center transition cursor-pointer"
+          >
+            <Share2 className="size-3.5" />
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
