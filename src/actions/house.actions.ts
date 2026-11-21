@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireHouseAccess } from "@/services/auth";
@@ -1072,6 +1073,10 @@ export async function updateHouseImagesAction(input: {
   return res;
 }
 
+/**
+ * Uploads a house cover or logo image directly from FormData to object storage
+ * and persists the resulting public URL on the house record.
+ */
 export async function uploadHouseAssetDirectAction(
   formData: FormData
 ): Promise<Result<{ publicUrl: string; storageKey: string }>> {
@@ -1103,7 +1108,7 @@ export async function uploadHouseAssetDirectAction(
   if (!roleCheck.ok) return roleCheck;
 
   const houseId = authCtx.value.houseId;
-  const uniqueId = Math.random().toString(36).substring(2, 9);
+  const uniqueId = randomBytes(8).toString("hex");
   const ext = file.type === "image/png" ? "png" : file.type === "image/jpeg" ? "jpg" : "webp";
   const storageKey = `houses/${houseId}/${assetType}_${Date.now()}_${uniqueId}.${ext}`;
 

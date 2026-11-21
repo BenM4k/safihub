@@ -110,7 +110,7 @@ describe("In-App Coverage Extension Support Ticket Service", () => {
 
     expect(res.ok).toBe(true);
     if (res.ok) {
-      expect(res.value.ticketReference).toMatch(/^TIC-EXT-[A-Z0-9]+-[A-Z0-9]+$/);
+      expect(res.value.ticketReference).toMatch(/^TIC-EXT-[0-9A-F]{6}-[A-Z0-9]+$/);
     }
   });
 });
