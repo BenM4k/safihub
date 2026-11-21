@@ -349,8 +349,8 @@ describe("Roles, Permissions & Area Guards", () => {
 
     it("getRoleCta resolves correct URLs and roles for guest, customer, admin, courier, and house", () => {
       expect(getRoleCta(null)).toEqual({
-        href: "#catalogue",
-        isExternalOrAnchor: true,
+        href: "/houses",
+        isExternalOrAnchor: false,
         roleKey: "guest",
       });
 
@@ -364,8 +364,8 @@ describe("Roles, Permissions & Area Guards", () => {
           isGuest: true,
         })
       ).toEqual({
-        href: "#catalogue",
-        isExternalOrAnchor: true,
+        href: "/houses",
+        isExternalOrAnchor: false,
         roleKey: "guest",
       });
 
@@ -379,8 +379,8 @@ describe("Roles, Permissions & Area Guards", () => {
           isGuest: false,
         })
       ).toEqual({
-        href: "#catalogue",
-        isExternalOrAnchor: true,
+        href: "/houses",
+        isExternalOrAnchor: false,
         roleKey: "customer",
       });
 

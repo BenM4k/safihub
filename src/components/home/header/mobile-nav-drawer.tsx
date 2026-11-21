@@ -24,7 +24,7 @@ export function MobileNavDrawer({ isOpen, onClose, user }: MobileNavDrawerProps)
   const tCommon = useTranslations("common");
 
   const cta = getRoleCta(user);
-  const ctaHref = cta.roleKey === "guest" || cta.roleKey === "customer" ? "/#catalogue" : cta.href;
+  const ctaHref = cta.href;
   const ctaLabel =
     cta.roleKey === "admin"
       ? tNav("adminPortal")

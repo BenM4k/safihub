@@ -12,8 +12,8 @@ export interface RoleCtaInfo {
 export function getRoleCta(user?: AuthenticatedUser | null): RoleCtaInfo {
   if (!user || user.isGuest) {
     return {
-      href: "#catalogue",
-      isExternalOrAnchor: true,
+      href: "/houses",
+      isExternalOrAnchor: false,
       roleKey: "guest",
     };
   }
@@ -40,8 +40,8 @@ export function getRoleCta(user?: AuthenticatedUser | null): RoleCtaInfo {
     case "customer":
     default:
       return {
-        href: "#catalogue",
-        isExternalOrAnchor: true,
+        href: "/houses",
+        isExternalOrAnchor: false,
         roleKey: "customer",
       };
   }

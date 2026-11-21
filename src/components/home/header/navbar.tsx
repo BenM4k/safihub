@@ -18,7 +18,7 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
   const tNav = useTranslations("nav");
 
   const cta = getRoleCta(user);
-  const ctaHref = cta.roleKey === "guest" || cta.roleKey === "customer" ? "/#catalogue" : cta.href;
+  const ctaHref = cta.href;
   const ctaLabel =
     cta.roleKey === "admin"
       ? tNav("adminPortal")

@@ -31,7 +31,7 @@ export default function NotFound() {
 
   const destinations = [
     {
-      href: "/#catalogue",
+      href: "/houses",
       title: t("catalogueShortcut"),
       icon: ShoppingBag,
     },

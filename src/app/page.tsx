@@ -7,7 +7,6 @@ import { HeroSkeleton } from "@/components/home/hero/hero-skeleton";
 import { TrustBanner } from "@/components/home/trust-banner/trust-banner";
 import { ServicesTabs } from "@/components/home/services-tabs/services-tabs";
 import { HowItWorks } from "@/components/home/how-it-works/how-it-works";
-import { ProductsCatalogue } from "@/components/home/products-catalogue/products-catalogue";
 import { Testimonials } from "@/components/home/testimonials/testimonials";
 import { FaqSection } from "@/components/home/faq/faq-section";
 import { Footer } from "@/components/home/footer/footer";
@@ -91,7 +90,6 @@ export default function HomePage() {
           <HomeUserSections neighborhoodsPromise={neighborhoodsPromise} />
         </Suspense>
         <HowItWorks />
-        <ProductsCatalogue />
         <Testimonials />
         <FaqSection />
       </main>

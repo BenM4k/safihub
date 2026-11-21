@@ -1,176 +1,159 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
+  Camera,
   CheckCircle2,
-  Video,
-  FileText,
-  Trash2,
-  Mic,
-  PhoneOff,
-  MessageSquare,
+  Clock,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { OrderTrackingCard } from "./status-cards/order-tracking-card";
+import { PartnerDashboardCard } from "./status-cards/partner-dashboard-card";
+import { CataloguePricingCard } from "./status-cards/catalogue-pricing-card";
+import { ComboOrderCatalogueCard } from "./status-cards/combo-order-catalogue-card";
+import { ComboPartnerOpsCard } from "./status-cards/combo-partner-ops-card";
+
+const PAGE_VARIANTS = [
+  { id: "order", Component: OrderTrackingCard },
+  { id: "partner", Component: PartnerDashboardCard },
+  { id: "catalogue", Component: CataloguePricingCard },
+  { id: "combo-order-catalogue", Component: ComboOrderCatalogueCard },
+  { id: "combo-partner-ops", Component: ComboPartnerOpsCard },
+] as const;
 
 export function HeroStatusCard() {
+  const t = useTranslations("hero.statusCard");
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Pick a random page showcase on mount (deterministic SSR, zero hydration mismatch)
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * PAGE_VARIANTS.length);
+    const frameId = requestAnimationFrame(() => {
+      setActiveIndex(randomIndex);
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  const ActivePage = PAGE_VARIANTS[activeIndex]?.Component ?? OrderTrackingCard;
+  const activeKey = PAGE_VARIANTS[activeIndex]?.id ?? "order";
+
   return (
-    <div className="relative mx-auto w-full max-w-132.5">
-      {/* Background canvas container */}
-      <div className="rounded-[2.25rem] bg-[#E1DEFE]/70 dark:bg-card/70 border border-indigo-100/60 dark:border-border p-4 sm:p-7 relative">
-        {/* Main Floating Application Window */}
-        <div className="rounded-2xl bg-card border border-border shadow-lg p-4 sm:p-5 relative z-10">
-          {/* Top action bar with acknowledgement button */}
-          <div className="text-center mb-3">
-            <Button
-              type="button"
-              variant="primary"
-              size="pill-sm"
-              className="text-[11px] min-h-0 h-auto py-1 px-3.5 font-semibold"
-            >
-              Valider et approuver le comptage
-            </Button>
+    <div className="hidden lg:block relative w-full max-w-[680px] font-sans">
+      {/* Main Layered Composition matching reference: offset dimmed primary backdrop + overhanging cards */}
+      <div className="relative pt-8 pb-7 pl-0 pr-8">
+        {/* Dimmed Primary Color Backdrop Rectangle (offset to the right behind cards) */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute top-0 right-0 bottom-0 left-14 rounded-[1.75rem] bg-gradient-to-b from-primary/40 via-primary/25 to-primary/15 dark:from-primary/35 dark:via-primary/20 dark:to-primary/10"
+        />
+
+        {/* Foreground Overhanging Page Window (breaks out cleanly to the left of the backdrop) */}
+        <div className="relative z-10 rounded-2xl bg-card border border-border/70 shadow-[0_22px_55px_-14px_rgba(40,36,213,0.18),0_6px_20px_-4px_rgba(16,24,40,0.08)] dark:shadow-[0_22px_55px_-14px_rgba(0,0,0,0.65)] overflow-hidden">
+          <div
+            key={activeKey}
+            className="animate-fade-up max-h-[390px] overflow-hidden"
+          >
+            <ActivePage />
           </div>
 
-          {/* Center split view: Document preview (left) + Video/Contact tiles (right) */}
-          <div className="grid grid-cols-12 gap-3 mb-3">
-            {/* Left side: Document preview */}
-            <div className="col-span-7 rounded-xl bg-muted/50 border border-border p-3 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between border-b border-border pb-1.5 mb-2">
-                  <span className="text-[11px] font-bold text-heading">
-                    Fiche de réception
-                  </span>
-                  <span className="text-[9px] font-semibold text-muted-foreground">
-                    #SH-2849
-                  </span>
-                </div>
-                {/* Skeleton invoice lines */}
-                <div className="space-y-1.5">
-                  <div className="h-2 w-full bg-muted rounded" />
-                  <div className="h-2 w-5/6 bg-muted rounded" />
-                  <div className="h-2 w-3/4 bg-muted/60 rounded" />
-                  <div className="h-2 w-4/5 bg-muted/60 rounded" />
-                </div>
-              </div>
-              <div className="pt-2 border-t border-border flex justify-between items-center text-[10px] font-bold text-heading">
-                <span>Total articles : 6</span>
-                <span className="text-primary font-extrabold">41 000 CDF</span>
-              </div>
-            </div>
-
-            {/* Right side: 2 Video / Avatar tiles */}
-            <div className="col-span-5 flex flex-col gap-2">
-              {/* Tile 1: Laundry House */}
-              <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-muted border border-border animate-float shadow-2xs">
-                <Image
-                  src="https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=300&q=80"
-                  alt="Pressing"
-                  fill
-                  priority
-                  sizes="140px"
-                  className="object-cover"
-                />
-                <span className="absolute bottom-1 left-1.5 text-[9px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded">
-                  Atelier Partenaire
-                </span>
-              </div>
-
-              {/* Tile 2: Courier */}
-              <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-muted border border-border animate-float [animation-delay:3s] shadow-2xs">
-                <Image
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80"
-                  alt="Coursier"
-                  fill
-                  priority
-                  sizes="140px"
-                  className="object-cover"
-                />
-                <span className="absolute bottom-1 left-1.5 text-[9px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded">
-                  Coursier SafiHub
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Call Controls & Timer Bar */}
-          <div className="flex items-center justify-between pt-2 border-t border-border text-[10px] text-muted-foreground font-medium">
-            <span>Contrôle contradictoire</span>
-            <span className="font-mono tabular">00:03:00</span>
-            <div className="flex items-center gap-1.5">
-              <span className="size-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                <Mic className="size-3" />
-              </span>
-              <span className="size-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                <Video className="size-3" />
-              </span>
-              <span className="size-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                <MessageSquare className="size-3" />
-              </span>
-              <span className="size-6 rounded-full bg-rose-500 flex items-center justify-center text-white">
-                <PhoneOff className="size-3" />
-              </span>
-            </div>
-          </div>
+          {/* Blended bottom edge melting smoothly into the card surface */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card via-card/80 to-transparent"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-card/75 to-transparent"
+          />
         </div>
 
-        {/* Lower floating elements */}
-        <div className="mt-3 space-y-2 relative z-20">
-          {/* Row 1: File pill + Green Camera tile */}
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-card rounded-xl p-2.5 shadow-sm border border-border flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="size-7 rounded-lg bg-primary-soft text-primary flex items-center justify-center shrink-0">
-                  <FileText className="size-4" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-heading leading-tight">
-                    Fiche_reception_Muhumba.pdf
+        {/* Lower Floating Status Rows + Accent Square Tiles (matching reference layout) */}
+        <div className="relative z-10 mt-3.5 pl-10 pr-2 flex items-stretch gap-3">
+          {/* Left: 2 crisp floating white cards */}
+          <div className="flex-1 min-w-0 space-y-2.5">
+            <div className="rounded-xl bg-card border border-primary/25 px-3.5 py-2.5 shadow-[0_8px_24px_-6px_rgba(40,36,213,0.12)] flex items-center justify-between gap-3 animate-float">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="size-8 rounded-lg bg-primary-soft text-primary flex items-center justify-center shrink-0">
+                  <Camera className="size-4" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-heading truncate">
+                    {t("courierTitle")}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    200 KB — 100% conforme
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {t("courierMeta")}
                   </p>
                 </div>
               </div>
-              <CheckCircle2 className="size-4 text-primary fill-primary/10 shrink-0" />
+              <CheckCircle2
+                className="size-4 text-primary shrink-0"
+                aria-hidden="true"
+              />
             </div>
 
-            {/* Vibrant green square button */}
-            <div className="size-11 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-sm shrink-0">
-              <Video className="size-5" />
-            </div>
-          </div>
-
-          {/* Row 2: Progress pill + Blue File tile */}
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-card rounded-xl p-2.5 shadow-sm border border-border flex items-center justify-between">
-              <div className="flex items-center gap-2.5 w-full pr-2">
-                <div className="size-7 rounded-lg bg-primary-soft text-primary flex items-center justify-center shrink-0">
-                  <FileText className="size-4" />
-                </div>
-                <div className="w-full">
-                  <p className="text-xs font-bold text-heading leading-tight">
-                    Photos_etat_vetements.zip
+            <div className="rounded-xl bg-card border border-border/80 px-3.5 py-2.5 shadow-[0_8px_24px_-6px_rgba(16,24,40,0.08)] flex items-center justify-between gap-3 animate-float [animation-delay:2.5s]">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <span className="size-8 rounded-lg bg-primary-soft text-primary flex items-center justify-center shrink-0">
+                  <Clock className="size-4" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-heading truncate">
+                    {t("etaTitle")} · {t("etaWindow")}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                      <div className="h-full w-full bg-primary rounded-full" />
+                    <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full w-4/5 rounded-full bg-primary" />
                     </div>
-                    <span className="text-[9px] font-bold text-muted-foreground tabular">
-                      100%
+                    <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">
+                      80%
                     </span>
                   </div>
                 </div>
               </div>
-              <Trash2 className="size-3.5 text-muted-foreground shrink-0 hover:text-rose-500" />
             </div>
+          </div>
 
-            {/* Vibrant blue square button with red notification dot */}
-            <div className="size-11 rounded-xl bg-primary text-white flex items-center justify-center shadow-sm shrink-0 relative">
-              <FileText className="size-5" />
-              <span className="absolute -top-1 -right-1 size-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+          {/* Right: 2 solid accent square tiles (emerald + primary with badge) */}
+          <div className="flex flex-col justify-between gap-2.5 shrink-0">
+            <div className="size-13 rounded-2xl bg-emerald-500 text-white shadow-[0_10px_24px_-6px_rgba(16,185,129,0.45)] flex items-center justify-center">
+              <ShieldCheck className="size-6" aria-hidden="true" />
+            </div>
+            <div className="relative size-13 rounded-2xl bg-primary text-primary-foreground shadow-[0_10px_24px_-6px_rgba(40,36,213,0.45)] flex items-center justify-center">
+              <Sparkles className="size-6" aria-hidden="true" />
+              <span className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-xs">
                 1
               </span>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Subtle Interactive Switcher Dots */}
+      <div
+        className="mt-4 pl-14 flex items-center justify-center gap-2"
+        role="tablist"
+        aria-label="Hero showcase"
+      >
+        {PAGE_VARIANTS.map((variant, idx) => {
+          const isCurrent = idx === activeIndex;
+          return (
+            <button
+              key={variant.id}
+              type="button"
+              role="tab"
+              aria-selected={isCurrent}
+              aria-label={t("switchCardAria", { index: idx + 1 })}
+              onClick={() => setActiveIndex(idx)}
+              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                isCurrent
+                  ? "w-8 bg-primary"
+                  : "w-2 bg-border-strong/50 hover:bg-primary/60"
+              }`}
+            />
+          );
+        })}
       </div>
     </div>
   );
