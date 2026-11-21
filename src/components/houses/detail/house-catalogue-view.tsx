@@ -133,13 +133,15 @@ export function HouseCatalogueView({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-3">
                 {filteredArticles.map((art) => (
                   <PressingArticleCard
                     key={art.key}
                     itemName={art.itemNameFr}
+                    itemCategory={art.itemCategory}
                     serviceName={art.serviceNameFr}
                     variants={art.variants}
+                    activeFabricId={activeFabricId}
                     getQuantityInCart={getQuantityInCart}
                     onUpdateQuantity={handleUpdateQuantity}
                     isHouseAvailable={isHouseAvailable}

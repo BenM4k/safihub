@@ -4,15 +4,11 @@ import { AlertCircle, Check, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ProgressCard } from "./progress-card";
 import { PricingFreezeNotice } from "./pricing-freeze-notice";
-import type { CatalogueServiceTab } from "./types";
 
 interface CatalogueHeaderProps {
   houseSlug: string;
   totalConfigured: number;
   totalPossible: number;
-  services: CatalogueServiceTab[];
-  activeServiceId: string;
-  onSelectService: (serviceId: string) => void;
   saveSuccessMsg: string | null;
   errorMsg: string | null;
 }
@@ -21,9 +17,6 @@ export function CatalogueHeader({
   houseSlug,
   totalConfigured,
   totalPossible,
-  services,
-  activeServiceId,
-  onSelectService,
   saveSuccessMsg,
   errorMsg,
 }: CatalogueHeaderProps) {
@@ -47,9 +40,6 @@ export function CatalogueHeader({
       <ProgressCard
         totalConfigured={totalConfigured}
         totalPossible={totalPossible}
-        services={services}
-        activeServiceId={activeServiceId}
-        onSelectService={onSelectService}
       />
 
       <PricingFreezeNotice />

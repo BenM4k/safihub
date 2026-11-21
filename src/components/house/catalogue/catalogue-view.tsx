@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState, useMemo } from "react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { HouseCatalogueItemRecord } from "@/dal";
 import { EmptyState } from "@/components/admin/shared/empty-state";
@@ -9,6 +10,7 @@ import { buildCatalogueStructure, getTargetCatalogueCells } from "./catalogue-he
 import { useCatalogueState } from "./use-catalogue-state";
 import { useCatalogueFilter } from "./use-catalogue-filter";
 import { CatalogueHeader } from "./catalogue-header";
+import { ServiceTabsBar } from "./service-tabs-bar";
 import { CatalogueToolbar } from "./catalogue-toolbar";
 import { DesktopPricingGrid } from "./desktop-pricing-grid";
 import { MobileArticleAccordion } from "./mobile-article-accordion";
@@ -67,6 +69,9 @@ export function CatalogueView({
   // Filtering and active service URL sync
   const {
     activeServiceId,
+    pendingServiceId,
+    pendingService,
+    isServicePending,
     handleSelectService: setFilterService,
     filters,
     setFilters,
@@ -95,52 +100,84 @@ export function CatalogueView({
         houseSlug={houseSlug}
         totalConfigured={totalConfigured}
         totalPossible={totalPossible}
-        services={services}
-        activeServiceId={activeServiceId}
-        onSelectService={handleSelectService}
         saveSuccessMsg={saveSuccessMsg}
         errorMsg={errorMsg}
       />
 
-      <CatalogueToolbar
-        filters={filters}
-        onFilterChange={setFilters}
-        categories={currentCategoryGroups}
-        selectedArticlesCount={selectedArticleIds.size}
-        totalFilteredCount={totalFilteredArticles}
-        onOpenBulkTools={() => setShowBulkModal(true)}
-      />
-
-      {filteredCategoryGroups.length === 0 ? (
-        <EmptyState
-          title={t("emptyFilter")}
-          description={t("emptyFilterDesc")}
+      <div className="space-y-4">
+        <ServiceTabsBar
+          services={services}
+          activeServiceId={activeServiceId}
+          pendingServiceId={pendingServiceId}
+          onSelectService={handleSelectService}
         />
-      ) : (
-        <>
-          <DesktopPricingGrid
-            categories={filteredCategoryGroups}
-            materials={materials}
-            edits={edits}
-            commissionBps={commissionBps}
-            selectedArticleIds={selectedArticleIds}
-            onToggleArticleSelect={handleToggleArticleSelect}
-            onCellChange={handleCellChange}
-            onApplyPriceToAllFabrics={handleApplyPriceToAllFabrics}
-          />
 
-          <MobileArticleAccordion
-            categories={filteredCategoryGroups}
-            materials={materials}
-            edits={edits}
-            commissionBps={commissionBps}
-            selectedArticleIds={selectedArticleIds}
-            onToggleArticleSelect={handleToggleArticleSelect}
-            onCellChange={handleCellChange}
-            onApplyPriceToAllFabrics={handleApplyPriceToAllFabrics}
-          />
-        </>
-      )}
+        <CatalogueToolbar
+          filters={filters}
+          onFilterChange={setFilters}
+          categories={currentCategoryGroups}
+          selectedArticlesCount={selectedArticleIds.size}
+          totalFilteredCount={totalFilteredArticles}
+          onOpenBulkTools={() => setShowBulkModal(true)}
+        />
+
+        <div className="relative" aria-busy={isServicePending}>
+          {isServicePending && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="mb-3 flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-primary-soft/80 border border-primary/25 text-primary text-xs font-bold animate-in fade-in duration-150"
+            >
+              <Loader2 className="size-4 animate-spin shrink-0" aria-hidden="true" />
+              <span>
+                {t("switchingService", {
+                  service: pendingService?.nameFr ?? "",
+                })}
+              </span>
+            </div>
+          )}
+
+          <div
+            key={activeServiceId}
+            className={`transition-opacity duration-200 ${
+              isServicePending
+                ? "opacity-50 pointer-events-none"
+                : "animate-in fade-in duration-200"
+            }`}
+          >
+            {filteredCategoryGroups.length === 0 ? (
+              <EmptyState
+                title={t("emptyFilter")}
+                description={t("emptyFilterDesc")}
+              />
+            ) : (
+              <>
+                <DesktopPricingGrid
+                  categories={filteredCategoryGroups}
+                  materials={materials}
+                  edits={edits}
+                  commissionBps={commissionBps}
+                  selectedArticleIds={selectedArticleIds}
+                  onToggleArticleSelect={handleToggleArticleSelect}
+                  onCellChange={handleCellChange}
+                  onApplyPriceToAllFabrics={handleApplyPriceToAllFabrics}
+                />
+
+                <MobileArticleAccordion
+                  categories={filteredCategoryGroups}
+                  materials={materials}
+                  edits={edits}
+                  commissionBps={commissionBps}
+                  selectedArticleIds={selectedArticleIds}
+                  onToggleArticleSelect={handleToggleArticleSelect}
+                  onCellChange={handleCellChange}
+                  onApplyPriceToAllFabrics={handleApplyPriceToAllFabrics}
+                />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
 
       <StickySaveBar
         dirtyCount={diffs.length}

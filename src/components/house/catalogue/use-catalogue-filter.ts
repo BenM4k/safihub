@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import type {
   CatalogueServiceTab,
@@ -24,12 +24,30 @@ export function useCatalogueFilter(
     services[0]?.id ??
     "";
 
+  const [isServicePending, startServiceTransition] = useTransition();
+  const [targetServiceId, setTargetServiceId] = useState<string | null>(null);
+
+  const pendingServiceId =
+    isServicePending && targetServiceId && targetServiceId !== activeServiceId
+      ? targetServiceId
+      : null;
+
+  const activeService =
+    services.find((s) => s.id === activeServiceId) ?? services[0] ?? null;
+  const pendingService = pendingServiceId
+    ? services.find((s) => s.id === pendingServiceId) ?? null
+    : null;
+
   function handleSelectService(serviceId: string) {
+    if (serviceId === activeServiceId) return;
     const srv = services.find((s) => s.id === serviceId);
     const param = srv ? srv.slug : serviceId;
     const params = new URLSearchParams(searchParams.toString());
     params.set("service", param);
-    router.replace(`${pathname}?${params.toString()}`);
+    setTargetServiceId(serviceId);
+    startServiceTransition(() => {
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    });
   }
 
   const [filters, setFilters] = useState<CatalogueFilterState>({
@@ -87,6 +105,10 @@ export function useCatalogueFilter(
 
   return {
     activeServiceId,
+    activeService,
+    pendingServiceId,
+    pendingService,
+    isServicePending: Boolean(pendingServiceId),
     handleSelectService,
     filters,
     setFilters,

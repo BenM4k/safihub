@@ -26,13 +26,6 @@ export function CatalogueGridSkeleton() {
           </div>
 
           <Skeleton className="h-2.5 w-full rounded-full" />
-
-          {/* Service tabs */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 pb-0.5">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-8 w-24 sm:w-28 rounded-xl" />
-            ))}
-          </div>
         </div>
 
         {/* Pricing Freeze Notice */}
@@ -45,8 +38,15 @@ export function CatalogueGridSkeleton() {
         </div>
       </div>
 
-      {/* 3. Toolbar */}
-      <div className="py-4 border-b border-border/60 space-y-3.5 font-sans">
+      {/* 3. Service Tabs & Toolbar */}
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl bg-card border border-border/60">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-9 w-28 sm:w-32 rounded-xl" />
+          ))}
+        </div>
+
+        <div className="py-4 border-b border-border/60 space-y-3.5 font-sans">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
           <Skeleton className="h-10 sm:h-9 w-full sm:max-w-sm rounded-xl" />
           <div className="flex flex-wrap items-center gap-2">
@@ -55,6 +55,7 @@ export function CatalogueGridSkeleton() {
             <Skeleton className="h-10 sm:h-9 w-28 rounded-lg" />
           </div>
         </div>
+      </div>
       </div>
 
       {/* 4. Desktop Table View (>=768px) */}

@@ -63,7 +63,7 @@ export function DesktopPricingGrid({
           <TableHeader className="sticky top-0 z-30 bg-muted/80 backdrop-blur-xs select-none">
             <TableRow className="border-b border-border/60">
               {/* Sticky first column header: Article name & bulk select */}
-              <TableHead className="sticky left-0 z-40 bg-muted py-4 px-5 min-w-[220px] max-w-[260px] border-r border-border/60 font-bold text-heading">
+              <TableHead className="sticky left-0 z-40 bg-muted py-4 px-5 min-w-[260px] max-w-[300px] border-r border-border/60 font-bold text-heading">
                 <div className="flex items-center gap-2">
                   <span>{t("itemCol")}</span>
                 </div>

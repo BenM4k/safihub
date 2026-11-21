@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronDown, Copy, CheckSquare, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { GarmentIcon } from "@/components/common/garment-icon";
 import type {
   CatalogueCategoryGroup,
   CatalogueMaterial,
@@ -98,11 +99,18 @@ export function MobileArticleAccordion({
                       <button
                         type="button"
                         onClick={() => toggleArticle(article.id)}
-                        className="flex-1 text-left min-w-0 flex items-center justify-between gap-2 cursor-pointer"
+                        className="flex-1 text-left min-w-0 flex items-center justify-between gap-2.5 cursor-pointer"
                       >
-                        <span className="font-bold text-xs text-heading truncate">
-                          {article.nameFr}
-                        </span>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <GarmentIcon
+                            name={article.nameFr}
+                            category={article.category}
+                            size="sm"
+                          />
+                          <span className="font-bold text-xs text-heading truncate">
+                            {article.nameFr}
+                          </span>
+                        </div>
                         <Badge variant="secondary" className="text-[10px] px-2 py-0.5 rounded-full shrink-0 font-mono">
                           {offeredCount}/{materials.length} {t("offered").toLowerCase()}
                         </Badge>

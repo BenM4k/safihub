@@ -3,24 +3,16 @@
 import { useTranslations } from "next-intl";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import type { CatalogueServiceTab } from "./types";
 import { CatalogueSetupGuide } from "./catalogue-setup-guide";
 
 interface ProgressCardProps {
   totalConfigured: number;
   totalPossible: number;
-  services: CatalogueServiceTab[];
-  activeServiceId: string;
-  onSelectService: (serviceId: string) => void;
 }
 
 export function ProgressCard({
   totalConfigured,
   totalPossible,
-  services,
-  activeServiceId,
-  onSelectService,
 }: ProgressCardProps) {
   const t = useTranslations("house.catalogue");
   const percent = totalPossible > 0 ? Math.round((totalConfigured / totalPossible) * 100) : 0;
@@ -48,40 +40,6 @@ export function ProgressCard({
 
       {/* Progress bar */}
       <Progress value={percent} className="h-2.5" />
-
-      {/* Per-service pills */}
-      <div className="flex flex-wrap items-center gap-2 pt-1 pb-0.5">
-        {services.map((srv) => {
-          const isSelected = srv.id === activeServiceId;
-          const isComplete = srv.configuredCount === srv.totalCount && srv.totalCount > 0;
-          return (
-            <button
-              key={srv.id}
-              type="button"
-              onClick={() => onSelectService(srv.id)}
-              className={`text-xs px-3 py-1.5 font-medium transition flex items-center gap-1.5 cursor-pointer rounded-xl border ${
-                isSelected
-                  ? "bg-primary-soft/80 border-primary/30 text-primary font-bold shadow-xs"
-                  : "border-transparent text-muted-foreground hover:text-heading hover:bg-muted/40"
-              }`}
-            >
-              <span>{srv.nameFr}</span>
-              <Badge
-                variant={isSelected ? "default" : isComplete ? "success" : "outline"}
-                className={`font-mono text-[10px] px-1.5 py-0 h-4 ${
-                  isSelected
-                    ? "bg-primary text-primary-foreground border-0"
-                    : isComplete
-                      ? "bg-success-soft text-success border-success/30"
-                      : "border-border/60 bg-muted/40 text-muted-foreground"
-                }`}
-              >
-                {srv.configuredCount}/{srv.totalCount}
-              </Badge>
-            </button>
-          );
-        })}
-      </div>
 
       {/* Catalogue Setup Guidance for partners */}
       <CatalogueSetupGuide defaultExpanded={percent < 100} />

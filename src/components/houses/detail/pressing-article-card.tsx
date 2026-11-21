@@ -4,12 +4,23 @@ import { useState, useMemo } from "react";
 import { Minus, Plus, AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { formatAmount } from "@/lib/order-formatters";
+import { GarmentIcon } from "@/components/common/garment-icon";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { CustomerHouseCatalogueItem } from "@/dal";
 
 interface PressingArticleCardProps {
   itemName: string;
+  itemCategory?: string | null;
   serviceName: string;
   variants: CustomerHouseCatalogueItem[];
+  activeFabricId?: string | null;
   getQuantityInCart: (houseItemId: string) => number;
   onUpdateQuantity: (item: CustomerHouseCatalogueItem, delta: number) => void;
   isHouseAvailable: boolean;
@@ -18,8 +29,10 @@ interface PressingArticleCardProps {
 
 export function PressingArticleCard({
   itemName,
+  itemCategory,
   serviceName,
   variants,
+  activeFabricId,
   getQuantityInCart,
   onUpdateQuantity,
   isHouseAvailable,
@@ -27,126 +40,174 @@ export function PressingArticleCard({
 }: PressingArticleCardProps) {
   const t = useTranslations("customerHouses");
 
-  // Sorted variants
   const sortedVariants = useMemo(() => {
     return [...variants].sort((a, b) => a.priceCdf - b.priceCdf);
   }, [variants]);
 
-  // Default selected variant: first non-excluded variant
-  const [selectedVariantIndex, setSelectedVariantIndex] = useState(() => {
-    const nonExcludedIdx = sortedVariants.findIndex((v) => !v.isExcluded);
-    return nonExcludedIdx >= 0 ? nonExcludedIdx : 0;
-  });
+  const [manualVariantId, setManualVariantId] = useState<string | null>(null);
 
-  const selectedItem = sortedVariants[selectedVariantIndex] || sortedVariants[0];
-  const quantityInCart = selectedItem ? getQuantityInCart(selectedItem.houseItemId) : 0;
+  const selectedItem = useMemo(() => {
+    if (manualVariantId) {
+      const found = sortedVariants.find(
+        (v) => v.houseItemId === manualVariantId,
+      );
+      if (found) return found;
+    }
+    if (activeFabricId) {
+      const matchingFabric = sortedVariants.find(
+        (v) => v.fabricId === activeFabricId && !v.isExcluded,
+      );
+      if (matchingFabric) return matchingFabric;
+    }
+    return sortedVariants.find((v) => !v.isExcluded) ?? sortedVariants[0];
+  }, [manualVariantId, activeFabricId, sortedVariants]);
 
-  const minPrice = sortedVariants.length > 0 ? sortedVariants[0].priceCdf : 0;
-  const currentPrice = selectedItem ? selectedItem.priceCdf : minPrice;
+  const quantityInCart = selectedItem
+    ? getQuantityInCart(selectedItem.houseItemId)
+    : 0;
+  const totalArticleCount = sortedVariants.reduce(
+    (sum, v) => sum + getQuantityInCart(v.houseItemId),
+    0,
+  );
 
+  const currentPrice = selectedItem?.priceCdf ?? 0;
   const priceUsdApprox =
     usdExchangeRate && usdExchangeRate > 0
       ? (currentPrice / usdExchangeRate).toFixed(2)
       : null;
 
+  const isExcluded = Boolean(selectedItem?.isExcluded);
+  const hasAnyInCart = totalArticleCount > 0;
+
   return (
     <div
-      className={`rounded-3xl border p-4 sm:p-5 flex flex-col justify-between transition-all bg-card hover-lift ${
-        selectedItem?.isExcluded
-          ? "border-border/60 opacity-60 bg-muted/30"
-          : quantityInCart > 0
-            ? "border-primary shadow-xs ring-1 ring-primary/20"
-            : "border-border hover:border-border-strong hover:shadow-2xs"
+      className={`rounded-2xl border p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 transition-all duration-200 bg-card ${
+        isExcluded
+          ? "border-border/60 opacity-65 bg-muted/30 shadow-xs"
+          : hasAnyInCart
+            ? "border-primary/80 ring-1 ring-primary/20 shadow-[0_6px_20px_-4px_rgba(40,36,213,0.16),0_2px_6px_-1px_rgba(16,24,40,0.06)] dark:shadow-[0_6px_20px_-4px_rgba(40,36,213,0.35),0_2px_6px_-1px_rgba(0,0,0,0.4)]"
+            : "border-border/80 shadow-[0_2px_10px_-2px_rgba(16,24,40,0.08),0_1px_3px_rgba(16,24,40,0.05)] hover:border-border-strong hover:shadow-[0_10px_24px_-4px_rgba(16,24,40,0.12),0_4px_8px_-2px_rgba(16,24,40,0.06)] dark:shadow-[0_2px_10px_-2px_rgba(0,0,0,0.35),0_1px_3px_rgba(0,0,0,0.25)] dark:hover:shadow-[0_10px_24px_-4px_rgba(0,0,0,0.5)]"
       }`}
     >
-      <div>
-        {/* Top badges: Service & Min price indicator */}
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-muted-foreground border border-border/40">
-            {serviceName}
-          </span>
-          {sortedVariants.length > 1 && (
-            <span className="text-[10px] text-muted-foreground font-medium">
-              {t("fromPrice", { price: formatAmount(minPrice) })}
+      {/* Left: Noticeable Garment Icon + Item Identity & Price */}
+      <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 flex-1">
+        <div className="relative shrink-0">
+          <GarmentIcon
+            name={itemName}
+            category={itemCategory}
+            size="lg"
+            className={hasAnyInCart ? "ring-2 ring-primary/30" : undefined}
+          />
+          {hasAnyInCart && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-primary text-white text-[10px] font-semibold flex items-center justify-center shadow-xs tabular-nums">
+              {totalArticleCount}
             </span>
           )}
         </div>
 
-        {/* Item Name */}
-        <h3 className="text-sm sm:text-base font-black text-heading leading-snug mb-3">
-          {itemName}
-        </h3>
-
-        {/* Material / Fabric Selector */}
-        {sortedVariants.length > 1 && (
-          <div className="mb-4">
-            <span className="text-[11px] font-bold text-muted-foreground block mb-1.5">
-              {t("selectMaterial")}
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm sm:text-[15px] font-semibold text-heading leading-snug truncate">
+              {itemName}
+            </h3>
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-secondary text-muted-foreground border border-border/40 shrink-0">
+              {serviceName}
             </span>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {sortedVariants.map((v, idx) => {
-                const isSelected = idx === selectedVariantIndex;
-                return (
-                  <button
-                    key={v.houseItemId}
-                    type="button"
-                    onClick={() => setSelectedVariantIndex(idx)}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                      isSelected
-                        ? "bg-primary text-white shadow-2xs"
-                        : "bg-secondary text-foreground hover:bg-secondary/80 border border-border/40"
-                    }`}
-                  >
-                    {v.fabricNameFr}
-                  </button>
-                );
-              })}
-            </div>
           </div>
-        )}
 
-        {/* Price display */}
-        <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-base sm:text-lg font-black text-heading tabular-nums">
-            {formatAmount(currentPrice)}
-          </span>
-          {priceUsdApprox && (
-            <span className="text-xs text-muted-foreground font-medium">
-              (≈ ${priceUsdApprox})
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-sm sm:text-[15px] font-semibold text-heading tabular-nums">
+              {formatAmount(currentPrice)}
             </span>
-          )}
+            {priceUsdApprox && (
+              <span className="text-xs text-muted-foreground font-normal">
+                (≈ ${priceUsdApprox})
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Action / Stepper / Exclusion Notice */}
-      <div className="pt-3 border-t border-border">
-        {selectedItem?.isExcluded ? (
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
+      {/* Right: Fabric/Type Selector + Item Count Stepper */}
+      <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-border/60 shrink-0">
+        {/* Type / Fabric Selector */}
+        {sortedVariants.length > 1 && selectedItem ? (
+          <Select
+            value={selectedItem.houseItemId}
+            onValueChange={(val: string) => setManualVariantId(val)}
+          >
+            <SelectTrigger
+              aria-label={`${t("selectMaterial")} ${itemName}`}
+              className="h-9 min-w-[130px] max-w-[175px] px-3 rounded-xl bg-muted/60 hover:bg-muted border border-input text-xs font-medium text-foreground cursor-pointer"
+            >
+              <SelectValue>{selectedItem.fabricNameFr}</SelectValue>
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectGroup>
+                {sortedVariants.map((v) => {
+                  const variantQty = getQuantityInCart(v.houseItemId);
+                  return (
+                    <SelectItem
+                      key={v.houseItemId}
+                      value={v.houseItemId}
+                      className="text-xs font-medium"
+                    >
+                      <span className="flex items-center justify-between gap-3 w-full">
+                        <span
+                          className={
+                            v.isExcluded
+                              ? "line-through text-muted-foreground"
+                              : ""
+                          }
+                        >
+                          {v.fabricNameFr}
+                          {variantQty > 0 ? ` (${variantQty})` : ""}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground tabular-nums">
+                          {formatAmount(v.priceCdf)}
+                        </span>
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        ) : selectedItem ? (
+          <span className="px-2.5 py-1.5 rounded-xl bg-muted/60 border border-border/50 text-xs font-medium text-muted-foreground truncate max-w-[150px]">
+            {selectedItem.fabricNameFr}
+          </span>
+        ) : null}
+
+        {/* Item Count Stepper or Exclusion Notice */}
+        {isExcluded ? (
+          <div className="flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 max-w-[160px]">
             <AlertCircle className="size-4 shrink-0" />
             <span className="truncate">
-              {selectedItem.exclusionNote || t("itemExcluded")}
+              {selectedItem?.exclusionNote || t("itemExcluded")}
             </span>
           </div>
-        ) : !isHouseAvailable ? (
-          <button
-            type="button"
-            disabled
-            className="w-full py-2.5 px-3 rounded-xl bg-muted text-muted-foreground text-xs font-bold cursor-not-allowed"
+        ) : selectedItem ? (
+          <div
+            className={`flex items-center gap-1 rounded-xl border p-1 transition ${
+              quantityInCart > 0
+                ? "bg-primary/5 border-primary/40 shadow-2xs"
+                : "bg-muted/40 border-border"
+            }`}
           >
-            {t("addToCart")}
-          </button>
-        ) : quantityInCart > 0 ? (
-          <div className="flex items-center justify-between bg-card border border-primary/40 rounded-2xl p-1 shadow-2xs">
             <button
               type="button"
+              disabled={!isHouseAvailable || quantityInCart <= 0}
               onClick={() => onUpdateQuantity(selectedItem, -1)}
               aria-label={`Diminuer la quantité de ${itemName} (${selectedItem.fabricNameFr})`}
-              className="size-8 rounded-xl bg-secondary hover:bg-secondary/80 text-foreground flex items-center justify-center transition active:scale-95 cursor-pointer"
+              className="size-8 rounded-lg bg-card hover:bg-secondary disabled:opacity-40 disabled:pointer-events-none text-foreground flex items-center justify-center transition active:scale-95 cursor-pointer border border-border/50"
             >
-              <Minus className="size-4" />
+              <Minus className="size-3.5" />
             </button>
             <span
-              className="text-sm font-black text-primary tabular-nums"
+              className={`min-w-7 text-center text-sm font-semibold tabular-nums ${
+                quantityInCart > 0 ? "text-primary" : "text-muted-foreground"
+              }`}
               aria-live="polite"
               aria-atomic="true"
             >
@@ -154,23 +215,15 @@ export function PressingArticleCard({
             </span>
             <button
               type="button"
+              disabled={!isHouseAvailable}
               onClick={() => onUpdateQuantity(selectedItem, 1)}
               aria-label={`Augmenter la quantité de ${itemName} (${selectedItem.fabricNameFr})`}
-              className="size-8 rounded-xl bg-primary hover:bg-primary-hover text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
+              className="size-8 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:pointer-events-none text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
             >
-              <Plus className="size-4" />
+              <Plus className="size-3.5" />
             </button>
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onUpdateQuantity(selectedItem, 1)}
-            className="w-full py-2.5 px-3 rounded-2xl border border-border bg-card hover:bg-primary hover:text-white hover:border-primary text-xs font-bold text-foreground transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-98 cursor-pointer"
-          >
-            <Plus className="size-4" />
-            <span>{t("addToCart")}</span>
-          </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

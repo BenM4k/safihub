@@ -89,27 +89,26 @@ export function HouseDetailSkeleton() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-10">
-            {/* Articles Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((i) => (
+            {/* Articles List */}
+            <div className="flex flex-col gap-3">
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
-                  className="rounded-3xl border border-border p-4 sm:p-5 flex flex-col justify-between bg-card space-y-4"
+                  className="rounded-2xl border border-border p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-card"
                 >
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <Skeleton className="h-4 w-16 rounded-full" />
-                      <Skeleton className="h-3 w-20 rounded-md" />
+                  <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
+                    <Skeleton className="size-14 sm:size-16 rounded-2xl shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-5 w-40 rounded-md" />
+                        <Skeleton className="h-4 w-20 rounded-full" />
+                      </div>
+                      <Skeleton className="h-5 w-24 rounded-md" />
                     </div>
-                    <Skeleton className="h-5 w-36 rounded-md" />
-                    <div className="flex gap-1.5 pt-1">
-                      <Skeleton className="h-6 w-14 rounded-xl" />
-                      <Skeleton className="h-6 w-14 rounded-xl" />
-                    </div>
-                    <Skeleton className="h-6 w-24 rounded-md pt-1" />
                   </div>
-                  <div className="pt-3 border-t border-border">
-                    <Skeleton className="h-9 w-full rounded-2xl" />
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-border/60">
+                    <Skeleton className="h-9 w-36 rounded-xl" />
+                    <Skeleton className="h-10 w-28 rounded-xl" />
                   </div>
                 </div>
               ))}

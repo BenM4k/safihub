@@ -8,10 +8,20 @@ export default async function PartnerRootLayout({
   children: ReactNode;
 }) {
   const messages = await getMessages();
-  const houseMessages = messages.house ? { house: messages.house } : {};
+  const raw = messages as Record<string, unknown>;
+  const adminObj = raw.admin as Record<string, unknown> | undefined;
+  const partnerMessages: Record<string, unknown> = { ...raw };
+
+  // Strip the bulky admin namespace (~63KB) while keeping `admin.shared`
+  // for shared UI primitives (e.g., ConfirmDialog, EmptyState) reused in partner screens.
+  if (adminObj?.shared) {
+    partnerMessages.admin = { shared: adminObj.shared };
+  } else {
+    delete partnerMessages.admin;
+  }
 
   return (
-    <NextIntlClientProvider messages={houseMessages}>
+    <NextIntlClientProvider messages={partnerMessages}>
       {children}
     </NextIntlClientProvider>
   );

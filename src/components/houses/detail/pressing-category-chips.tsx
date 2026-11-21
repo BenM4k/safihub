@@ -49,7 +49,7 @@ export function PressingCategoryChips({
   return (
     <>
       {/* Category chips jump bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 pt-0.5">
         <button
           type="button"
           onClick={() => onSelectCategory(null)}

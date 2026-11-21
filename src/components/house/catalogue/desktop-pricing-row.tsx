@@ -3,6 +3,7 @@
 import { CheckSquare, Copy, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { GarmentIcon } from "@/components/common/garment-icon";
 import type {
   CatalogueArticle,
   CatalogueCellEdit,
@@ -41,12 +42,12 @@ export function DesktopPricingRow({
       }`}
     >
       {/* Sticky first column: Article Details & Bulk checkbox */}
-      <TableCell className="sticky left-0 z-20 bg-card group-hover:bg-muted/50 py-3.5 px-5 border-r border-border min-w-[220px] max-w-[260px] align-top">
+      <TableCell className="sticky left-0 z-20 bg-card group-hover:bg-muted/50 py-3.5 px-5 border-r border-border min-w-[260px] max-w-[300px] align-top">
         <div className="flex items-start gap-2.5">
           <button
             type="button"
             onClick={onToggleSelect}
-            className="mt-0.5 text-muted-foreground hover:text-primary transition shrink-0 cursor-pointer"
+            className="mt-2.5 text-muted-foreground hover:text-primary transition shrink-0 cursor-pointer"
             aria-label={t("selectArticleAria", { name: article.nameFr })}
           >
             {isSelected ? (
@@ -55,7 +56,12 @@ export function DesktopPricingRow({
               <Square className="size-4" />
             )}
           </button>
-          <div className="space-y-1.5 flex-1 min-w-0">
+          <GarmentIcon
+            name={article.nameFr}
+            category={article.category}
+            size="md"
+          />
+          <div className="space-y-1 flex-1 min-w-0 pt-0.5">
             <div className="font-bold text-heading text-xs leading-snug truncate">
               {article.nameFr}
             </div>
