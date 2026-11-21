@@ -103,7 +103,7 @@ export function HouseCardImage({
       {/* Top Overlay Bar: Status Badge & Quick Actions */}
       <div className="relative z-20 flex items-start justify-between gap-2 p-3.5">
         {isOpenNow ? (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600/95 text-white shadow-md backdrop-blur-md border border-white/20">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-700/95 text-white shadow-md backdrop-blur-md border border-white/20">
             <span className="size-1.5 rounded-full bg-white animate-pulse" />
             <span>
               {extractClosingTimeDisplay(todayHoursText)

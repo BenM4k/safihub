@@ -39,22 +39,32 @@ export function PressingCartTransferBanner({
   onClearCart,
 }: PressingCartTransferBannerProps) {
   const t = useTranslations("customerHouses");
-  const [noMatchDetected, setNoMatchDetected] = useState(false);
+  const [failedTransferSnapshot, setFailedTransferSnapshot] = useState<{
+    items: CustomerHouseCatalogueItem[];
+    cartHouseId: string | null;
+    cartItemsCount: number;
+  } | null>(null);
 
   if (!isHydrated || !cartHouseId || cartHouseId === houseId || cartItemsCount === 0) {
     return null;
   }
 
+  const noMatchDetected =
+    failedTransferSnapshot !== null &&
+    failedTransferSnapshot.items === items &&
+    failedTransferSnapshot.cartHouseId === cartHouseId &&
+    failedTransferSnapshot.cartItemsCount === cartItemsCount;
+
   const handleTransferClick = () => {
     const result = onTransfer(houseId, houseName, items);
 
     if (!result.transferred) {
-      setNoMatchDetected(true);
+      setFailedTransferSnapshot({ items, cartHouseId, cartItemsCount });
       toast.warning(t("cartTransferNoMatchToast", { houseName }));
       return;
     }
 
-    setNoMatchDetected(false);
+    setFailedTransferSnapshot(null);
 
     if (result.unmatchedCount > 0) {
       toast.warning(
@@ -99,7 +109,7 @@ export function PressingCartTransferBanner({
             variant="outline"
             className="font-bold border-amber-500/40 hover:bg-amber-500/15 shrink-0 rounded-lg"
             onClick={() => {
-              setNoMatchDetected(false);
+              setFailedTransferSnapshot(null);
               onClearCart();
             }}
           >
