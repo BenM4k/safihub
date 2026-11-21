@@ -101,6 +101,7 @@ export function HouseCatalogueView({
         cartItemsCount={cart.items.length}
         isHydrated={cart.isHydrated}
         onTransfer={(hId, hName, itms) => cart.transferCartToHouse(hId, hName, itms)}
+        onClearCart={cart.clearCart}
       />
 
       {/* Exclusions banner */}

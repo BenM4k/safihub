@@ -21,6 +21,13 @@ export interface PendingSwitchPayload {
   item: Omit<CartItem, "quantity"> & { quantity?: number };
 }
 
+export interface CartTransferResult {
+  transferred: boolean;
+  matchedCount: number;
+  unmatchedCount: number;
+  totalCount: number;
+}
+
 export interface CartStoreState {
   houseId: string | null;
   houseName: string | null;
@@ -55,7 +62,7 @@ export interface CartStoreState {
       fabricId: string;
       priceCdf: number;
     }>
-  ) => boolean;
+  ) => CartTransferResult;
   updateExpectedUnitPrice: (
     serviceId: string,
     itemId: string,
@@ -194,7 +201,14 @@ export const useCartStore = create<CartStoreState>()(
 
       transferCartToHouse: (newHouseId, newHouseName, availableItems) => {
         const { items } = get();
-        if (items.length === 0) return false;
+        if (items.length === 0) {
+          return {
+            transferred: false,
+            matchedCount: 0,
+            unmatchedCount: 0,
+            totalCount: 0,
+          };
+        }
 
         const migratedItems: CartItem[] = [];
         for (const it of items) {
@@ -213,7 +227,18 @@ export const useCartStore = create<CartStoreState>()(
           }
         }
 
-        if (migratedItems.length === 0) return false;
+        const matchedCount = migratedItems.length;
+        const totalCount = items.length;
+        const unmatchedCount = totalCount - matchedCount;
+
+        if (matchedCount === 0) {
+          return {
+            transferred: false,
+            matchedCount: 0,
+            unmatchedCount,
+            totalCount,
+          };
+        }
 
         set({
           houseId: newHouseId,
@@ -222,7 +247,12 @@ export const useCartStore = create<CartStoreState>()(
           pendingSwitch: null,
           showSwitchModal: false,
         });
-        return true;
+        return {
+          transferred: true,
+          matchedCount,
+          unmatchedCount,
+          totalCount,
+        };
       },
 
       updateExpectedUnitPrice: (serviceId, itemId, fabricId, newPrice) => {
