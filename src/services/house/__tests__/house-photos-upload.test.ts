@@ -49,8 +49,9 @@ describe("House Photos & Asset Upload Pipeline", () => {
     if (!coverRes.ok) return;
 
     expect(coverRes.value.uploadUrl).toBeDefined();
-    expect(coverRes.value.storageKey).toMatch(new RegExp(`^houses/${house.id}/cover_`));
-    expect(coverRes.value.storageKey.endsWith(".webp")).toBe(true);
+    expect(coverRes.value.storageKey).toMatch(
+      new RegExp(`^houses/${house.id}/cover_\\d+_[0-9a-f]{16}\\.webp$`)
+    );
     expect(coverRes.value.publicUrl).toContain(coverRes.value.storageKey);
     expect(coverRes.value.expiresInSeconds).toBe(300);
 
@@ -63,8 +64,9 @@ describe("House Photos & Asset Upload Pipeline", () => {
     expect(logoRes.ok).toBe(true);
     if (!logoRes.ok) return;
 
-    expect(logoRes.value.storageKey).toMatch(new RegExp(`^houses/${house.id}/logo_`));
-    expect(logoRes.value.storageKey.endsWith(".png")).toBe(true);
+    expect(logoRes.value.storageKey).toMatch(
+      new RegExp(`^houses/${house.id}/logo_\\d+_[0-9a-f]{16}\\.png$`)
+    );
   });
 
   it("fails to generate upload URL for non-existent house", async () => {

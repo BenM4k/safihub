@@ -1,4 +1,5 @@
 import "server-only";
+import { randomBytes } from "node:crypto";
 import { err, ok, type Result } from "@/lib/result";
 import {
   createHouseClosure,
@@ -1081,7 +1082,7 @@ export async function requestCoverageExtension(
       return err(`Votre pressing dessert déjà jusqu'au niveau ${currentLevel}.`);
     }
 
-    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const suffix = randomBytes(3).toString("hex").toUpperCase();
     const timeCode = Date.now().toString(36).toUpperCase();
     const ticketReference = `TIC-EXT-${suffix}-${timeCode}`;
 
@@ -1104,6 +1105,9 @@ export async function requestCoverageExtension(
   }
 }
 
+/**
+ * Generates a short-lived presigned upload URL and storage key for a house cover or logo asset.
+ */
 export async function generateHouseAssetUploadUrlService(params: {
   houseId: string;
   assetType: "cover" | "logo";
@@ -1122,7 +1126,7 @@ export async function generateHouseAssetUploadUrlService(params: {
       return err("Pressing introuvable");
     }
 
-    const uniqueId = Math.random().toString(36).substring(2, 9);
+    const uniqueId = randomBytes(8).toString("hex");
     const contentType = params.contentType || "image/webp";
     const extension =
       contentType === "image/jpeg"

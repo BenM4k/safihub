@@ -6,6 +6,10 @@ import {
 import { enqueueOfflinePhoto } from "@/lib/offline/offline-photo-store";
 import { ok, err, type Result } from "@/lib/result";
 
+/**
+ * Compresses a pickup condition photo and either uploads it immediately when online
+ * or enqueues it in IndexedDB with a unique offline photo ID when offline.
+ */
 export async function uploadPickupConditionPhoto({
   orderId,
   orderItemId,
@@ -54,8 +58,13 @@ export async function uploadPickupConditionPhoto({
 
       if (!recordRes.ok) return err(recordRes.error);
     } else {
+      const uniqueSuffix =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : Math.random().toString(36).substring(2, 7);
+
       await enqueueOfflinePhoto({
-        id: `offline_photo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        id: `offline_photo_${Date.now()}_${uniqueSuffix}`,
         orderId,
         orderItemId,
         missionId,
