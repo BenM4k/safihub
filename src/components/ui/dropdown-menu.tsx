@@ -18,8 +18,10 @@ import {
   MenuSubTrigger,
   MenuTrigger,
 } from "@ui-sdk/react/menu";
-import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
+import { CheckIcon, ChevronRightIcon, CircleIcon, MinusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const DropdownMenuGroupContext = React.createContext(false);
 
 function DropdownMenu(props: React.ComponentProps<typeof Menu>) {
   return <Menu {...props} />;
@@ -57,8 +59,17 @@ function DropdownMenuContent({
   );
 }
 
-function DropdownMenuGroup(props: React.ComponentProps<typeof MenuGroup>) {
-  return <MenuGroup {...props} />;
+function DropdownMenuGroup({
+  children,
+  ...props
+}: Omit<React.ComponentProps<typeof MenuGroup>, "children"> & {
+  children?: React.ReactNode;
+}) {
+  return (
+    <DropdownMenuGroupContext.Provider value={true}>
+      <MenuGroup {...props}>{children}</MenuGroup>
+    </DropdownMenuGroupContext.Provider>
+  );
 }
 
 function DropdownMenuItem({
@@ -116,21 +127,31 @@ function DropdownMenuCheckboxItem({
   onCheckedChange?: (checked: boolean) => void;
   children?: React.ReactNode;
 }) {
+  const isIndeterminate = checked === "indeterminate";
+
   return (
     <MenuCheckboxItem
       className={cn(
         "relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
-      checked={checked === "indeterminate" ? false : checked}
+      checked={isIndeterminate ? false : checked}
+      aria-checked={isIndeterminate ? "mixed" : undefined}
+      data-indeterminate={isIndeterminate ? "" : undefined}
       onCheckedChange={
         onCheckedChange ? (next) => onCheckedChange(next) : undefined
       }
       {...props}
     >
-      <MenuItemIndicator className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
-        <CheckIcon className="size-4" aria-hidden="true" />
-      </MenuItemIndicator>
+      {isIndeterminate ? (
+        <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
+          <MinusIcon className="size-4" aria-hidden="true" />
+        </span>
+      ) : (
+        <MenuItemIndicator className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
+          <CheckIcon className="size-4" aria-hidden="true" />
+        </MenuItemIndicator>
+      )}
       {children}
     </MenuCheckboxItem>
   );
@@ -183,11 +204,28 @@ function DropdownMenuLabel({
   className,
   inset,
   ...props
-}: React.ComponentProps<typeof MenuGroupLabel> & { inset?: boolean }) {
+}: React.ComponentProps<"div"> & { inset?: boolean }) {
+  const isInsideGroup = React.useContext(DropdownMenuGroupContext);
+  const labelClassName = cn(
+    "px-2 py-1.5 text-sm font-medium data-[inset]:pl-8",
+    className
+  );
+
+  if (isInsideGroup) {
+    return (
+      <MenuGroupLabel
+        data-inset={inset}
+        className={labelClassName}
+        {...props}
+      />
+    );
+  }
+
   return (
-    <MenuGroupLabel
+    <div
+      data-slot="dropdown-menu-label"
       data-inset={inset}
-      className={cn("px-2 py-1.5 text-sm font-medium data-[inset]:pl-8", className)}
+      className={labelClassName}
       {...props}
     />
   );

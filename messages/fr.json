@@ -10,6 +10,7 @@
     "supportBukavu": "Assistance Bukavu : +243 999 000 123",
     "selectLanguage": "Choisir la langue",
     "languageHeader": "Langue • Language",
+    "closeNotification": "Fermer la notification",
     "changeLanguage": "Changer de langue",
     "currentLanguage": "Langue actuelle : {locale}. Cliquer pour changer.",
     "languages": {
@@ -88,6 +89,7 @@
     "home": "Accueil",
     "register": "Inscription",
     "becomePartner": "Devenir partenaire",
+    "mainNavAria": "Navigation principale",
     "cart": "Panier",
     "notifications": "Notifications",
     "login": "Se connecter",
@@ -3201,7 +3203,8 @@
       "missions": "Missions",
       "cash": "Cash",
       "history": "Historique",
-      "account": "Compte"
+      "account": "Compte",
+      "ariaLabel": "Navigation coursier"
     },
     "header": {
       "title": "Application Coursier",

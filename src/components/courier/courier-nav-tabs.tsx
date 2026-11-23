@@ -31,7 +31,7 @@ export function CourierNavTabs() {
 
   return (
     <NavigationMenu
-      aria-label="Navigation coursier"
+      aria-label={t("ariaLabel")}
       className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200/90 shadow-lg"
     >
       <NavigationMenuList className="max-w-md mx-auto grid grid-cols-4 h-16 list-none m-0 p-0">

@@ -19,51 +19,123 @@ const ToggleGroupContext = React.createContext<
   spacing: 0,
 });
 
-type ToggleGroupProps = Omit<
+type ToggleGroupBaseProps = Omit<
   React.ComponentProps<typeof UiToggleGroup>,
-  "value" | "defaultValue" | "onValueChange" | "children"
+  "multiple" | "value" | "defaultValue" | "onValueChange" | "children"
 > &
   VariantProps<typeof toggleVariants> & {
     spacing?: number;
-    type?: "single" | "multiple";
-    value?: string | string[];
-    defaultValue?: string | string[];
-    onValueChange?: (value: string & string[]) => void;
     children?: React.ReactNode;
   };
 
-function toArray(val: string | string[] | undefined): string[] | undefined {
-  if (val === undefined) return undefined;
-  return Array.isArray(val) ? val : val ? [val] : [];
-}
+type ToggleGroupSingleProps = ToggleGroupBaseProps & {
+  type?: "single";
+  multiple?: false;
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
+};
 
-function ToggleGroup({
-  className,
-  variant,
-  size,
-  spacing = 0,
-  type,
-  multiple,
-  value,
-  defaultValue,
-  onValueChange,
-  children,
-  ...props
-}: ToggleGroupProps) {
-  const isMultiple = multiple ?? type === "multiple";
+type ToggleGroupMultipleProps = ToggleGroupBaseProps &
+  (
+    | {
+        type: "multiple";
+        multiple?: true;
+      }
+    | {
+        type?: never;
+        multiple: true;
+      }
+  ) & {
+    value?: string[];
+    defaultValue?: string[];
+    onValueChange?: (value: string[]) => void;
+  };
+
+type ToggleGroupProps = ToggleGroupSingleProps | ToggleGroupMultipleProps;
+
+function ToggleGroup(props: ToggleGroupProps) {
+  const { className, variant, size, spacing = 0, children } = props;
+
+  if (props.type === "multiple" || props.multiple === true) {
+    const {
+      type: _type,
+      multiple: _multiple,
+      className: _className,
+      variant: _variant,
+      size: _size,
+      spacing: _spacing,
+      children: _children,
+      value,
+      defaultValue,
+      onValueChange,
+      ...rest
+    } = props;
+    void _type;
+    void _multiple;
+    void _className;
+    void _variant;
+    void _size;
+    void _spacing;
+    void _children;
+
+    return (
+      <UiToggleGroup
+        multiple
+        value={value}
+        defaultValue={defaultValue}
+        onValueChange={onValueChange ? (next) => onValueChange(next) : undefined}
+        data-variant={variant}
+        data-size={size}
+        data-spacing={spacing}
+        style={{ "--gap": spacing } as React.CSSProperties}
+        className={cn(
+          "group/toggle-group flex w-fit items-center gap-[--spacing(var(--gap))] rounded-md data-[spacing=default]:data-[variant=outline]:shadow-xs",
+          className
+        )}
+        {...rest}
+      >
+        <ToggleGroupContext.Provider value={{ variant, size, spacing }}>
+          {children}
+        </ToggleGroupContext.Provider>
+      </UiToggleGroup>
+    );
+  }
+
+  const {
+    type: _type,
+    multiple: _multiple,
+    className: _className,
+    variant: _variant,
+    size: _size,
+    spacing: _spacing,
+    children: _children,
+    value,
+    defaultValue,
+    onValueChange,
+    ...rest
+  } = props;
+  void _type;
+  void _multiple;
+  void _className;
+  void _variant;
+  void _size;
+  void _spacing;
+  void _children;
 
   return (
     <UiToggleGroup
-      multiple={isMultiple}
-      value={toArray(value)}
-      defaultValue={toArray(defaultValue)}
-      onValueChange={
-        onValueChange
-          ? (next) => {
-              const out = isMultiple ? next : (next[0] ?? "");
-              (onValueChange as (v: string | string[]) => void)(out);
-            }
+      multiple={false}
+      value={value !== undefined ? (value ? [value] : []) : undefined}
+      defaultValue={
+        defaultValue !== undefined
+          ? defaultValue
+            ? [defaultValue]
+            : []
           : undefined
+      }
+      onValueChange={
+        onValueChange ? (next) => onValueChange(next[0] ?? "") : undefined
       }
       data-variant={variant}
       data-size={size}
@@ -73,7 +145,7 @@ function ToggleGroup({
         "group/toggle-group flex w-fit items-center gap-[--spacing(var(--gap))] rounded-md data-[spacing=default]:data-[variant=outline]:shadow-xs",
         className
       )}
-      {...props}
+      {...rest}
     >
       <ToggleGroupContext.Provider value={{ variant, size, spacing }}>
         {children}

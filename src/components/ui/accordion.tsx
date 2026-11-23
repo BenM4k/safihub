@@ -11,48 +11,93 @@ import {
 import { ChevronDownIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type AccordionProps = Omit<
+type AccordionBaseProps = Omit<
   React.ComponentProps<typeof UiAccordion>,
-  "value" | "defaultValue" | "onValueChange"
+  "multiple" | "value" | "defaultValue" | "onValueChange"
 > & {
-  type?: "single" | "multiple";
   collapsible?: boolean;
-  value?: string | string[];
-  defaultValue?: string | string[];
-  onValueChange?: (value: string & string[]) => void;
 };
 
-function toArray(val: string | string[] | undefined): string[] | undefined {
-  if (val === undefined) return undefined;
-  return Array.isArray(val) ? val : val ? [val] : [];
-}
+type AccordionSingleProps = AccordionBaseProps & {
+  type?: "single";
+  multiple?: false;
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
+};
 
-function Accordion({
-  type,
-  collapsible,
-  multiple,
-  value,
-  defaultValue,
-  onValueChange,
-  ...props
-}: AccordionProps) {
-  const isMultiple = multiple ?? type === "multiple";
+type AccordionMultipleProps = AccordionBaseProps &
+  (
+    | {
+        type: "multiple";
+        multiple?: true;
+      }
+    | {
+        type?: never;
+        multiple: true;
+      }
+  ) & {
+    value?: string[];
+    defaultValue?: string[];
+    onValueChange?: (value: string[]) => void;
+  };
+
+type AccordionProps = AccordionSingleProps | AccordionMultipleProps;
+
+function Accordion(props: AccordionProps) {
+  if (props.type === "multiple" || props.multiple === true) {
+    const {
+      type: _type,
+      multiple: _multiple,
+      collapsible,
+      value,
+      defaultValue,
+      onValueChange,
+      ...rest
+    } = props;
+    void _type;
+    void _multiple;
+
+    return (
+      <UiAccordion
+        multiple
+        collapsible={collapsible ?? true}
+        value={value}
+        defaultValue={defaultValue}
+        onValueChange={onValueChange ? (next) => onValueChange(next) : undefined}
+        {...rest}
+      />
+    );
+  }
+
+  const {
+    type: _type,
+    multiple: _multiple,
+    collapsible,
+    value,
+    defaultValue,
+    onValueChange,
+    ...rest
+  } = props;
+  void _type;
+  void _multiple;
 
   return (
     <UiAccordion
-      multiple={isMultiple}
+      multiple={false}
       collapsible={collapsible ?? true}
-      value={toArray(value)}
-      defaultValue={toArray(defaultValue)}
-      onValueChange={
-        onValueChange
-          ? (next) => {
-              const out = isMultiple ? next : (next[0] ?? "");
-              (onValueChange as (v: string | string[]) => void)(out);
-            }
+      value={value !== undefined ? (value ? [value] : []) : undefined}
+      defaultValue={
+        defaultValue !== undefined
+          ? defaultValue
+            ? [defaultValue]
+            : []
           : undefined
       }
-      {...props}
+      onValueChange={
+        onValueChange ? (next) => onValueChange(next[0] ?? "") : undefined
+      }
+      {...rest}
     />
   );
 }

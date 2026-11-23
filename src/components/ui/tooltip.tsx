@@ -9,17 +9,28 @@ import {
 } from "@ui-sdk/react/tooltip";
 import { cn } from "@/lib/utils";
 
+const TooltipDelayContext = React.createContext<number | undefined>(undefined);
+
 function TooltipProvider({
   children,
+  delayDuration = 0,
 }: {
   children?: React.ReactNode;
   delayDuration?: number;
 }) {
-  return <>{children}</>;
+  return (
+    <TooltipDelayContext.Provider value={delayDuration}>
+      {children}
+    </TooltipDelayContext.Provider>
+  );
 }
 
-function Tooltip(props: React.ComponentProps<typeof UiTooltip>) {
-  return <UiTooltip {...props} />;
+function Tooltip({
+  delay,
+  ...props
+}: React.ComponentProps<typeof UiTooltip>) {
+  const inheritedDelay = React.useContext(TooltipDelayContext);
+  return <UiTooltip delay={delay ?? inheritedDelay} {...props} />;
 }
 
 function TooltipTrigger({

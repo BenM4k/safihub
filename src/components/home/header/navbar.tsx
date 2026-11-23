@@ -66,7 +66,7 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
         </Link>
 
         <NavigationMenu
-          aria-label="Navigation principale"
+          aria-label={tNav("mainNavAria")}
           className="hidden md:flex items-center bg-white/95 dark:bg-card/95 backdrop-blur-xs border border-slate-200/90 dark:border-border shadow-xs rounded-full px-2 py-1 text-xs sm:text-sm font-semibold text-foreground"
         >
           <NavigationMenuList className="flex items-center list-none m-0 p-0">

@@ -59,7 +59,10 @@ export function AddAddressDialog({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-slate-200 shadow-2xl">
+      <DialogContent
+        showCloseButton={false}
+        className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-slate-200 shadow-2xl"
+      >
         <div className="flex items-center gap-2 text-slate-900 font-bold text-lg">
           <MapPin className="size-5 text-primary" />
           <DialogTitle className="text-slate-900 font-bold text-lg">

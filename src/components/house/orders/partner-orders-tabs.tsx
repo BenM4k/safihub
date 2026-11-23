@@ -52,7 +52,7 @@ export function PartnerOrdersTabs({
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
-    const activeEl = el.querySelector<HTMLElement>('[data-state="active"]');
+    const activeEl = el.querySelector<HTMLElement>("[data-selected]");
     if (activeEl) {
       activeEl.scrollIntoView({
         behavior: "smooth",

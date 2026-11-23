@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MoreHorizontal, X, LogOut } from "lucide-react";
@@ -34,6 +34,17 @@ export function AppBottomNav({
 }: AppBottomNavProps) {
   const pathname = usePathname();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isMoreOpen || typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches) setIsMoreOpen(false);
+    };
+    handleChange(mq);
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, [isMoreOpen]);
 
   function isItemActive(href: string, exactMatch?: boolean) {
     if (exactMatch) {

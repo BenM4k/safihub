@@ -10,6 +10,7 @@
     "supportBukavu": "Bukavu Support: +243 999 000 123",
     "selectLanguage": "Select language",
     "languageHeader": "Language",
+    "closeNotification": "Close notification",
     "changeLanguage": "Change language",
     "currentLanguage": "Current language: {locale}. Click to change.",
     "languages": {
@@ -88,6 +89,7 @@
     "home": "Home",
     "register": "Sign Up",
     "becomePartner": "Become a partner",
+    "mainNavAria": "Main navigation",
     "cart": "Cart",
     "notifications": "Notifications",
     "login": "Log In",
@@ -3201,7 +3203,8 @@
       "missions": "Missions",
       "cash": "Cash",
       "history": "History",
-      "account": "Account"
+      "account": "Account",
+      "ariaLabel": "Courier navigation"
     },
     "header": {
       "title": "Courier App",

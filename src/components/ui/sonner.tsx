@@ -17,6 +17,7 @@ import {
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 type ToasterProps = {
@@ -83,6 +84,8 @@ export function Toaster({
   position = "bottom-center",
   className,
 }: ToasterProps) {
+  const t = useTranslations("common");
+
   return (
     <ToastRegion
       className={cn(
@@ -104,7 +107,7 @@ export function Toaster({
           </div>
           <ToastAction className="shrink-0 rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary-hover" />
           <ToastClose
-            aria-label="Close notification"
+            aria-label={t("closeNotification")}
             className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-70 transition-opacity hover:opacity-100"
           >
             <XIcon className="size-3.5" aria-hidden="true" />

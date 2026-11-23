@@ -7,6 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { createAgent, registerTools } from "@ui-sdk/react/agent";
 import { describe, expect, it, vi } from "vitest";
 import { Switch } from "@/components/ui/switch";
+import { getUiAgent, registerWebMcpTools } from "@/lib/ui-agent";
 
 let approveConfirmedStep = false;
 const agent = createAgent({
@@ -160,6 +161,64 @@ describe("Switch (@ui-sdk/react/switch)", () => {
       expect(tools.has("act")).toBe(true);
       expect(await tools.get("snapshot")!.execute({})).toBeInstanceOf(Array);
     } finally {
+      unregister();
+    }
+  });
+
+  it("enforces window.confirm through production getUiAgent and registerWebMcpTools", async () => {
+    render(
+      <label>
+        Emergency pause
+        <Switch
+          defaultChecked={false}
+          data-agent-confirm="Pauses all incoming orders"
+        />
+      </label>
+    );
+
+    const tools = new Map<
+      string,
+      { execute: (input: object) => Promise<{ ok?: boolean }> }
+    >();
+    Object.assign(document, {
+      modelContext: {
+        registerTool: async (tool: {
+          name: string;
+          execute: (input: object) => Promise<{ ok?: boolean }>;
+        }) => {
+          tools.set(tool.name, tool);
+        },
+      },
+    });
+
+    getUiAgent();
+    const unregister = registerWebMcpTools();
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    try {
+      const actTool = tools.get("act")!;
+      const toggle = screen.getByRole("switch", { name: "Emergency pause" });
+
+      confirmSpy.mockReturnValueOnce(false);
+      const rejected = await actTool.execute({
+        steps: [
+          { ref: "Emergency pause", action: "setChecked", args: [true] },
+        ],
+      });
+      expect(rejected.ok).toBe(false);
+      expect(confirmSpy).toHaveBeenCalledWith("Pauses all incoming orders");
+      expect(toggle.getAttribute("aria-checked")).toBe("false");
+
+      confirmSpy.mockReturnValueOnce(true);
+      const approved = await actTool.execute({
+        steps: [
+          { ref: "Emergency pause", action: "setChecked", args: [true] },
+        ],
+      });
+      expect(approved.ok).toBe(true);
+      expect(toggle.getAttribute("aria-checked")).toBe("true");
+    } finally {
+      confirmSpy.mockRestore();
       unregister();
     }
   });

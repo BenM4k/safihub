@@ -78,20 +78,33 @@ export function AddressPicker({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {savedAddresses.map((addr) => {
               const isSelected = selectedAddressId === addr.id;
+              const isServedAddr = neighborhoods.some(
+                (n) => n.id === addr.neighborhoodId && n.status === "served"
+              );
               return (
                 <button
                   key={addr.id}
                   type="button"
+                  disabled={!isServedAddr}
                   onClick={() => onSelectSavedAddress(addr)}
-                  className={`p-3 rounded-xl border text-left text-xs transition cursor-pointer ${
-                    isSelected
-                      ? "border-primary bg-primary/10 text-primary font-bold shadow-2xs"
-                      : "border-border bg-muted/40 hover:border-border-strong text-muted-foreground hover:text-foreground"
+                  className={`p-3 rounded-xl border text-left text-xs transition ${
+                    !isServedAddr
+                      ? "border-border bg-muted/30 text-muted-foreground opacity-60 cursor-not-allowed"
+                      : isSelected
+                        ? "border-primary bg-primary/10 text-primary font-bold shadow-2xs cursor-pointer"
+                        : "border-border bg-muted/40 hover:border-border-strong text-muted-foreground hover:text-foreground cursor-pointer"
                   }`}
                 >
-                  <p className="font-bold text-heading">
-                    {addr.label || addr.neighborhoodName}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-bold text-heading truncate">
+                      {addr.label || addr.neighborhoodName}
+                    </p>
+                    {!isServedAddr && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                        {tHouses("neighborhoodUnservedBadge")}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
                     {addr.landmark} ({addr.neighborhoodName})
                   </p>

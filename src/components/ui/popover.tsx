@@ -10,8 +10,22 @@ import {
 } from "@ui-sdk/react/popover";
 import { cn } from "@/lib/utils";
 
-function Popover(props: React.ComponentProps<typeof UiPopover>) {
-  return <UiPopover {...props} />;
+interface PopoverAnchorContextValue {
+  anchor: HTMLElement | null;
+  setAnchor: (node: HTMLElement | null) => void;
+}
+
+const PopoverAnchorContext =
+  React.createContext<PopoverAnchorContextValue | null>(null);
+
+function Popover({ children, ...props }: React.ComponentProps<typeof UiPopover>) {
+  const [anchor, setAnchor] = React.useState<HTMLElement | null>(null);
+
+  return (
+    <PopoverAnchorContext.Provider value={{ anchor, setAnchor }}>
+      <UiPopover {...props}>{children}</UiPopover>
+    </PopoverAnchorContext.Provider>
+  );
 }
 
 function PopoverTrigger({
@@ -29,12 +43,17 @@ function PopoverContent({
   className,
   align = "center",
   sideOffset = 4,
+  anchor,
   ...props
 }: React.ComponentProps<typeof UiPopoverContent>) {
+  const anchorCtx = React.useContext(PopoverAnchorContext);
+  const resolvedAnchor = anchor ?? anchorCtx?.anchor ?? undefined;
+
   return (
     <UiPopoverContent
       align={align}
       sideOffset={sideOffset}
+      anchor={resolvedAnchor}
       className={cn(
         "z-50 w-72 origin-(--transform-origin) rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-hidden transition-[opacity,scale] duration-150 data-starting-style:scale-95 data-starting-style:opacity-0 data-ending-style:scale-95 data-ending-style:opacity-0",
         className
@@ -44,8 +63,22 @@ function PopoverContent({
   );
 }
 
-function PopoverAnchor({ ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="popover-anchor" {...props} />;
+function PopoverAnchor({
+  ref,
+  ...props
+}: React.ComponentProps<"div"> & { ref?: React.Ref<HTMLDivElement> }) {
+  const anchorCtx = React.useContext(PopoverAnchorContext);
+
+  const handleRef = (node: HTMLDivElement | null) => {
+    anchorCtx?.setAnchor(node);
+    if (typeof ref === "function") {
+      ref(node);
+    } else if (ref && typeof ref === "object" && "current" in ref) {
+      (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    }
+  };
+
+  return <div ref={handleRef} data-slot="popover-anchor" {...props} />;
 }
 
 function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
