@@ -225,7 +225,99 @@
     "seeAll": "Voir toutes les FAQ",
     "contactTitle": "Prenez contact avec notre équipe",
     "contactSubtitle": "Une question spécifique pour votre hôtel ou votre linge ? Réponse en moins de 15 min.",
-    "contactCta": "Assistance WhatsApp"
+    "contactCta": "Assistance WhatsApp",
+    "page": {
+      "badge": "Centre d'aide & FAQ",
+      "breadcrumbHome": "Accueil",
+      "breadcrumbFaq": "FAQ",
+      "searchPlaceholder": "Rechercher une question (paiement, comptage, Ibanda, code...)...",
+      "searchClear": "Effacer la recherche",
+      "resultsCount": "{count, plural, =0 {Aucune question trouvée} =1 {1 question affichée} other {# questions affichées}}",
+      "emptyTitle": "Aucune question ne correspond à votre recherche",
+      "emptyDescription": "Essayez un autre mot-clé ou réinitialisez les filtres pour parcourir toutes les réponses.",
+      "resetFilters": "Réinitialiser les filtres",
+      "quickLinksTitle": "Besoin d'agir rapidement ?",
+      "quickLinkHousesTitle": "Pressings à Bukavu",
+      "quickLinkHousesDesc": "Comparer les tarifs et passer commande",
+      "quickLinkCoverageTitle": "Zones desservies",
+      "quickLinkCoverageDesc": "Vérifier votre quartier à Ibanda, Kadutu ou Bagira",
+      "quickLinkTrackTitle": "Suivre une commande",
+      "quickLinkTrackDesc": "Consulter l'avancement avec votre lien de suivi"
+    },
+    "categories": {
+      "all": "Toutes",
+      "orders": "Commandes",
+      "payment": "Paiement & Tarifs",
+      "delivery": "Collecte & Livraison",
+      "care": "Soin & Sécurité",
+      "partners": "Pressings partenaires"
+    },
+    "links": {
+      "trackPage": "page de suivi",
+      "partnerApply": "Devenir Partenaire"
+    },
+    "items": {
+      "paymentMethods": {
+        "question": "Comment s'effectue le paiement (CDF ou USD) ?",
+        "answer": "Vous payez directement en espèces (Cash on Delivery) à notre coursier une fois vos vêtements propres livrés et vérifiés. Nous acceptons les Francs Congolais (CDF) et les Dollars Américains (USD) au taux officiel du jour, gelé dès la création de votre commande."
+      },
+      "threePointCount": {
+        "question": "Que se passe-t-il si le nombre d'articles diffère lors de la collecte ?",
+        "answer": "Notre système applique un comptage contradictoire en 3 points : votre déclaration en ligne, le recomptage sur place devant vous par le coursier, puis la validation finale par le pressing. Si une différence ou un tissu particulier est détecté, le prix s'ajuste et vous recevez une notification d'approbation avant tout lavage."
+      },
+      "turnaroundTimes": {
+        "question": "Quels sont les délais de traitement et de livraison ?",
+        "answer": "Le délai standard est de 24h à 48h selon le type de vêtement et le pressing partenaire sélectionné. Pour les urgences professionnelles, notre formule Express livre vos chemises et tenues dans des délais réduits."
+      },
+      "coverageZones": {
+        "question": "Quels quartiers de Bukavu sont actuellement desservis ?",
+        "answer": "Nous couvrons les zones actives d'Ibanda, Kadutu et Bagira selon la disponibilité de nos coursiers. Nos coursiers utilisent des sacs étanches pour protéger vos habits contre la poussière et la pluie."
+      },
+      "delicateFabrics": {
+        "question": "Prenez-vous en charge les tissus délicats et traditionnels ?",
+        "answer": "Oui ! Les soies, pagnes cirés brodés, velours, lin fin et costumes en pure laine bénéficient d'un traitement spécialisé sans solvant agressif, avec repassage à température régulée et cintres sous housse."
+      },
+      "howOrderingWorks": {
+        "question": "Comment passer commande sur SafiHub ?",
+        "answer": "Choisissez un pressing proche de votre quartier, sélectionnez vos articles selon le tissu et la formule souhaitée, puis choisissez un créneau de collecte. Le montant estimé est calculé automatiquement côté serveur avant validation."
+      },
+      "acceptanceTimeout": {
+        "question": "Combien de temps le pressing met-il pour confirmer ma commande ?",
+        "answer": "Le pressing dispose de 45 minutes ouvrées pour accepter votre commande (le compteur se met automatiquement en pause en dehors des heures d'ouverture). En cas de délai dépassé, notre équipe est alertée pour réassigner rapidement votre commande."
+      },
+      "guestTracking": {
+        "question": "Puis-je suivre ma commande sans me reconnecter ?",
+        "answer": "Oui. Chaque commande dispose d'un lien de suivi unique accessible sur la page de suivi, vous permettant de voir chaque étape (collecte, réception, lavage, livraison) et de valider d'éventuels ajustements."
+      },
+      "cancelOrder": {
+        "question": "Puis-je annuler une commande après l'avoir validée ?",
+        "answer": "Tant que votre linge n'a pas encore été collecté ou pris en charge pour le lavage, vous pouvez demander l'annulation depuis votre suivi de commande ou via notre assistance WhatsApp."
+      },
+      "excludedItems": {
+        "question": "Que se passe-t-il si un article ne peut pas être traité par le pressing ?",
+        "answer": "Tout article non accepté lors du contrôle de réception est marqué comme retourné, déduit intégralement de votre facture (aucun frais de nettoyage facturé) et vous est restitué lors de la livraison."
+      },
+      "deliveryFees": {
+        "question": "Comment sont calculés les frais de livraison ?",
+        "answer": "Les frais de livraison dépendent uniquement de la zone de votre quartier et de celle du pressing choisi. Le tarif exact est affiché en toute transparence dans votre panier avant de confirmer la commande."
+      },
+      "pickupWindows": {
+        "question": "Quels sont les créneaux horaires de passage des coursiers à Bukavu ?",
+        "answer": "Nos coursiers interviennent sur quatre fenêtres standard : 08h-10h, 10h-12h, 14h-16h et 16h-18h. Seuls les créneaux couverts par au moins un coursier actif sur votre trajet sont proposés."
+      },
+      "deliveryCode": {
+        "question": "À quoi sert le code de confirmation à la livraison ?",
+        "answer": "Lors de la remise de vos vêtements propres, vous communiquez votre code à 6 chiffres au coursier pour confirmer la bonne réception de l'ensemble de vos articles et clôturer la commande en toute sécurité."
+      },
+      "conditionPhotosPrivacy": {
+        "question": "Pourquoi des photos d'état sont-elles prises et comment ma vie privée est-elle protégée ?",
+        "answer": "Les articles fragiles ou tachés sont photographiés sans aucun visage lors de la collecte pour votre protection, puis supprimés automatiquement après 90 jours. De plus, les pressings partenaires ne voient jamais votre numéro de téléphone ni votre adresse exacte."
+      },
+      "becomePartner": {
+        "question": "Comment un pressing de Bukavu peut-il rejoindre le réseau SafiHub ?",
+        "answer": "Rendez-vous sur la page Devenir Partenaire pour soumettre votre établissement. Une fois validé par notre équipe, vous gérez vos tarifs, vos horaires et vos paiements directement depuis votre espace pressing."
+      }
+    }
   },
   "footer": {
     "brandDesc": "La première plateforme de blanchisserie et pressing à la demande à Bukavu, RDC.",

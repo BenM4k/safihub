@@ -137,7 +137,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="#faq"
+                  href="/faq"
                   className="hover:text-white transition-colors"
                 >
                   FAQ & Aide

@@ -225,7 +225,99 @@
     "seeAll": "Tazama maswali yote ya FAQ",
     "contactTitle": "Wasiliana na timu yetu",
     "contactSubtitle": "Swali maalum kwa hoteli au nguo zako? Jibu kwa chini ya dakika 15.",
-    "contactCta": "Usaidizi wa WhatsApp"
+    "contactCta": "Usaidizi wa WhatsApp",
+    "page": {
+      "badge": "Kituo cha Msaada na FAQ",
+      "breadcrumbHome": "Mwanzo",
+      "breadcrumbFaq": "FAQ",
+      "searchPlaceholder": "Tafuta swali (malipo, hesabu, Ibanda, msimbo...)...",
+      "searchClear": "Futa utafutaji",
+      "resultsCount": "{count, plural, =0 {Hakuna swali lililopatikana} =1 {Swali 1 linaonyeshwa} other {Maswali # yanaonyeshwa}}",
+      "emptyTitle": "Hakuna swali linalolingana na utafutaji wako",
+      "emptyDescription": "Jaribu neno lingine au weka upya vichujio ili kuona majibu yote.",
+      "resetFilters": "Weka upya vichujio",
+      "quickLinksTitle": "Ungependa kuchukua hatua?",
+      "quickLinkHousesTitle": "Nyumba za Dobi Bukavu",
+      "quickLinkHousesDesc": "Linganisha bei na uagize sasa",
+      "quickLinkCoverageTitle": "Maeneo Yanayofikiwa",
+      "quickLinkCoverageDesc": "Angalia mtaa wako huko Ibanda, Kadutu au Bagira",
+      "quickLinkTrackTitle": "Fuatilia Agizo",
+      "quickLinkTrackDesc": "Angalia hatua za agizo kwa kiungo chako cha ufuatiliaji"
+    },
+    "categories": {
+      "all": "Yote",
+      "orders": "Maagizo",
+      "payment": "Malipo na Bei",
+      "delivery": "Ukusanyaji na Uwasilishaji",
+      "care": "Utunzaji na Faragha",
+      "partners": "Washirika wa Dobi"
+    },
+    "links": {
+      "trackPage": "ukurasa wa ufuatiliaji",
+      "partnerApply": "Kuwa Mshirika"
+    },
+    "items": {
+      "paymentMethods": {
+        "question": "Malipo yanafanyikaje (CDF au USD)?",
+        "answer": "Unalipa taslimu unapopokea nguo zako (Cash on Delivery) baada ya kuzikagua. Tunapokea Faranga za Kongo (CDF) na Dola za Kimarekani (USD) kwa kiwango rasmi kilichohifadhiwa wakati agizo liliundwa."
+      },
+      "threePointCount": {
+        "question": "Nini hutokea ikiwa idadi ya nguo itatofautiana wakati wa ukusanyaji?",
+        "answer": "Tunatumia hesabu ya hatua 3: tamko lako mtandaoni, kuhesabu tena mbele yako na msafirishaji, na uhakiki wa mwisho kwenye dobi. Tofauti ikionekana, bei hubadilika na husubiri idhini yako kabla ya kufuliwa."
+      },
+      "turnaroundTimes": {
+        "question": "Muda wa usafishaji na uwasilishaji ni upi?",
+        "answer": "Muda wa kawaida ni saa 24 hadi 48 kulingana na aina ya nguo na dobi uliyochagua. Huduma ya haraka (Express) pia inapatikana kwa mahitaji ya dharura."
+      },
+      "coverageZones": {
+        "question": "Ni mitaa ipi ya Bukavu inayohudumiwa kwa sasa?",
+        "answer": "Tunahudumia maeneo hai ya Ibanda, Kadutu na Bagira kulingana na upatikanaji wa wasafirishaji wetu. Wasafirishaji hutumia mifuko isiyoingiza maji kulinda nguo dhidi ya vumbi na mvua."
+      },
+      "delicateFabrics": {
+        "question": "Je, mnashughulikia vitambaa laini na vya kitamaduni?",
+        "answer": "Ndiyo! Hariri, vitenge vilivyodariziwa, mahameli, kitani laini na suti za sufi hupata matunzo maalum bila kemikali kali, pasi yenye joto lililodhibitiwa na mifuniko salama."
+      },
+      "howOrderingWorks": {
+        "question": "Ninawezaje kuweka agizo kwenye SafiHub?",
+        "answer": "Chagua dobi iliyo karibu na mtaa wako, chagua nguo zako kulingana na kitambaa na huduma, kisha chagua muda wa ukusanyaji. Jumla ya bei huhesabiwa moja kwa moja na seva kabla ya kuthibitisha."
+      },
+      "acceptanceTimeout": {
+        "question": "Dobi huchukua muda gani kukubali agizo langu?",
+        "answer": "Dobi ina dakika 45 za saa za kazi kukubali agizo lako (kipima muda husimama nje ya saa za kazi). Muda ukipita, timu yetu hupokea tahadhari ili kulihamishia agizo haraka."
+      },
+      "guestTracking": {
+        "question": "Je, ninaweza kufuatilia agizo bila kuingia tena kwenye akaunti?",
+        "answer": "Ndiyo. Kila agizo lina kiungo cha kipekee kwenye ukurasa wa ufuatiliaji kinachokuwezesha kuona hatua zote na kuidhinisha marekebisho ya bei."
+      },
+      "cancelOrder": {
+        "question": "Je, ninaweza kughairi agizo baada ya kuliweka?",
+        "answer": "Kabla ya ukusanyaji au ufuaji kuanza, unaweza kuomba kughairi kupitia ukurasa wako wa ufuatiliaji au kwa kuwasiliana na usaidizi wetu wa WhatsApp."
+      },
+      "excludedItems": {
+        "question": "Nini hutokea ikiwa dobi haiwezi kushughulikia nguo mojawapo?",
+        "answer": "Nguo yoyote isiyokubaliwa wakati wa mapokezi huwekwa kama itakayorudishwa, huondolewa kabisa kwenye bili yako (bila gharama ya usafishaji) na hurudishwa pamoja na agizo lako."
+      },
+      "deliveryFees": {
+        "question": "Gharama za uwasilishaji huhesabiwaje?",
+        "answer": "Gharama za usafirishaji hutegemea eneo lako na eneo la dobi uliyochagua. Bei kamili huonyeshwa wazi kwenye kikapu chako kabla ya kuthibitisha agizo."
+      },
+      "pickupWindows": {
+        "question": "Ni vipindi vipi vya muda ambavyo wasafirishaji hupita Bukavu?",
+        "answer": "Wasafirishaji wetu hufanya kazi katika vipindi vinne vya kila siku: 08:00-10:00, 10:00-12:00, 14:00-16:00 na 16:00-18:00. Vipindi vyenye msafirishaji hai pekee ndivyo huonyeshwa."
+      },
+      "deliveryCode": {
+        "question": "Msimbo wa uthibitisho wakati wa uwasilishaji ni wa nini?",
+        "answer": "Nguo zako safi zinapowasilishwa, unampa msafirishaji msimbo wako wa tarakimu 6 ili kuthibitisha kupokea nguo zote na kufunga agizo kwa usalama."
+      },
+      "conditionPhotosPrivacy": {
+        "question": "Kwa nini picha za hali hupigwa na faragha yangu inalindwaje?",
+        "answer": "Nguo zenye madoa au dhaifu hupigwa picha bila uso wowote wakati wa ukusanyaji kwa usalama wako na hufutwa baada ya siku 90. Zaidi ya hayo, dobi washirika hawaoni namba yako ya simu wala anwani yako kamili."
+      },
+      "becomePartner": {
+        "question": "Dobi la Bukavu linawezaje kujiunga na mtandao wa SafiHub?",
+        "answer": "Tuma maombi kupitia ukurasa wa Kuwa Mshirika. Baada ya kuthibitishwa na timu yetu, utadhibiti bei, saa za kazi na malipo yako moja kwa moja kwenye eneo lako la mshirika."
+      }
+    }
   },
   "footer": {
     "brandDesc": "Jukwaa la kwanza la huduma ya dobi ya kisasa kwa ombi mjini Bukavu, DRC.",

@@ -225,7 +225,99 @@
     "seeAll": "See all FAQs",
     "contactTitle": "Get in touch with our team",
     "contactSubtitle": "A specific question for your hotel or laundry? Response in under 15 minutes.",
-    "contactCta": "WhatsApp Support"
+    "contactCta": "WhatsApp Support",
+    "page": {
+      "badge": "Help Center & FAQ",
+      "breadcrumbHome": "Home",
+      "breadcrumbFaq": "FAQ",
+      "searchPlaceholder": "Search a question (payment, count, Ibanda, code...)...",
+      "searchClear": "Clear search",
+      "resultsCount": "{count, plural, =0 {No questions found} =1 {1 question shown} other {# questions shown}}",
+      "emptyTitle": "No questions match your search",
+      "emptyDescription": "Try another keyword or reset filters to browse every answer.",
+      "resetFilters": "Reset filters",
+      "quickLinksTitle": "Ready to take action?",
+      "quickLinkHousesTitle": "Laundry Houses in Bukavu",
+      "quickLinkHousesDesc": "Compare pricing and place an order",
+      "quickLinkCoverageTitle": "Coverage Zones",
+      "quickLinkCoverageDesc": "Check your neighborhood in Ibanda, Kadutu, or Bagira",
+      "quickLinkTrackTitle": "Track an Order",
+      "quickLinkTrackDesc": "Follow live progress using your tracking link"
+    },
+    "categories": {
+      "all": "All",
+      "orders": "Orders",
+      "payment": "Payment & Pricing",
+      "delivery": "Pickup & Delivery",
+      "care": "Care & Privacy",
+      "partners": "Partner Houses"
+    },
+    "links": {
+      "trackPage": "tracking page",
+      "partnerApply": "Partner Application"
+    },
+    "items": {
+      "paymentMethods": {
+        "question": "How does payment work (CDF or USD)?",
+        "answer": "You pay cash on delivery directly to our courier once your clean garments are delivered and inspected. We accept Congolese Francs (CDF) and US Dollars (USD) at the official rate frozen when your order is created."
+      },
+      "threePointCount": {
+        "question": "What happens if the item count differs at pickup?",
+        "answer": "We enforce a 3-point count check: your online declaration, on-site recount with the courier, and final confirmation at the laundry house. If a count or fabric difference is found, the price adjusts and waits for your explicit approval before washing starts."
+      },
+      "turnaroundTimes": {
+        "question": "What are the processing and delivery turnaround times?",
+        "answer": "Standard turnaround is 24 to 48 hours depending on garment type and selected laundry house. Express options are also available for urgent business attire."
+      },
+      "coverageZones": {
+        "question": "Which neighborhoods in Bukavu are covered?",
+        "answer": "We serve active zones across Ibanda, Kadutu, and Bagira based on on-shift courier coverage. Our couriers carry waterproof bags to shield your laundry from dust and rain."
+      },
+      "delicateFabrics": {
+        "question": "Do you handle delicate and traditional fabrics?",
+        "answer": "Yes! Silk, embroidered wax prints (pagnes), velvet, fine linen, and wool suits receive specialized gentle treatment, temperature-controlled pressing, and garment covers."
+      },
+      "howOrderingWorks": {
+        "question": "How do I place an order on SafiHub?",
+        "answer": "Pick a laundry house serving your neighborhood, select your items by fabric and service, and choose an available pickup window. Totals and fees are computed server-side before checkout."
+      },
+      "acceptanceTimeout": {
+        "question": "How quickly does the laundry house confirm my order?",
+        "answer": "Partner houses have 45 opening-hour minutes to accept an order (timers automatically pause overnight or during closures). If delayed, operations are alerted so your order can be reassigned promptly."
+      },
+      "guestTracking": {
+        "question": "Can I track my order without signing back in?",
+        "answer": "Yes. Every order has a dedicated tracking link accessible on our tracking page so you can follow pickup, reception, washing, and delivery updates or approve price adjustments."
+      },
+      "cancelOrder": {
+        "question": "Can I cancel an order after placing it?",
+        "answer": "Before pickup or washing begins, you can request cancellation from your order tracking view or by reaching out to our WhatsApp support team."
+      },
+      "excludedItems": {
+        "question": "What if a partner house cannot accept one of my items?",
+        "answer": "Any unaccepted item during reception inspection is marked as returned, removed completely from your total with zero cleaning fee, and delivered back with your order."
+      },
+      "deliveryFees": {
+        "question": "How are delivery fees calculated?",
+        "answer": "Delivery fees are based strictly on the customer zone and laundry house zone matrix. The exact fee is displayed transparently in your cart before placing the order."
+      },
+      "pickupWindows": {
+        "question": "What pickup time windows are available in Bukavu?",
+        "answer": "Couriers operate across four daily windows: 08:00-10:00, 10:00-12:00, 14:00-16:00, and 16:00-18:00. Only windows with an active courier covering both your zone and the house zone are offered."
+      },
+      "deliveryCode": {
+        "question": "Why is there a confirmation code on delivery?",
+        "answer": "When your clean clothes arrive, you share your 6-digit verification code with the courier to confirm delivery and securely close out the order."
+      },
+      "conditionPhotosPrivacy": {
+        "question": "Why are condition photos taken and how is my privacy protected?",
+        "answer": "Pre-existing stains or fragile items are photographed without faces at pickup for mutual protection and automatically purged after 90 days. Partner houses never see your phone number or exact street address."
+      },
+      "becomePartner": {
+        "question": "How can a laundry house in Bukavu join SafiHub?",
+        "answer": "Apply via our Partner Application page. Once verified by our team, you manage your pricing catalogue, hours, and settlements directly in the partner workspace."
+      }
+    }
   },
   "footer": {
     "brandDesc": "The premier on-demand laundry and dry-cleaning platform in Bukavu, DRC.",

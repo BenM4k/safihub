@@ -125,7 +125,7 @@ function AccordionTrigger({
     <AccordionHeader className="flex">
       <UiAccordionTrigger
         className={cn(
-          "flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 [&[data-open]>svg]:rotate-180",
+          "flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 [&[data-open]>svg:last-child]:rotate-180",
           className
         )}
         {...props}
@@ -149,7 +149,7 @@ function AccordionContent({
 }) {
   return (
     <AccordionPanel
-      className="overflow-hidden text-sm data-closed:animate-accordion-up data-open:animate-accordion-down"
+      className="h-[var(--accordion-panel-height)] overflow-hidden text-sm transition-[height,opacity] duration-200 ease-out data-starting-style:h-0 data-starting-style:opacity-0 data-ending-style:h-0 data-ending-style:opacity-0"
       {...props}
     >
       <div className={cn("pt-0 pb-4", className)}>{children}</div>
