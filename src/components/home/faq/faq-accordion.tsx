@@ -35,24 +35,33 @@ function renderAnswerWithLinks(
   let nodes: ReactNode[] = [answer];
   for (const link of links) {
     if (!link.label) continue;
-    nodes = nodes.flatMap((node, idx) => {
-      if (typeof node !== "string") return [node];
+    const nextNodes: ReactNode[] = [];
+    for (let idx = 0; idx < nodes.length; idx++) {
+      const node = nodes[idx];
+      if (typeof node !== "string") {
+        nextNodes.push(node);
+        continue;
+      }
       const matchIndex = node.indexOf(link.label);
-      if (matchIndex === -1) return [node];
+      if (matchIndex === -1) {
+        nextNodes.push(node);
+        continue;
+      }
       const before = node.slice(0, matchIndex);
       const after = node.slice(matchIndex + link.label.length);
-      return [
-        before,
+      if (before) nextNodes.push(before);
+      nextNodes.push(
         <Link
           key={`${link.href}-${idx}`}
           href={link.href}
           className="text-primary font-medium underline underline-offset-4 hover:text-primary-hover transition-colors"
         >
           {link.label}
-        </Link>,
-        after,
-      ].filter((part) => part !== "");
-    });
+        </Link>
+      );
+      if (after) nextNodes.push(after);
+    }
+    nodes = nextNodes;
   }
 
   return nodes;
