@@ -5,9 +5,12 @@ import {
   sendHouseSettlementEmail,
   sendHouseStaffLinkedEmail,
   sendHouseStatusChangeEmail,
+  sendOrderAcceptanceEscalationEmail,
+  sendOrderAcceptanceReminderEmail,
   sendOrderAdjustmentPromptEmail,
   sendOrderConfirmationEmail,
   sendOrderDeliveredReceiptEmail,
+  sendOrderExpiredEmail,
   sendPartnerApplicationReceivedEmail,
   sendPartnerInvitationEmail,
   sendPartnerRejectionEmail,
@@ -37,6 +40,12 @@ export function buildIdempotentEmailKey(payload: EmailNotificationJobPayload): s
       return `email-house-staff-${payload.houseId}-${payload.email}-${payload.eventId || "linked"}`;
     case "house_settlement_disbursed":
       return `email-house-settlement-${payload.settlementId}`;
+    case "order_acceptance_reminder":
+      return `email-order-acc-rem-${payload.orderId}-${payload.email}`;
+    case "order_acceptance_escalation":
+      return `email-order-acc-esc-${payload.orderId}-${payload.email}`;
+    case "order_expired":
+      return `email-order-expired-${payload.orderId}-${payload.email}`;
   }
 }
 
@@ -68,6 +77,15 @@ async function executeEmailNotificationDirect(payload: EmailNotificationJobPaylo
       break;
     case "house_settlement_disbursed":
       await sendHouseSettlementEmail(payload);
+      break;
+    case "order_acceptance_reminder":
+      await sendOrderAcceptanceReminderEmail(payload);
+      break;
+    case "order_acceptance_escalation":
+      await sendOrderAcceptanceEscalationEmail(payload);
+      break;
+    case "order_expired":
+      await sendOrderExpiredEmail(payload);
       break;
   }
 }

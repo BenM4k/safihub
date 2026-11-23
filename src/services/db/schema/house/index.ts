@@ -36,6 +36,14 @@ export const houseReviewStatusEnum = pgEnum("house_review_status", [
   "suspended",
 ]);
 
+export const houseMemberRoleEnum = pgEnum("house_member_role", [
+  "owner",
+  "manager",
+  "operator",
+]);
+
+export type HouseMemberRole = (typeof houseMemberRoleEnum.enumValues)[number];
+
 export const partnerOnboardingStatusEnum = pgEnum("partner_onboarding_status", [
   "not_started",
   "in_progress",
@@ -93,6 +101,9 @@ export const houses = pgTable(
     uniqueIndex("houses_slug_unique").on(t.slug),
     index("houses_neighborhood_idx").on(t.neighborhoodId),
     index("houses_review_status_idx").on(t.reviewStatus),
+    index("houses_active_approved_idx")
+      .on(t.isActive, t.reviewStatus)
+      .where(sql`${t.isActive} = true and ${t.reviewStatus} = 'approved'`),
     index("houses_location_gist_idx").using("gist", t.location),
     check(
       "houses_commission_range",
@@ -116,6 +127,7 @@ export const houseMembers = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    role: houseMemberRoleEnum("role").notNull().default("owner"),
     createdAt: createdAt(),
   },
   (t) => [

@@ -141,6 +141,8 @@ export const orders = pgTable(
     ),
     index("orders_house_status_idx").on(t.houseId, t.status),
     index("orders_customer_idx").on(t.customerId, t.createdAt),
+    index("orders_contact_phone_created_idx").on(t.contactPhone, t.createdAt),
+    index("orders_house_pickup_slot_idx").on(t.houseId, t.pickupSlotStart),
     index("orders_status_deadline_idx").on(t.status, t.acceptanceDeadlineAt),
     index("orders_reception_deadline_idx").on(t.status, t.receptionDeadlineAt),
     check(

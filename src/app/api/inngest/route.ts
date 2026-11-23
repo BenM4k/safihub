@@ -3,6 +3,8 @@ import {
   dispatchEmailNotification,
   dispatchWhatsAppNotification,
   inngest,
+  processOrderAcceptanceTimers,
+  processReceptionConformingTimers,
   pruneExpiredPhotos,
 } from "@/inngest";
 
@@ -12,5 +14,7 @@ export const { GET, POST, PUT } = serve({
     pruneExpiredPhotos,
     dispatchWhatsAppNotification,
     dispatchEmailNotification,
+    processOrderAcceptanceTimers,
+    processReceptionConformingTimers,
   ],
 });

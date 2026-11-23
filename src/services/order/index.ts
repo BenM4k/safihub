@@ -6,3 +6,4 @@ export * from "./verification";
 export * from "./customer-order.service";
 export * from "./context";
 export * from "./pickup-slots.service";
+export * from "./timers.service";

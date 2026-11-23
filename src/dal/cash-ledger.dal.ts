@@ -286,6 +286,7 @@ export async function getCourierCashBalances(courierId: string): Promise<{
 
   let cashHeldCDF = 0;
   let cashHeldUSD = 0;
+  let totalHeldCDF = 0;
   let totalCollectedCDF = 0;
   let totalRemittedCDF = 0;
 
@@ -297,28 +298,33 @@ export async function getCourierCashBalances(courierId: string): Promise<{
     if (entry.entryType === "cash_collected") {
       if (entry.currency === "USD") cashHeldUSD += entry.amount;
       else cashHeldCDF += entry.amount;
+      totalHeldCDF += amountCDF;
       totalCollectedCDF += amountCDF;
     } else if (entry.entryType === "float_issued") {
       if (entry.currency === "USD") cashHeldUSD += entry.amount;
       else cashHeldCDF += entry.amount;
+      totalHeldCDF += amountCDF;
     } else if (entry.entryType === "cash_remitted") {
       if (entry.currency === "USD") cashHeldUSD -= entry.amount;
       else cashHeldCDF -= entry.amount;
+      totalHeldCDF -= amountCDF;
       totalRemittedCDF += amountCDF;
     } else if (entry.entryType === "float_returned") {
       if (entry.currency === "USD") cashHeldUSD -= entry.amount;
       else cashHeldCDF -= entry.amount;
+      totalHeldCDF -= amountCDF;
     }
   }
 
   const effectiveHeldCDF = Math.max(0, cashHeldCDF);
+  const effectiveTotalHeldCDF = Math.max(0, totalHeldCDF);
   const ceiling = profile?.cashCeiling ?? null;
 
   return {
     cashHeldCDF: effectiveHeldCDF,
     cashHeldUSD: Math.max(0, cashHeldUSD),
     cashCeiling: ceiling,
-    isCeilingExceeded: ceiling !== null && effectiveHeldCDF >= ceiling,
+    isCeilingExceeded: ceiling !== null && effectiveTotalHeldCDF >= ceiling,
     securityDeposit: profile?.securityDeposit ?? 0,
     changeFloat: profile?.changeFloat ?? 0,
     totalCollectedCDF,

@@ -78,7 +78,7 @@ export function filterCatalogueOutliers(
     const exceedsHardCap = isApparel && item.priceCdf >= clothingHardCap;
 
     // Statistical outlier check (e.g., > 4x median of the category if there are multiple items)
-    const exceedsMultiple = pricesByCategory.get(cat)!.length >= 2 && ratio > maxMultiplier;
+    const exceedsMultiple = (pricesByCategory.get(cat)?.length ?? 0) >= 2 && ratio > maxMultiplier;
 
     if (exceedsHardCap || exceedsMultiple) {
       flaggedOutliers.push({

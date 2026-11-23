@@ -5,11 +5,12 @@ import { notFound, redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { auth } from "./auth";
 import {
-  checkUserHouseAccess,
   getHouseBySlug,
+  getUserHouseMemberRole,
   getUserHouseMemberships,
   type HouseMembershipInfo,
 } from "@/dal";
+import type { HouseMemberRole } from "@/services/db/schema";
 import { err, ok, type Result } from "@/lib/result";
 import type { UserRole } from "./permissions";
 
@@ -39,6 +40,7 @@ export interface HouseAuthContext extends AuthContext {
   houseSlug?: string;
   primaryHouseId?: string;
   memberships?: HouseMembershipInfo[];
+  memberRole?: HouseMemberRole;
   isAdminOverride: boolean;
 }
 
@@ -168,14 +170,15 @@ export async function requireHouseAccess(
       session,
       houseId: targetHouseId,
       houseSlug: targetHouseSlug,
+      memberRole: "owner",
       isAdminOverride: true,
     });
   }
 
   // House staff user: must verify active membership
   if (targetHouseId) {
-    const hasAccess = await checkUserHouseAccess(user.id, targetHouseId);
-    if (!hasAccess) {
+    const memberRole = await getUserHouseMemberRole(user.id, targetHouseId);
+    if (!memberRole) {
       if (options?.returnNotFoundOnUnauthorized) {
         notFound();
       }
@@ -190,6 +193,7 @@ export async function requireHouseAccess(
       session,
       houseId: targetHouseId,
       houseSlug: targetHouseSlug,
+      memberRole,
       isAdminOverride: false,
     });
   }
@@ -213,6 +217,7 @@ export async function requireHouseAccess(
     primaryHouseId: memberships[0].houseId,
     houseSlug: memberships[0].houseSlug,
     memberships,
+    memberRole: memberships[0].memberRole,
     isAdminOverride: false,
   });
 }

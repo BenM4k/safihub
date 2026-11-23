@@ -1,7 +1,11 @@
 import "server-only";
-import { and, asc, eq, or, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lte, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
-import { toBukavuDateTime } from "@/services/availability/bukavu-time";
+import {
+  toBukavuDateTime,
+  type BukavuDateTime,
+} from "@/services/availability/bukavu-time";
+import { isDateClosed, type HouseClosure } from "@/services/availability/slots";
 import { filterCatalogueOutliers } from "@/services/catalog/outliers";
 import { normalizeStorageUrl } from "@/lib/storage-url";
 import { resolveHouseCoords } from "./house-location.dal";
@@ -119,6 +123,52 @@ export interface CustomerHouseDetailData {
 const DEFAULT_HOUSE_IMAGE =
   "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=800&q=80";
 
+export interface TodayHourSegment {
+  opensAt: string;
+  closesAt: string;
+}
+
+/**
+ * Evaluates whether a laundry house is currently open and builds a human-readable
+ * summary of today's opening segments, accounting for pauses, closures, and split shifts.
+ */
+export function evaluateTodayOpeningStatus(params: {
+  isPaused: boolean;
+  todaySegments: TodayHourSegment[];
+  closures: HouseClosure[];
+  bukavuNow: BukavuDateTime;
+}): { isOpenNow: boolean; todayHoursText: string } {
+  if (params.isPaused || isDateClosed(params.bukavuNow.dateString, params.closures)) {
+    return {
+      isOpenNow: false,
+      todayHoursText: "Temporairement fermé",
+    };
+  }
+
+  if (params.todaySegments.length === 0) {
+    return {
+      isOpenNow: false,
+      todayHoursText: "Fermé aujourd'hui",
+    };
+  }
+
+  const sorted = [...params.todaySegments].sort((a, b) =>
+    a.opensAt.localeCompare(b.opensAt)
+  );
+  const todayHoursText = sorted
+    .map((seg) => `${seg.opensAt.slice(0, 5)} - ${seg.closesAt.slice(0, 5)}`)
+    .join(", ");
+
+  const currentHm = params.bukavuNow.timeString;
+  const isOpenNow = sorted.some((seg) => {
+    const opensHm = seg.opensAt.slice(0, 5);
+    const closesHm = seg.closesAt.slice(0, 5);
+    return currentHm >= opensHm && currentHm < closesHm;
+  });
+
+  return { isOpenNow, todayHoursText };
+}
+
 export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
   const now = new Date();
   const bukavuNow = toBukavuDateTime(now);
@@ -128,8 +178,14 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
     eq(schema.houses.reviewStatus, "approved")
   );
 
-  const [rawHouses, todayHoursRows, allCoverage, aggregatedHouseServices] =
-    await Promise.all([
+  const [
+    rawHouses,
+    todayHoursRows,
+    activeClosureRows,
+    allCoverage,
+    aggregatedHouseServices,
+    ratingStatsRows,
+  ] = await Promise.all([
       db
         .select({
           id: schema.houses.id,
@@ -182,6 +238,24 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
         ),
       db
         .select({
+          houseId: schema.houseClosures.houseId,
+          startsOn: schema.houseClosures.startsOn,
+          endsOn: schema.houseClosures.endsOn,
+        })
+        .from(schema.houseClosures)
+        .innerJoin(
+          schema.houses,
+          eq(schema.houseClosures.houseId, schema.houses.id)
+        )
+        .where(
+          and(
+            approvedActiveHouseCondition,
+            lte(schema.houseClosures.startsOn, bukavuNow.dateString),
+            gte(schema.houseClosures.endsOn, bukavuNow.dateString)
+          )
+        ),
+      db
+        .select({
           houseId: schema.houseCoverage.houseId,
           neighborhoodId: schema.houseCoverage.neighborhoodId,
         })
@@ -227,13 +301,45 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
           schema.services.nameFr,
           schema.services.nameSw
         ),
+      db
+        .select({
+          houseId: schema.houseRatingStats.houseId,
+          reviewCount: schema.houseRatingStats.reviewCount,
+          averageRating: schema.houseRatingStats.averageRating,
+        })
+        .from(schema.houseRatingStats)
+        .innerJoin(
+          schema.houses,
+          eq(schema.houseRatingStats.houseId, schema.houses.id)
+        )
+        .where(approvedActiveHouseCondition),
     ]);
 
   if (rawHouses.length === 0) return [];
 
-  const todayHoursByHouse = new Map<string, (typeof todayHoursRows)[number]>();
+  const todayHoursByHouse = new Map<string, TodayHourSegment[]>();
   for (const hr of todayHoursRows) {
-    todayHoursByHouse.set(hr.houseId, hr);
+    const segments = todayHoursByHouse.get(hr.houseId) || [];
+    segments.push({ opensAt: hr.opensAt, closesAt: hr.closesAt });
+    todayHoursByHouse.set(hr.houseId, segments);
+  }
+
+  const closuresByHouse = new Map<string, HouseClosure[]>();
+  for (const cl of activeClosureRows) {
+    const list = closuresByHouse.get(cl.houseId) || [];
+    list.push({ startsOn: cl.startsOn, endsOn: cl.endsOn });
+    closuresByHouse.set(cl.houseId, list);
+  }
+
+  const ratingStatsByHouse = new Map<
+    string,
+    { reviewCount: number; averageRating: string | null }
+  >();
+  for (const rs of ratingStatsRows) {
+    ratingStatsByHouse.set(rs.houseId, {
+      reviewCount: rs.reviewCount,
+      averageRating: rs.averageRating,
+    });
   }
 
   const coverageByHouse = new Map<string, string[]>();
@@ -263,21 +369,21 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
   }
 
   return rawHouses.map((h) => {
-    const todayHrs = todayHoursByHouse.get(h.id);
+    const todaySegments = todayHoursByHouse.get(h.id) || [];
+    const closures = closuresByHouse.get(h.id) || [];
+    const { isOpenNow, todayHoursText } = evaluateTodayOpeningStatus({
+      isPaused: h.isPaused,
+      todaySegments,
+      closures,
+      bukavuNow,
+    });
 
-    let isOpenNow = false;
-    let todayHoursText = "Fermé aujourd'hui";
-
-    if (h.isPaused) {
-      isOpenNow = false;
-      todayHoursText = "Temporairement fermé";
-    } else if (todayHrs) {
-      todayHoursText = `${todayHrs.opensAt.slice(0, 5)} - ${todayHrs.closesAt.slice(0, 5)}`;
-      const currentHm = bukavuNow.timeString;
-      const opensHm = todayHrs.opensAt.slice(0, 5);
-      const closesHm = todayHrs.closesAt.slice(0, 5);
-      isOpenNow = currentHm >= opensHm && currentHm < closesHm;
-    }
+    const stats = ratingStatsByHouse.get(h.id);
+    const reviewCount = stats?.reviewCount ?? 0;
+    const rating =
+      reviewCount >= 3 && stats?.averageRating
+        ? Number(stats.averageRating)
+        : null;
 
     const services = servicesByHouse.get(h.id) || [];
     const minPrice = minPriceByHouse.get(h.id);
@@ -321,8 +427,8 @@ export async function getCustomerHousesList(): Promise<CustomerHouseSummary[]> {
       minItemPriceCdf,
       availableServices: services,
       coveredNeighborhoodIds: coverageByHouse.get(h.id) || [h.neighborhoodId],
-      rating: null,
-      reviewCount: 0,
+      rating,
+      reviewCount,
       imageUrl,
       coverImageUrl: normalizedCover,
       logoUrl: normalizedLogo,
@@ -379,7 +485,8 @@ export async function getCustomerHouseDetail(
   const now = new Date();
   const bukavuNow = toBukavuDateTime(now);
 
-  const [weeklyHours, rawExclusions, rawHouseItems, [ratingStatsRow]] = await Promise.all([
+  const [weeklyHours, rawExclusions, rawHouseItems, [ratingStatsRow], detailClosures] =
+    await Promise.all([
     db
       .select({
         weekday: schema.houseHours.weekday,
@@ -437,6 +544,19 @@ export async function getCustomerHouseDetail(
       .from(schema.houseRatingStats)
       .where(eq(schema.houseRatingStats.houseId, house.id))
       .limit(1),
+    db
+      .select({
+        startsOn: schema.houseClosures.startsOn,
+        endsOn: schema.houseClosures.endsOn,
+      })
+      .from(schema.houseClosures)
+      .where(
+        and(
+          eq(schema.houseClosures.houseId, house.id),
+          lte(schema.houseClosures.startsOn, bukavuNow.dateString),
+          gte(schema.houseClosures.endsOn, bukavuNow.dateString)
+        )
+      ),
   ]);
 
   const excludedItemIds = new Set<string>();
@@ -454,20 +574,13 @@ export async function getCustomerHouseDetail(
     }
   }
 
-  const todayHrs = weeklyHours.find((h) => h.weekday === bukavuNow.weekday);
-  let isOpenNow = false;
-  let todayHoursText = "Fermé aujourd'hui";
-
-  if (house.isPaused) {
-    isOpenNow = false;
-    todayHoursText = "Temporairement fermé";
-  } else if (todayHrs) {
-    todayHoursText = `${todayHrs.opensAt.slice(0, 5)} - ${todayHrs.closesAt.slice(0, 5)}`;
-    const currentHm = bukavuNow.timeString;
-    const opensHm = todayHrs.opensAt.slice(0, 5);
-    const closesHm = todayHrs.closesAt.slice(0, 5);
-    isOpenNow = currentHm >= opensHm && currentHm < closesHm;
-  }
+  const todaySegments = weeklyHours.filter((h) => h.weekday === bukavuNow.weekday);
+  const { isOpenNow, todayHoursText } = evaluateTodayOpeningStatus({
+    isPaused: house.isPaused,
+    todaySegments,
+    closures: detailClosures,
+    bukavuNow,
+  });
 
   const serviceMap = new Map<string, { id: string; slug: string; nameFr: string; nameSw: string }>();
   const items: CustomerHouseCatalogueItem[] = [];

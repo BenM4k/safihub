@@ -84,4 +84,31 @@ describe("Catalogue Outliers Filtering", () => {
     expect(result.flaggedOutliers).toHaveLength(1);
     expect(result.flaggedOutliers[0].reason).toBe("Prix invalide ou nul");
   });
+
+  it("does not throw when a category contains only an excluded item with positive price", () => {
+    const items: CustomerHouseCatalogueItem[] = [
+      {
+        houseItemId: "hi-excl",
+        serviceId: "s-wash",
+        serviceSlug: "wash",
+        serviceNameFr: "Lavage",
+        serviceNameSw: "Kufua",
+        itemId: "i-silk",
+        itemNameFr: "Robe en soie",
+        itemNameSw: "Gauni la hariri",
+        itemCategory: "delicate",
+        fabricId: "f-silk",
+        fabricNameFr: "Soie",
+        fabricNameSw: "Hariri",
+        priceCdf: 12000,
+        currency: "CDF",
+        isExcluded: true,
+        exclusionNote: "Non traité",
+      },
+    ];
+
+    const result = filterCatalogueOutliers(items);
+    expect(result.validItems).toHaveLength(1);
+    expect(result.flaggedOutliers).toHaveLength(0);
+  });
 });

@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { getCurrentUser } from "@/services/auth";
+import { requireRole } from "@/services/auth";
 import {
   upsertPartnerOnboarding,
   incrementOnboardingReminder,
@@ -16,18 +16,24 @@ import {
 } from "@/services/analytics/analytics.service";
 
 const stepUpdateSchema = z.object({
-  tourId: z.string().optional().default("partner-main"),
-  stepId: z.string().min(1),
+  tourId: z.string().min(1).max(64).optional().default("partner-main"),
+  stepId: z.string().min(1).max(64),
   status: z.enum(["not_started", "in_progress", "skipped", "completed"]),
+});
+
+const tourParamsSchema = z.object({
+  tourId: z.string().min(1).max(64).optional().default("partner-main"),
+  stepId: z.string().min(1).max(64).optional(),
 });
 
 export async function updateOnboardingStepAction(
   params: z.input<typeof stepUpdateSchema>
 ): Promise<Result<{ status: PartnerOnboardingStatus; lastStepId: string | null }>> {
-  const user = await getCurrentUser({ fresh: true });
-  if (!user) {
-    return err("Session expirée.");
+  const auth = await requireRole(["house", "admin"]);
+  if (!auth.ok) {
+    return err("Accès réservé aux partenaires pressing.");
   }
+  const user = auth.value.user;
 
   const parsed = stepUpdateSchema.safeParse(params);
   if (!parsed.success) {
@@ -64,12 +70,18 @@ export async function skipOnboardingTourAction(params?: {
   tourId?: string;
   stepId?: string;
 }): Promise<Result<{ success: boolean }>> {
-  const user = await getCurrentUser({ fresh: true });
-  if (!user) {
-    return err("Session expirée.");
+  const auth = await requireRole(["house", "admin"]);
+  if (!auth.ok) {
+    return err("Accès réservé aux partenaires pressing.");
+  }
+  const user = auth.value.user;
+
+  const parsed = tourParamsSchema.safeParse(params ?? {});
+  if (!parsed.success) {
+    return err("Données de visite invalides.");
   }
 
-  const tourId = params?.tourId ?? "partner-main";
+  const { tourId, stepId } = parsed.data;
   await upsertPartnerOnboarding({
     userId: user.id,
     tourId,
@@ -80,7 +92,7 @@ export async function skipOnboardingTourAction(params?: {
   await trackStepSkipped({
     userId: user.id,
     tourId,
-    stepId: params?.stepId,
+    stepId,
   });
 
   return ok({ success: true });
@@ -89,12 +101,18 @@ export async function skipOnboardingTourAction(params?: {
 export async function resetOnboardingTourAction(params?: {
   tourId?: string;
 }): Promise<Result<{ success: boolean }>> {
-  const user = await getCurrentUser({ fresh: true });
-  if (!user) {
-    return err("Session expirée.");
+  const auth = await requireRole(["house", "admin"]);
+  if (!auth.ok) {
+    return err("Accès réservé aux partenaires pressing.");
+  }
+  const user = auth.value.user;
+
+  const parsed = tourParamsSchema.safeParse(params ?? {});
+  if (!parsed.success) {
+    return err("Données de visite invalides.");
   }
 
-  const tourId = params?.tourId ?? "partner-main";
+  const { tourId } = parsed.data;
   await upsertPartnerOnboarding({
     userId: user.id,
     tourId,
@@ -115,12 +133,18 @@ export async function resetOnboardingTourAction(params?: {
 export async function recordOnboardingReminderAction(params?: {
   tourId?: string;
 }): Promise<Result<{ reminderCount: number; status: PartnerOnboardingStatus }>> {
-  const user = await getCurrentUser({ fresh: true });
-  if (!user) {
-    return err("Session expirée.");
+  const auth = await requireRole(["house", "admin"]);
+  if (!auth.ok) {
+    return err("Accès réservé aux partenaires pressing.");
+  }
+  const user = auth.value.user;
+
+  const parsed = tourParamsSchema.safeParse(params ?? {});
+  if (!parsed.success) {
+    return err("Données de visite invalides.");
   }
 
-  const tourId = params?.tourId ?? "partner-main";
+  const { tourId } = parsed.data;
   const updated = await incrementOnboardingReminder(user.id, tourId, 2);
 
   return ok({

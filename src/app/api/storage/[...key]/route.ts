@@ -42,13 +42,26 @@ export async function GET(request: Request, { params }: RouteParams) {
     return new Response(null, { status: 304 });
   }
 
+const ALLOWED_PUBLIC_IMAGE_TYPES = new Set([
+  "image/webp",
+  "image/jpeg",
+  "image/png",
+]);
+
+  const safeContentType =
+    object.contentType && ALLOWED_PUBLIC_IMAGE_TYPES.has(object.contentType)
+      ? object.contentType
+      : "image/webp";
+
   return new Response(object.body as unknown as BodyInit, {
     status: 200,
     headers: {
-      "Content-Type": object.contentType || "image/webp",
+      "Content-Type": safeContentType,
       "Content-Length": object.size.toString(),
       "Cache-Control": "public, max-age=31536000, immutable",
       ...(object.etag ? { ETag: object.etag } : {}),
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; sandbox",
       "Access-Control-Allow-Origin": "*",
     },
   });

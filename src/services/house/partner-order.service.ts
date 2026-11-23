@@ -10,6 +10,9 @@ import {
   getHouseOrderDetailRestricted,
   getOrderItems,
   getHouseOrderEventsRestricted,
+  getHouseClosures,
+  getHouseHours,
+  getSettings,
   transitionOrderStatusAtomic,
   type PartnerOrderListItemDTO,
   type PartnerOrderQueryFilters,
@@ -19,6 +22,7 @@ import {
   type OrderEventRecord,
 } from "@/dal";
 import { transitionOrder } from "@/services/order/transitions";
+import { computeReceptionDeadline } from "@/services/order/deadlines";
 import {
   acceptIncomingOrder,
   rejectIncomingOrder,
@@ -190,10 +194,28 @@ export async function markPartnerOrderReceived(params: {
       return err(transitionRes.error);
     }
 
+    const [hours, closures, settings] = await Promise.all([
+      getHouseHours(params.houseId),
+      getHouseClosures(params.houseId),
+      getSettings(),
+    ]);
+    const now = new Date();
+    const receptionWindowMinutes = settings.receptionWindowMinutes ?? 60;
+    const receptionDeadlineAt = computeReceptionDeadline(
+      now,
+      receptionWindowMinutes,
+      hours,
+      closures,
+    );
+
     const updated = await transitionOrderStatusAtomic({
       orderId: params.orderId,
       expectedStatus: detail.status,
       newStatus: "received",
+      orderUpdates: {
+        receivedAt: now,
+        receptionDeadlineAt,
+      },
       event: transitionRes.value.event,
     });
 

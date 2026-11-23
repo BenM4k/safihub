@@ -218,6 +218,11 @@ vi.mock("@/dal", async (importOriginal) => {
 
     getOrderEvents: vi.fn(async () => []),
     getHouseOrderEventsRestricted: vi.fn(async () => []),
+    getHouseHours: vi.fn(async () => [
+      { id: "hh-1", houseId: "house-alpha", weekday: 1, opensAt: "08:00:00", closesAt: "18:00:00" },
+    ]),
+    getHouseClosures: vi.fn(async () => []),
+    getSettings: vi.fn(async () => ({ receptionWindowMinutes: 60 })),
 
     transitionOrderStatusAtomic: vi.fn(async () => true),
 

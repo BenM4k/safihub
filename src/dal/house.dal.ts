@@ -7,7 +7,7 @@ import { err, ok, type Result } from "@/lib/result";
 import { normalizeStorageUrl } from "@/lib/storage-url";
 import { resolveHouseCoords } from "./house-location.dal";
 
-import type { HouseReviewStatus } from "@/services/db/schema";
+import type { HouseMemberRole, HouseReviewStatus } from "@/services/db/schema";
 
 export interface HouseMembershipInfo {
   houseId: string;
@@ -16,6 +16,7 @@ export interface HouseMembershipInfo {
   houseSlug: string;
   isActive: boolean;
   isPaused: boolean;
+  memberRole: HouseMemberRole;
 }
 
 export interface HouseRecord {
@@ -105,12 +106,35 @@ export async function getUserHouseMemberships(
       houseSlug: schema.houses.slug,
       isActive: schema.houses.isActive,
       isPaused: schema.houses.isPaused,
+      memberRole: schema.houseMembers.role,
     })
     .from(schema.houseMembers)
     .innerJoin(schema.houses, eq(schema.houseMembers.houseId, schema.houses.id))
     .where(eq(schema.houseMembers.userId, userId));
 
   return rows;
+}
+
+export async function getUserHouseMemberRole(
+  userId: string,
+  houseIdOrSlug: string
+): Promise<HouseMemberRole | null> {
+  const [membership] = await db
+    .select({ role: schema.houseMembers.role })
+    .from(schema.houseMembers)
+    .innerJoin(schema.houses, eq(schema.houseMembers.houseId, schema.houses.id))
+    .where(
+      and(
+        eq(schema.houseMembers.userId, userId),
+        or(
+          eq(schema.houseMembers.houseId, houseIdOrSlug),
+          eq(schema.houses.slug, houseIdOrSlug)
+        )
+      )
+    )
+    .limit(1);
+
+  return membership?.role ?? null;
 }
 
 export async function checkUserHouseAccess(
@@ -138,15 +162,18 @@ export async function checkUserHouseAccess(
 export async function addHouseMember({
   houseId,
   userId,
+  role = "owner",
 }: {
   houseId: string;
   userId: string;
+  role?: HouseMemberRole;
 }): Promise<void> {
   await db
     .insert(schema.houseMembers)
     .values({
       houseId,
       userId,
+      role,
     })
     .onConflictDoNothing();
 }

@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { completeDeliveryMissionAtomic, startDeliveryMissionAtomic } from "@/dal/courier.dal";
+import {
+  completeDeliveryMissionAtomic,
+  completePickupMissionAtomic,
+  startDeliveryMissionAtomic,
+} from "@/dal/courier.dal";
 
 interface CapturedOrderValues {
   status?: string;
@@ -75,7 +79,7 @@ describe("Phase 10.3: Delivery Confirmation Code", () => {
     expect(captured.updatedOrderValues?.status).toBe("delivery_in_progress");
     expect(captured.updatedOrderValues?.deliveryConfirmationCode).toBeDefined();
     expect(typeof captured.updatedOrderValues?.deliveryConfirmationCode).toBe("string");
-    expect(String(captured.updatedOrderValues?.deliveryConfirmationCode).length).toBeGreaterThanOrEqual(4);
+    expect(String(captured.updatedOrderValues?.deliveryConfirmationCode)).toMatch(/^\d{6}$/);
   });
 
   it("fails and cannot complete delivery when the entered code is wrong", async () => {
@@ -237,5 +241,197 @@ describe("Phase 10.3: Delivery Confirmation Code", () => {
     expect(successRes.ok).toBe(true);
     expect(completedMissionStatus).toBe("completed");
     expect(completedOrderStatus).toBe("delivered");
+  });
+
+  it("posts CDF accounting splits and does not inflate totalDue on USD-paid orders", async () => {
+    const { db } = await import("@/dal/db");
+    const insertedLedgerRows: Array<Record<string, unknown>> = [];
+
+    vi.spyOn(db, "transaction").mockImplementation(async (callback) => {
+      const mockTx = {
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              for: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue([
+                  {
+                    id: missionId,
+                    type: "delivery",
+                    status: "in_progress",
+                    courierId,
+                    orderId,
+                    courierPay: 1500,
+                  },
+                ]),
+              }),
+              limit: vi.fn().mockResolvedValue([
+                {
+                  id: orderId,
+                  status: "delivery_in_progress",
+                  deliveryConfirmationCode: correctCode,
+                  houseId: "house_1",
+                  itemsTotal: 11500,
+                  adjustedItemsTotal: null,
+                  deliveryFee: 2500,
+                  commissionAmount: 2300,
+                  totalDue: 14000, // Always stored in CDF (= 5 USD @ 2800)
+                  paymentCurrency: "USD",
+                  exchangeRateUsed: 2800,
+                },
+              ]),
+            }),
+          }),
+        }),
+        update: vi.fn().mockReturnValue({
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+        insert: vi.fn().mockImplementation((table) => ({
+          values: vi.fn().mockImplementation(async (vals) => {
+            const { schema } = await import("@/dal/db");
+            if (table === schema.cashLedger) {
+              insertedLedgerRows.push(vals as Record<string, unknown>);
+            }
+            return [];
+          }),
+        })),
+      };
+      return await callback(mockAs(mockTx));
+    });
+
+    const res = await completeDeliveryMissionAtomic({
+      missionId,
+      courierId,
+      confirmationCode: correctCode,
+      cashCollected: 5,
+      cashCurrency: "USD",
+    });
+
+    expect(res.ok).toBe(true);
+    expect(res.discrepancyFlagged).toBe(false);
+
+    const cashRow = insertedLedgerRows.find((r) => r.entryType === "cash_collected");
+    const houseRow = insertedLedgerRows.find((r) => r.entryType === "owed_to_house");
+    const ownerRow = insertedLedgerRows.find((r) => r.entryType === "owed_to_owner");
+    const courierRow = insertedLedgerRows.find((r) => r.entryType === "courier_pay");
+    const discrepancyRow = insertedLedgerRows.find((r) => r.entryType === "discrepancy");
+
+    expect(discrepancyRow).toBeUndefined();
+    expect(cashRow).toMatchObject({ currency: "USD", amount: 5 });
+    expect(houseRow).toMatchObject({ currency: "CDF", amount: 9200 });
+    expect(ownerRow).toMatchObject({ currency: "CDF", amount: 3300 });
+    expect(courierRow).toMatchObject({ currency: "CDF", amount: 1500 });
+  });
+
+  it("credits pickup-leg courier_pay in CDF when completing a pickup mission", async () => {
+    const { db } = await import("@/dal/db");
+    const insertedLedgerRows: Array<Record<string, unknown>> = [];
+
+    vi.spyOn(db, "transaction").mockImplementation(async (callback) => {
+      const mockTx = {
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockImplementation(() => {
+              const chain = {
+                for: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue([
+                    {
+                      id: "miss_pickup_1",
+                      type: "pickup",
+                      status: "in_progress",
+                      courierId,
+                      orderId,
+                      courierPay: 2000,
+                    },
+                  ]),
+                }),
+                limit: vi.fn().mockResolvedValue([
+                  {
+                    id: orderId,
+                    status: "pickup_in_progress",
+                    houseId: "house_1",
+                  },
+                ]),
+                then: vi.fn().mockImplementation((onResolve) => Promise.resolve([]).then(onResolve)),
+              };
+              return chain;
+            }),
+          }),
+        }),
+        update: vi.fn().mockReturnValue({
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+        insert: vi.fn().mockImplementation((table) => ({
+          values: vi.fn().mockImplementation(async (vals) => {
+            const { schema } = await import("@/dal/db");
+            if (table === schema.cashLedger) {
+              insertedLedgerRows.push(vals as Record<string, unknown>);
+            }
+            return [];
+          }),
+        })),
+      };
+      return await callback(mockAs(mockTx));
+    });
+
+    const res = await completePickupMissionAtomic({
+      missionId: "miss_pickup_1",
+      courierId,
+      items: [],
+    });
+
+    expect(res.ok).toBe(true);
+    expect(insertedLedgerRows).toHaveLength(1);
+    expect(insertedLedgerRows[0]).toMatchObject({
+      entryType: "courier_pay",
+      missionId: "miss_pickup_1",
+      courierId,
+      currency: "CDF",
+      amount: 2000,
+    });
+  });
+
+  it("rejects starting delivery mission if order is in 'ready' status instead of 'delivery_assigned'", async () => {
+    const { db } = await import("@/dal/db");
+
+    vi.spyOn(db, "transaction").mockImplementation(async (callback) => {
+      const queryBuilder: Record<string, unknown> = {
+        for: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: missionId,
+              type: "delivery",
+              status: "assigned",
+              courierId,
+              orderId,
+            },
+          ]),
+        }),
+        limit: vi.fn().mockResolvedValue([
+          {
+            id: orderId,
+            status: "ready",
+            deliveryConfirmationCode: null,
+          },
+        ]),
+        leftJoin: vi.fn().mockReturnThis(),
+        where: vi.fn().mockImplementation(() => queryBuilder),
+        then: vi.fn().mockImplementation((onResolve) => Promise.resolve([]).then(onResolve)),
+      };
+
+      const mockTx = {
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue(queryBuilder),
+        }),
+      };
+      return await callback(mockAs(mockTx));
+    });
+
+    const res = await startDeliveryMissionAtomic(missionId, courierId);
+    expect(res.ok).toBe(false);
+    expect(res.error).toContain("Invalid transition");
   });
 });

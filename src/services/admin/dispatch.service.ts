@@ -3,7 +3,10 @@ import { err, ok, type Result } from "@/lib/result";
 import {
   addOrderEvent,
   assignMission,
+  getAllCourierZones,
+  getCourierCashBalances,
   getCouriers,
+  getCourierShifts,
   getEligibleCouriersForZones,
   getHouses,
   getMissionById,
@@ -15,6 +18,10 @@ import {
   type CourierRecord,
   type MissionRecord,
 } from "@/dal";
+import {
+  timeToMinutes,
+  toBukavuDateTime,
+} from "@/services/availability/bukavu-time";
 import {
   enrichOrders,
   type EnrichedDispatchOrder,
@@ -57,6 +64,7 @@ export async function getAdminDispatchData(): Promise<
       ordersCreated,
       allMissions,
       allCouriers,
+      allCourierZones,
       allHouses,
       assignedMissions,
       acceptedMissions,
@@ -65,6 +73,7 @@ export async function getAdminDispatchData(): Promise<
       getOrders({ status: "created", limit: 100 }),
       getMissions({ status: "unassigned", limit: 100 }),
       getCouriers(),
+      getAllCourierZones(),
       getHouses(),
       getMissions({ status: "assigned", limit: 200 }),
       getMissions({ status: "accepted", limit: 200 }),
@@ -83,21 +92,49 @@ export async function getAdminDispatchData(): Promise<
 
     const enrichedOrders = enrichOrders(ordersCreated, relancesMap, new Date());
 
-    // Evaluate AC 20 eligible couriers for unassigned missions
-    const unassignedMissions: MissionWithEligibleCouriers[] = [];
-    for (const mission of allMissions) {
-      let eligibleCouriers: CourierRecord[] = [];
-      if (mission.customerZoneId && mission.houseZoneId) {
-        eligibleCouriers = await getEligibleCouriersForZones(
-          mission.customerZoneId,
-          mission.houseZoneId
-        );
+    // Build inverted zone -> active courier index for O(min(|A|, |B|)) AC 20 intersection
+    const activeCourierById = new Map<string, CourierRecord>();
+    for (const c of allCouriers) {
+      if (c.isActive && c.status === "active") {
+        activeCourierById.set(c.userId, c);
       }
-      unassignedMissions.push({
-        ...mission,
-        eligibleCouriers,
-      });
     }
+    const couriersByZone = new Map<string, Set<string>>();
+    for (const cz of allCourierZones) {
+      if (!activeCourierById.has(cz.courierId)) continue;
+      let set = couriersByZone.get(cz.zoneId);
+      if (!set) {
+        set = new Set<string>();
+        couriersByZone.set(cz.zoneId, set);
+      }
+      set.add(cz.courierId);
+    }
+
+    const unassignedMissions: MissionWithEligibleCouriers[] = allMissions.map(
+      (mission) => {
+        const eligibleCouriers: CourierRecord[] = [];
+        if (mission.customerZoneId && mission.houseZoneId) {
+          const customerCouriers = couriersByZone.get(mission.customerZoneId);
+          const houseCouriers = couriersByZone.get(mission.houseZoneId);
+          if (customerCouriers && houseCouriers) {
+            const [smaller, larger] =
+              customerCouriers.size <= houseCouriers.size
+                ? [customerCouriers, houseCouriers]
+                : [houseCouriers, customerCouriers];
+            for (const cId of smaller) {
+              if (larger.has(cId)) {
+                const courier = activeCourierById.get(cId);
+                if (courier) eligibleCouriers.push(courier);
+              }
+            }
+          }
+        }
+        return {
+          ...mission,
+          eligibleCouriers,
+        };
+      }
+    );
 
     // Compute fleet courier status breakdown
     const activeCourierIds = new Set<string>();
@@ -213,6 +250,40 @@ export async function assignMissionToCourier(params: {
       if (!isEligible) {
         return err(
           "AC 20 violation: The selected courier does not cover both the customer's zone and the laundry house's zone"
+        );
+      }
+    }
+
+    // Spec §14 check: verify courier is on shift for the mission's scheduled slot
+    if (mission.slotStart && mission.slotEnd) {
+      const shifts = await getCourierShifts(params.courierId);
+      const startLocal = toBukavuDateTime(mission.slotStart);
+      const endLocal = toBukavuDateTime(mission.slotEnd);
+      const slotStartMin = timeToMinutes(startLocal.timeString);
+      const slotEndMin = timeToMinutes(endLocal.timeString);
+
+      const isOnShift =
+        startLocal.dateString === endLocal.dateString &&
+        shifts.some(
+          (s) =>
+            s.weekday === startLocal.weekday &&
+            timeToMinutes(s.startsAt) <= slotStartMin &&
+            timeToMinutes(s.endsAt) >= slotEndMin
+        );
+
+      if (!isOnShift) {
+        return err(
+          "Shift violation: The selected courier is not on shift for this mission slot"
+        );
+      }
+    }
+
+    // AC 13 check: block assigning new delivery missions when courier exceeds cash ceiling
+    if (mission.type === "delivery") {
+      const balances = await getCourierCashBalances(params.courierId);
+      if (balances.isCeilingExceeded) {
+        return err(
+          "AC 13 violation: Courier cash ceiling exceeded; remittance required before assigning delivery missions"
         );
       }
     }

@@ -1,8 +1,84 @@
 import "server-only";
+import { randomInt, timingSafeEqual } from "node:crypto";
 import { and, asc, desc, eq, inArray, isNull, ne, notInArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
 import { DEFAULT_RETRY_FEE_CDF, RETRY_FEE_FAILED_PICKUP_COUNT } from "@/lib/fees";
+import { transitionOrder } from "@/services/order/transitions";
+
+type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function isCourierCashCeilingExceededTx(
+  tx: DbTx,
+  courierId: string
+): Promise<{ exceeded: boolean; cashHeld: number; ceiling: number | null }> {
+  const [profile] = await tx
+    .select()
+    .from(schema.courierProfiles)
+    .where(eq(schema.courierProfiles.userId, courierId))
+    .limit(1);
+
+  const reversedSubquery = tx
+    .select({ id: schema.cashLedger.reversalOfId })
+    .from(schema.cashLedger)
+    .where(
+      and(
+        eq(schema.cashLedger.entryType, "reversal"),
+        sql`${schema.cashLedger.reversalOfId} is not null`
+      )
+    );
+
+  const ledgerEntries = await tx
+    .select({
+      entryType: schema.cashLedger.entryType,
+      currency: schema.cashLedger.currency,
+      amount: schema.cashLedger.amount,
+      exchangeRateUsed: schema.orders.exchangeRateUsed,
+    })
+    .from(schema.cashLedger)
+    .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
+    .where(
+      and(
+        eq(schema.cashLedger.courierId, courierId),
+        sql`${schema.cashLedger.entryType} <> 'reversal'`,
+        notInArray(schema.cashLedger.id, reversedSubquery)
+      )
+    );
+
+  let cashCollected = 0;
+  let cashRemitted = 0;
+  for (const entry of ledgerEntries) {
+    const rate = Number(entry.exchangeRateUsed) || 2800;
+    const amountCDF =
+      entry.currency === "USD" ? Math.round(entry.amount * rate) : entry.amount;
+    if (entry.entryType === "cash_collected" || entry.entryType === "float_issued") {
+      cashCollected += amountCDF;
+    } else if (entry.entryType === "cash_remitted" || entry.entryType === "float_returned") {
+      cashRemitted += amountCDF;
+    }
+  }
+
+  const cashHeld = Math.max(0, cashCollected - cashRemitted);
+  const ceiling = profile?.cashCeiling ?? null;
+
+  return {
+    exceeded: ceiling !== null && cashHeld >= ceiling,
+    cashHeld,
+    ceiling,
+  };
+}
+
+function verifyConfirmationCode(entered: string, expected: string): boolean {
+  const normalizedEntered = entered.trim().toUpperCase();
+  const normalizedExpected = expected.trim().toUpperCase();
+  if (!normalizedEntered || !normalizedExpected) return false;
+
+  const enteredBuf = Buffer.from(normalizedEntered, "utf8");
+  const expectedBuf = Buffer.from(normalizedExpected, "utf8");
+  if (enteredBuf.length !== expectedBuf.length) return false;
+
+  return timingSafeEqual(enteredBuf, expectedBuf);
+}
 
 export interface CourierRecord {
   userId: string;
@@ -98,12 +174,20 @@ export async function getCouriers(): Promise<CourierRecord[]> {
     .innerJoin(schema.neighborhoods, eq(schema.houses.neighborhoodId, schema.neighborhoods.id))
     .where(eq(schema.houses.isActive, true));
 
+  const housesCountByZone = new Map<string, number>();
+  for (const h of rawHouses) {
+    housesCountByZone.set(h.zoneId, (housesCountByZone.get(h.zoneId) ?? 0) + 1);
+  }
+
   return users.map((u) => {
     const prof = profileMap.get(u.id);
     const cZones = courierZonesMap.get(u.id);
-    const servedHouseCount = cZones
-      ? rawHouses.filter((h) => cZones.has(h.zoneId)).length
-      : 0;
+    let servedHouseCount = 0;
+    if (cZones) {
+      for (const zId of cZones) {
+        servedHouseCount += housesCountByZone.get(zId) ?? 0;
+      }
+    }
 
     return {
       userId: u.id,
@@ -237,6 +321,15 @@ export async function setCourierShifts(
       );
     }
   });
+}
+
+export async function getAllCourierZones(): Promise<CourierZoneRecord[]> {
+  return db
+    .select({
+      courierId: schema.courierZones.courierId,
+      zoneId: schema.courierZones.zoneId,
+    })
+    .from(schema.courierZones);
 }
 
 export async function getCourierZones(courierId: string): Promise<CourierZoneRecord[]> {
@@ -778,22 +871,50 @@ export async function acceptMissionAtomic(
   missionId: string,
   courierId: string
 ): Promise<boolean> {
-  const [updated] = await db
-    .update(schema.missions)
-    .set({
-      status: "accepted",
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(schema.missions.id, missionId),
-        eq(schema.missions.courierId, courierId),
-        eq(schema.missions.status, "assigned")
+  return await db.transaction(async (tx) => {
+    const [mission] = await tx
+      .select({
+        id: schema.missions.id,
+        type: schema.missions.type,
+        status: schema.missions.status,
+      })
+      .from(schema.missions)
+      .where(
+        and(
+          eq(schema.missions.id, missionId),
+          eq(schema.missions.courierId, courierId),
+          eq(schema.missions.status, "assigned")
+        )
       )
-    )
-    .returning({ id: schema.missions.id });
+      .for("update")
+      .limit(1);
 
-  return Boolean(updated);
+    if (!mission) return false;
+
+    if (mission.type === "delivery") {
+      const ceilingCheck = await isCourierCashCeilingExceededTx(tx, courierId);
+      if (ceilingCheck.exceeded) {
+        return false;
+      }
+    }
+
+    const [updated] = await tx
+      .update(schema.missions)
+      .set({
+        status: "accepted",
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.missions.id, missionId),
+          eq(schema.missions.courierId, courierId),
+          eq(schema.missions.status, "assigned")
+        )
+      )
+      .returning({ id: schema.missions.id });
+
+    return Boolean(updated);
+  });
 }
 
 /**
@@ -824,6 +945,17 @@ export async function startPickupMissionAtomic(
 
     if (!order) return { ok: false, error: "Commande introuvable" };
 
+    const transitionRes = transitionOrder(order.id, order.status, {
+      targetStatus: "pickup_in_progress",
+      actorId: courierId,
+      actorRole: "courier",
+      note: "Coursier en route pour la collecte",
+    });
+
+    if (!transitionRes.ok) {
+      return { ok: false, error: transitionRes.error };
+    }
+
     await tx
       .update(schema.missions)
       .set({
@@ -833,25 +965,15 @@ export async function startPickupMissionAtomic(
       })
       .where(eq(schema.missions.id, missionId));
 
-    if (order.status === "pickup_assigned" || order.status === "accepted") {
-      await tx
-        .update(schema.orders)
-        .set({
-          status: "pickup_in_progress",
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.orders.id, order.id));
+    await tx
+      .update(schema.orders)
+      .set({
+        status: "pickup_in_progress",
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.orders.id, order.id));
 
-      await tx.insert(schema.orderEvents).values({
-        orderId: order.id,
-        type: "status_change",
-        fromStatus: order.status,
-        toStatus: "pickup_in_progress",
-        actorId: courierId,
-        actorRole: "courier",
-        note: "Coursier en route pour la collecte",
-      });
-    }
+    await tx.insert(schema.orderEvents).values(transitionRes.value.event);
 
     return { ok: true };
   });
@@ -945,6 +1067,25 @@ export async function completePickupMissionAtomic(params: {
         .where(eq(schema.orderItems.id, it.orderItemId));
     }
 
+    const transitionRes = transitionOrder(order.id, order.status, {
+      targetStatus: "picked_up",
+      actorId: params.courierId,
+      actorRole: "courier",
+      note:
+        params.note ||
+        (hasCountDiscrepancy
+          ? "Collecte terminée avec écart de comptage"
+          : "Collecte terminée avec succès"),
+      payload: {
+        hasCountDiscrepancy,
+        onSiteApproved: Boolean(params.onSiteApproved),
+      },
+    });
+
+    if (!transitionRes.ok) {
+      return { ok: false, error: transitionRes.error };
+    }
+
     // Complete mission
     await tx
       .update(schema.missions)
@@ -955,6 +1096,22 @@ export async function completePickupMissionAtomic(params: {
       })
       .where(eq(schema.missions.id, params.missionId));
 
+    // Credit pickup leg courier pay to append-only cash_ledger in CDF
+    const pickupCourierPay = Math.max(0, mission.courierPay ?? 0);
+    if (pickupCourierPay > 0) {
+      await tx.insert(schema.cashLedger).values({
+        entryType: "courier_pay",
+        orderId: order.id,
+        missionId: params.missionId,
+        courierId: params.courierId,
+        houseId: order.houseId,
+        currency: "CDF",
+        amount: pickupCourierPay,
+        note: `Rémunération collecte coursier : ${pickupCourierPay} CDF`,
+        createdBy: params.courierId,
+      });
+    }
+
     // Update order status: pickup_in_progress -> picked_up
     await tx
       .update(schema.orders)
@@ -964,19 +1121,7 @@ export async function completePickupMissionAtomic(params: {
       })
       .where(eq(schema.orders.id, order.id));
 
-    await tx.insert(schema.orderEvents).values({
-      orderId: order.id,
-      type: "status_change",
-      fromStatus: order.status,
-      toStatus: "picked_up",
-      actorId: params.courierId,
-      actorRole: "courier",
-      note: params.note || (hasCountDiscrepancy ? "Collecte terminée avec écart de comptage" : "Collecte terminée avec succès"),
-      payload: {
-        hasCountDiscrepancy,
-        onSiteApproved: Boolean(params.onSiteApproved),
-      },
-    });
+    await tx.insert(schema.orderEvents).values(transitionRes.value.event);
 
     if (hasCountDiscrepancy && params.onSiteApproved) {
       await tx.insert(schema.orderEvents).values({
@@ -1030,6 +1175,17 @@ export async function failPickupMissionAtomic(params: {
 
     if (!order) return { ok: false, error: "Commande introuvable" };
 
+    const transitionRes = transitionOrder(order.id, order.status, {
+      targetStatus: "pickup_failed",
+      actorId: params.courierId,
+      actorRole: "courier",
+      reason: params.reason,
+    });
+
+    if (!transitionRes.ok) {
+      return { ok: false, error: transitionRes.error };
+    }
+
     await tx
       .update(schema.missions)
       .set({
@@ -1049,15 +1205,7 @@ export async function failPickupMissionAtomic(params: {
       })
       .where(eq(schema.orders.id, order.id));
 
-    await tx.insert(schema.orderEvents).values({
-      orderId: order.id,
-      type: "status_change",
-      fromStatus: order.status,
-      toStatus: "pickup_failed",
-      actorId: params.courierId,
-      actorRole: "courier",
-      note: params.reason,
-    });
+    await tx.insert(schema.orderEvents).values(transitionRes.value.event);
 
     // Check failed pickup threshold (Task 10.1: blocking after 2 failed pickups)
     const [settingsRow] = await tx
@@ -1158,59 +1306,11 @@ export async function startDeliveryMissionAtomic(
     }
 
     // AC 13: Check courier held cash vs cash ceiling
-    const [profile] = await tx
-      .select()
-      .from(schema.courierProfiles)
-      .where(eq(schema.courierProfiles.userId, courierId))
-      .limit(1);
-
-    const reversedSubquery = tx
-      .select({ id: schema.cashLedger.reversalOfId })
-      .from(schema.cashLedger)
-      .where(
-        and(
-          eq(schema.cashLedger.entryType, "reversal"),
-          sql`${schema.cashLedger.reversalOfId} is not null`
-        )
-      );
-
-    const ledgerEntries = await tx
-      .select({
-        entryType: schema.cashLedger.entryType,
-        amount: schema.cashLedger.amount,
-        currency: schema.cashLedger.currency,
-        exchangeRateUsed: schema.orders.exchangeRateUsed,
-      })
-      .from(schema.cashLedger)
-      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
-      .where(
-        and(
-          eq(schema.cashLedger.courierId, courierId),
-          sql`${schema.cashLedger.entryType} <> 'reversal'`,
-          notInArray(schema.cashLedger.id, reversedSubquery)
-        )
-      );
-
-    let cashCollected = 0;
-    let cashRemitted = 0;
-    for (const entry of ledgerEntries) {
-      const rate = Number(entry.exchangeRateUsed) || 2800;
-      const amountCDF =
-        entry.currency === "USD" ? Math.round(entry.amount * rate) : entry.amount;
-      if (entry.entryType === "cash_collected" || entry.entryType === "float_issued") {
-        cashCollected += amountCDF;
-      } else if (entry.entryType === "cash_remitted" || entry.entryType === "float_returned") {
-        cashRemitted += amountCDF;
-      }
-    }
-
-    const cashHeld = Math.max(0, cashCollected - cashRemitted);
-
-    const ceiling = profile?.cashCeiling ?? null;
-    if (ceiling !== null && cashHeld >= ceiling) {
+    const ceilingCheck = await isCourierCashCeilingExceededTx(tx, courierId);
+    if (ceilingCheck.exceeded && ceilingCheck.ceiling !== null) {
       return {
         ok: false,
-        error: `Plafond de trésorerie dépassé (${cashHeld.toLocaleString()} / ${ceiling.toLocaleString()} CDF). Versement requis avant de démarrer une nouvelle livraison (AC 13).`,
+        error: `Plafond de trésorerie dépassé (${ceilingCheck.cashHeld.toLocaleString()} / ${ceilingCheck.ceiling.toLocaleString()} CDF). Versement requis avant de démarrer une nouvelle livraison (AC 13).`,
       };
     }
 
@@ -1222,16 +1322,15 @@ export async function startDeliveryMissionAtomic(
 
     if (!order) return { ok: false, error: "Commande introuvable" };
 
-    const isOrderEligible =
-      order.status === "delivery_assigned" ||
-      order.status === "ready" ||
-      order.status === "delivery_slot_confirmed";
+    const transitionRes = transitionOrder(order.id, order.status, {
+      targetStatus: "delivery_in_progress",
+      actorId: courierId,
+      actorRole: "courier",
+      note: "Coursier en route pour la livraison",
+    });
 
-    if (!isOrderEligible) {
-      return {
-        ok: false,
-        error: `Impossible de démarrer la livraison : la commande est au statut '${order.status}'`,
-      };
+    if (!transitionRes.ok) {
+      return { ok: false, error: transitionRes.error };
     }
 
     await tx
@@ -1245,7 +1344,7 @@ export async function startDeliveryMissionAtomic(
 
     const deliveryCode =
       order.deliveryConfirmationCode ||
-      Math.floor(1000 + Math.random() * 9000).toString();
+      randomInt(100000, 1000000).toString();
 
     await tx
       .update(schema.orders)
@@ -1256,15 +1355,7 @@ export async function startDeliveryMissionAtomic(
       })
       .where(eq(schema.orders.id, order.id));
 
-    await tx.insert(schema.orderEvents).values({
-      orderId: order.id,
-      type: "status_change",
-      fromStatus: order.status,
-      toStatus: "delivery_in_progress",
-      actorId: courierId,
-      actorRole: "courier",
-      note: "Coursier en route pour la livraison",
-    });
+    await tx.insert(schema.orderEvents).values(transitionRes.value.event);
 
     return { ok: true };
   });
@@ -1314,10 +1405,7 @@ export async function completeDeliveryMissionAtomic(params: {
     if (!order) return { ok: false, error: "Commande introuvable" };
 
     // Verify delivery confirmation code (Task 10.3)
-    const enteredCode = (params.confirmationCode || "").trim().toUpperCase();
-    const expectedCode = (order.deliveryConfirmationCode || "").trim().toUpperCase();
-
-    if (!expectedCode || !enteredCode || enteredCode !== expectedCode) {
+    if (!verifyConfirmationCode(params.confirmationCode || "", order.deliveryConfirmationCode || "")) {
       return {
         ok: false,
         error: "Code de confirmation de livraison invalide. Demandez le code au client.",
@@ -1328,9 +1416,26 @@ export async function completeDeliveryMissionAtomic(params: {
     const exchangeRate = Number(order.exchangeRateUsed) || 2800;
     const collectedInCDF =
       currency === "USD" ? Math.round(params.cashCollected * exchangeRate) : params.cashCollected;
-    const expectedInCDF =
-      order.paymentCurrency === "USD" ? Math.round(order.totalDue * exchangeRate) : order.totalDue;
+    // Order totals (itemsTotal, deliveryFee, commissionAmount, totalDue) are always stored in CDF.
+    const expectedInCDF = order.totalDue;
     const discrepancyFlagged = collectedInCDF !== expectedInCDF;
+
+    const transitionRes = transitionOrder(order.id, order.status, {
+      targetStatus: "delivered",
+      actorId: params.courierId,
+      actorRole: "courier",
+      note: `Livraison effectuée. Montant encaissé : ${params.cashCollected} ${currency}${discrepancyFlagged ? " [Écart signalé]" : ""}`,
+      payload: {
+        cashCollected: params.cashCollected,
+        currency,
+        totalDue: order.totalDue,
+        discrepancyFlagged,
+      },
+    });
+
+    if (!transitionRes.ok) {
+      return { ok: false, error: transitionRes.error };
+    }
 
     // Update mission
     const deliveredAt = new Date();
@@ -1369,7 +1474,7 @@ export async function completeDeliveryMissionAtomic(params: {
     const deliveryFeeNet = Math.max(0, order.deliveryFee - courierPayEarned);
     const owedToOwner = Math.max(0, order.commissionAmount + deliveryFeeNet);
 
-    // 1. cash_collected
+    // 1. cash_collected (recorded in the actual physical currency collected)
     if (params.cashCollected > 0) {
       await tx.insert(schema.cashLedger).values({
         entryType: "cash_collected",
@@ -1380,13 +1485,14 @@ export async function completeDeliveryMissionAtomic(params: {
         currency,
         amount: params.cashCollected,
         note: discrepancyFlagged
-          ? `Encaissé : ${params.cashCollected} ${currency} (Écart détecté vs dû : ${order.totalDue} ${currency})`
+          ? `Encaissé : ${params.cashCollected} ${currency} (Écart détecté vs dû : ${expectedInCDF} CDF)`
           : `Paiement à la livraison complet : ${params.cashCollected} ${currency}`,
         createdBy: params.courierId,
       });
     }
 
-    const orderCurrency = order.paymentCurrency || "CDF";
+    // Accounting splits (owed_to_house, owed_to_owner, courier_pay) are always denominated in CDF.
+    const ledgerCurrency = "CDF" as const;
 
     // 2. owed_to_house
     if (owedToHouse > 0) {
@@ -1396,9 +1502,9 @@ export async function completeDeliveryMissionAtomic(params: {
         missionId: params.missionId,
         courierId: params.courierId,
         houseId: order.houseId,
-        currency: orderCurrency,
+        currency: ledgerCurrency,
         amount: owedToHouse,
-        note: `Part pressing : ${owedToHouse} ${orderCurrency} (${finalItemsTotal} - ${order.commissionAmount})`,
+        note: `Part pressing : ${owedToHouse} ${ledgerCurrency} (${finalItemsTotal} - ${order.commissionAmount})`,
         createdBy: params.courierId,
       });
     }
@@ -1411,9 +1517,9 @@ export async function completeDeliveryMissionAtomic(params: {
         missionId: params.missionId,
         courierId: params.courierId,
         houseId: order.houseId,
-        currency: orderCurrency,
+        currency: ledgerCurrency,
         amount: owedToOwner,
-        note: `Part propriétaire (commission + marge livraison) : ${owedToOwner} ${orderCurrency}`,
+        note: `Part propriétaire (commission + marge livraison) : ${owedToOwner} ${ledgerCurrency}`,
         createdBy: params.courierId,
       });
     }
@@ -1426,9 +1532,9 @@ export async function completeDeliveryMissionAtomic(params: {
         missionId: params.missionId,
         courierId: params.courierId,
         houseId: order.houseId,
-        currency: orderCurrency,
+        currency: ledgerCurrency,
         amount: courierPayEarned,
-        note: `Rémunération livraison coursier : ${courierPayEarned} ${orderCurrency}`,
+        note: `Rémunération livraison coursier : ${courierPayEarned} ${ledgerCurrency}`,
         createdBy: params.courierId,
       });
     }
@@ -1444,27 +1550,13 @@ export async function completeDeliveryMissionAtomic(params: {
         houseId: order.houseId,
         currency: "CDF",
         amount: diff,
-        note: `Écart de caisse à la livraison : ${params.cashCollected} ${currency} perçu vs ${order.totalDue} ${orderCurrency} attendu (${diff} CDF d'écart)`,
+        note: `Écart de caisse à la livraison : ${params.cashCollected} ${currency} perçu vs ${expectedInCDF} CDF attendu (${diff} CDF d'écart)`,
         createdBy: params.courierId,
       });
     }
 
     // Write audit event
-    await tx.insert(schema.orderEvents).values({
-      orderId: order.id,
-      type: "status_change",
-      fromStatus: order.status,
-      toStatus: "delivered",
-      actorId: params.courierId,
-      actorRole: "courier",
-      note: `Livraison effectuée. Montant encaissé : ${params.cashCollected} ${currency}${discrepancyFlagged ? " [Écart signalé]" : ""}`,
-      payload: {
-        cashCollected: params.cashCollected,
-        currency,
-        totalDue: order.totalDue,
-        discrepancyFlagged,
-      },
-    });
+    await tx.insert(schema.orderEvents).values(transitionRes.value.event);
 
     return {
       ok: true,
@@ -1513,6 +1605,17 @@ export async function failDeliveryMissionAtomic(params: {
 
     if (!order) return { ok: false, error: "Commande introuvable" };
 
+    const transitionRes = transitionOrder(order.id, order.status, {
+      targetStatus: "delivery_failed",
+      actorId: params.courierId,
+      actorRole: "courier",
+      reason: params.reason,
+    });
+
+    if (!transitionRes.ok) {
+      return { ok: false, error: transitionRes.error };
+    }
+
     await tx
       .update(schema.missions)
       .set({
@@ -1532,15 +1635,7 @@ export async function failDeliveryMissionAtomic(params: {
       })
       .where(eq(schema.orders.id, order.id));
 
-    await tx.insert(schema.orderEvents).values({
-      orderId: order.id,
-      type: "status_change",
-      fromStatus: order.status,
-      toStatus: "delivery_failed",
-      actorId: params.courierId,
-      actorRole: "courier",
-      note: params.reason,
-    });
+    await tx.insert(schema.orderEvents).values(transitionRes.value.event);
 
     return { ok: true };
   });

@@ -183,6 +183,19 @@ export const cashLedger = pgTable(
     index("cash_ledger_courier_idx").on(t.courierId, t.createdAt),
     index("cash_ledger_house_idx").on(t.houseId, t.createdAt),
     index("cash_ledger_order_idx").on(t.orderId),
+    index("cash_ledger_reversal_of_idx")
+      .on(t.reversalOfId)
+      .where(sql`${t.reversalOfId} is not null`),
+    index("cash_ledger_courier_type_created_idx").on(
+      t.courierId,
+      t.entryType,
+      t.createdAt
+    ),
+    index("cash_ledger_house_type_created_idx").on(
+      t.houseId,
+      t.entryType,
+      t.createdAt
+    ),
     check(
       "cash_ledger_reversal_link",
       sql`(${t.entryType} = 'reversal') = (${t.reversalOfId} is not null)`

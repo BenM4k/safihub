@@ -18,15 +18,15 @@ const confirmReconciliationSchema = z.object({
   courierId: z.string().min(1, "Coursier requis"),
   businessDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date requise (AAAA-MM-JJ)"),
   currency: z.enum(["CDF", "USD"]).default("CDF"),
-  expectedAmount: z.number().nonnegative(),
-  receivedAmount: z.number().nonnegative("Montant reçu invalide"),
+  expectedAmount: z.number().int().nonnegative(),
+  receivedAmount: z.number().int().nonnegative("Montant reçu invalide"),
   note: z.string().optional(),
   deductFromDeposit: z.boolean().optional(),
 });
 
 const depositFloatSchema = z.object({
   courierId: z.string().min(1, "Coursier requis"),
-  amount: z.number().positive("Le montant doit être supérieur à zéro"),
+  amount: z.number().int().positive("Le montant doit être supérieur à zéro"),
   currency: z.enum(["CDF", "USD"]).default("CDF"),
   note: z.string().optional(),
 });

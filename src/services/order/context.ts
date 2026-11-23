@@ -8,9 +8,70 @@ import {
   getNeighborhoods,
   getOrderValidationData,
   getSettings,
+  getSlotAvailabilityData,
   getZoneFees,
 } from "@/dal";
 import type { OrderValidationContext } from "./validation";
+
+export type SlotAvailabilityContext = Pick<
+  OrderValidationContext,
+  | "houses"
+  | "neighborhoods"
+  | "houseCoverage"
+  | "zoneFees"
+  | "houseHours"
+  | "houseClosures"
+  | "courierShifts"
+  | "courierZones"
+  | "bookedOrdersByDate"
+  | "currentTime"
+> & {
+  settings: {
+    maxCoverageDistanceLevel: number;
+    leadTimeMinutes?: number;
+  };
+};
+
+/**
+ * Builds the lightweight context needed for checkout pickup slot evaluation,
+ * avoiding full-catalog, exchange-rate, and order-history queries.
+ */
+export async function buildSlotAvailabilityContext(
+  houseId: string
+): Promise<SlotAvailabilityContext> {
+  const data = await getSlotAvailabilityData(houseId);
+
+  const housesMap = new Map<
+    string,
+    OrderValidationContext["houses"] extends Map<string, infer V> ? V : never
+  >();
+  if (data.house) {
+    housesMap.set(data.house.id, data.house);
+  }
+
+  const neighborhoodsMap = new Map<
+    string,
+    OrderValidationContext["neighborhoods"] extends Map<string, infer V> ? V : never
+  >();
+  for (const n of data.neighborhoods) {
+    neighborhoodsMap.set(n.id, n);
+  }
+
+  return {
+    houses: housesMap,
+    neighborhoods: neighborhoodsMap,
+    houseCoverage: data.houseCoverage,
+    zoneFees: data.zoneFees,
+    houseHours: data.houseHours,
+    houseClosures: data.houseClosures,
+    courierShifts: data.courierShifts,
+    courierZones: data.courierZones,
+    bookedOrdersByDate: data.bookedOrdersByDate,
+    settings: {
+      maxCoverageDistanceLevel: data.maxCoverageDistanceLevel,
+    },
+  };
+}
 
 /**
  * Builds the canonical order validation context directly from the DAL.

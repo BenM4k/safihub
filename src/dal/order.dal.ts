@@ -8,12 +8,14 @@ import {
   gte,
   ilike,
   inArray,
+  isNotNull,
   isNull,
   ne,
   or,
   sql,
 } from "drizzle-orm";
 import { db, schema } from "./db";
+import { computeAcceptanceDeadlines } from "@/services/order/deadlines";
 import {
   toBukavuDateTime,
   fromBukavuDateTime,
@@ -21,6 +23,7 @@ import {
 import { ok, err, type Result } from "@/lib/result";
 import type {
   ApprovalMethod,
+  HouseReviewStatus,
   OrderSource,
   OrderStatus,
 } from "@/services/db/schema";
@@ -372,19 +375,6 @@ export async function addOrderEvent(event: {
   });
 }
 
-export async function updateOrderStatus(
-  orderId: string,
-  newStatus: OrderStatus,
-): Promise<void> {
-  await db
-    .update(schema.orders)
-    .set({
-      status: newStatus,
-      updatedAt: new Date(),
-    })
-    .where(eq(schema.orders.id, orderId));
-}
-
 /**
  * Compare-and-set status update: only writes when the order is still in
  * `expectedStatus`. Returns true when a row was updated.
@@ -461,6 +451,17 @@ export async function transitionOrderStatusAtomic(params: {
   orderId: string;
   expectedStatus?: OrderStatus;
   newStatus: OrderStatus;
+  orderUpdates?: Partial<
+    Pick<
+      typeof schema.orders.$inferInsert,
+      | "receivedAt"
+      | "receptionDeadlineAt"
+      | "receptionConfirmedAt"
+      | "acceptanceDeadlineAt"
+      | "acceptanceReminderSentAt"
+      | "acceptanceEscalatedAt"
+    >
+  >;
   event: {
     type?: OrderEventType;
     fromStatus?: OrderStatus | null;
@@ -483,6 +484,7 @@ export async function transitionOrderStatusAtomic(params: {
     const updated = await tx
       .update(schema.orders)
       .set({
+        ...(params.orderUpdates ?? {}),
         status: params.newStatus,
         updatedAt: new Date(),
       })
@@ -897,6 +899,226 @@ export async function getOrderValidationData(scope?: {
     customerCompletedOrdersCount: completedOrdersResult[0]?.count ?? 0,
     dailyOrdersForPhoneCount: dailyOrdersResult[0]?.count ?? 0,
     isCustomerBlocked,
+  };
+}
+
+export interface SlotAvailabilityData {
+  house: {
+    id: string;
+    name: string;
+    neighborhoodId: string;
+    isActive: boolean;
+    isPaused: boolean;
+    pausedUntil: Date | null;
+    maxDistanceLevel: number | null;
+    minimumOrderAmount: number;
+    commissionBps: number | null;
+    cutoffMinutes: number;
+    dailyCapacity: number | null;
+    reviewStatus: HouseReviewStatus;
+  } | null;
+  neighborhoods: Array<{
+    id: string;
+    name: string;
+    zoneId: string;
+    status: "served" | "paused" | "not_served";
+    isPaused: boolean;
+    pausedUntil: Date | null;
+  }>;
+  zoneFees: Array<{
+    customerZoneId: string;
+    houseZoneId: string;
+    distanceLevel: number;
+    deliveryFee: number;
+  }>;
+  houseCoverage: Array<{
+    houseId: string;
+    neighborhoodId: string;
+    isActive: boolean;
+    pausedUntil: Date | string | null;
+  }>;
+  houseHours: Array<{
+    houseId: string;
+    weekday: number;
+    opensAt: string;
+    closesAt: string;
+  }>;
+  houseClosures: Array<{
+    houseId: string;
+    startsOn: string;
+    endsOn: string;
+    reason: string | null;
+  }>;
+  courierShifts: Array<{
+    courierId: string;
+    weekday: number;
+    startsAt: string;
+    endsAt: string;
+  }>;
+  courierZones: Array<{
+    courierId: string;
+    zoneId: string;
+  }>;
+  bookedOrdersByDate: Record<string, number>;
+  maxCoverageDistanceLevel: number;
+}
+
+/**
+ * Lightweight DAL loader for pickup-slot computation: queries only the target house,
+ * neighborhoods, zone fees, hours/closures, active courier shifts/zones, capacity counts, and settings.
+ */
+export async function getSlotAvailabilityData(
+  houseId: string,
+): Promise<SlotAvailabilityData> {
+  const [
+    houseRows,
+    neighborhoodRows,
+    zoneFeeRows,
+    houseCoverage,
+    houseHours,
+    houseClosures,
+    courierShifts,
+    courierZones,
+    bookedOrdersResult,
+    settingsRows,
+  ] = await Promise.all([
+    db
+      .select({
+        id: schema.houses.id,
+        name: schema.houses.name,
+        neighborhoodId: schema.houses.neighborhoodId,
+        isActive: schema.houses.isActive,
+        isPaused: schema.houses.isPaused,
+        pausedUntil: schema.houses.pausedUntil,
+        maxDistanceLevel: schema.houses.maxDistanceLevel,
+        minimumOrderAmount: schema.houses.minimumOrderAmount,
+        commissionBps: schema.houses.commissionBps,
+        cutoffMinutes: schema.houses.cutoffMinutes,
+        dailyCapacity: schema.houses.dailyCapacity,
+        reviewStatus: schema.houses.reviewStatus,
+      })
+      .from(schema.houses)
+      .where(eq(schema.houses.id, houseId))
+      .limit(1),
+    db
+      .select({
+        id: schema.neighborhoods.id,
+        name: schema.neighborhoods.name,
+        zoneId: schema.neighborhoods.zoneId,
+        status: schema.neighborhoods.status,
+        pausedUntil: schema.neighborhoods.pausedUntil,
+      })
+      .from(schema.neighborhoods),
+    db
+      .select({
+        customerZoneId: schema.zoneFees.customerZoneId,
+        houseZoneId: schema.zoneFees.houseZoneId,
+        distanceLevel: schema.zoneFees.distanceLevel,
+        deliveryFee: schema.zoneFees.deliveryFee,
+      })
+      .from(schema.zoneFees),
+    db
+      .select({
+        houseId: schema.houseCoverage.houseId,
+        neighborhoodId: schema.houseCoverage.neighborhoodId,
+        isActive: schema.houseCoverage.isActive,
+        pausedUntil: schema.houseCoverage.pausedUntil,
+      })
+      .from(schema.houseCoverage)
+      .where(eq(schema.houseCoverage.houseId, houseId)),
+    db
+      .select({
+        houseId: schema.houseHours.houseId,
+        weekday: schema.houseHours.weekday,
+        opensAt: schema.houseHours.opensAt,
+        closesAt: schema.houseHours.closesAt,
+      })
+      .from(schema.houseHours)
+      .where(eq(schema.houseHours.houseId, houseId)),
+    db
+      .select({
+        houseId: schema.houseClosures.houseId,
+        startsOn: schema.houseClosures.startsOn,
+        endsOn: schema.houseClosures.endsOn,
+        reason: schema.houseClosures.reason,
+      })
+      .from(schema.houseClosures)
+      .where(eq(schema.houseClosures.houseId, houseId)),
+    db
+      .select({
+        courierId: schema.courierShifts.courierId,
+        weekday: schema.courierShifts.weekday,
+        startsAt: schema.courierShifts.startsAt,
+        endsAt: schema.courierShifts.endsAt,
+      })
+      .from(schema.courierShifts)
+      .innerJoin(schema.user, eq(schema.courierShifts.courierId, schema.user.id))
+      .leftJoin(
+        schema.courierProfiles,
+        eq(schema.courierShifts.courierId, schema.courierProfiles.userId),
+      )
+      .where(
+        and(
+          eq(schema.user.role, "courier"),
+          eq(schema.user.status, "active"),
+          or(
+            isNull(schema.courierProfiles.isActive),
+            eq(schema.courierProfiles.isActive, true),
+          ),
+        ),
+      ),
+    db
+      .select({
+        courierId: schema.courierZones.courierId,
+        zoneId: schema.courierZones.zoneId,
+      })
+      .from(schema.courierZones),
+    db
+      .select({
+        dateStr: sql<string>`to_char(${schema.orders.pickupSlotStart} at time zone 'Africa/Lubumbashi', 'YYYY-MM-DD')`,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(schema.orders)
+      .where(
+        and(
+          eq(schema.orders.houseId, houseId),
+          sql`${schema.orders.status} != 'cancelled'`,
+          gte(schema.orders.pickupSlotStart, sql`now() - interval '1 day'`),
+        ),
+      )
+      .groupBy(
+        sql`to_char(${schema.orders.pickupSlotStart} at time zone 'Africa/Lubumbashi', 'YYYY-MM-DD')`,
+      ),
+    db
+      .select({
+        maxCoverageDistanceLevel: schema.settings.maxCoverageDistanceLevel,
+      })
+      .from(schema.settings)
+      .where(eq(schema.settings.id, 1))
+      .limit(1),
+  ]);
+
+  const bookedOrdersByDate: Record<string, number> = {};
+  for (const row of bookedOrdersResult) {
+    if (row.dateStr) {
+      bookedOrdersByDate[row.dateStr] = Number(row.count) || 0;
+    }
+  }
+
+  return {
+    house: houseRows[0] ?? null,
+    neighborhoods: neighborhoodRows.map((n) => ({
+      ...n,
+      isPaused: n.status === "paused",
+    })),
+    zoneFees: zoneFeeRows,
+    houseCoverage,
+    houseHours,
+    houseClosures,
+    courierShifts,
+    courierZones,
+    bookedOrdersByDate,
+    maxCoverageDistanceLevel: settingsRows[0]?.maxCoverageDistanceLevel ?? 2,
   };
 }
 
@@ -2368,7 +2590,23 @@ export async function reassignOrderPressing(params: {
       );
     }
 
-    const newDeadline = new Date(Date.now() + 45 * 60 * 1000);
+    const [houseHours, houseClosures, settingsRows] = await Promise.all([
+      getHouseHours(params.newHouseId),
+      getHouseClosures(params.newHouseId),
+      db
+        .select({ acceptanceDelayMinutes: schema.settings.acceptanceDelayMinutes })
+        .from(schema.settings)
+        .where(eq(schema.settings.id, 1))
+        .limit(1),
+    ]);
+
+    const delayMinutes = settingsRows[0]?.acceptanceDelayMinutes ?? 45;
+    const { deadlineAt: newDeadline } = computeAcceptanceDeadlines(
+      new Date(),
+      delayMinutes,
+      houseHours,
+      houseClosures,
+    );
 
     await db.transaction(async (tx) => {
       const updated = await tx
@@ -2376,6 +2614,8 @@ export async function reassignOrderPressing(params: {
         .set({
           houseId: params.newHouseId,
           acceptanceDeadlineAt: newDeadline,
+          acceptanceReminderSentAt: null,
+          acceptanceEscalatedAt: null,
           updatedAt: new Date(),
         })
         .where(
@@ -2561,4 +2801,155 @@ export async function updateOrderLandmarkWithGps(params: {
         : "Impossible de mettre à jour le repère GPS de la commande"
     );
   }
+}
+
+export interface PendingAcceptanceOrderRecord {
+  id: string;
+  code: string;
+  houseId: string;
+  houseName: string;
+  houseSlug: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string | null;
+  customerIsGuest: boolean;
+  contactPhone: string;
+  trackingToken: string;
+  status: OrderStatus;
+  createdAt: Date;
+  acceptanceDeadlineAt: Date | null;
+  acceptanceReminderSentAt: Date | null;
+  acceptanceEscalatedAt: Date | null;
+}
+
+export interface PendingReceptionOrderRecord {
+  id: string;
+  code: string;
+  houseId: string;
+  status: OrderStatus;
+  receivedAt: Date | null;
+  receptionDeadlineAt: Date | null;
+  receptionConfirmedAt: Date | null;
+}
+
+export async function getPendingAcceptanceOrders(): Promise<
+  PendingAcceptanceOrderRecord[]
+> {
+  return db
+    .select({
+      id: schema.orders.id,
+      code: schema.orders.code,
+      houseId: schema.orders.houseId,
+      houseName: schema.houses.name,
+      houseSlug: schema.houses.slug,
+      customerId: schema.orders.customerId,
+      customerName: schema.user.name,
+      customerEmail: schema.user.email,
+      customerIsGuest: schema.user.isGuest,
+      contactPhone: schema.orders.contactPhone,
+      trackingToken: schema.orders.trackingToken,
+      status: schema.orders.status,
+      createdAt: schema.orders.createdAt,
+      acceptanceDeadlineAt: schema.orders.acceptanceDeadlineAt,
+      acceptanceReminderSentAt: schema.orders.acceptanceReminderSentAt,
+      acceptanceEscalatedAt: schema.orders.acceptanceEscalatedAt,
+    })
+    .from(schema.orders)
+    .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
+    .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+    .where(
+      and(
+        eq(schema.orders.status, "created"),
+        isNotNull(schema.orders.acceptanceDeadlineAt)
+      )
+    );
+}
+
+export async function getPendingReceptionOrders(): Promise<
+  PendingReceptionOrderRecord[]
+> {
+  return db
+    .select({
+      id: schema.orders.id,
+      code: schema.orders.code,
+      houseId: schema.orders.houseId,
+      status: schema.orders.status,
+      receivedAt: schema.orders.receivedAt,
+      receptionDeadlineAt: schema.orders.receptionDeadlineAt,
+      receptionConfirmedAt: schema.orders.receptionConfirmedAt,
+    })
+    .from(schema.orders)
+    .where(
+      and(
+        eq(schema.orders.status, "received"),
+        isNotNull(schema.orders.receptionDeadlineAt),
+        isNull(schema.orders.receptionConfirmedAt)
+      )
+    );
+}
+
+export async function markOrderAcceptanceReminderSent(
+  orderId: string,
+  sentAt: Date
+): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    const updated = await tx
+      .update(schema.orders)
+      .set({
+        acceptanceReminderSentAt: sentAt,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.orders.id, orderId),
+          eq(schema.orders.status, "created"),
+          isNull(schema.orders.acceptanceReminderSentAt)
+        )
+      )
+      .returning({ id: schema.orders.id });
+
+    if (updated.length === 0) return false;
+
+    await tx.insert(schema.orderEvents).values({
+      orderId,
+      type: "note",
+      actorRole: "system",
+      note: "Rappel automatique envoyé au pressing (50% du délai d'acceptation écoulé)",
+    });
+
+    return true;
+  });
+}
+
+export async function markOrderAcceptanceEscalated(
+  orderId: string,
+  escalatedAt: Date
+): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    const updated = await tx
+      .update(schema.orders)
+      .set({
+        acceptanceEscalatedAt: escalatedAt,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.orders.id, orderId),
+          eq(schema.orders.status, "created"),
+          isNull(schema.orders.acceptanceEscalatedAt)
+        )
+      )
+      .returning({ id: schema.orders.id });
+
+    if (updated.length === 0) return false;
+
+    await tx.insert(schema.orderEvents).values({
+      orderId,
+      type: "note",
+      actorRole: "system",
+      note: "Alerte d'escalade administrateur (75% du délai d'acceptation écoulé)",
+    });
+
+    return true;
+  });
 }

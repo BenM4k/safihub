@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { clearRateLimitStore } from "@/services/abuse/rate-limiter";
 import {
   getCourierAssignedMissionsService,
   getCourierMissionDetailService,
@@ -253,6 +254,7 @@ vi.mock("@/dal", () => ({
 
 describe("Phase 6: Courier Interface Engine & Lifecycle", () => {
   beforeEach(() => {
+    clearRateLimitStore();
     unremittedCashAmount = 25000;
     cashCeilingAmount = 50000;
   });
@@ -418,6 +420,29 @@ describe("Phase 6: Courier Interface Engine & Lifecycle", () => {
 
       expect(res.ok).toBe(true);
     });
+
+    it("rate-limits repeated failed delivery confirmation code attempts", async () => {
+      for (let i = 0; i < 5; i++) {
+        const res = await completeDeliveryMissionService({
+          courierId: "courier_1",
+          missionId: "m_delivery_1",
+          confirmationCode: `000${i}`,
+          cashCollected: 22000,
+        });
+        expect(res.ok).toBe(false);
+      }
+
+      const lockedRes = await completeDeliveryMissionService({
+        courierId: "courier_1",
+        missionId: "m_delivery_1",
+        confirmationCode: "4829",
+        cashCollected: 22000,
+      });
+      expect(lockedRes.ok).toBe(false);
+      if (!lockedRes.ok) {
+        expect(lockedRes.error).toContain("Trop de tentatives");
+      }
+    });
   });
 
   describe("Task 6.4: Cash controls & history (Amount owed to each party)", () => {
@@ -528,6 +553,35 @@ describe("Phase 6: Courier Interface Engine & Lifecycle", () => {
         expect(res.value.rejectedCount).toBe(1);
         expect(res.value.results[0]?.status).toBe("rejected");
         expect(res.value.results[0]?.message).toContain("reason is required");
+      }
+    });
+
+    it("rejects batched duplicate complete_delivery attempts for the same mission in offline sync", async () => {
+      const res = await syncOfflineCourierActionsService({
+        courierId: "courier_1",
+        actions: [
+          {
+            id: "act_cd_1",
+            type: "complete_delivery",
+            missionId: "m_delivery_1",
+            payload: { confirmationCode: "0001", cashCollected: 22000, cashCurrency: "CDF" },
+            timestamp: 1000,
+          },
+          {
+            id: "act_cd_2",
+            type: "complete_delivery",
+            missionId: "m_delivery_1",
+            payload: { confirmationCode: "4829", cashCollected: 22000, cashCurrency: "CDF" },
+            timestamp: 2000,
+          },
+        ],
+      });
+
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.value.rejectedCount).toBe(2);
+        expect(res.value.results[1]?.status).toBe("rejected");
+        expect(res.value.results[1]?.message).toContain("Une seule tentative");
       }
     });
   });

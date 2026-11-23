@@ -20,6 +20,7 @@ import {
   type CourierMissionDetail,
 } from "@/dal";
 import { trackOrderDelivered } from "@/services/analytics";
+import { rateLimitDeliveryCodeVerification } from "@/services/abuse/rate-limiter";
 import { inngest } from "@/inngest";
 import type { NotificationTemplateKey } from "@/services/notifications/notifications.types";
 import { getAppBaseUrl, queueEmailNotification } from "@/services/email";
@@ -349,6 +350,13 @@ export async function completeDeliveryMissionService(
       return err("Le montant perçu ne peut pas être négatif");
     }
 
+    const rl = await rateLimitDeliveryCodeVerification(input.courierId, input.missionId);
+    if (!rl.allowed) {
+      return err(
+        "Trop de tentatives de code de confirmation. Veuillez réessayer plus tard ou contacter l'administrateur."
+      );
+    }
+
     const res = await completeDeliveryMissionAtomic({
       missionId: input.missionId,
       courierId: input.courierId,
@@ -462,6 +470,7 @@ export async function syncOfflineCourierActionsService(params: {
   // Sort actions chronologically by client timestamp
   const sortedActions = [...actions].sort((a, b) => a.timestamp - b.timestamp);
   const results: ActionSyncResult[] = [];
+  const seenCompleteDeliveryMissions = new Set<string>();
   let successCount = 0;
   let rejectedCount = 0;
 
@@ -595,6 +604,18 @@ export async function syncOfflineCourierActionsService(params: {
         }
 
         case "complete_delivery": {
+          if (seenCompleteDeliveryMissions.has(action.missionId)) {
+            results.push({
+              actionId: action.id,
+              status: "rejected",
+              message:
+                "Une seule tentative de finalisation de livraison est autorisée par mission lors de la synchronisation",
+            });
+            rejectedCount++;
+            break;
+          }
+          seenCompleteDeliveryMissions.add(action.missionId);
+
           if (currentDetail && currentDetail.mission.status === "completed") {
             results.push({
               actionId: action.id,

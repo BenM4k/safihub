@@ -176,3 +176,13 @@ export function rateLimitPasswordChange(
   return recordRateLimitHit(`pwd_change:${identifier}`, 5, 15 * 60);
 }
 
+/**
+ * Rate limit delivery confirmation code attempts: max 5 attempts per 15 minutes per courier + mission.
+ */
+export function rateLimitDeliveryCodeVerification(
+  courierId: string,
+  missionId: string
+): Promise<RateLimitResult> {
+  return recordRateLimitHit(`delivery-code:${courierId}:${missionId}`, 5, 15 * 60);
+}
+

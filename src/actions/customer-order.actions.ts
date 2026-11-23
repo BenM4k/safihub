@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { z } from "zod";
 import { getCurrentUser } from "@/services/auth";
 import { createGuestUser, isPhoneOrEmailBlocked } from "@/dal/auth.dal";
 import { rateLimitCheckout } from "@/services/abuse";
@@ -65,9 +66,45 @@ export async function getCartEstimateAction(
   return { success: true, data: res.value };
 }
 
+const checkoutOrderActionSchema = z.object({
+  idempotencyKey: z.string().uuid("Clé d'idempotence invalide"),
+  houseId: z.string().uuid("Pressing invalide"),
+  customerNeighborhoodId: z.string().uuid("Quartier invalide"),
+  landmark: z.string().trim().min(2, "Repère d'adresse requis").max(300, "Repère trop long"),
+  contactPhone: z.string().trim().min(6, "Numéro de téléphone invalide").max(30),
+  customerName: z.string().trim().max(120).optional(),
+  pickupSlot: z.object({
+    start: z.coerce.date(),
+    end: z.coerce.date(),
+  }),
+  items: z
+    .array(
+      z.object({
+        houseItemId: z.string().uuid().optional(),
+        serviceId: z.string().uuid("Service invalide"),
+        itemId: z.string().uuid("Article invalide"),
+        fabricId: z.string().uuid("Tissu invalide"),
+        quantity: z.number().int().min(1).max(50),
+        expectedUnitPrice: z.number().int().nonnegative().optional(),
+      })
+    )
+    .min(1, "Votre panier est vide")
+    .max(50),
+  paymentCurrency: z.enum(["CDF", "USD"]).optional(),
+});
+
 export async function checkoutOrderAction(
   input: Omit<CheckoutInput, "customerId"> & { customerName?: string }
 ): Promise<CheckoutActionResult> {
+  const parsed = checkoutOrderActionSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Données de commande invalides",
+    };
+  }
+
+  const validatedInput = parsed.data;
   const cookieStore = await cookies();
   const hasSessionCookie = Boolean(
     cookieStore.get("better-auth.session_token") ||
@@ -96,7 +133,7 @@ export async function checkoutOrderAction(
   let customerId = user?.id;
 
   // Task 10.1: Rate limiting on checkout
-  const rateLimitKey = customerId || input.contactPhone;
+  const rateLimitKey = customerId || validatedInput.contactPhone;
   const rateLimit = await rateLimitCheckout(rateLimitKey);
   if (!rateLimit.allowed) {
     return {
@@ -108,7 +145,7 @@ export async function checkoutOrderAction(
 
   if (!customerId) {
     // Task 10.1: Blocked phone cannot order or create guest
-    const isBlocked = await isPhoneOrEmailBlocked({ phone: input.contactPhone });
+    const isBlocked = await isPhoneOrEmailBlocked({ phone: validatedInput.contactPhone });
     if (isBlocked) {
       return {
         success: false,
@@ -119,8 +156,8 @@ export async function checkoutOrderAction(
 
     // Guest checkout
     const guestRes = await createGuestUser({
-      name: input.customerName || "Client Invité",
-      phone: input.contactPhone,
+      name: validatedInput.customerName || "Client Invité",
+      phone: validatedInput.contactPhone,
     });
     if (!guestRes.ok) {
       return { success: false, error: "Impossible de créer le compte invité." };
@@ -129,7 +166,8 @@ export async function checkoutOrderAction(
   }
 
   const res = await placeCustomerOrder({
-    ...input,
+    ...validatedInput,
+    source: "app",
     customerId,
   });
 
