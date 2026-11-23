@@ -1,10 +1,13 @@
+"use client";
+
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
+import { Button as UiButton } from "@ui-sdk/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { Slot } from "@/components/ui/slot";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-all duration-150 select-none cursor-pointer disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:translate-y-px [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-all duration-150 select-none cursor-pointer disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:translate-y-px [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -18,12 +21,9 @@ const buttonVariants = cva(
           "bg-heading text-background hover:bg-primary hover:text-white",
         outline:
           "border border-border-strong bg-card text-foreground hover:bg-muted hover:border-heading",
-        ghost:
-          "text-heading hover:bg-muted",
-        destructive:
-          "bg-destructive text-white hover:bg-[#B42318]",
-        link:
-          "text-primary underline-offset-4 hover:underline p-0 h-auto font-medium",
+        ghost: "text-heading hover:bg-muted",
+        destructive: "bg-destructive text-white hover:bg-[#B42318]",
+        link: "text-primary underline-offset-4 hover:underline p-0 h-auto font-medium",
         social:
           "border border-border bg-card text-foreground font-medium hover:bg-muted shadow-none justify-center",
       },
@@ -49,9 +49,6 @@ export interface ButtonProps
   asChild?: boolean;
 }
 
-/**
- * Standard shadcn Button component with SafiHub design tokens and React 19 ref support.
- */
 export function Button({
   className,
   variant,
@@ -60,12 +57,24 @@ export function Button({
   ref,
   ...props
 }: ButtonProps & { ref?: React.Ref<HTMLButtonElement> }) {
-  const Comp = asChild ? Slot : "button";
+  if (asChild) {
+    return (
+      <Slot
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref as React.Ref<HTMLElement>}
+        {...(props as React.HTMLAttributes<HTMLElement>)}
+      />
+    );
+  }
+
+  const { onClick, ...restProps } = props;
+
   return (
-    <Comp
+    <UiButton
       className={cn(buttonVariants({ variant, size, className }))}
       ref={ref}
-      {...props}
+      onClick={onClick as React.ComponentProps<typeof UiButton>["onClick"]}
+      {...restProps}
     />
   );
 }

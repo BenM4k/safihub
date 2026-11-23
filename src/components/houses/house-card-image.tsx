@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Heart, Share2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
+import { toast } from "@ui-sdk/react/toast";
 import { normalizeStorageUrl } from "@/lib/storage-url";
 import { DEFAULT_IMAGE_BLUR_DATA_URL } from "@/lib/image-blur";
 import {

@@ -10,6 +10,7 @@
     "supportBukavu": "Assistance Bukavu : +243 999 000 123",
     "selectLanguage": "Choisir la langue",
     "languageHeader": "Langue • Language",
+    "closeNotification": "Fermer la notification",
     "changeLanguage": "Changer de langue",
     "currentLanguage": "Langue actuelle : {locale}. Cliquer pour changer.",
     "languages": {
@@ -88,6 +89,7 @@
     "home": "Accueil",
     "register": "Inscription",
     "becomePartner": "Devenir partenaire",
+    "mainNavAria": "Navigation principale",
     "cart": "Panier",
     "notifications": "Notifications",
     "login": "Se connecter",
@@ -2891,6 +2893,10 @@
     "deliveryTo": "Livraison vers",
     "chooseNeighborhood": "Choisir votre quartier...",
     "deliveryNotServed": "Ce quartier n'est pas encore desservi par ce pressing.",
+    "neighborhoodUnservedBadge": "Non desservi",
+    "deliveryServed": "Quartier desservi",
+    "deliveryFeeLabel": "Frais de livraison",
+    "deliveryFeeCalculated": "Frais calculés",
     "deliveryFeeAmount": "Frais de livraison : {amount} CDF",
     "nextSlot": "Prochain créneau : {slot}",
     "searchArticles": "Rechercher un article...",
@@ -3197,7 +3203,8 @@
       "missions": "Missions",
       "cash": "Cash",
       "history": "Historique",
-      "account": "Compte"
+      "account": "Compte",
+      "ariaLabel": "Navigation coursier"
     },
     "header": {
       "title": "Application Coursier",

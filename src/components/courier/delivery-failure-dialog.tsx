@@ -31,7 +31,7 @@ export function DeliveryFailureDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 h-dvh w-screen bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
           <div className="flex items-center gap-2 text-rose-700 font-semibold text-sm">

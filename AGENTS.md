@@ -10,7 +10,8 @@ Rules
 - product-spec.md is the source of truth. Never change anything marked Decided.
   If the spec is ambiguous or contradicts itself, ask instead of guessing.
 - Stack: Next.js (App Router, TypeScript), Drizzle ORM, PostgreSQL (with PostGIS) on Neon,
-  better-auth, Zod, react-hook-form, Zustand, next-intl, MapLibre GL (`maplibre-gl`, `react-map-gl/maplibre`), Vitest. Do not add other dependencies without asking.
+  better-auth, Zod, react-hook-form, Zustand, next-intl, `@ui-sdk/core` & `@ui-sdk/react`, MapLibre GL (`maplibre-gl`, `react-map-gl/maplibre`), Vitest. Do not add other dependencies without asking.
+- UI SDK: Before using `@ui-sdk/*`, follow the `ui-sdk` skill and read `node_modules/@ui-sdk/react/docs/llms.txt`. To build a custom primitive, search `node_modules/@ui-sdk/react/docs/core.md` by heading and read `docs/rendering.md` next to it.
 - All business rules live in server-side domain code (Server Actions or route
   handlers calling shared functions). The UI never computes prices, fees or
   availability. The client sends identifiers and quantities only.
@@ -79,7 +80,7 @@ src/
     courier/    # Courier PWA (role guard): active missions, cash held, offline sync
     admin/      # Operations console (admin guard): dispatch, manual entry, applications, cash, settlements
     api/        # auth/[...all], inngest, storage presigned URLs, webhooks/whatsapp
-  components/   # React components (<= 150-200 lines): ui/ (shadcn), customer/, house/, courier/, admin/
+  components/   # React components (<= 150-200 lines): ui/ (@ui-sdk/react), customer/, house/, courier/, admin/
   actions/      # Server actions (Zod validation + auth check -> calls services)
   services/     # Pure business logic & orchestration (order, pricing, coverage, cash, storage, auth, whatsapp)
   dal/          # Data Access Layer (THE ONLY layer importing Drizzle / db)
@@ -104,5 +105,5 @@ For exhaustive schemas, state transitions, algorithms, and workflows, consult [`
 | **Coverage & Zones**          | [`docs/coverage-and-zones.md`](./docs/coverage-and-zones.md)                   | 3-level coverage model, zone fee matrix, distance level caps, demand requests backlog.                    |
 | **Cash Ledger & Settlements** | [`docs/cash-ledger-and-settlements.md`](./docs/cash-ledger-and-settlements.md) | Cash on delivery, append-only `cash_ledger`, courier ceiling lockouts, daily reconciliation, settlements. |
 | **File Storage & Photos**     | [`docs/file-storage-and-photos.md`](./docs/file-storage-and-photos.md)         | Cloudflare R2 presigned URLs, client compression (< 300KB), 90-day retention, offline queue.              |
-| **UI & Frontend**             | [`docs/ui-and-frontend.md`](./docs/ui-and-frontend.md)                         | Mobile-first 360px design, shadcn/ui mandate, Server vs Client leaves, courier PWA, bilingual next-intl.  |
+| **UI & Frontend**             | [`docs/ui-and-frontend.md`](./docs/ui-and-frontend.md)                         | Mobile-first 360px design, `@ui-sdk/react` mandate, Server vs Client leaves, courier PWA, bilingual next-intl.  |
 | **Testing & Troubleshooting** | [`docs/testing-and-troubleshooting.md`](./docs/testing-and-troubleshooting.md) | Vitest test runner commands, quality gates, 16 gotchas & traps.     |

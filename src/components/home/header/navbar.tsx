@@ -1,4 +1,10 @@
 import Link from "next/link";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "@ui-sdk/react/navigation-menu";
 import { BrandLogoMark } from "@/components/common/brand-logo";
 import { useTranslations } from "next-intl";
 import { MobileNav } from "./mobile-nav";
@@ -30,6 +36,19 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
 
   const isAuthenticated = Boolean(user && !user.isGuest);
 
+  const navLinks = isAuthenticated
+    ? [
+        { href: "/houses", label: tNav("houses") },
+        { href: "/cart", label: tNav("cart") },
+        { href: "/orders", label: tNav("orders") },
+        { href: "/account", label: tNav("account") },
+      ]
+    : [
+        { href: "/", label: tNav("home") },
+        { href: "/houses", label: tNav("houses") },
+        { href: "/partners/apply", label: tNav("becomePartner") },
+      ];
+
   return (
     <header
       className={
@@ -39,7 +58,6 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
       }
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between gap-4 pointer-events-auto">
-        {/* Brand logo: SafiHub ribbon mark + brand text (Safi + primary Hub) */}
         <Link href="/" className="flex items-center gap-2.5 group shrink-0">
           <BrandLogoMark size="md" />
           <span className="font-display font-black text-2xl tracking-tight text-heading">
@@ -47,60 +65,24 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
           </span>
         </Link>
 
-        {/* Center Pill Segmented Nav */}
-        <nav className="hidden md:flex items-center bg-white/95 dark:bg-card/95 backdrop-blur-xs border border-slate-200/90 dark:border-border shadow-xs rounded-full px-2 py-1 text-xs sm:text-sm font-semibold text-foreground">
-          {isAuthenticated ? (
-            <>
-              <Link
-                href="/houses"
-                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
-              >
-                {tNav("houses")}
-              </Link>
-              <Link
-                href="/cart"
-                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
-              >
-                {tNav("cart")}
-              </Link>
-              <Link
-                href="/orders"
-                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
-              >
-                {tNav("orders")}
-              </Link>
-              <Link
-                href="/account"
-                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
-              >
-                {tNav("account")}
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/"
-                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
-              >
-                {tNav("home")}
-              </Link>
-              <Link
-                href="/houses"
-                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
-              >
-                {tNav("houses")}
-              </Link>
-              <Link
-                href="/partners/apply"
-                className="px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
-              >
-                {tNav("becomePartner")}
-              </Link>
-            </>
-          )}
-        </nav>
+        <NavigationMenu
+          aria-label={tNav("mainNavAria")}
+          className="hidden md:flex items-center bg-white/95 dark:bg-card/95 backdrop-blur-xs border border-slate-200/90 dark:border-border shadow-xs rounded-full px-2 py-1 text-xs sm:text-sm font-semibold text-foreground"
+        >
+          <NavigationMenuList className="flex items-center list-none m-0 p-0">
+            {navLinks.map((item) => (
+              <NavigationMenuItem key={item.href}>
+                <NavigationMenuLink
+                  render={<Link href={item.href} />}
+                  className="inline-block px-4 py-1.5 rounded-full text-heading hover:text-primary transition-colors"
+                >
+                  {item.label}
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            ))}
+          </NavigationMenuList>
+        </NavigationMenu>
 
-        {/* Right actions */}
         <div className="hidden sm:flex items-center gap-4">
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
@@ -141,7 +123,6 @@ export function Navbar({ variant = "transparent", user }: NavbarProps = {}) {
           )}
         </div>
 
-        {/* Mobile menu trigger */}
         <div className="flex md:hidden items-center gap-3">
           <Button
             asChild

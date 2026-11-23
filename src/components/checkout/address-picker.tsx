@@ -2,6 +2,14 @@
 
 import { MapPin, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { CustomerAddressRecord, NeighborhoodRecord } from "@/dal";
 
 interface AddressPickerProps {
@@ -36,6 +44,24 @@ export function AddressPicker({
   isGuest = false,
 }: AddressPickerProps) {
   const t = useTranslations("checkout");
+  const tHouses = useTranslations("customerHouses");
+
+  const sortedNeighborhoods = [
+    ...neighborhoods.filter((n) => n.status === "served"),
+    ...neighborhoods.filter((n) => n.status !== "served"),
+  ];
+
+  const selectItems = sortedNeighborhoods.map((n) => ({
+    value: n.id,
+    label: `${n.name} (${n.zoneName || "Bukavu"})`,
+    disabled: n.status !== "served",
+  }));
+
+  const handleNeighborhoodChange = (val: string) => {
+    const target = neighborhoods.find((n) => n.id === val);
+    if (!target || target.status !== "served") return;
+    onChangeNeighborhood(val);
+  };
 
   return (
     <div className="p-5 bg-card rounded-2xl border border-border shadow-2xs space-y-4">
@@ -52,20 +78,33 @@ export function AddressPicker({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {savedAddresses.map((addr) => {
               const isSelected = selectedAddressId === addr.id;
+              const isServedAddr = neighborhoods.some(
+                (n) => n.id === addr.neighborhoodId && n.status === "served"
+              );
               return (
                 <button
                   key={addr.id}
                   type="button"
+                  disabled={!isServedAddr}
                   onClick={() => onSelectSavedAddress(addr)}
-                  className={`p-3 rounded-xl border text-left text-xs transition cursor-pointer ${
-                    isSelected
-                      ? "border-primary bg-primary/10 text-primary font-bold shadow-2xs"
-                      : "border-border bg-muted/40 hover:border-border-strong text-muted-foreground hover:text-foreground"
+                  className={`p-3 rounded-xl border text-left text-xs transition ${
+                    !isServedAddr
+                      ? "border-border bg-muted/30 text-muted-foreground opacity-60 cursor-not-allowed"
+                      : isSelected
+                        ? "border-primary bg-primary/10 text-primary font-bold shadow-2xs cursor-pointer"
+                        : "border-border bg-muted/40 hover:border-border-strong text-muted-foreground hover:text-foreground cursor-pointer"
                   }`}
                 >
-                  <p className="font-bold text-heading">
-                    {addr.label || addr.neighborhoodName}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-bold text-heading truncate">
+                      {addr.label || addr.neighborhoodName}
+                    </p>
+                    {!isServedAddr && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                        {tHouses("neighborhoodUnservedBadge")}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
                     {addr.landmark} ({addr.neighborhoodName})
                   </p>
@@ -101,19 +140,47 @@ export function AddressPicker({
           <label className="text-xs font-semibold text-muted-foreground">
             {t("neighborhood")}
           </label>
-          <select
-            value={neighborhoodId}
-            onChange={(e) => onChangeNeighborhood(e.target.value)}
+          <Select
+            name="neighborhoodId"
             required
-            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            items={selectItems}
+            value={neighborhoodId || undefined}
+            onValueChange={handleNeighborhoodChange}
           >
-            <option value="">Sélectionnez un quartier</option>
-            {neighborhoods.map((n) => (
-              <option key={n.id} value={n.id}>
-                {n.name} ({n.zoneName || "Bukavu"})
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              aria-label={t("neighborhood")}
+              className="w-full h-auto px-3.5 py-2.5 rounded-xl border border-border bg-card text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
+            >
+              <SelectValue placeholder={tHouses("chooseNeighborhood")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {sortedNeighborhoods.map((n) => {
+                  const isServed = n.status === "served";
+                  return (
+                    <SelectItem
+                      key={n.id}
+                      value={n.id}
+                      disabled={!isServed}
+                      label={`${n.name} (${n.zoneName || "Bukavu"})`}
+                      className="bg-card text-foreground"
+                    >
+                      <span className="flex items-center justify-between gap-2 w-full">
+                        <span>
+                          {n.name} ({n.zoneName || "Bukavu"})
+                        </span>
+                        {!isServed && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                            {tHouses("neighborhoodUnservedBadge")}
+                          </span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-1">

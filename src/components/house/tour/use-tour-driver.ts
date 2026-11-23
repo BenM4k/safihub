@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
+import { toast } from "@ui-sdk/react/toast";
 import {
   updateOnboardingStepAction,
   skipOnboardingTourAction,

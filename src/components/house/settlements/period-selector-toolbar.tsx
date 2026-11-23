@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Calendar, Download, FileSpreadsheet, FileText } from "lucide-react";
+import { Tabs, TabsList, TabsTab } from "@ui-sdk/react/tabs";
 import type { PeriodType } from "@/types/partner-settlements";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,32 +81,27 @@ export function PeriodSelectorToolbar({
   return (
     <div className="py-2 space-y-3 border-b border-border/60 pb-3">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-        {/* Period Filter Buttons: text-primary, no bg */}
-        <div
-          className="flex items-center gap-0.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none"
-          role="tablist"
-          aria-label={t("periodSelectorAria")}
+        <Tabs
+          value={currentPeriod}
+          onValueChange={(next) => {
+            if (next) handleSelectPeriod(next as PeriodType);
+          }}
         >
-          {periodOptions.map((opt) => {
-            const isSelected = currentPeriod === opt.key;
-            return (
-              <button
+          <TabsList
+            className="flex items-center gap-0.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none"
+            aria-label={t("periodSelectorAria")}
+          >
+            {periodOptions.map((opt) => (
+              <TabsTab
                 key={opt.key}
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                onClick={() => handleSelectPeriod(opt.key)}
-                className={`px-2.5 py-1 text-xs transition shrink-0 h-8 flex items-center justify-center cursor-pointer bg-transparent border-0 shadow-none ${
-                  isSelected
-                    ? "text-primary font-bold"
-                    : "text-muted-foreground hover:text-foreground font-medium"
-                }`}
+                value={opt.key}
+                className="px-2.5 py-1 text-xs transition shrink-0 h-8 flex items-center justify-center cursor-pointer bg-transparent border-0 shadow-none text-muted-foreground hover:text-foreground font-medium data-selected:text-primary data-selected:font-bold"
               >
                 {opt.label}
-              </button>
-            );
-          })}
-        </div>
+              </TabsTab>
+            ))}
+          </TabsList>
+        </Tabs>
 
         {/* Right side: Active date label & shadcn DropdownMenu for Export */}
         <div className="flex items-center gap-2.5 justify-between md:justify-end">

@@ -9,7 +9,7 @@ export default defineConfig({
   test: {
     environment: "node",
     testTimeout: 30000,
-    include: ["src/**/*.{test,spec}.ts"],
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["node_modules/**", "e2e/**"],
     alias: {
       "server-only": path.resolve(__dirname, "./empty-server-only.js"),

@@ -24,7 +24,9 @@ export default async function AdminLayout({
   await guardAdminRoute();
 
   const messages = await getMessages();
-  const adminMessages = messages.admin ? { admin: messages.admin } : {};
+  const adminMessages = { ...(messages as Record<string, unknown>) };
+  // Strip the bulky house portal namespace (~47KB) while keeping shared namespaces (auth, notifications, mapLocation, etc.).
+  delete adminMessages.house;
 
   return (
     <NextIntlClientProvider messages={adminMessages}>

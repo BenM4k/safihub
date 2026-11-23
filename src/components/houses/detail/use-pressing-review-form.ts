@@ -1,5 +1,5 @@
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { toast } from "@ui-sdk/react/toast";
 import { useTranslations } from "next-intl";
 import { submitReviewAction } from "@/actions/review.actions";
 

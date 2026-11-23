@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Image as ImageIcon, X, ExternalLink, ShieldAlert } from "lucide-react";
 import type { PhotoWithSignedUrl } from "@/services/storage";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface OrderPhotosGalleryProps {
   photos: PhotoWithSignedUrl[];
@@ -20,21 +26,6 @@ export function OrderPhotosGallery({
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoWithSignedUrl | null>(
     null
   );
-  const lightboxRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!selectedPhoto) return;
-    lightboxRef.current?.focus();
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setSelectedPhoto(null);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPhoto]);
 
   if (photos.length === 0) {
     return (
@@ -53,9 +44,15 @@ export function OrderPhotosGallery({
   const deliveryPhotos = photos.filter((p) => p.type === "delivery_proof");
   const disputePhotos = photos.filter((p) => p.type === "dispute");
 
+  const selectedPhotoTitle =
+    selectedPhoto?.type === "pickup_condition"
+      ? t("pickupPhotosTitle")
+      : selectedPhoto?.type === "delivery_proof"
+        ? t("deliveryPhotosTitle")
+        : t("disputePhotosTitle");
+
   return (
     <div className={`space-y-4 ${className ?? ""}`}>
-      {/* Privacy compliance banner */}
       <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-2 text-blue-900 text-[11px]">
         <ShieldAlert className="size-4 shrink-0 text-blue-600" />
         <span>{t("privacyNotice")}</span>
@@ -145,63 +142,59 @@ export function OrderPhotosGallery({
         </div>
       )}
 
-      {/* Lightbox / Modal */}
-      {selectedPhoto && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs"
-          onClick={() => setSelectedPhoto(null)}
+      <Dialog
+        open={Boolean(selectedPhoto)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedPhoto(null);
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-lg w-full bg-slate-900 border-slate-800 rounded-2xl overflow-hidden shadow-2xl p-2 gap-0"
         >
-          <div
-            ref={lightboxRef}
-            tabIndex={-1}
-            className="relative max-w-lg w-full bg-slate-900 rounded-2xl overflow-hidden shadow-2xl p-2 outline-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-2 text-white text-xs">
-              <span className="font-medium text-slate-300">
-                {selectedPhoto.type === "pickup_condition"
-                  ? t("pickupPhotosTitle")
-                  : selectedPhoto.type === "delivery_proof"
-                  ? t("deliveryPhotosTitle")
-                  : t("disputePhotosTitle")}
-              </span>
-              <div className="flex items-center gap-1">
-                <a
-                  href={selectedPhoto.downloadUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1 hover:text-blue-400"
-                  aria-label={t("openInNewTab")}
-                >
-                  <ExternalLink className="size-4" />
-                </a>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedPhoto(null)}
-                  className="size-7 p-0 text-slate-400 hover:text-white"
-                  aria-label={t("close")}
-                >
-                  <X className="size-4" />
-                </Button>
+          {selectedPhoto && (
+            <>
+              <div className="flex items-center justify-between p-2 text-white text-xs">
+                <DialogTitle className="text-xs font-medium text-slate-300">
+                  {selectedPhotoTitle}
+                </DialogTitle>
+                <div className="flex items-center gap-1">
+                  <a
+                    href={selectedPhoto.downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1 hover:text-blue-400"
+                    aria-label={t("openInNewTab")}
+                  >
+                    <ExternalLink className="size-4" />
+                  </a>
+                  <DialogClose asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="size-7 p-0 text-slate-400 hover:text-white"
+                      aria-label={t("close")}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </DialogClose>
+                </div>
               </div>
-            </div>
 
-            <div className="relative max-h-[75vh] min-h-[200px] flex items-center justify-center bg-black/40 rounded-xl overflow-hidden p-2">
-              <Image
-                src={selectedPhoto.downloadUrl}
-                alt={t("photoAlt")}
-                width={800}
-                height={800}
-                unoptimized
-                className="max-h-[70vh] w-auto object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="relative max-h-[75vh] min-h-[200px] flex items-center justify-center bg-black/40 rounded-xl overflow-hidden p-2">
+                <Image
+                  src={selectedPhoto.downloadUrl}
+                  alt={t("photoAlt")}
+                  width={800}
+                  height={800}
+                  unoptimized
+                  className="max-h-[70vh] w-auto object-contain"
+                />
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

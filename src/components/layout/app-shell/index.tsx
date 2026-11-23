@@ -60,7 +60,6 @@ export function AppShell({
         <AppSidebar
           groups={sidebarGroups}
           isCollapsed={isCollapsed}
-          onToggleCollapse={handleToggleCollapse}
           footer={sidebarFooter}
           className="h-full"
         />
@@ -78,6 +77,8 @@ export function AppShell({
           publicViewLabel={publicViewLabel}
           soundEnabled={soundEnabled}
           onToggleSound={onToggleSound}
+          isSidebarCollapsed={isCollapsed}
+          onToggleSidebar={handleToggleCollapse}
         />
 
         <main className="flex-1 min-w-0 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 pb-24 md:pb-10">

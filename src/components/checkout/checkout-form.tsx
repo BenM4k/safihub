@@ -40,18 +40,50 @@ export function CheckoutForm({
   // Mint idempotency key once per checkout view (AC 3)
   const [idempotencyKey] = useState(() => crypto.randomUUID());
 
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
-    savedAddresses.find((a) => a.isDefault)?.id || null
-  );
-  const defaultAddr = savedAddresses.find((a) => a.isDefault) || savedAddresses[0];
+  const defaultAddr =
+    savedAddresses.find((a) => a.isDefault) || savedAddresses[0];
 
-  const [neighborhoodId, setNeighborhoodId] = useState<string>(
-    defaultAddr?.neighborhoodId || cart.customerNeighborhoodId || ""
-  );
-  const [landmark, setLandmark] = useState<string>(defaultAddr?.landmark || "");
-  const [phone, setPhone] = useState<string>(
-    defaultAddr?.phone || user?.contactPhone || ""
-  );
+  const [overrideNeighborhoodId, setOverrideNeighborhoodId] = useState<
+    string | null
+  >(null);
+  const [overrideAddressId, setOverrideAddressId] = useState<
+    string | null | undefined
+  >(undefined);
+  const [overrideLandmark, setOverrideLandmark] = useState<string | null>(null);
+  const [overridePhone, setOverridePhone] = useState<string | null>(null);
+
+  const isServedNeighborhood = (id: string | null | undefined): boolean =>
+    Boolean(
+      id && neighborhoods.some((n) => n.id === id && n.status === "served")
+    );
+
+  const preselectedNeighborhoodId =
+    cart.isHydrated && isServedNeighborhood(cart.customerNeighborhoodId)
+      ? cart.customerNeighborhoodId
+      : null;
+
+  const initialAddress = preselectedNeighborhoodId
+    ? (savedAddresses.find(
+        (a) => a.neighborhoodId === preselectedNeighborhoodId
+      ) ?? null)
+    : isServedNeighborhood(defaultAddr?.neighborhoodId)
+      ? (defaultAddr ?? null)
+      : null;
+
+  const neighborhoodId =
+    overrideNeighborhoodId ??
+    preselectedNeighborhoodId ??
+    initialAddress?.neighborhoodId ??
+    "";
+
+  const selectedAddressId =
+    overrideAddressId !== undefined
+      ? overrideAddressId
+      : (initialAddress?.id ?? null);
+
+  const landmark = overrideLandmark ?? initialAddress?.landmark ?? "";
+  const phone =
+    overridePhone ?? initialAddress?.phone ?? user?.contactPhone ?? "";
   const [customerName, setCustomerName] = useState<string>(user?.name || "");
 
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
@@ -88,10 +120,13 @@ export function CheckoutForm({
     });
 
   const handleSelectSavedAddress = (addr: CustomerAddressRecord) => {
-    setSelectedAddressId(addr.id);
-    setNeighborhoodId(addr.neighborhoodId);
-    setLandmark(addr.landmark);
-    setPhone(addr.phone);
+    if (!isServedNeighborhood(addr.neighborhoodId)) return;
+    setOverrideAddressId(addr.id);
+    setOverrideNeighborhoodId(addr.neighborhoodId);
+    cart.setCustomerNeighborhoodId(addr.neighborhoodId);
+    setOverrideLandmark(addr.landmark);
+    setOverridePhone(addr.phone);
+    setSelectedSlot(null);
   };
 
   const handleAcceptPriceChange = () => {
@@ -153,19 +188,20 @@ export function CheckoutForm({
           selectedAddressId={selectedAddressId}
           onSelectSavedAddress={handleSelectSavedAddress}
           onChangeNeighborhood={(id) => {
-            setNeighborhoodId(id);
-            setSelectedAddressId(null);
+            setOverrideNeighborhoodId(id);
+            cart.setCustomerNeighborhoodId(id || null);
+            setOverrideAddressId(null);
             setSelectedSlot(null);
           }}
           landmark={landmark}
           onChangeLandmark={(val) => {
-            setLandmark(val);
-            setSelectedAddressId(null);
+            setOverrideLandmark(val);
+            setOverrideAddressId(null);
           }}
           phone={phone}
           onChangePhone={(val) => {
-            setPhone(val);
-            setSelectedAddressId(null);
+            setOverridePhone(val);
+            setOverrideAddressId(null);
           }}
           customerName={customerName}
           onChangeCustomerName={setCustomerName}

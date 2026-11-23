@@ -108,7 +108,7 @@ export function UserDetailsSheet({
             <TabsList className="h-auto p-0 gap-6 bg-transparent border-0 rounded-none justify-start">
               <TabsTrigger
                 value="profile"
-                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-[state=active]:!text-primary data-[state=active]:!bg-transparent data-[state=active]:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
+                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-selected:!text-primary data-selected:!bg-transparent data-selected:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
               >
                 <User className="size-3.5" />
                 <span>{t("tabProfile")}</span>
@@ -116,7 +116,7 @@ export function UserDetailsSheet({
 
               <TabsTrigger
                 value="permissions"
-                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-[state=active]:!text-primary data-[state=active]:!bg-transparent data-[state=active]:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
+                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-selected:!text-primary data-selected:!bg-transparent data-selected:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
               >
                 <Shield className="size-3.5" />
                 <span>{t("tabPermissions")}</span>
@@ -124,7 +124,7 @@ export function UserDetailsSheet({
 
               <TabsTrigger
                 value="activity"
-                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-[state=active]:!text-primary data-[state=active]:!bg-transparent data-[state=active]:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
+                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-selected:!text-primary data-selected:!bg-transparent data-selected:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
               >
                 <Activity className="size-3.5" />
                 <span>{t("tabActivity")}</span>

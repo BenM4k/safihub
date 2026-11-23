@@ -1,16 +1,25 @@
-"use client"
+"use client";
 
-import { useMemo } from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import {
+  Field as UiField,
+  FieldDescription as UiFieldDescription,
+  FieldError as UiFieldError,
+  FieldGroup as UiFieldGroup,
+  FieldLabel as UiFieldLabel,
+  FieldLegend as UiFieldLegend,
+  FieldSet as UiFieldSet,
+} from "@ui-sdk/react/field";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-
-function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
+function FieldSet({
+  className,
+  ...props
+}: React.ComponentProps<typeof UiFieldSet>) {
   return (
-    <fieldset
-      data-slot="field-set"
+    <UiFieldSet
       className={cn(
         "flex flex-col gap-6",
         "has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3",
@@ -18,17 +27,18 @@ function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
       )}
       {...props}
     />
-  )
+  );
 }
 
 function FieldLegend({
   className,
   variant = "legend",
   ...props
-}: React.ComponentProps<"legend"> & { variant?: "legend" | "label" }) {
+}: React.ComponentProps<typeof UiFieldLegend> & {
+  variant?: "legend" | "label";
+}) {
   return (
-    <legend
-      data-slot="field-legend"
+    <UiFieldLegend
       data-variant={variant}
       className={cn(
         "mb-3 font-medium",
@@ -38,20 +48,22 @@ function FieldLegend({
       )}
       {...props}
     />
-  )
+  );
 }
 
-function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
+function FieldGroup({
+  className,
+  ...props
+}: React.ComponentProps<typeof UiFieldGroup>) {
   return (
-    <div
-      data-slot="field-group"
+    <UiFieldGroup
       className={cn(
         "group/field-group @container/field-group flex w-full flex-col gap-7 data-[slot=checkbox-group]:gap-3 [&>[data-slot=field-group]]:gap-4",
         className
       )}
       {...props}
     />
-  )
+  );
 }
 
 const fieldVariants = cva(
@@ -76,22 +88,20 @@ const fieldVariants = cva(
       orientation: "vertical",
     },
   }
-)
+);
 
 function Field({
   className,
   orientation = "vertical",
   ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>) {
+}: React.ComponentProps<typeof UiField> & VariantProps<typeof fieldVariants>) {
   return (
-    <div
-      role="group"
-      data-slot="field"
+    <UiField
       data-orientation={orientation}
       className={cn(fieldVariants({ orientation }), className)}
       {...props}
     />
-  )
+  );
 }
 
 function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
@@ -104,25 +114,24 @@ function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
       )}
       {...props}
     />
-  )
+  );
 }
 
 function FieldLabel({
   className,
   ...props
-}: React.ComponentProps<typeof Label>) {
+}: React.ComponentProps<typeof UiFieldLabel>) {
   return (
-    <Label
-      data-slot="field-label"
+    <UiFieldLabel
       className={cn(
-        "group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50",
+        "group/field-label peer/field-label flex w-fit gap-2 text-sm font-semibold text-heading leading-snug select-none group-data-[disabled=true]/field:opacity-50 group-data-disabled/field:opacity-50",
         "has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border [&>*]:data-[slot=field]:p-4",
-        "has-data-[state=checked]:border-primary has-data-[state=checked]:bg-primary/5 dark:has-data-[state=checked]:bg-primary/10",
+        "has-data-checked:border-primary has-data-checked:bg-primary/5 dark:has-data-checked:bg-primary/10",
         className
       )}
       {...props}
     />
-  )
+  );
 }
 
 function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
@@ -135,13 +144,15 @@ function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
       )}
       {...props}
     />
-  )
+  );
 }
 
-function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
+function FieldDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof UiFieldDescription>) {
   return (
-    <p
-      data-slot="field-description"
+    <UiFieldDescription
       className={cn(
         "text-sm leading-normal font-normal text-muted-foreground group-has-[[data-orientation=horizontal]]/field:text-balance",
         "last:mt-0 nth-last-2:-mt-1 [[data-variant=legend]+&]:-mt-1.5",
@@ -150,7 +161,7 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
       )}
       {...props}
     />
-  )
+  );
 }
 
 function FieldSeparator({
@@ -158,7 +169,7 @@ function FieldSeparator({
   className,
   ...props
 }: React.ComponentProps<"div"> & {
-  children?: React.ReactNode
+  children?: React.ReactNode;
 }) {
   return (
     <div
@@ -180,7 +191,7 @@ function FieldSeparator({
         </span>
       )}
     </div>
-  )
+  );
 }
 
 function FieldError({
@@ -188,50 +199,48 @@ function FieldError({
   children,
   errors,
   ...props
-}: React.ComponentProps<"div"> & {
-  errors?: Array<{ message?: string } | undefined>
+}: Omit<React.ComponentProps<typeof UiFieldError>, "children"> & {
+  children?: React.ReactNode;
+  errors?: Array<{ message?: string } | undefined>;
 }) {
-  const content = useMemo(() => {
-    if (children) {
-      return children
-    }
-
-    if (!errors?.length) {
-      return null
-    }
+  const content = React.useMemo(() => {
+    if (children) return children;
+    if (!errors?.length) return null;
 
     const uniqueErrors = [
       ...new Map(errors.map((error) => [error?.message, error])).values(),
-    ]
+    ];
 
-    if (uniqueErrors?.length == 1) {
-      return uniqueErrors[0]?.message
+    if (uniqueErrors.length === 1) {
+      return uniqueErrors[0]?.message;
     }
 
     return (
       <ul className="ml-4 flex list-disc flex-col gap-1">
         {uniqueErrors.map(
           (error, index) =>
-            error?.message && <li key={index}>{error.message}</li>
+            error?.message && <li key={error.message ?? index}>{error.message}</li>
         )}
       </ul>
-    )
-  }, [children, errors])
+    );
+  }, [children, errors]);
 
   if (!content) {
-    return null
+    return null;
   }
 
   return (
-    <div
-      role="alert"
-      data-slot="field-error"
-      className={cn("text-xs sm:text-sm font-medium text-destructive", className)}
+    <UiFieldError
+      match
+      className={cn(
+        "text-xs sm:text-sm font-medium text-destructive",
+        className
+      )}
       {...props}
     >
       {content}
-    </div>
-  )
+    </UiFieldError>
+  );
 }
 
 export {
@@ -245,4 +254,4 @@ export {
   FieldSet,
   FieldContent,
   FieldTitle,
-}
+};

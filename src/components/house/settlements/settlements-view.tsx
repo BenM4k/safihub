@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PackageCheck, Receipt } from "lucide-react";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@ui-sdk/react/tabs";
 import type {
   PartnerDeliveredOrderDTO,
   PartnerPayoutDTO,
@@ -110,61 +111,63 @@ export function SettlementsView({ data }: SettlementsViewProps) {
       {/* 4. KPI Row (Period-scoped with trends) */}
       <PeriodKpiRow kpis={data.kpis} />
 
-      {/* 5. Full-width Tabs for Commandes livrées vs Versements */}
-      <div className="space-y-4">
-        <div className="flex border-b border-border gap-2" role="tablist" aria-label={t("activityTabsAria")}>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "orders"}
-            onClick={() => setActiveTab("orders")}
-            className={`pb-3 px-4 text-sm font-bold transition flex items-center gap-2 border-b-2 cursor-pointer min-h-[44px] ${
-              activeTab === "orders"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+      <Tabs
+        value={activeTab}
+        onValueChange={(next) => {
+          if (next === "orders" || next === "payouts") setActiveTab(next);
+        }}
+        className="space-y-4"
+      >
+        <TabsList
+          className="flex border-b border-border gap-2"
+          aria-label={t("activityTabsAria")}
+        >
+          <TabsTab
+            value="orders"
+            className="pb-3 px-4 text-sm font-bold transition flex items-center gap-2 border-b-2 border-transparent text-muted-foreground hover:text-foreground data-selected:border-primary data-selected:text-primary cursor-pointer min-h-[44px]"
           >
             <PackageCheck className="size-4" />
             <span>{t("tabDeliveredOrders")}</span>
-            <Badge variant="secondary" className="px-2 py-0 text-2xs font-semibold rounded-full">
+            <Badge
+              variant="secondary"
+              className="px-2 py-0 text-2xs font-semibold rounded-full"
+            >
               {data.orders.length}
             </Badge>
-          </button>
+          </TabsTab>
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "payouts"}
-            onClick={() => setActiveTab("payouts")}
-            className={`pb-3 px-4 text-sm font-bold transition flex items-center gap-2 border-b-2 cursor-pointer min-h-[44px] ${
-              activeTab === "payouts"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+          <TabsTab
+            value="payouts"
+            className="pb-3 px-4 text-sm font-bold transition flex items-center gap-2 border-b-2 border-transparent text-muted-foreground hover:text-foreground data-selected:border-primary data-selected:text-primary cursor-pointer min-h-[44px]"
           >
             <Receipt className="size-4" />
             <span>{t("tabPayoutsReceived")}</span>
-            <Badge variant="secondary" className="px-2 py-0 text-2xs font-semibold rounded-full">
+            <Badge
+              variant="secondary"
+              className="px-2 py-0 text-2xs font-semibold rounded-full"
+            >
               {data.payouts.length}
             </Badge>
-          </button>
-        </div>
+          </TabsTab>
+        </TabsList>
 
-        {activeTab === "orders" ? (
+        <TabsPanel value="orders">
           <DeliveredOrdersTable
             orders={data.orders}
             houseSlug={data.houseSlug}
             onOpenReportDialog={handleOpenOrderReport}
           />
-        ) : (
+        </TabsPanel>
+
+        <TabsPanel value="payouts">
           <PayoutsTable
             payouts={data.payouts}
             onSelectPayout={setSelectedPayout}
             onOpenReportDialog={handleOpenPayoutReport}
             onOpenReceiptModal={handleOpenReceiptModal}
           />
-        )}
-      </div>
+        </TabsPanel>
+      </Tabs>
 
       {/* 6. Explanatory Accordion: Comment ça marche */}
       <HowItWorksCard

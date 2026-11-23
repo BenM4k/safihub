@@ -10,6 +10,7 @@
     "supportBukavu": "Usaidizi Bukavu : +243 999 000 123",
     "selectLanguage": "Chagua lugha",
     "languageHeader": "Lugha",
+    "closeNotification": "Funga taarifa",
     "changeLanguage": "Badilisha lugha",
     "currentLanguage": "Lugha ya sasa: {locale}. Bofya ili kubadilisha.",
     "languages": {
@@ -88,6 +89,7 @@
     "home": "Nyumbani",
     "register": "Jisajili",
     "becomePartner": "Kuwa mshirika",
+    "mainNavAria": "Urambazaji mkuu",
     "cart": "Kikapu",
     "notifications": "Taarifa",
     "login": "Ingia",
@@ -2891,6 +2893,10 @@
     "deliveryTo": "Ufikishaji hadi",
     "chooseNeighborhood": "Chagua mtaa wako...",
     "deliveryNotServed": "Mtaa huu haujahudumiwa bado na dobi hili.",
+    "neighborhoodUnservedBadge": "Hahudumiwi",
+    "deliveryServed": "Mtaa unahudumiwa",
+    "deliveryFeeLabel": "Gharama ya usafirishaji",
+    "deliveryFeeCalculated": "Huhesabiwa",
     "deliveryFeeAmount": "Gharama ya usafirishaji: {amount} CDF",
     "nextSlot": "Nafasi ijayo: {slot}",
     "searchArticles": "Tafuta nguo...",
@@ -3197,7 +3203,8 @@
       "missions": "Majukumu",
       "cash": "Cash",
       "history": "Historia",
-      "account": "Akaunti"
+      "account": "Akaunti",
+      "ariaLabel": "Urambazaji wa mjumbe"
     },
     "header": {
       "title": "Programu ya Dereva",
