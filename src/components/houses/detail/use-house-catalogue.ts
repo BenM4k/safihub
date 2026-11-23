@@ -1,33 +1,37 @@
 import { useMemo } from "react";
 import type { NeighborhoodOption } from "./pressing-delivery-selector";
-import type { CustomerHouseCatalogueItem } from "@/dal";
+import type { CustomerHouseCatalogueItem, NeighborhoodRecord } from "@/dal";
 import type { useCartHydrated } from "@/lib/stores/use-cart-hydrated";
 
 export function useHouseCatalogue(
   houseId: string,
   houseName: string,
-  neighborhoods: Array<{ id: string; name: string; zoneId: string }>,
+  neighborhoods: NeighborhoodRecord[],
   zoneFees: Record<string, number>,
-  cart: ReturnType<typeof useCartHydrated>
+  cart: ReturnType<typeof useCartHydrated>,
 ) {
   const neighborhoodOptions: NeighborhoodOption[] = useMemo(() => {
     return neighborhoods.map((n) => {
-      const fee = zoneFees[n.zoneId] ?? 3000;
+      const isServed = n.status === "served";
+      const fee = isServed ? (zoneFees[n.zoneId] ?? 3000) : null;
       return {
         id: n.id,
         name: n.name,
         zoneId: n.zoneId,
-        isServed: true,
+        isServed,
         deliveryFeeCdf: fee,
       };
     });
   }, [neighborhoods, zoneFees]);
 
   const selectedNeighborhood = neighborhoodOptions.find(
-    (n) => n.id === cart.customerNeighborhoodId
+    (n) => n.id === cart.customerNeighborhoodId,
   );
 
-  const handleUpdateQuantity = (item: CustomerHouseCatalogueItem, delta: number) => {
+  const handleUpdateQuantity = (
+    item: CustomerHouseCatalogueItem,
+    delta: number,
+  ) => {
     if (delta > 0) {
       cart.addItem(houseId, houseName, {
         houseItemId: item.houseItemId,

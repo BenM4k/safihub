@@ -52,7 +52,7 @@ export function ServicesTabs({ user }: { user?: AuthenticatedUser | null } = {})
               <TabsTrigger
                 key={tab.id}
                 value={tab.id}
-                className="h-auto border-0 shadow-none after:hidden px-4 sm:px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer text-muted-foreground hover:text-heading data-[state=active]:bg-slate-900 data-[state=active]:text-white dark:data-[state=active]:bg-primary dark:data-[state=active]:text-white data-[state=active]:shadow-xs"
+                className="h-auto border-0 shadow-none after:hidden px-4 sm:px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer text-muted-foreground hover:text-heading data-selected:bg-slate-900 data-selected:text-white dark:data-selected:bg-primary dark:data-selected:text-white data-selected:shadow-xs"
               >
                 {tab.name}
               </TabsTrigger>

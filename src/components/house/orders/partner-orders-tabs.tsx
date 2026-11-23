@@ -113,7 +113,7 @@ export function PartnerOrdersTabs({
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="gap-2 px-3 py-2 text-xs font-semibold data-[state=active]:font-bold data-[state=active]:text-primary rounded-xl cursor-pointer shrink-0"
+                  className="gap-2 px-3 py-2 text-xs font-semibold data-selected:font-bold data-selected:text-primary rounded-xl cursor-pointer shrink-0"
                 >
                   <span>{t(tab.labelKey)}</span>
                   <Badge

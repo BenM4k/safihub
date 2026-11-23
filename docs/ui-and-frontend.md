@@ -4,9 +4,9 @@ This document describes SafiHub's frontend engineering standards, component boun
 
 ---
 
-## 1. Component Standards & shadcn/ui Mandate
+## 1. Component Standards & `@ui-sdk/react` Mandate
 
-SafiHub enforces strict design consistency using Tailwind CSS v4 and shadcn/ui.
+SafiHub enforces strict design consistency using Tailwind CSS v4 and `@ui-sdk/react` primitives (`@ui-sdk/core` + `@ui-sdk/react`).
 
 ### 1. Component Size & Decomposition (Primary Constraint)
 
@@ -14,10 +14,17 @@ SafiHub enforces strict design consistency using Tailwind CSS v4 and shadcn/ui.
 - **Single Responsibility:** Separate layout/data assembly from interactive controls.
 - **Composition over Configuration:** Prefer small composed components passed as children/props over massive components with dozens of conditional props.
 
-### 2. Mandatory shadcn/ui Primitives
+### 2. Mandatory `@ui-sdk/react` Primitives
 
-- Always compose official shadcn components in `src/components/ui/` (`DropdownMenu`, `Dialog`, `Sheet`, `Button`, `Badge`, `Input`, `Select`, `Card`, `Tabs`).
+- Always compose official `@ui-sdk/react`-backed components in `src/components/ui/` (`DropdownMenu`, `Dialog`, `Sheet`, `Button`, `Badge`, `Input`, `Select`, `Card`, `Tabs`, `Switch`, `AlertDialog`, `Accordion`, `Collapsible`, `Popover`, `Tooltip`, `Carousel`, `Field`, `Toast`).
 - **No Handwritten Overlays:** Building ad-hoc custom modal sheets, dropdowns, or tooltips using raw `useState` and manual floating coordinate math is **strictly forbidden**.
+
+### 3. `@ui-sdk` Adoption & Agent-Ready UI (WebMCP)
+
+- All interactive UI primitives in `src/components/ui/` (`Accordion`, `AlertDialog`, `Avatar`, `Button`, `Checkbox`, `Collapsible`, `Dialog`, `DropdownMenu`, `Input`, `Label`, `Popover`, `Progress`, `RadioGroup`, `ScrollArea`, `Select`, `Separator`, `Sheet`, `Switch`, `Tabs`, `Textarea`, `Toggle`, `ToggleGroup`, `Tooltip`) are built on `@ui-sdk/core` and `@ui-sdk/react` (zero Radix dependencies) and styled with SafiHub's Tailwind v4 design tokens (`data-slot`, `data-checked`, `data-open`, `data-selected`, etc.).
+- `@layer ui-sdk;` is declared at the top of `src/app/globals.css` above `@import "tailwindcss";` so Tailwind utilities always take precedence.
+- `src/lib/ui-agent.ts` and `src/components/common/ui-agent-bridge.tsx` (mounted dynamically in `ClientShellAddons`) expose `createAgent` and browser WebMCP tools (`registerTools`), enforcing human confirmation for controls marked with `data-agent-confirm`.
+- Component and agent-readiness tests use `src/test/ui-sdk-setup.ts` (`__UI_SDK_STRICT__ = true` + jsdom stubs) with `// @vitest-environment jsdom`.
 
 ---
 
@@ -27,7 +34,7 @@ No `tailwind.config` — everything lives in CSS. `src/app/globals.css` imports,
 
 | File | Contents |
 | :--- | :------- |
-| `src/styles/tokens.css` | Raw palettes (`lagoon` primary, `mint`, `citrus`, `coral`, `ink` neutrals), semantic roles in `:root`/`.dark` (shadcn names + `heading`, `surface`, `primary-soft`, `highlight`, `success/warning/destructive(-soft)`), fluid type scale (`text-display`, `text-h1…h4`, `text-lead`), spacing (`gutter`, `section`, `section-sm`, `touch`), containers (`max-w-page/narrow/prose-tight`), radii (`rounded-control/card/panel`), shadows (`soft/card/lift/nav/glow`), `ease-soft`, `animate-fade-up/in`, `xs` (360px) breakpoint, class-based `dark:` variant. |
+| `src/styles/tokens.css` | Raw palettes (`lagoon` primary, `mint`, `citrus`, `coral`, `ink` neutrals), semantic roles in `:root`/`.dark` (`background`, `foreground`, `card`, `popover`, `primary`, `muted`, `accent`, `border`, `ring` + `heading`, `surface`, `primary-soft`, `highlight`, `success/warning/destructive(-soft)`), fluid type scale (`text-display`, `text-h1…h4`, `text-lead`), spacing (`gutter`, `section`, `section-sm`, `touch`), containers (`max-w-page/narrow/prose-tight`), radii (`rounded-control/card/panel`), shadows (`soft/card/lift/nav/glow`), `ease-soft`, `animate-fade-up/in`, `xs` (360px) breakpoint, class-based `dark:` variant. |
 | `src/styles/base.css` | Element defaults: Plus Jakarta Sans, heading sizes/weights/balance, focus ring, selection, tabular numerals for `data`/`time`/`.tabular`, reduced-motion. |
 | `src/styles/layout.css` | `container-page/narrow/prose`, `section(-sm)`, `stack(-n)`, `cluster(-n)`, `grid-auto-{container}` / `grid-auto-[14rem]`, `split`, `touch`. |
 | `src/styles/controls.css` | `btn` + variant (`btn-primary/secondary/contrast/outline/ghost/warm/destructive`) + size (`btn-sm/lg/icon/block`); `link`, `link-quiet`, `link-arrow`. |
@@ -38,7 +45,7 @@ No `tailwind.config` — everything lives in CSS. `src/app/globals.css` imports,
 **Rules**
 
 - Components use **semantic** tokens (`bg-primary`, `text-heading`, `text-muted-foreground`, `border-border`); raw palettes only for illustrations/charts.
-- Buttons compose `btn btn-<variant> btn-<size>`. Variants only set `--btn-*` custom properties, so class order never matters. Mark trailing arrows with `data-icon="trailing"` for the hover nudge. shadcn `Button` cva variants should map onto these classes.
+- Buttons compose `btn btn-<variant> btn-<size>`. Variants only set `--btn-*` custom properties, so class order never matters. Mark trailing arrows with `data-icon="trailing"` for the hover nudge. `Button` cva variants in `src/components/ui/button.tsx` map onto these design tokens.
 - All buttons are ≥ 44px tall; hover effects are wrapped in `@media (hover: hover)` so touch devices never get sticky hover.
 - Headings are heavy (700–800) with tight negative tracking; body is 16px / 1.6; lead copy 17–20px / 1.65.
 - Decorative glows (`orb`) use radial gradients, **not** `filter: blur()`, to stay cheap on low-end Android GPUs.

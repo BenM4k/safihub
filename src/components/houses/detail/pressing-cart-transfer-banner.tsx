@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
+import { toast } from "@ui-sdk/react/toast";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { CustomerHouseCatalogueItem } from "@/dal";

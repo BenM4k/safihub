@@ -1,19 +1,28 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { Popover as PopoverPrimitive } from "radix-ui"
+import * as React from "react";
+import {
+  Popover as UiPopover,
+  PopoverContent as UiPopoverContent,
+  PopoverDescription as UiPopoverDescription,
+  PopoverTitle as UiPopoverTitle,
+  PopoverTrigger as UiPopoverTrigger,
+} from "@ui-sdk/react/popover";
+import { cn } from "@/lib/utils";
 
-function Popover({
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
-  return <PopoverPrimitive.Root data-slot="popover" {...props} />
+function Popover(props: React.ComponentProps<typeof UiPopover>) {
+  return <UiPopover {...props} />;
 }
 
 function PopoverTrigger({
+  asChild,
+  children,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
-  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+}: React.ComponentProps<typeof UiPopoverTrigger> & { asChild?: boolean }) {
+  if (asChild && React.isValidElement(children)) {
+    return <UiPopoverTrigger render={children} {...props} />;
+  }
+  return <UiPopoverTrigger {...props}>{children}</UiPopoverTrigger>;
 }
 
 function PopoverContent({
@@ -21,27 +30,22 @@ function PopoverContent({
   align = "center",
   sideOffset = 4,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+}: React.ComponentProps<typeof UiPopoverContent>) {
   return (
-    <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Content
-        data-slot="popover-content"
-        align={align}
-        sideOffset={sideOffset}
-        className={cn(
-          "z-50 w-72 origin-(--radix-popover-content-transform-origin) rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-hidden data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
-          className
-        )}
-        {...props}
-      />
-    </PopoverPrimitive.Portal>
-  )
+    <UiPopoverContent
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 w-72 origin-(--transform-origin) rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-hidden transition-[opacity,scale] duration-150 data-starting-style:scale-95 data-starting-style:opacity-0 data-ending-style:scale-95 data-ending-style:opacity-0",
+        className
+      )}
+      {...props}
+    />
+  );
 }
 
-function PopoverAnchor({
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
-  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
+function PopoverAnchor({ ...props }: React.ComponentProps<"div">) {
+  return <div data-slot="popover-anchor" {...props} />;
 }
 
 function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
@@ -51,30 +55,28 @@ function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
       className={cn("flex flex-col gap-1 text-sm", className)}
       {...props}
     />
-  )
+  );
 }
 
-function PopoverTitle({ className, ...props }: React.ComponentProps<"h2">) {
+function PopoverTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof UiPopoverTitle>) {
   return (
-    <div
-      data-slot="popover-title"
-      className={cn("font-medium", className)}
-      {...props}
-    />
-  )
+    <UiPopoverTitle className={cn("font-medium", className)} {...props} />
+  );
 }
 
 function PopoverDescription({
   className,
   ...props
-}: React.ComponentProps<"p">) {
+}: React.ComponentProps<typeof UiPopoverDescription>) {
   return (
-    <p
-      data-slot="popover-description"
+    <UiPopoverDescription
       className={cn("text-muted-foreground", className)}
       {...props}
     />
-  )
+  );
 }
 
 export {
@@ -85,4 +87,4 @@ export {
   PopoverHeader,
   PopoverTitle,
   PopoverDescription,
-}
+};

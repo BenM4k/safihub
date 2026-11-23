@@ -7,9 +7,9 @@ import { useTranslations } from "next-intl";
 const SwitchHouseDialog = dynamic(
   () =>
     import("@/components/cart/switch-house-dialog").then(
-      (m) => m.SwitchHouseDialog
+      (m) => m.SwitchHouseDialog,
     ),
-  { ssr: false }
+  { ssr: false },
 );
 import { useCartHydrated } from "@/lib/stores/use-cart-hydrated";
 import { PressingBanner } from "./pressing-banner";
@@ -27,7 +27,7 @@ import { HouseExclusionsBanner } from "./house-exclusions-banner";
 import { usePressingArticles } from "./use-pressing-articles";
 import { usePressingCartSubtotal } from "./use-pressing-cart-subtotal";
 import { useHouseCatalogue } from "./use-house-catalogue";
-import type { CustomerHouseDetailData } from "@/dal";
+import type { CustomerHouseDetailData, NeighborhoodRecord } from "@/dal";
 import type { HouseReviewItem, HouseReviewStatsData } from "@/dal/review.dal";
 
 interface HouseCatalogueViewProps {
@@ -35,7 +35,7 @@ interface HouseCatalogueViewProps {
   initialReviews: HouseReviewItem[];
   stats: HouseReviewStatsData;
   eligibleOrders: Array<{ id: string; createdAt: Date }>;
-  neighborhoods: Array<{ id: string; name: string; zoneId: string }>;
+  neighborhoods: NeighborhoodRecord[];
   zoneFees: Record<string, number>;
   usdExchangeRate?: number | null;
   isAuthenticated: boolean;
@@ -73,7 +73,13 @@ export function HouseCatalogueView({
   } = usePressingArticles(data.items);
 
   const { neighborhoodOptions, selectedNeighborhood, handleUpdateQuantity } =
-    useHouseCatalogue(data.house.id, data.house.name, neighborhoods, zoneFees, cart);
+    useHouseCatalogue(
+      data.house.id,
+      data.house.name,
+      neighborhoods,
+      zoneFees,
+      cart,
+    );
 
   const isHouseAvailable = !data.house.isPaused;
   const handleProceedOrder = () => router.push("/checkout");
@@ -100,7 +106,9 @@ export function HouseCatalogueView({
         cartHouseId={cart.houseId}
         cartItemsCount={cart.items.length}
         isHydrated={cart.isHydrated}
-        onTransfer={(hId, hName, itms) => cart.transferCartToHouse(hId, hName, itms)}
+        onTransfer={(hId, hName, itms) =>
+          cart.transferCartToHouse(hId, hName, itms)
+        }
         onClearCart={cart.clearCart}
       />
 

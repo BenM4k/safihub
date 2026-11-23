@@ -24,6 +24,14 @@ const Toaster = dynamic(
   { ssr: false }
 );
 
+const UiAgentBridge = dynamic(
+  () =>
+    import("@/components/common/ui-agent-bridge").then(
+      (mod) => mod.UiAgentBridge
+    ),
+  { ssr: false }
+);
+
 export function ClientShellAddons() {
   return (
     <>
@@ -32,6 +40,7 @@ export function ClientShellAddons() {
       </Suspense>
       <LanguageSwitcher />
       <Toaster position="bottom-center" />
+      <UiAgentBridge />
     </>
   );
 }

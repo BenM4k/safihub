@@ -33,7 +33,33 @@ export function PressingDeliverySelector({
 }: PressingDeliverySelectorProps) {
   const t = useTranslations("customerHouses");
 
-  const currentOption = neighborhoods.find((n) => n.id === selectedNeighborhoodId);
+  const sortedNeighborhoods = [
+    ...neighborhoods.filter((n) => n.isServed),
+    ...neighborhoods.filter((n) => !n.isServed),
+  ];
+
+  const selectItems = [
+    { value: "none", label: t("chooseNeighborhood") },
+    ...sortedNeighborhoods.map((n) => ({
+      value: n.id,
+      label: n.name,
+      disabled: !n.isServed,
+    })),
+  ];
+
+  const currentOption = neighborhoods.find(
+    (n) => n.id === selectedNeighborhoodId
+  );
+
+  const handleValueChange = (val: string) => {
+    if (val === "none") {
+      onSelectNeighborhood(null);
+      return;
+    }
+    const target = neighborhoods.find((n) => n.id === val);
+    if (!target || !target.isServed) return;
+    onSelectNeighborhood(val);
+  };
 
   return (
     <div className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-muted/40 dark:bg-card/75 border border-border/80 shadow-xs space-y-3.5">
@@ -46,18 +72,35 @@ export function PressingDeliverySelector({
 
       <div className="relative">
         <Select
-          value={selectedNeighborhoodId || "none"}
-          onValueChange={(val: string) => onSelectNeighborhood(val === "none" ? null : val)}
+          items={selectItems}
+          value={
+            currentOption?.isServed ? (selectedNeighborhoodId ?? "none") : "none"
+          }
+          onValueChange={handleValueChange}
         >
           <SelectTrigger className="w-full h-auto p-2.5 rounded-lg bg-card border border-input text-base font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-xs">
             <SelectValue placeholder={t("chooseNeighborhood")} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="none" className="bg-card text-foreground">{t("chooseNeighborhood")}</SelectItem>
-              {neighborhoods.map((n) => (
-                <SelectItem key={n.id} value={n.id} className="bg-card text-foreground">
-                  {n.name}
+              <SelectItem value="none" className="bg-card text-foreground">
+                {t("chooseNeighborhood")}
+              </SelectItem>
+              {sortedNeighborhoods.map((n) => (
+                <SelectItem
+                  key={n.id}
+                  value={n.id}
+                  disabled={!n.isServed}
+                  className="bg-card text-foreground"
+                >
+                  <span className="flex items-center justify-between gap-2 w-full">
+                    <span>{n.name}</span>
+                    {!n.isServed && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                        {t("neighborhoodUnservedBadge")}
+                      </span>
+                    )}
+                  </span>
                 </SelectItem>
               ))}
             </SelectGroup>
@@ -68,16 +111,21 @@ export function PressingDeliverySelector({
       {currentOption && (
         <div className="pt-0.5">
           {currentOption.isServed ? (
-            <div className="flex items-center justify-between text-xs font-semibold text-success bg-success-soft/30 p-2.5 rounded-lg border border-success/20">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-success bg-success-soft/30 p-2.5 rounded-lg border border-success/20">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="size-3.5 text-success shrink-0" />
-                <span>Quartier desservi</span>
+                <span>{t("deliveryServed")}</span>
               </div>
-              <span className="font-black text-success">
-                {currentOption.deliveryFeeCdf !== null
-                  ? formatAmount(currentOption.deliveryFeeCdf)
-                  : "Frais calculés"}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium text-success/80">
+                  {t("deliveryFeeLabel")} :
+                </span>
+                <span className="font-black text-success tabular-nums">
+                  {currentOption.deliveryFeeCdf !== null
+                    ? formatAmount(currentOption.deliveryFeeCdf)
+                    : t("deliveryFeeCalculated")}
+                </span>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">

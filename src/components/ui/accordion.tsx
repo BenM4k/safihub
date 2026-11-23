@@ -1,65 +1,115 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { ChevronDownIcon } from "lucide-react"
-import { Accordion as AccordionPrimitive } from "radix-ui"
+import * as React from "react";
+import {
+  Accordion as UiAccordion,
+  AccordionHeader,
+  AccordionItem as UiAccordionItem,
+  AccordionPanel,
+  AccordionTrigger as UiAccordionTrigger,
+} from "@ui-sdk/react/accordion";
+import { ChevronDownIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type AccordionProps = Omit<
+  React.ComponentProps<typeof UiAccordion>,
+  "value" | "defaultValue" | "onValueChange"
+> & {
+  type?: "single" | "multiple";
+  collapsible?: boolean;
+  value?: string | string[];
+  defaultValue?: string | string[];
+  onValueChange?: (value: string & string[]) => void;
+};
+
+function toArray(val: string | string[] | undefined): string[] | undefined {
+  if (val === undefined) return undefined;
+  return Array.isArray(val) ? val : val ? [val] : [];
+}
 
 function Accordion({
+  type,
+  collapsible,
+  multiple,
+  value,
+  defaultValue,
+  onValueChange,
   ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Root>) {
-  return <AccordionPrimitive.Root data-slot="accordion" {...props} />
+}: AccordionProps) {
+  const isMultiple = multiple ?? type === "multiple";
+
+  return (
+    <UiAccordion
+      multiple={isMultiple}
+      collapsible={collapsible ?? true}
+      value={toArray(value)}
+      defaultValue={toArray(defaultValue)}
+      onValueChange={
+        onValueChange
+          ? (next) => {
+              const out = isMultiple ? next : (next[0] ?? "");
+              (onValueChange as (v: string | string[]) => void)(out);
+            }
+          : undefined
+      }
+      {...props}
+    />
+  );
 }
 
 function AccordionItem({
   className,
   ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Item>) {
+}: React.ComponentProps<typeof UiAccordionItem>) {
   return (
-    <AccordionPrimitive.Item
-      data-slot="accordion-item"
+    <UiAccordionItem
       className={cn("border-b last:border-b-0", className)}
       {...props}
     />
-  )
+  );
 }
 
 function AccordionTrigger({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
+}: Omit<React.ComponentProps<typeof UiAccordionTrigger>, "children"> & {
+  children?: React.ReactNode;
+}) {
   return (
-    <AccordionPrimitive.Header className="flex">
-      <AccordionPrimitive.Trigger
-        data-slot="accordion-trigger"
+    <AccordionHeader className="flex">
+      <UiAccordionTrigger
         className={cn(
-          "flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
+          "flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 [&[data-open]>svg]:rotate-180",
           className
         )}
         {...props}
       >
         {children}
-        <ChevronDownIcon className="pointer-events-none size-4 shrink-0 translate-y-0.5 text-muted-foreground transition-transform duration-200" />
-      </AccordionPrimitive.Trigger>
-    </AccordionPrimitive.Header>
-  )
+        <ChevronDownIcon
+          className="pointer-events-none size-4 shrink-0 translate-y-0.5 text-muted-foreground transition-transform duration-200"
+          aria-hidden="true"
+        />
+      </UiAccordionTrigger>
+    </AccordionHeader>
+  );
 }
 
 function AccordionContent({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Content>) {
+}: Omit<React.ComponentProps<typeof AccordionPanel>, "children"> & {
+  children?: React.ReactNode;
+}) {
   return (
-    <AccordionPrimitive.Content
-      data-slot="accordion-content"
-      className="overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+    <AccordionPanel
+      className="overflow-hidden text-sm data-closed:animate-accordion-up data-open:animate-accordion-down"
       {...props}
     >
       <div className={cn("pt-0 pb-4", className)}>{children}</div>
-    </AccordionPrimitive.Content>
-  )
+    </AccordionPanel>
+  );
 }
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent }
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };

@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "@ui-sdk/react/navigation-menu";
 import { Package, Wallet, History, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,8 +30,11 @@ export function CourierNavTabs() {
   const t = useTranslations("courier.nav");
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200/90 shadow-lg">
-      <div className="max-w-md mx-auto grid grid-cols-4 h-16">
+    <NavigationMenu
+      aria-label="Navigation coursier"
+      className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200/90 shadow-lg"
+    >
+      <NavigationMenuList className="max-w-md mx-auto grid grid-cols-4 h-16 list-none m-0 p-0">
         {NAV_ITEMS.map((item) => {
           const isActive =
             item.href === "/courier"
@@ -34,31 +43,33 @@ export function CourierNavTabs() {
           const Icon = item.icon;
 
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors touch-manipulation select-none",
-                isActive
-                  ? "text-blue-600 font-bold"
-                  : "text-slate-500 hover:text-slate-900"
-              )}
-            >
-              <div
+            <NavigationMenuItem key={item.href} className="flex">
+              <NavigationMenuLink
+                current={isActive}
+                render={<Link href={item.href} />}
                 className={cn(
-                  "p-1 rounded-xl transition-all",
-                  isActive ? "bg-blue-50" : ""
+                  "flex flex-1 flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors touch-manipulation select-none",
+                  isActive
+                    ? "text-blue-600 font-bold"
+                    : "text-slate-500 hover:text-slate-900"
                 )}
               >
-                <Icon className="size-5" />
-              </div>
-              <span className="text-[11px] leading-tight tracking-tight">
-                {t(item.labelKey)}
-              </span>
-            </Link>
+                <div
+                  className={cn(
+                    "p-1 rounded-xl transition-all",
+                    isActive ? "bg-blue-50" : ""
+                  )}
+                >
+                  <Icon className="size-5" aria-hidden="true" />
+                </div>
+                <span className="text-[11px] leading-tight tracking-tight">
+                  {t(item.labelKey)}
+                </span>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
           );
         })}
-      </div>
-    </nav>
+      </NavigationMenuList>
+    </NavigationMenu>
   );
 }

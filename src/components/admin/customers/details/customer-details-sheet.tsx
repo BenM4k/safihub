@@ -124,7 +124,7 @@ export function CustomerDetailsSheet({
             <TabsList className="h-auto p-0 gap-6 bg-transparent border-0 rounded-none justify-start">
               <TabsTrigger
                 value="profile"
-                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-[state=active]:!text-primary data-[state=active]:!bg-transparent data-[state=active]:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
+                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-selected:!text-primary data-selected:!bg-transparent data-selected:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
               >
                 <User className="size-3.5" />
                 <span>{t("tabProfile")}</span>
@@ -132,7 +132,7 @@ export function CustomerDetailsSheet({
 
               <TabsTrigger
                 value="orders"
-                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-[state=active]:!text-primary data-[state=active]:!bg-transparent data-[state=active]:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
+                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-selected:!text-primary data-selected:!bg-transparent data-selected:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
               >
                 <ShoppingBag className="size-3.5" />
                 <span>{t("tabOrders")}</span>
@@ -145,7 +145,7 @@ export function CustomerDetailsSheet({
 
               <TabsTrigger
                 value="addresses"
-                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-[state=active]:!text-primary data-[state=active]:!bg-transparent data-[state=active]:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
+                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-selected:!text-primary data-selected:!bg-transparent data-selected:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
               >
                 <Home className="size-3.5" />
                 <span>{t("tabAddresses")}</span>
@@ -153,7 +153,7 @@ export function CustomerDetailsSheet({
 
               <TabsTrigger
                 value="history"
-                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-[state=active]:!text-primary data-[state=active]:!bg-transparent data-[state=active]:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
+                className="h-auto p-0 pb-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground border-0 data-selected:!text-primary data-selected:!bg-transparent data-selected:!shadow-none after:!hidden rounded-none gap-1.5 cursor-pointer"
               >
                 <History className="size-3.5" />
                 <span>{t("tabHistory")}</span>

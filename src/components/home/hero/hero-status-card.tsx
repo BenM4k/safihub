@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTab } from "@ui-sdk/react/tabs";
 import { OrderTrackingCard } from "./status-cards/order-tracking-card";
 import { PartnerDashboardCard } from "./status-cards/partner-dashboard-card";
 import { CataloguePricingCard } from "./status-cards/catalogue-pricing-card";
@@ -130,31 +131,28 @@ export function HeroStatusCard() {
         </div>
       </div>
 
-      {/* Subtle Interactive Switcher Dots */}
-      <div
-        className="mt-4 pl-14 flex items-center justify-center gap-2"
-        role="tablist"
-        aria-label="Hero showcase"
+      <Tabs
+        value={activeKey}
+        onValueChange={(next) => {
+          const idx = PAGE_VARIANTS.findIndex((v) => v.id === next);
+          if (idx >= 0) setActiveIndex(idx);
+        }}
+        className="mt-4 pl-14"
       >
-        {PAGE_VARIANTS.map((variant, idx) => {
-          const isCurrent = idx === activeIndex;
-          return (
-            <button
+        <TabsList
+          aria-label="Hero showcase"
+          className="flex items-center justify-center gap-2"
+        >
+          {PAGE_VARIANTS.map((variant, idx) => (
+            <TabsTab
               key={variant.id}
-              type="button"
-              role="tab"
-              aria-selected={isCurrent}
+              value={variant.id}
               aria-label={t("switchCardAria", { index: idx + 1 })}
-              onClick={() => setActiveIndex(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                isCurrent
-                  ? "w-8 bg-primary"
-                  : "w-2 bg-border-strong/50 hover:bg-primary/60"
-              }`}
+              className="h-1.5 w-2 rounded-full bg-border-strong/50 hover:bg-primary/60 data-selected:w-8 data-selected:bg-primary transition-all duration-300 cursor-pointer"
             />
-          );
-        })}
-      </div>
+          ))}
+        </TabsList>
+      </Tabs>
     </div>
   );
 }

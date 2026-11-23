@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Eye, BookOpen, ShieldCheck, SunMedium } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import type { UserPreferences } from "./types";
 
 interface WidgetProfilesProps {
@@ -28,12 +29,8 @@ function ProfileItem({
   onToggle,
 }: ProfileItemProps) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={onToggle}
-      className={`group flex w-full items-center justify-between p-3 rounded-2xl border text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+    <label
+      className={`group flex w-full items-center justify-between p-3 rounded-2xl border text-left transition-all cursor-pointer focus-within:ring-2 focus-within:ring-primary ${
         checked
           ? "bg-primary/5 dark:bg-primary/10 border-primary/30"
           : "bg-slate-50/80 dark:bg-white/[0.03] border-slate-200/60 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10"
@@ -60,20 +57,14 @@ function ProfileItem({
         </div>
       </div>
 
-      {/* Visual iOS-style Switch */}
-      <span
-        aria-hidden="true"
-        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-          checked ? "bg-primary" : "bg-slate-300 dark:bg-slate-700"
-        }`}
-      >
-        <span
-          className={`pointer-events-none inline-block size-5 rounded-full bg-white shadow-md transform transition duration-200 ease-in-out ${
-            checked ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </span>
-    </button>
+      <Switch
+        checked={checked}
+        onCheckedChange={(next) => {
+          if (next !== checked) onToggle();
+        }}
+        aria-label={title}
+      />
+    </label>
   );
 }
 
