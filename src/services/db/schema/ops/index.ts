@@ -183,6 +183,19 @@ export const cashLedger = pgTable(
     index("cash_ledger_courier_idx").on(t.courierId, t.createdAt),
     index("cash_ledger_house_idx").on(t.houseId, t.createdAt),
     index("cash_ledger_order_idx").on(t.orderId),
+    index("cash_ledger_reversal_of_idx")
+      .on(t.reversalOfId)
+      .where(sql`${t.reversalOfId} is not null`),
+    index("cash_ledger_courier_type_created_idx").on(
+      t.courierId,
+      t.entryType,
+      t.createdAt
+    ),
+    index("cash_ledger_house_type_created_idx").on(
+      t.houseId,
+      t.entryType,
+      t.createdAt
+    ),
     check(
       "cash_ledger_reversal_link",
       sql`(${t.entryType} = 'reversal') = (${t.reversalOfId} is not null)`
@@ -230,7 +243,10 @@ export const notifications = pgTable(
     locale: text("locale").notNull().default("fr"),
     title: text("title"),
     body: text("body").notNull(),
+    dedupeKey: text("dedupe_key"),
     status: notificationStatusEnum("status").notNull().default("pending"),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    nextRetryAt: ts("next_retry_at"),
     error: text("error"),
     sentAt: ts("sent_at"),
     readAt: ts("read_at"),
@@ -239,6 +255,12 @@ export const notifications = pgTable(
   (t) => [
     index("notifications_user_idx").on(t.userId, t.createdAt),
     index("notifications_status_idx").on(t.status),
+    uniqueIndex("notifications_dedupe_key_unique")
+      .on(t.dedupeKey)
+      .where(sql`${t.dedupeKey} is not null`),
+    index("notifications_outbox_retry_idx")
+      .on(t.status, t.nextRetryAt)
+      .where(sql`${t.userId} is null`),
     check(
       "notifications_recipient",
       sql`${t.userId} is not null or ${t.phone} is not null`

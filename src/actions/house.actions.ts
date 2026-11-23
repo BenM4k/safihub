@@ -56,7 +56,9 @@ async function getAuthenticatedHouseContext(providedHouseId?: string) {
   }
 
   const staffRole: HouseStaffRole =
-    authRes.value.user.role === "admin" ? "owner" : normalizeStaffRole(authRes.value.user.role);
+    authRes.value.user.role === "admin"
+      ? "owner"
+      : normalizeStaffRole(authRes.value.memberRole ?? "owner");
 
   return ok({
     user: authRes.value.user,

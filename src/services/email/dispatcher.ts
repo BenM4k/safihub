@@ -5,9 +5,12 @@ import {
   sendHouseSettlementEmail,
   sendHouseStaffLinkedEmail,
   sendHouseStatusChangeEmail,
+  sendOrderAcceptanceEscalationEmail,
+  sendOrderAcceptanceReminderEmail,
   sendOrderAdjustmentPromptEmail,
   sendOrderConfirmationEmail,
   sendOrderDeliveredReceiptEmail,
+  sendOrderExpiredEmail,
   sendPartnerApplicationReceivedEmail,
   sendPartnerInvitationEmail,
   sendPartnerRejectionEmail,
@@ -37,6 +40,12 @@ export function buildIdempotentEmailKey(payload: EmailNotificationJobPayload): s
       return `email-house-staff-${payload.houseId}-${payload.email}-${payload.eventId || "linked"}`;
     case "house_settlement_disbursed":
       return `email-house-settlement-${payload.settlementId}`;
+    case "order_acceptance_reminder":
+      return `email-order-acc-rem-${payload.orderId}-${payload.assignmentRevision}-${payload.email}`;
+    case "order_acceptance_escalation":
+      return `email-order-acc-esc-${payload.orderId}-${payload.assignmentRevision}-${payload.email}`;
+    case "order_expired":
+      return `email-order-expired-${payload.orderId}-${payload.email}`;
   }
 }
 
@@ -69,6 +78,27 @@ async function executeEmailNotificationDirect(payload: EmailNotificationJobPaylo
     case "house_settlement_disbursed":
       await sendHouseSettlementEmail(payload);
       break;
+    case "order_acceptance_reminder": {
+      const res = await sendOrderAcceptanceReminderEmail(payload);
+      if (!res.success) {
+        throw new Error(res.error || "Failed to send order acceptance reminder email");
+      }
+      break;
+    }
+    case "order_acceptance_escalation": {
+      const res = await sendOrderAcceptanceEscalationEmail(payload);
+      if (!res.success) {
+        throw new Error(res.error || "Failed to send order acceptance escalation email");
+      }
+      break;
+    }
+    case "order_expired": {
+      const res = await sendOrderExpiredEmail(payload);
+      if (!res.success) {
+        throw new Error(res.error || "Failed to send order expired email");
+      }
+      break;
+    }
   }
 }
 

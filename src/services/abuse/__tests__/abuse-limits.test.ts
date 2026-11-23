@@ -6,10 +6,15 @@ import {
   type OrderValidationContext,
 } from "@/services/order/validation";
 import {
+  checkDeliveryCodeVerificationRateLimit,
+  clearDeliveryCodeVerificationRateLimit,
   clearRateLimitStore,
+  consumeDeliveryCodeVerificationAttempt,
   rateLimitCheckout,
   rateLimitLogin,
   rateLimitRegistration,
+  recordFailedDeliveryCodeAttempt,
+  releaseDeliveryCodeVerificationAttempt,
 } from "../rate-limiter";
 import { applyRetryFeeToOrder, DEFAULT_RETRY_FEE_CDF } from "../retry-fee";
 
@@ -264,6 +269,57 @@ describe("Phase 10.1: Abuse & Fraud Controls - Limits & Blocking", () => {
       expect(res.ok).toBe(false);
       if (!res.ok) {
         expect(res.error).toContain("bloqué");
+      }
+    });
+  });
+
+  describe("Delivery Code Verification Rate Limit", () => {
+    it("only consumes attempt budget on failed verification and clears on success", async () => {
+      clearRateLimitStore();
+      for (let i = 0; i < 4; i++) {
+        await recordFailedDeliveryCodeAttempt("cour-1", "miss-1");
+      }
+
+      const check = await checkDeliveryCodeVerificationRateLimit("cour-1", "miss-1");
+      expect(check.allowed).toBe(true);
+      expect(check.remaining).toBe(1);
+
+      // Re-checking does not consume budget
+      const check2 = await checkDeliveryCodeVerificationRateLimit("cour-1", "miss-1");
+      expect(check2.allowed).toBe(true);
+      expect(check2.remaining).toBe(1);
+
+      await clearDeliveryCodeVerificationRateLimit("cour-1", "miss-1");
+      const resetCheck = await checkDeliveryCodeVerificationRateLimit("cour-1", "miss-1");
+      expect(resetCheck.allowed).toBe(true);
+      expect(resetCheck.remaining).toBe(5);
+    });
+
+    it("consumes upfront on atomic check and releases slot on non-code abort", async () => {
+      clearRateLimitStore();
+      const first = await consumeDeliveryCodeVerificationAttempt("cour-atomic", "miss-atomic");
+      expect(first.allowed).toBe(true);
+      expect(first.remaining).toBe(4);
+
+      await releaseDeliveryCodeVerificationAttempt("cour-atomic", "miss-atomic");
+      const afterRelease = await checkDeliveryCodeVerificationRateLimit("cour-atomic", "miss-atomic");
+      expect(afterRelease.allowed).toBe(true);
+      expect(afterRelease.remaining).toBe(5);
+    });
+
+    it("falls back open and logs an error when Redis is unavailable outside test environment", async () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
+      vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        const res = await consumeDeliveryCodeVerificationAttempt("cour-2", "miss-2");
+        expect(res.allowed).toBe(true);
+        expect(res.unavailable).toBeUndefined();
+        expect(errorSpy).toHaveBeenCalled();
+      } finally {
+        errorSpy.mockRestore();
+        vi.unstubAllEnvs();
       }
     });
   });

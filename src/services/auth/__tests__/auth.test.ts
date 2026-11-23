@@ -283,6 +283,40 @@ describe("Better Auth & Customer Authentication", () => {
         expect(fakeAttempt.error).toContain("Only administrators");
       }
     });
+
+    it("rejects blocked or banned administrators from executing admin user actions", async () => {
+      const blockedAdminId = `usr_blocked_admin_${uniqueId()}`;
+      const blockedEmail = `blocked-admin-${uniqueId()}@safihub.cd`;
+      await db.insert(schema.user).values({
+        id: blockedAdminId,
+        name: "Blocked Admin",
+        email: blockedEmail,
+        emailVerified: true,
+        role: "admin",
+        status: "blocked",
+        banned: true,
+      });
+
+      const resetRes = await adminResetUserPassword({
+        adminUserId: blockedAdminId,
+        targetUserId: blockedAdminId,
+        newPassword: "NewPassword123!",
+      });
+      expect(resetRes.ok).toBe(false);
+      if (!resetRes.ok) {
+        expect(resetRes.error).toContain("Only administrators");
+      }
+
+      const guestRes = await adminCreateGuestUser({
+        adminUserId: blockedAdminId,
+        name: "Guest",
+        phone: "+243990001122",
+      });
+      expect(guestRes.ok).toBe(false);
+      if (!guestRes.ok) {
+        expect(guestRes.error).toContain("Only administrators");
+      }
+    });
   });
 
   describe("Guest User Handling & Account Merging", () => {

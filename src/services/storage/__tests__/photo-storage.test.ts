@@ -99,6 +99,7 @@ vi.mock("@/dal", () => ({
     { id: "p_old_2", storageKey: "orders/ord_100/old2.webp", orderId: "ord_100" },
   ]),
   markPhotosDeletedAtomic: vi.fn(async (photoIds: string[]) => photoIds.length),
+  verifyPhotoAssociationOwnership: vi.fn(async () => true),
   checkUserHouseAccess: vi.fn(async (userId: string, houseId: string) => {
     // Only house_staff_A has access to house_A
     return userId === "staff_house_A" && houseId === "house_A";
@@ -216,6 +217,49 @@ describe("Phase 7: Cloudflare R2 Photos, Compression & Storage Architecture", ()
         expect(res.value.uploadUrl).toContain("/api/storage/");
         expect(res.value.storageKey).toContain("orders/ord_100/pickup_condition/");
         expect(res.value.expiresInSeconds).toBe(300);
+      }
+    });
+
+    it("rejects customer and house staff from uploading courier pickup_condition or delivery_proof photos", async () => {
+      const custRes = await generatePhotoUploadUrlService({
+        user: { id: "cust_1", role: "customer" },
+        orderId: "ord_100",
+        type: "delivery_proof",
+      });
+      expect(custRes.ok).toBe(false);
+
+      const houseRes = await generatePhotoUploadUrlService({
+        user: { id: "staff_house_A", role: "house" },
+        orderId: "ord_100",
+        type: "pickup_condition",
+      });
+      expect(houseRes.ok).toBe(false);
+    });
+
+    it("allows customer to upload dispute photos for their own order", async () => {
+      const res = await generatePhotoUploadUrlService({
+        user: { id: "cust_1", role: "customer" },
+        orderId: "ord_100",
+        type: "dispute",
+      });
+      expect(res.ok).toBe(true);
+    });
+
+    it("rejects recording photo when foreign orderItemId/missionId does not belong to order", async () => {
+      const dal = await import("@/dal");
+      vi.mocked(dal.verifyPhotoAssociationOwnership).mockResolvedValueOnce(false);
+
+      const res = await recordUploadedPhotoService({
+        user: { id: "courier_1", role: "courier" },
+        orderId: "ord_100",
+        orderItemId: "item_other_order",
+        type: "pickup_condition",
+        storageKey: "orders/ord_100/pickup_condition/00000000-0000-0000-0000-000000000099.webp",
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toContain("Association invalide");
       }
     });
 

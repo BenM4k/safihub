@@ -17,7 +17,8 @@ test.describe("Flow 3: Acceptance Expiry & Alternative House Switching", () => {
     // Order placed on Monday at 10:00 AM
     const orderPlacedTime = new Date("2026-10-12T10:00:00Z");
     const deadlines = computeAcceptanceDeadlines(orderPlacedTime, 45, houseSchedule, []); // 45 min
-    expect(deadlines.deadlineAt.getTime()).toBe(new Date("2026-10-12T10:45:00Z").getTime());
+    expect(deadlines.deadlineAt).not.toBeNull();
+    expect(deadlines.deadlineAt!.getTime()).toBe(new Date("2026-10-12T10:45:00Z").getTime());
 
     // 2. 45 minutes pass without house acceptance -> system transitions order to 'expired'
     const expireRes = transitionOrder(orderId, orderStatus, {

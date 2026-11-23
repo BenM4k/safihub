@@ -14,7 +14,6 @@ import {
   insertOrderWithDetails,
   transitionOrderStatusAtomic,
   updateOrderStatusIfCurrent,
-  updateOrderStatusWithDeadline,
   type OrderDetailRecord,
   type OrderEventRecord,
   type OrderItemRecord,
@@ -184,16 +183,25 @@ export async function adminConfirmFirstOrder(params: {
       houseClosures
     );
 
-    const updated = await updateOrderStatusWithDeadline(
-      order.id,
-      "awaiting_confirmation",
-      "created",
-      deadlines.deadlineAt
-    );
+    const updated = await transitionOrderStatusAtomic({
+      orderId: order.id,
+      expectedStatus: "awaiting_confirmation",
+      newStatus: "created",
+      orderUpdates: {
+        acceptanceDeadlineAt: deadlines.deadlineAt,
+      },
+      event: {
+        ...transitionResult.value.event,
+        payload: {
+          ...(transitionResult.value.event.payload ?? {}),
+          category: "screening_confirmed",
+          confirmedAt: now.toISOString(),
+        },
+      },
+    });
     if (!updated) {
       return err("Le statut de la commande a changé entre-temps.");
     }
-    await addOrderEvent(transitionResult.value.event);
 
     return ok(undefined);
   } catch (error) {

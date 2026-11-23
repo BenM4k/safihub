@@ -117,5 +117,8 @@ export const courierZones = pgTable(
       .notNull()
       .references(() => zones.id),
   },
-  (t) => [primaryKey({ columns: [t.courierId, t.zoneId] })]
+  (t) => [
+    primaryKey({ columns: [t.courierId, t.zoneId] }),
+    index("courier_zones_zone_idx").on(t.zoneId, t.courierId),
+  ]
 );

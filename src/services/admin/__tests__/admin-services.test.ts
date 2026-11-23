@@ -10,28 +10,46 @@ import {
 } from "../settings.service";
 import { assignMissionToCourier } from "../dispatch.service";
 
+const dispatchMocks = vi.hoisted(() => ({
+  mission: {
+    id: "m-dummy",
+    orderId: "ord-dummy",
+    type: "pickup" as "pickup" | "delivery",
+    courierId: null,
+    status: "unassigned",
+    slotStart: new Date("2026-10-12T06:00:00Z"), // Mon 08:00 Bukavu
+    slotEnd: new Date("2026-10-12T08:00:00Z"), // Mon 10:00 Bukavu
+    customerZoneId: "zone-customer-nonexistent",
+    houseZoneId: "zone-house-nonexistent",
+    createdAt: new Date(),
+  },
+  eligibleCouriers: [] as Array<{ userId: string }>,
+  shifts: [] as Array<{ id: string; courierId: string; weekday: number; startsAt: string; endsAt: string }>,
+  cashCeilingExceeded: false,
+}));
+
 vi.mock("@/dal", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/dal")>();
   return {
     ...actual,
     getMissionById: vi.fn(async (id: string) => {
       if (id === "m-dummy") {
-        return {
-          id: "m-dummy",
-          orderId: "ord-dummy",
-          type: "pickup",
-          courierId: null,
-          status: "unassigned",
-          slotStart: new Date(),
-          slotEnd: new Date(),
-          customerZoneId: "zone-customer-nonexistent",
-          houseZoneId: "zone-house-nonexistent",
-          createdAt: new Date(),
-        };
+        return dispatchMocks.mission;
       }
       return null;
     }),
-    getEligibleCouriersForZones: vi.fn(async () => []),
+    getEligibleCouriersForZones: vi.fn(async () => dispatchMocks.eligibleCouriers),
+    getCourierShifts: vi.fn(async () => dispatchMocks.shifts),
+    getCourierCashBalances: vi.fn(async () => ({
+      cashHeldCDF: dispatchMocks.cashCeilingExceeded ? 60000 : 10000,
+      cashHeldUSD: 0,
+      cashCeiling: 50000,
+      isCeilingExceeded: dispatchMocks.cashCeilingExceeded,
+      securityDeposit: 0,
+      changeFloat: 0,
+      totalCollectedCDF: 0,
+      totalRemittedCDF: 0,
+    })),
     assignMission: vi.fn(async () => true),
     addOrderEvent: vi.fn(async () => {}),
   };
@@ -139,8 +157,9 @@ describe("Admin Back-Office Services Unit Tests", () => {
     });
   });
 
-  describe("Dispatch & Courier Assignment (AC 20)", () => {
+  describe("Dispatch & Courier Assignment (AC 20, Shift & Cash Ceiling)", () => {
     it("rejects assigning a mission if courier does not cover both customer and house zones", async () => {
+      dispatchMocks.eligibleCouriers = [];
       const res = await assignMissionToCourier({
         missionId: "m-dummy",
         orderId: "ord-dummy",
@@ -153,6 +172,48 @@ describe("Admin Back-Office Services Unit Tests", () => {
       expect(res.ok).toBe(false);
       if (!res.ok) {
         expect(res.error).toContain("AC 20 violation");
+      }
+    });
+
+    it("rejects assigning a mission when courier is not on shift for the slot", async () => {
+      dispatchMocks.mission.type = "pickup";
+      dispatchMocks.eligibleCouriers = [{ userId: "courier-1" }];
+      dispatchMocks.shifts = [
+        { id: "s1", courierId: "courier-1", weekday: 1, startsAt: "14:00", endsAt: "18:00" },
+      ];
+      dispatchMocks.cashCeilingExceeded = false;
+
+      const res = await assignMissionToCourier({
+        missionId: "m-dummy",
+        orderId: "ord-dummy",
+        courierId: "courier-1",
+        adminId: "usr_admin",
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toContain("Shift violation");
+      }
+    });
+
+    it("rejects assigning a delivery mission when courier cash ceiling is exceeded (AC 13)", async () => {
+      dispatchMocks.mission.type = "delivery";
+      dispatchMocks.eligibleCouriers = [{ userId: "courier-1" }];
+      dispatchMocks.shifts = [
+        { id: "s1", courierId: "courier-1", weekday: 1, startsAt: "08:00", endsAt: "12:00" },
+      ];
+      dispatchMocks.cashCeilingExceeded = true;
+
+      const res = await assignMissionToCourier({
+        missionId: "m-dummy",
+        orderId: "ord-dummy",
+        courierId: "courier-1",
+        adminId: "usr_admin",
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.error).toContain("AC 13 violation");
       }
     });
   });

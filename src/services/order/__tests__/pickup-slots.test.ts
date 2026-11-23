@@ -8,8 +8,7 @@ describe("getCheckoutPickupSlots", () => {
   const neighborhoodId = "neigh_cust";
 
   it("returns available slots when house is covered and eligible couriers are on shift", async () => {
-    vi.spyOn(contextModule, "buildOrderValidationContext").mockResolvedValue({
-      existingOrders: [],
+    vi.spyOn(contextModule, "buildSlotAvailabilityContext").mockResolvedValue({
       houses: new Map([
         [
           houseId,
@@ -44,10 +43,6 @@ describe("getCheckoutPickupSlots", () => {
       zoneFees: [
         { customerZoneId: "zone_ibanda", houseZoneId: "zone_kadutu", distanceLevel: 1, deliveryFee: 3000 },
       ],
-      masterServices: new Map(),
-      masterItems: new Map(),
-      masterFabrics: new Map(),
-      houseItems: [],
       houseHours: [
         { houseId, weekday: 1, opensAt: "08:00", closesAt: "18:00" },
       ],
@@ -61,10 +56,7 @@ describe("getCheckoutPickupSlots", () => {
       ],
       currentTime: fromBukavuDateTime("2026-10-26", "06:00"),
       settings: {
-        maxItemsPerOrder: 50,
-        defaultCommissionBps: 1500,
         maxCoverageDistanceLevel: 3,
-        acceptanceDelayMinutes: 45,
         leadTimeMinutes: 30,
       },
     });
@@ -79,8 +71,7 @@ describe("getCheckoutPickupSlots", () => {
   });
 
   it("returns no slots if courier does not cover both zones", async () => {
-    vi.spyOn(contextModule, "buildOrderValidationContext").mockResolvedValue({
-      existingOrders: [],
+    vi.spyOn(contextModule, "buildSlotAvailabilityContext").mockResolvedValue({
       houses: new Map([
         [
           houseId,
@@ -115,10 +106,6 @@ describe("getCheckoutPickupSlots", () => {
       zoneFees: [
         { customerZoneId: "zone_ibanda", houseZoneId: "zone_kadutu", distanceLevel: 1, deliveryFee: 3000 },
       ],
-      masterServices: new Map(),
-      masterItems: new Map(),
-      masterFabrics: new Map(),
-      houseItems: [],
       houseHours: [
         { houseId, weekday: 1, opensAt: "08:00", closesAt: "18:00" },
       ],
@@ -132,10 +119,7 @@ describe("getCheckoutPickupSlots", () => {
       ],
       currentTime: fromBukavuDateTime("2026-10-26", "06:00"),
       settings: {
-        maxItemsPerOrder: 50,
-        defaultCommissionBps: 1500,
         maxCoverageDistanceLevel: 3,
-        acceptanceDelayMinutes: 45,
         leadTimeMinutes: 30,
       },
     });

@@ -312,13 +312,33 @@ export async function getCourierCashBalances(courierId: string): Promise<{
   }
 
   const effectiveHeldCDF = Math.max(0, cashHeldCDF);
+  const effectiveHeldUSD = Math.max(0, cashHeldUSD);
+
+  let policyRate = 2800;
+  if (effectiveHeldUSD > 0) {
+    const [latestRate] = await db
+      .select({ rate: schema.exchangeRates.rate })
+      .from(schema.exchangeRates)
+      .where(
+        and(
+          eq(schema.exchangeRates.baseCurrency, "USD"),
+          eq(schema.exchangeRates.quoteCurrency, "CDF")
+        )
+      )
+      .orderBy(desc(schema.exchangeRates.effectiveDate), desc(schema.exchangeRates.createdAt))
+      .limit(1);
+    policyRate = Number(latestRate?.rate) || 2800;
+  }
+
+  const effectiveTotalHeldCDF =
+    effectiveHeldCDF + Math.round(effectiveHeldUSD * policyRate);
   const ceiling = profile?.cashCeiling ?? null;
 
   return {
     cashHeldCDF: effectiveHeldCDF,
-    cashHeldUSD: Math.max(0, cashHeldUSD),
+    cashHeldUSD: effectiveHeldUSD,
     cashCeiling: ceiling,
-    isCeilingExceeded: ceiling !== null && effectiveHeldCDF >= ceiling,
+    isCeilingExceeded: ceiling !== null && effectiveTotalHeldCDF >= ceiling,
     securityDeposit: profile?.securityDeposit ?? 0,
     changeFloat: profile?.changeFloat ?? 0,
     totalCollectedCDF,

@@ -306,6 +306,12 @@ export async function resetPasswordWithToken(
   }
 }
 
+function isActiveAdmin(
+  user: { role?: string | null; status?: string | null; banned?: boolean | null } | null | undefined
+): boolean {
+  return Boolean(user && user.role === "admin" && user.status !== "blocked" && !user.banned);
+}
+
 /**
  * Admin action: Resets a user's password directly (fallback when email is unavailable).
  */
@@ -313,7 +319,7 @@ export async function adminResetUserPassword(
   input: AdminResetPasswordInput
 ): Promise<Result<{ success: boolean }>> {
   const adminUser = await getUserById(input.adminUserId);
-  if (!adminUser || adminUser.role !== "admin") {
+  if (!isActiveAdmin(adminUser)) {
     return err("Unauthorized: Only administrators can reset user passwords.");
   }
 
@@ -364,7 +370,7 @@ export async function adminCreateGuestUser(
   input: AdminCreateGuestInput
 ): Promise<Result<{ id: string; email: string; name: string; contactPhone: string | null }>> {
   const adminUser = await getUserById(input.adminUserId);
-  if (!adminUser || adminUser.role !== "admin") {
+  if (!isActiveAdmin(adminUser)) {
     return err("Unauthorized: Only administrators can create guest users.");
   }
 
@@ -392,7 +398,7 @@ export async function adminMergeGuestUser(
   input: AdminMergeGuestInput
 ): Promise<Result<GuestMergeResult>> {
   const adminUser = await getUserById(input.adminUserId);
-  if (!adminUser || adminUser.role !== "admin") {
+  if (!isActiveAdmin(adminUser)) {
     return err("Unauthorized: Only administrators can merge guest users.");
   }
 
@@ -415,7 +421,7 @@ export async function adminBlockUser({
   reason?: string;
 }): Promise<Result<Record<string, unknown>>> {
   const adminUser = await getUserById(adminUserId);
-  if (!adminUser || adminUser.role !== "admin") {
+  if (!isActiveAdmin(adminUser)) {
     return err("Unauthorized: Only administrators can block users.");
   }
 
@@ -443,7 +449,7 @@ export async function adminUnblockUser({
   targetUserId: string;
 }): Promise<Result<Record<string, unknown>>> {
   const adminUser = await getUserById(adminUserId);
-  if (!adminUser || adminUser.role !== "admin") {
+  if (!isActiveAdmin(adminUser)) {
     return err("Unauthorized: Only administrators can unblock users.");
   }
 
@@ -470,7 +476,7 @@ export async function adminSetUserRole({
   role: UserRole;
 }): Promise<Result<Record<string, unknown>>> {
   const adminUser = await getUserById(adminUserId);
-  if (!adminUser || adminUser.role !== "admin") {
+  if (!isActiveAdmin(adminUser)) {
     return err("Unauthorized: Only administrators can change user roles.");
   }
 

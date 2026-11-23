@@ -1,13 +1,17 @@
 import "server-only";
-import { and, asc, desc, eq, gte, inArray, lte, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte, notInArray, or, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { generateUniqueSlug } from "@/lib/slug";
 import { toBukavuDateTime } from "@/services/availability";
 import { err, ok, type Result } from "@/lib/result";
 import { normalizeStorageUrl } from "@/lib/storage-url";
+import {
+  computeReceptionDeadline,
+  countOpeningHoursMinutes,
+} from "@/services/order/deadlines";
 import { resolveHouseCoords } from "./house-location.dal";
 
-import type { HouseReviewStatus } from "@/services/db/schema";
+import type { HouseMemberRole, HouseReviewStatus } from "@/services/db/schema";
 
 export interface HouseMembershipInfo {
   houseId: string;
@@ -16,6 +20,7 @@ export interface HouseMembershipInfo {
   houseSlug: string;
   isActive: boolean;
   isPaused: boolean;
+  memberRole: HouseMemberRole;
 }
 
 export interface HouseRecord {
@@ -105,12 +110,36 @@ export async function getUserHouseMemberships(
       houseSlug: schema.houses.slug,
       isActive: schema.houses.isActive,
       isPaused: schema.houses.isPaused,
+      memberRole: schema.houseMembers.role,
     })
     .from(schema.houseMembers)
     .innerJoin(schema.houses, eq(schema.houseMembers.houseId, schema.houses.id))
-    .where(eq(schema.houseMembers.userId, userId));
+    .where(eq(schema.houseMembers.userId, userId))
+    .orderBy(asc(schema.houseMembers.createdAt), asc(schema.houseMembers.houseId));
 
   return rows;
+}
+
+export async function getUserHouseMemberRole(
+  userId: string,
+  houseIdOrSlug: string
+): Promise<HouseMemberRole | null> {
+  const [membership] = await db
+    .select({ role: schema.houseMembers.role })
+    .from(schema.houseMembers)
+    .innerJoin(schema.houses, eq(schema.houseMembers.houseId, schema.houses.id))
+    .where(
+      and(
+        eq(schema.houseMembers.userId, userId),
+        or(
+          eq(schema.houseMembers.houseId, houseIdOrSlug),
+          eq(schema.houses.slug, houseIdOrSlug)
+        )
+      )
+    )
+    .limit(1);
+
+  return membership?.role ?? null;
 }
 
 export async function checkUserHouseAccess(
@@ -138,15 +167,18 @@ export async function checkUserHouseAccess(
 export async function addHouseMember({
   houseId,
   userId,
+  role = "owner",
 }: {
   houseId: string;
   userId: string;
+  role?: HouseMemberRole;
 }): Promise<void> {
   await db
     .insert(schema.houseMembers)
     .values({
       houseId,
       userId,
+      role,
     })
     .onConflictDoNothing();
 }
@@ -468,7 +500,115 @@ export async function setHouseHours(
   houseId: string,
   hours: Array<{ weekday: number; opensAt: string; closesAt: string }>
 ): Promise<void> {
+  const editedAt = new Date();
   await db.transaction(async (tx) => {
+    const [prevHours, closures, settingsRows, activeReceivedOrders] =
+      await Promise.all([
+        tx
+          .select()
+          .from(schema.houseHours)
+          .where(eq(schema.houseHours.houseId, houseId))
+          .orderBy(asc(schema.houseHours.weekday), asc(schema.houseHours.opensAt)),
+        tx
+          .select()
+          .from(schema.houseClosures)
+          .where(eq(schema.houseClosures.houseId, houseId))
+          .orderBy(asc(schema.houseClosures.startsOn)),
+        tx
+          .select({ receptionWindowMinutes: schema.settings.receptionWindowMinutes })
+          .from(schema.settings)
+          .where(eq(schema.settings.id, 1))
+          .limit(1),
+        tx
+          .select({
+            id: schema.orders.id,
+            receivedAt: schema.orders.receivedAt,
+          })
+          .from(schema.orders)
+          .where(
+            and(
+              eq(schema.orders.houseId, houseId),
+              eq(schema.orders.status, "received"),
+              isNotNull(schema.orders.receivedAt),
+              isNull(schema.orders.receptionConfirmedAt)
+            )
+          ),
+      ]);
+
+    const receptionWindowMinutes = settingsRows[0]?.receptionWindowMinutes ?? 60;
+
+    for (const activeOrder of activeReceivedOrders) {
+      if (!activeOrder.receivedAt) continue;
+
+      const [latestCheckpoint] = await tx
+        .select({ payload: schema.orderEvents.payload })
+        .from(schema.orderEvents)
+        .where(
+          and(
+            eq(schema.orderEvents.orderId, activeOrder.id),
+            eq(schema.orderEvents.type, "note"),
+            sql`${schema.orderEvents.payload}->>'category' = 'reception_schedule_checkpoint'`
+          )
+        )
+        .orderBy(desc(schema.orderEvents.createdAt))
+        .limit(1);
+
+      const payloadObj = latestCheckpoint?.payload as
+        | { effectiveAt?: string; accruedOpenMinutes?: number }
+        | null
+        | undefined;
+      const prevEffectiveAt = payloadObj?.effectiveAt
+        ? new Date(payloadObj.effectiveAt)
+        : activeOrder.receivedAt;
+      const prevAccrued =
+        typeof payloadObj?.accruedOpenMinutes === "number"
+          ? payloadObj.accruedOpenMinutes
+          : 0;
+
+      const newlyAccrued = countOpeningHoursMinutes(
+        prevEffectiveAt,
+        editedAt,
+        prevHours,
+        closures
+      );
+      const totalAccrued = Math.min(
+        receptionWindowMinutes,
+        prevAccrued + newlyAccrued
+      );
+      const remainingMinutes = Math.max(0, receptionWindowMinutes - totalAccrued);
+      const newDeadline =
+        remainingMinutes === 0
+          ? editedAt
+          : computeReceptionDeadline(editedAt, remainingMinutes, hours, closures);
+
+      await tx
+        .update(schema.orders)
+        .set({
+          receptionDeadlineAt: newDeadline,
+          updatedAt: editedAt,
+        })
+        .where(
+          and(
+            eq(schema.orders.id, activeOrder.id),
+            eq(schema.orders.status, "received"),
+            isNull(schema.orders.receptionConfirmedAt)
+          )
+        );
+
+      await tx.insert(schema.orderEvents).values({
+        orderId: activeOrder.id,
+        type: "note",
+        actorRole: "system",
+        onBehalfOfHouseId: houseId,
+        note: "Horaires du pressing modifiés pendant le contrôle de réception",
+        payload: {
+          category: "reception_schedule_checkpoint",
+          effectiveAt: editedAt.toISOString(),
+          accruedOpenMinutes: totalAccrued,
+        },
+      });
+    }
+
     await tx.delete(schema.houseHours).where(eq(schema.houseHours.houseId, houseId));
     if (hours.length > 0) {
       await tx.insert(schema.houseHours).values(

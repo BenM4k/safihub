@@ -61,12 +61,23 @@ export async function getSettings(): Promise<SettingsRecord> {
     .limit(1);
 
   if (!row) {
-    // Insert defaults if missing
+    // Insert defaults if missing (conflict-safe under concurrent calls)
     const [inserted] = await db
       .insert(schema.settings)
       .values({ id: 1 })
+      .onConflictDoNothing({ target: schema.settings.id })
       .returning();
-    return inserted!;
+
+    if (inserted) {
+      return inserted;
+    }
+
+    const [existing] = await db
+      .select()
+      .from(schema.settings)
+      .where(eq(schema.settings.id, 1))
+      .limit(1);
+    return existing!;
   }
 
   return row;

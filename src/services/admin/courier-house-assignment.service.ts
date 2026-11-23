@@ -1,6 +1,7 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
 import {
+  getAllCourierZones,
   getCouriers,
   getCourierZones,
   getHousesForCourierAssignment,
@@ -115,7 +116,8 @@ export async function assignCourierToHouses(params: {
       getHousesForCourierAssignment(),
     ]);
 
-    const targetHouses = allHouses.filter((h) => houseIds.includes(h.id));
+    const targetHouseIds = new Set(houseIds);
+    const targetHouses = allHouses.filter((h) => targetHouseIds.has(h.id));
     if (targetHouses.length === 0) {
       return err("Aucune maison valide trouvée");
     }
@@ -185,21 +187,21 @@ export async function unassignCourierFromHouse(params: {
  */
 export async function getHousesWithoutCourier(): Promise<Result<HouseWithoutCourierSummary[]>> {
   try {
-    const [houses, couriers] = await Promise.all([
+    const [houses, couriers, allZones] = await Promise.all([
       getHousesForCourierAssignment(),
       getCouriers(),
+      getAllCourierZones(),
     ]);
 
-    const activeCouriersWithShifts = couriers.filter(
-      (c) => c.isActive && c.status === "active" && c.shiftCount > 0
+    const activeCourierIds = new Set(
+      couriers
+        .filter((c) => c.isActive && c.status === "active" && c.shiftCount > 0)
+        .map((c) => c.userId)
     );
 
-    const courierZonesPromises = activeCouriersWithShifts.map((c) => getCourierZones(c.userId));
-    const courierZonesList = await Promise.all(courierZonesPromises);
-
     const servedZoneIds = new Set<string>();
-    for (const zones of courierZonesList) {
-      for (const z of zones) {
+    for (const z of allZones) {
+      if (activeCourierIds.has(z.courierId)) {
         servedZoneIds.add(z.zoneId);
       }
     }

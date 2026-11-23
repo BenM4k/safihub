@@ -1,5 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
+  checkDeliveryCodeVerificationRateLimit,
+  clearRateLimitStore,
+} from "@/services/abuse/rate-limiter";
+import {
   getCourierAssignedMissionsService,
   getCourierMissionDetailService,
   acceptMissionService,
@@ -185,6 +189,7 @@ vi.mock("@/dal", () => ({
     if (params.confirmationCode !== "4829") {
       return {
         ok: false,
+        invalidConfirmationCode: true,
         error: "Code de confirmation de livraison invalide. Demandez le code au client.",
       };
     }
@@ -253,6 +258,7 @@ vi.mock("@/dal", () => ({
 
 describe("Phase 6: Courier Interface Engine & Lifecycle", () => {
   beforeEach(() => {
+    clearRateLimitStore();
     unremittedCashAmount = 25000;
     cashCeilingAmount = 50000;
   });
@@ -418,6 +424,98 @@ describe("Phase 6: Courier Interface Engine & Lifecycle", () => {
 
       expect(res.ok).toBe(true);
     });
+
+    it("rate-limits repeated failed delivery confirmation code attempts", async () => {
+      for (let i = 0; i < 5; i++) {
+        const res = await completeDeliveryMissionService({
+          courierId: "courier_1",
+          missionId: "m_delivery_1",
+          confirmationCode: `000${i}`,
+          cashCollected: 22000,
+        });
+        expect(res.ok).toBe(false);
+      }
+
+      const lockedRes = await completeDeliveryMissionService({
+        courierId: "courier_1",
+        missionId: "m_delivery_1",
+        confirmationCode: "4829",
+        cashCollected: 22000,
+      });
+      expect(lockedRes.ok).toBe(false);
+      if (!lockedRes.ok) {
+        expect(lockedRes.error).toContain("Trop de tentatives");
+      }
+    });
+
+    it("does not consume confirmation code budget on successful attempts and resets prior failures on success", async () => {
+      for (let i = 0; i < 4; i++) {
+        const wrong = await completeDeliveryMissionService({
+          courierId: "courier_1",
+          missionId: "m_delivery_1",
+          confirmationCode: `999${i}`,
+          cashCollected: 22000,
+        });
+        expect(wrong.ok).toBe(false);
+      }
+
+      const beforeSuccess = await checkDeliveryCodeVerificationRateLimit(
+        "courier_1",
+        "m_delivery_1"
+      );
+      expect(beforeSuccess.remaining).toBe(1);
+
+      // First successful verification restores full 5-attempt budget
+      const firstOk = await completeDeliveryMissionService({
+        courierId: "courier_1",
+        missionId: "m_delivery_1",
+        confirmationCode: "4829",
+        cashCollected: 22000,
+      });
+      expect(firstOk.ok).toBe(true);
+
+      const afterFirstSuccess = await checkDeliveryCodeVerificationRateLimit(
+        "courier_1",
+        "m_delivery_1"
+      );
+      expect(afterFirstSuccess.remaining).toBe(5);
+
+      // Subsequent consecutive successful calls continue to preserve the 5-attempt budget
+      for (let i = 0; i < 5; i++) {
+        const okRes = await completeDeliveryMissionService({
+          courierId: "courier_1",
+          missionId: "m_delivery_1",
+          confirmationCode: "4829",
+          cashCollected: 22000,
+        });
+        expect(okRes.ok).toBe(true);
+      }
+
+      const afterAllSuccesses = await checkDeliveryCodeVerificationRateLimit(
+        "courier_1",
+        "m_delivery_1"
+      );
+      expect(afterAllSuccesses.remaining).toBe(5);
+
+      // Unrelated non-code failure releases its reserved slot and preserves prior code attempts
+      const dal = await import("@/dal");
+      vi.spyOn(dal, "completeDeliveryMissionAtomic").mockResolvedValueOnce({
+        ok: false,
+        error: "Statut de mission invalide pour la finalisation",
+      });
+      const nonCodeFail = await completeDeliveryMissionService({
+        courierId: "courier_1",
+        missionId: "m_delivery_1",
+        confirmationCode: "4829",
+        cashCollected: 22000,
+      });
+      expect(nonCodeFail.ok).toBe(false);
+      const afterNonCodeFail = await checkDeliveryCodeVerificationRateLimit(
+        "courier_1",
+        "m_delivery_1"
+      );
+      expect(afterNonCodeFail.remaining).toBe(5);
+    });
   });
 
   describe("Task 6.4: Cash controls & history (Amount owed to each party)", () => {
@@ -528,6 +626,35 @@ describe("Phase 6: Courier Interface Engine & Lifecycle", () => {
         expect(res.value.rejectedCount).toBe(1);
         expect(res.value.results[0]?.status).toBe("rejected");
         expect(res.value.results[0]?.message).toContain("reason is required");
+      }
+    });
+
+    it("rejects batched duplicate complete_delivery attempts for the same mission in offline sync", async () => {
+      const res = await syncOfflineCourierActionsService({
+        courierId: "courier_1",
+        actions: [
+          {
+            id: "act_cd_1",
+            type: "complete_delivery",
+            missionId: "m_delivery_1",
+            payload: { confirmationCode: "0001", cashCollected: 22000, cashCurrency: "CDF" },
+            timestamp: 1000,
+          },
+          {
+            id: "act_cd_2",
+            type: "complete_delivery",
+            missionId: "m_delivery_1",
+            payload: { confirmationCode: "4829", cashCollected: 22000, cashCurrency: "CDF" },
+            timestamp: 2000,
+          },
+        ],
+      });
+
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.value.rejectedCount).toBe(2);
+        expect(res.value.results[1]?.status).toBe("rejected");
+        expect(res.value.results[1]?.message).toContain("Une seule tentative");
       }
     });
   });

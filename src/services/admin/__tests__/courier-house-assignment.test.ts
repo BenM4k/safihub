@@ -178,7 +178,7 @@ describe("courier-house-assignment", () => {
         },
       ]);
 
-      vi.spyOn(dal, "getCourierZones").mockResolvedValue([
+      vi.spyOn(dal, "getAllCourierZones").mockResolvedValue([
         { courierId: "cour_active", zoneId: "zone_served" },
       ]);
 

@@ -350,3 +350,192 @@ L'équipe SafiHub Bukavu`;
   });
 }
 
+/**
+ * 50% acceptance deadline reminder sent to partner laundry house staff.
+ */
+export async function sendOrderAcceptanceReminderEmail({
+  email,
+  recipientName,
+  orderCode,
+  houseName,
+  partnerOrderUrl,
+}: {
+  email: string;
+  recipientName: string;
+  orderCode: string;
+  houseName: string;
+  partnerOrderUrl: string;
+}): Promise<{ id: string; success: boolean; error?: string }> {
+  const safeRecipient = escapeHtml(recipientName);
+  const safeOrderCode = escapeHtml(orderCode);
+  const safeHouse = escapeHtml(houseName);
+
+  const subject = `SafiHub — Rappel : commande #${orderCode} en attente d'acceptation`;
+  const text = `Bonjour ${recipientName},
+
+La commande #${orderCode} destinée à ${houseName} est toujours en attente d'acceptation (50% du délai écoulé).
+
+Veuillez confirmer ou refuser cette commande rapidement depuis votre espace partenaire :
+${partnerOrderUrl}
+
+L'équipe SafiHub Bukavu`;
+
+  const contentHtml = `
+    <h2 style="font-size: 18px; margin: 0 0 16px 0; color: #101828; font-weight: 700;">
+      Commande #${safeOrderCode} en attente
+    </h2>
+    <p style="font-size: 14px; line-height: 1.6; color: #344054; margin: 0 0 16px 0;">
+      Bonjour <strong>${safeRecipient}</strong>,
+    </p>
+    <p style="font-size: 14px; line-height: 1.6; color: #344054; margin: 0 0 20px 0;">
+      La commande <strong>#${safeOrderCode}</strong> pour <strong>${safeHouse}</strong> a atteint 50% de son délai d'acceptation. Merci de la traiter avant son expiration automatique.
+    </p>
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${partnerOrderUrl}" style="background-color: #2824D5; color: #FFFFFF; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">
+        Traiter la commande
+      </a>
+    </div>
+  `;
+
+  const html = renderEmailLayout({
+    title: subject,
+    preheader: `La commande #${orderCode} attend votre confirmation.`,
+    badge: { text: "Rappel Pressing", variant: "warning" },
+    contentHtml,
+  });
+
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+    text,
+    senderType: "contact",
+  });
+}
+
+/**
+ * 75% acceptance deadline escalation alert sent to platform administrators.
+ */
+export async function sendOrderAcceptanceEscalationEmail({
+  email,
+  recipientName,
+  orderCode,
+  houseName,
+  adminDispatchUrl,
+}: {
+  email: string;
+  recipientName: string;
+  orderCode: string;
+  houseName: string;
+  adminDispatchUrl: string;
+}): Promise<{ id: string; success: boolean; error?: string }> {
+  const safeRecipient = escapeHtml(recipientName);
+  const safeOrderCode = escapeHtml(orderCode);
+  const safeHouse = escapeHtml(houseName);
+
+  const subject = `SafiHub Alerte Dispatch — Commande #${orderCode} non acceptée (75%)`;
+  const text = `Bonjour ${recipientName},
+
+La commande #${orderCode} (${houseName}) a atteint 75% de son délai d'acceptation sans réponse du pressing.
+
+Intervention requise (relance pressing ou réassignation) :
+${adminDispatchUrl}
+
+L'équipe SafiHub Bukavu`;
+
+  const contentHtml = `
+    <h2 style="font-size: 18px; margin: 0 0 16px 0; color: #101828; font-weight: 700;">
+      Escalade d'acceptation — #${safeOrderCode}
+    </h2>
+    <p style="font-size: 14px; line-height: 1.6; color: #344054; margin: 0 0 16px 0;">
+      Bonjour <strong>${safeRecipient}</strong>,
+    </p>
+    <p style="font-size: 14px; line-height: 1.6; color: #344054; margin: 0 0 20px 0;">
+      La commande <strong>#${safeOrderCode}</strong> assignée à <strong>${safeHouse}</strong> a dépassé 75% de son délai d'acceptation. Une relance ou réassignation peut être nécessaire.
+    </p>
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${adminDispatchUrl}" style="background-color: #B42318; color: #FFFFFF; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">
+        Ouvrir la console Dispatch
+      </a>
+    </div>
+  `;
+
+  const html = renderEmailLayout({
+    title: subject,
+    preheader: `Escalade requise pour la commande #${orderCode} (${houseName}).`,
+    badge: { text: "Escalade Admin", variant: "warning" },
+    contentHtml,
+  });
+
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+    text,
+    senderType: "contact",
+  });
+}
+
+/**
+ * 100% acceptance deadline expiration notice sent to the customer.
+ */
+export async function sendOrderExpiredEmail({
+  email,
+  recipientName,
+  orderCode,
+  houseName,
+  trackingUrl,
+}: {
+  email: string;
+  recipientName: string;
+  orderCode: string;
+  houseName: string;
+  trackingUrl: string;
+}): Promise<{ id: string; success: boolean; error?: string }> {
+  const safeRecipient = escapeHtml(recipientName);
+  const safeOrderCode = escapeHtml(orderCode);
+  const safeHouse = escapeHtml(houseName);
+
+  const subject = `SafiHub — Commande #${orderCode} expirée`;
+  const text = `Bonjour ${recipientName},
+
+Le pressing ${houseName} n'a pas pu confirmer votre commande #${orderCode} dans le délai imparti. Votre commande a expiré automatiquement sans aucun frais.
+
+Vous pouvez choisir un autre pressing disponible à tout moment :
+${trackingUrl}
+
+L'équipe SafiHub Bukavu`;
+
+  const contentHtml = `
+    <h2 style="font-size: 18px; margin: 0 0 16px 0; color: #101828; font-weight: 700;">
+      Commande #${safeOrderCode} expirée
+    </h2>
+    <p style="font-size: 14px; line-height: 1.6; color: #344054; margin: 0 0 16px 0;">
+      Bonjour <strong>${safeRecipient}</strong>,
+    </p>
+    <p style="font-size: 14px; line-height: 1.6; color: #344054; margin: 0 0 20px 0;">
+      Le pressing <strong>${safeHouse}</strong> n'a pas confirmé votre commande <strong>#${safeOrderCode}</strong> dans les délais d'ouverture. Aucun montant n'a été facturé.
+    </p>
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${trackingUrl}" style="background-color: #2824D5; color: #FFFFFF; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">
+        Voir ma commande
+      </a>
+    </div>
+  `;
+
+  const html = renderEmailLayout({
+    title: subject,
+    preheader: `Votre commande #${orderCode} a expiré sans frais.`,
+    badge: { text: "Expirée", variant: "warning" },
+    contentHtml,
+  });
+
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+    text,
+    senderType: "contact",
+  });
+}
+

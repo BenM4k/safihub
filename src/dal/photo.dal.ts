@@ -298,3 +298,57 @@ export async function markPhotosDeletedAtomic(
 
   return res.rowCount ?? photoIds.length;
 }
+
+/**
+ * Verifies that optional orderItemId, missionId, and disputeId belong to the specified orderId.
+ */
+export async function verifyPhotoAssociationOwnership(params: {
+  orderId: string;
+  orderItemId?: string | null;
+  missionId?: string | null;
+  disputeId?: string | null;
+}): Promise<boolean> {
+  if (params.orderItemId) {
+    const [item] = await db
+      .select({ id: schema.orderItems.id })
+      .from(schema.orderItems)
+      .where(
+        and(
+          eq(schema.orderItems.id, params.orderItemId),
+          eq(schema.orderItems.orderId, params.orderId),
+        ),
+      )
+      .limit(1);
+    if (!item) return false;
+  }
+
+  if (params.missionId) {
+    const [mission] = await db
+      .select({ id: schema.missions.id })
+      .from(schema.missions)
+      .where(
+        and(
+          eq(schema.missions.id, params.missionId),
+          eq(schema.missions.orderId, params.orderId),
+        ),
+      )
+      .limit(1);
+    if (!mission) return false;
+  }
+
+  if (params.disputeId) {
+    const [dispute] = await db
+      .select({ id: schema.disputes.id })
+      .from(schema.disputes)
+      .where(
+        and(
+          eq(schema.disputes.id, params.disputeId),
+          eq(schema.disputes.orderId, params.orderId),
+        ),
+      )
+      .limit(1);
+    if (!dispute) return false;
+  }
+
+  return true;
+}

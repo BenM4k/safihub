@@ -7,7 +7,7 @@ import {
   type TimeSlot,
 } from "@/services/availability";
 import { checkHouseCoverage } from "@/services/coverage";
-import { buildOrderValidationContext } from "./context";
+import { buildSlotAvailabilityContext } from "./context";
 
 export interface GetCheckoutPickupSlotsParams {
   houseId: string;
@@ -41,7 +41,7 @@ export async function getCheckoutPickupSlots(
     return { slots: [], nextAvailableSlot: null, reason: "Paramètres manquants" };
   }
 
-  const context = await buildOrderValidationContext({ houseId });
+  const context = await buildSlotAvailabilityContext(houseId);
   const house = context.houses.get(houseId);
   if (!house) {
     return { slots: [], nextAvailableSlot: null, reason: "Pressing introuvable" };

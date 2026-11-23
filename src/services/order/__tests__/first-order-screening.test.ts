@@ -290,8 +290,9 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       vi.spyOn(dal, "getSettings").mockResolvedValue(mockAs({ acceptanceDelayMinutes: 45 }));
       vi.spyOn(dal, "getHouseHours").mockResolvedValue([mockAs({ weekday: 1, opensAt: "08:00", closesAt: "18:00" })]);
       vi.spyOn(dal, "getHouseClosures").mockResolvedValue([]);
-      const updateDeadlineSpy = vi.spyOn(dal, "updateOrderStatusWithDeadline").mockResolvedValue(true);
-      const addEventSpy = vi.spyOn(dal, "addOrderEvent").mockResolvedValue(mockAs({}));
+      const transitionSpy = vi
+        .spyOn(dal, "transitionOrderStatusAtomic")
+        .mockResolvedValue(true);
 
       const res = await adminConfirmFirstOrder({
         orderId: mockOrder.id,
@@ -299,18 +300,24 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       });
 
       expect(res.ok).toBe(true);
-      expect(updateDeadlineSpy).toHaveBeenCalledWith(
-        mockOrder.id,
-        "awaiting_confirmation",
-        "created",
-        expect.any(Date)
-      );
-      expect(addEventSpy).toHaveBeenCalledWith(
+      expect(transitionSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           orderId: mockOrder.id,
-          fromStatus: "awaiting_confirmation",
-          toStatus: "created",
-          actorRole: "admin",
+          expectedStatus: "awaiting_confirmation",
+          newStatus: "created",
+          orderUpdates: {
+            acceptanceDeadlineAt: expect.any(Date),
+          },
+          event: expect.objectContaining({
+            orderId: mockOrder.id,
+            fromStatus: "awaiting_confirmation",
+            toStatus: "created",
+            actorRole: "admin",
+            payload: expect.objectContaining({
+              category: "screening_confirmed",
+              confirmedAt: expect.any(String),
+            }),
+          }),
         })
       );
     });

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 import {
   getOrderPhotos,
   getOrderPhotoById,
@@ -12,6 +12,7 @@ import {
   getExpiredPhotosForPruning,
   markPhotosDeletedAtomic,
   checkUserHouseAccess,
+  verifyPhotoAssociationOwnership,
   type OrderPhotoRecord,
   type OrderAccessDetails,
 } from "@/dal";
@@ -40,6 +41,14 @@ export interface UserSessionContext {
   role: string;
 }
 
+function safeCompareToken(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
 /**
  * Checks if a user (or guest tracking token) has permission to access order photos.
  * Implements strict authorization and the house privacy firewall (AC 14 / Task 7.1 & 7.3).
@@ -62,7 +71,7 @@ export async function canAccessOrderPhotos(params: {
   }
 
   // 3. Guest tracking token matches order guestToken
-  if (guestToken && guestToken === orderAccess.guestToken) {
+  if (guestToken && orderAccess.guestToken && safeCompareToken(guestToken, orderAccess.guestToken)) {
     return true;
   }
 
@@ -78,6 +87,28 @@ export async function canAccessOrderPhotos(params: {
   }
 
   return false;
+}
+
+/**
+ * Checks if a user is authorized to upload/record a specific type of order photo.
+ * Separates write permissions from read permissions so customers/houses cannot forge courier proofs.
+ */
+export async function canUploadOrderPhoto(params: {
+  user: UserSessionContext;
+  orderAccess: OrderAccessDetails;
+  type: "pickup_condition" | "delivery_proof" | "dispute";
+}): Promise<boolean> {
+  const { user, orderAccess, type } = params;
+
+  if (user.role === "admin") {
+    return true;
+  }
+
+  if (type === "pickup_condition" || type === "delivery_proof") {
+    return user.role === "courier" && orderAccess.activeCourierIds.includes(user.id);
+  }
+
+  return canAccessOrderPhotos({ user, orderAccess });
 }
 
 /**
@@ -103,12 +134,23 @@ export async function generatePhotoUploadUrlService(params: {
       return err("Commande introuvable");
     }
 
-    const hasAccess = await canAccessOrderPhotos({
+    const canUpload = await canUploadOrderPhoto({
       user: params.user,
       orderAccess,
+      type: params.type,
     });
-    if (!hasAccess) {
+    if (!canUpload) {
       return err("Accès non autorisé aux photos de cette commande");
+    }
+
+    if (params.orderItemId) {
+      const ownsItem = await verifyPhotoAssociationOwnership({
+        orderId: params.orderId,
+        orderItemId: params.orderItemId,
+      });
+      if (!ownsItem) {
+        return err("Association d'article invalide pour cette commande");
+      }
     }
 
     // Task 7.2: Limit photos per order
@@ -269,12 +311,25 @@ export async function recordUploadedPhotoService(params: {
       return err("Commande introuvable");
     }
 
-    const hasAccess = await canAccessOrderPhotos({
+    const canUpload = await canUploadOrderPhoto({
       user: params.user,
       orderAccess,
+      type: params.type,
     });
-    if (!hasAccess) {
+    if (!canUpload) {
       return err("Accès non autorisé pour enregistrer cette photo");
+    }
+
+    if (params.orderItemId || params.missionId || params.disputeId) {
+      const ownsAssociations = await verifyPhotoAssociationOwnership({
+        orderId: params.orderId,
+        orderItemId: params.orderItemId,
+        missionId: params.missionId,
+        disputeId: params.disputeId,
+      });
+      if (!ownsAssociations) {
+        return err("Association invalide pour cette commande");
+      }
     }
 
     // Validate storageKey format: orders/<orderId>/<type>/<uuid>.webp

@@ -24,12 +24,18 @@ describe("Tooltip Responsive & Overflow Safeguards", () => {
 
 describe("ClientShellAddons Preferences Widget Mobile Positioning & Enter Animation", () => {
   const widgetPath = path.resolve(process.cwd(), "src/components/common/preferences-widget/index.tsx");
+  const popoverPath = path.resolve(process.cwd(), "src/components/ui/popover.tsx");
 
   it("verifies mobile downward positioning and smooth enter animation without exit delay", () => {
     const content = fs.readFileSync(widgetPath, "utf-8");
-    // Enter animation: fade-in, zoom-in, slide-in from bottom, ease-out
-    expect(content).toContain("origin-bottom-right duration-300 ease-out animate-in fade-in-0 zoom-in-90 slide-in-from-bottom-4");
-    // No exit animation
+    const popoverContent = fs.readFileSync(popoverPath, "utf-8");
+    // Uses @ui-sdk/react PopoverContent anchored upward from bottom-right
+    expect(content).toContain("<PopoverContent");
+    expect(content).toContain('side="top"');
+    expect(content).toContain('align="end"');
+    // PopoverContent defines the enter transition
+    expect(popoverContent).toContain("data-starting-style:scale-95 data-starting-style:opacity-0");
+    // No legacy Radix exit animation delay
     expect(content).not.toContain("animate-out");
     // Downward positioning on mobile
     expect(content).toContain('hasBottomNav ? "bottom-[4.25rem]" : "bottom-5"');

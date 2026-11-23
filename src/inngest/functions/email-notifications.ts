@@ -3,9 +3,12 @@ import {
   sendHouseSettlementEmail,
   sendHouseStaffLinkedEmail,
   sendHouseStatusChangeEmail,
+  sendOrderAcceptanceEscalationEmail,
+  sendOrderAcceptanceReminderEmail,
   sendOrderAdjustmentPromptEmail,
   sendOrderConfirmationEmail,
   sendOrderDeliveredReceiptEmail,
+  sendOrderExpiredEmail,
   sendPartnerApplicationReceivedEmail,
   sendPartnerInvitationEmail,
   sendPartnerRejectionEmail,
@@ -98,6 +101,35 @@ export type EmailNotificationJobPayload =
       netPayoutAmountCdf: number;
       commissionAmountCdf?: number;
       ordersCount?: number;
+    }
+  | {
+      kind: "order_acceptance_reminder";
+      orderId: string;
+      assignmentRevision: string;
+      email: string;
+      recipientName: string;
+      orderCode: string;
+      houseName: string;
+      partnerOrderUrl: string;
+    }
+  | {
+      kind: "order_acceptance_escalation";
+      orderId: string;
+      assignmentRevision: string;
+      email: string;
+      recipientName: string;
+      orderCode: string;
+      houseName: string;
+      adminDispatchUrl: string;
+    }
+  | {
+      kind: "order_expired";
+      orderId: string;
+      email: string;
+      recipientName: string;
+      orderCode: string;
+      houseName: string;
+      trackingUrl: string;
     };
 
 /**
@@ -156,6 +188,21 @@ export const dispatchEmailNotification = inngest.createFunction(
         case "house_settlement_disbursed": {
           const res = await sendHouseSettlementEmail(data);
           if (!res.success) throw new Error(res.error || "Failed to send settlement email");
+          return res;
+        }
+        case "order_acceptance_reminder": {
+          const res = await sendOrderAcceptanceReminderEmail(data);
+          if (!res.success) throw new Error(res.error || "Failed to send acceptance reminder email");
+          return res;
+        }
+        case "order_acceptance_escalation": {
+          const res = await sendOrderAcceptanceEscalationEmail(data);
+          if (!res.success) throw new Error(res.error || "Failed to send acceptance escalation email");
+          return res;
+        }
+        case "order_expired": {
+          const res = await sendOrderExpiredEmail(data);
+          if (!res.success) throw new Error(res.error || "Failed to send order expired email");
           return res;
         }
         default:

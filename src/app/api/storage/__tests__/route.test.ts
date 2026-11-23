@@ -11,6 +11,14 @@ vi.mock("@/lib/storage/r2-client", () => ({
         size: 4,
       };
     }
+    if (key === "houses/h_1/evil.svg") {
+      return {
+        body: new Uint8Array([60, 115, 118, 103]),
+        contentType: "image/svg+xml",
+        etag: '"etagsvg"',
+        size: 4,
+      };
+    }
     return null;
   }),
 }));
@@ -65,6 +73,19 @@ describe("/api/storage/[...key] route handler", () => {
     expect(res.headers.get("Content-Length")).toBe("4");
     expect(res.headers.get("Cache-Control")).toContain("public");
     expect(res.headers.get("ETag")).toBe('"etag123"');
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("Content-Security-Policy")).toBe("default-src 'none'; sandbox");
+  });
+
+  it("forces safe image/webp Content-Type and nosniff/sandbox headers on disallowed MIME types", async () => {
+    const res = await GET(new Request("http://localhost:3000/api/storage"), {
+      params: Promise.resolve({ key: ["houses", "h_1", "evil.svg"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("image/webp");
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("Content-Security-Policy")).toBe("default-src 'none'; sandbox");
   });
 
   it("returns 304 Not Modified when client provides matching ETag", async () => {

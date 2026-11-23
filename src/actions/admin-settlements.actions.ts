@@ -12,7 +12,7 @@ import {
 
 const settleHouseSchema = z.object({
   houseId: z.string().min(1, "Pressing requis"),
-  amount: z.number().positive("Le montant du règlement doit être supérieur à zéro"),
+  amount: z.number().int().positive("Le montant du règlement doit être supérieur à zéro"),
   currency: z.enum(["CDF", "USD"]).default("CDF"),
   method: z.enum(["mobile_money", "bank", "cash"]).default("mobile_money"),
   reference: z.string().optional(),
@@ -22,7 +22,7 @@ const settleHouseSchema = z.object({
 
 const settleCourierSchema = z.object({
   courierId: z.string().min(1, "Coursier requis"),
-  amount: z.number().positive("Le montant du règlement doit être supérieur à zéro"),
+  amount: z.number().int().positive("Le montant du règlement doit être supérieur à zéro"),
   currency: z.enum(["CDF", "USD"]).default("CDF"),
   method: z.enum(["mobile_money", "bank", "cash"]).default("mobile_money"),
   reference: z.string().optional(),

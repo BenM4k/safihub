@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { auth } from "@/services/auth/auth";
+import { requireRole } from "@/services/auth/guards";
 import {
   adminCreateGuestUser,
   adminMergeGuestUser,
@@ -217,10 +217,9 @@ export async function adminCreateGuestAction(
   formData: FormData
 ): Promise<AuthActionState> {
   const t = await getTranslations("auth");
-  const reqHeaders = await headers();
-  const session = await auth.api.getSession({ headers: reqHeaders });
+  const authRes = await requireRole(["admin"]);
 
-  if (!session?.user || session.user.role !== "admin") {
+  if (!authRes.ok) {
     return { success: false, errors: { form: t("adminRequired") } };
   }
 
@@ -235,7 +234,7 @@ export async function adminCreateGuestAction(
   }
 
   const res = await adminCreateGuestUser({
-    adminUserId: session.user.id,
+    adminUserId: authRes.value.user.id,
     name: parsed.data.name,
     phone: parsed.data.phone,
   });
@@ -252,10 +251,9 @@ export async function adminMergeGuestAction(
   formData: FormData
 ): Promise<AuthActionState> {
   const t = await getTranslations("auth");
-  const reqHeaders = await headers();
-  const session = await auth.api.getSession({ headers: reqHeaders });
+  const authRes = await requireRole(["admin"]);
 
-  if (!session?.user || session.user.role !== "admin") {
+  if (!authRes.ok) {
     return { success: false, errors: { form: t("adminRequired") } };
   }
 
@@ -270,7 +268,7 @@ export async function adminMergeGuestAction(
   }
 
   const res = await adminMergeGuestUser({
-    adminUserId: session.user.id,
+    adminUserId: authRes.value.user.id,
     guestUserId: parsed.data.guestUserId,
     targetUserId: parsed.data.targetUserId,
   });
@@ -287,13 +285,13 @@ export async function adminResetPasswordAction(
   formData: FormData
 ): Promise<AuthActionState> {
   const t = await getTranslations("auth");
-  const reqHeaders = await headers();
-  const session = await auth.api.getSession({ headers: reqHeaders });
+  const authRes = await requireRole(["admin"]);
 
-  if (!session?.user || session.user.role !== "admin") {
+  if (!authRes.ok) {
     return { success: false, errors: { form: t("adminRequired") } };
   }
 
+  const reqHeaders = await headers();
   const schema = getAdminResetPasswordSchema((k) => t(k as Parameters<typeof t>[0]));
   const parsed = schema.safeParse({
     targetUserId: formData.get("targetUserId"),
@@ -305,7 +303,7 @@ export async function adminResetPasswordAction(
   }
 
   const res = await adminResetUserPassword({
-    adminUserId: session.user.id,
+    adminUserId: authRes.value.user.id,
     targetUserId: parsed.data.targetUserId,
     newPassword: parsed.data.newPassword,
     headers: reqHeaders,
