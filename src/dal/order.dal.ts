@@ -447,9 +447,21 @@ export async function updateOrderFinancials(params: {
   }
 }
 
+export interface OrderTimerNotificationIntentInput {
+  orderId: string;
+  milestone:
+    | "order_acceptance_reminder"
+    | "order_acceptance_escalation"
+    | "order_expired";
+  intentKey: string;
+  body: string;
+}
+
 export async function transitionOrderStatusAtomic(params: {
   orderId: string;
   expectedStatus?: OrderStatus;
+  expectedHouseId?: string;
+  expectedAcceptanceDeadlineAt?: Date | null;
   newStatus: OrderStatus;
   orderUpdates?: Partial<
     Pick<
@@ -474,11 +486,22 @@ export async function transitionOrderStatusAtomic(params: {
     note?: string | null;
     payload?: Record<string, unknown> | null;
   };
+  notificationIntent?: OrderTimerNotificationIntentInput;
 }): Promise<boolean> {
   return await db.transaction(async (tx) => {
     const conditions = [eq(schema.orders.id, params.orderId)];
     if (params.expectedStatus) {
       conditions.push(eq(schema.orders.status, params.expectedStatus));
+    }
+    if (params.expectedHouseId !== undefined) {
+      conditions.push(eq(schema.orders.houseId, params.expectedHouseId));
+    }
+    if (params.expectedAcceptanceDeadlineAt !== undefined) {
+      conditions.push(
+        params.expectedAcceptanceDeadlineAt === null
+          ? isNull(schema.orders.acceptanceDeadlineAt)
+          : eq(schema.orders.acceptanceDeadlineAt, params.expectedAcceptanceDeadlineAt)
+      );
     }
 
     const updated = await tx
@@ -508,6 +531,20 @@ export async function transitionOrderStatusAtomic(params: {
       note: params.event.note ?? null,
       payload: params.event.payload ?? null,
     });
+
+    if (params.notificationIntent) {
+      await tx.insert(schema.notifications).values({
+        userId: null,
+        phone: "timer-outbox",
+        orderId: params.notificationIntent.orderId,
+        channel: "in_app",
+        templateKey: `timer_outbox:${params.notificationIntent.milestone}`,
+        locale: "fr",
+        title: params.notificationIntent.intentKey,
+        body: params.notificationIntent.body,
+        status: "pending",
+      });
+    }
 
     return true;
   });
@@ -2817,6 +2854,7 @@ export interface PendingAcceptanceOrderRecord {
   trackingToken: string;
   status: OrderStatus;
   createdAt: Date;
+  assignedAt?: Date | null;
   acceptanceDeadlineAt: Date | null;
   acceptanceReminderSentAt: Date | null;
   acceptanceEscalatedAt: Date | null;
@@ -2850,6 +2888,13 @@ export async function getPendingAcceptanceOrders(): Promise<
       trackingToken: schema.orders.trackingToken,
       status: schema.orders.status,
       createdAt: schema.orders.createdAt,
+      assignedAt: sql<Date>`coalesce((
+        select max(${schema.orderEvents.createdAt})
+        from ${schema.orderEvents}
+        where ${schema.orderEvents.orderId} = ${schema.orders.id}
+          and ${schema.orderEvents.type} = 'note'
+          and ${schema.orderEvents.payload}->>'category' = 'pressing_reassignment'
+      ), ${schema.orders.createdAt})`,
       acceptanceDeadlineAt: schema.orders.acceptanceDeadlineAt,
       acceptanceReminderSentAt: schema.orders.acceptanceReminderSentAt,
       acceptanceEscalatedAt: schema.orders.acceptanceEscalatedAt,
@@ -2888,24 +2933,41 @@ export async function getPendingReceptionOrders(): Promise<
     );
 }
 
+export interface AcceptanceMilestoneGuardOptions {
+  expectedHouseId?: string;
+  expectedAcceptanceDeadlineAt?: Date | null;
+  notificationIntent?: OrderTimerNotificationIntentInput;
+}
+
 export async function markOrderAcceptanceReminderSent(
   orderId: string,
-  sentAt: Date
+  sentAt: Date,
+  options?: AcceptanceMilestoneGuardOptions
 ): Promise<boolean> {
   return db.transaction(async (tx) => {
+    const conditions = [
+      eq(schema.orders.id, orderId),
+      eq(schema.orders.status, "created"),
+      isNull(schema.orders.acceptanceReminderSentAt),
+    ];
+    if (options?.expectedHouseId !== undefined) {
+      conditions.push(eq(schema.orders.houseId, options.expectedHouseId));
+    }
+    if (options?.expectedAcceptanceDeadlineAt !== undefined) {
+      conditions.push(
+        options.expectedAcceptanceDeadlineAt === null
+          ? isNull(schema.orders.acceptanceDeadlineAt)
+          : eq(schema.orders.acceptanceDeadlineAt, options.expectedAcceptanceDeadlineAt)
+      );
+    }
+
     const updated = await tx
       .update(schema.orders)
       .set({
         acceptanceReminderSentAt: sentAt,
         updatedAt: new Date(),
       })
-      .where(
-        and(
-          eq(schema.orders.id, orderId),
-          eq(schema.orders.status, "created"),
-          isNull(schema.orders.acceptanceReminderSentAt)
-        )
-      )
+      .where(and(...conditions))
       .returning({ id: schema.orders.id });
 
     if (updated.length === 0) return false;
@@ -2917,28 +2979,53 @@ export async function markOrderAcceptanceReminderSent(
       note: "Rappel automatique envoyé au pressing (50% du délai d'acceptation écoulé)",
     });
 
+    if (options?.notificationIntent) {
+      await tx.insert(schema.notifications).values({
+        userId: null,
+        phone: "timer-outbox",
+        orderId: options.notificationIntent.orderId,
+        channel: "in_app",
+        templateKey: `timer_outbox:${options.notificationIntent.milestone}`,
+        locale: "fr",
+        title: options.notificationIntent.intentKey,
+        body: options.notificationIntent.body,
+        status: "pending",
+      });
+    }
+
     return true;
   });
 }
 
 export async function markOrderAcceptanceEscalated(
   orderId: string,
-  escalatedAt: Date
+  escalatedAt: Date,
+  options?: AcceptanceMilestoneGuardOptions
 ): Promise<boolean> {
   return db.transaction(async (tx) => {
+    const conditions = [
+      eq(schema.orders.id, orderId),
+      eq(schema.orders.status, "created"),
+      isNull(schema.orders.acceptanceEscalatedAt),
+    ];
+    if (options?.expectedHouseId !== undefined) {
+      conditions.push(eq(schema.orders.houseId, options.expectedHouseId));
+    }
+    if (options?.expectedAcceptanceDeadlineAt !== undefined) {
+      conditions.push(
+        options.expectedAcceptanceDeadlineAt === null
+          ? isNull(schema.orders.acceptanceDeadlineAt)
+          : eq(schema.orders.acceptanceDeadlineAt, options.expectedAcceptanceDeadlineAt)
+      );
+    }
+
     const updated = await tx
       .update(schema.orders)
       .set({
         acceptanceEscalatedAt: escalatedAt,
         updatedAt: new Date(),
       })
-      .where(
-        and(
-          eq(schema.orders.id, orderId),
-          eq(schema.orders.status, "created"),
-          isNull(schema.orders.acceptanceEscalatedAt)
-        )
-      )
+      .where(and(...conditions))
       .returning({ id: schema.orders.id });
 
     if (updated.length === 0) return false;
@@ -2949,6 +3036,20 @@ export async function markOrderAcceptanceEscalated(
       actorRole: "system",
       note: "Alerte d'escalade administrateur (75% du délai d'acceptation écoulé)",
     });
+
+    if (options?.notificationIntent) {
+      await tx.insert(schema.notifications).values({
+        userId: null,
+        phone: "timer-outbox",
+        orderId: options.notificationIntent.orderId,
+        channel: "in_app",
+        templateKey: `timer_outbox:${options.notificationIntent.milestone}`,
+        locale: "fr",
+        title: options.notificationIntent.intentKey,
+        body: options.notificationIntent.body,
+        status: "pending",
+      });
+    }
 
     return true;
   });

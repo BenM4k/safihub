@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, like, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 
 export interface NotificationRecord {
@@ -247,4 +247,67 @@ export async function deletePushSubscription(
     .returning({ id: schema.pushSubscriptions.id });
 
   return deleted.length > 0;
+}
+
+export const TIMER_OUTBOX_PHONE = "timer-outbox";
+export const TIMER_OUTBOX_TEMPLATE_PREFIX = "timer_outbox:";
+
+export async function getPendingTimerNotificationIntents(): Promise<
+  NotificationRecord[]
+> {
+  const rows = await db
+    .select()
+    .from(schema.notifications)
+    .where(
+      and(
+        isNull(schema.notifications.userId),
+        eq(schema.notifications.phone, TIMER_OUTBOX_PHONE),
+        like(schema.notifications.templateKey, `${TIMER_OUTBOX_TEMPLATE_PREFIX}%`),
+        inArray(schema.notifications.status, ["pending", "failed"])
+      )
+    )
+    .orderBy(asc(schema.notifications.createdAt))
+    .limit(100);
+
+  return rows as unknown as NotificationRecord[];
+}
+
+export async function findPendingTimerNotificationIntentByKey(
+  intentKey: string
+): Promise<NotificationRecord | null> {
+  const [row] = await db
+    .select()
+    .from(schema.notifications)
+    .where(
+      and(
+        isNull(schema.notifications.userId),
+        eq(schema.notifications.phone, TIMER_OUTBOX_PHONE),
+        eq(schema.notifications.title, intentKey),
+        inArray(schema.notifications.status, ["pending", "failed"])
+      )
+    )
+    .orderBy(desc(schema.notifications.createdAt))
+    .limit(1);
+
+  return (row as unknown as NotificationRecord) ?? null;
+}
+
+export async function updateTimerNotificationIntent(
+  id: string,
+  updates: {
+    status: "pending" | "sent" | "failed";
+    body: string;
+    error?: string | null;
+    sentAt?: Date | null;
+  }
+): Promise<void> {
+  await db
+    .update(schema.notifications)
+    .set({
+      status: updates.status,
+      body: updates.body,
+      error: updates.error ?? null,
+      sentAt: updates.sentAt ?? null,
+    })
+    .where(eq(schema.notifications.id, id));
 }

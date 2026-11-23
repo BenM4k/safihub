@@ -105,6 +105,7 @@ export type EmailNotificationJobPayload =
   | {
       kind: "order_acceptance_reminder";
       orderId: string;
+      assignmentRevision: string;
       email: string;
       recipientName: string;
       orderCode: string;
@@ -114,6 +115,7 @@ export type EmailNotificationJobPayload =
   | {
       kind: "order_acceptance_escalation";
       orderId: string;
+      assignmentRevision: string;
       email: string;
       recipientName: string;
       orderCode: string;

@@ -20,7 +20,11 @@ import {
   type CourierMissionDetail,
 } from "@/dal";
 import { trackOrderDelivered } from "@/services/analytics";
-import { rateLimitDeliveryCodeVerification } from "@/services/abuse/rate-limiter";
+import {
+  checkDeliveryCodeVerificationRateLimit,
+  clearDeliveryCodeVerificationRateLimit,
+  recordFailedDeliveryCodeAttempt,
+} from "@/services/abuse/rate-limiter";
 import { inngest } from "@/inngest";
 import type { NotificationTemplateKey } from "@/services/notifications/notifications.types";
 import { getAppBaseUrl, queueEmailNotification } from "@/services/email";
@@ -350,10 +354,12 @@ export async function completeDeliveryMissionService(
       return err("Le montant perçu ne peut pas être négatif");
     }
 
-    const rl = await rateLimitDeliveryCodeVerification(input.courierId, input.missionId);
+    const rl = await checkDeliveryCodeVerificationRateLimit(input.courierId, input.missionId);
     if (!rl.allowed) {
       return err(
-        "Trop de tentatives de code de confirmation. Veuillez réessayer plus tard ou contacter l'administrateur."
+        rl.unavailable
+          ? "La vérification du code de confirmation est temporairement indisponible. Veuillez réessayer plus tard."
+          : "Trop de tentatives de code de confirmation. Veuillez réessayer plus tard ou contacter l'administrateur."
       );
     }
 
@@ -366,8 +372,13 @@ export async function completeDeliveryMissionService(
     });
 
     if (!res.ok) {
+      if (res.invalidConfirmationCode) {
+        await recordFailedDeliveryCodeAttempt(input.courierId, input.missionId);
+      }
       return err(res.error || "Failed to complete delivery mission");
     }
+
+    await clearDeliveryCodeVerificationRateLimit(input.courierId, input.missionId);
 
     if (res.orderId) {
       const turnaroundMinutes =

@@ -303,8 +303,86 @@ describe("Transactional Email Service & Templates", () => {
         inviteUrl: "u",
       });
 
+      const remKeyRev1 = buildIdempotentEmailKey({
+        kind: "order_acceptance_reminder",
+        orderId: "ord-123",
+        assignmentRevision: "house-a:2026-10-12T06:00:00.000Z",
+        email: "house@example.com",
+        recipientName: "Gérant",
+        orderCode: "ORD-1",
+        houseName: "H",
+        partnerOrderUrl: "u",
+      });
+
+      const remKeyRev2 = buildIdempotentEmailKey({
+        kind: "order_acceptance_reminder",
+        orderId: "ord-123",
+        assignmentRevision: "house-b:2026-10-12T07:00:00.000Z",
+        email: "house@example.com",
+        recipientName: "Gérant",
+        orderCode: "ORD-1",
+        houseName: "H",
+        partnerOrderUrl: "u",
+      });
+
       expect(key1).toBe("email-order-confirmation-ord-123");
       expect(key2).toBe("email-partner-app-approved-app-456");
+      expect(remKeyRev1).not.toBe(remKeyRev2);
+    });
+
+    it("rejects queueEmailNotification when direct timer email sends fail", async () => {
+      const orderTemplates = await import("../templates/order");
+      const { vi } = await import("vitest");
+
+      const spyRem = vi
+        .spyOn(orderTemplates, "sendOrderAcceptanceReminderEmail")
+        .mockResolvedValueOnce({ id: "", success: false, error: "Resend error" });
+      await expect(
+        queueEmailNotification({
+          kind: "order_acceptance_reminder",
+          orderId: "ord-1",
+          assignmentRevision: "house-a:2026-10-12T06:00:00.000Z",
+          email: "house@example.com",
+          recipientName: "Gérant",
+          orderCode: "ORD-1",
+          houseName: "H",
+          partnerOrderUrl: "u",
+        })
+      ).rejects.toThrow("Resend error");
+      spyRem.mockRestore();
+
+      const spyEsc = vi
+        .spyOn(orderTemplates, "sendOrderAcceptanceEscalationEmail")
+        .mockResolvedValueOnce({ id: "", success: false, error: "Escalation failed" });
+      await expect(
+        queueEmailNotification({
+          kind: "order_acceptance_escalation",
+          orderId: "ord-1",
+          assignmentRevision: "house-a:2026-10-12T06:00:00.000Z",
+          email: "admin@example.com",
+          recipientName: "Admin",
+          orderCode: "ORD-1",
+          houseName: "H",
+          adminDispatchUrl: "u",
+        })
+      ).rejects.toThrow("Escalation failed");
+      spyEsc.mockRestore();
+
+      const spyExp = vi
+        .spyOn(orderTemplates, "sendOrderExpiredEmail")
+        .mockResolvedValueOnce({ id: "", success: false, error: "Expired failed" });
+      await expect(
+        queueEmailNotification({
+          kind: "order_expired",
+          orderId: "ord-1",
+          email: "cust@example.com",
+          recipientName: "Cust",
+          orderCode: "ORD-1",
+          houseName: "H",
+          trackingUrl: "u",
+        })
+      ).rejects.toThrow("Expired failed");
+      spyExp.mockRestore();
     });
 
     it("executes email notifications via queueEmailNotification in test mode", async () => {

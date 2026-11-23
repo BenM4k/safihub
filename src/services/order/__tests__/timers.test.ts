@@ -4,18 +4,67 @@ import {
   processReceptionConformingTimersService,
 } from "../timers.service";
 import type {
+  HouseClosureRecord,
+  HouseHourRecord,
+  HouseStaffMemberRecord,
+  NotificationRecord,
   PendingAcceptanceOrderRecord,
   PendingReceptionOrderRecord,
+  UserRecord,
 } from "@/dal";
+
+const defaultHours: HouseHourRecord[] = [
+  { id: "hh-1", houseId: "house-1", weekday: 1, opensAt: "08:00", closesAt: "18:00" },
+  { id: "hh-2", houseId: "house-2", weekday: 1, opensAt: "07:00", closesAt: "18:00" },
+];
+
+const defaultStaff: HouseStaffMemberRecord[] = [
+  {
+    houseId: "house-1",
+    userId: "staff-1",
+    name: "Gérant Kivu",
+    email: "gerant@kivu.cd",
+    role: "house",
+    createdAt: new Date(),
+  },
+];
+
+const defaultAdmins: Array<Partial<UserRecord> & { id: string; name: string; email: string }> = [
+  {
+    id: "admin-1",
+    name: "Admin SafiHub",
+    email: "admin@safihub.cd",
+    role: "admin",
+    status: "active",
+    banned: false,
+  },
+];
 
 const mocks = vi.hoisted(() => ({
   pendingAcceptance: [] as PendingAcceptanceOrderRecord[],
   pendingReception: [] as PendingReceptionOrderRecord[],
+  pendingIntents: [] as NotificationRecord[],
+  hours: null as HouseHourRecord[] | null,
+  closures: [] as HouseClosureRecord[],
+  staffByHouse: new Map<string, HouseStaffMemberRecord[]>(),
+  admins: null as Array<Partial<UserRecord>> | null,
   transitionOrderStatusAtomic: vi.fn(async () => true),
   markOrderAcceptanceReminderSent: vi.fn(async () => true),
   markOrderAcceptanceEscalated: vi.fn(async () => true),
+  findPendingTimerNotificationIntentByKey: vi.fn(async () => null as NotificationRecord | null),
+  updateTimerNotificationIntent: vi.fn<
+    (
+      id: string,
+      updates: {
+        status: "pending" | "sent" | "failed";
+        body: string;
+        error?: string | null;
+        sentAt?: Date | null;
+      }
+    ) => Promise<void>
+  >(async () => {}),
   queueEmailNotification: vi.fn(async () => {}),
-  sendNotification: vi.fn(async () => ({ ok: true })),
+  sendNotification: vi.fn(async () => ({ ok: true as const, value: {} as NotificationRecord })),
 }));
 
 vi.mock("@/dal", async (importOriginal) => {
@@ -24,30 +73,23 @@ vi.mock("@/dal", async (importOriginal) => {
     ...actual,
     getPendingAcceptanceOrders: vi.fn(async () => mocks.pendingAcceptance),
     getPendingReceptionOrders: vi.fn(async () => mocks.pendingReception),
-    getSettings: vi.fn(async () => ({ acceptanceDelayMinutes: 45 })),
-    getHouseHours: vi.fn(async () => [
-      { id: "hh-1", houseId: "house-1", weekday: 1, opensAt: "08:00", closesAt: "18:00" },
-    ]),
-    getHouseClosures: vi.fn(async () => []),
-    getHouseStaff: vi.fn(async () => [
-      {
-        houseId: "house-1",
-        userId: "staff-1",
-        name: "Gérant Kivu",
-        email: "gerant@kivu.cd",
-        role: "house",
-        createdAt: new Date(),
-      },
-    ]),
-    getAdminUsers: vi.fn(async () => [
-      {
-        id: "admin-1",
-        name: "Admin SafiHub",
-        email: "admin@safihub.cd",
-        role: "admin",
-        status: "active",
-      },
-    ]),
+    getPendingTimerNotificationIntents: vi.fn(async () => mocks.pendingIntents),
+    findPendingTimerNotificationIntentByKey: mocks.findPendingTimerNotificationIntentByKey,
+    updateTimerNotificationIntent: mocks.updateTimerNotificationIntent,
+    getSettings: vi.fn(async () => ({
+      acceptanceDelayMinutes: 45,
+      receptionWindowMinutes: 60,
+    })),
+    getHouseHours: vi.fn(async (houseId: string) =>
+      (mocks.hours ?? defaultHours).filter((h) => h.houseId === houseId)
+    ),
+    getHouseClosures: vi.fn(async (houseId: string) =>
+      mocks.closures.filter((c) => c.houseId === houseId)
+    ),
+    getHouseStaff: vi.fn(
+      async (houseId: string) => mocks.staffByHouse.get(houseId) ?? defaultStaff
+    ),
+    getAdminUsers: vi.fn(async () => mocks.admins ?? defaultAdmins),
     transitionOrderStatusAtomic: mocks.transitionOrderStatusAtomic,
     markOrderAcceptanceReminderSent: mocks.markOrderAcceptanceReminderSent,
     markOrderAcceptanceEscalated: mocks.markOrderAcceptanceEscalated,
@@ -87,6 +129,7 @@ function makePendingAcceptance(
     trackingToken: "trk-1",
     status: "created",
     createdAt: new Date("2026-10-12T06:00:00Z"),
+    assignedAt: null,
     acceptanceDeadlineAt: new Date("2026-10-12T06:45:00Z"),
     acceptanceReminderSentAt: null,
     acceptanceEscalatedAt: null,
@@ -98,11 +141,18 @@ describe("Order Timers Service (Acceptance & Reception Auto-Confirm)", () => {
   beforeEach(() => {
     mocks.pendingAcceptance = [];
     mocks.pendingReception = [];
-    mocks.transitionOrderStatusAtomic.mockClear();
-    mocks.markOrderAcceptanceReminderSent.mockClear();
-    mocks.markOrderAcceptanceEscalated.mockClear();
-    mocks.queueEmailNotification.mockClear();
-    mocks.sendNotification.mockClear();
+    mocks.pendingIntents = [];
+    mocks.hours = null;
+    mocks.closures = [];
+    mocks.staffByHouse = new Map();
+    mocks.admins = null;
+    mocks.transitionOrderStatusAtomic.mockReset().mockResolvedValue(true);
+    mocks.markOrderAcceptanceReminderSent.mockReset().mockResolvedValue(true);
+    mocks.markOrderAcceptanceEscalated.mockReset().mockResolvedValue(true);
+    mocks.findPendingTimerNotificationIntentByKey.mockReset().mockResolvedValue(null);
+    mocks.updateTimerNotificationIntent.mockReset().mockResolvedValue(undefined);
+    mocks.queueEmailNotification.mockReset().mockResolvedValue(undefined);
+    mocks.sendNotification.mockReset().mockResolvedValue({ ok: true, value: {} as NotificationRecord });
   });
 
   it("reminds at 50%, escalates at 75%, and expires created orders at 100% with email and in-app notifications", async () => {
@@ -117,7 +167,15 @@ describe("Order Timers Service (Acceptance & Reception Auto-Confirm)", () => {
     }
     expect(mocks.markOrderAcceptanceReminderSent).toHaveBeenCalledWith(
       "ord-remind",
-      new Date("2026-10-12T06:25:00Z")
+      new Date("2026-10-12T06:25:00Z"),
+      expect.objectContaining({
+        expectedHouseId: "house-1",
+        expectedAcceptanceDeadlineAt: new Date("2026-10-12T06:45:00Z"),
+        notificationIntent: expect.objectContaining({
+          orderId: "ord-remind",
+          milestone: "order_acceptance_reminder",
+        }),
+      })
     );
     expect(mocks.sendNotification).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -150,8 +208,11 @@ describe("Order Timers Service (Acceptance & Reception Auto-Confirm)", () => {
       makePendingAcceptance({
         id: "ord-expire",
         code: "ORD-3",
+        houseId: "house-2",
+        houseName: "Pressing Early",
+        houseSlug: "pressing-early",
         createdAt: new Date("2026-10-12T05:00:00Z"),
-        acceptanceDeadlineAt: new Date("2026-10-12T06:30:00Z"),
+        acceptanceDeadlineAt: new Date("2026-10-12T05:45:00Z"),
       }),
     ];
 
@@ -162,7 +223,15 @@ describe("Order Timers Service (Acceptance & Reception Auto-Confirm)", () => {
     }
     expect(mocks.markOrderAcceptanceEscalated).toHaveBeenCalledWith(
       "ord-escalate",
-      new Date("2026-10-12T06:35:00Z")
+      new Date("2026-10-12T06:35:00Z"),
+      expect.objectContaining({
+        expectedHouseId: "house-1",
+        expectedAcceptanceDeadlineAt: new Date("2026-10-12T07:00:00Z"),
+        notificationIntent: expect.objectContaining({
+          orderId: "ord-escalate",
+          milestone: "order_acceptance_escalation",
+        }),
+      })
     );
     expect(mocks.sendNotification).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -232,6 +301,249 @@ describe("Order Timers Service (Acceptance & Reception Auto-Confirm)", () => {
         newStatus: "washing",
         orderUpdates: { receptionConfirmedAt: now },
       })
+    );
+  });
+
+  it("skips counter and notifications on stale snapshot after house reassignment, then notifies for house B", async () => {
+    const initialCreated = new Date("2026-10-12T06:00:00Z");
+
+    // 1. Order selected with House A, but atomic guard fails because order was reassigned to House B
+    mocks.pendingAcceptance = [
+      makePendingAcceptance({
+        id: "ord-reassign-race",
+        code: "ORD-RACE",
+        houseId: "house-1",
+        houseName: "Pressing A",
+        houseSlug: "pressing-a",
+        createdAt: initialCreated,
+        assignedAt: initialCreated,
+        acceptanceDeadlineAt: new Date("2026-10-12T06:45:00Z"),
+      }),
+    ];
+    mocks.markOrderAcceptanceReminderSent.mockResolvedValueOnce(false);
+
+    const raceRes = await processAcceptanceTimersService(new Date("2026-10-12T06:25:00Z"));
+    expect(raceRes.ok).toBe(true);
+    if (raceRes.ok) {
+      expect(raceRes.value).toEqual({ checked: 1, reminded: 0, escalated: 0, expired: 0 });
+    }
+    expect(mocks.sendNotification).not.toHaveBeenCalled();
+    expect(mocks.queueEmailNotification).not.toHaveBeenCalled();
+
+    // 2. Subsequent sweep sees House B with its own assignedAt -> starts milestones from assignedAt (06:30Z)
+    const assignedToBAt = new Date("2026-10-12T06:30:00Z");
+    mocks.hours = [
+      { id: "hh-1", houseId: "house-1", weekday: 1, opensAt: "08:00", closesAt: "18:00" },
+      { id: "hh-b", houseId: "house-b", weekday: 1, opensAt: "08:00", closesAt: "18:00" },
+    ];
+    mocks.staffByHouse.set("house-b", [
+      {
+        houseId: "house-b",
+        userId: "staff-b",
+        name: "Gérant B",
+        email: "gerant-b@safihub.cd",
+        role: "house",
+        createdAt: new Date(),
+      },
+    ]);
+    mocks.pendingAcceptance = [
+      makePendingAcceptance({
+        id: "ord-reassign-race",
+        code: "ORD-RACE",
+        houseId: "house-b",
+        houseName: "Pressing B",
+        houseSlug: "pressing-b",
+        createdAt: initialCreated,
+        assignedAt: assignedToBAt,
+        acceptanceDeadlineAt: new Date("2026-10-12T07:15:00Z"),
+      }),
+    ];
+
+    // At 06:40Z (only 10m since House B assignment < 22.5m), no reminder triggers for House B yet
+    const tooEarlyRes = await processAcceptanceTimersService(new Date("2026-10-12T06:40:00Z"));
+    expect(tooEarlyRes.ok).toBe(true);
+    if (tooEarlyRes.ok) {
+      expect(tooEarlyRes.value).toEqual({ checked: 1, reminded: 0, escalated: 0, expired: 0 });
+    }
+
+    // At 06:55Z (25m since House B assignment >= 22.5m), House B receives reminder with its assignmentRevision
+    const houseBRes = await processAcceptanceTimersService(new Date("2026-10-12T06:55:00Z"));
+    expect(houseBRes.ok).toBe(true);
+    if (houseBRes.ok) {
+      expect(houseBRes.value).toEqual({ checked: 1, reminded: 1, escalated: 0, expired: 0 });
+    }
+    expect(mocks.sendNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "staff-b", orderId: "ord-reassign-race" })
+    );
+    expect(mocks.queueEmailNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "order_acceptance_reminder",
+        email: "gerant-b@safihub.cd",
+        assignmentRevision: `house-b:${assignedToBAt.toISOString()}`,
+      })
+    );
+  });
+
+  it("excludes banned admins during escalation fan-out", async () => {
+    mocks.admins = [
+      { id: "admin-ok", name: "Active Admin", email: "ok@safihub.cd", role: "admin", status: "active", banned: false },
+      { id: "admin-banned", name: "Banned Admin", email: "banned@safihub.cd", role: "admin", status: "active", banned: true },
+    ];
+    mocks.pendingAcceptance = [
+      makePendingAcceptance({
+        id: "ord-esc-ban",
+        code: "ORD-BAN",
+        createdAt: new Date("2026-10-12T06:00:00Z"),
+        acceptanceDeadlineAt: new Date("2026-10-12T06:45:00Z"),
+        acceptanceReminderSentAt: new Date("2026-10-12T06:23:00Z"),
+      }),
+    ];
+
+    const res = await processAcceptanceTimersService(new Date("2026-10-12T06:35:00Z"));
+    expect(res.ok).toBe(true);
+    expect(mocks.sendNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.sendNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "admin-ok" })
+    );
+    expect(mocks.queueEmailNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.queueEmailNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "ok@safihub.cd" })
+    );
+  });
+
+  it("delays acceptance and reception expiry across temporary house closures", async () => {
+    mocks.hours = [
+      { id: "hh-1", houseId: "house-1", weekday: 1, opensAt: "08:00", closesAt: "18:00" },
+      { id: "hh-tue", houseId: "house-1", weekday: 2, opensAt: "08:00", closesAt: "18:00" },
+    ];
+    // Full-day closure on Monday 2026-10-12
+    mocks.closures = [
+      {
+        id: "clos-1",
+        houseId: "house-1",
+        startsOn: "2026-10-12",
+        endsOn: "2026-10-12",
+        reason: "Maintenance",
+        createdAt: new Date("2026-10-11T00:00:00Z"),
+      },
+    ];
+
+    // Order created Monday 07:00Z while closed; stored deadline without closure was Monday 07:45Z.
+    // Open time only starts Tuesday 06:00Z (08:00 Bukavu), so 45m deadline becomes Tuesday 06:45Z.
+    mocks.pendingAcceptance = [
+      makePendingAcceptance({
+        id: "ord-closure",
+        createdAt: new Date("2026-10-12T07:00:00Z"),
+        acceptanceDeadlineAt: new Date("2026-10-12T07:45:00Z"),
+        acceptanceReminderSentAt: new Date("2026-10-13T06:23:00Z"),
+        acceptanceEscalatedAt: new Date("2026-10-13T06:34:00Z"),
+      }),
+    ];
+    const beforeClosureRes = await processAcceptanceTimersService(new Date("2026-10-13T06:30:00Z"));
+    expect(beforeClosureRes.ok).toBe(true);
+    if (beforeClosureRes.ok) {
+      expect(beforeClosureRes.value.expired).toBe(0);
+    }
+    const afterClosureRes = await processAcceptanceTimersService(new Date("2026-10-13T06:45:00Z"));
+    expect(afterClosureRes.ok).toBe(true);
+    if (afterClosureRes.ok) {
+      expect(afterClosureRes.value.expired).toBe(1);
+    }
+
+    // Same for reception auto-confirm: received Monday 07:00Z, 60m window starts Tuesday 06:00Z -> 07:00Z
+    mocks.pendingAcceptance = [];
+    mocks.pendingReception = [
+      {
+        id: "ord-rec-closure",
+        code: "ORD-RC",
+        houseId: "house-1",
+        status: "received",
+        receivedAt: new Date("2026-10-12T07:00:00Z"),
+        receptionDeadlineAt: new Date("2026-10-12T08:00:00Z"),
+        receptionConfirmedAt: null,
+      },
+    ];
+    const recWaitRes = await processReceptionConformingTimersService(new Date("2026-10-13T06:45:00Z"));
+    expect(recWaitRes.ok).toBe(true);
+    if (recWaitRes.ok) {
+      expect(recWaitRes.value.conformed).toBe(0);
+    }
+    const recConfirmRes = await processReceptionConformingTimersService(new Date("2026-10-13T07:00:00Z"));
+    expect(recConfirmRes.ok).toBe(true);
+    if (recConfirmRes.ok) {
+      expect(recConfirmRes.value.conformed).toBe(1);
+    }
+  });
+
+  it("retries persisted pending outbox intents independently without resending succeeded recipients", async () => {
+    mocks.pendingIntents = [
+      {
+        id: "outbox-1",
+        userId: null,
+        phone: "timer-outbox",
+        orderId: "ord-outbox",
+        channel: "in_app",
+        templateKey: "timer_outbox:order_acceptance_reminder",
+        locale: "fr",
+        title: "ord-outbox:order_acceptance_reminder:house-1:2026-10-12T06:00:00.000Z",
+        body: JSON.stringify({
+          milestone: "order_acceptance_reminder",
+          orderId: "ord-outbox",
+          orderCode: "ORD-OUT",
+          houseId: "house-1",
+          houseName: "Pressing Kivu",
+          houseSlug: "pressing-kivu",
+          customerId: "cust-1",
+          customerName: "Amani",
+          customerEmail: "amani@safihub.cd",
+          customerIsGuest: false,
+          contactPhone: "+243990001122",
+          trackingToken: "trk-out",
+          assignmentRevision: "house-1:2026-10-12T06:00:00.000Z",
+          completedDeliveryKeys: [],
+        }),
+        status: "pending",
+        error: null,
+        sentAt: null,
+        readAt: null,
+        createdAt: new Date(),
+      },
+    ];
+
+    // First attempt: in-app returns fulfilled Err, email succeeds
+    mocks.sendNotification.mockResolvedValueOnce({ ok: false, error: "DB write failed" } as unknown as {
+      ok: true;
+      value: NotificationRecord;
+    });
+    const resFail = await processAcceptanceTimersService(new Date("2026-10-12T06:25:00Z"));
+    expect(resFail.ok).toBe(true);
+    expect(mocks.updateTimerNotificationIntent).toHaveBeenCalledWith(
+      "outbox-1",
+      expect.objectContaining({
+        status: "failed",
+        error: "DB write failed",
+      })
+    );
+
+    const savedBody = mocks.updateTimerNotificationIntent.mock.calls[0]![1].body;
+    expect(JSON.parse(savedBody).completedDeliveryKeys).toEqual([
+      "email:remind:ord-outbox:house-1:2026-10-12T06:00:00.000Z:gerant@kivu.cd",
+    ]);
+
+    // Second sweep retries ONLY the failed in-app notification, skipping the already-sent email
+    mocks.pendingIntents[0]!.body = savedBody;
+    mocks.pendingIntents[0]!.status = "failed";
+    mocks.sendNotification.mockClear();
+    mocks.queueEmailNotification.mockClear();
+    mocks.updateTimerNotificationIntent.mockClear();
+    mocks.sendNotification.mockResolvedValueOnce({ ok: true, value: {} as NotificationRecord });
+
+    await processAcceptanceTimersService(new Date("2026-10-12T06:30:00Z"));
+    expect(mocks.sendNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.queueEmailNotification).not.toHaveBeenCalled();
+    expect(mocks.updateTimerNotificationIntent).toHaveBeenCalledWith(
+      "outbox-1",
+      expect.objectContaining({ status: "sent", error: null })
     );
   });
 });

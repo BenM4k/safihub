@@ -434,4 +434,177 @@ describe("Phase 10.3: Delivery Confirmation Code", () => {
     expect(res.ok).toBe(false);
     expect(res.error).toContain("Invalid transition");
   });
+
+  it("reconciles owed_to_house, owed_to_owner, pickup courier_pay, and delivery courier_pay with cash_collected", async () => {
+    const { db, schema } = await import("@/dal/db");
+    const insertedLedgerRows: Array<Record<string, unknown>> = [];
+
+    vi.spyOn(db, "transaction").mockImplementation(async (callback) => {
+      const mockTx = {
+        select: vi.fn().mockImplementation(() => ({
+          from: vi.fn().mockImplementation((table) => ({
+            where: vi.fn().mockImplementation(() => ({
+              for: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue([
+                  {
+                    id: missionId,
+                    type: "delivery",
+                    status: "in_progress",
+                    courierId: "courier_delivery_2",
+                    orderId,
+                    courierPay: 1500,
+                  },
+                ]),
+              }),
+              limit: vi.fn().mockImplementation(async () => {
+                if (table === schema.cashLedger) {
+                  return [
+                    {
+                      id: "ledger_pickup_pay_1",
+                      entryType: "courier_pay",
+                      missionId: "miss_pickup_1",
+                      currency: "CDF",
+                      amount: 1000,
+                      reversalOfId: null,
+                    },
+                  ];
+                }
+                return [
+                  {
+                    id: orderId,
+                    status: "delivery_in_progress",
+                    deliveryConfirmationCode: correctCode,
+                    houseId: "house_1",
+                    itemsTotal: 10000,
+                    adjustedItemsTotal: null,
+                    deliveryFee: 3000,
+                    commissionAmount: 2000,
+                    totalDue: 13000,
+                    paymentCurrency: "CDF",
+                    exchangeRateUsed: 2800,
+                  },
+                ];
+              }),
+            })),
+          })),
+        })),
+        update: vi.fn().mockReturnValue({
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+        insert: vi.fn().mockImplementation((table) => ({
+          values: vi.fn().mockImplementation(async (vals) => {
+            if (table === schema.cashLedger) {
+              insertedLedgerRows.push(vals as Record<string, unknown>);
+            }
+            return [];
+          }),
+        })),
+      };
+      return await callback(mockAs(mockTx));
+    });
+
+    const res = await completeDeliveryMissionAtomic({
+      missionId,
+      courierId: "courier_delivery_2",
+      confirmationCode: correctCode,
+      cashCollected: 13000,
+      cashCurrency: "CDF",
+    });
+
+    expect(res.ok).toBe(true);
+    expect(res.discrepancyFlagged).toBe(false);
+
+    const cashRow = insertedLedgerRows.find((r) => r.entryType === "cash_collected");
+    const houseRow = insertedLedgerRows.find((r) => r.entryType === "owed_to_house");
+    const ownerRow = insertedLedgerRows.find((r) => r.entryType === "owed_to_owner");
+    const deliveryCourierRow = insertedLedgerRows.find((r) => r.entryType === "courier_pay");
+
+    // Prior pickup leg = 1000 CDF; delivery leg = 1500 CDF; commission = 2000; deliveryFee = 3000
+    // owedToHouse = 8000, owedToOwner = 2000 + 3000 - (1000 + 1500) = 2500
+    // Total: 8000 + 2500 + 1000 + 1500 = 13000 === cashCollected
+    expect(cashRow?.amount).toBe(13000);
+    expect(houseRow?.amount).toBe(8000);
+    expect(ownerRow?.amount).toBe(2500);
+    expect(deliveryCourierRow?.amount).toBe(1500);
+    expect(
+      Number(houseRow?.amount) +
+        Number(ownerRow?.amount) +
+        1000 +
+        Number(deliveryCourierRow?.amount)
+    ).toBe(Number(cashRow?.amount));
+  });
+
+  it("does not update order_items in completePickupMissionAtomic when order transition fails", async () => {
+    const { db, schema } = await import("@/dal/db");
+    const updatedTables: unknown[] = [];
+
+    vi.spyOn(db, "transaction").mockImplementation(async (callback) => {
+      const mockTx = {
+        select: vi.fn().mockImplementation(() => ({
+          from: vi.fn().mockImplementation((table) => ({
+            where: vi.fn().mockImplementation(() => {
+              if (table === schema.orderItems) {
+                return Promise.resolve([
+                  {
+                    id: "oi_1",
+                    orderId,
+                    declaredQuantity: 2,
+                    conditionNote: null,
+                    isFlagged: false,
+                  },
+                ]);
+              }
+              if (table === schema.orderPhotos) {
+                return Promise.resolve([]);
+              }
+              return {
+                for: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue([
+                    {
+                      id: "miss_pickup_invalid",
+                      type: "pickup",
+                      status: "in_progress",
+                      courierId,
+                      orderId,
+                      courierPay: 1000,
+                    },
+                  ]),
+                }),
+                limit: vi.fn().mockResolvedValue([
+                  {
+                    id: orderId,
+                    status: "created", // Cannot transition directly from 'created' -> 'picked_up'
+                    houseId: "house_1",
+                  },
+                ]),
+              };
+            }),
+          })),
+        })),
+        update: vi.fn().mockImplementation((table) => {
+          updatedTables.push(table);
+          return {
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([]),
+            }),
+          };
+        }),
+        insert: vi.fn().mockReturnValue({
+          values: vi.fn().mockResolvedValue([]),
+        }),
+      };
+      return await callback(mockAs(mockTx));
+    });
+
+    const res = await completePickupMissionAtomic({
+      missionId: "miss_pickup_invalid",
+      courierId,
+      items: [{ orderItemId: "oi_1", pickupQuantity: 3 }],
+    });
+
+    expect(res.ok).toBe(false);
+    expect(updatedTables).not.toContain(schema.orderItems);
+  });
 });

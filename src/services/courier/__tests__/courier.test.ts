@@ -186,6 +186,7 @@ vi.mock("@/dal", () => ({
     if (params.confirmationCode !== "4829") {
       return {
         ok: false,
+        invalidConfirmationCode: true,
         error: "Code de confirmation de livraison invalide. Demandez le code au client.",
       };
     }
@@ -441,6 +442,29 @@ describe("Phase 6: Courier Interface Engine & Lifecycle", () => {
       expect(lockedRes.ok).toBe(false);
       if (!lockedRes.ok) {
         expect(lockedRes.error).toContain("Trop de tentatives");
+      }
+    });
+
+    it("does not consume confirmation code budget on successful attempts and resets prior failures on success", async () => {
+      for (let i = 0; i < 4; i++) {
+        const wrong = await completeDeliveryMissionService({
+          courierId: "courier_1",
+          missionId: "m_delivery_1",
+          confirmationCode: `999${i}`,
+          cashCollected: 22000,
+        });
+        expect(wrong.ok).toBe(false);
+      }
+
+      // 6 consecutive successful calls must not exhaust the 5-attempt budget
+      for (let i = 0; i < 6; i++) {
+        const okRes = await completeDeliveryMissionService({
+          courierId: "courier_1",
+          missionId: "m_delivery_1",
+          confirmationCode: "4829",
+          cashCollected: 22000,
+        });
+        expect(okRes.ok).toBe(true);
       }
     });
   });

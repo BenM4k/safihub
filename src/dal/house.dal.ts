@@ -110,7 +110,8 @@ export async function getUserHouseMemberships(
     })
     .from(schema.houseMembers)
     .innerJoin(schema.houses, eq(schema.houseMembers.houseId, schema.houses.id))
-    .where(eq(schema.houseMembers.userId, userId));
+    .where(eq(schema.houseMembers.userId, userId))
+    .orderBy(asc(schema.houseMembers.createdAt), asc(schema.houseMembers.houseId));
 
   return rows;
 }

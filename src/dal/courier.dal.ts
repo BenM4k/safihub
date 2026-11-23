@@ -33,10 +33,8 @@ async function isCourierCashCeilingExceededTx(
       entryType: schema.cashLedger.entryType,
       currency: schema.cashLedger.currency,
       amount: schema.cashLedger.amount,
-      exchangeRateUsed: schema.orders.exchangeRateUsed,
     })
     .from(schema.cashLedger)
-    .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
     .where(
       and(
         eq(schema.cashLedger.courierId, courierId),
@@ -45,20 +43,38 @@ async function isCourierCashCeilingExceededTx(
       )
     );
 
-  let cashCollected = 0;
-  let cashRemitted = 0;
+  let cashHeldCDF = 0;
+  let cashHeldUSD = 0;
   for (const entry of ledgerEntries) {
-    const rate = Number(entry.exchangeRateUsed) || 2800;
-    const amountCDF =
-      entry.currency === "USD" ? Math.round(entry.amount * rate) : entry.amount;
     if (entry.entryType === "cash_collected" || entry.entryType === "float_issued") {
-      cashCollected += amountCDF;
+      if (entry.currency === "USD") cashHeldUSD += entry.amount;
+      else cashHeldCDF += entry.amount;
     } else if (entry.entryType === "cash_remitted" || entry.entryType === "float_returned") {
-      cashRemitted += amountCDF;
+      if (entry.currency === "USD") cashHeldUSD -= entry.amount;
+      else cashHeldCDF -= entry.amount;
     }
   }
 
-  const cashHeld = Math.max(0, cashCollected - cashRemitted);
+  const effectiveHeldCDF = Math.max(0, cashHeldCDF);
+  const effectiveHeldUSD = Math.max(0, cashHeldUSD);
+
+  let policyRate = 2800;
+  if (effectiveHeldUSD > 0) {
+    const [latestRate] = await tx
+      .select({ rate: schema.exchangeRates.rate })
+      .from(schema.exchangeRates)
+      .where(
+        and(
+          eq(schema.exchangeRates.baseCurrency, "USD"),
+          eq(schema.exchangeRates.quoteCurrency, "CDF")
+        )
+      )
+      .orderBy(desc(schema.exchangeRates.effectiveDate), desc(schema.exchangeRates.createdAt))
+      .limit(1);
+    policyRate = Number(latestRate?.rate) || 2800;
+  }
+
+  const cashHeld = effectiveHeldCDF + Math.round(effectiveHeldUSD * policyRate);
   const ceiling = profile?.cashCeiling ?? null;
 
   return {
@@ -1037,6 +1053,10 @@ export async function completePickupMissionAtomic(params: {
     );
 
     let hasCountDiscrepancy = false;
+    const validatedUpdates: Array<{
+      item: (typeof params.items)[number];
+      match: (typeof existingItems)[number];
+    }> = [];
 
     for (const it of params.items) {
       const match = existingItems.find((e) => e.id === it.orderItemId);
@@ -1057,14 +1077,7 @@ export async function completePickupMissionAtomic(params: {
         hasCountDiscrepancy = true;
       }
 
-      await tx
-        .update(schema.orderItems)
-        .set({
-          pickupQuantity: it.pickupQuantity,
-          conditionNote: it.conditionNote ?? match.conditionNote,
-          isFlagged: it.isFlagged ?? match.isFlagged,
-        })
-        .where(eq(schema.orderItems.id, it.orderItemId));
+      validatedUpdates.push({ item: it, match });
     }
 
     const transitionRes = transitionOrder(order.id, order.status, {
@@ -1084,6 +1097,17 @@ export async function completePickupMissionAtomic(params: {
 
     if (!transitionRes.ok) {
       return { ok: false, error: transitionRes.error };
+    }
+
+    for (const { item: it, match } of validatedUpdates) {
+      await tx
+        .update(schema.orderItems)
+        .set({
+          pickupQuantity: it.pickupQuantity,
+          conditionNote: it.conditionNote ?? match.conditionNote,
+          isFlagged: it.isFlagged ?? match.isFlagged,
+        })
+        .where(eq(schema.orderItems.id, it.orderItemId));
     }
 
     // Complete mission
@@ -1375,6 +1399,7 @@ export async function completeDeliveryMissionAtomic(params: {
   ok: boolean;
   orderId?: string;
   error?: string;
+  invalidConfirmationCode?: boolean;
   discrepancyFlagged?: boolean;
   orderCreatedAt?: Date;
   deliveredAt?: Date;
@@ -1408,6 +1433,7 @@ export async function completeDeliveryMissionAtomic(params: {
     if (!verifyConfirmationCode(params.confirmationCode || "", order.deliveryConfirmationCode || "")) {
       return {
         ok: false,
+        invalidConfirmationCode: true,
         error: "Code de confirmation de livraison invalide. Demandez le code au client.",
       };
     }
@@ -1471,8 +1497,44 @@ export async function completeDeliveryMissionAtomic(params: {
     const finalItemsTotal = order.adjustedItemsTotal ?? order.itemsTotal;
     const owedToHouse = Math.max(0, finalItemsTotal - order.commissionAmount);
     const courierPayEarned = Math.max(0, mission.courierPay ?? 0);
-    const deliveryFeeNet = Math.max(0, order.deliveryFee - courierPayEarned);
-    const owedToOwner = Math.max(0, order.commissionAmount + deliveryFeeNet);
+
+    // Account for prior non-reversed courier_pay entries on this order (e.g. pickup leg)
+    // so owed_to_house + owed_to_owner + all courier_pay legs reconcile with cash_collected.
+    const orderLedgerRows = await tx
+      .select({
+        id: schema.cashLedger.id,
+        entryType: schema.cashLedger.entryType,
+        missionId: schema.cashLedger.missionId,
+        currency: schema.cashLedger.currency,
+        amount: schema.cashLedger.amount,
+        reversalOfId: schema.cashLedger.reversalOfId,
+      })
+      .from(schema.cashLedger)
+      .where(eq(schema.cashLedger.orderId, order.id))
+      .limit(200);
+
+    const reversedLedgerIds = new Set(
+      orderLedgerRows
+        .filter((r) => r.entryType === "reversal" && r.reversalOfId)
+        .map((r) => r.reversalOfId as string)
+    );
+    const priorCourierPay = orderLedgerRows
+      .filter(
+        (r) =>
+          r.entryType === "courier_pay" &&
+          r.missionId !== params.missionId &&
+          !reversedLedgerIds.has(r.id)
+      )
+      .reduce((sum, r) => {
+        const amountCDF =
+          r.currency === "USD" ? Math.round(r.amount * exchangeRate) : r.amount;
+        return sum + Math.max(0, amountCDF);
+      }, 0);
+
+    const owedToOwner = Math.max(
+      0,
+      order.commissionAmount + order.deliveryFee - (priorCourierPay + courierPayEarned)
+    );
 
     // 1. cash_collected (recorded in the actual physical currency collected)
     if (params.cashCollected > 0) {

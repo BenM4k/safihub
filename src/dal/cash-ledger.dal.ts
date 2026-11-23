@@ -286,7 +286,6 @@ export async function getCourierCashBalances(courierId: string): Promise<{
 
   let cashHeldCDF = 0;
   let cashHeldUSD = 0;
-  let totalHeldCDF = 0;
   let totalCollectedCDF = 0;
   let totalRemittedCDF = 0;
 
@@ -298,31 +297,46 @@ export async function getCourierCashBalances(courierId: string): Promise<{
     if (entry.entryType === "cash_collected") {
       if (entry.currency === "USD") cashHeldUSD += entry.amount;
       else cashHeldCDF += entry.amount;
-      totalHeldCDF += amountCDF;
       totalCollectedCDF += amountCDF;
     } else if (entry.entryType === "float_issued") {
       if (entry.currency === "USD") cashHeldUSD += entry.amount;
       else cashHeldCDF += entry.amount;
-      totalHeldCDF += amountCDF;
     } else if (entry.entryType === "cash_remitted") {
       if (entry.currency === "USD") cashHeldUSD -= entry.amount;
       else cashHeldCDF -= entry.amount;
-      totalHeldCDF -= amountCDF;
       totalRemittedCDF += amountCDF;
     } else if (entry.entryType === "float_returned") {
       if (entry.currency === "USD") cashHeldUSD -= entry.amount;
       else cashHeldCDF -= entry.amount;
-      totalHeldCDF -= amountCDF;
     }
   }
 
   const effectiveHeldCDF = Math.max(0, cashHeldCDF);
-  const effectiveTotalHeldCDF = Math.max(0, totalHeldCDF);
+  const effectiveHeldUSD = Math.max(0, cashHeldUSD);
+
+  let policyRate = 2800;
+  if (effectiveHeldUSD > 0) {
+    const [latestRate] = await db
+      .select({ rate: schema.exchangeRates.rate })
+      .from(schema.exchangeRates)
+      .where(
+        and(
+          eq(schema.exchangeRates.baseCurrency, "USD"),
+          eq(schema.exchangeRates.quoteCurrency, "CDF")
+        )
+      )
+      .orderBy(desc(schema.exchangeRates.effectiveDate), desc(schema.exchangeRates.createdAt))
+      .limit(1);
+    policyRate = Number(latestRate?.rate) || 2800;
+  }
+
+  const effectiveTotalHeldCDF =
+    effectiveHeldCDF + Math.round(effectiveHeldUSD * policyRate);
   const ceiling = profile?.cashCeiling ?? null;
 
   return {
     cashHeldCDF: effectiveHeldCDF,
-    cashHeldUSD: Math.max(0, cashHeldUSD),
+    cashHeldUSD: effectiveHeldUSD,
     cashCeiling: ceiling,
     isCeilingExceeded: ceiling !== null && effectiveTotalHeldCDF >= ceiling,
     securityDeposit: profile?.securityDeposit ?? 0,

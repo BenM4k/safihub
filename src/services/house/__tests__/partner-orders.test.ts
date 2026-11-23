@@ -220,6 +220,7 @@ vi.mock("@/dal", async (importOriginal) => {
     getHouseOrderEventsRestricted: vi.fn(async () => []),
     getHouseHours: vi.fn(async () => [
       { id: "hh-1", houseId: "house-alpha", weekday: 1, opensAt: "08:00:00", closesAt: "18:00:00" },
+      { id: "hh-2", houseId: "house-alpha", weekday: 2, opensAt: "08:00:00", closesAt: "18:00:00" },
     ]),
     getHouseClosures: vi.fn(async () => []),
     getSettings: vi.fn(async () => ({ receptionWindowMinutes: 60 })),
@@ -441,13 +442,33 @@ describe("Partner Orders Domain Service", () => {
     });
 
     it("allows advancing picked_up to received (T11)", async () => {
-      const res = await markPartnerOrderReceived({
-        houseId: "house-alpha",
-        orderId: "ord-picked-up",
-        actorId: "user-alpha",
-        actorRole: "house",
-      });
-      expect(res.ok).toBe(true);
+      const { transitionOrderStatusAtomic } = await import("@/dal");
+      vi.mocked(transitionOrderStatusAtomic).mockClear();
+      const fixedReceiptTime = new Date("2026-10-12T15:30:00Z"); // Monday 17:30 Bukavu (30m before closing)
+      vi.useFakeTimers();
+      vi.setSystemTime(fixedReceiptTime);
+      try {
+        const res = await markPartnerOrderReceived({
+          houseId: "house-alpha",
+          orderId: "ord-picked-up",
+          actorId: "user-alpha",
+          actorRole: "house",
+        });
+        expect(res.ok).toBe(true);
+        expect(transitionOrderStatusAtomic).toHaveBeenCalledWith(
+          expect.objectContaining({
+            orderId: "ord-picked-up",
+            expectedStatus: "picked_up",
+            newStatus: "received",
+            orderUpdates: {
+              receivedAt: fixedReceiptTime,
+              receptionDeadlineAt: new Date("2026-10-13T06:30:00Z"),
+            },
+          })
+        );
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("allows advancing received to washing (T13)", async () => {
