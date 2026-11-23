@@ -7,7 +7,7 @@ import {
 export const processOrderAcceptanceTimers = inngest.createFunction(
   {
     id: "process-order-acceptance-timers",
-    triggers: [{ cron: "*/5 * * * *" }],
+    triggers: [{ cron: "*/10 * * * *" }],
   },
   async ({ step }) => {
     return await step.run("process-acceptance-timers-step", async () => {
@@ -17,21 +17,24 @@ export const processOrderAcceptanceTimers = inngest.createFunction(
       }
       return result.value;
     });
-  }
+  },
 );
 
 export const processReceptionConformingTimers = inngest.createFunction(
   {
     id: "process-reception-conforming-timers",
-    triggers: [{ cron: "*/5 * * * *" }],
+    triggers: [{ cron: "*/10 * * * *" }],
   },
   async ({ step }) => {
-    return await step.run("process-reception-conforming-timers-step", async () => {
-      const result = await processReceptionConformingTimersService();
-      if (!result.ok) {
-        throw new Error(result.error);
-      }
-      return result.value;
-    });
-  }
+    return await step.run(
+      "process-reception-conforming-timers-step",
+      async () => {
+        const result = await processReceptionConformingTimersService();
+        if (!result.ok) {
+          throw new Error(result.error);
+        }
+        return result.value;
+      },
+    );
+  },
 );

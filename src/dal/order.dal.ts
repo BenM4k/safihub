@@ -2868,6 +2868,31 @@ export interface PendingReceptionOrderRecord {
   receivedAt: Date | null;
   receptionDeadlineAt: Date | null;
   receptionConfirmedAt: Date | null;
+  receptionCheckpointAt?: Date | null;
+  receptionAccruedOpenMinutes?: number | null;
+}
+
+export interface OrderAcceptanceSnapshotRecord {
+  id: string;
+  status: OrderStatus;
+  houseId: string;
+  createdAt: Date;
+  assignedAt: Date | null;
+}
+
+function acceptanceAssignedAtExpr() {
+  return sql<Date>`coalesce((
+    select max(coalesce(
+      nullif(${schema.orderEvents.payload}->>'confirmedAt', '')::timestamptz,
+      ${schema.orderEvents.createdAt}
+    ))
+    from ${schema.orderEvents}
+    where ${schema.orderEvents.orderId} = ${schema.orders.id}
+      and (
+        (${schema.orderEvents.type} = 'note' and ${schema.orderEvents.payload}->>'category' = 'pressing_reassignment')
+        or (${schema.orderEvents.type} = 'status_change' and ${schema.orderEvents.fromStatus} = 'awaiting_confirmation' and ${schema.orderEvents.toStatus} = 'created')
+      )
+  ), ${schema.orders.createdAt})`;
 }
 
 export async function getPendingAcceptanceOrders(): Promise<
@@ -2888,13 +2913,7 @@ export async function getPendingAcceptanceOrders(): Promise<
       trackingToken: schema.orders.trackingToken,
       status: schema.orders.status,
       createdAt: schema.orders.createdAt,
-      assignedAt: sql<Date>`coalesce((
-        select max(${schema.orderEvents.createdAt})
-        from ${schema.orderEvents}
-        where ${schema.orderEvents.orderId} = ${schema.orders.id}
-          and ${schema.orderEvents.type} = 'note'
-          and ${schema.orderEvents.payload}->>'category' = 'pressing_reassignment'
-      ), ${schema.orders.createdAt})`,
+      assignedAt: acceptanceAssignedAtExpr(),
       acceptanceDeadlineAt: schema.orders.acceptanceDeadlineAt,
       acceptanceReminderSentAt: schema.orders.acceptanceReminderSentAt,
       acceptanceEscalatedAt: schema.orders.acceptanceEscalatedAt,
@@ -2910,6 +2929,24 @@ export async function getPendingAcceptanceOrders(): Promise<
     );
 }
 
+export async function getOrderAcceptanceSnapshot(
+  orderId: string
+): Promise<OrderAcceptanceSnapshotRecord | null> {
+  const [row] = await db
+    .select({
+      id: schema.orders.id,
+      status: schema.orders.status,
+      houseId: schema.orders.houseId,
+      createdAt: schema.orders.createdAt,
+      assignedAt: acceptanceAssignedAtExpr(),
+    })
+    .from(schema.orders)
+    .where(eq(schema.orders.id, orderId))
+    .limit(1);
+
+  return row ?? null;
+}
+
 export async function getPendingReceptionOrders(): Promise<
   PendingReceptionOrderRecord[]
 > {
@@ -2922,12 +2959,30 @@ export async function getPendingReceptionOrders(): Promise<
       receivedAt: schema.orders.receivedAt,
       receptionDeadlineAt: schema.orders.receptionDeadlineAt,
       receptionConfirmedAt: schema.orders.receptionConfirmedAt,
+      receptionCheckpointAt: sql<Date | null>`(
+        select (oe.payload->>'effectiveAt')::timestamptz
+        from ${schema.orderEvents} oe
+        where oe.order_id = ${schema.orders.id}
+          and oe.type = 'note'
+          and oe.payload->>'category' = 'reception_schedule_checkpoint'
+        order by oe.created_at desc
+        limit 1
+      )`,
+      receptionAccruedOpenMinutes: sql<number | null>`(
+        select (oe.payload->>'accruedOpenMinutes')::double precision
+        from ${schema.orderEvents} oe
+        where oe.order_id = ${schema.orders.id}
+          and oe.type = 'note'
+          and oe.payload->>'category' = 'reception_schedule_checkpoint'
+        order by oe.created_at desc
+        limit 1
+      )`,
     })
     .from(schema.orders)
     .where(
       and(
         eq(schema.orders.status, "received"),
-        isNotNull(schema.orders.receptionDeadlineAt),
+        isNotNull(schema.orders.receivedAt),
         isNull(schema.orders.receptionConfirmedAt)
       )
     );

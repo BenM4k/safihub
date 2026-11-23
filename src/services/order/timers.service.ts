@@ -2,23 +2,27 @@ import "server-only";
 
 import { err, ok, type Result } from "@/lib/result";
 import {
+  computeTimerOutboxBackoffMs,
   findPendingTimerNotificationIntentByKey,
   getAdminUsers,
   getHouseClosures,
   getHouseHours,
   getHouseStaff,
+  getOrderAcceptanceSnapshot,
   getPendingAcceptanceOrders,
   getPendingReceptionOrders,
   getPendingTimerNotificationIntents,
   getSettings,
   markOrderAcceptanceEscalated,
   markOrderAcceptanceReminderSent,
+  MAX_TIMER_OUTBOX_ATTEMPTS,
   transitionOrderStatusAtomic,
   updateTimerNotificationIntent,
   type HouseClosureRecord,
   type HouseHourRecord,
   type HouseStaffMemberRecord,
   type NotificationRecord,
+  type OrderAcceptanceSnapshotRecord,
   type OrderTimerNotificationIntentInput,
   type PendingAcceptanceOrderRecord,
   type UserRecord,
@@ -156,9 +160,10 @@ async function deliverTimerNotificationIntent(
 
   if (payload.milestone === "order_expired") {
     const trackingUrl = `${deps.baseUrl}/track/${payload.trackingToken}`;
+    const expireInAppKey = `in_app:expire:${payload.orderId}:${payload.assignmentRevision}:${payload.customerId}`;
 
     tasks.push({
-      key: `in_app:expire:${payload.orderId}:${payload.assignmentRevision}:${payload.customerId}`,
+      key: expireInAppKey,
       run: () =>
         runInAppNotification({
           userId: payload.customerId,
@@ -166,6 +171,7 @@ async function deliverTimerNotificationIntent(
           orderId: payload.orderId,
           channel: "in_app",
           templateKey: "order_expired",
+          dedupeKey: expireInAppKey,
           params: { orderIdShort, houseName, trackingUrl },
         }),
     });
@@ -218,14 +224,16 @@ async function deliverTimerNotificationIntent(
     const adminDispatchUrl = `${deps.baseUrl}/admin/dispatch`;
 
     for (const admin of adminLookup.items) {
+      const escalateInAppKey = `in_app:escalate:${payload.orderId}:${payload.assignmentRevision}:${admin.id}`;
       tasks.push({
-        key: `in_app:escalate:${payload.orderId}:${payload.assignmentRevision}:${admin.id}`,
+        key: escalateInAppKey,
         run: () =>
           runInAppNotification({
             userId: admin.id,
             orderId: payload.orderId,
             channel: "in_app",
             templateKey: "admin_escalation_alert",
+            dedupeKey: escalateInAppKey,
             params: { orderIdShort, houseName },
           }),
       });
@@ -254,14 +262,16 @@ async function deliverTimerNotificationIntent(
     const partnerOrderUrl = `${deps.baseUrl}/partner/${payload.houseSlug}/orders/${payload.orderId}`;
 
     for (const staff of staffLookup.items) {
+      const remindInAppKey = `in_app:remind:${payload.orderId}:${payload.assignmentRevision}:${staff.userId}`;
       tasks.push({
-        key: `in_app:remind:${payload.orderId}:${payload.assignmentRevision}:${staff.userId}`,
+        key: remindInAppKey,
         run: () =>
           runInAppNotification({
             userId: staff.userId,
             orderId: payload.orderId,
             channel: "in_app",
             templateKey: "house_acceptance_reminder",
+            dedupeKey: remindInAppKey,
             params: { orderIdShort, houseName },
           }),
       });
@@ -319,27 +329,80 @@ async function deliverTimerNotificationIntent(
 }
 
 async function flushTimerOutboxIntent(
-  outboxRow: NotificationRecord | null,
+  outboxRow: NotificationRecord,
   payload: TimerNotificationIntentPayload,
   deps: {
     baseUrl: string;
     getCachedHouseStaff: (houseId: string) => Promise<LookupResult<HouseStaffMemberRecord>>;
     getCachedAdmins: () => Promise<LookupResult<UserRecord>>;
-  }
+    getOrderSnapshot: (orderId: string) => Promise<OrderAcceptanceSnapshotRecord | null>;
+  },
+  now: Date
 ): Promise<void> {
+  if (
+    payload.milestone === "order_acceptance_reminder" ||
+    payload.milestone === "order_acceptance_escalation"
+  ) {
+    const snapshot = await deps.getOrderSnapshot(payload.orderId);
+    const snapshotStart = snapshot
+      ? snapshot.assignedAt
+        ? new Date(snapshot.assignedAt)
+        : snapshot.createdAt
+      : null;
+    const currentRevision =
+      snapshot && snapshotStart
+        ? `${snapshot.houseId}:${snapshotStart.toISOString()}`
+        : null;
+
+    if (
+      !snapshot ||
+      snapshot.status !== "created" ||
+      currentRevision !== payload.assignmentRevision
+    ) {
+      await updateTimerNotificationIntent(outboxRow.id, {
+        status: "sent",
+        body: JSON.stringify({ ...payload, retired: true }),
+        error: "Retired: stale assignment or order no longer created",
+        sentAt: now,
+        attemptCount: outboxRow.attemptCount ?? 0,
+        nextRetryAt: null,
+      }).catch(() => {});
+      return;
+    }
+  }
+
   const result = await deliverTimerNotificationIntent(payload, deps);
-  if (!outboxRow) return;
 
   const updatedPayload: TimerNotificationIntentPayload = {
     ...payload,
     completedDeliveryKeys: result.completedDeliveryKeys,
   };
 
+  if (result.allSucceeded) {
+    await updateTimerNotificationIntent(outboxRow.id, {
+      status: "sent",
+      body: JSON.stringify(updatedPayload),
+      error: null,
+      sentAt: now,
+      attemptCount: outboxRow.attemptCount ?? 0,
+      nextRetryAt: null,
+    }).catch(() => {});
+    return;
+  }
+
+  const nextAttempt = (outboxRow.attemptCount ?? 0) + 1;
+  const nextRetryAt =
+    nextAttempt >= MAX_TIMER_OUTBOX_ATTEMPTS
+      ? null
+      : new Date(now.getTime() + computeTimerOutboxBackoffMs(nextAttempt));
+
   await updateTimerNotificationIntent(outboxRow.id, {
-    status: result.allSucceeded ? "sent" : "failed",
+    status: "failed",
     body: JSON.stringify(updatedPayload),
     error: result.errorMessage,
-    sentAt: result.allSucceeded ? new Date() : null,
+    sentAt: null,
+    attemptCount: nextAttempt,
+    nextRetryAt,
   }).catch(() => {});
 }
 
@@ -383,7 +446,7 @@ export async function processAcceptanceTimersService(
   try {
     const [pendingOrders, persistedPendingIntents] = await Promise.all([
       getPendingAcceptanceOrders(),
-      getPendingTimerNotificationIntents().catch(() => [] as NotificationRecord[]),
+      getPendingTimerNotificationIntents(now).catch(() => [] as NotificationRecord[]),
     ]);
 
     if (pendingOrders.length === 0 && persistedPendingIntents.length === 0) {
@@ -394,7 +457,32 @@ export async function processAcceptanceTimersService(
     const hoursCache = new Map<string, HouseHourRecord[]>();
     const closuresCache = new Map<string, HouseClosureRecord[]>();
     const staffCache = new Map<string, LookupResult<HouseStaffMemberRecord>>();
+    const pendingOrdersById = new Map(pendingOrders.map((o) => [o.id, o]));
+    const snapshotCache = new Map<string, OrderAcceptanceSnapshotRecord | null>();
     let cachedAdmins: LookupResult<UserRecord> | null = null;
+
+    const getOrderSnapshot = async (
+      orderId: string
+    ): Promise<OrderAcceptanceSnapshotRecord | null> => {
+      if (snapshotCache.has(orderId)) {
+        return snapshotCache.get(orderId) ?? null;
+      }
+      const inPending = pendingOrdersById.get(orderId);
+      if (inPending) {
+        const snap: OrderAcceptanceSnapshotRecord = {
+          id: inPending.id,
+          status: inPending.status,
+          houseId: inPending.houseId,
+          createdAt: inPending.createdAt,
+          assignedAt: inPending.assignedAt ?? null,
+        };
+        snapshotCache.set(orderId, snap);
+        return snap;
+      }
+      const fetched = await getOrderAcceptanceSnapshot(orderId).catch(() => null);
+      snapshotCache.set(orderId, fetched);
+      return fetched;
+    };
 
     const getCachedHouseStaff = async (
       houseId: string
@@ -427,21 +515,33 @@ export async function processAcceptanceTimersService(
       return cachedAdmins;
     };
 
-    const deliveryDeps = { baseUrl, getCachedHouseStaff, getCachedAdmins };
+    const deliveryDeps = {
+      baseUrl,
+      getCachedHouseStaff,
+      getCachedAdmins,
+      getOrderSnapshot,
+    };
 
     // Retry unfinished notification intents from previous sweeps independently
     for (const row of persistedPendingIntents) {
       const parsed = parseOutboxPayload(row);
       if (!parsed) {
+        const nextAttempt = (row.attemptCount ?? 0) + 1;
+        const nextRetryAt =
+          nextAttempt >= MAX_TIMER_OUTBOX_ATTEMPTS
+            ? null
+            : new Date(now.getTime() + computeTimerOutboxBackoffMs(nextAttempt));
         await updateTimerNotificationIntent(row.id, {
           status: "failed",
           body: row.body,
           error: "Malformed timer notification outbox payload",
           sentAt: null,
+          attemptCount: nextAttempt,
+          nextRetryAt,
         }).catch(() => {});
         continue;
       }
-      await flushTimerOutboxIntent(row, parsed, deliveryDeps);
+      await flushTimerOutboxIntent(row, parsed, deliveryDeps, now);
     }
 
     if (pendingOrders.length === 0) {
@@ -525,7 +625,9 @@ export async function processAcceptanceTimersService(
             const outboxRow = await findPendingTimerNotificationIntentByKey(
               intent.intentKey
             ).catch(() => null);
-            await flushTimerOutboxIntent(outboxRow, intent.payload, deliveryDeps);
+            if (outboxRow) {
+              await flushTimerOutboxIntent(outboxRow, intent.payload, deliveryDeps, now);
+            }
           }
         }
       } else if (action.type === "alert_admin") {
@@ -548,7 +650,9 @@ export async function processAcceptanceTimersService(
           const outboxRow = await findPendingTimerNotificationIntentByKey(
             intent.intentKey
           ).catch(() => null);
-          await flushTimerOutboxIntent(outboxRow, intent.payload, deliveryDeps);
+          if (outboxRow) {
+            await flushTimerOutboxIntent(outboxRow, intent.payload, deliveryDeps, now);
+          }
         }
       } else if (action.type === "remind_house") {
         const intent = buildTimerNotificationIntent(
@@ -570,7 +674,9 @@ export async function processAcceptanceTimersService(
           const outboxRow = await findPendingTimerNotificationIntentByKey(
             intent.intentKey
           ).catch(() => null);
-          await flushTimerOutboxIntent(outboxRow, intent.payload, deliveryDeps);
+          if (outboxRow) {
+            await flushTimerOutboxIntent(outboxRow, intent.payload, deliveryDeps, now);
+          }
         }
       }
     }
@@ -623,14 +729,18 @@ export async function processReceptionConformingTimersService(
         closuresCache.set(order.houseId, closures);
       }
 
-      const closureAwareDeadline = order.receivedAt
-        ? computeReceptionDeadline(
-            order.receivedAt,
-            receptionWindowMinutes,
-            hours,
-            closures
-          )
-        : order.receptionDeadlineAt;
+      const windowStart = order.receptionCheckpointAt
+        ? new Date(order.receptionCheckpointAt)
+        : order.receivedAt;
+      const remainingMinutes = Math.max(
+        0,
+        receptionWindowMinutes - Math.max(0, order.receptionAccruedOpenMinutes ?? 0)
+      );
+      const closureAwareDeadline = !windowStart
+        ? null
+        : remainingMinutes === 0
+          ? windowStart
+          : computeReceptionDeadline(windowStart, remainingMinutes, hours, closures);
 
       const action = evaluateReceptionConformingJob(
         {

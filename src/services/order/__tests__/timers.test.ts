@@ -8,6 +8,8 @@ import type {
   HouseHourRecord,
   HouseStaffMemberRecord,
   NotificationRecord,
+  OrderAcceptanceSnapshotRecord,
+  OrderTimerNotificationIntentInput,
   PendingAcceptanceOrderRecord,
   PendingReceptionOrderRecord,
   UserRecord,
@@ -40,18 +42,82 @@ const defaultAdmins: Array<Partial<UserRecord> & { id: string; name: string; ema
   },
 ];
 
+function makeOutboxRecord(intent: OrderTimerNotificationIntentInput): NotificationRecord {
+  return {
+    id: `outbox-${intent.intentKey}`,
+    userId: null,
+    phone: "timer-outbox",
+    orderId: intent.orderId,
+    channel: "in_app",
+    templateKey: `timer_outbox:${intent.milestone}`,
+    locale: "fr",
+    title: intent.intentKey,
+    body: intent.body,
+    dedupeKey: null,
+    status: "pending",
+    attemptCount: 0,
+    nextRetryAt: null,
+    error: null,
+    sentAt: null,
+    readAt: null,
+    createdAt: new Date(),
+  };
+}
+
 const mocks = vi.hoisted(() => ({
   pendingAcceptance: [] as PendingAcceptanceOrderRecord[],
   pendingReception: [] as PendingReceptionOrderRecord[],
   pendingIntents: [] as NotificationRecord[],
+  recordedIntentsByKey: new Map<string, NotificationRecord>(),
+  orderSnapshot: null as OrderAcceptanceSnapshotRecord | null,
   hours: null as HouseHourRecord[] | null,
   closures: [] as HouseClosureRecord[],
   staffByHouse: new Map<string, HouseStaffMemberRecord[]>(),
   admins: null as Array<Partial<UserRecord>> | null,
-  transitionOrderStatusAtomic: vi.fn(async () => true),
-  markOrderAcceptanceReminderSent: vi.fn(async () => true),
-  markOrderAcceptanceEscalated: vi.fn(async () => true),
-  findPendingTimerNotificationIntentByKey: vi.fn(async () => null as NotificationRecord | null),
+  transitionOrderStatusAtomic: vi.fn(
+    async (params: { notificationIntent?: OrderTimerNotificationIntentInput }) => {
+      if (params.notificationIntent) {
+        mocks.recordedIntentsByKey.set(
+          params.notificationIntent.intentKey,
+          makeOutboxRecord(params.notificationIntent)
+        );
+      }
+      return true;
+    }
+  ),
+  markOrderAcceptanceReminderSent: vi.fn(
+    async (
+      _orderId: string,
+      _sentAt: Date,
+      options?: { notificationIntent?: OrderTimerNotificationIntentInput }
+    ) => {
+      if (options?.notificationIntent) {
+        mocks.recordedIntentsByKey.set(
+          options.notificationIntent.intentKey,
+          makeOutboxRecord(options.notificationIntent)
+        );
+      }
+      return true;
+    }
+  ),
+  markOrderAcceptanceEscalated: vi.fn(
+    async (
+      _orderId: string,
+      _escalatedAt: Date,
+      options?: { notificationIntent?: OrderTimerNotificationIntentInput }
+    ) => {
+      if (options?.notificationIntent) {
+        mocks.recordedIntentsByKey.set(
+          options.notificationIntent.intentKey,
+          makeOutboxRecord(options.notificationIntent)
+        );
+      }
+      return true;
+    }
+  ),
+  findPendingTimerNotificationIntentByKey: vi.fn(
+    async (intentKey: string) => mocks.recordedIntentsByKey.get(intentKey) ?? null
+  ),
   updateTimerNotificationIntent: vi.fn<
     (
       id: string,
@@ -60,9 +126,11 @@ const mocks = vi.hoisted(() => ({
         body: string;
         error?: string | null;
         sentAt?: Date | null;
+        attemptCount?: number;
+        nextRetryAt?: Date | null;
       }
-    ) => Promise<void>
-  >(async () => {}),
+    ) => Promise<boolean>
+  >(async () => true),
   queueEmailNotification: vi.fn(async () => {}),
   sendNotification: vi.fn(async () => ({ ok: true as const, value: {} as NotificationRecord })),
 }));
@@ -73,6 +141,7 @@ vi.mock("@/dal", async (importOriginal) => {
     ...actual,
     getPendingAcceptanceOrders: vi.fn(async () => mocks.pendingAcceptance),
     getPendingReceptionOrders: vi.fn(async () => mocks.pendingReception),
+    getOrderAcceptanceSnapshot: vi.fn(async () => mocks.orderSnapshot),
     getPendingTimerNotificationIntents: vi.fn(async () => mocks.pendingIntents),
     findPendingTimerNotificationIntentByKey: mocks.findPendingTimerNotificationIntentByKey,
     updateTimerNotificationIntent: mocks.updateTimerNotificationIntent,
@@ -142,15 +211,43 @@ describe("Order Timers Service (Acceptance & Reception Auto-Confirm)", () => {
     mocks.pendingAcceptance = [];
     mocks.pendingReception = [];
     mocks.pendingIntents = [];
+    mocks.recordedIntentsByKey.clear();
+    mocks.orderSnapshot = null;
     mocks.hours = null;
     mocks.closures = [];
     mocks.staffByHouse = new Map();
     mocks.admins = null;
-    mocks.transitionOrderStatusAtomic.mockReset().mockResolvedValue(true);
-    mocks.markOrderAcceptanceReminderSent.mockReset().mockResolvedValue(true);
-    mocks.markOrderAcceptanceEscalated.mockReset().mockResolvedValue(true);
-    mocks.findPendingTimerNotificationIntentByKey.mockReset().mockResolvedValue(null);
-    mocks.updateTimerNotificationIntent.mockReset().mockResolvedValue(undefined);
+    mocks.transitionOrderStatusAtomic.mockReset().mockImplementation(async (params) => {
+      if (params.notificationIntent) {
+        mocks.recordedIntentsByKey.set(
+          params.notificationIntent.intentKey,
+          makeOutboxRecord(params.notificationIntent)
+        );
+      }
+      return true;
+    });
+    mocks.markOrderAcceptanceReminderSent.mockReset().mockImplementation(async (_id, _at, options) => {
+      if (options?.notificationIntent) {
+        mocks.recordedIntentsByKey.set(
+          options.notificationIntent.intentKey,
+          makeOutboxRecord(options.notificationIntent)
+        );
+      }
+      return true;
+    });
+    mocks.markOrderAcceptanceEscalated.mockReset().mockImplementation(async (_id, _at, options) => {
+      if (options?.notificationIntent) {
+        mocks.recordedIntentsByKey.set(
+          options.notificationIntent.intentKey,
+          makeOutboxRecord(options.notificationIntent)
+        );
+      }
+      return true;
+    });
+    mocks.findPendingTimerNotificationIntentByKey
+      .mockReset()
+      .mockImplementation(async (intentKey: string) => mocks.recordedIntentsByKey.get(intentKey) ?? null);
+    mocks.updateTimerNotificationIntent.mockReset().mockResolvedValue(true);
     mocks.queueEmailNotification.mockReset().mockResolvedValue(undefined);
     mocks.sendNotification.mockReset().mockResolvedValue({ ok: true, value: {} as NotificationRecord });
   });
@@ -510,7 +607,14 @@ describe("Order Timers Service (Acceptance & Reception Auto-Confirm)", () => {
       },
     ];
 
-    // First attempt: in-app returns fulfilled Err, email succeeds
+    // First attempt: order is still created with matching assignment revision; in-app returns fulfilled Err, email succeeds
+    mocks.orderSnapshot = {
+      id: "ord-outbox",
+      status: "created",
+      houseId: "house-1",
+      createdAt: new Date("2026-10-12T06:00:00Z"),
+      assignedAt: new Date("2026-10-12T06:00:00Z"),
+    };
     mocks.sendNotification.mockResolvedValueOnce({ ok: false, error: "DB write failed" } as unknown as {
       ok: true;
       value: NotificationRecord;
@@ -522,6 +626,8 @@ describe("Order Timers Service (Acceptance & Reception Auto-Confirm)", () => {
       expect.objectContaining({
         status: "failed",
         error: "DB write failed",
+        attemptCount: 1,
+        nextRetryAt: new Date("2026-10-12T06:26:00Z"),
       })
     );
 
@@ -530,9 +636,10 @@ describe("Order Timers Service (Acceptance & Reception Auto-Confirm)", () => {
       "email:remind:ord-outbox:house-1:2026-10-12T06:00:00.000Z:gerant@kivu.cd",
     ]);
 
-    // Second sweep retries ONLY the failed in-app notification, skipping the already-sent email
+    // Second sweep retries ONLY the failed in-app notification with deterministic dedupeKey, skipping the already-sent email
     mocks.pendingIntents[0]!.body = savedBody;
     mocks.pendingIntents[0]!.status = "failed";
+    mocks.pendingIntents[0]!.attemptCount = 1;
     mocks.sendNotification.mockClear();
     mocks.queueEmailNotification.mockClear();
     mocks.updateTimerNotificationIntent.mockClear();
@@ -540,10 +647,194 @@ describe("Order Timers Service (Acceptance & Reception Auto-Confirm)", () => {
 
     await processAcceptanceTimersService(new Date("2026-10-12T06:30:00Z"));
     expect(mocks.sendNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.sendNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dedupeKey: "in_app:remind:ord-outbox:house-1:2026-10-12T06:00:00.000Z:staff-1",
+      })
+    );
     expect(mocks.queueEmailNotification).not.toHaveBeenCalled();
     expect(mocks.updateTimerNotificationIntent).toHaveBeenCalledWith(
       "outbox-1",
-      expect.objectContaining({ status: "sent", error: null })
+      expect.objectContaining({ status: "sent", error: null, nextRetryAt: null })
+    );
+  });
+
+  it("defers acceptance and reception transitions when no deadline fits within 30 days", async () => {
+    mocks.closures = [
+      {
+        id: "clos-long",
+        houseId: "house-1",
+        startsOn: "2026-10-12",
+        endsOn: "2026-12-31",
+        reason: "Extended renovation",
+        createdAt: new Date("2026-10-11T00:00:00Z"),
+      },
+    ];
+    mocks.pendingAcceptance = [
+      makePendingAcceptance({
+        id: "ord-long-close",
+        createdAt: new Date("2026-10-12T06:00:00Z"),
+        acceptanceDeadlineAt: new Date("2026-10-12T06:45:00Z"),
+      }),
+    ];
+    mocks.pendingReception = [
+      {
+        id: "ord-rec-long-close",
+        code: "ORD-RLC",
+        houseId: "house-1",
+        status: "received",
+        receivedAt: new Date("2026-10-12T06:00:00Z"),
+        receptionDeadlineAt: new Date("2026-10-12T07:00:00Z"),
+        receptionConfirmedAt: null,
+      },
+    ];
+
+    const accRes = await processAcceptanceTimersService(new Date("2026-11-20T12:00:00Z"));
+    expect(accRes.ok).toBe(true);
+    if (accRes.ok) {
+      expect(accRes.value).toEqual({ checked: 1, reminded: 0, escalated: 0, expired: 0 });
+    }
+
+    const recRes = await processReceptionConformingTimersService(new Date("2026-11-20T12:00:00Z"));
+    expect(recRes.ok).toBe(true);
+    if (recRes.ok) {
+      expect(recRes.value).toEqual({ checked: 1, conformed: 0 });
+    }
+  });
+
+  it("preserves accrued open minutes across schedule edits in reception conforming sweep", async () => {
+    // House schedule now opens only at 09:00Z (11:00 Bukavu), but 45 open minutes already accrued
+    // before schedule edit checkpoint at 07:00Z -> only 15 open minutes remain starting 09:00Z -> 09:15Z.
+    mocks.hours = [
+      { id: "hh-new", houseId: "house-1", weekday: 1, opensAt: "11:00", closesAt: "18:00" },
+    ];
+    mocks.pendingReception = [
+      {
+        id: "ord-rec-ckpt",
+        code: "ORD-CKPT",
+        houseId: "house-1",
+        status: "received",
+        receivedAt: new Date("2026-10-12T06:00:00Z"),
+        receptionDeadlineAt: new Date("2026-10-12T09:15:00Z"),
+        receptionConfirmedAt: null,
+        receptionCheckpointAt: new Date("2026-10-12T07:00:00Z"),
+        receptionAccruedOpenMinutes: 45,
+      },
+    ];
+
+    const waitRes = await processReceptionConformingTimersService(new Date("2026-10-12T09:10:00Z"));
+    expect(waitRes.ok).toBe(true);
+    if (waitRes.ok) {
+      expect(waitRes.value.conformed).toBe(0);
+    }
+
+    const dueRes = await processReceptionConformingTimersService(new Date("2026-10-12T09:15:00Z"));
+    expect(dueRes.ok).toBe(true);
+    if (dueRes.ok) {
+      expect(dueRes.value.conformed).toBe(1);
+    }
+  });
+
+  it("retires stale reminder/escalation outbox intents without sending, while still retrying order_expired", async () => {
+    mocks.pendingIntents = [
+      {
+        id: "outbox-stale-rem",
+        userId: null,
+        phone: "timer-outbox",
+        orderId: "ord-stale",
+        channel: "in_app",
+        templateKey: "timer_outbox:order_acceptance_reminder",
+        locale: "fr",
+        title: "ord-stale:order_acceptance_reminder:house-1:2026-10-12T06:00:00.000Z",
+        body: JSON.stringify({
+          milestone: "order_acceptance_reminder",
+          orderId: "ord-stale",
+          orderCode: "ORD-STALE",
+          houseId: "house-1",
+          houseName: "Pressing Kivu",
+          houseSlug: "pressing-kivu",
+          customerId: "cust-1",
+          customerName: "Amani",
+          customerEmail: "amani@safihub.cd",
+          customerIsGuest: false,
+          contactPhone: "+243990001122",
+          trackingToken: "trk-s",
+          assignmentRevision: "house-1:2026-10-12T06:00:00.000Z",
+          completedDeliveryKeys: [],
+        }),
+        status: "failed",
+        attemptCount: 1,
+        error: "temp error",
+        sentAt: null,
+        readAt: null,
+        createdAt: new Date(),
+      },
+      {
+        id: "outbox-exp",
+        userId: null,
+        phone: "timer-outbox",
+        orderId: "ord-expired-done",
+        channel: "in_app",
+        templateKey: "timer_outbox:order_expired",
+        locale: "fr",
+        title: "ord-expired-done:order_expired:house-1:2026-10-12T06:00:00.000Z",
+        body: JSON.stringify({
+          milestone: "order_expired",
+          orderId: "ord-expired-done",
+          orderCode: "ORD-EXP",
+          houseId: "house-1",
+          houseName: "Pressing Kivu",
+          houseSlug: "pressing-kivu",
+          customerId: "cust-1",
+          customerName: "Amani",
+          customerEmail: "amani@safihub.cd",
+          customerIsGuest: false,
+          contactPhone: "+243990001122",
+          trackingToken: "trk-e",
+          assignmentRevision: "house-1:2026-10-12T06:00:00.000Z",
+          completedDeliveryKeys: [],
+        }),
+        status: "failed",
+        attemptCount: 1,
+        error: "temp error",
+        sentAt: null,
+        readAt: null,
+        createdAt: new Date(),
+      },
+    ];
+
+    // Stale order is now accepted (no longer created)
+    mocks.orderSnapshot = {
+      id: "ord-stale",
+      status: "accepted",
+      houseId: "house-1",
+      createdAt: new Date("2026-10-12T06:00:00Z"),
+      assignedAt: new Date("2026-10-12T06:00:00Z"),
+    };
+
+    const res = await processAcceptanceTimersService(new Date("2026-10-12T06:35:00Z"));
+    expect(res.ok).toBe(true);
+
+    // Stale reminder retired without sending to house staff
+    expect(mocks.updateTimerNotificationIntent).toHaveBeenCalledWith(
+      "outbox-stale-rem",
+      expect.objectContaining({
+        status: "sent",
+        error: expect.stringContaining("Retired"),
+      })
+    );
+    // Expiry notice still retried and delivered to customer
+    expect(mocks.sendNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.sendNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "cust-1",
+        orderId: "ord-expired-done",
+        templateKey: "order_expired",
+      })
+    );
+    expect(mocks.queueEmailNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.queueEmailNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "order_expired", orderId: "ord-expired-done" })
     );
   });
 });

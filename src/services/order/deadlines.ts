@@ -10,9 +10,9 @@ import {
 import type { OrderStatus } from "@/services/db/schema";
 
 export interface AcceptanceDeadlines {
-  reminderAt: Date; // 50% of delay
-  escalationAt: Date; // 75% of delay
-  deadlineAt: Date; // 100% of delay
+  reminderAt: Date | null; // 50% of delay
+  escalationAt: Date | null; // 75% of delay
+  deadlineAt: Date | null; // 100% of delay
 }
 
 export interface OrderAcceptanceState {
@@ -46,21 +46,22 @@ export type ReceptionJobAction =
 
 /**
  * Computes a target timestamp by adding open operating minutes, pausing outside house hours and closures.
+ * Returns null if no verified opening hours are configured or the 30-day search limit is reached with minutes remaining.
  */
 export function addOpeningHoursMinutes(
   startTime: Date,
   minutesToAdd: number,
   houseHours: HouseHourSegment[],
   houseClosures: HouseClosure[]
-): Date {
+): Date | null {
   if (minutesToAdd <= 0) return new Date(startTime);
 
   let remainingMinutes = minutesToAdd;
   let currentUtcMs = startTime.getTime();
 
-  // Guard against infinite loop if house has no hours configured
+  // Pause timers outside verified opening hours (including unconfigured schedules)
   if (houseHours.length === 0) {
-    return new Date(currentUtcMs + minutesToAdd * 60 * 1000);
+    return null;
   }
 
   for (let safetyDay = 0; safetyDay < 30 && remainingMinutes > 0; safetyDay++) {
@@ -124,7 +125,50 @@ export function addOpeningHoursMinutes(
     currentUtcMs = nextDayUtc;
   }
 
-  return new Date(currentUtcMs);
+  return remainingMinutes > 0 ? null : new Date(currentUtcMs);
+}
+
+/**
+ * Counts verified opening-hour minutes elapsed in `[startTime, endTime)`.
+ */
+export function countOpeningHoursMinutes(
+  startTime: Date,
+  endTime: Date,
+  houseHours: HouseHourSegment[],
+  houseClosures: HouseClosure[]
+): number {
+  const startMs = startTime.getTime();
+  const endMs = endTime.getTime();
+  if (endMs <= startMs || houseHours.length === 0) return 0;
+
+  let accruedMs = 0;
+  let dayStartMs = fromBukavuDateTime(
+    toBukavuDateTime(startTime).dateString,
+    "00:00"
+  ).getTime();
+
+  while (dayStartMs < endMs) {
+    const currentLocal = toBukavuDateTime(new Date(dayStartMs));
+    const dateStr = currentLocal.dateString;
+    const weekday = currentLocal.weekday;
+
+    if (!isDateClosed(dateStr, houseClosures)) {
+      const segments = houseHours.filter((h) => h.weekday === weekday);
+      for (const segment of segments) {
+        const segOpenMs = fromBukavuDateTime(dateStr, segment.opensAt).getTime();
+        const segCloseMs = fromBukavuDateTime(dateStr, segment.closesAt).getTime();
+        const overlap = Math.max(
+          0,
+          Math.min(endMs, segCloseMs) - Math.max(startMs, segOpenMs)
+        );
+        accruedMs += overlap;
+      }
+    }
+
+    dayStartMs += 24 * 60 * 60 * 1000;
+  }
+
+  return Math.max(0, accruedMs / 60_000);
 }
 
 /**
@@ -151,7 +195,7 @@ export function computeReceptionDeadline(
   windowMinutes: number,
   houseHours: HouseHourSegment[],
   houseClosures: HouseClosure[]
-): Date {
+): Date | null {
   return addOpeningHoursMinutes(receivedAt, windowMinutes, houseHours, houseClosures);
 }
 

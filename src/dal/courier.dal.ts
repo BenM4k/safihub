@@ -1531,10 +1531,8 @@ export async function completeDeliveryMissionAtomic(params: {
         return sum + Math.max(0, amountCDF);
       }, 0);
 
-    const owedToOwner = Math.max(
-      0,
-      order.commissionAmount + order.deliveryFee - (priorCourierPay + courierPayEarned)
-    );
+    const owedToOwner =
+      order.commissionAmount + order.deliveryFee - (priorCourierPay + courierPayEarned);
 
     // 1. cash_collected (recorded in the actual physical currency collected)
     if (params.cashCollected > 0) {
@@ -1571,8 +1569,8 @@ export async function completeDeliveryMissionAtomic(params: {
       });
     }
 
-    // 3. owed_to_owner
-    if (owedToOwner > 0) {
+    // 3. owed_to_owner (can be negative when combined courier pay exceeds order margin)
+    if (owedToOwner !== 0) {
       await tx.insert(schema.cashLedger).values({
         entryType: "owed_to_owner",
         orderId: order.id,
@@ -1581,7 +1579,10 @@ export async function completeDeliveryMissionAtomic(params: {
         houseId: order.houseId,
         currency: ledgerCurrency,
         amount: owedToOwner,
-        note: `Part propriétaire (commission + marge livraison) : ${owedToOwner} ${ledgerCurrency}`,
+        note:
+          owedToOwner < 0
+            ? `Subvention propriétaire (rémunération coursier supérieure à la marge) : ${owedToOwner} ${ledgerCurrency}`
+            : `Part propriétaire (commission + marge livraison) : ${owedToOwner} ${ledgerCurrency}`,
         createdBy: params.courierId,
       });
     }

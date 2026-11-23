@@ -607,4 +607,101 @@ describe("Phase 10.3: Delivery Confirmation Code", () => {
     expect(res.ok).toBe(false);
     expect(updatedTables).not.toContain(schema.orderItems);
   });
+
+  it("records explicit negative owed_to_owner entry when combined pickup and delivery courier pay exceeds order margin", async () => {
+    const { db, schema } = await import("@/dal/db");
+    const insertedLedgerRows: Array<Record<string, unknown>> = [];
+
+    vi.spyOn(db, "transaction").mockImplementation(async (callback) => {
+      const mockTx = {
+        select: vi.fn().mockImplementation(() => ({
+          from: vi.fn().mockImplementation((table) => ({
+            where: vi.fn().mockImplementation(() => ({
+              for: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue([
+                  {
+                    id: missionId,
+                    type: "delivery",
+                    status: "in_progress",
+                    courierId: "courier_delivery_2",
+                    orderId,
+                    courierPay: 2500,
+                  },
+                ]),
+              }),
+              limit: vi.fn().mockImplementation(async () => {
+                if (table === schema.cashLedger) {
+                  return [
+                    {
+                      id: "ledger_pickup_pay_2",
+                      entryType: "courier_pay",
+                      missionId: "miss_pickup_1",
+                      currency: "CDF",
+                      amount: 3000,
+                      reversalOfId: null,
+                    },
+                  ];
+                }
+                return [
+                  {
+                    id: orderId,
+                    status: "delivery_in_progress",
+                    deliveryConfirmationCode: correctCode,
+                    houseId: "house_1",
+                    itemsTotal: 10000,
+                    adjustedItemsTotal: null,
+                    deliveryFee: 3000,
+                    commissionAmount: 2000,
+                    totalDue: 13000,
+                    paymentCurrency: "CDF",
+                    exchangeRateUsed: 2800,
+                  },
+                ];
+              }),
+            })),
+          })),
+        })),
+        update: vi.fn().mockReturnValue({
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+        insert: vi.fn().mockImplementation((table) => ({
+          values: vi.fn().mockImplementation(async (vals) => {
+            if (table === schema.cashLedger) {
+              insertedLedgerRows.push(vals as Record<string, unknown>);
+            }
+            return [];
+          }),
+        })),
+      };
+      return await callback(mockAs(mockTx));
+    });
+
+    const res = await completeDeliveryMissionAtomic({
+      missionId,
+      courierId: "courier_delivery_2",
+      confirmationCode: correctCode,
+      cashCollected: 13000,
+      cashCurrency: "CDF",
+    });
+
+    expect(res.ok).toBe(true);
+    const cashRow = insertedLedgerRows.find((r) => r.entryType === "cash_collected");
+    const houseRow = insertedLedgerRows.find((r) => r.entryType === "owed_to_house");
+    const ownerRow = insertedLedgerRows.find((r) => r.entryType === "owed_to_owner");
+    const deliveryCourierRow = insertedLedgerRows.find((r) => r.entryType === "courier_pay");
+
+    // Margin = commissionAmount (2000) + deliveryFee (3000) = 5000
+    // Combined courier pay = pickup (3000) + delivery (2500) = 5500 -> owedToOwner = -500
+    expect(houseRow?.amount).toBe(8000);
+    expect(ownerRow?.amount).toBe(-500);
+    expect(deliveryCourierRow?.amount).toBe(2500);
+    expect(
+      Number(houseRow?.amount) +
+        Number(ownerRow?.amount) +
+        3000 +
+        Number(deliveryCourierRow?.amount)
+    ).toBe(Number(cashRow?.amount));
+  });
 });

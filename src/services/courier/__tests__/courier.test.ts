@@ -1,5 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { clearRateLimitStore } from "@/services/abuse/rate-limiter";
+import {
+  checkDeliveryCodeVerificationRateLimit,
+  clearRateLimitStore,
+} from "@/services/abuse/rate-limiter";
 import {
   getCourierAssignedMissionsService,
   getCourierMissionDetailService,
@@ -456,8 +459,29 @@ describe("Phase 6: Courier Interface Engine & Lifecycle", () => {
         expect(wrong.ok).toBe(false);
       }
 
-      // 6 consecutive successful calls must not exhaust the 5-attempt budget
-      for (let i = 0; i < 6; i++) {
+      const beforeSuccess = await checkDeliveryCodeVerificationRateLimit(
+        "courier_1",
+        "m_delivery_1"
+      );
+      expect(beforeSuccess.remaining).toBe(1);
+
+      // First successful verification restores full 5-attempt budget
+      const firstOk = await completeDeliveryMissionService({
+        courierId: "courier_1",
+        missionId: "m_delivery_1",
+        confirmationCode: "4829",
+        cashCollected: 22000,
+      });
+      expect(firstOk.ok).toBe(true);
+
+      const afterFirstSuccess = await checkDeliveryCodeVerificationRateLimit(
+        "courier_1",
+        "m_delivery_1"
+      );
+      expect(afterFirstSuccess.remaining).toBe(5);
+
+      // Subsequent consecutive successful calls continue to preserve the 5-attempt budget
+      for (let i = 0; i < 5; i++) {
         const okRes = await completeDeliveryMissionService({
           courierId: "courier_1",
           missionId: "m_delivery_1",
@@ -466,6 +490,31 @@ describe("Phase 6: Courier Interface Engine & Lifecycle", () => {
         });
         expect(okRes.ok).toBe(true);
       }
+
+      const afterAllSuccesses = await checkDeliveryCodeVerificationRateLimit(
+        "courier_1",
+        "m_delivery_1"
+      );
+      expect(afterAllSuccesses.remaining).toBe(5);
+
+      // Unrelated non-code failure releases its reserved slot and preserves prior code attempts
+      const dal = await import("@/dal");
+      vi.spyOn(dal, "completeDeliveryMissionAtomic").mockResolvedValueOnce({
+        ok: false,
+        error: "Statut de mission invalide pour la finalisation",
+      });
+      const nonCodeFail = await completeDeliveryMissionService({
+        courierId: "courier_1",
+        missionId: "m_delivery_1",
+        confirmationCode: "4829",
+        cashCollected: 22000,
+      });
+      expect(nonCodeFail.ok).toBe(false);
+      const afterNonCodeFail = await checkDeliveryCodeVerificationRateLimit(
+        "courier_1",
+        "m_delivery_1"
+      );
+      expect(afterNonCodeFail.remaining).toBe(5);
     });
   });
 

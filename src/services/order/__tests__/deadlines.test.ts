@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { fromBukavuDateTime, toBukavuDateTime, type HouseHourSegment } from "@/services/availability";
 import {
+  addOpeningHoursMinutes,
   computeAcceptanceDeadlines,
   computeReceptionDeadline,
+  countOpeningHoursMinutes,
   evaluateAcceptanceJob,
   evaluateReceptionConformingJob,
   type OrderAcceptanceState,
@@ -29,17 +31,21 @@ describe("Opening-Hours Aware Timers & Deadlines", () => {
 
       const deadlines = computeAcceptanceDeadlines(createdAt, 45, houseHours, []);
 
-      const deadlineLocal = toBukavuDateTime(deadlines.deadlineAt);
+      expect(deadlines.deadlineAt).not.toBeNull();
+      expect(deadlines.reminderAt).not.toBeNull();
+      expect(deadlines.escalationAt).not.toBeNull();
+
+      const deadlineLocal = toBukavuDateTime(deadlines.deadlineAt!);
       expect(deadlineLocal.dateString).toBe("2026-10-13"); // Next day
       expect(deadlineLocal.timeString).toBe("08:15"); // 08:00 + 15 mins
 
       // 50% reminder (22.5 mins): 17:30 + 22.5 mins = 17:53 (rounded) on Monday
-      const reminderLocal = toBukavuDateTime(deadlines.reminderAt);
+      const reminderLocal = toBukavuDateTime(deadlines.reminderAt!);
       expect(reminderLocal.dateString).toBe("2026-10-12");
       expect(reminderLocal.timeString).toBe("17:53");
 
       // 75% escalation (33.75 mins): 30 mins Monday + 3.75 mins Tuesday = 08:04 on Tuesday
-      const escalationLocal = toBukavuDateTime(deadlines.escalationAt);
+      const escalationLocal = toBukavuDateTime(deadlines.escalationAt!);
       expect(escalationLocal.dateString).toBe("2026-10-13");
       expect(escalationLocal.timeString).toBe("08:04");
     });
@@ -52,7 +58,8 @@ describe("Opening-Hours Aware Timers & Deadlines", () => {
 
       const deadlines = computeAcceptanceDeadlines(createdAt, 45, houseHours, []);
 
-      const deadlineLocal = toBukavuDateTime(deadlines.deadlineAt);
+      expect(deadlines.deadlineAt).not.toBeNull();
+      const deadlineLocal = toBukavuDateTime(deadlines.deadlineAt!);
       expect(deadlineLocal.dateString).toBe("2026-10-19"); // Monday!
       expect(deadlineLocal.timeString).toBe("08:30");
     });
@@ -116,7 +123,8 @@ describe("Opening-Hours Aware Timers & Deadlines", () => {
       const receivedAt = fromBukavuDateTime("2026-10-12", "10:00");
       const deadline = computeReceptionDeadline(receivedAt, 60, houseHours, []);
 
-      const local = toBukavuDateTime(deadline);
+      expect(deadline).not.toBeNull();
+      const local = toBukavuDateTime(deadline!);
       expect(local.dateString).toBe("2026-10-12");
       expect(local.timeString).toBe("11:00");
     });
@@ -164,6 +172,22 @@ describe("Opening-Hours Aware Timers & Deadlines", () => {
 
       const afterNow = fromBukavuDateTime("2026-10-12", "11:05");
       expect(evaluateReceptionConformingJob(orderWithDiscrepancy, afterNow).type).toBe("none");
+    });
+
+    it("returns null when 30-day search exhausts with open minutes remaining and counts open minutes across schedules", () => {
+      const start = fromBukavuDateTime("2026-10-12", "10:00");
+      const longClosure = [{ startsOn: "2026-10-12", endsOn: "2026-11-30" }];
+      expect(addOpeningHoursMinutes(start, 60, houseHours, longClosure)).toBeNull();
+      expect(addOpeningHoursMinutes(start, 60, [], [])).toBeNull();
+
+      // Monday 17:30 -> Tuesday 08:20 yields 30m Monday + 20m Tuesday = 50 open minutes
+      const elapsed = countOpeningHoursMinutes(
+        fromBukavuDateTime("2026-10-12", "17:30"),
+        fromBukavuDateTime("2026-10-13", "08:20"),
+        houseHours,
+        []
+      );
+      expect(elapsed).toBe(50);
     });
   });
 });

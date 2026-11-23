@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   createNotification,
+  createNotificationIdempotent,
   getNotificationsByUser,
   getNotificationById,
   markNotificationAsRead,
@@ -37,7 +38,7 @@ export async function sendNotification(
   const body = input.customBody || rendered.body;
 
   try {
-    const record = await createNotification({
+    const payload = {
       userId: input.userId ?? null,
       phone: input.phone ?? null,
       orderId: input.orderId ?? null,
@@ -46,9 +47,14 @@ export async function sendNotification(
       locale,
       title: title ?? null,
       body,
-      status: "sent",
+      dedupeKey: input.dedupeKey ?? null,
+      status: "sent" as const,
       sentAt: new Date(),
-    });
+    };
+
+    const record = input.dedupeKey
+      ? (await createNotificationIdempotent(payload)).record
+      : await createNotification(payload);
 
     return ok(record);
   } catch (error) {

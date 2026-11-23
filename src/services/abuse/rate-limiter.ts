@@ -198,6 +198,38 @@ export async function recordRateLimitHit(
 }
 
 /**
+ * Releases one previously consumed sliding-window hit (e.g. when a reserved verification attempt completes
+ * without failing code comparison).
+ */
+export async function releaseRateLimitHit(
+  key: string,
+  maxRequests: number,
+  windowSeconds: number
+): Promise<void> {
+  if (isTestEnv()) {
+    const windowMs = windowSeconds * 1000;
+    const now = Date.now();
+    const timestamps = (memoryStore.get(key) ?? []).filter((ts) => now - ts < windowMs);
+    timestamps.pop();
+    if (timestamps.length === 0) {
+      memoryStore.delete(key);
+    } else {
+      memoryStore.set(key, timestamps);
+    }
+    return;
+  }
+
+  const redis = getRedis();
+  if (!redis) return;
+
+  try {
+    await getLimiter(redis, maxRequests, windowSeconds).limit(key, { rate: -1 });
+  } catch (error) {
+    console.error("[rate-limiter] Upstash error during releaseRateLimitHit.", error);
+  }
+}
+
+/**
  * Resets the sliding window counter for a given key and window definition.
  */
 export async function resetRateLimitKey(
@@ -284,7 +316,7 @@ function deliveryCodeRateLimitKey(courierId: string, missionId: string): string 
 
 /**
  * Checks delivery confirmation code verification budget without consuming an attempt.
- * Fails closed when Redis is unavailable outside tests to preserve brute-force protection.
+ * Falls back open (logging an error) when Upstash is unconfigured or unreachable so deliveries are not blocked.
  */
 export function checkDeliveryCodeVerificationRateLimit(
   courierId: string,
@@ -293,8 +325,36 @@ export function checkDeliveryCodeVerificationRateLimit(
   return checkRateLimitStatus(
     deliveryCodeRateLimitKey(courierId, missionId),
     DELIVERY_CODE_MAX_ATTEMPTS,
-    DELIVERY_CODE_WINDOW_SECONDS,
-    { failClosed: true }
+    DELIVERY_CODE_WINDOW_SECONDS
+  );
+}
+
+/**
+ * Atomically checks and consumes one delivery confirmation code verification slot before checking the code.
+ * Falls back open (logging an error) when Upstash is unavailable so deliveries can still be completed.
+ */
+export function consumeDeliveryCodeVerificationAttempt(
+  courierId: string,
+  missionId: string
+): Promise<RateLimitResult> {
+  return recordRateLimitHit(
+    deliveryCodeRateLimitKey(courierId, missionId),
+    DELIVERY_CODE_MAX_ATTEMPTS,
+    DELIVERY_CODE_WINDOW_SECONDS
+  );
+}
+
+/**
+ * Releases one reserved delivery confirmation code attempt when verification aborts for non-code reasons.
+ */
+export function releaseDeliveryCodeVerificationAttempt(
+  courierId: string,
+  missionId: string
+): Promise<void> {
+  return releaseRateLimitHit(
+    deliveryCodeRateLimitKey(courierId, missionId),
+    DELIVERY_CODE_MAX_ATTEMPTS,
+    DELIVERY_CODE_WINDOW_SECONDS
   );
 }
 
@@ -308,8 +368,7 @@ export function recordFailedDeliveryCodeAttempt(
   return recordRateLimitHit(
     deliveryCodeRateLimitKey(courierId, missionId),
     DELIVERY_CODE_MAX_ATTEMPTS,
-    DELIVERY_CODE_WINDOW_SECONDS,
-    { failClosed: true }
+    DELIVERY_CODE_WINDOW_SECONDS
   );
 }
 

@@ -53,4 +53,5 @@ export interface SendNotificationInput {
   params?: TemplateParams;
   customTitle?: string;
   customBody?: string;
+  dedupeKey?: string;
 }
