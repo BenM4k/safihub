@@ -2921,12 +2921,7 @@ export async function getPendingAcceptanceOrders(): Promise<
     .from(schema.orders)
     .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
     .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
-    .where(
-      and(
-        eq(schema.orders.status, "created"),
-        isNotNull(schema.orders.acceptanceDeadlineAt)
-      )
-    );
+    .where(eq(schema.orders.status, "created"));
 }
 
 export async function getOrderAcceptanceSnapshot(

@@ -837,4 +837,30 @@ describe("Order Timers Service (Acceptance & Reception Auto-Confirm)", () => {
       expect.objectContaining({ kind: "order_expired", orderId: "ord-expired-done" })
     );
   });
+
+  it("evaluates and expires created orders with null acceptanceDeadlineAt when 45 opening minutes elapse", async () => {
+    mocks.pendingAcceptance = [
+      makePendingAcceptance({
+        id: "ord-null-deadline",
+        code: "ORD-NULL",
+        createdAt: new Date("2026-10-12T06:00:00Z"),
+        acceptanceDeadlineAt: null,
+      }),
+    ];
+
+    const res = await processAcceptanceTimersService(new Date("2026-10-12T06:50:00Z"));
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.value).toEqual({ checked: 1, reminded: 0, escalated: 0, expired: 1 });
+    }
+    expect(mocks.transitionOrderStatusAtomic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderId: "ord-null-deadline",
+        expectedStatus: "created",
+        expectedHouseId: "house-1",
+        expectedAcceptanceDeadlineAt: null,
+        newStatus: "expired",
+      })
+    );
+  });
 });

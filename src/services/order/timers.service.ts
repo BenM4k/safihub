@@ -584,9 +584,7 @@ export async function processAcceptanceTimersService(
         {
           id: order.id,
           status: order.status,
-          acceptanceDeadlineAt: order.acceptanceDeadlineAt
-            ? deadlines.deadlineAt
-            : null,
+          acceptanceDeadlineAt: deadlines.deadlineAt,
           acceptanceReminderAt: deadlines.reminderAt,
           acceptanceReminderSentAt: order.acceptanceReminderSentAt,
           acceptanceEscalationAt: deadlines.escalationAt,
