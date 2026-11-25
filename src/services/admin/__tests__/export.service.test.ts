@@ -138,4 +138,50 @@ describe("Phase 11.6: Admin Data Export Service", () => {
       expect(res.error).toContain("Type de jeu de données inconnu");
     }
   });
+
+  it("detects truncation when rows exceed limit and returns nextOffset", async () => {
+    const { getAdminCustomersExportData } = await import("@/dal/ops.dal");
+    vi.mocked(getAdminCustomersExportData).mockResolvedValueOnce([
+      {
+        id: "cust-1",
+        name: "Client 1",
+        email: "c1@example.cd",
+        contactPhone: "+243810000001",
+        status: "active",
+        isGuest: false,
+        createdAt: new Date("2026-10-01T10:00:00Z"),
+      },
+      {
+        id: "cust-2",
+        name: "Client 2",
+        email: "c2@example.cd",
+        contactPhone: "+243810000002",
+        status: "active",
+        isGuest: false,
+        createdAt: new Date("2026-10-02T10:00:00Z"),
+      },
+      {
+        id: "cust-3",
+        name: "Client 3",
+        email: "c3@example.cd",
+        contactPhone: "+243810000003",
+        status: "active",
+        isGuest: false,
+        createdAt: new Date("2026-10-03T10:00:00Z"),
+      },
+    ]);
+
+    const res = await exportAdminDataset("customers", "json", { limit: 2, offset: 4 });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+
+    expect(res.value.truncated).toBe(true);
+    expect(res.value.rowCount).toBe(2);
+    expect(res.value.limit).toBe(2);
+    expect(res.value.offset).toBe(4);
+    expect(res.value.nextOffset).toBe(6);
+    expect(res.value.filename).toContain("-offset-4.json");
+    const parsed = JSON.parse(res.value.content);
+    expect(parsed).toHaveLength(2);
+  });
 });

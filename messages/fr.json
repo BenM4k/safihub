@@ -683,7 +683,9 @@
       "requestsCount": "Nombre de demandes",
       "notifyWhatsApp": "Notifier via WhatsApp",
       "notifiedBadge": "Notifié",
-      "pendingBadge": "En attente"
+      "pendingBadge": "En attente",
+      "settingsLoadError": "Impossible de charger les paramètres de couverture.",
+      "settingsLoadErrorDesc": "La limite globale de distance ne peut pas être affichée ou modifiée pour le moment."
     },
     "catalogue": {
       "title": "Catalogue maître",
@@ -1531,6 +1533,9 @@
       "exportCustomersName": "Clients Enregistrés",
       "exportCustomersDesc": "Liste des clients avec contacts, statut et date d'inscription.",
       "exportError": "Erreur lors du téléchargement du fichier.",
+      "exportTruncatedTitle": "Export partiel ({count} lignes téléchargées)",
+      "exportTruncatedDesc": "La limite maximale de {limit} lignes par requête a été atteinte. Des enregistrements supplémentaires existent.",
+      "exportNextBatch": "Télécharger le lot suivant (offset {nextOffset})",
       "saveExchangeRate": "Enregistrer le taux"
     },
     "cash": {
@@ -1852,6 +1857,9 @@
       "openRatio": "{open} sur {total}",
       "emptyTitle": "Aucun litige enregistré",
       "emptyDescription": "Toutes les commandes sont traitées sans réclamation ouverte.",
+      "loadErrorTitle": "Impossible de charger les litiges",
+      "loadErrorDescription": "Une erreur est survenue lors de la récupération des litiges. Veuillez réessayer.",
+      "retry": "Réessayer",
       "statusOpen": "Ouvert",
       "statusResolved": "Résolu",
       "orderLink": "Commande #{code}"
@@ -1913,7 +1921,17 @@
       "simHouseLabel": "Pressing choisi",
       "simItemsCountLabel": "Articles au panier",
       "simLandmarkLabel": "Repère / GPS",
-      "simNone": "Aucun"
+      "simNone": "Aucun",
+      "dryRunToggleLabel": "Mode simulation sans envoi réel (Dry-Run)",
+      "dryRunToggleHint": "Désactivez uniquement pour envoyer un vrai message ou exécuter le bot en direct.",
+      "errors": {
+        "phoneRequired": "Un numéro de téléphone WhatsApp valide est requis.",
+        "phoneTooLong": "Numéro de téléphone trop long.",
+        "phoneInvalid": "Numéro de téléphone WhatsApp invalide (8 à 15 chiffres attendus).",
+        "rateLimitSend": "Trop de tests WhatsApp envoyés. Veuillez patienter une minute.",
+        "rateLimitSimulate": "Trop de simulations effectuées. Veuillez patienter une minute.",
+        "invalidParams": "Paramètres invalides."
+      }
     }
   },
   "house": {

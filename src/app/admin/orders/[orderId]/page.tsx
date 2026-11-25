@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ExternalLink } from "lucide-react";
+import { guardAdminRoute } from "@/services/auth";
 import { getAdminOrderDetail } from "@/services/admin";
 import { OrderItemsList } from "@/components/admin/orders/order-items-list";
 import { OnBehalfActions } from "@/components/admin/orders/on-behalf-actions";
@@ -24,6 +25,7 @@ interface OrderDetailPageProps {
 }
 
 export default async function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
+  await guardAdminRoute();
   const { orderId } = await params;
   const t = await getTranslations("admin.orders");
   const res = await getAdminOrderDetail(orderId);
@@ -71,7 +73,7 @@ export default async function AdminOrderDetailPage({ params }: OrderDetailPagePr
 
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild className="text-xs border-border-strong">
-            <Link href={`/track/${order.trackingToken}`} target="_blank" className="gap-1.5">
+            <Link href={`/track/${order.trackingToken}`} target="_blank" rel="noopener noreferrer" className="gap-1.5">
               <span>{t("clientTrackingView")}</span>
               <ExternalLink className="size-3.5 text-muted-foreground" />
             </Link>

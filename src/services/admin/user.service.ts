@@ -2,6 +2,8 @@ import "server-only";
 import { revalidateTag } from "next/cache";
 import { hashPassword } from "better-auth/crypto";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { validateMergeCandidates } from "@/lib/customer-formatters";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import { clearSessionMemoryCache } from "@/services/auth/guards";
 import { err, ok, type Result } from "@/lib/result";
 import {
@@ -19,6 +21,15 @@ import {
   type UserRecord,
 } from "@/dal";
 
+function safeRevalidateAuthTags(userId: string): void {
+  try {
+    revalidateTag(CACHE_TAGS.userSession(userId), { expire: 0 });
+    revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
+  } catch {
+    // Non-blocking outside Next.js request context (e.g. unit tests)
+  }
+}
+
 export async function listAdminUsers(params?: {
   query?: string;
   role?: string;
@@ -31,7 +42,7 @@ export async function listAdminUsers(params?: {
     const users = await getAdminUsers(params);
     return ok(users);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load users");
+    return err(sanitizeServiceError(error, "Impossible de charger les utilisateurs.", "listAdminUsers"));
   }
 }
 
@@ -40,7 +51,7 @@ export async function getActiveAdminsCount(): Promise<Result<number>> {
     const count = await countActiveAdmins();
     return ok(count);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to count active admins");
+    return err(sanitizeServiceError(error, "Impossible de compter les administrateurs actifs.", "getActiveAdminsCount"));
   }
 }
 
@@ -70,12 +81,11 @@ export async function blockAdminUser(params: {
     });
     if (res.ok) {
       clearSessionMemoryCache();
-      revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
-      revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
+      safeRevalidateAuthTags(params.userId);
     }
     return res;
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to block user");
+    return err(sanitizeServiceError(error, "Échec du blocage de l'utilisateur.", "blockAdminUser"));
   }
 }
 
@@ -108,12 +118,11 @@ export async function updateAdminUserRole(params: {
     });
     if (res.ok) {
       clearSessionMemoryCache();
-      revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
-      revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
+      safeRevalidateAuthTags(params.userId);
     }
     return res;
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update user role");
+    return err(sanitizeServiceError(error, "Échec de la mise à jour du rôle.", "updateAdminUserRole"));
   }
 }
 
@@ -125,38 +134,77 @@ export async function unblockAdminUser(userId: string): Promise<Result<void>> {
       banReason: null,
     });
     clearSessionMemoryCache();
-    revalidateTag(CACHE_TAGS.userSession(userId), { expire: 0 });
-    revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
+    safeRevalidateAuthTags(userId);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to unblock user");
+    return err(sanitizeServiceError(error, "Échec du déblocage de l'utilisateur.", "unblockAdminUser"));
   }
 }
+
+const SAFE_CREDENTIAL_ERRORS = new Set([
+  "Utilisateur introuvable",
+  "Cette action est réservée aux comptes clients.",
+  "Impossible de réinitialiser le mot de passe d'un autre administrateur.",
+  "Échec de la mise à jour du mot de passe.",
+  "Un enregistrement identique existe déjà.",
+  "Référence invalide ou introuvable.",
+  "Format d'identifiant invalide.",
+]);
 
 export async function resetAdminUserPassword(params: {
   userId: string;
   newPassword: string;
+  operatorId?: string;
+  requireCustomerRole?: boolean;
 }): Promise<Result<void>> {
   try {
     if (!params.newPassword || params.newPassword.length < 8) {
       return err("Password must contain at least 8 characters");
     }
 
+    const targetUser = await getUserById(params.userId);
+    if (!targetUser) {
+      return err("Utilisateur introuvable");
+    }
+
+    if (params.requireCustomerRole && targetUser.role !== "customer") {
+      return err("Cette action est réservée aux comptes clients.");
+    }
+
+    if (
+      params.operatorId &&
+      targetUser.role === "admin" &&
+      targetUser.id !== params.operatorId
+    ) {
+      return err("Impossible de réinitialiser le mot de passe d'un autre administrateur.");
+    }
+
     const hashedPassword = await hashPassword(params.newPassword);
-    await setUserPasswordCredential({
+    const credRes = await setUserPasswordCredential({
       userId: params.userId,
       hashedPassword,
+      operatorId: params.operatorId,
+      requireCustomerRole: params.requireCustomerRole,
     });
+    if (!credRes.ok) {
+      const safeMessage = SAFE_CREDENTIAL_ERRORS.has(credRes.error)
+        ? credRes.error
+        : sanitizeServiceError(
+            new Error(credRes.error),
+            "Échec de la mise à jour du mot de passe.",
+            "resetAdminUserPassword"
+          );
+      return err(safeMessage);
+    }
 
     // Revoke all active sessions immediately
     await deleteUserSessions(params.userId);
     clearSessionMemoryCache();
-    revalidateTag(CACHE_TAGS.userSession(params.userId), { expire: 0 });
-    revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
+    safeRevalidateAuthTags(params.userId);
 
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to reset password");
+    return err(sanitizeServiceError(error, "Échec de la réinitialisation du mot de passe.", "resetAdminUserPassword"));
   }
 }
 
@@ -192,7 +240,7 @@ export async function createAdminStaffAccount(params: {
 
     return ok({ userId });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to create staff account");
+    return err(sanitizeServiceError(error, "Échec de la création du compte staff.", "createAdminStaffAccount"));
   }
 }
 
@@ -201,8 +249,26 @@ export async function mergeAdminGuestCustomer(params: {
   targetUserId: string;
 }): Promise<Result<GuestMergeResult>> {
   try {
-    return await mergeGuestUser(params);
+    const [guest, target] = await Promise.all([
+      getUserById(params.guestUserId),
+      getUserById(params.targetUserId),
+    ]);
+
+    const validation = validateMergeCandidates({
+      source: guest,
+      target,
+    });
+    if (!validation.valid) {
+      return err(validation.error || "Candidats de fusion invalides.");
+    }
+
+    const res = await mergeGuestUser(params);
+    if (res.ok) {
+      clearSessionMemoryCache();
+      safeRevalidateAuthTags(params.guestUserId);
+    }
+    return res;
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to merge guest account");
+    return err(sanitizeServiceError(error, "Échec de la fusion du compte invité.", "mergeAdminGuestCustomer"));
   }
 }

@@ -1,9 +1,9 @@
-import { getCurrentUser } from "@/services/auth";
+import { guardAdminRoute } from "@/services/auth";
 import { listAdminCustomers } from "@/services/admin";
 import { CustomersManagementView } from "@/components/admin/customers/customers-management-view";
 
 export default async function AdminCustomersPage() {
-  const currentUser = await getCurrentUser();
+  const authCtx = await guardAdminRoute();
   const res = await listAdminCustomers({ limit: 500 });
 
   if (!res.ok) {
@@ -11,7 +11,7 @@ export default async function AdminCustomersPage() {
   }
 
   const { customers, totalCount } = res.value;
-  const isAdmin = currentUser?.role === "admin";
+  const isAdmin = authCtx.user.role === "admin";
 
   return (
     <CustomersManagementView

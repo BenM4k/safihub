@@ -1,4 +1,8 @@
 import "server-only";
+import { revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import { sanitizeServiceError } from "@/lib/service-errors";
+import { clearSessionMemoryCache } from "@/services/auth/guards";
 import { err, ok, type Result } from "@/lib/result";
 import {
   blockUserAndRevokeSessions,
@@ -18,6 +22,26 @@ import {
   type UserRecord,
 } from "@/dal";
 import { validateMergeCandidates } from "@/lib/customer-formatters";
+
+function safeRevalidateAuthTags(userId: string): void {
+  try {
+    revalidateTag(CACHE_TAGS.userSession(userId), { expire: 0 });
+    revalidateTag(CACHE_TAGS.authSessions, { expire: 0 });
+  } catch {
+    // Non-blocking outside Next.js request context
+  }
+}
+
+function formatBukavuAuditTimestamp(date: Date = new Date()): string {
+  return date.toLocaleDateString("fr-FR", {
+    timeZone: "Africa/Lubumbashi",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export interface CustomerDetailedProfile {
   customer: AdminCustomerRecord;
@@ -63,7 +87,7 @@ export async function listAdminCustomers(
     const data = await getAdminCustomers(params);
     return ok(data);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur chargement clients");
+    return err(sanitizeServiceError(error, "Erreur chargement clients", "listAdminCustomers"));
   }
 }
 
@@ -122,7 +146,7 @@ export async function getCustomerDetailedProfile(
       })),
     });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur profil client");
+    return err(sanitizeServiceError(error, "Erreur profil client", "getCustomerDetailedProfile"));
   }
 }
 
@@ -139,6 +163,10 @@ export async function blockAdminCustomer(params: {
     const user = await getUserById(params.customerId);
     if (!user) {
       return err("Client introuvable.");
+    }
+
+    if (user.role !== "customer") {
+      return err("Cette action est réservée aux comptes clients.");
     }
 
     const orders = await getCustomerOrders(params.customerId);
@@ -164,35 +192,49 @@ export async function blockAdminCustomer(params: {
         ? ` [Attention: ${activeOrders.length} commande(s) en cours au moment du blocage]`
         : "";
 
-    const timestamp = new Date().toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const timestamp = formatBukavuAuditTimestamp();
 
     const operatorPart = params.operatorName ? ` par ${params.operatorName}` : "";
     const auditReason = `${params.reason.trim()}${activeWarning} (Enregistré le ${timestamp}${operatorPart})`;
 
-    await blockUserAndRevokeSessions(params.customerId, auditReason);
+    const blockRes = await blockUserAndRevokeSessions(
+      params.customerId,
+      auditReason,
+      { requireRole: "customer" }
+    );
+    if (!blockRes.ok) {
+      return err(blockRes.error);
+    }
+
+    clearSessionMemoryCache();
+    safeRevalidateAuthTags(params.customerId);
 
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du blocage du client");
+    return err(sanitizeServiceError(error, "Erreur lors du blocage du client", "blockAdminCustomer"));
   }
 }
 
 export async function unblockAdminCustomer(customerId: string): Promise<Result<void>> {
   try {
+    const user = await getUserById(customerId);
+    if (!user) {
+      return err("Client introuvable.");
+    }
+    if (user.role !== "customer") {
+      return err("Cette action est réservée aux comptes clients.");
+    }
+
     await updateUserRoleAndStatus(customerId, {
       banned: false,
       status: "active",
       banReason: null,
     });
+    clearSessionMemoryCache();
+    safeRevalidateAuthTags(customerId);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du déblocage");
+    return err(sanitizeServiceError(error, "Erreur lors du déblocage", "unblockAdminCustomer"));
   }
 }
 
@@ -250,7 +292,7 @@ export async function previewCustomerMerge(params: {
       addressesToMoveCount: guestAddresses.length,
     });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur prévisualisation fusion");
+    return err(sanitizeServiceError(error, "Erreur prévisualisation fusion", "previewCustomerMerge"));
   }
 }
 
@@ -276,22 +318,21 @@ export async function executeCustomerMerge(params: {
     }
 
     // Construct audit metadata for banReason
-    const timestamp = new Date().toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const timestamp = formatBukavuAuditTimestamp();
     const operator = params.operatorName || params.operatorId || "Opérateur Admin";
     const auditReason = `Fusionné vers le compte client ${params.targetUserId} (${target!.name}) par ${operator} le ${timestamp}.`;
 
-    return await mergeGuestUser({
+    const res = await mergeGuestUser({
       guestUserId: params.guestUserId,
       targetUserId: params.targetUserId,
       auditReason,
     });
+    if (res.ok) {
+      clearSessionMemoryCache();
+      safeRevalidateAuthTags(params.guestUserId);
+    }
+    return res;
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors de la fusion des comptes");
+    return err(sanitizeServiceError(error, "Erreur lors de la fusion des comptes", "executeCustomerMerge"));
   }
 }

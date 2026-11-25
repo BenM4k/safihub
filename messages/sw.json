@@ -683,7 +683,9 @@
       "requestsCount": "Idadi ya Maombi",
       "notifyWhatsApp": "Arifu kupitia WhatsApp",
       "notifiedBadge": "Imejulishwa",
-      "pendingBadge": "Inasubiri"
+      "pendingBadge": "Inasubiri",
+      "settingsLoadError": "Imeshindwa kupakia mipangilio ya ufikiaji.",
+      "settingsLoadErrorDesc": "Kikomo cha jumla cha umbali hakiwezi kuonyeshwa au kubadilishwa kwa sasa."
     },
     "catalogue": {
       "title": "Katalogi Kuu",
@@ -1531,6 +1533,9 @@
       "exportCustomersName": "Wateja Waliosajiliwa",
       "exportCustomersDesc": "Orodha ya wateja yenye mawasiliano, hali na tarehe ya usajili.",
       "exportError": "Hitilafu wakati wa kupakua faili ya data.",
+      "exportTruncatedTitle": "Uhamishaji wa sehemu (safu {count} zimepakuliwa)",
+      "exportTruncatedDesc": "Kikomo cha juu cha safu {limit} kwa ombi moja kimefikiwa. Rekodi zaidi bado zipo.",
+      "exportNextBatch": "Pakua sehemu inayofuata (kuanzia {nextOffset})",
       "saveExchangeRate": "Hifadhi Kiwango"
     },
     "cash": {
@@ -1852,6 +1857,9 @@
       "openRatio": "{open} kati ya {total}",
       "emptyTitle": "Hakuna mgogoro uliorekodiwa",
       "emptyDescription": "Maagizo yote yanashughulikiwa bila malalamiko ya wazi.",
+      "loadErrorTitle": "Imeshindwa kupakia migogoro",
+      "loadErrorDescription": "Hitilafu imetokea wakati wa kupakia orodha ya migogoro. Tafadhali jaribu tena.",
+      "retry": "Jaribu tena",
       "statusOpen": "Wazi",
       "statusResolved": "Imetatuliwa",
       "orderLink": "Agizo #{code}"
@@ -1913,7 +1921,17 @@
       "simHouseLabel": "Dobi Aliyechaguliwa",
       "simItemsCountLabel": "Nguo Kwenye Kikapu",
       "simLandmarkLabel": "Alama / GPS",
-      "simNone": "Hakuna"
+      "simNone": "Hakuna",
+      "dryRunToggleLabel": "Hali Salama ya Majaribio (Dry-Run)",
+      "dryRunToggleHint": "Zima tu ikiwa unataka kutuma ujumbe halisi au kuendesha boti moja kwa moja.",
+      "errors": {
+        "phoneRequired": "Nambari sahihi ya WhatsApp inahitajika.",
+        "phoneTooLong": "Nambari ya simu ni ndefu mno.",
+        "phoneInvalid": "Nambari ya WhatsApp si sahihi (tarakimu 8 hadi 15 zinatarajiwa).",
+        "rateLimitSend": "Majaribio mengi mno ya WhatsApp yametumwa. Tafadhali subiri dakika moja.",
+        "rateLimitSimulate": "Majaribio mengi mno ya boti yamefanywa. Tafadhali subiri dakika moja.",
+        "invalidParams": "Vigezo si sahihi."
+      }
     }
   },
   "house": {

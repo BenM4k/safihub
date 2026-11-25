@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { guardAdminRoute } from "@/services/auth";
 import { getAdminDailyReconciliation, getAdminReconciliationHistory } from "@/services/admin";
 import { PageHeader } from "@/components/admin/shared/page-header";
 import { DateNavigator } from "@/components/admin/shared/date-navigator";
@@ -12,6 +13,7 @@ interface AdminCashPageProps {
 }
 
 export default async function AdminCashPage({ searchParams }: AdminCashPageProps) {
+  await guardAdminRoute();
   const t = await getTranslations("admin.cash");
   const params = await searchParams;
 

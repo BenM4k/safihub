@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { clearSessionMemoryCache } from "@/services/auth/guards";
 import {
   formatCustomerEmail,
   formatCustomerName,
@@ -22,8 +23,12 @@ vi.mock("@/dal", () => ({
   getUserById: vi.fn(),
   getCustomerOrders: vi.fn(),
   getCustomerAddresses: vi.fn(),
-  blockUserAndRevokeSessions: vi.fn().mockResolvedValue(undefined),
+  blockUserAndRevokeSessions: vi.fn().mockResolvedValue({ ok: true, value: undefined }),
   updateUserRoleAndStatus: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/services/auth/guards", () => ({
+  clearSessionMemoryCache: vi.fn(),
 }));
 
 describe("Customer Administration & Merge Validation Rules", () => {
@@ -31,6 +36,7 @@ describe("Customer Administration & Merge Validation Rules", () => {
     const validGuest = {
       id: "usr_guest_01",
       name: "Client Invité",
+      role: "customer",
       isGuest: true,
       status: "active",
       banned: false,
@@ -39,6 +45,7 @@ describe("Customer Administration & Merge Validation Rules", () => {
     const validRegistered = {
       id: "usr_reg_01",
       name: "Bahati Christian",
+      role: "customer",
       isGuest: false,
       status: "active",
       banned: false,
@@ -108,6 +115,15 @@ describe("Customer Administration & Merge Validation Rules", () => {
     it("rejects missing source or target candidates", () => {
       expect(validateMergeCandidates({ source: null, target: validRegistered }).valid).toBe(false);
       expect(validateMergeCandidates({ source: validGuest, target: null }).valid).toBe(false);
+    });
+
+    it("rejects non-customer target accounts", () => {
+      const resAdmin = validateMergeCandidates({
+        source: validGuest,
+        target: { ...validRegistered, role: "admin" },
+      });
+      expect(resAdmin.valid).toBe(false);
+      expect(resAdmin.error).toContain("client");
     });
   });
 
@@ -212,6 +228,10 @@ describe("Customer Administration & Merge Validation Rules", () => {
   });
 
   describe("Block & Unblock State Transitions", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
     it("transitions active account to blocked via production blockAdminCustomer", async () => {
       vi.mocked(getUserById).mockResolvedValueOnce({
         id: "cust_123",
@@ -241,11 +261,30 @@ describe("Customer Administration & Merge Validation Rules", () => {
       expect(result.ok).toBe(true);
       expect(blockUserAndRevokeSessions).toHaveBeenCalledWith(
         "cust_123",
-        expect.stringContaining("Fraude signalée")
+        expect.stringContaining("Fraude signalée"),
+        { requireRole: "customer" }
       );
+      expect(clearSessionMemoryCache).toHaveBeenCalledTimes(1);
     });
 
     it("transitions blocked account to active via production unblockAdminCustomer", async () => {
+      vi.mocked(getUserById).mockResolvedValueOnce({
+        id: "cust_123",
+        name: "Test Customer",
+        role: "customer",
+        status: "blocked",
+        banned: true,
+        email: "test@safihub.cd",
+        emailVerified: true,
+        image: null,
+        contactPhone: "+243999537712",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        banReason: "Fraude",
+        banExpires: null,
+        isGuest: false,
+        mustChangePassword: false,
+      });
       const result = await unblockAdminCustomer("cust_123");
 
       expect(result.ok).toBe(true);
@@ -254,6 +293,7 @@ describe("Customer Administration & Merge Validation Rules", () => {
         status: "active",
         banReason: null,
       });
+      expect(clearSessionMemoryCache).toHaveBeenCalledTimes(1);
     });
   });
 });

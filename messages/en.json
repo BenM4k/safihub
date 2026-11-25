@@ -683,7 +683,9 @@
       "requestsCount": "Request Count",
       "notifyWhatsApp": "Notify via WhatsApp",
       "notifiedBadge": "Notified",
-      "pendingBadge": "Pending"
+      "pendingBadge": "Pending",
+      "settingsLoadError": "Unable to load coverage settings.",
+      "settingsLoadErrorDesc": "The global distance limit cannot be displayed or updated right now."
     },
     "catalogue": {
       "title": "Master Catalogue",
@@ -1531,6 +1533,9 @@
       "exportCustomersName": "Registered Customers",
       "exportCustomersDesc": "Customer list with contact information, status, and registration date.",
       "exportError": "Failed to download export file.",
+      "exportTruncatedTitle": "Partial export ({count} rows downloaded)",
+      "exportTruncatedDesc": "The per-request limit of {limit} rows was reached. More records are available.",
+      "exportNextBatch": "Download next batch (offset {nextOffset})",
       "saveExchangeRate": "Save Rate"
     },
     "cash": {
@@ -1852,6 +1857,9 @@
       "openRatio": "{open} of {total}",
       "emptyTitle": "No disputes recorded",
       "emptyDescription": "All orders are handled without open claims.",
+      "loadErrorTitle": "Unable to load disputes",
+      "loadErrorDescription": "An error occurred while loading the disputes list. Please try again.",
+      "retry": "Retry",
       "statusOpen": "Open",
       "statusResolved": "Resolved",
       "orderLink": "Order #{code}"
@@ -1913,7 +1921,17 @@
       "simHouseLabel": "Selected House",
       "simItemsCountLabel": "Cart Items",
       "simLandmarkLabel": "Landmark / GPS",
-      "simNone": "None"
+      "simNone": "None",
+      "dryRunToggleLabel": "Safe Dry-Run Mode (no live send)",
+      "dryRunToggleHint": "Disable only to dispatch a live message or mutate the live bot session.",
+      "errors": {
+        "phoneRequired": "A valid WhatsApp phone number is required.",
+        "phoneTooLong": "Phone number is too long.",
+        "phoneInvalid": "Invalid WhatsApp phone number (8 to 15 digits expected).",
+        "rateLimitSend": "Too many WhatsApp tests sent. Please wait one minute.",
+        "rateLimitSimulate": "Too many bot simulations run. Please wait one minute.",
+        "invalidParams": "Invalid parameters."
+      }
     }
   },
   "house": {

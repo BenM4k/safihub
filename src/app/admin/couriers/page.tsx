@@ -1,10 +1,12 @@
 import { getTranslations } from "next-intl/server";
+import { guardAdminRoute } from "@/services/auth";
 import { listAdminCouriers } from "@/services/admin";
 import { CouriersTable } from "@/components/admin/couriers/couriers-table";
 import { CourierCreateForm } from "@/components/admin/couriers/courier-create-form";
 import { HousesWithoutCourierAlert } from "@/components/admin/couriers/houses-without-courier-alert";
 
 export default async function AdminCouriersPage() {
+  await guardAdminRoute();
   const t = await getTranslations("admin.couriers");
   const res = await listAdminCouriers();
   const couriers = res.ok ? res.value : [];

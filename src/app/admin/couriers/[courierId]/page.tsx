@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { guardAdminRoute } from "@/services/auth";
 import { getAdminCourierDetail } from "@/services/admin";
 import { CourierDetailTabs } from "@/components/admin/couriers/courier-detail-tabs";
 import {
@@ -17,6 +18,7 @@ export default async function AdminCourierDetailPage({
 }: {
   params: Promise<{ courierId: string }>;
 }) {
+  await guardAdminRoute();
   const { courierId } = await params;
   const t = await getTranslations("admin.couriers");
 

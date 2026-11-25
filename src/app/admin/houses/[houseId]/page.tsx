@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ExternalLink } from "lucide-react";
+import { guardAdminRoute } from "@/services/auth";
 import { getAdminHouseDetail } from "@/services/admin";
 import { HouseDetailTabs } from "@/components/admin/houses/house-detail-tabs";
 import {
@@ -19,6 +20,7 @@ export default async function AdminHouseDetailPage({
 }: {
   params: Promise<{ houseId: string }>;
 }) {
+  await guardAdminRoute();
   const { houseId } = await params;
   const t = await getTranslations("admin.houses");
 

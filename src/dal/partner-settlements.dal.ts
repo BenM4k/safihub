@@ -1,8 +1,9 @@
 import "server-only";
 
-import { and, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, lte, notInArray, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { err, ok, type Result } from "@/lib/result";
+import { resolveLedgerCdfAmount } from "@/lib/ledger-fx";
 import type {
   PartnerDeliveredOrderDTO,
   PartnerPayoutDTO,
@@ -156,6 +157,28 @@ export async function getPartnerSettlementsData(
       )
     );
 
+  const todayBukavu = toBukavuDateTime(now).dateString;
+  const [latestRateRow] = await db
+    .select({ rate: schema.exchangeRates.rate })
+    .from(schema.exchangeRates)
+    .where(
+      and(
+        eq(schema.exchangeRates.baseCurrency, "USD"),
+        eq(schema.exchangeRates.quoteCurrency, "CDF"),
+        lte(schema.exchangeRates.effectiveDate, todayBukavu)
+      )
+    )
+    .orderBy(desc(schema.exchangeRates.effectiveDate), desc(schema.exchangeRates.createdAt))
+    .limit(1);
+  const activeUsdToCdfRate =
+    Number(latestRateRow?.rate) > 0 ? Number(latestRateRow.rate) : 2800;
+
+  const toCdfAmount = (
+    amount: number,
+    currency: string,
+    note?: string | null
+  ): number => resolveLedgerCdfAmount(amount, currency, note, activeUsdToCdfRate);
+
   // 2. Fetch all settlements for this house
   const rawSettlements = await db
     .select({
@@ -268,7 +291,8 @@ export async function getPartnerSettlementsData(
 
     // Accumulate settlement amounts in chronological order until they cover netOwed
     while (availableSettlementFunds < netOwed && settlementIdx < chronologicalSettlements.length) {
-      availableSettlementFunds += chronologicalSettlements[settlementIdx].amount;
+      const st = chronologicalSettlements[settlementIdx];
+      availableSettlementFunds += toCdfAmount(st.amount, st.currency, st.note);
       settlementIdx++;
     }
 
@@ -397,9 +421,17 @@ export async function getPartnerSettlementsData(
     };
   });
 
+  const settlementCdfById = new Map<string, number>();
+  for (const s of rawSettlements) {
+    settlementCdfById.set(s.id, toCdfAmount(s.amount, s.currency, s.note));
+  }
+
   // 6. All-Time Reconciliation calculations
   const totalAllTimeNetCDF = ordersDTO.reduce((sum, o) => sum + o.netReceivable, 0);
-  const totalAllTimeSettledCDF = payoutsDTO.reduce((sum, p) => sum + p.amount, 0);
+  const totalAllTimeSettledCDF = payoutsDTO.reduce(
+    (sum, p) => sum + (settlementCdfById.get(p.id) ?? toCdfAmount(p.amount, p.currency, p.note)),
+    0
+  );
   const balanceOwedCDF = Math.max(0, totalAllTimeNetCDF - totalAllTimeSettledCDF);
 
   // 7. Period calculations (filtered by selected start and end)
@@ -417,7 +449,10 @@ export async function getPartnerSettlementsData(
   const grossRevenueCDF = periodOrders.reduce((sum, o) => sum + o.itemsTotal, 0);
   const commissionCDF = periodOrders.reduce((sum, o) => sum + o.commissionAmount, 0);
   const netReceivableCDF = periodOrders.reduce((sum, o) => sum + o.netReceivable, 0);
-  const totalSettledCDF = periodPayouts.reduce((sum, p) => sum + p.amount, 0);
+  const totalSettledCDF = periodPayouts.reduce(
+    (sum, p) => sum + (settlementCdfById.get(p.id) ?? toCdfAmount(p.amount, p.currency, p.note)),
+    0
+  );
 
   // Adjustments check: grossRevenue - commission = netReceivable
   const calculatedNet = grossRevenueCDF - commissionCDF;

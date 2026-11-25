@@ -56,6 +56,14 @@ export interface RequireHouseAccessOptions extends RequireRoleOptions {
   returnNotFoundOnUnauthorized?: boolean;
 }
 
+const getFreshRequestSession = cache(async () => {
+  const reqHeaders = await headers();
+  return auth.api.getSession({
+    headers: reqHeaders,
+    query: { disableCookieCache: true },
+  });
+});
+
 /**
  * Validates that the active session belongs to a user with one of the allowed roles
  * and that the account is active (not blocked).
@@ -64,11 +72,12 @@ export async function requireRole(
   allowedRoles: UserRole | UserRole[],
   options?: RequireRoleOptions
 ): Promise<Result<AuthContext>> {
-  const reqHeaders = options?.headers ?? (await headers());
-  const session = await auth.api.getSession({
-    headers: reqHeaders,
-    query: { disableCookieCache: true },
-  });
+  const session = options?.headers
+    ? await auth.api.getSession({
+        headers: options.headers,
+        query: { disableCookieCache: true },
+      })
+    : await getFreshRequestSession();
 
   if (!session?.user) {
     if (options?.redirectIfUnauthorized) {

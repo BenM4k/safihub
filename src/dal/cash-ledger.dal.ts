@@ -1,7 +1,35 @@
 import "server-only";
-import { and, desc, eq, inArray, like, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, like, lte, notInArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
+import { toBukavuDateTime } from "@/services/availability/bukavu-time";
+import {
+  appendCdfMetadataTag,
+  formatCdfMetadataTag,
+  resolveCappedLedgerMovement,
+  resolveLedgerCdfAmount,
+} from "@/lib/ledger-fx";
+
+type CashLedgerExecutor = Pick<typeof db, "select">;
+
+async function getActiveUsdToCdfRate(executor: CashLedgerExecutor = db): Promise<number> {
+  const todayBukavu = toBukavuDateTime(new Date()).dateString;
+  const [latestRate] = await executor
+    .select({ rate: schema.exchangeRates.rate })
+    .from(schema.exchangeRates)
+    .where(
+      and(
+        eq(schema.exchangeRates.baseCurrency, "USD"),
+        eq(schema.exchangeRates.quoteCurrency, "CDF"),
+        lte(schema.exchangeRates.effectiveDate, todayBukavu)
+      )
+    )
+    .orderBy(desc(schema.exchangeRates.effectiveDate), desc(schema.exchangeRates.createdAt))
+    .limit(1);
+
+  const parsed = Number(latestRate?.rate);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 2800;
+}
 
 export interface DeliveryLedgerPostingParams {
   orderId: string;
@@ -163,6 +191,13 @@ export async function reverseLedgerEntry(params: {
       return { ok: false, error: "Une contre-passation ne peut pas être annulée" };
     }
 
+    if (original.note?.includes("[RECON: ")) {
+      return {
+        ok: false,
+        error: "Cette écriture est liée à une réconciliation journalière ; annulez la réconciliation correspondante.",
+      };
+    }
+
     // Check if already reversed
     const [alreadyReversed] = await tx
       .select()
@@ -197,11 +232,25 @@ export async function reverseLedgerEntry(params: {
 
     // Keep courierProfiles balances consistent with the reversal
     if (original.courierId) {
+      const profileDelta =
+        original.currency === "USD" &&
+        (original.entryType === "deposit_held" ||
+          original.entryType === "deposit_released" ||
+          original.entryType === "float_issued" ||
+          original.entryType === "float_returned")
+          ? resolveLedgerCdfAmount(
+              original.amount,
+              original.currency,
+              original.note,
+              await getActiveUsdToCdfRate(tx)
+            )
+          : original.amount;
+
       if (original.entryType === "deposit_held") {
         await tx
           .update(schema.courierProfiles)
           .set({
-            securityDeposit: sql`greatest(0, ${schema.courierProfiles.securityDeposit} - ${original.amount})`,
+            securityDeposit: sql`greatest(0, ${schema.courierProfiles.securityDeposit} - ${profileDelta})`,
             updatedAt: new Date(),
           })
           .where(eq(schema.courierProfiles.userId, original.courierId));
@@ -209,7 +258,7 @@ export async function reverseLedgerEntry(params: {
         await tx
           .update(schema.courierProfiles)
           .set({
-            securityDeposit: sql`${schema.courierProfiles.securityDeposit} + ${original.amount}`,
+            securityDeposit: sql`${schema.courierProfiles.securityDeposit} + ${profileDelta}`,
             updatedAt: new Date(),
           })
           .where(eq(schema.courierProfiles.userId, original.courierId));
@@ -217,7 +266,7 @@ export async function reverseLedgerEntry(params: {
         await tx
           .update(schema.courierProfiles)
           .set({
-            changeFloat: sql`greatest(0, ${schema.courierProfiles.changeFloat} - ${original.amount})`,
+            changeFloat: sql`greatest(0, ${schema.courierProfiles.changeFloat} - ${profileDelta})`,
             updatedAt: new Date(),
           })
           .where(eq(schema.courierProfiles.userId, original.courierId));
@@ -225,7 +274,7 @@ export async function reverseLedgerEntry(params: {
         await tx
           .update(schema.courierProfiles)
           .set({
-            changeFloat: sql`${schema.courierProfiles.changeFloat} + ${original.amount}`,
+            changeFloat: sql`${schema.courierProfiles.changeFloat} + ${profileDelta}`,
             updatedAt: new Date(),
           })
           .where(eq(schema.courierProfiles.userId, original.courierId));
@@ -316,18 +365,7 @@ export async function getCourierCashBalances(courierId: string): Promise<{
 
   let policyRate = 2800;
   if (effectiveHeldUSD > 0) {
-    const [latestRate] = await db
-      .select({ rate: schema.exchangeRates.rate })
-      .from(schema.exchangeRates)
-      .where(
-        and(
-          eq(schema.exchangeRates.baseCurrency, "USD"),
-          eq(schema.exchangeRates.quoteCurrency, "CDF")
-        )
-      )
-      .orderBy(desc(schema.exchangeRates.effectiveDate), desc(schema.exchangeRates.createdAt))
-      .limit(1);
-    policyRate = Number(latestRate?.rate) || 2800;
+    policyRate = await getActiveUsdToCdfRate(db);
   }
 
   const effectiveTotalHeldCDF =
@@ -358,25 +396,32 @@ export async function holdCourierDeposit(params: {
 }): Promise<{ ok: boolean; newDeposit: number }> {
   return await db.transaction(async (tx) => {
     const currency = params.currency ?? "CDF";
+    const rate = currency === "USD" ? await getActiveUsdToCdfRate(tx) : 1;
+    const cdfDelta = currency === "USD" ? Math.round(params.amount * rate) : params.amount;
+    const baseNote =
+      params.note ?? `Caution de sécurité retenue : ${params.amount} ${currency}`;
+    const entryNote =
+      currency === "USD" ? appendCdfMetadataTag(baseNote, cdfDelta, rate) : baseNote;
+
     await tx.insert(schema.cashLedger).values({
       entryType: "deposit_held",
       courierId: params.courierId,
       currency,
       amount: params.amount,
-      note: params.note ?? `Caution de sécurité retenue : ${params.amount} ${currency}`,
+      note: entryNote,
       createdBy: params.adminId ?? null,
     });
 
     const [updated] = await tx
       .update(schema.courierProfiles)
       .set({
-        securityDeposit: sql`${schema.courierProfiles.securityDeposit} + ${params.amount}`,
+        securityDeposit: sql`${schema.courierProfiles.securityDeposit} + ${cdfDelta}`,
         updatedAt: new Date(),
       })
       .where(eq(schema.courierProfiles.userId, params.courierId))
       .returning();
 
-    return { ok: true, newDeposit: updated?.securityDeposit ?? params.amount };
+    return { ok: true, newDeposit: updated?.securityDeposit ?? cdfDelta };
   });
 }
 
@@ -389,7 +434,7 @@ export async function releaseCourierDeposit(params: {
   currency?: "CDF" | "USD";
   note?: string;
   adminId?: string;
-}): Promise<{ ok: boolean; newDeposit: number }> {
+}): Promise<{ ok: boolean; newDeposit: number; error?: string }> {
   return await db.transaction(async (tx) => {
     const currency = params.currency ?? "CDF";
     const [profile] = await tx
@@ -400,21 +445,39 @@ export async function releaseCourierDeposit(params: {
       .limit(1);
 
     const currentDeposit = profile?.securityDeposit ?? 0;
-    const amountToRelease = Math.min(params.amount, currentDeposit);
+    if (currentDeposit <= 0) {
+      return { ok: false, newDeposit: 0, error: "Aucune caution disponible à restituer" };
+    }
+
+    const rate = currency === "USD" ? await getActiveUsdToCdfRate(tx) : 1;
+    const movement = resolveCappedLedgerMovement({
+      requestedAmount: params.amount,
+      currency,
+      availableCdf: currentDeposit,
+      rate,
+    });
+
+    const baseNote =
+      params.note ??
+      `Caution libérée/restituée : ${movement.ledgerAmount} ${movement.ledgerCurrency}`;
+    const entryNote =
+      movement.ledgerCurrency === "USD"
+        ? appendCdfMetadataTag(baseNote, movement.cdfDelta, rate)
+        : baseNote;
 
     await tx.insert(schema.cashLedger).values({
       entryType: "deposit_released",
       courierId: params.courierId,
-      currency,
-      amount: amountToRelease,
-      note: params.note ?? `Caution libérée/restituée : ${amountToRelease} ${currency}`,
+      currency: movement.ledgerCurrency,
+      amount: movement.ledgerAmount,
+      note: entryNote,
       createdBy: params.adminId ?? null,
     });
 
     const [updated] = await tx
       .update(schema.courierProfiles)
       .set({
-        securityDeposit: Math.max(0, currentDeposit - amountToRelease),
+        securityDeposit: Math.max(0, currentDeposit - movement.cdfDelta),
         updatedAt: new Date(),
       })
       .where(eq(schema.courierProfiles.userId, params.courierId))
@@ -436,25 +499,32 @@ export async function issueCourierFloat(params: {
 }): Promise<{ ok: boolean; newFloat: number }> {
   return await db.transaction(async (tx) => {
     const currency = params.currency ?? "CDF";
+    const rate = currency === "USD" ? await getActiveUsdToCdfRate(tx) : 1;
+    const cdfDelta = currency === "USD" ? Math.round(params.amount * rate) : params.amount;
+    const baseNote =
+      params.note ?? `Fond de caisse remis : ${params.amount} ${currency}`;
+    const entryNote =
+      currency === "USD" ? appendCdfMetadataTag(baseNote, cdfDelta, rate) : baseNote;
+
     await tx.insert(schema.cashLedger).values({
       entryType: "float_issued",
       courierId: params.courierId,
       currency,
       amount: params.amount,
-      note: params.note ?? `Fond de caisse remis : ${params.amount} ${currency}`,
+      note: entryNote,
       createdBy: params.adminId ?? null,
     });
 
     const [updated] = await tx
       .update(schema.courierProfiles)
       .set({
-        changeFloat: sql`${schema.courierProfiles.changeFloat} + ${params.amount}`,
+        changeFloat: sql`${schema.courierProfiles.changeFloat} + ${cdfDelta}`,
         updatedAt: new Date(),
       })
       .where(eq(schema.courierProfiles.userId, params.courierId))
       .returning();
 
-    return { ok: true, newFloat: updated?.changeFloat ?? params.amount };
+    return { ok: true, newFloat: updated?.changeFloat ?? cdfDelta };
   });
 }
 
@@ -467,7 +537,7 @@ export async function returnCourierFloat(params: {
   currency?: "CDF" | "USD";
   note?: string;
   adminId?: string;
-}): Promise<{ ok: boolean; newFloat: number }> {
+}): Promise<{ ok: boolean; newFloat: number; error?: string }> {
   return await db.transaction(async (tx) => {
     const currency = params.currency ?? "CDF";
     const [profile] = await tx
@@ -478,21 +548,39 @@ export async function returnCourierFloat(params: {
       .limit(1);
 
     const currentFloat = profile?.changeFloat ?? 0;
-    const amountToReturn = Math.min(params.amount, currentFloat);
+    if (currentFloat <= 0) {
+      return { ok: false, newFloat: 0, error: "Aucun fond de caisse disponible à retourner" };
+    }
+
+    const rate = currency === "USD" ? await getActiveUsdToCdfRate(tx) : 1;
+    const movement = resolveCappedLedgerMovement({
+      requestedAmount: params.amount,
+      currency,
+      availableCdf: currentFloat,
+      rate,
+    });
+
+    const baseNote =
+      params.note ??
+      `Fond de caisse retourné : ${movement.ledgerAmount} ${movement.ledgerCurrency}`;
+    const entryNote =
+      movement.ledgerCurrency === "USD"
+        ? appendCdfMetadataTag(baseNote, movement.cdfDelta, rate)
+        : baseNote;
 
     await tx.insert(schema.cashLedger).values({
       entryType: "float_returned",
       courierId: params.courierId,
-      currency,
-      amount: amountToReturn,
-      note: params.note ?? `Fond de caisse retourné : ${amountToReturn} ${currency}`,
+      currency: movement.ledgerCurrency,
+      amount: movement.ledgerAmount,
+      note: entryNote,
       createdBy: params.adminId ?? null,
     });
 
     const [updated] = await tx
       .update(schema.courierProfiles)
       .set({
-        changeFloat: Math.max(0, currentFloat - amountToReturn),
+        changeFloat: Math.max(0, currentFloat - movement.cdfDelta),
         updatedAt: new Date(),
       })
       .where(eq(schema.courierProfiles.userId, params.courierId))
@@ -1060,7 +1148,8 @@ export async function reverseCourierReconciliation(params: {
           eq(schema.cashLedger.courierId, recon.courierId),
           like(schema.cashLedger.note, `%${reconTag}%`)
         )
-      );
+      )
+      .for("update");
 
     if (recon.status === "confirmed" && linkedEntries.length === 0) {
       return { ok: false, error: "Aucune écriture liée à cette réconciliation à annuler" };
@@ -1172,16 +1261,17 @@ export async function getHouseBalancesMap(): Promise<Map<string, number>> {
       )
     );
 
+  const activeRate = await getActiveUsdToCdfRate(db);
   const totalsByHouse = new Map<string, { owed: number; settled: number }>();
 
   for (const e of entries) {
     if (!e.houseId) continue;
     const current = totalsByHouse.get(e.houseId) ?? { owed: 0, settled: 0 };
     if (e.entryType === "owed_to_house") {
-      const rate = Number(e.exchangeRateUsed) || 2800;
+      const rate = Number(e.exchangeRateUsed) || activeRate;
       current.owed += e.currency === "USD" ? Math.round(e.amount * rate) : e.amount;
     } else if (e.entryType === "house_settlement_paid") {
-      current.settled += e.currency === "USD" ? Math.round(e.amount * 2800) : e.amount;
+      current.settled += e.currency === "USD" ? Math.round(e.amount * activeRate) : e.amount;
     }
     totalsByHouse.set(e.houseId, current);
   }
@@ -1233,7 +1323,8 @@ export async function getHouseSettlementsOverview(): Promise<{
       )
     );
 
-  const [allHouses, allDeliveredOrders, allHouseLedgerEntries] = await Promise.all([
+  const [activeRate, allHouses, allDeliveredOrders, allHouseLedgerEntries] = await Promise.all([
+    getActiveUsdToCdfRate(db),
     db
       .select({
         id: schema.houses.id,
@@ -1268,6 +1359,7 @@ export async function getHouseSettlementsOverview(): Promise<{
         entryType: schema.cashLedger.entryType,
         amount: schema.cashLedger.amount,
         currency: schema.cashLedger.currency,
+        note: schema.cashLedger.note,
         exchangeRateUsed: schema.orders.exchangeRateUsed,
         createdAt: schema.cashLedger.createdAt,
       })
@@ -1334,19 +1426,24 @@ export async function getHouseSettlementsOverview(): Promise<{
 
     const owedEntries = owedByHouseId.get(h.id) ?? [];
     const totalOwedCDF = owedEntries.reduce((sum, e) => {
-      const rate = Number(e.exchangeRateUsed) || 2800;
+      const rate = Number(e.exchangeRateUsed) || activeRate;
       return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
     }, 0);
 
     const settledEntries = settledByHouseId.get(h.id) ?? [];
     const totalSettledCDF = settledEntries.reduce((sum, e) => {
-      return sum + (e.currency === "USD" ? Math.round(e.amount * 2800) : e.amount);
+      return sum + resolveLedgerCdfAmount(e.amount, e.currency, e.note, activeRate);
     }, 0);
     const balanceOwedCDF = Math.max(0, totalOwedCDF - totalSettledCDF);
     totalPendingOwed += balanceOwedCDF;
 
     const lastSettlementAmount = settledEntries[0]
-      ? (settledEntries[0].currency === "USD" ? Math.round(settledEntries[0].amount * 2800) : settledEntries[0].amount)
+      ? resolveLedgerCdfAmount(
+          settledEntries[0].amount,
+          settledEntries[0].currency,
+          settledEntries[0].note,
+          activeRate
+        )
       : null;
     const lastSettlementAt = settledEntries[0]?.createdAt ?? null;
 
@@ -1449,6 +1546,8 @@ export async function getHouseSettlementDetail(houseId: string): Promise<{
       )
     );
 
+  const activeRate = await getActiveUsdToCdfRate(db);
+
   // Settlement payments
   const settlements = await db
     .select({
@@ -1469,7 +1568,7 @@ export async function getHouseSettlementDetail(houseId: string): Promise<{
     .orderBy(desc(schema.cashLedger.createdAt));
 
   const totalSettledCDF = settlements.reduce((sum, s) => {
-    return sum + (s.currency === "USD" ? Math.round(s.amount * 2800) : s.amount);
+    return sum + resolveLedgerCdfAmount(s.amount, s.currency, s.note, activeRate);
   }, 0);
 
   // Calculate totalOwedCDF from the same non-reversed owed_to_house ledger entries
@@ -1490,7 +1589,7 @@ export async function getHouseSettlementDetail(houseId: string): Promise<{
     );
 
   const totalOwedCDF = owedEntries.reduce((sum, e) => {
-    const rate = Number(e.exchangeRateUsed) || 2800;
+    const rate = Number(e.exchangeRateUsed) || activeRate;
     return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
   }, 0);
 
@@ -1599,8 +1698,10 @@ export async function settleHouseBalance(params: {
         )
       );
 
+    const activeRate = await getActiveUsdToCdfRate(tx);
+
     const totalOwedCDF = owedEntries.reduce((sum, e) => {
-      const rate = Number(e.exchangeRateUsed) || 2800;
+      const rate = Number(e.exchangeRateUsed) || activeRate;
       return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
     }, 0);
 
@@ -1608,6 +1709,7 @@ export async function settleHouseBalance(params: {
       .select({
         amount: schema.cashLedger.amount,
         currency: schema.cashLedger.currency,
+        note: schema.cashLedger.note,
       })
       .from(schema.cashLedger)
       .where(
@@ -1619,11 +1721,11 @@ export async function settleHouseBalance(params: {
       );
 
     const totalSettledCDF = settledEntries.reduce((sum, e) => {
-      return sum + (e.currency === "USD" ? Math.round(e.amount * 2800) : e.amount);
+      return sum + resolveLedgerCdfAmount(e.amount, e.currency, e.note, activeRate);
     }, 0);
 
     const currentBalanceCDF = Math.max(0, totalOwedCDF - totalSettledCDF);
-    const amountInCDF = params.currency === "USD" ? Math.round(params.amount * 2800) : params.amount;
+    const amountInCDF = params.currency === "USD" ? Math.round(params.amount * activeRate) : params.amount;
 
     if (amountInCDF > currentBalanceCDF) {
       return {
@@ -1637,14 +1739,19 @@ export async function settleHouseBalance(params: {
     const methodTag = params.method ? `[MÉTHODE: ${params.method}]` : "";
     const refTag = params.reference ? `[RÉF: ${params.reference}]` : "";
     const periodTag = params.period ? `[PÉRIODE: ${params.period}]` : "";
+    const cdfTag = currency === "USD" ? formatCdfMetadataTag(amountInCDF, activeRate) : "";
     const customNote = params.note?.trim() ?? "";
-    const combinedParts = [methodTag, refTag, periodTag, customNote].filter(Boolean);
-    const finalNote =
+    const combinedParts = [methodTag, refTag, periodTag, cdfTag, customNote].filter(Boolean);
+    const baseNote =
       combinedParts.length > 0
         ? combinedParts.join(" ")
         : params.reference
           ? `Règlement pressing : ${params.reference}`
           : `Règlement hebdomadaire pressing (${params.amount} ${currency})`;
+    const finalNote =
+      combinedParts.length > 0 || currency !== "USD"
+        ? baseNote
+        : appendCdfMetadataTag(baseNote, amountInCDF, activeRate);
 
     const [entry] = await tx
       .insert(schema.cashLedger)
@@ -1705,7 +1812,8 @@ export async function getCourierSettlementsOverview(): Promise<{
       )
     );
 
-  const [activeCouriers, allCourierLedgerEntries] = await Promise.all([
+  const [activeRate, activeCouriers, allCourierLedgerEntries] = await Promise.all([
+    getActiveUsdToCdfRate(db),
     db
       .select({
         id: schema.user.id,
@@ -1780,24 +1888,29 @@ export async function getCourierSettlementsOverview(): Promise<{
     }
 
     const totalEarnedCDF = earnedEntries.reduce((sum, e) => {
-      const rate = Number(e.exchangeRateUsed) || 2800;
+      const rate = Number(e.exchangeRateUsed) || activeRate;
       return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
     }, 0);
 
     const totalPaidCDF = paidEntries.reduce((sum, p) => {
-      return sum + (p.currency === "USD" ? Math.round(p.amount * 2800) : p.amount);
+      return sum + resolveLedgerCdfAmount(p.amount, p.currency, p.note, activeRate);
     }, 0);
 
     const balanceOwedCDF = Math.max(0, totalEarnedCDF - totalPaidCDF);
     totalPendingOwed += balanceOwedCDF;
 
     const lastPaymentAmount = paidEntries[0]
-      ? (paidEntries[0].currency === "USD" ? Math.round(paidEntries[0].amount * 2800) : paidEntries[0].amount)
+      ? resolveLedgerCdfAmount(
+          paidEntries[0].amount,
+          paidEntries[0].currency,
+          paidEntries[0].note,
+          activeRate
+        )
       : null;
     const lastPaymentAt = paidEntries[0]?.createdAt ?? null;
 
     const cashDiscrepancyCDF = discrepancyRows.reduce((sum, d) => {
-      const rate = Number(d.exchangeRateUsed) || 2800;
+      const rate = Number(d.exchangeRateUsed) || activeRate;
       const amountCDF = d.currency === "USD" ? Math.round(d.amount * rate) : d.amount;
       const isShortage = d.note ? (d.note.includes("Déficit") || d.note.includes(" : -")) : false;
       const signedAmountCDF = isShortage ? -amountCDF : amountCDF;
@@ -1807,7 +1920,7 @@ export async function getCourierSettlementsOverview(): Promise<{
     const deliveredOrders = earnedEntries.map((e) => ({
       id: e.orderId ?? e.id,
       code: e.orderCode ?? "—",
-      amount: e.currency === "USD" ? Math.round(e.amount * (Number(e.exchangeRateUsed) || 2800)) : e.amount,
+      amount: e.currency === "USD" ? Math.round(e.amount * (Number(e.exchangeRateUsed) || activeRate)) : e.amount,
       createdAt: e.createdAt,
     }));
 
@@ -1819,7 +1932,7 @@ export async function getCourierSettlementsOverview(): Promise<{
       );
       let remainingPaid = totalPaidCDF;
       for (const entry of chronologicalEarned) {
-        const rate = Number(entry.exchangeRateUsed) || 2800;
+        const rate = Number(entry.exchangeRateUsed) || activeRate;
         const entryAmountCDF = entry.currency === "USD" ? Math.round(entry.amount * rate) : entry.amount;
         if (remainingPaid >= entryAmountCDF) {
           remainingPaid -= entryAmountCDF;
@@ -1919,6 +2032,7 @@ export async function settleCourierPay(params: {
       .select({
         amount: schema.cashLedger.amount,
         currency: schema.cashLedger.currency,
+        note: schema.cashLedger.note,
       })
       .from(schema.cashLedger)
       .where(
@@ -1929,17 +2043,19 @@ export async function settleCourierPay(params: {
         )
       );
 
+    const activeRate = await getActiveUsdToCdfRate(tx);
+
     const totalEarnedCDF = earnedEntries.reduce((sum, e) => {
-      const rate = Number(e.exchangeRateUsed) || 2800;
+      const rate = Number(e.exchangeRateUsed) || activeRate;
       return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
     }, 0);
 
     const totalPaidCDF = paidEntries.reduce((sum, p) => {
-      return sum + (p.currency === "USD" ? Math.round(p.amount * 2800) : p.amount);
+      return sum + resolveLedgerCdfAmount(p.amount, p.currency, p.note, activeRate);
     }, 0);
 
     const currentBalanceCDF = Math.max(0, totalEarnedCDF - totalPaidCDF);
-    const amountInCDF = params.currency === "USD" ? Math.round(params.amount * 2800) : params.amount;
+    const amountInCDF = params.currency === "USD" ? Math.round(params.amount * activeRate) : params.amount;
 
     if (amountInCDF > currentBalanceCDF) {
       return {
@@ -1953,14 +2069,19 @@ export async function settleCourierPay(params: {
     const methodTag = params.method ? `[MÉTHODE: ${params.method}]` : "";
     const refTag = params.reference ? `[RÉF: ${params.reference}]` : "";
     const periodTag = params.period ? `[PÉRIODE: ${params.period}]` : "";
+    const cdfTag = currency === "USD" ? formatCdfMetadataTag(amountInCDF, activeRate) : "";
     const customNote = params.note?.trim() ?? "";
-    const combinedParts = [methodTag, refTag, periodTag, customNote].filter(Boolean);
-    const finalNote =
+    const combinedParts = [methodTag, refTag, periodTag, cdfTag, customNote].filter(Boolean);
+    const baseNote =
       combinedParts.length > 0
         ? combinedParts.join(" ")
         : params.reference
           ? `Règlement rémunération : ${params.reference}`
           : `Règlement des courses du coursier (${params.amount} ${currency})`;
+    const finalNote =
+      combinedParts.length > 0 || currency !== "USD"
+        ? baseNote
+        : appendCdfMetadataTag(baseNote, amountInCDF, activeRate);
 
     const [entry] = await tx
       .insert(schema.cashLedger)
@@ -2097,6 +2218,7 @@ export async function getSettlementHistoryLogs(limit = 100): Promise<
       .replace(/\[MÉTHODE:[^\]]+\]/gi, "")
       .replace(/\[RÉF:[^\]]+\]/gi, "")
       .replace(/\[PÉRIODE:[^\]]+\]/gi, "")
+      .replace(/\[CDF:[^\]]+\]/gi, "")
       .trim();
 
     return {
@@ -2145,8 +2267,7 @@ export async function getSuccessCriteriaDashboard(): Promise<{
   totalCollectedCashCDF: number;
 }> {
   // 1. Orders per week (count orders in last 7 days)
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000);
 
   const [recentOrders] = await db
     .select({ count: sql<number>`count(*)::int` })

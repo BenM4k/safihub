@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { guardAdminRoute } from "@/services/auth";
 import { getAdminDispatchData } from "@/services/admin";
 import { DispatchDashboard } from "@/components/admin/dispatch/dispatch-dashboard";
 import { Button } from "@/components/ui/button";
 
 export default async function AdminDispatchPage() {
+  await guardAdminRoute();
   const t = await getTranslations("admin.dispatch");
   const res = await getAdminDispatchData();
 

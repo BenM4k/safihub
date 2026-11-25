@@ -219,3 +219,80 @@ export async function resolveItemRequest(params: {
 
   return result.length > 0;
 }
+
+export async function approveItemRequestTransaction(params: {
+  requestId: string;
+  adminId: string;
+  kind: "item" | "fabric";
+  nameFr: string;
+  nameSw: string;
+  category?: string | null;
+  adminNote?: string;
+}): Promise<{ createdId: string } | { kindMismatch: true } | null> {
+  return await db.transaction(async (tx) => {
+    const [pendingRequest] = await tx
+      .select({
+        id: schema.itemRequests.id,
+        kind: schema.itemRequests.kind,
+      })
+      .from(schema.itemRequests)
+      .where(
+        and(
+          eq(schema.itemRequests.id, params.requestId),
+          eq(schema.itemRequests.status, "pending")
+        )
+      )
+      .for("update")
+      .limit(1);
+
+    if (!pendingRequest) {
+      return null;
+    }
+
+    if (pendingRequest.kind !== params.kind) {
+      return { kindMismatch: true as const };
+    }
+
+    let createdItemId: string | null = null;
+    let createdFabricId: string | null = null;
+
+    if (params.kind === "item") {
+      const [createdItem] = await tx
+        .insert(schema.items)
+        .values({
+          nameFr: params.nameFr.trim(),
+          nameSw: params.nameSw.trim(),
+          category: params.category?.trim() ?? null,
+          sortOrder: 0,
+          isActive: true,
+        })
+        .returning({ id: schema.items.id });
+      createdItemId = createdItem!.id;
+    } else {
+      const [createdFabric] = await tx
+        .insert(schema.fabrics)
+        .values({
+          nameFr: params.nameFr.trim(),
+          nameSw: params.nameSw.trim(),
+          sortOrder: 0,
+          isActive: true,
+        })
+        .returning({ id: schema.fabrics.id });
+      createdFabricId = createdFabric!.id;
+    }
+
+    await tx
+      .update(schema.itemRequests)
+      .set({
+        status: "approved",
+        adminNote: params.adminNote ?? null,
+        resolvedBy: params.adminId,
+        resolvedAt: new Date(),
+        createdItemId,
+        createdFabricId,
+      })
+      .where(eq(schema.itemRequests.id, params.requestId));
+
+    return { createdId: (createdItemId || createdFabricId)! };
+  });
+}

@@ -1,10 +1,11 @@
 import "server-only";
 import { randomInt, timingSafeEqual } from "node:crypto";
-import { and, asc, desc, eq, inArray, isNull, ne, notInArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lte, ne, notInArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
 import { DEFAULT_RETRY_FEE_CDF, RETRY_FEE_FAILED_PICKUP_COUNT } from "@/lib/fees";
 import { transitionOrder } from "@/services/order/transitions";
+import { toBukavuDateTime } from "@/services/availability/bukavu-time";
 
 type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -60,13 +61,15 @@ async function isCourierCashCeilingExceededTx(
 
   let policyRate = 2800;
   if (effectiveHeldUSD > 0) {
+    const todayBukavu = toBukavuDateTime(new Date()).dateString;
     const [latestRate] = await tx
       .select({ rate: schema.exchangeRates.rate })
       .from(schema.exchangeRates)
       .where(
         and(
           eq(schema.exchangeRates.baseCurrency, "USD"),
-          eq(schema.exchangeRates.quoteCurrency, "CDF")
+          eq(schema.exchangeRates.quoteCurrency, "CDF"),
+          lte(schema.exchangeRates.effectiveDate, todayBukavu)
         )
       )
       .orderBy(desc(schema.exchangeRates.effectiveDate), desc(schema.exchangeRates.createdAt))
@@ -513,12 +516,117 @@ export async function getMissions(filters?: {
   return rows as MissionRecord[];
 }
 
+export async function createCourierAccountTransaction(params: {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    contactPhone: string;
+  };
+  hashedPassword?: string;
+  cashCeiling?: number;
+  securityDeposit?: number;
+  changeFloat?: number;
+  zoneIds?: string[];
+  shifts?: Array<{ weekday: number; startsAt: string; endsAt: string }>;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.insert(schema.user).values({
+      id: params.user.id,
+      name: params.user.name.trim(),
+      email: params.user.email.trim().toLowerCase(),
+      role: "courier",
+      contactPhone: params.user.contactPhone.trim(),
+      isGuest: false,
+      emailVerified: true,
+      status: "active",
+      banned: false,
+      mustChangePassword: Boolean(params.hashedPassword),
+    });
+
+    if (params.hashedPassword) {
+      await tx.insert(schema.account).values({
+        id: crypto.randomUUID(),
+        userId: params.user.id,
+        accountId: params.user.id,
+        providerId: "credential",
+        password: params.hashedPassword,
+      });
+    }
+
+    await tx.insert(schema.courierProfiles).values({
+      userId: params.user.id,
+      cashCeiling: params.cashCeiling ?? 140000,
+      securityDeposit: params.securityDeposit ?? 0,
+      changeFloat: params.changeFloat ?? 0,
+      isActive: true,
+    });
+
+    if (params.zoneIds && params.zoneIds.length > 0) {
+      await tx.insert(schema.courierZones).values(
+        params.zoneIds.map((zoneId) => ({
+          courierId: params.user.id,
+          zoneId,
+        }))
+      );
+    }
+
+    if (params.shifts && params.shifts.length > 0) {
+      await tx.insert(schema.courierShifts).values(
+        params.shifts.map((s) => ({
+          courierId: params.user.id,
+          weekday: s.weekday,
+          startsAt: s.startsAt,
+          endsAt: s.endsAt,
+        }))
+      );
+    }
+  });
+}
+
 export async function assignMission(
   missionId: string,
   courierId: string,
-  adminId?: string
+  adminId?: string,
+  options?: {
+    enforceCashCeiling?: boolean;
+    assignmentNote?: string;
+  }
 ): Promise<boolean> {
   return await db.transaction(async (tx) => {
+    const [mission] = await tx
+      .select({
+        id: schema.missions.id,
+        orderId: schema.missions.orderId,
+        type: schema.missions.type,
+        status: schema.missions.status,
+      })
+      .from(schema.missions)
+      .where(
+        and(
+          eq(schema.missions.id, missionId),
+          eq(schema.missions.status, "unassigned")
+        )
+      )
+      .for("update")
+      .limit(1);
+
+    if (!mission) return false;
+
+    if (options?.enforceCashCeiling && mission.type === "delivery") {
+      await tx
+        .select({ userId: schema.courierProfiles.userId })
+        .from(schema.courierProfiles)
+        .where(eq(schema.courierProfiles.userId, courierId))
+        .for("update")
+        .limit(1);
+
+      const ceilingStatus = await isCourierCashCeilingExceededTx(tx, courierId);
+      if (ceilingStatus.exceeded) {
+        return false;
+      }
+    }
+
     const [updated] = await tx
       .update(schema.missions)
       .set({
@@ -580,6 +688,17 @@ export async function assignMission(
           note: "Coursier assigné pour la livraison",
         });
       }
+    }
+
+    if (options?.assignmentNote && adminId) {
+      await tx.insert(schema.orderEvents).values({
+        orderId: updated.orderId,
+        type: "assignment",
+        actorId: adminId,
+        actorRole: "admin",
+        recordedBy: adminId,
+        note: options.assignmentNote,
+      });
     }
 
     return true;

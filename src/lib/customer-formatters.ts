@@ -81,12 +81,14 @@ export interface MergeValidationResult {
 export function validateMergeCandidates(params: {
   source: {
     id: string;
+    role?: string | null;
     isGuest: boolean;
     status: string;
     banned?: boolean | null;
   } | null;
   target: {
     id: string;
+    role: string | null;
     isGuest: boolean;
     status: string;
     banned?: boolean | null;
@@ -104,6 +106,13 @@ export function validateMergeCandidates(params: {
     return { valid: false, error: "Impossible de fusionner un compte avec lui-même." };
   }
 
+  if (params.source.role && params.source.role !== "customer") {
+    return {
+      valid: false,
+      error: "Le compte source doit être un compte client invité.",
+    };
+  }
+
   if (!params.source.isGuest) {
     return {
       valid: false,
@@ -115,6 +124,13 @@ export function validateMergeCandidates(params: {
     return {
       valid: false,
       error: "Ce compte invité a déjà été fusionné.",
+    };
+  }
+
+  if (params.target.role !== "customer") {
+    return {
+      valid: false,
+      error: "Le compte cible doit être un compte client enregistré.",
     };
   }
 

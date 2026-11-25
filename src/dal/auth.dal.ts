@@ -2,6 +2,7 @@ import "server-only";
 import { and, desc, eq, gt, ne, or } from "drizzle-orm";
 import { db, schema } from "./db";
 import { ok, err, type Result } from "@/lib/result";
+import { sanitizeServiceError } from "@/lib/service-errors";
 
 export type ConsentDocumentType = "terms" | "privacy" | "photos";
 
@@ -182,25 +183,54 @@ export async function mergeGuestUser({
       return err("Cannot merge a user account into itself.");
     }
 
-    const guestUser = await getUserById(guestUserId);
-    if (!guestUser) {
-      return err(`Guest user with ID ${guestUserId} not found.`);
-    }
-
-    if (!guestUser.isGuest) {
-      return err(`User ${guestUserId} is not a guest account.`);
-    }
-
-    const targetUser = await getUserById(targetUserId);
-    if (!targetUser) {
-      return err(`Target user with ID ${targetUserId} not found.`);
-    }
-
-    if (targetUser.isGuest) {
-      return err(`Target user ${targetUserId} cannot be a guest account.`);
-    }
-
     return await db.transaction(async (tx) => {
+      const [guestUser] = await tx
+        .select({
+          id: schema.user.id,
+          role: schema.user.role,
+          isGuest: schema.user.isGuest,
+          status: schema.user.status,
+          banned: schema.user.banned,
+        })
+        .from(schema.user)
+        .where(eq(schema.user.id, guestUserId))
+        .for("update")
+        .limit(1);
+
+      if (!guestUser) {
+        return err(`Guest user with ID ${guestUserId} not found.`);
+      }
+
+      if (guestUser.role !== "customer" || !guestUser.isGuest) {
+        return err(`User ${guestUserId} is not a guest customer account.`);
+      }
+
+      const [targetUser] = await tx
+        .select({
+          id: schema.user.id,
+          role: schema.user.role,
+          isGuest: schema.user.isGuest,
+          status: schema.user.status,
+          banned: schema.user.banned,
+        })
+        .from(schema.user)
+        .where(eq(schema.user.id, targetUserId))
+        .for("update")
+        .limit(1);
+
+      if (!targetUser) {
+        return err(`Target user with ID ${targetUserId} not found.`);
+      }
+
+      if (
+        targetUser.role !== "customer" ||
+        targetUser.isGuest ||
+        targetUser.status !== "active" ||
+        targetUser.banned
+      ) {
+        return err(`Target user ${targetUserId} is not an active registered customer account.`);
+      }
+
       // 1. Reassign orders from guest customer to registered user
       const updatedOrders = await tx
         .update(schema.orders)
@@ -215,7 +245,7 @@ export async function mergeGuestUser({
         .where(eq(schema.customerAddresses.userId, guestUserId))
         .returning({ id: schema.customerAddresses.id });
 
-      // 3. Mark the guest account as merged and blocked from further orders
+      // 3. Mark the guest account as merged and blocked from further orders, and revoke sessions
       await tx
         .update(schema.user)
         .set({
@@ -227,6 +257,8 @@ export async function mergeGuestUser({
           updatedAt: new Date(),
         })
         .where(eq(schema.user.id, guestUserId));
+
+      await tx.delete(schema.session).where(eq(schema.session.userId, guestUserId));
 
       return ok({
         guestUserId,
@@ -250,41 +282,76 @@ export async function mergeGuestUser({
 export async function setUserPasswordCredential({
   userId,
   hashedPassword,
+  operatorId,
+  requireCustomerRole,
 }: {
   userId: string;
   hashedPassword: string;
+  operatorId?: string;
+  requireCustomerRole?: boolean;
 }): Promise<Result<boolean>> {
   try {
-    const existingAccounts = await db
-      .select()
-      .from(schema.account)
-      .where(eq(schema.account.userId, userId));
+    return await db.transaction(async (tx) => {
+      const [targetUser] = await tx
+        .select({ id: schema.user.id, role: schema.user.role })
+        .from(schema.user)
+        .where(eq(schema.user.id, userId))
+        .for("update")
+        .limit(1);
 
-    const credentialAccount = existingAccounts.find(
-      (a) => a.providerId === "credential",
-    );
+      if (!targetUser) {
+        return err("Utilisateur introuvable");
+      }
 
-    if (credentialAccount) {
-      await db
-        .update(schema.account)
-        .set({ password: hashedPassword })
-        .where(eq(schema.account.id, credentialAccount.id));
-    } else {
-      await db.insert(schema.account).values({
-        id: crypto.randomUUID(),
-        userId,
-        accountId: userId,
-        providerId: "credential",
-        password: hashedPassword,
-      });
-    }
+      if (requireCustomerRole && targetUser.role !== "customer") {
+        return err("Cette action est réservée aux comptes clients.");
+      }
 
-    return ok(true);
+      if (
+        operatorId &&
+        targetUser.role === "admin" &&
+        targetUser.id !== operatorId
+      ) {
+        return err(
+          "Impossible de réinitialiser le mot de passe d'un autre administrateur."
+        );
+      }
+
+      const [credentialAccount] = await tx
+        .select({ id: schema.account.id })
+        .from(schema.account)
+        .where(
+          and(
+            eq(schema.account.userId, userId),
+            eq(schema.account.providerId, "credential")
+          )
+        )
+        .limit(1);
+
+      if (credentialAccount) {
+        await tx
+          .update(schema.account)
+          .set({ password: hashedPassword })
+          .where(eq(schema.account.id, credentialAccount.id));
+      } else {
+        await tx.insert(schema.account).values({
+          id: crypto.randomUUID(),
+          userId,
+          accountId: userId,
+          providerId: "credential",
+          password: hashedPassword,
+        });
+      }
+
+      return ok(true);
+    });
   } catch (error) {
     return err(
-      error instanceof Error
-        ? error.message
-        : "Failed to update account password credential.",
+      sanitizeServiceError(
+        error,
+        "Échec de la mise à jour du mot de passe.",
+        "setUserPasswordCredential"
+      )
     );
   }
 }

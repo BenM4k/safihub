@@ -1,9 +1,11 @@
 import { getTranslations } from "next-intl/server";
+import { guardAdminRoute } from "@/services/auth";
 import { listAdminZoneFees, listAdminZones } from "@/services/admin";
 import { FeeMatrixTable } from "@/components/admin/delivery-fees/fee-matrix-table";
 import { FeePairForm } from "@/components/admin/delivery-fees/fee-pair-form";
 
 export default async function AdminDeliveryFeesPage() {
+  await guardAdminRoute();
   const t = await getTranslations("admin.deliveryFees");
 
   const [feesRes, zonesRes] = await Promise.all([

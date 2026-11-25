@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { guardAdminRoute } from "@/services/auth";
 import { getAdminSettingsData } from "@/services/admin";
 import { PlatformSettingsForm } from "@/components/admin/settings/platform-settings-form";
 import { ExchangeRateForm } from "@/components/admin/settings/exchange-rate-form";
@@ -6,6 +7,7 @@ import { ExchangeRatesHistory } from "@/components/admin/settings/exchange-rates
 import { DataExportCard } from "@/components/admin/settings/data-export-card";
 
 export default async function AdminSettingsPage() {
+  await guardAdminRoute();
   const t = await getTranslations("admin.settings");
   const res = await getAdminSettingsData();
 

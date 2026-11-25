@@ -3,6 +3,13 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import type { ApplicationStatus } from "@/services/db/schema";
 
+export class PartnerApplicationApprovalError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PartnerApplicationApprovalError";
+  }
+}
+
 export interface HouseApplicationRecord {
   id: string;
   houseName: string;
@@ -241,6 +248,50 @@ export async function approveHouseApplicationTransaction(params: {
   passwordApplied: boolean;
 }> {
   return await db.transaction(async (tx) => {
+    // 0. Lock and verify pending application first so concurrent approvals fail safely
+    const [pendingApp] = await tx
+      .select({ id: schema.houseApplications.id, status: schema.houseApplications.status })
+      .from(schema.houseApplications)
+      .where(
+        and(
+          eq(schema.houseApplications.id, params.applicationId),
+          eq(schema.houseApplications.status, "pending")
+        )
+      )
+      .for("update")
+      .limit(1);
+
+    if (!pendingApp) {
+      throw new PartnerApplicationApprovalError(
+        `Application "${params.applicationId}" not found or not in pending status.`
+      );
+    }
+
+    // Check and lock any existing user BEFORE inserting house/membership records
+    const [existingUser] = await tx
+      .select({
+        id: schema.user.id,
+        role: schema.user.role,
+        emailVerified: schema.user.emailVerified,
+      })
+      .from(schema.user)
+      .where(eq(schema.user.email, params.user.email.toLowerCase()))
+      .for("update")
+      .limit(1);
+
+    if (existingUser) {
+      if (existingUser.role !== "customer" && existingUser.role !== "house") {
+        throw new PartnerApplicationApprovalError(
+          `Cannot approve application: existing user has invalid role "${existingUser.role}".`
+        );
+      }
+      if (!existingUser.emailVerified) {
+        throw new PartnerApplicationApprovalError(
+          "Cannot approve application: the existing account's email address has not been verified yet."
+        );
+      }
+    }
+
     // 1. Create house (isActive: false until configured)
     const [createdHouse] = await tx
       .insert(schema.houses)
@@ -257,21 +308,10 @@ export async function approveHouseApplicationTransaction(params: {
 
     const houseId = createdHouse!.id;
 
-    // 2. Check if user already exists with that email
-    const [existingUser] = await tx
-      .select({ id: schema.user.id, role: schema.user.role })
-      .from(schema.user)
-      .where(eq(schema.user.email, params.user.email.toLowerCase()))
-      .limit(1);
-
+    // 2. Grant house role to verified existing user OR provision new user
     let userId: string;
     let isNewAccount = false;
     if (existingUser) {
-      if (existingUser.role !== "customer" && existingUser.role !== "house") {
-        throw new Error(
-          `Cannot approve application: existing user has invalid role "${existingUser.role}".`
-        );
-      }
       userId = existingUser.id;
       await tx
         .update(schema.user)
@@ -289,7 +329,8 @@ export async function approveHouseApplicationTransaction(params: {
         isGuest: false,
         status: "active",
         banned: false,
-        emailVerified: false,
+        emailVerified: true,
+        mustChangePassword: Boolean(params.hashedPassword),
       });
     }
 
@@ -316,6 +357,12 @@ export async function approveHouseApplicationTransaction(params: {
           password: params.hashedPassword,
         });
         passwordApplied = true;
+        if (!isNewAccount) {
+          await tx
+            .update(schema.user)
+            .set({ mustChangePassword: true, updatedAt: new Date() })
+            .where(eq(schema.user.id, userId));
+        }
       }
     }
 

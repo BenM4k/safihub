@@ -1,15 +1,7 @@
 import { formatCustomerEmail, formatCustomerName } from "@/lib/customer-formatters";
+import { escapeCsvCell } from "@/lib/csv-utils";
 import { formatPhone } from "@/lib/order-formatters";
 import type { CustomerRow } from "./types";
-
-function escapeCsvField(value: string | null | undefined): string {
-  if (!value) return '""';
-  let str = value;
-  if (/^[=+\-@\t\r]/.test(str)) {
-    str = `'${str}`;
-  }
-  return `"${str.replace(/"/g, '""')}"`;
-}
 
 export function exportCustomersCsv(customers: CustomerRow[]): void {
   const headers = [
@@ -31,20 +23,22 @@ export function exportCustomersCsv(customers: CustomerRow[]): void {
     const type = c.isGuest ? "Invité" : "Inscrit";
     const status = c.banned || c.status === "blocked" ? "Bloqué" : "Actif";
     const lastOrder = c.lastOrderAt
-      ? new Date(c.lastOrderAt).toLocaleDateString("fr-FR")
+      ? new Date(c.lastOrderAt).toLocaleDateString("fr-FR", { timeZone: "Africa/Lubumbashi" })
       : "—";
-    const registered = new Date(c.createdAt).toLocaleDateString("fr-FR");
+    const registered = new Date(c.createdAt).toLocaleDateString("fr-FR", {
+      timeZone: "Africa/Lubumbashi",
+    });
 
     return [
-      escapeCsvField(name),
-      escapeCsvField(phone),
-      escapeCsvField(email),
-      `"${type}"`,
-      `"${status}"`,
-      `"${c.ordersCount}"`,
-      `"${c.totalSpentCDF}"`,
-      `"${lastOrder}"`,
-      `"${registered}"`,
+      escapeCsvCell(name, { alwaysQuote: true }),
+      escapeCsvCell(phone, { alwaysQuote: true }),
+      escapeCsvCell(email, { alwaysQuote: true }),
+      escapeCsvCell(type, { alwaysQuote: true }),
+      escapeCsvCell(status, { alwaysQuote: true }),
+      escapeCsvCell(c.ordersCount, { alwaysQuote: true }),
+      escapeCsvCell(c.totalSpentCDF, { alwaysQuote: true }),
+      escapeCsvCell(lastOrder, { alwaysQuote: true }),
+      escapeCsvCell(registered, { alwaysQuote: true }),
     ].join(";");
   });
 

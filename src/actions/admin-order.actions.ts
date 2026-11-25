@@ -1,8 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { z } from "zod";
 import { requireRole } from "@/services/auth";
 import { err, type Result } from "@/lib/result";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
   addAdminOrderTimelineNote,
   adminConfirmFirstOrder,
@@ -12,9 +14,62 @@ import {
   getAdminOrderDetail,
 } from "@/services/admin";
 import type { OrderDetailRecord, OrderEventRecord, OrderItemRecord } from "@/dal";
-import type { ApprovalMethod, OrderStatus } from "@/services/db/schema";
+import {
+  approvalMethodEnum,
+  orderStatusEnum,
+} from "@/services/db/schema";
+
+const orderIdSchema = z.string().uuid("Identifiant de commande invalide");
+
+const createManualOrderSchema = z.object({
+  idempotencyKey: z.string().uuid().optional(),
+  customerPhone: z.string().trim().min(6, "Numéro de téléphone requis").max(32),
+  customerName: z.string().trim().max(120).optional(),
+  houseId: z.string().uuid("Pressing invalide"),
+  customerNeighborhoodId: z.string().uuid("Quartier invalide"),
+  landmark: z.string().trim().min(2, "Point de repère requis").max(500),
+  pickupSlotStart: z.string().refine((v) => !Number.isNaN(Date.parse(v)), "Créneau de début invalide"),
+  pickupSlotEnd: z.string().refine((v) => !Number.isNaN(Date.parse(v)), "Créneau de fin invalide"),
+  source: z.enum(["whatsapp", "phone"]),
+  items: z
+    .array(
+      z.object({
+        serviceId: z.string().uuid("Service invalide"),
+        itemId: z.string().uuid("Article invalide"),
+        fabricId: z.string().uuid("Tissu invalide"),
+        quantity: z.number().int().min(1).max(200),
+      })
+    )
+    .min(1, "Au moins un article requis")
+    .max(100),
+});
+
+const performOnBehalfSchema = z.object({
+  orderId: orderIdSchema,
+  targetStatus: z.enum(orderStatusEnum.enumValues),
+  onBehalfOfHouseId: z.string().uuid("Pressing invalide"),
+  reason: z.string().trim().max(500).optional(),
+  note: z.string().trim().max(500).optional(),
+  approvalMethod: z.enum(approvalMethodEnum.enumValues).optional(),
+});
+
+const addNoteSchema = z.object({
+  orderId: orderIdSchema,
+  note: z.string().trim().min(1, "La note ne peut pas être vide").max(1000),
+});
+
+const confirmFirstOrderSchema = z.object({
+  orderId: orderIdSchema,
+  note: z.string().trim().max(500).optional(),
+});
+
+const rejectFirstOrderSchema = z.object({
+  orderId: orderIdSchema,
+  reason: z.string().trim().min(1, "Un motif de rejet est obligatoire").max(500),
+});
 
 export async function createManualOrderAction(params: {
+  idempotencyKey?: string;
   customerPhone: string;
   customerName?: string;
   houseId: string;
@@ -33,20 +88,28 @@ export async function createManualOrderAction(params: {
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
+  const parsed = createManualOrderSchema.safeParse(params);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données de commande invalides");
+  }
+
   const res = await createManualAdminOrder({
-    customerPhone: params.customerPhone,
-    customerName: params.customerName,
-    houseId: params.houseId,
-    customerNeighborhoodId: params.customerNeighborhoodId,
-    landmark: params.landmark,
-    pickupSlotStart: new Date(params.pickupSlotStart),
-    pickupSlotEnd: new Date(params.pickupSlotEnd),
-    source: params.source,
-    items: params.items,
+    idempotencyKey: parsed.data.idempotencyKey,
+    customerPhone: parsed.data.customerPhone,
+    customerName: parsed.data.customerName,
+    houseId: parsed.data.houseId,
+    customerNeighborhoodId: parsed.data.customerNeighborhoodId,
+    landmark: parsed.data.landmark,
+    pickupSlotStart: new Date(parsed.data.pickupSlotStart),
+    pickupSlotEnd: new Date(parsed.data.pickupSlotEnd),
+    source: parsed.data.source,
+    items: parsed.data.items,
     adminId: auth.value.user.id,
   });
 
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.order(res.value.orderId), "max");
+    revalidateTag(CACHE_TAGS.adminDispatch, "max");
     revalidatePath("/admin/orders");
     revalidatePath("/admin/dispatch");
   }
@@ -58,27 +121,36 @@ export async function performOnBehalfAction(formData: FormData): Promise<Result<
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const orderId = String(formData.get("orderId"));
-  const targetStatus = String(formData.get("targetStatus")) as OrderStatus;
-  const onBehalfOfHouseId = String(formData.get("onBehalfOfHouseId"));
-  const reason = formData.get("reason") ? String(formData.get("reason")) : undefined;
-  const note = formData.get("note") ? String(formData.get("note")) : undefined;
-  const approvalMethod = formData.get("approvalMethod")
-    ? (String(formData.get("approvalMethod")) as ApprovalMethod)
-    : undefined;
+  const rawReason = formData.get("reason");
+  const rawNote = formData.get("note");
+  const rawMethod = formData.get("approvalMethod");
+
+  const parsed = performOnBehalfSchema.safeParse({
+    orderId: formData.get("orderId"),
+    targetStatus: formData.get("targetStatus"),
+    onBehalfOfHouseId: formData.get("onBehalfOfHouseId"),
+    reason: typeof rawReason === "string" && rawReason.trim() ? rawReason : undefined,
+    note: typeof rawNote === "string" && rawNote.trim() ? rawNote : undefined,
+    approvalMethod: typeof rawMethod === "string" && rawMethod.trim() ? rawMethod : undefined,
+  });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
 
   const res = await executeAdminOnBehalfAction({
-    orderId,
-    targetStatus,
+    orderId: parsed.data.orderId,
+    targetStatus: parsed.data.targetStatus,
     adminId: auth.value.user.id,
-    onBehalfOfHouseId,
-    reason,
-    note,
-    approvalMethod,
+    onBehalfOfHouseId: parsed.data.onBehalfOfHouseId,
+    reason: parsed.data.reason,
+    note: parsed.data.note,
+    approvalMethod: parsed.data.approvalMethod,
   });
 
   if (res.ok) {
-    revalidatePath(`/admin/orders/${orderId}`);
+    revalidateTag(CACHE_TAGS.order(parsed.data.orderId), "max");
+    revalidateTag(CACHE_TAGS.adminDispatch, "max");
+    revalidatePath(`/admin/orders/${parsed.data.orderId}`);
     revalidatePath("/admin/orders");
     revalidatePath("/admin/dispatch");
   }
@@ -90,17 +162,23 @@ export async function addOrderTimelineNoteAction(formData: FormData): Promise<Re
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const orderId = String(formData.get("orderId"));
-  const note = String(formData.get("note"));
+  const parsed = addNoteSchema.safeParse({
+    orderId: formData.get("orderId"),
+    note: formData.get("note"),
+  });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
 
   const res = await addAdminOrderTimelineNote({
-    orderId,
+    orderId: parsed.data.orderId,
     adminId: auth.value.user.id,
-    note,
+    note: parsed.data.note,
   });
 
   if (res.ok) {
-    revalidatePath(`/admin/orders/${orderId}`);
+    revalidateTag(CACHE_TAGS.order(parsed.data.orderId), "max");
+    revalidatePath(`/admin/orders/${parsed.data.orderId}`);
   }
 
   return res;
@@ -113,14 +191,21 @@ export async function confirmFirstOrderAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
+  const parsed = confirmFirstOrderSchema.safeParse({ orderId, note });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
   const res = await adminConfirmFirstOrder({
-    orderId,
+    orderId: parsed.data.orderId,
     adminId: auth.value.user.id,
-    note,
+    note: parsed.data.note,
   });
 
   if (res.ok) {
-    revalidatePath(`/admin/orders/${orderId}`);
+    revalidateTag(CACHE_TAGS.order(parsed.data.orderId), "max");
+    revalidateTag(CACHE_TAGS.adminDispatch, "max");
+    revalidatePath(`/admin/orders/${parsed.data.orderId}`);
     revalidatePath("/admin/orders");
     revalidatePath("/admin/dispatch");
   }
@@ -135,14 +220,21 @@ export async function rejectFirstOrderAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
+  const parsed = rejectFirstOrderSchema.safeParse({ orderId, reason });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
   const res = await adminRejectFirstOrder({
-    orderId,
+    orderId: parsed.data.orderId,
     adminId: auth.value.user.id,
-    reason,
+    reason: parsed.data.reason,
   });
 
   if (res.ok) {
-    revalidatePath(`/admin/orders/${orderId}`);
+    revalidateTag(CACHE_TAGS.order(parsed.data.orderId), "max");
+    revalidateTag(CACHE_TAGS.adminDispatch, "max");
+    revalidatePath(`/admin/orders/${parsed.data.orderId}`);
     revalidatePath("/admin/orders");
     revalidatePath("/admin/dispatch");
   }
@@ -160,6 +252,11 @@ export async function getAdminOrderDetailAction(orderId: string): Promise<
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  return getAdminOrderDetail(orderId);
+  const parsed = orderIdSchema.safeParse(orderId);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Identifiant de commande invalide");
+  }
+
+  return getAdminOrderDetail(parsed.data);
 }
 

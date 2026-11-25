@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { AlertCircle, PlusCircle, RefreshCw } from "lucide-react";
+import { guardAdminRoute } from "@/services/auth";
 import { listAdminHouses, listAdminOrders } from "@/services/admin";
 import { Button } from "@/components/ui/button";
 import { OrdersManagementClient } from "@/components/admin/orders/orders-management-client";
 
 export default async function AdminOrdersPage() {
+  await guardAdminRoute();
   const t = await getTranslations("admin.orders");
 
   const [ordersRes, housesRes] = await Promise.all([

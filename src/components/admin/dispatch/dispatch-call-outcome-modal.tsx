@@ -28,6 +28,8 @@ interface DispatchCallOutcomeModalProps {
   onSuccess?: () => void;
 }
 
+const MAX_RELANCE_BATCH_SIZE = 100;
+
 export function DispatchCallOutcomeModal({
   isOpen,
   onClose,
@@ -55,18 +57,42 @@ export function DispatchCallOutcomeModal({
     setIsSubmitting(true);
     setError(null);
 
-    const res = await logPressingRelanceAction({
-      pressingId,
-      orderIds,
-      channel,
-      outcome,
-      note: note.trim() || undefined,
-    });
+    const trimmedNote = note.trim() || undefined;
+    const chunks: string[][] = [];
+    for (let i = 0; i < orderIds.length; i += MAX_RELANCE_BATCH_SIZE) {
+      chunks.push(orderIds.slice(i, i + MAX_RELANCE_BATCH_SIZE));
+    }
+    if (chunks.length === 0) {
+      chunks.push([]);
+    }
+
+    let succeededOrders = 0;
+    const errors: string[] = [];
+
+    for (const chunk of chunks) {
+      const res = await logPressingRelanceAction({
+        pressingId,
+        orderIds: chunk,
+        channel,
+        outcome,
+        note: trimmedNote,
+      });
+      if (res.ok) {
+        succeededOrders += chunk.length;
+      } else {
+        errors.push(res.error);
+      }
+    }
 
     setIsSubmitting(false);
 
-    if (!res.ok) {
-      setError(res.error);
+    if (errors.length > 0) {
+      const uniqueErrors = Array.from(new Set(errors));
+      const progressPrefix =
+        succeededOrders > 0
+          ? `${succeededOrders}/${orderIds.length} commande(s) enregistrée(s) ; échec partiel : `
+          : "";
+      setError(`${progressPrefix}${uniqueErrors.join(" | ")}`);
     } else {
       handleClose();
       if (onSuccess) onSuccess();

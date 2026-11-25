@@ -1,5 +1,6 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import {
   createNeighborhood,
   createZone,
@@ -23,7 +24,7 @@ export async function listAdminZones(): Promise<Result<ZoneRecord[]>> {
     const zones = await getZones();
     return ok(zones);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load zones");
+    return err(sanitizeServiceError(error, "Failed to load zones", "listAdminZones"));
   }
 }
 
@@ -38,7 +39,7 @@ export async function addAdminZone(params: {
     const created = await createZone(params);
     return ok(created);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to create zone");
+    return err(sanitizeServiceError(error, "Failed to create zone", "addAdminZone"));
   }
 }
 
@@ -47,7 +48,7 @@ export async function listAdminNeighborhoods(): Promise<Result<NeighborhoodRecor
     const neighborhoods = await getNeighborhoods();
     return ok(neighborhoods);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load neighborhoods");
+    return err(sanitizeServiceError(error, "Failed to load neighborhoods", "listAdminNeighborhoods"));
   }
 }
 
@@ -72,7 +73,7 @@ export async function addAdminNeighborhood(params: {
     const created = await createNeighborhood(params);
     return ok(created);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to create neighborhood");
+    return err(sanitizeServiceError(error, "Failed to create neighborhood", "addAdminNeighborhood"));
   }
 }
 
@@ -94,7 +95,7 @@ export async function setAdminNeighborhoodStatus(params: {
     });
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update neighborhood status");
+    return err(sanitizeServiceError(error, "Failed to update neighborhood status", "setAdminNeighborhoodStatus"));
   }
 }
 
@@ -103,7 +104,7 @@ export async function listAdminZoneFees(): Promise<Result<ZoneFeeRecord[]>> {
     const fees = await getZoneFees();
     return ok(fees);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load zone fees");
+    return err(sanitizeServiceError(error, "Failed to load zone fees", "listAdminZoneFees"));
   }
 }
 
@@ -128,7 +129,7 @@ export async function setAdminZoneFeePair(params: {
     await upsertZoneFee(params);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to set zone fee pair");
+    return err(sanitizeServiceError(error, "Failed to set zone fee pair", "setAdminZoneFeePair"));
   }
 }
 
@@ -142,7 +143,7 @@ export async function updateAdminGlobalDistanceLimit(
     const updated = await updateSettings({ maxCoverageDistanceLevel: maxDistanceLevel });
     return ok(updated.maxCoverageDistanceLevel);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update global distance limit");
+    return err(sanitizeServiceError(error, "Failed to update global distance limit", "updateAdminGlobalDistanceLimit"));
   }
 }
 
@@ -162,7 +163,7 @@ export async function updateAdminHouseDistanceOverride(params: {
     await updateHouse(params.houseId, { maxDistanceLevel: params.maxDistanceLevel });
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update house distance override");
+    return err(sanitizeServiceError(error, "Failed to update house distance override", "updateAdminHouseDistanceOverride"));
   }
 }
 
@@ -171,7 +172,7 @@ export async function listAdminCoverageDemand(): Promise<Result<CoverageDemandSu
     const demand = await getCoverageDemandRanked();
     return ok(demand);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load coverage demand");
+    return err(sanitizeServiceError(error, "Failed to load coverage demand", "listAdminCoverageDemand"));
   }
 }
 
@@ -185,6 +186,6 @@ export async function notifyAdminCoverageRequests(
     await markCoverageRequestsNotified(phonesOrIds);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to mark coverage requests notified");
+    return err(sanitizeServiceError(error, "Failed to mark coverage requests notified", "notifyAdminCoverageRequests"));
   }
 }

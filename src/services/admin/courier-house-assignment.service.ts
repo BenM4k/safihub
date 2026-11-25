@@ -1,5 +1,6 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import {
   getAllCourierZones,
   getCouriers,
@@ -141,7 +142,7 @@ export async function assignCourierToHouses(params: {
     await setCourierZones(courierId, Array.from(updatedZoneIds));
     return ok({ addedZoneCount: addedCount });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Échec de l'assignation des maisons");
+    return err(sanitizeServiceError(error, "Échec de l'assignation des maisons", "assignCourierToHouses"));
   }
 }
 
@@ -178,7 +179,7 @@ export async function unassignCourierFromHouse(params: {
       affectedSiblingHouses,
     });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Échec du retrait de la maison");
+    return err(sanitizeServiceError(error, "Échec du retrait de la maison", "unassignCourierFromHouse"));
   }
 }
 
@@ -217,6 +218,6 @@ export async function getHousesWithoutCourier(): Promise<Result<HouseWithoutCour
 
     return ok(unservedHouses);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Échec de la récupération des alertes");
+    return err(sanitizeServiceError(error, "Échec de la récupération des alertes", "getHousesWithoutCourier"));
   }
 }

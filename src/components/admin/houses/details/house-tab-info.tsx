@@ -123,6 +123,7 @@ export function HouseTabInfo({ house, onToggleStatus }: HouseTabInfoProps) {
         <Link
           href={`/partner/${house.slug}`}
           target="_blank"
+          rel="noopener noreferrer"
           className="p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 transition-colors flex items-center justify-between font-semibold text-foreground"
         >
           <div className="flex items-center gap-2">

@@ -1,8 +1,11 @@
 import "server-only";
+import { randomInt } from "node:crypto";
 import { err, ok, type Result } from "@/lib/result";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import {
   addOrderEvent,
   createGuestUser,
+  getAdminDisputes,
   getHouseClosures,
   getHouseHours,
   getOrderById,
@@ -13,7 +16,7 @@ import {
   getUserByContactPhone,
   insertOrderWithDetails,
   transitionOrderStatusAtomic,
-  updateOrderStatusIfCurrent,
+  type AdminDisputeRecord,
   type OrderDetailRecord,
   type OrderEventRecord,
   type OrderItemRecord,
@@ -27,6 +30,15 @@ import {
 } from "@/services/order";
 import type { ApprovalMethod, OrderSource, OrderStatus } from "@/services/db/schema";
 
+export async function listAdminDisputes(): Promise<Result<AdminDisputeRecord[]>> {
+  try {
+    const disputes = await getAdminDisputes();
+    return ok(disputes);
+  } catch (error) {
+    return err(sanitizeServiceError(error, "Failed to load disputes", "listAdminDisputes"));
+  }
+}
+
 export async function listAdminOrders(filters?: {
   status?: OrderStatus;
   houseId?: string;
@@ -39,7 +51,7 @@ export async function listAdminOrders(filters?: {
     const orders = await getOrders(filters);
     return ok(orders);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load orders");
+    return err(sanitizeServiceError(error, "Failed to load orders", "listAdminOrders"));
   }
 }
 
@@ -63,7 +75,7 @@ export async function getAdminOrderDetail(orderId: string): Promise<
 
     return ok({ order, items, events });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load order details");
+    return err(sanitizeServiceError(error, "Failed to load order details", "getAdminOrderDetail"));
   }
 }
 
@@ -113,7 +125,7 @@ export async function executeAdminOnBehalfAction(params: {
 
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to execute on-behalf action");
+    return err(sanitizeServiceError(error, "Failed to execute on-behalf action", "executeAdminOnBehalfAction"));
   }
 }
 
@@ -138,7 +150,7 @@ export async function addAdminOrderTimelineNote(params: {
 
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to add note to order");
+    return err(sanitizeServiceError(error, "Failed to add note to order", "addAdminOrderTimelineNote"));
   }
 }
 
@@ -172,9 +184,11 @@ export async function adminConfirmFirstOrder(params: {
 
     // Compute acceptance deadline starting from now
     const now = new Date();
-    const settings = await getSettings();
-    const houseHours = await getHouseHours(order.houseId);
-    const houseClosures = await getHouseClosures(order.houseId);
+    const [settings, houseHours, houseClosures] = await Promise.all([
+      getSettings(),
+      getHouseHours(order.houseId),
+      getHouseClosures(order.houseId),
+    ]);
 
     const deadlines = computeAcceptanceDeadlines(
       now,
@@ -205,7 +219,7 @@ export async function adminConfirmFirstOrder(params: {
 
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur confirmation commande");
+    return err(sanitizeServiceError(error, "Erreur confirmation commande", "adminConfirmFirstOrder"));
   }
 }
 
@@ -236,19 +250,19 @@ export async function adminRejectFirstOrder(params: {
       return err(transitionResult.error);
     }
 
-    const updated = await updateOrderStatusIfCurrent(
-      order.id,
-      "awaiting_confirmation",
-      "cancelled"
-    );
+    const updated = await transitionOrderStatusAtomic({
+      orderId: order.id,
+      expectedStatus: "awaiting_confirmation",
+      newStatus: "cancelled",
+      event: transitionResult.value.event,
+    });
     if (!updated) {
       return err("Le statut de la commande a changé entre-temps.");
     }
-    await addOrderEvent(transitionResult.value.event);
 
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur rejet commande");
+    return err(sanitizeServiceError(error, "Erreur rejet commande", "adminRejectFirstOrder"));
   }
 }
 
@@ -256,6 +270,7 @@ import { buildOrderValidationContext } from "@/services/order";
 export { buildOrderValidationContext };
 
 export async function createManualAdminOrder(params: {
+  idempotencyKey?: string;
   customerPhone: string;
   customerName?: string;
   houseId: string;
@@ -289,7 +304,7 @@ export async function createManualAdminOrder(params: {
     }
 
     // 2. Validate using shared canonical validation function
-    const idempotencyKey = `manual_${crypto.randomUUID()}`;
+    const idempotencyKey = params.idempotencyKey?.trim() || `manual_${crypto.randomUUID()}`;
     const context = await buildOrderValidationContext({
       houseId: params.houseId,
       customerId: customer.id,
@@ -320,7 +335,23 @@ export async function createManualAdminOrder(params: {
     }
 
     const val = validation.value;
-    const code = `SF-${Math.floor(100000 + Math.random() * 900000)}`;
+    if (val.isDuplicate && val.existingOrderId) {
+      const existing = context.existingOrders.find((o) => o.id === val.existingOrderId);
+      let trackingToken = existing?.trackingToken;
+      let existingCode = existing?.code;
+      if (!trackingToken || !existingCode) {
+        const dbOrder = await getOrderById(val.existingOrderId);
+        trackingToken = dbOrder?.trackingToken || trackingToken || "";
+        existingCode = dbOrder?.code || existingCode;
+      }
+      return ok({
+        orderId: val.existingOrderId,
+        code: existingCode || "EXISTING",
+        trackingToken,
+      });
+    }
+
+    const code = `SF-${randomInt(100000, 1000000)}`;
     const trackingToken = crypto.randomUUID();
     const deadlines = computeAcceptanceDeadlines(
       new Date(),
@@ -384,6 +415,6 @@ export async function createManualAdminOrder(params: {
 
     return ok(created);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to create manual order");
+    return err(sanitizeServiceError(error, "Failed to create manual order", "createManualAdminOrder"));
   }
 }

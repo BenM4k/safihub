@@ -1,8 +1,9 @@
 import "server-only";
 import { hashPassword } from "better-auth/crypto";
 import { err, ok, type Result } from "@/lib/result";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import {
-  createStaffUser,
+  createCourierAccountTransaction,
   getCourierById,
   getCourierShifts,
   getCouriers,
@@ -10,7 +11,6 @@ import {
   getZones,
   setCourierShifts,
   setCourierZones,
-  setUserPasswordCredential,
   upsertCourierProfile,
   type CourierRecord,
   type CourierShiftRecord,
@@ -36,7 +36,7 @@ export async function listAdminCouriers(): Promise<Result<CourierRecord[]>> {
     const couriers = await getCouriers();
     return ok(couriers);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load couriers");
+    return err(sanitizeServiceError(error, "Failed to load couriers", "listAdminCouriers"));
   }
 }
 
@@ -59,7 +59,7 @@ export async function getAdminCourierDetail(
 
     return ok({ courier, shifts, zones, allZones, houses });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load courier detail");
+    return err(sanitizeServiceError(error, "Failed to load courier detail", "getAdminCourierDetail"));
   }
 }
 
@@ -85,7 +85,7 @@ export async function updateAdminCourierProfile(params: {
     await upsertCourierProfile(params);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update courier profile");
+    return err(sanitizeServiceError(error, "Failed to update courier profile", "updateAdminCourierProfile"));
   }
 }
 
@@ -105,7 +105,7 @@ export async function updateAdminCourierShifts(params: {
     await setCourierShifts(params.courierId, params.shifts);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update courier shifts");
+    return err(sanitizeServiceError(error, "Failed to update courier shifts", "updateAdminCourierShifts"));
   }
 }
 
@@ -117,7 +117,7 @@ export async function updateAdminCourierZones(params: {
     await setCourierZones(params.courierId, params.zoneIds);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update courier zones");
+    return err(sanitizeServiceError(error, "Failed to update courier zones", "updateAdminCourierZones"));
   }
 }
 
@@ -138,40 +138,27 @@ export async function createAdminCourier(params: {
     }
 
     const courierId = `usr_courier_${crypto.randomUUID().slice(0, 8)}`;
-    await createStaffUser({
-      id: courierId,
-      name: params.name.trim(),
-      email: params.email.trim().toLowerCase(),
-      role: "courier",
-      contactPhone: params.phone.trim(),
+    const hashedPassword = params.password?.trim()
+      ? await hashPassword(params.password.trim())
+      : undefined;
+
+    await createCourierAccountTransaction({
+      user: {
+        id: courierId,
+        name: params.name.trim(),
+        email: params.email.trim().toLowerCase(),
+        contactPhone: params.phone.trim(),
+      },
+      hashedPassword,
+      cashCeiling: params.cashCeiling,
+      securityDeposit: params.securityDeposit,
+      changeFloat: params.changeFloat,
+      zoneIds: params.zoneIds,
+      shifts: params.shifts,
     });
-
-    if (params.password?.trim()) {
-      const hashedPassword = await hashPassword(params.password.trim());
-      await setUserPasswordCredential({
-        userId: courierId,
-        hashedPassword,
-      });
-    }
-
-    await upsertCourierProfile({
-      userId: courierId,
-      cashCeiling: params.cashCeiling ?? 140000,
-      securityDeposit: params.securityDeposit ?? 0,
-      changeFloat: params.changeFloat ?? 0,
-      isActive: true,
-    });
-
-    if (params.zoneIds && params.zoneIds.length > 0) {
-      await setCourierZones(courierId, params.zoneIds);
-    }
-
-    if (params.shifts && params.shifts.length > 0) {
-      await setCourierShifts(courierId, params.shifts);
-    }
 
     return ok({ courierId });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to create courier");
+    return err(sanitizeServiceError(error, "Failed to create courier", "createAdminCourier"));
   }
 }

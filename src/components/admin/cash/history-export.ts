@@ -1,13 +1,5 @@
+import { escapeCsvCell } from "@/lib/csv-utils";
 import type { ReconciliationLogRow } from "./reconciliation-history-table";
-
-function escapeCsvCell(value: string | number | null | undefined): string {
-  if (value === null || value === undefined) return '""';
-  let str = String(value);
-  if (/^[=+\-@]/.test(str)) {
-    str = `'${str}`;
-  }
-  return `"${str.replace(/"/g, '""')}"`;
-}
 
 /**
  * Exports filtered reconciliation records to CSV with UTF-8 BOM and standard accounting columns.
@@ -29,15 +21,15 @@ export function exportReconciliationHistoryCsv(
   ];
 
   const rows = logs.map((l) => [
-    l.businessDate,
-    escapeCsvCell(l.courierName || l.courierId),
+    escapeCsvCell(l.businessDate),
+    escapeCsvCell(l.courierName || l.courierId, { alwaysQuote: true }),
     l.expectedAmount,
     l.receivedAmount,
     l.difference,
     l.note?.includes("[ANNULÉE") ? "Annulée" : l.difference === 0 ? "Réconcilié" : "Écart",
-    escapeCsvCell(l.reconcilerName || l.reconciledBy || "—"),
+    escapeCsvCell(l.reconcilerName || l.reconciledBy || "—", { alwaysQuote: true }),
     new Date(l.createdAt).toISOString(),
-    escapeCsvCell(l.note || ""),
+    escapeCsvCell(l.note || "", { alwaysQuote: true }),
   ]);
 
   const csvContent =

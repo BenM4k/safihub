@@ -1,6 +1,8 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import {
+  approveItemRequestTransaction,
   createMasterFabric,
   createMasterItem,
   createMasterService,
@@ -35,7 +37,7 @@ export async function listAdminCatalog(): Promise<
 
     return ok({ services, items, fabrics, requests });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load catalog data");
+    return err(sanitizeServiceError(error, "Failed to load catalog data", "listAdminCatalog"));
   }
 }
 
@@ -52,7 +54,7 @@ export async function addAdminMasterItem(params: {
     const created = await createMasterItem(params);
     return ok(created);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to create master item");
+    return err(sanitizeServiceError(error, "Failed to create master item", "addAdminMasterItem"));
   }
 }
 
@@ -64,7 +66,7 @@ export async function toggleAdminMasterItemActive(
     await updateMasterItem(itemId, { isActive });
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update item");
+    return err(sanitizeServiceError(error, "Failed to update item", "toggleAdminMasterItemActive"));
   }
 }
 
@@ -80,7 +82,7 @@ export async function addAdminMasterFabric(params: {
     const created = await createMasterFabric(params);
     return ok(created);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to create master fabric");
+    return err(sanitizeServiceError(error, "Failed to create master fabric", "addAdminMasterFabric"));
   }
 }
 
@@ -92,7 +94,7 @@ export async function toggleAdminMasterFabricActive(
     await updateMasterFabric(fabricId, { isActive });
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update fabric");
+    return err(sanitizeServiceError(error, "Failed to update fabric", "toggleAdminMasterFabricActive"));
   }
 }
 
@@ -109,7 +111,7 @@ export async function addAdminMasterService(params: {
     const created = await createMasterService(params);
     return ok(created);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to create master service");
+    return err(sanitizeServiceError(error, "Failed to create master service", "addAdminMasterService"));
   }
 }
 
@@ -127,40 +129,27 @@ export async function approveAdminItemRequest(params: {
       return err("Both French and Swahili names are required for the new catalogue entry");
     }
 
-    let createdItemId: string | null = null;
-    let createdFabricId: string | null = null;
-
-    if (params.kind === "item") {
-      const createdItem = await createMasterItem({
-        nameFr: params.nameFr,
-        nameSw: params.nameSw,
-        category: params.category,
-      });
-      createdItemId = createdItem.id;
-    } else {
-      const createdFabric = await createMasterFabric({
-        nameFr: params.nameFr,
-        nameSw: params.nameSw,
-      });
-      createdFabricId = createdFabric.id;
-    }
-
-    const updated = await resolveItemRequest({
+    const approved = await approveItemRequestTransaction({
       requestId: params.requestId,
-      status: "approved",
+      adminId: params.adminId,
+      kind: params.kind,
+      nameFr: params.nameFr,
+      nameSw: params.nameSw,
+      category: params.category,
       adminNote: params.adminNote,
-      resolvedBy: params.adminId,
-      createdItemId,
-      createdFabricId,
     });
 
-    if (!updated) {
+    if (!approved) {
       return err("Item request is not pending or does not exist");
     }
 
-    return ok({ createdId: (createdItemId || createdFabricId)! });
+    if ("kindMismatch" in approved) {
+      return err("Item request kind does not match the approval payload");
+    }
+
+    return ok({ createdId: approved.createdId });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to approve item request");
+    return err(sanitizeServiceError(error, "Failed to approve item request", "approveAdminItemRequest"));
   }
 }
 
@@ -187,6 +176,6 @@ export async function rejectAdminItemRequest(params: {
 
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to reject item request");
+    return err(sanitizeServiceError(error, "Failed to reject item request", "rejectAdminItemRequest"));
   }
 }

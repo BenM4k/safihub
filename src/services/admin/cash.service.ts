@@ -1,5 +1,6 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import {
   getDailyCourierReconciliationData,
   recordDailyCourierReconciliation,
@@ -20,7 +21,13 @@ export async function getAdminDailyReconciliation(dateStr: string) {
     const data = await getDailyCourierReconciliationData(dateStr);
     return ok(data);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du chargement de la réconciliation");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors du chargement de la réconciliation",
+        "getAdminDailyReconciliation"
+      )
+    );
   }
 }
 
@@ -54,13 +61,23 @@ export async function confirmAdminDailyReconciliation(params: {
       deductFromDeposit: params.deductFromDeposit,
     });
 
+    if (!res.ok) {
+      return err(res.error || "Échec de l'enregistrement de la réconciliation");
+    }
+
     return ok({
       reconciliationId: res.reconciliationId,
       discrepancyLogged: res.discrepancyLogged,
       depositDeducted: res.depositDeducted,
     });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors de l'enregistrement de la réconciliation");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors de l'enregistrement de la réconciliation",
+        "confirmAdminDailyReconciliation"
+      )
+    );
   }
 }
 
@@ -69,7 +86,13 @@ export async function getAdminReconciliationHistory(limit = 30) {
     const logs = await getReconciliationLogs(limit);
     return ok(logs);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du chargement de l'historique");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors du chargement de l'historique",
+        "getAdminReconciliationHistory"
+      )
+    );
   }
 }
 
@@ -93,7 +116,13 @@ export async function holdAdminCourierDeposit(params: {
     });
     return ok(res);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors de la retenue de caution");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors de la retenue de caution",
+        "holdAdminCourierDeposit"
+      )
+    );
   }
 }
 
@@ -115,9 +144,18 @@ export async function releaseAdminCourierDeposit(params: {
       note: params.note,
       adminId: params.adminId,
     });
+    if (!res.ok) {
+      return err((res as { error?: string }).error || "Caution insuffisante pour cette restitution");
+    }
     return ok(res);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors de la restitution de caution");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors de la restitution de caution",
+        "releaseAdminCourierDeposit"
+      )
+    );
   }
 }
 
@@ -141,7 +179,13 @@ export async function issueAdminCourierFloat(params: {
     });
     return ok(res);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors de l'émission du fond de caisse");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors de l'émission du fond de caisse",
+        "issueAdminCourierFloat"
+      )
+    );
   }
 }
 
@@ -163,9 +207,18 @@ export async function returnAdminCourierFloat(params: {
       note: params.note,
       adminId: params.adminId,
     });
+    if (!res.ok) {
+      return err((res as { error?: string }).error || "Fond de caisse insuffisant pour ce retour");
+    }
     return ok(res);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du retour du fond de caisse");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors du retour du fond de caisse",
+        "returnAdminCourierFloat"
+      )
+    );
   }
 }
 
@@ -185,9 +238,15 @@ export async function reverseAdminLedgerEntry(params: {
     });
 
     if (!res.ok) return err(res.error || "Échec de la contre-passation");
-    return ok(res);
+    return ok({ reversalId: res.reversalId });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors de la contre-passation");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors de la contre-passation",
+        "reverseAdminLedgerEntry"
+      )
+    );
   }
 }
 
@@ -207,10 +266,14 @@ export async function reverseAdminCourierReconciliation(params: {
     });
 
     if (!res.ok) return err(res.error || "Échec de l'annulation de la réconciliation");
-    return ok(res);
+    return ok({ reversalId: res.reversalId });
   } catch (error) {
     return err(
-      error instanceof Error ? error.message : "Erreur lors de l'annulation de la réconciliation"
+      sanitizeServiceError(
+        error,
+        "Erreur lors de l'annulation de la réconciliation",
+        "reverseAdminCourierReconciliation"
+      )
     );
   }
 }

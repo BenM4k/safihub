@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { guardAdminRoute } from "@/services/auth";
 import { listAdminPartnerApplications } from "@/services/admin/partner-application.service";
 import { ApplicationsTable } from "@/components/admin/applications/applications-table";
 import type { ApplicationStatus } from "@/services/db/schema";
@@ -12,6 +13,7 @@ interface PageProps {
 }
 
 export default async function AdminApplicationsPage({ searchParams }: PageProps) {
+  await guardAdminRoute();
   const t = await getTranslations("admin.applications");
   const sp = await searchParams;
 

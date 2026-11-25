@@ -1,11 +1,14 @@
 import "server-only";
 import { hashPassword } from "better-auth/crypto";
 import { err, ok, type Result } from "@/lib/result";
+import { runAfterSafe } from "@/lib/after-safe";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import {
   approveHouseApplicationTransaction,
   getHouseApplicationById,
   isHouseSlugAvailable,
   listHouseApplications,
+  PartnerApplicationApprovalError,
   updateHouseApplication,
   type HouseApplicationRecord,
 } from "@/dal/house-application.dal";
@@ -141,14 +144,14 @@ export async function approvePartnerApplication(params: {
 
     // Send credential-bearing invitation directly outside queueEmailNotification
     // to prevent storing plaintext credentials in the durable Inngest event store.
-    void sendPartnerInvitationEmail({
-      email: application.email,
-      contactName: application.contactName,
-      houseName: application.houseName,
-      inviteUrl,
-      temporaryPassword: passwordApplied ? plainPassword : undefined,
-    }).catch((err) => {
-      console.error("[approvePartnerApplication] Direct email delivery warning:", err);
+    runAfterSafe(async () => {
+      await sendPartnerInvitationEmail({
+        email: application.email,
+        contactName: application.contactName,
+        houseName: application.houseName,
+        inviteUrl,
+        temporaryPassword: passwordApplied ? plainPassword : undefined,
+      });
     });
 
     return ok({
@@ -160,10 +163,15 @@ export async function approvePartnerApplication(params: {
       passwordApplied,
     });
   } catch (error) {
+    if (error instanceof PartnerApplicationApprovalError) {
+      return err(error.message);
+    }
     return err(
-      error instanceof Error
-        ? error.message
-        : "Failed to approve partner application"
+      sanitizeServiceError(
+        error,
+        "Failed to approve partner application",
+        "approvePartnerApplication"
+      )
     );
   }
 }
@@ -196,23 +204,25 @@ export async function rejectPartnerApplication(params: {
       reviewedAt: new Date(),
     });
 
-    void queueEmailNotification({
-      kind: "partner_application_rejected",
-      applicationId: application.id,
-      email: application.email,
-      contactName: application.contactName,
-      houseName: application.houseName,
-      adminNote: params.adminNote.trim(),
-    }).catch((err) => {
-      console.error("[rejectPartnerApplication] Email queue warning:", err);
+    runAfterSafe(async () => {
+      await queueEmailNotification({
+        kind: "partner_application_rejected",
+        applicationId: application.id,
+        email: application.email,
+        contactName: application.contactName,
+        houseName: application.houseName,
+        adminNote: params.adminNote.trim(),
+      });
     });
 
     return ok(undefined);
   } catch (error) {
     return err(
-      error instanceof Error
-        ? error.message
-        : "Failed to reject partner application"
+      sanitizeServiceError(
+        error,
+        "Failed to reject partner application",
+        "rejectPartnerApplication"
+      )
     );
   }
 }
