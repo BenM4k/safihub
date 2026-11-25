@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import type {
   ItemRequestRecord,
@@ -8,7 +8,12 @@ import type {
   MasterItemRecord,
   MasterServiceRecord,
 } from "@/dal";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { ItemsTab } from "./items-tab";
 import { FabricsTab } from "./fabrics-tab";
 import { ServicesTab } from "./services-tab";
@@ -39,7 +44,11 @@ export function CatalogueTabsContainer({
   return (
     <div className="space-y-6 animate-enter-fast">
       <Tabs value={tab} onValueChange={(v) => setTab(v as CatalogueTab)}>
-        <TabsList variant="line" className="w-full justify-start border-b border-border pb-1 overflow-x-auto scrollbar-none">
+        <TabsList
+          variant="line"
+          aria-label={t("title")}
+          className="w-full justify-start border-b border-border pb-1 overflow-x-auto scrollbar-none"
+        >
           <TabsTrigger value="items" className="min-h-10 px-3 text-xs">
             {t("itemsTab")} ({items.length})
           </TabsTrigger>
@@ -58,20 +67,20 @@ export function CatalogueTabsContainer({
             )}
           </TabsTrigger>
         </TabsList>
-      </Tabs>
 
-      <Activity mode={tab === "items" ? "visible" : "hidden"}>
-        <ItemsTab items={items} />
-      </Activity>
-      <Activity mode={tab === "fabrics" ? "visible" : "hidden"}>
-        <FabricsTab fabrics={fabrics} />
-      </Activity>
-      <Activity mode={tab === "services" ? "visible" : "hidden"}>
-        <ServicesTab services={services} />
-      </Activity>
-      <Activity mode={tab === "requests" ? "visible" : "hidden"}>
-        <RequestsTab requests={requests} />
-      </Activity>
+        <TabsContent value="items" keepMounted className="pt-4">
+          <ItemsTab items={items} />
+        </TabsContent>
+        <TabsContent value="fabrics" keepMounted className="pt-4">
+          <FabricsTab fabrics={fabrics} />
+        </TabsContent>
+        <TabsContent value="services" keepMounted className="pt-4">
+          <ServicesTab services={services} />
+        </TabsContent>
+        <TabsContent value="requests" keepMounted className="pt-4">
+          <RequestsTab requests={requests} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

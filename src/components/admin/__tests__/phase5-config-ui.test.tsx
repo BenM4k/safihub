@@ -12,6 +12,8 @@ const actionMocks = vi.hoisted(() => ({
   updatePlatformSettingsAction: vi.fn(),
   setZoneFeePairAction: vi.fn(),
   sendAdminWhatsAppTestAction: vi.fn(),
+  createZoneAction: vi.fn(),
+  createNeighborhoodAction: vi.fn(),
 }));
 
 vi.mock("@/actions/admin-settings.actions", () => ({
@@ -21,6 +23,8 @@ vi.mock("@/actions/admin-settings.actions", () => ({
 
 vi.mock("@/actions/admin-coverage.actions", () => ({
   setZoneFeePairAction: actionMocks.setZoneFeePairAction,
+  createZoneAction: actionMocks.createZoneAction,
+  createNeighborhoodAction: actionMocks.createNeighborhoodAction,
 }));
 
 vi.mock("@/actions/admin-whatsapp.actions", () => ({
@@ -41,6 +45,8 @@ vi.mock("@/actions/admin-catalog.actions", () => ({
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CatalogueTabsContainer } from "../catalogue/catalogue-tabs-container";
 import { FeePairForm } from "../delivery-fees/fee-pair-form";
+import { NeighborhoodForm } from "../neighborhoods/neighborhood-form";
+import { ZoneForm } from "../neighborhoods/zone-form";
 import { DataExportCard } from "../settings/data-export-card";
 import { PlatformSettingsForm } from "../settings/platform-settings-form";
 import { WhatsAppTestSender } from "../whatsapp/whatsapp-test-sender";
@@ -96,17 +102,26 @@ describe("Phase 5 Admin Configuration & WhatsApp UI Components", () => {
       />
     );
 
-    expect(screen.getByText("Chemise")).toBeTruthy();
+    const itemsPanel = screen
+      .getByText("Chemise")
+      .closest('[role="tabpanel"]') as HTMLElement;
+    const fabricsPanel = screen
+      .getByText("Coton")
+      .closest('[role="tabpanel"]') as HTMLElement;
+    const fabricsTab = screen.getByRole("tab", {
+      name: new RegExp(frMessages.admin.catalogue.fabricsTab),
+    });
 
-    await user.click(
-      screen.getByRole("tab", {
-        name: new RegExp(frMessages.admin.catalogue.fabricsTab),
-      })
-    );
-    expect(screen.getByText("Coton")).toBeTruthy();
+    expect(fabricsTab.getAttribute("aria-controls")).toBe(fabricsPanel.id);
+    expect(itemsPanel.hidden).toBe(false);
+    expect(fabricsPanel.hidden).toBe(true);
+
+    await user.click(fabricsTab);
+    expect(fabricsPanel.hidden).toBe(false);
+    expect(itemsPanel.hidden).toBe(true);
   });
 
-  it("FeePairForm shows localized validation error when submitted without selecting zones", async () => {
+  it("FeePairForm shows localized validation error and preserves fee input when zones are missing", async () => {
     const user = userEvent.setup();
 
     renderWithIntl(
@@ -118,10 +133,10 @@ describe("Phase 5 Admin Configuration & WhatsApp UI Components", () => {
       />
     );
 
-    await user.type(
-      screen.getByLabelText(frMessages.admin.deliveryFees.deliveryFee),
-      "2500"
-    );
+    const feeInput = screen.getByLabelText(
+      frMessages.admin.deliveryFees.deliveryFee
+    ) as HTMLInputElement;
+    await user.type(feeInput, "2500");
     await user.click(
       screen.getByRole("button", { name: frMessages.admin.deliveryFees.savePair })
     );
@@ -131,7 +146,58 @@ describe("Phase 5 Admin Configuration & WhatsApp UI Components", () => {
         frMessages.admin.deliveryFees.selectBothZonesError
       )
     ).toBeTruthy();
+    expect(feeInput.value).toBe("2500");
     expect(actionMocks.setZoneFeePairAction).not.toHaveBeenCalled();
+  });
+
+  it("ZoneForm preserves submitted input values when createZoneAction rejects", async () => {
+    const user = userEvent.setup();
+    actionMocks.createZoneAction.mockResolvedValue({
+      ok: false,
+      error: "Nom déjà utilisé",
+    });
+
+    renderWithIntl(<ZoneForm />);
+
+    const zoneInput = screen.getByLabelText(
+      frMessages.admin.neighborhoods.zoneName
+    ) as HTMLInputElement;
+    await user.type(zoneInput, "Bagira");
+    await user.click(
+      screen.getByRole("button", { name: frMessages.admin.neighborhoods.save })
+    );
+
+    expect(await screen.findByText("Nom déjà utilisé")).toBeTruthy();
+    expect(zoneInput.value).toBe("Bagira");
+  });
+
+  it("NeighborhoodForm derives fallback zone when zones list populates after mount", async () => {
+    const user = userEvent.setup();
+    actionMocks.createNeighborhoodAction.mockResolvedValue({ ok: true });
+
+    const { rerender } = renderWithIntl(<NeighborhoodForm zones={[]} />);
+    rerender(
+      <NextIntlClientProvider locale="fr" messages={frMessages}>
+        <TooltipProvider>
+          <NeighborhoodForm
+            zones={[{ id: "z-1", name: "Ibanda", sortOrder: 1 }]}
+          />
+        </TooltipProvider>
+      </NextIntlClientProvider>
+    );
+
+    await user.type(
+      screen.getByLabelText(frMessages.admin.neighborhoods.neighborhoodName),
+      "La Botte"
+    );
+    await user.click(
+      screen.getByRole("button", { name: frMessages.admin.neighborhoods.save })
+    );
+
+    expect(actionMocks.createNeighborhoodAction).toHaveBeenCalledTimes(1);
+    const fd = actionMocks.createNeighborhoodAction.mock
+      .calls[0]![0] as FormData;
+    expect(fd.get("zoneId")).toBe("z-1");
   });
 
   it("DataExportCard displays inline localized alert on download failure instead of window.alert", async () => {

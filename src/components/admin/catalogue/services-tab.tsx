@@ -71,7 +71,7 @@ export function ServicesTab({ services }: ServicesTabProps) {
               name="slug"
               required
               placeholder={t("serviceSlugPlaceholder")}
-              className="h-9 text-xs"
+              className="h-9 text-base sm:text-xs"
             />
           </div>
           <div className="space-y-1">
@@ -83,7 +83,7 @@ export function ServicesTab({ services }: ServicesTabProps) {
               name="nameFr"
               required
               placeholder={t("serviceNameFrPlaceholder")}
-              className="h-9 text-xs"
+              className="h-9 text-base sm:text-xs"
             />
           </div>
           <div className="space-y-1">
@@ -95,7 +95,7 @@ export function ServicesTab({ services }: ServicesTabProps) {
               name="nameSw"
               required
               placeholder={t("serviceNameSwPlaceholder")}
-              className="h-9 text-xs"
+              className="h-9 text-base sm:text-xs"
             />
           </div>
         </div>

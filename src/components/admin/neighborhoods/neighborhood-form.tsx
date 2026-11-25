@@ -26,16 +26,23 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [zoneId, setZoneId] = useState(zones[0]?.id ?? "");
+  const [selectedZoneId, setSelectedZoneId] = useState("");
   const [status, setStatus] = useState("served");
 
-  async function handleSubmit(formData: FormData) {
+  const effectiveZoneId =
+    selectedZoneId && zones.some((z) => z.id === selectedZoneId)
+      ? selectedZoneId
+      : (zones[0]?.id ?? "");
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setError(null);
-    if (!zoneId) {
+    if (!effectiveZoneId) {
       setError(t("selectZoneRequired"));
       return;
     }
 
+    const formData = new FormData(e.currentTarget);
     setLoading(true);
     try {
       const res = await createNeighborhoodAction(formData);
@@ -43,7 +50,7 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
         setError(res.error);
       } else {
         formRef.current?.reset();
-        setZoneId(zones[0]?.id ?? "");
+        setSelectedZoneId("");
         setStatus("served");
       }
     } catch (err) {
@@ -56,10 +63,10 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
   return (
     <form
       ref={formRef}
-      action={handleSubmit}
+      onSubmit={handleSubmit}
       className="p-4 bg-muted/20 rounded-lg border border-border space-y-3"
     >
-      <input type="hidden" name="zoneId" value={zoneId} />
+      <input type="hidden" name="zoneId" value={effectiveZoneId} />
       <input type="hidden" name="status" value={status} />
 
       <div className="font-bold text-xs text-foreground">
@@ -95,7 +102,7 @@ export function NeighborhoodForm({ zones }: NeighborhoodFormProps) {
           >
             {t("selectZone")}
           </Label>
-          <Select value={zoneId || undefined} onValueChange={setZoneId}>
+          <Select value={effectiveZoneId || undefined} onValueChange={setSelectedZoneId}>
             <SelectTrigger
               id="neighZone"
               className="h-10 w-full bg-card border-border text-xs"

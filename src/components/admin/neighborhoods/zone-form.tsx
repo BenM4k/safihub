@@ -15,8 +15,10 @@ export function ZoneForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setError(null);
+    const formData = new FormData(e.currentTarget);
     setLoading(true);
     try {
       const res = await createZoneAction(formData);
@@ -35,7 +37,7 @@ export function ZoneForm() {
   return (
     <form
       ref={formRef}
-      action={handleSubmit}
+      onSubmit={handleSubmit}
       className="p-4 bg-muted/20 rounded-lg border border-border space-y-3"
     >
       <div className="font-bold text-xs text-foreground">{t("addZone")}</div>

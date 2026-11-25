@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { AlertTriangle } from "lucide-react";
 import {
@@ -9,35 +10,44 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { DistanceLimitForm } from "./distance-limit-form";
 import { NeighborhoodStatusTable } from "./neighborhood-status-table";
 import { CoverageDemandTable } from "./coverage-demand-table";
+import {
+  CoverageDemandSkeleton,
+  CoverageDistanceSkeleton,
+  CoverageNeighborhoodsSkeleton,
+} from "./admin-coverage-skeleton";
 
-export async function CoverageStreamContent() {
-  const [t, settingsRes, neighRes, demandRes] = await Promise.all([
+async function CoverageSettingsSection() {
+  const [t, settingsRes] = await Promise.all([
     getTranslations("admin.coverage"),
     getAdminPlatformSettings(),
-    listAdminNeighborhoods(),
-    listAdminCoverageDemand(),
   ]);
 
-  const neighborhoods = neighRes.ok ? neighRes.value : [];
-  const demand = demandRes.ok ? demandRes.value : [];
+  if (!settingsRes.ok) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="size-4" />
+        <AlertTitle>{t("settingsLoadError")}</AlertTitle>
+        <AlertDescription className="text-xs">
+          {t("settingsLoadErrorDesc")}
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
-    <div className="space-y-6 animate-enter-fast">
-      {settingsRes.ok ? (
-        <DistanceLimitForm
-          currentLimit={settingsRes.value.maxCoverageDistanceLevel}
-        />
-      ) : (
-        <Alert variant="destructive">
-          <AlertTriangle className="size-4" />
-          <AlertTitle>{t("settingsLoadError")}</AlertTitle>
-          <AlertDescription className="text-xs">
-            {t("settingsLoadErrorDesc")}
-          </AlertDescription>
-        </Alert>
-      )}
+    <DistanceLimitForm currentLimit={settingsRes.value.maxCoverageDistanceLevel} />
+  );
+}
 
-      {(!neighRes.ok || !demandRes.ok) && (
+async function CoverageNeighborhoodsSection() {
+  const [t, neighRes] = await Promise.all([
+    getTranslations("admin.coverage"),
+    listAdminNeighborhoods(),
+  ]);
+
+  if (!neighRes.ok) {
+    return (
+      <div className="space-y-4">
         <Alert variant="destructive">
           <AlertTriangle className="size-4" />
           <AlertTitle>{t("errorTitle")}</AlertTitle>
@@ -45,10 +55,52 @@ export async function CoverageStreamContent() {
             {t("errorDescription")}
           </AlertDescription>
         </Alert>
-      )}
+        <NeighborhoodStatusTable neighborhoods={[]} />
+      </div>
+    );
+  }
 
-      <NeighborhoodStatusTable neighborhoods={neighborhoods} />
-      <CoverageDemandTable demand={demand} />
+  return <NeighborhoodStatusTable neighborhoods={neighRes.value} />;
+}
+
+async function CoverageDemandSection() {
+  const [t, demandRes] = await Promise.all([
+    getTranslations("admin.coverage"),
+    listAdminCoverageDemand(),
+  ]);
+
+  if (!demandRes.ok) {
+    return (
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertTriangle className="size-4" />
+          <AlertTitle>{t("errorTitle")}</AlertTitle>
+          <AlertDescription className="text-xs">
+            {t("errorDescription")}
+          </AlertDescription>
+        </Alert>
+        <CoverageDemandTable demand={[]} />
+      </div>
+    );
+  }
+
+  return <CoverageDemandTable demand={demandRes.value} />;
+}
+
+export function CoverageStreamContent() {
+  return (
+    <div className="space-y-6 animate-enter-fast">
+      <Suspense fallback={<CoverageDistanceSkeleton />}>
+        <CoverageSettingsSection />
+      </Suspense>
+
+      <Suspense fallback={<CoverageNeighborhoodsSkeleton />}>
+        <CoverageNeighborhoodsSection />
+      </Suspense>
+
+      <Suspense fallback={<CoverageDemandSkeleton />}>
+        <CoverageDemandSection />
+      </Suspense>
     </div>
   );
 }

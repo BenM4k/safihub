@@ -29,7 +29,8 @@ export function FeePairForm({ zones }: FeePairFormProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setError(null);
     setSuccess(null);
 
@@ -38,6 +39,7 @@ export function FeePairForm({ zones }: FeePairFormProps) {
       return;
     }
 
+    const formData = new FormData(e.currentTarget);
     setLoading(true);
     try {
       const res = await setZoneFeePairAction(formData);
@@ -55,7 +57,7 @@ export function FeePairForm({ zones }: FeePairFormProps) {
 
   return (
     <form
-      action={handleSubmit}
+      onSubmit={handleSubmit}
       className="p-5 bg-card rounded-xl border border-border shadow-xs space-y-4"
     >
       <input type="hidden" name="customerZoneId" value={customerZoneId} />
