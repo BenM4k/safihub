@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { updateGlobalDistanceLimitAction } from "@/actions/admin-coverage.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface DistanceLimitFormProps {
   currentLimit: number;
@@ -28,10 +28,10 @@ export function DistanceLimitForm({ currentLimit }: DistanceLimitFormProps) {
       if (!res.ok) {
         setError(res.error);
       } else {
-        setSuccess("Limite globale mise à jour avec succès (AC 21)");
+        setSuccess(t("limitUpdatedSuccess"));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("unexpectedError"));
     } finally {
       setLoading(false);
     }
@@ -58,9 +58,11 @@ export function DistanceLimitForm({ currentLimit }: DistanceLimitFormProps) {
         </Alert>
       )}
       {success && (
-        <Alert className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-          <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
-          <AlertDescription className="text-xs font-semibold">{success}</AlertDescription>
+        <Alert className="border-success/20 bg-success-soft text-success">
+          <CheckCircle2 className="size-4 text-success" />
+          <AlertDescription className="text-xs font-semibold">
+            {success}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -77,10 +79,10 @@ export function DistanceLimitForm({ currentLimit }: DistanceLimitFormProps) {
             max="3"
             defaultValue={currentLimit}
             required
-            className="h-9 text-xs"
+            className="h-10 text-xs"
           />
         </div>
-        <Button type="submit" disabled={loading} size="sm" className="h-9">
+        <Button type="submit" disabled={loading} size="sm" className="min-h-10 press">
           {loading ? "..." : t("saveLimit")}
         </Button>
       </div>

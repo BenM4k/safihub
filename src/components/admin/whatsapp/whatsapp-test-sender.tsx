@@ -2,35 +2,31 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Send, CheckCircle2, AlertTriangle, MessageSquare } from "lucide-react";
+import {
+  Send,
+  CheckCircle2,
+  AlertTriangle,
+  MessageSquare,
+} from "lucide-react";
 import { sendAdminWhatsAppTestAction } from "@/actions/admin-whatsapp.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { StatusBadge } from "@/components/admin/shared/status-badge";
+import { isWhatsAppErrorKey } from "./whatsapp-error-utils";
 import type {
   ExecuteWhatsAppTestResult,
   WhatsAppLocale,
   WhatsAppTestScenario,
 } from "@/services/whatsapp";
-
-const WHATSAPP_ERROR_KEYS = new Set([
-  "errors.phoneRequired",
-  "errors.phoneTooLong",
-  "errors.phoneInvalid",
-  "errors.rateLimitSend",
-  "errors.rateLimitSimulate",
-  "errors.invalidParams",
-] as const);
-
-type WhatsAppErrorKey =
-  | "errors.phoneRequired"
-  | "errors.phoneTooLong"
-  | "errors.phoneInvalid"
-  | "errors.rateLimitSend"
-  | "errors.rateLimitSimulate"
-  | "errors.invalidParams";
 
 export function WhatsAppTestSender() {
   const t = useTranslations("admin.whatsapp");
@@ -38,7 +34,8 @@ export function WhatsAppTestSender() {
 
   const [recipientPhone, setRecipientPhone] = useState("");
   const [dryRun, setDryRun] = useState(true);
-  const [scenario, setScenario] = useState<WhatsAppTestScenario>("order_status");
+  const [scenario, setScenario] =
+    useState<WhatsAppTestScenario>("order_status");
   const [locale, setLocale] = useState<WhatsAppLocale>("fr");
   const [orderCode, setOrderCode] = useState("ORD-20261105-4821");
   const [houseName, setHouseName] = useState("Pressing Rafiki");
@@ -68,8 +65,8 @@ export function WhatsAppTestSender() {
         dryRun,
       });
       if (!res.ok) {
-        const message = WHATSAPP_ERROR_KEYS.has(res.error as WhatsAppErrorKey)
-          ? t(res.error as WhatsAppErrorKey)
+        const message = isWhatsAppErrorKey(res.error)
+          ? t(res.error)
           : res.error;
         setErrorMsg(message);
         return;
@@ -79,14 +76,16 @@ export function WhatsAppTestSender() {
   }
 
   return (
-    <div className="rounded-2xl border border-[#EAECF0] bg-white p-6 shadow-xs space-y-5">
-      <div className="flex items-center gap-3 border-b border-[#EAECF0] pb-4">
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-5 animate-enter-fast">
+      <div className="flex items-center gap-3 border-b border-border pb-4">
         <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
           <MessageSquare className="size-5" />
         </div>
         <div>
-          <h2 className="text-base font-bold text-[#101828]">{t("senderTitle")}</h2>
-          <p className="text-xs text-[#667085]">{t("senderSubtitle")}</p>
+          <h2 className="text-base font-bold text-heading font-display">
+            {t("senderTitle")}
+          </h2>
+          <p className="text-xs text-muted-foreground">{t("senderSubtitle")}</p>
         </div>
       </div>
 
@@ -104,35 +103,49 @@ export function WhatsAppTestSender() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="wa-locale">{t("localeLabel")}</Label>
-            <select
-              id="wa-locale"
+            <Select
               value={locale}
-              onChange={(e) => setLocale(e.target.value as WhatsAppLocale)}
-              className="flex h-10 w-full rounded-xl border border-[#D0D5DD] bg-white px-3 py-2 text-sm text-[#101828]"
+              onValueChange={(v) => setLocale(v as WhatsAppLocale)}
             >
-              <option value="fr">Français (FR)</option>
-              <option value="sw">Kiswahili (SW)</option>
-              <option value="en">English (EN)</option>
-            </select>
+              <SelectTrigger
+                id="wa-locale"
+                className="h-10 w-full rounded-xl bg-card border-border text-sm text-heading"
+                aria-label={t("localeLabel")}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fr">Français (FR)</SelectItem>
+                <SelectItem value="sw">Kiswahili (SW)</SelectItem>
+                <SelectItem value="en">English (EN)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="wa-scenario">{t("scenarioLabel")}</Label>
-          <select
-            id="wa-scenario"
+          <Select
             value={scenario}
-            onChange={(e) => setScenario(e.target.value as WhatsAppTestScenario)}
-            className="flex h-10 w-full rounded-xl border border-[#D0D5DD] bg-white px-3 py-2 text-sm text-[#101828]"
+            onValueChange={(v) => setScenario(v as WhatsAppTestScenario)}
           >
-            <option value="order_status">{t("scenarioOrderStatus")}</option>
-            <option value="courier_arrival">{t("scenarioCourierArrival")}</option>
-            <option value="price_adjustment">{t("scenarioPriceAdjustment")}</option>
-            <option value="partner_settlement">{t("scenarioPartnerSettlement")}</option>
-            <option value="bot_welcome">{t("scenarioBotWelcome")}</option>
-            <option value="free_text">{t("scenarioFreeText")}</option>
-            <option value="hello_world_template">{t("scenarioHelloWorld")}</option>
-          </select>
+            <SelectTrigger
+              id="wa-scenario"
+              className="h-10 w-full rounded-xl bg-card border-border text-sm text-heading"
+              aria-label={t("scenarioLabel")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="order_status">{t("scenarioOrderStatus")}</SelectItem>
+              <SelectItem value="courier_arrival">{t("scenarioCourierArrival")}</SelectItem>
+              <SelectItem value="price_adjustment">{t("scenarioPriceAdjustment")}</SelectItem>
+              <SelectItem value="partner_settlement">{t("scenarioPartnerSettlement")}</SelectItem>
+              <SelectItem value="bot_welcome">{t("scenarioBotWelcome")}</SelectItem>
+              <SelectItem value="free_text">{t("scenarioFreeText")}</SelectItem>
+              <SelectItem value="hello_world_template">{t("scenarioHelloWorld")}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -157,13 +170,13 @@ export function WhatsAppTestSender() {
         </div>
 
         {errorMsg && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-medium text-red-700 flex items-center gap-2">
+          <div className="rounded-xl border border-destructive/30 bg-destructive-soft px-3.5 py-2.5 text-xs font-medium text-destructive flex items-center gap-2">
             <AlertTriangle className="size-4 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface/60 px-3.5 py-2.5">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-3.5 py-2.5">
           <div className="space-y-0.5">
             <Label htmlFor="wa-sender-dryrun" className="text-xs font-semibold">
               {t("dryRunToggleLabel")}
@@ -177,26 +190,30 @@ export function WhatsAppTestSender() {
           />
         </div>
 
-        <Button type="submit" disabled={isPending} className="w-full">
+        <Button type="submit" disabled={isPending} className="w-full min-h-10 press">
           <Send className="size-4 mr-2" />
           {isPending ? t("sending") : t("sendButton")}
         </Button>
       </form>
 
       {lastResult && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-2">
+        <div className="rounded-xl border border-success/20 bg-success-soft p-4 space-y-2 animate-enter-fast">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-              <CheckCircle2 className="size-4 text-emerald-600" />
+            <span className="text-xs font-bold text-success flex items-center gap-1.5">
+              <CheckCircle2 className="size-4 text-success" />
               {t("lastResultTitle")}
             </span>
             <StatusBadge tone={lastResult.dryRun ? "warning" : "success"}>
               {lastResult.dryRun ? t("modeDryRunBadge") : t("modeLiveBadge")}
             </StatusBadge>
           </div>
-          <div className="text-xs text-[#344054] space-y-1 font-mono">
-            <div><strong>{t("messageIdLabel")}:</strong> {lastResult.messageId}</div>
-            <div><strong>{t("recipientLabel")}:</strong> +{lastResult.recipientPhone}</div>
+          <div className="text-xs text-foreground space-y-1 font-mono">
+            <div>
+              <strong>{t("messageIdLabel")}:</strong> {lastResult.messageId}
+            </div>
+            <div>
+              <strong>{t("recipientLabel")}:</strong> +{lastResult.recipientPhone}
+            </div>
           </div>
         </div>
       )}

@@ -1,32 +1,25 @@
+import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { guardAdminRoute } from "@/services/auth";
-import { listAdminZoneFees, listAdminZones } from "@/services/admin";
-import { FeeMatrixTable } from "@/components/admin/delivery-fees/fee-matrix-table";
-import { FeePairForm } from "@/components/admin/delivery-fees/fee-pair-form";
+import { PageHeader } from "@/components/admin/shared/page-header";
+import { DeliveryFeesStreamContent } from "@/components/admin/delivery-fees/delivery-fees-stream-content";
+import { AdminDeliveryFeesSkeleton } from "@/components/admin/delivery-fees/admin-delivery-fees-skeleton";
 
 export default async function AdminDeliveryFeesPage() {
-  await guardAdminRoute();
-  const t = await getTranslations("admin.deliveryFees");
-
-  const [feesRes, zonesRes] = await Promise.all([
-    listAdminZoneFees(),
-    listAdminZones(),
+  const [, t] = await Promise.all([
+    guardAdminRoute(),
+    getTranslations("admin.deliveryFees"),
   ]);
-
-  const zoneFees = feesRes.ok ? feesRes.value : [];
-  const zones = zonesRes.ok ? zonesRes.value : [];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-heading tracking-tight">
-          {t("title")}
-        </h1>
-        <p className="text-xs text-muted-foreground mt-1">{t("subtitle")}</p>
+      <div className="animate-enter">
+        <PageHeader title={t("title")} subtitle={t("subtitle")} />
       </div>
 
-      <FeePairForm zones={zones} />
-      <FeeMatrixTable zoneFees={zoneFees} />
+      <Suspense fallback={<AdminDeliveryFeesSkeleton />}>
+        <DeliveryFeesStreamContent />
+      </Suspense>
     </div>
   );
 }

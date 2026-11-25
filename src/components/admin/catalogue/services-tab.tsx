@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { AlertCircle } from "lucide-react";
 import { createMasterServiceAction } from "@/actions/admin-catalog.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { StatusBadge } from "@/components/admin/shared/status-badge";
 import {
   Table,
   TableBody,
@@ -25,27 +25,33 @@ interface ServicesTabProps {
 
 export function ServicesTab({ services }: ServicesTabProps) {
   const t = useTranslations("admin.catalogue");
+  const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleCreate(formData: FormData) {
     setError(null);
     setLoading(true);
-    const res = await createMasterServiceAction(formData);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      (document.getElementById("serv-form-el") as HTMLFormElement)?.reset();
+    try {
+      const res = await createMasterServiceAction(formData);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        formRef.current?.reset();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("unexpectedError"));
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
     <div className="space-y-4">
       <form
-        id="serv-form-el"
+        ref={formRef}
         action={handleCreate}
-        className="p-4 bg-muted/20 rounded-lg border border-border space-y-3"
+        className="p-4 bg-muted/20 rounded-xl border border-border space-y-3"
       >
         <div className="font-bold text-xs text-foreground">{t("addService")}</div>
         {error && (
@@ -57,21 +63,45 @@ export function ServicesTab({ services }: ServicesTabProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1">
-            <Label htmlFor="servSlug" className="text-xs font-semibold text-foreground">{t("slug")}</Label>
-            <Input id="servSlug" name="slug" required placeholder="wash, iron, dry_clean..." className="h-9 text-xs" />
+            <Label htmlFor="servSlug" className="text-xs font-semibold text-foreground">
+              {t("slug")}
+            </Label>
+            <Input
+              id="servSlug"
+              name="slug"
+              required
+              placeholder={t("serviceSlugPlaceholder")}
+              className="h-9 text-xs"
+            />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="servNameFr" className="text-xs font-semibold text-foreground">{t("nameFr")}</Label>
-            <Input id="servNameFr" name="nameFr" required placeholder="Lavage & Repassage..." className="h-9 text-xs" />
+            <Label htmlFor="servNameFr" className="text-xs font-semibold text-foreground">
+              {t("nameFr")}
+            </Label>
+            <Input
+              id="servNameFr"
+              name="nameFr"
+              required
+              placeholder={t("serviceNameFrPlaceholder")}
+              className="h-9 text-xs"
+            />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="servNameSw" className="text-xs font-semibold text-foreground">{t("nameSw")}</Label>
-            <Input id="servNameSw" name="nameSw" required placeholder="Kufua & Kupiga pasi..." className="h-9 text-xs" />
+            <Label htmlFor="servNameSw" className="text-xs font-semibold text-foreground">
+              {t("nameSw")}
+            </Label>
+            <Input
+              id="servNameSw"
+              name="nameSw"
+              required
+              placeholder={t("serviceNameSwPlaceholder")}
+              className="h-9 text-xs"
+            />
           </div>
         </div>
 
         <div className="flex justify-end pt-1">
-          <Button type="submit" disabled={loading} size="sm" className="h-9">
+          <Button type="submit" disabled={loading} size="sm" className="min-h-9 press">
             {loading ? "..." : t("addService")}
           </Button>
         </div>
@@ -90,21 +120,20 @@ export function ServicesTab({ services }: ServicesTabProps) {
             </TableHeader>
             <TableBody>
               {services.map((service) => (
-                <TableRow key={service.id} className="hover:bg-muted/40 transition">
-                  <TableCell className="px-4 py-3 font-mono font-semibold text-primary">{service.slug}</TableCell>
-                  <TableCell className="px-4 py-3 font-semibold text-foreground">{service.nameFr}</TableCell>
-                  <TableCell className="px-4 py-3 text-muted-foreground">{service.nameSw}</TableCell>
+                <TableRow key={service.id} className="row-interactive">
+                  <TableCell className="px-4 py-3 font-mono font-semibold text-primary">
+                    {service.slug}
+                  </TableCell>
+                  <TableCell className="px-4 py-3 font-semibold text-foreground">
+                    {service.nameFr}
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-muted-foreground">
+                    {service.nameSw}
+                  </TableCell>
                   <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="outline"
-                      className={
-                        service.isActive
-                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
-                          : "bg-muted text-muted-foreground border-border"
-                      }
-                    >
+                    <StatusBadge tone={service.isActive ? "success" : "secondary"}>
                       {service.isActive ? t("active") : t("inactive")}
-                    </Badge>
+                    </StatusBadge>
                   </TableCell>
                 </TableRow>
               ))}

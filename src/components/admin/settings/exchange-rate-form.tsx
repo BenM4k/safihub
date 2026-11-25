@@ -1,23 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { recordDailyExchangeRateAction } from "@/actions/admin-settings.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
 
-export function ExchangeRateForm() {
+interface ExchangeRateFormProps {
+  defaultEffectiveDate?: string;
+}
+
+function getFallbackBukavuDate(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Lubumbashi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+export function ExchangeRateForm({
+  defaultEffectiveDate,
+}: ExchangeRateFormProps) {
   const t = useTranslations("admin.settings");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const todayStr = new Date().toISOString().split("T")[0];
   const [rate, setRate] = useState("2850");
-  const [effectiveDate, setEffectiveDate] = useState(todayStr);
+  const [effectiveDate, setEffectiveDate] = useState(
+    () => defaultEffectiveDate ?? getFallbackBukavuDate()
+  );
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,10 +58,11 @@ export function ExchangeRateForm() {
         setError(res.error);
       } else {
         setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => setSuccess(false), 3000);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("unexpectedError"));
     } finally {
       setLoading(false);
     }
@@ -47,9 +71,11 @@ export function ExchangeRateForm() {
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-foreground">{t("exchangeRateTitle")}</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("exchangeRateTitle")}
+        </h2>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Enregistre le taux officiel du jour. Toute nouvelle commande en USD fige ce taux.
+          {t("exchangeRateDesc")}
         </p>
       </div>
 
@@ -60,9 +86,11 @@ export function ExchangeRateForm() {
         </Alert>
       )}
       {success && (
-        <Alert className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-          <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
-          <AlertDescription className="text-xs font-semibold">Taux de change enregistré avec succès.</AlertDescription>
+        <Alert className="border-success/20 bg-success-soft text-success">
+          <CheckCircle2 className="size-4 text-success" />
+          <AlertDescription className="text-xs font-semibold">
+            {t("rateSavedSuccess")}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -108,13 +136,12 @@ export function ExchangeRateForm() {
           <Button
             type="submit"
             disabled={loading}
-            className="text-xs"
+            className="text-xs min-h-10 press"
           >
-            {loading ? "Enregistrement..." : t("saveRate")}
+            {loading ? t("saving") : t("saveRate")}
           </Button>
         </div>
       </form>
-
     </div>
   );
 }

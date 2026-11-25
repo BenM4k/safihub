@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { updatePlatformSettingsAction } from "@/actions/admin-settings.actions";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
 import type { SettingsRecord } from "@/dal";
 
 interface PlatformSettingsFormProps {
@@ -16,18 +17,39 @@ interface PlatformSettingsFormProps {
 
 export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
   const t = useTranslations("admin.settings");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const [commissionBps, setCommissionBps] = useState(settings.defaultCommissionBps);
-  const [acceptanceDelay, setAcceptanceDelay] = useState(settings.acceptanceDelayMinutes);
-  const [receptionWindow, setReceptionWindow] = useState(settings.receptionWindowMinutes);
+  const [commissionBps, setCommissionBps] = useState(
+    settings.defaultCommissionBps
+  );
+  const [acceptanceDelay, setAcceptanceDelay] = useState(
+    settings.acceptanceDelayMinutes
+  );
+  const [receptionWindow, setReceptionWindow] = useState(
+    settings.receptionWindowMinutes
+  );
   const [slotLength, setSlotLength] = useState(settings.slotLengthMinutes);
-  const [maxDistance, setMaxDistance] = useState(settings.maxCoverageDistanceLevel);
-  const [cashCeiling, setCashCeiling] = useState(settings.defaultCashCeiling ?? "");
-  const [courierPay, setCourierPay] = useState(settings.defaultCourierPayPerLeg ?? "");
-  const [firstOrderScreening, setFirstOrderScreening] = useState(settings.firstOrderScreening);
+  const [maxDistance, setMaxDistance] = useState(
+    settings.maxCoverageDistanceLevel
+  );
+  const [cashCeiling, setCashCeiling] = useState(
+    settings.defaultCashCeiling ?? ""
+  );
+  const [courierPay, setCourierPay] = useState(
+    settings.defaultCourierPayPerLeg ?? ""
+  );
+  const [firstOrderScreening, setFirstOrderScreening] = useState(
+    settings.firstOrderScreening
+  );
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,10 +73,11 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
         setError(res.error);
       } else {
         setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => setSuccess(false), 3000);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("unexpectedError"));
     } finally {
       setLoading(false);
     }
@@ -63,9 +86,11 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-foreground">{t("platformConfigTitle")}</h2>
+        <h2 className="text-base font-semibold text-foreground">
+          {t("platformConfigTitle")}
+        </h2>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Les nouvelles valeurs s&apos;appliquent immédiatement aux prochaines commandes. Les commandes existantes conservent leurs valeurs gelées.
+          {t("platformConfigDesc")}
         </p>
       </div>
 
@@ -76,9 +101,11 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
         </Alert>
       )}
       {success && (
-        <Alert className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-          <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
-          <AlertDescription className="text-xs font-semibold">Paramètres enregistrés avec succès.</AlertDescription>
+        <Alert className="border-success/20 bg-success-soft text-success">
+          <CheckCircle2 className="size-4 text-success" />
+          <AlertDescription className="text-xs font-semibold">
+            {t("settingsSavedSuccess")}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -86,7 +113,7 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="comm" className="text-xs font-semibold text-foreground">
-              {t("defaultCommission")} (ex: 1500 = 15%)
+              {t("defaultCommission")} ({t("commissionHint")})
             </Label>
             <Input
               id="comm"
@@ -147,7 +174,7 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
 
           <div className="space-y-1.5">
             <Label htmlFor="dist" className="text-xs font-semibold text-foreground">
-              {t("maxDistance")} (Niveau 1, 2 ou 3)
+              {t("maxDistance")} ({t("maxDistanceHint")})
             </Label>
             <Input
               id="dist"
@@ -163,49 +190,50 @@ export function PlatformSettingsForm({ settings }: PlatformSettingsFormProps) {
 
           <div className="space-y-1.5">
             <Label htmlFor="ceil" className="text-xs font-semibold text-foreground">
-              Plafond d&apos;encaisse par défaut (CDF)
+              {t("defaultCashCeilingLabel")}
             </Label>
             <Input
               id="ceil"
               type="number"
               value={cashCeiling}
               onChange={(e) => setCashCeiling(e.target.value)}
-              placeholder="Ex: 50000"
+              placeholder={t("defaultCashCeilingPlaceholder")}
               className="text-xs"
             />
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="pay" className="text-xs font-semibold text-foreground">
-              Rémunération coursier par trajet (CDF)
+              {t("defaultCourierPayLabel")}
             </Label>
             <Input
               id="pay"
               type="number"
               value={courierPay}
               onChange={(e) => setCourierPay(e.target.value)}
-              placeholder="Ex: 2500"
+              placeholder={t("defaultCourierPayPlaceholder")}
               className="text-xs"
             />
           </div>
 
-          <div className="flex items-center gap-2 pt-6">
-            <input
+          <div className="flex items-center gap-2.5 pt-6">
+            <Checkbox
               id="screening"
-              type="checkbox"
               checked={firstOrderScreening}
-              onChange={(e) => setFirstOrderScreening(e.target.checked)}
-              className="size-4 rounded text-primary focus:ring-primary"
+              onCheckedChange={(checked) => setFirstOrderScreening(checked)}
             />
-            <Label htmlFor="screening" className="text-xs font-medium text-foreground cursor-pointer">
-              Filtrage / screening systématique des premières commandes
+            <Label
+              htmlFor="screening"
+              className="text-xs font-medium text-foreground cursor-pointer"
+            >
+              {t("firstOrderScreeningLabel")}
             </Label>
           </div>
         </div>
 
         <div className="flex justify-end pt-3 border-t border-border">
-          <Button type="submit" disabled={loading} className="text-xs">
-            {loading ? "Enregistrement..." : t("saveConfig")}
+          <Button type="submit" disabled={loading} className="text-xs min-h-10 press">
+            {loading ? t("saving") : t("saveConfig")}
           </Button>
         </div>
       </form>

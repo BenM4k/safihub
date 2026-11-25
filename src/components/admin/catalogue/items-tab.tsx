@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { createMasterItemAction, toggleMasterItemActiveAction } from "@/actions/admin-catalog.actions";
+import { AlertCircle } from "lucide-react";
+import {
+  createMasterItemAction,
+  toggleMasterItemActiveAction,
+} from "@/actions/admin-catalog.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { StatusBadge } from "@/components/admin/shared/status-badge";
 import {
   Table,
   TableBody,
@@ -25,6 +28,7 @@ interface ItemsTabProps {
 
 export function ItemsTab({ items }: ItemsTabProps) {
   const t = useTranslations("admin.catalogue");
+  const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -37,10 +41,10 @@ export function ItemsTab({ items }: ItemsTabProps) {
       if (!res.ok) {
         setError(res.error);
       } else {
-        (document.getElementById("item-form-el") as HTMLFormElement)?.reset();
+        formRef.current?.reset();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("unexpectedError"));
     } finally {
       setLoading(false);
     }
@@ -55,7 +59,7 @@ export function ItemsTab({ items }: ItemsTabProps) {
         setError(res.error);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("unexpectedError"));
     } finally {
       setTogglingId(null);
     }
@@ -64,9 +68,9 @@ export function ItemsTab({ items }: ItemsTabProps) {
   return (
     <div className="space-y-4">
       <form
-        id="item-form-el"
+        ref={formRef}
         action={handleCreate}
-        className="p-4 bg-muted/20 rounded-lg border border-border space-y-3"
+        className="p-4 bg-muted/20 rounded-xl border border-border space-y-3"
       >
         <div className="font-bold text-xs text-foreground">{t("addItem")}</div>
         {error && (
@@ -78,21 +82,44 @@ export function ItemsTab({ items }: ItemsTabProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1">
-            <Label htmlFor="itemNameFr" className="text-xs font-semibold text-foreground">{t("nameFr")}</Label>
-            <Input id="itemNameFr" name="nameFr" required placeholder="Chemise, Robe..." className="h-9 text-xs" />
+            <Label htmlFor="itemNameFr" className="text-xs font-semibold text-foreground">
+              {t("nameFr")}
+            </Label>
+            <Input
+              id="itemNameFr"
+              name="nameFr"
+              required
+              placeholder={t("itemNameFrPlaceholder")}
+              className="h-9 text-xs"
+            />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="itemNameSw" className="text-xs font-semibold text-foreground">{t("nameSw")}</Label>
-            <Input id="itemNameSw" name="nameSw" required placeholder="Shati, Gauni..." className="h-9 text-xs" />
+            <Label htmlFor="itemNameSw" className="text-xs font-semibold text-foreground">
+              {t("nameSw")}
+            </Label>
+            <Input
+              id="itemNameSw"
+              name="nameSw"
+              required
+              placeholder={t("itemNameSwPlaceholder")}
+              className="h-9 text-xs"
+            />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="itemCategory" className="text-xs font-semibold text-foreground">{t("category")}</Label>
-            <Input id="itemCategory" name="category" placeholder="tops, bottoms, bedding..." className="h-9 text-xs" />
+            <Label htmlFor="itemCategory" className="text-xs font-semibold text-foreground">
+              {t("category")}
+            </Label>
+            <Input
+              id="itemCategory"
+              name="category"
+              placeholder={t("itemCategoryPlaceholder")}
+              className="h-9 text-xs"
+            />
           </div>
         </div>
 
         <div className="flex justify-end pt-1">
-          <Button type="submit" disabled={loading} size="sm" className="h-9">
+          <Button type="submit" disabled={loading} size="sm" className="min-h-9 press">
             {loading ? "..." : t("addItem")}
           </Button>
         </div>
@@ -107,26 +134,19 @@ export function ItemsTab({ items }: ItemsTabProps) {
                 <TableHead className="px-4 py-3 font-semibold text-foreground">{t("nameSw")}</TableHead>
                 <TableHead className="px-4 py-3 font-semibold text-foreground">{t("category")}</TableHead>
                 <TableHead className="px-4 py-3 font-semibold text-foreground">{t("status")}</TableHead>
-                <TableHead className="px-4 py-3 text-right font-semibold text-foreground">Action</TableHead>
+                <TableHead className="px-4 py-3 text-right font-semibold text-foreground">{t("colAction")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.map((item) => (
-                <TableRow key={item.id} className="hover:bg-muted/40 transition">
+                <TableRow key={item.id} className="row-interactive">
                   <TableCell className="px-4 py-3 font-semibold text-foreground">{item.nameFr}</TableCell>
                   <TableCell className="px-4 py-3 text-muted-foreground">{item.nameSw}</TableCell>
                   <TableCell className="px-4 py-3 text-muted-foreground">{item.category || "—"}</TableCell>
                   <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="outline"
-                      className={
-                        item.isActive
-                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
-                          : "bg-muted text-muted-foreground border-border"
-                      }
-                    >
+                    <StatusBadge tone={item.isActive ? "success" : "secondary"}>
                       {item.isActive ? t("active") : t("inactive")}
-                    </Badge>
+                    </StatusBadge>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-right">
                     <Button
@@ -134,9 +154,13 @@ export function ItemsTab({ items }: ItemsTabProps) {
                       size="sm"
                       disabled={togglingId === item.id}
                       onClick={() => handleToggle(item.id, !item.isActive)}
-                      className="h-7 text-xs"
+                      className="min-h-8 text-xs press"
                     >
-                      {togglingId === item.id ? "..." : item.isActive ? "Désactiver" : "Activer"}
+                      {togglingId === item.id
+                        ? "..."
+                        : item.isActive
+                          ? t("deactivate")
+                          : t("activate")}
                     </Button>
                   </TableCell>
                 </TableRow>

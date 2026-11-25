@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import type { NeighborhoodRecord } from "@/dal";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/admin/shared/status-badge";
 import {
   Table,
   TableBody,
@@ -20,35 +20,14 @@ export async function NeighborhoodsTable({
 }: NeighborhoodsTableProps) {
   const t = await getTranslations("admin.neighborhoods");
 
-  const statusBadge = (status: string) => {
+  const renderStatusBadge = (status: string) => {
     switch (status) {
       case "served":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
-          >
-            {t("served")}
-          </Badge>
-        );
+        return <StatusBadge tone="success">{t("served")}</StatusBadge>;
       case "paused":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
-          >
-            {t("paused")}
-          </Badge>
-        );
+        return <StatusBadge tone="warning">{t("paused")}</StatusBadge>;
       default:
-        return (
-          <Badge
-            variant="outline"
-            className="bg-muted text-muted-foreground border-border"
-          >
-            {t("notServed")}
-          </Badge>
-        );
+        return <StatusBadge tone="secondary">{t("notServed")}</StatusBadge>;
     }
   };
 
@@ -58,8 +37,8 @@ export async function NeighborhoodsTable({
         <h2 className="text-sm font-bold text-foreground">
           {t("neighborhoodsCard")}
         </h2>
-        <span className="text-xs text-muted-foreground font-semibold">
-          {neighborhoods.length} quartier(s)
+        <span className="text-xs text-muted-foreground font-semibold tabular-nums">
+          {t("neighborhoodCount", { count: neighborhoods.length })}
         </span>
       </div>
 
@@ -67,23 +46,33 @@ export async function NeighborhoodsTable({
         <Table className="text-xs">
           <TableHeader>
             <TableRow className="border-b border-border bg-muted/40 font-semibold text-foreground hover:bg-muted/40">
-              <TableHead className="px-4 py-3 font-semibold text-foreground">{t("neighborhoodName")}</TableHead>
-              <TableHead className="px-4 py-3 font-semibold text-foreground">{t("selectZone")}</TableHead>
-              <TableHead className="px-4 py-3 font-semibold text-foreground">{t("status")}</TableHead>
-              <TableHead className="px-4 py-3 font-semibold text-foreground">{t("pauseReason")}</TableHead>
-              <TableHead className="px-4 py-3 text-right font-semibold text-foreground">GPS</TableHead>
+              <TableHead className="px-4 py-3 font-semibold text-foreground">
+                {t("neighborhoodName")}
+              </TableHead>
+              <TableHead className="px-4 py-3 font-semibold text-foreground">
+                {t("selectZone")}
+              </TableHead>
+              <TableHead className="px-4 py-3 font-semibold text-foreground">
+                {t("status")}
+              </TableHead>
+              <TableHead className="px-4 py-3 font-semibold text-foreground">
+                {t("pauseReason")}
+              </TableHead>
+              <TableHead className="px-4 py-3 text-right font-semibold text-foreground">
+                {t("colGps")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {neighborhoods.map((n) => (
-              <TableRow key={n.id} className="hover:bg-muted/40 transition">
+              <TableRow key={n.id} className="row-interactive">
                 <TableCell className="px-4 py-3 font-semibold text-foreground">
                   {n.name}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-muted-foreground">
                   {n.zoneName}
                 </TableCell>
-                <TableCell className="px-4 py-3">{statusBadge(n.status)}</TableCell>
+                <TableCell className="px-4 py-3">{renderStatusBadge(n.status)}</TableCell>
                 <TableCell className="px-4 py-3 text-muted-foreground italic">
                   {n.pauseReason || "—"}
                 </TableCell>

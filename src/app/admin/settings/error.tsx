@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AdminErrorView } from "@/components/admin/admin-error-view";
 
 interface AdminSettingsErrorProps {
@@ -11,12 +12,14 @@ export default function AdminSettingsError({
   error,
   reset,
 }: AdminSettingsErrorProps) {
+  const t = useTranslations("admin.settings");
+
   return (
     <AdminErrorView
       error={error}
       reset={reset}
-      title="Erreur des paramètres de la plateforme"
-      description="Impossible de charger les paramètres opérationnels globaux, les taux de change ou les utilitaires d'export."
+      title={t("errorTitle")}
+      description={t("errorDescription")}
     />
   );
 }

@@ -1,34 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { AlertCircle } from "lucide-react";
 import { createZoneAction } from "@/actions/admin-coverage.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 
 export function ZoneForm() {
   const t = useTranslations("admin.neighborhoods");
+  const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     setError(null);
     setLoading(true);
-    const res = await createZoneAction(formData);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error);
-    } else {
-      (document.getElementById("zone-form-el") as HTMLFormElement)?.reset();
+    try {
+      const res = await createZoneAction(formData);
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        formRef.current?.reset();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("unexpectedError"));
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
     <form
-      id="zone-form-el"
+      ref={formRef}
       action={handleSubmit}
       className="p-4 bg-muted/20 rounded-lg border border-border space-y-3"
     >
@@ -48,7 +54,7 @@ export function ZoneForm() {
             id="zoneName"
             name="name"
             required
-            placeholder="ex: Commune d'Ibanda"
+            placeholder={t("zoneNamePlaceholder")}
             className="h-9 text-xs"
           />
         </div>
@@ -65,7 +71,7 @@ export function ZoneForm() {
           />
         </div>
         <div className="flex items-end">
-          <Button type="submit" disabled={loading} size="sm" className="h-9">
+          <Button type="submit" disabled={loading} size="sm" className="h-9 press">
             {loading ? "..." : t("save")}
           </Button>
         </div>
