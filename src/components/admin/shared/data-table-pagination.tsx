@@ -73,6 +73,7 @@ export function DataTablePagination({
     pageSize,
     totalItems
   );
+  const canGoPrev = hasPrev || page > totalPages;
   const busy = isLoading || isPending;
 
   if (hideIfSinglePage && totalPages <= 1 && page <= 1) {
@@ -150,7 +151,7 @@ export function DataTablePagination({
             variant="outline"
             size="icon"
             onClick={() => handlePage(1)}
-            disabled={!hasPrev || busy}
+            disabled={!canGoPrev || busy}
             className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 sm:size-9 border-border hover:bg-surface"
             aria-label={t("firstPage")}
           >
@@ -162,8 +163,8 @@ export function DataTablePagination({
           type="button"
           variant="outline"
           size="icon"
-          onClick={() => handlePage(page - 1)}
-          disabled={!hasPrev || busy}
+          onClick={() => handlePage(Math.min(totalPages, page - 1))}
+          disabled={!canGoPrev || busy}
           className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 sm:size-9 border-border hover:bg-surface"
           aria-label={t("prevPage")}
         >

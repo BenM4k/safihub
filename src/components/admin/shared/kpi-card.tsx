@@ -67,30 +67,41 @@ export function KpiCard({
     ? `${formula}${tooltip ? ` · ${tooltip}` : ""}`
     : tooltip;
 
-  const sharedClassName = cn(
-    "p-4 rounded-xl border shadow-xs transition-all flex flex-col justify-between gap-3 w-full text-left",
+  const containerClassName = cn(
+    "relative p-4 rounded-xl border shadow-xs transition-all flex flex-col justify-between gap-3 w-full text-left",
     styles.container,
-    isSelected && "ring-2 ring-primary border-primary shadow-sm",
-    onClick &&
-      "cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
+    isSelected && "ring-2 ring-primary border-primary shadow-sm"
   );
 
-  const inner = (
-    <>
+  const labelContent = (
+    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+      {label}
+    </p>
+  );
+
+  return (
+    <div className={containerClassName}>
       <div className="flex items-start justify-between gap-2 w-full">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {label}
-          </p>
+          {onClick ? (
+            <button
+              type="button"
+              onClick={onClick}
+              className="text-left cursor-pointer focus-visible:outline-hidden after:absolute after:inset-0 after:content-[''] after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-primary"
+            >
+              {labelContent}
+            </button>
+          ) : (
+            labelContent
+          )}
           {tooltipText && (
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <span
-                    tabIndex={0}
-                    className="inline-flex items-center text-muted-foreground hover:text-heading transition-colors cursor-help"
+                  <button
+                    type="button"
+                    className="relative z-10 inline-flex items-center text-muted-foreground hover:text-heading transition-colors cursor-help focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
                     aria-label={tooltip ?? formula}
-                    onClick={(e) => e.stopPropagation()}
                   />
                 }
               >
@@ -129,16 +140,6 @@ export function KpiCard({
           </div>
         )}
       </div>
-    </>
+    </div>
   );
-
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} className={sharedClassName}>
-        {inner}
-      </button>
-    );
-  }
-
-  return <div className={sharedClassName}>{inner}</div>;
 }

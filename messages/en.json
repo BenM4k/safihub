@@ -526,7 +526,10 @@
         "sun": "Sunday",
         "to": "to",
         "saveSchedule": "Save",
-        "saving": "Saving..."
+        "saving": "Saving...",
+        "startTimeLabel": "{day} start time",
+        "endTimeLabel": "{day} end time",
+        "saveErrorFallback": "Failed to save schedule."
       }
     },
     "nav": {
@@ -762,6 +765,9 @@
       "detailTitle": "House Details",
       "profileTab": "Profile & Terms",
       "hoursTab": "Weekly Hours",
+      "hoursClosedLabel": "Closed",
+      "hoursSaveButton": "Save hours",
+      "hoursSaveSuccess": "Opening hours saved successfully",
       "closuresTab": "Special Closures",
       "exclusionsTab": "Excluded Items",
       "staffTab": "Staff Accounts",
@@ -839,6 +845,9 @@
       "detailTitle": "Courier Profile",
       "profileTab": "Profile & Financials",
       "shiftsTab": "Shifts",
+      "shiftsOffLabel": "Off duty",
+      "shiftsSaveButton": "Save shifts",
+      "shiftsSaveSuccess": "Work shifts saved successfully",
       "zonesTab": "Covered Zones",
       "cashCeiling": "Cash Ceiling (CDF)",
       "securityDeposit": "Security Deposit (CDF)",

@@ -526,7 +526,10 @@
         "sun": "Jumapili",
         "to": "hadi",
         "saveSchedule": "Hifadhi",
-        "saving": "Inahifadhi..."
+        "saving": "Inahifadhi...",
+        "startTimeLabel": "Muda wa kuanza {day}",
+        "endTimeLabel": "Muda wa kumaliza {day}",
+        "saveErrorFallback": "Imeshindwa kuhifadhi ratiba."
       }
     },
     "nav": {
@@ -762,6 +765,9 @@
       "detailTitle": "Maelezo ya Dobi",
       "profileTab": "Wasifu & Masharti",
       "hoursTab": "Saa za Wiki",
+      "hoursClosedLabel": "Imefungwa",
+      "hoursSaveButton": "Hifadhi saa",
+      "hoursSaveSuccess": "Saa za kazi zimehifadhiwa",
       "closuresTab": "Kufungwa kwa Muda",
       "exclusionsTab": "Vitu Visivyosafishwa",
       "staffTab": "Akaunti za Wafanyakazi",
@@ -839,6 +845,9 @@
       "detailTitle": "Wasifu wa Dereva",
       "profileTab": "Wasifu & Fedha",
       "shiftsTab": "Saa za Zamu",
+      "shiftsOffLabel": "Hakuna zamu",
+      "shiftsSaveButton": "Hifadhi zamu",
+      "shiftsSaveSuccess": "Saa za zamu zimehifadhiwa",
       "zonesTab": "Kanda Zinazofikiwa",
       "cashCeiling": "Ukomo wa Fedha Taslimu (CDF)",
       "securityDeposit": "Amana ya Usalama (CDF)",

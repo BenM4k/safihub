@@ -86,7 +86,7 @@ export function WeeklyScheduleEditor({
     startTransition(async () => {
       const res = await onSave(payload);
       if (!res.ok) {
-        setFeedback({ kind: "error", text: res.error || "Operation failed" });
+        setFeedback({ kind: "error", text: res.error || t("saveErrorFallback") });
         return;
       }
       setFeedback({ kind: "success", text: successMessage });
@@ -145,7 +145,7 @@ export function WeeklyScheduleEditor({
                     type="time"
                     value={item.start}
                     disabled={isPending}
-                    aria-label={`${dayLabel} (${t("to")})`}
+                    aria-label={t("startTimeLabel", { day: dayLabel })}
                     onChange={(e) => updateDay(item.weekday, { start: e.target.value })}
                     className="min-h-11 sm:min-h-9 w-32 text-base sm:text-xs"
                   />
@@ -154,7 +154,7 @@ export function WeeklyScheduleEditor({
                     type="time"
                     value={item.end}
                     disabled={isPending}
-                    aria-label={`${dayLabel} end`}
+                    aria-label={t("endTimeLabel", { day: dayLabel })}
                     onChange={(e) => updateDay(item.weekday, { end: e.target.value })}
                     className="min-h-11 sm:min-h-9 w-32 text-base sm:text-xs"
                   />

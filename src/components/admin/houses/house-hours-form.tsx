@@ -21,9 +21,9 @@ export function HouseHoursForm({ houseId, hours }: HouseHoursFormProps) {
         start: h.opensAt,
         end: h.closesAt,
       }))}
-      offLabel="Fermé"
-      saveLabel="Enregistrer les horaires"
-      successMessage="Horaires enregistrés avec succès"
+      offLabel={t("hoursClosedLabel")}
+      saveLabel={t("hoursSaveButton")}
+      successMessage={t("hoursSaveSuccess")}
       onSave={(entries) =>
         updateHouseHoursAction(
           houseId,

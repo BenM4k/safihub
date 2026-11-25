@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Calendar, Info } from "lucide-react";
@@ -36,9 +36,8 @@ export function DateNavigator({
   const locale = useLocale();
   const t = useTranslations("admin.cash");
   const [isPending, startTransition] = useTransition();
-  const [fallbackToday] = useState(() => toBukavuDateTime(new Date()).dateString);
 
-  const todayLubumbashi = maxDate ?? fallbackToday;
+  const todayLubumbashi = maxDate ?? toBukavuDateTime(new Date()).dateString;
   const isToday = currentDate === todayLubumbashi;
   const isFuture = currentDate > todayLubumbashi;
 

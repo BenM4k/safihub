@@ -21,9 +21,9 @@ export function CourierShiftsForm({ courierId, shifts }: CourierShiftsFormProps)
         start: s.startsAt,
         end: s.endsAt,
       }))}
-      offLabel="Pas de garde"
-      saveLabel="Enregistrer les créneaux"
-      successMessage="Créneaux de travail enregistrés avec succès"
+      offLabel={t("shiftsOffLabel")}
+      saveLabel={t("shiftsSaveButton")}
+      successMessage={t("shiftsSaveSuccess")}
       onSave={(entries) =>
         updateCourierShiftsAction(
           courierId,

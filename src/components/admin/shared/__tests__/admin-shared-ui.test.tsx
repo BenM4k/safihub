@@ -22,6 +22,7 @@ vi.mock("next/navigation", () => ({
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AdminSearchInput } from "../admin-search-input";
+import { DataTable } from "../data-table";
 import { DataTablePagination } from "../data-table-pagination";
 import { WeeklyScheduleEditor } from "../weekly-schedule-editor";
 import { KpiCard } from "../kpi-card";
@@ -111,12 +112,70 @@ describe("Phase 2 Admin Shared Primitives UI", () => {
       await user.click(screen.getByRole("option", { name: "50" }));
       expect(onPageSizeChange).toHaveBeenCalledWith(50);
     });
+
+    it("keeps Previous recovery enabled when page exceeds totalPages and disables both on valid single page", async () => {
+      const user = userEvent.setup();
+      const onPageChange = vi.fn();
+
+      const { rerender } = renderWithIntl(
+        <DataTablePagination
+          page={3}
+          pageSize={25}
+          totalItems={10}
+          onPageChange={onPageChange}
+          showFirstLast
+        />
+      );
+
+      const prevBtn = screen.getByRole("button", { name: "Page précédente" });
+      const nextBtn = screen.getByRole("button", { name: "Page suivante" });
+      expect((prevBtn as HTMLButtonElement).disabled).toBe(false);
+      expect((nextBtn as HTMLButtonElement).disabled).toBe(true);
+
+      await user.click(prevBtn);
+      expect(onPageChange).toHaveBeenCalledWith(1);
+
+      rerender(
+        <NextIntlClientProvider locale="fr" messages={frMessages}>
+          <TooltipProvider>
+            <DataTablePagination
+              page={1}
+              pageSize={25}
+              totalItems={10}
+              onPageChange={onPageChange}
+            />
+          </TooltipProvider>
+        </NextIntlClientProvider>
+      );
+      expect(
+        (screen.getByRole("button", { name: "Page précédente" }) as HTMLButtonElement).disabled
+      ).toBe(true);
+      expect(
+        (screen.getByRole("button", { name: "Page suivante" }) as HTMLButtonElement).disabled
+      ).toBe(true);
+    });
+
+    it("renders DataTable footer when only onPageSizeChange is provided", () => {
+      renderWithIntl(
+        <DataTable
+          columns={[{ id: "name", header: "Nom", render: (r: { id: string; name: string }) => r.name }]}
+          data={[{ id: "1", name: "Test" }]}
+          keyExtractor={(r) => r.id}
+          page={1}
+          pageSize={10}
+          totalItems={1}
+          onPageSizeChange={vi.fn()}
+        />
+      );
+
+      expect(screen.getByRole("combobox", { name: "Lignes par page" })).toBeTruthy();
+    });
   });
 
   describe("WeeklyScheduleEditor", () => {
-    it("toggles switches immutably, saves enabled days, and renders destructive errors", async () => {
+    it("toggles switches immutably, uses localized time labels, and renders fallback error", async () => {
       const user = userEvent.setup();
-      const onSave = vi.fn().mockResolvedValue({ ok: false, error: "Horaire invalide" });
+      const onSave = vi.fn().mockResolvedValue({ ok: false });
 
       renderWithIntl(
         <WeeklyScheduleEditor
@@ -129,6 +188,9 @@ describe("Phase 2 Admin Shared Primitives UI", () => {
         />
       );
 
+      expect(screen.getByLabelText("Lundi — heure de début")).toBeTruthy();
+      expect(screen.getByLabelText("Lundi — heure de fin")).toBeTruthy();
+
       const tuesdaySwitch = screen.getByRole("switch", { name: /Mardi/i });
       await user.click(tuesdaySwitch);
       await user.click(screen.getByRole("button", { name: "Enregistrer les horaires" }));
@@ -139,13 +201,13 @@ describe("Phase 2 Admin Shared Primitives UI", () => {
       ]);
 
       const alert = await screen.findByRole("alert");
-      expect(alert.textContent).toContain("Horaire invalide");
+      expect(alert.textContent).toContain("Échec de l'enregistrement des horaires.");
       expect(alert.className).toContain("text-destructive");
     });
   });
 
   describe("KpiCard & Status Badges", () => {
-    it("renders semantic button only when onClick is provided", async () => {
+    it("renders semantic card button outside tooltip trigger when onClick is provided", async () => {
       const user = userEvent.setup();
       const onClick = vi.fn();
 
@@ -153,7 +215,10 @@ describe("Phase 2 Admin Shared Primitives UI", () => {
         <KpiCard label="Commandes" value="42" tooltip="Total du jour" onClick={onClick} />
       );
 
-      const btn = screen.getByRole("button", { name: /Commandes/i });
+      const btn = screen.getByRole("button", { name: "Commandes" });
+      const tooltipBtn = screen.getByRole("button", { name: "Total du jour" });
+      expect(btn.contains(tooltipBtn)).toBe(false);
+
       await user.click(btn);
       expect(onClick).toHaveBeenCalledTimes(1);
 

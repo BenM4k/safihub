@@ -137,7 +137,7 @@ export function DataTable<T>({
         </Table>
       </div>
 
-      {hasPagination && (onPageChange || urlMode) && (
+      {hasPagination && (onPageChange || onPageSizeChange || urlMode) && (
         <DataTablePagination
           page={page}
           pageSize={pageSize}

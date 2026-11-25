@@ -526,7 +526,10 @@
         "sun": "Dimanche",
         "to": "à",
         "saveSchedule": "Enregistrer",
-        "saving": "Enregistrement..."
+        "saving": "Enregistrement...",
+        "startTimeLabel": "{day} — heure de début",
+        "endTimeLabel": "{day} — heure de fin",
+        "saveErrorFallback": "Échec de l'enregistrement des horaires."
       }
     },
     "nav": {
@@ -762,6 +765,9 @@
       "detailTitle": "Détails du pressing",
       "profileTab": "Profil & Conditions",
       "hoursTab": "Horaires hebdomadaires",
+      "hoursClosedLabel": "Fermé",
+      "hoursSaveButton": "Enregistrer les horaires",
+      "hoursSaveSuccess": "Horaires enregistrés avec succès",
       "closuresTab": "Fermetures exceptionnelles",
       "exclusionsTab": "Articles exclus",
       "staffTab": "Comptes du personnel",
@@ -839,6 +845,9 @@
       "detailTitle": "Fiche du coursier",
       "profileTab": "Profil & Finances",
       "shiftsTab": "Créneaux de garde",
+      "shiftsOffLabel": "Pas de garde",
+      "shiftsSaveButton": "Enregistrer les créneaux",
+      "shiftsSaveSuccess": "Créneaux de travail enregistrés avec succès",
       "zonesTab": "Zones couvertes",
       "cashCeiling": "Plafond d'espèces (CDF)",
       "securityDeposit": "Dépôt de garantie (CDF)",
