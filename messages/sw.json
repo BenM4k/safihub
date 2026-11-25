@@ -17,6 +17,10 @@
       "fr": "Français",
       "en": "English",
       "sw": "Kiswahili"
+    },
+    "orderEvents": {
+      "disputeResolved": "Mgogoro umetatuliwa",
+      "disputeResolvedWithCompensation": "Mgogoro umetatuliwa ({amount} {currency})"
     }
   },
   "appShell": {
@@ -677,7 +681,12 @@
       "recentOrdersColAmount": "Kiasi",
       "recentOrdersShowingCount": "Inaonyesha maagizo {count}",
       "recentOrdersViewAll": "Tazama maagizo yote",
-      "operationsLoadError": "Hitilafu ya kupakia shughuli"
+      "operationsLoadError": "Hitilafu ya kupakia shughuli",
+      "customerFallback": "Mteja",
+      "houseFallback": "Dobi",
+      "assignedCourierLabel": "Mjumbe aliyeteuliwa",
+      "loadingMetricsAria": "Inapakia takwimu",
+      "loadingOperationsAria": "Inapakia shughuli za moja kwa moja"
     },
     "neighborhoods": {
       "title": "Mitaa & Kanda za Usafirishaji",
@@ -1476,7 +1485,18 @@
         "unexpectedError": "Hitilafu isiyotarajiwa wakati wa kuunda"
       },
       "errorLoadingOrders": "Hitilafu wakati wa kupakia maagizo",
-      "retryOrders": "Jaribu tena"
+      "retryOrders": "Jaribu tena",
+      "channelApp": "App ya Mteja",
+      "channelWhatsapp": "WhatsApp",
+      "channelPhone": "Simu",
+      "paymentToPay": "Ya kulipa",
+      "timelineTransition": "Mabadiliko",
+      "timelineActorBy": "Na",
+      "neighborhoodLabel": "Mtaa",
+      "loadingOrdersAria": "Inapakia maagizo",
+      "removeDateRangeFilter": "Ondoa kichujio cha muda",
+      "detailLoadError": "Imeshindwa kupakia maelezo ya agizo.",
+      "exportOrdersError": "Imeshindwa kuhamisha maagizo yaliyochujwa."
     },
     "dispatch": {
       "title": "Dashibodi ya Ugawaji wa Kazi",
@@ -1547,7 +1567,22 @@
       "urgencyUrgent": "Ya haraka",
       "urgencyOverdue": "Muda umepita (+dakika {minutes})",
       "errorLoadingDispatch": "Hitilafu wakati wa kupakia data za utumaji",
-      "retryDispatch": "Jaribu tena"
+      "retryDispatch": "Jaribu tena",
+      "slaSubtitle": "SLA dakika 45 · Ufuatiliaji wa haraka wa madobi washirika",
+      "filterDelayAriaLabel": "Chuja kwa ucheleweshaji",
+      "sortAriaLabel": "Panga maagizo",
+      "missionsAc20Subtitle": "Uteuzi mkali wa AC 20 (mjumbe lazima afikie kanda zote mbili)",
+      "missionTypePickup": "Ukusanyaji",
+      "missionTypeDelivery": "Uwasilishaji",
+      "missionRouteLabel": "Njia:",
+      "missionZoneClient": "Eneo la Mteja ({zone})",
+      "missionZoneHouse": "Eneo la Dobi ({zone})",
+      "missionSlotLabel": "Muda",
+      "missionLandmarkLabel": "Alama",
+      "selectCourierWithCount": "Chagua mjumbe ({count})",
+      "assigningCourier": "Inateua...",
+      "loadingDispatchAria": "Inapakia ugawaji",
+      "assignMissionError": "Imeshindwa kumteua mjumbe. Tafadhali jaribu tena."
     },
     "settings": {
       "title": "Mipangilio ya Mfumo",
@@ -1907,7 +1942,29 @@
       "retry": "Jaribu tena",
       "statusOpen": "Wazi",
       "statusResolved": "Imetatuliwa",
-      "orderLink": "Agizo #{code}"
+      "orderLink": "Agizo #{code}",
+      "tabAll": "Yote",
+      "searchPlaceholder": "Tafuta kwa namba ya agizo, maelezo au aina...",
+      "resolutionSummaryTitle": "Uamuzi wa utatuzi",
+      "resolveButton": "Tatua mgogoro",
+      "resolveDialogTitle": "Tatua mgogoro",
+      "resolveDialogDesc": "Agizo #{code} — Andika uamuzi wa mwisho na fidia yoyote.",
+      "resolutionLabel": "Muhtasari wa utatuzi",
+      "resolutionPlaceholder": "Mfano: Marejesho ya sehemu yameidhinishwa baada ya ukaguzi...",
+      "resolutionMinError": "Tafadhali weka angalau herufi 5 za utatuzi.",
+      "compensationLabel": "Fidia (hiari)",
+      "compensationInvalidError": "Kiasi cha fidia lazima kiwe nambari chanya.",
+      "currencyLabel": "Sarafu",
+      "cancelResolve": "Ghairi",
+      "resolving": "Inatatua...",
+      "confirmResolve": "Thibitisha utatuzi",
+      "loadingDisputesAria": "Inapakia migogoro",
+      "errorGeneric": "Imeshindwa kutatua mgogoro. Tafadhali jaribu tena.",
+      "errorNetworkReconcile": "Muunganisho umekatika. Hali ya mgogoro imesasishwa.",
+      "errorUnauthorized": "Huna idhini ya kutatua mgogoro huu.",
+      "errorNotFound": "Mgogoro haujapatikana.",
+      "errorAlreadyResolved": "Mgogoro huu tayari umetatuliwa.",
+      "errorInvalidInput": "Taarifa za utatuzi hazifai."
     },
     "whatsapp": {
       "title": "Dashibodi ya Majaribio ya WhatsApp Cloud API",

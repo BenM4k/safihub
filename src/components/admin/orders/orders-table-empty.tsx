@@ -15,8 +15,8 @@ export function OrdersTableEmpty({ colSpan, onResetFilters }: OrdersTableEmptyPr
   return (
     <tr>
       <td colSpan={colSpan} className="px-4 py-16 text-center">
-        <div className="max-w-xs mx-auto space-y-3">
-          <div className="w-10 h-10 rounded-full bg-surface border border-border-strong flex items-center justify-center mx-auto text-ink-400 shadow-2xs">
+        <div className="max-w-xs mx-auto space-y-3 animate-enter-fast">
+          <div className="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center mx-auto text-muted-foreground shadow-2xs">
             <RotateCcw className="w-5 h-5" />
           </div>
           <div>
@@ -28,7 +28,7 @@ export function OrdersTableEmpty({ colSpan, onResetFilters }: OrdersTableEmptyPr
             variant="outline"
             size="sm"
             onClick={onResetFilters}
-            className="text-xs h-8 font-semibold border-border-strong shadow-xs hover:shadow-sm cursor-pointer"
+            className="text-xs min-h-10 font-semibold border-border shadow-xs hover:shadow-sm press cursor-pointer"
           >
             {t("resetFiltersFull")}
           </Button>

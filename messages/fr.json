@@ -17,6 +17,10 @@
       "fr": "Français",
       "en": "English",
       "sw": "Kiswahili"
+    },
+    "orderEvents": {
+      "disputeResolved": "Litige résolu",
+      "disputeResolvedWithCompensation": "Litige résolu ({amount} {currency})"
     }
   },
   "appShell": {
@@ -677,7 +681,12 @@
       "recentOrdersColAmount": "Montant",
       "recentOrdersShowingCount": "Affichage de {count} commandes",
       "recentOrdersViewAll": "Voir toutes les commandes",
-      "operationsLoadError": "Erreur de chargement des opérations"
+      "operationsLoadError": "Erreur de chargement des opérations",
+      "customerFallback": "Client",
+      "houseFallback": "Pressing",
+      "assignedCourierLabel": "Coursier assigné",
+      "loadingMetricsAria": "Chargement des indicateurs",
+      "loadingOperationsAria": "Chargement des opérations en direct"
     },
     "neighborhoods": {
       "title": "Quartiers & Zones de livraison",
@@ -1476,7 +1485,18 @@
         "unexpectedError": "Erreur inattendue lors de la création"
       },
       "errorLoadingOrders": "Erreur lors du chargement des commandes",
-      "retryOrders": "Réessayer"
+      "retryOrders": "Réessayer",
+      "channelApp": "App Client",
+      "channelWhatsapp": "WhatsApp",
+      "channelPhone": "Appel Téléphonique",
+      "paymentToPay": "À payer",
+      "timelineTransition": "Transition",
+      "timelineActorBy": "Par",
+      "neighborhoodLabel": "Quartier",
+      "loadingOrdersAria": "Chargement des commandes",
+      "removeDateRangeFilter": "Réinitialiser le filtre de période",
+      "detailLoadError": "Impossible de charger les détails de la commande.",
+      "exportOrdersError": "Impossible d'exporter les commandes filtrées."
     },
     "dispatch": {
       "title": "Écran de Dispatch Opérationnel",
@@ -1547,7 +1567,22 @@
       "urgencyUrgent": "Urgent",
       "urgencyOverdue": "En retard (+{minutes} min)",
       "errorLoadingDispatch": "Erreur lors du chargement des données de dispatch",
-      "retryDispatch": "Réessayer"
+      "retryDispatch": "Réessayer",
+      "slaSubtitle": "SLA 45 min · Chasse proactive des pressings partenaires",
+      "filterDelayAriaLabel": "Filtrer par délai",
+      "sortAriaLabel": "Trier les commandes",
+      "missionsAc20Subtitle": "Affectation stricte selon AC 20 (le coursier doit obligatoirement couvrir les deux zones)",
+      "missionTypePickup": "Collecte",
+      "missionTypeDelivery": "Livraison",
+      "missionRouteLabel": "Trajet :",
+      "missionZoneClient": "Zone Client ({zone})",
+      "missionZoneHouse": "Zone Pressing ({zone})",
+      "missionSlotLabel": "Créneau",
+      "missionLandmarkLabel": "Repère",
+      "selectCourierWithCount": "Sélectionner un coursier ({count})",
+      "assigningCourier": "Assignation...",
+      "loadingDispatchAria": "Chargement du dispatch",
+      "assignMissionError": "Impossible d'assigner le coursier. Veuillez réessayer."
     },
     "settings": {
       "title": "Paramètres de la plateforme",
@@ -1907,7 +1942,29 @@
       "retry": "Réessayer",
       "statusOpen": "Ouvert",
       "statusResolved": "Résolu",
-      "orderLink": "Commande #{code}"
+      "orderLink": "Commande #{code}",
+      "tabAll": "Tous",
+      "searchPlaceholder": "Rechercher par commande, description ou type...",
+      "resolutionSummaryTitle": "Décision de résolution",
+      "resolveButton": "Résoudre le litige",
+      "resolveDialogTitle": "Résoudre le litige",
+      "resolveDialogDesc": "Commande #{code} — Documentez la décision finale et l'éventuelle compensation.",
+      "resolutionLabel": "Résumé de la résolution",
+      "resolutionPlaceholder": "Ex : Remboursement partiel accordé suite au contrôle...",
+      "resolutionMinError": "Veuillez saisir au moins 5 caractères pour la résolution.",
+      "compensationLabel": "Compensation (optionnel)",
+      "compensationInvalidError": "Le montant de compensation doit être un entier positif.",
+      "currencyLabel": "Devise",
+      "cancelResolve": "Annuler",
+      "resolving": "Validation...",
+      "confirmResolve": "Confirmer la résolution",
+      "loadingDisputesAria": "Chargement des litiges",
+      "errorGeneric": "Impossible de résoudre le litige. Veuillez réessayer.",
+      "errorNetworkReconcile": "La connexion a été interrompue. L'état du litige a été actualisé.",
+      "errorUnauthorized": "Accès non autorisé pour résoudre ce litige.",
+      "errorNotFound": "Ce litige est introuvable.",
+      "errorAlreadyResolved": "Ce litige a déjà été résolu.",
+      "errorInvalidInput": "Les informations saisies sont invalides."
     },
     "whatsapp": {
       "title": "Console de Test WhatsApp Cloud API",

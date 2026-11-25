@@ -12,8 +12,16 @@ import {
   createManualAdminOrder,
   executeAdminOnBehalfAction,
   getAdminOrderDetail,
+  listFilteredAdminOrdersForExport,
+  resolveAdminDispute,
 } from "@/services/admin";
-import type { OrderDetailRecord, OrderEventRecord, OrderItemRecord } from "@/dal";
+import type {
+  OrderDetailRecord,
+  OrderEventRecord,
+  OrderItemRecord,
+  OrderListItemRecord,
+} from "@/dal";
+import { parseAdminOrdersSearchParams } from "@/lib/admin-orders-query";
 import {
   approvalMethodEnum,
   orderStatusEnum,
@@ -258,5 +266,73 @@ export async function getAdminOrderDetailAction(orderId: string): Promise<
   }
 
   return getAdminOrderDetail(parsed.data);
+}
+
+const resolveDisputeSchema = z.object({
+  disputeId: z.string().uuid("INVALID_DISPUTE_ID"),
+  resolution: z
+    .string()
+    .trim()
+    .min(5, "RESOLUTION_TOO_SHORT")
+    .max(1000, "INVALID_INPUT"),
+  compensationAmount: z
+    .number()
+    .int("INVALID_COMPENSATION")
+    .min(0, "INVALID_COMPENSATION")
+    .max(10_000_000, "INVALID_COMPENSATION")
+    .nullable()
+    .optional(),
+  currency: z.enum(["CDF", "USD"]).optional(),
+});
+
+export async function exportFilteredAdminOrdersAction(
+  rawParams: Record<string, string | string[] | undefined>
+): Promise<Result<OrderListItemRecord[]>> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err("UNAUTHORIZED");
+
+  const query = parseAdminOrdersSearchParams(rawParams);
+  return listFilteredAdminOrdersForExport(query);
+}
+
+export async function resolveAdminDisputeAction(input: {
+  disputeId: string;
+  resolution: string;
+  compensationAmount?: number | null;
+  currency?: "CDF" | "USD";
+}): Promise<Result<{ orderId: string; resolvedAt: Date }>> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err("UNAUTHORIZED");
+
+  const parsed = resolveDisputeSchema.safeParse(input);
+  if (!parsed.success) {
+    const firstIssue = parsed.error.issues[0];
+    const code = firstIssue?.message;
+    if (
+      code === "INVALID_DISPUTE_ID" ||
+      code === "RESOLUTION_TOO_SHORT" ||
+      code === "INVALID_COMPENSATION"
+    ) {
+      return err(code);
+    }
+    return err("INVALID_INPUT");
+  }
+
+  const res = await resolveAdminDispute({
+    disputeId: parsed.data.disputeId,
+    resolution: parsed.data.resolution,
+    compensationAmount: parsed.data.compensationAmount ?? null,
+    currency: parsed.data.currency,
+    adminId: auth.value.user.id,
+  });
+
+  if (res.ok) {
+    revalidateTag(CACHE_TAGS.order(res.value.orderId), "max");
+    revalidatePath(`/admin/orders/${res.value.orderId}`);
+    revalidatePath("/admin/disputes");
+    revalidatePath("/admin");
+  }
+
+  return res;
 }
 

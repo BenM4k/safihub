@@ -1,12 +1,16 @@
+import { getTranslations } from "next-intl/server";
 import { CheckCircle2, Clock, AlertTriangle, Truck, Sparkles, XCircle } from "lucide-react";
 import type { OrderEventRecord } from "@/dal";
+import { getStructuredDisputeResolution } from "@/lib/order-event-formatters";
 
 interface OrderStatusTimelineProps {
   events: OrderEventRecord[];
   currentStatus: string;
 }
 
-export function OrderStatusTimeline({ events }: OrderStatusTimelineProps) {
+export async function OrderStatusTimeline({ events }: OrderStatusTimelineProps) {
+  const tEvents = await getTranslations("common.orderEvents");
+
   const getEventIcon = (type: string, toStatus: string | null) => {
     if (toStatus === "cancelled" || toStatus === "expired" || toStatus === "rejected") {
       return <XCircle className="size-4 text-rose-600" />;
@@ -31,38 +35,63 @@ export function OrderStatusTimeline({ events }: OrderStatusTimelineProps) {
       </h3>
 
       <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
-        {events.map((ev) => (
-          <div key={ev.id} className="relative group">
-            <span className="absolute -left-6 top-0.5 size-5 rounded-full bg-card border-2 border-border flex items-center justify-center">
-              {getEventIcon(ev.type, ev.toStatus)}
-            </span>
+        {events.map((ev) => {
+          const disputeMeta = getStructuredDisputeResolution(ev.payload);
+          const categoryLabel = disputeMeta
+            ? disputeMeta.compensationAmount !== null
+              ? tEvents("disputeResolvedWithCompensation", {
+                  amount: disputeMeta.compensationAmount,
+                  currency: disputeMeta.currency,
+                })
+              : tEvents("disputeResolved")
+            : null;
 
-            <div className="space-y-0.5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <p className="text-xs font-bold text-heading">
-                  {ev.note || ev.toStatus || ev.type}
-                </p>
-                <span className="text-[11px] text-muted-foreground/70">
-                  {new Date(ev.createdAt).toLocaleTimeString("fr-FR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  {" · "}
-                  {new Date(ev.createdAt).toLocaleDateString("fr-FR", {
-                    day: "numeric",
-                    month: "short",
-                  })}
-                </span>
+          return (
+            <div key={ev.id} className="relative group">
+              <span className="absolute -left-6 top-0.5 size-5 rounded-full bg-card border-2 border-border flex items-center justify-center">
+                {getEventIcon(ev.type, ev.toStatus)}
+              </span>
+
+              <div className="space-y-0.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <div className="space-y-0.5">
+                    {categoryLabel && (
+                      <p className="text-xs font-bold text-heading">
+                        {categoryLabel}
+                      </p>
+                    )}
+                    <p
+                      className={
+                        categoryLabel
+                          ? "text-xs text-foreground"
+                          : "text-xs font-bold text-heading"
+                      }
+                    >
+                      {ev.note || ev.toStatus || ev.type}
+                    </p>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground/70">
+                    {new Date(ev.createdAt).toLocaleTimeString("fr-FR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    {" · "}
+                    {new Date(ev.createdAt).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </span>
+                </div>
+
+                {ev.approvalMethod && (
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                    Méthode de validation : {ev.approvalMethod}
+                  </p>
+                )}
               </div>
-
-              {ev.approvalMethod && (
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
-                  Méthode de validation : {ev.approvalMethod}
-                </p>
-              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

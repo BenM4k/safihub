@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { ExternalLink } from "lucide-react";
 import { guardAdminRoute } from "@/services/auth";
 import { getAdminOrderDetail } from "@/services/admin";
@@ -25,19 +25,28 @@ interface OrderDetailPageProps {
 }
 
 export default async function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
-  await guardAdminRoute();
-  const { orderId } = await params;
-  const t = await getTranslations("admin.orders");
-  const res = await getAdminOrderDetail(orderId);
+  const [, { orderId }, t, locale] = await Promise.all([
+    guardAdminRoute(),
+    params,
+    getTranslations("admin.orders"),
+    getLocale(),
+  ]);
 
+  const res = await getAdminOrderDetail(orderId);
   if (!res.ok || !res.value) {
     notFound();
   }
 
   const { order, items, events } = res.value;
+  const formatTime = (date: Date) =>
+    new Date(date).toLocaleTimeString(locale, {
+      timeZone: "Africa/Lubumbashi",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 animate-enter">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-5">
         <div className="flex flex-col gap-1.5">
@@ -72,8 +81,13 @@ export default async function AdminOrderDetailPage({ params }: OrderDetailPagePr
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild className="text-xs border-border-strong">
-            <Link href={`/track/${order.trackingToken}`} target="_blank" rel="noopener noreferrer" className="gap-1.5">
+          <Button variant="outline" size="sm" asChild className="text-xs min-h-10 border-border press">
+            <Link
+              href={`/track/${order.trackingToken}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="gap-1.5"
+            >
               <span>{t("clientTrackingView")}</span>
               <ExternalLink className="size-3.5 text-muted-foreground" />
             </Link>
@@ -82,42 +96,44 @@ export default async function AdminOrderDetailPage({ params }: OrderDetailPagePr
       </div>
 
       {/* Details Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Customer card */}
-        <Card className="p-4 rounded-xl border border-border bg-card shadow-xs gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-stagger">
+        <Card className="p-4 rounded-xl border border-border bg-card shadow-xs gap-2 hover-lift">
           <CardHeader className="p-0 space-y-0">
             <CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
               {t("customer")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0 flex flex-col gap-1 text-xs text-ink-600">
+          <CardContent className="p-0 flex flex-col gap-1 text-xs text-foreground">
             <p className="text-sm font-semibold text-heading">
               {order.customerName || t("guestCustomer")}
             </p>
-            <p className="font-mono text-ink-700">{order.customerPhone}</p>
+            <p className="font-mono text-foreground">{order.customerPhone}</p>
             <p>
-              Quartier: <span className="font-medium text-heading">{order.neighborhoodName || t("unspecified")}</span>
+              {t("neighborhoodLabel")}:{" "}
+              <span className="font-medium text-heading">
+                {order.neighborhoodName || t("unspecified")}
+              </span>
             </p>
-            <p>{t("landmark")}: {order.landmark}</p>
+            <p>
+              {t("landmark")}: {order.landmark}
+            </p>
           </CardContent>
         </Card>
 
-        {/* House card */}
-        <Card className="p-4 rounded-xl border border-border bg-card shadow-xs gap-2">
+        <Card className="p-4 rounded-xl border border-border bg-card shadow-xs gap-2 hover-lift">
           <CardHeader className="p-0 space-y-0">
             <CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
               {t("house")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0 flex flex-col gap-1.5 text-xs text-ink-600">
+          <CardContent className="p-0 flex flex-col gap-1.5 text-xs text-foreground">
             <p className="text-sm font-semibold text-heading">
               {order.houseName || order.houseId}
             </p>
             <p>
               {t("pickupSlot")}:{" "}
-              <span className="font-medium text-heading">
-                {new Date(order.pickupSlotStart).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} -{" "}
-                {new Date(order.pickupSlotEnd).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              <span className="font-medium text-heading tabular-nums">
+                {formatTime(order.pickupSlotStart)} - {formatTime(order.pickupSlotEnd)}
               </span>
             </p>
             {order.deliveryConfirmationCode && (
@@ -128,8 +144,7 @@ export default async function AdminOrderDetailPage({ params }: OrderDetailPagePr
           </CardContent>
         </Card>
 
-        {/* Financials card */}
-        <Card className="p-4 rounded-xl border border-border bg-card shadow-xs gap-2 text-xs text-ink-600">
+        <Card className="p-4 rounded-xl border border-border bg-card shadow-xs gap-2 text-xs text-foreground hover-lift">
           <CardHeader className="p-0 space-y-0">
             <CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1">
               {t("financialsTitle")}
@@ -138,26 +153,26 @@ export default async function AdminOrderDetailPage({ params }: OrderDetailPagePr
           <CardContent className="p-0 flex flex-col gap-1.5">
             <div className="flex justify-between">
               <span>{t("itemsTotal")}:</span>
-              <span className="font-medium text-heading">
-                {order.itemsTotal.toLocaleString()} {order.currency}
+              <span className="font-medium tabular-nums text-heading">
+                {order.itemsTotal.toLocaleString(locale)} {order.currency}
               </span>
             </div>
             <div className="flex justify-between">
               <span>{t("deliveryFee")}:</span>
-              <span className="font-medium text-heading">
-                {order.deliveryFee.toLocaleString()} {order.currency}
+              <span className="font-medium tabular-nums text-heading">
+                {order.deliveryFee.toLocaleString(locale)} {order.currency}
               </span>
             </div>
             <div className="flex justify-between pt-1 border-t border-border font-semibold text-heading">
               <span>{t("totalDue")}:</span>
-              <span className="text-primary font-bold">
-                {order.totalDue.toLocaleString()} {order.currency}
+              <span className="text-primary font-bold tabular-nums">
+                {order.totalDue.toLocaleString(locale)} {order.currency}
               </span>
             </div>
             <div className="flex justify-between text-[11px] text-muted-foreground pt-1">
               <span>{t("commission", { rate: order.commissionBps / 100 })}:</span>
-              <span>
-                {order.commissionAmount.toLocaleString()} {order.currency}
+              <span className="tabular-nums">
+                {order.commissionAmount.toLocaleString(locale)} {order.currency}
               </span>
             </div>
             {order.exchangeRateUsed && (
@@ -169,7 +184,7 @@ export default async function AdminOrderDetailPage({ params }: OrderDetailPagePr
         </Card>
       </div>
 
-      {/* Main split: Items & On-behalf actions vs Event Timeline */}
+      {/* Main split */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col gap-6">
           <OrderItemsList items={items} currency={order.currency} />

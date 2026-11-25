@@ -1,16 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
-import type { OrderListItemRecord } from "@/dal";
+import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import type { OrderListItemRecord, PaginatedOrdersResult } from "@/dal";
+import {
+  exportFilteredAdminOrdersAction,
+  getAdminOrderDetailAction,
+} from "@/actions/admin-order.actions";
+import { err } from "@/lib/result";
 import { exportOrdersToCSV } from "@/lib/order-formatters";
+import {
+  buildAdminOrdersQueryString,
+  DEFAULT_ADMIN_ORDERS_QUERY,
+  type AdminOrdersQueryParams,
+  type AdminOrderSortField,
+} from "@/lib/admin-orders-query";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { OrdersStatsRow } from "./orders-stats-row";
-import { OrdersFilterBar } from "./orders-filter-bar";
+import { OrdersFilterBar, type FilterState } from "./orders-filter-bar";
 import { OrdersBulkActions } from "./orders-bulk-actions";
 import { OrdersDataTable } from "./orders-data-table";
 import { DataTablePagination } from "@/components/admin/shared/data-table-pagination";
-import { useOrdersFilter } from "./use-orders-filter";
+import type { OrderDetailActionResult } from "./order-details-async-body";
 
 const OrderDetailsSheet = dynamic(
   () => import("./order-details-sheet").then((m) => m.OrderDetailsSheet),
@@ -28,154 +41,246 @@ const OrderCancelDialog = dynamic(
 );
 
 interface OrdersManagementClientProps {
-  initialOrders: OrderListItemRecord[];
+  data: PaginatedOrdersResult;
+  query: AdminOrdersQueryParams;
   houses: Array<{ id: string; name: string }>;
 }
 
 export function OrdersManagementClient({
-  initialOrders,
+  data,
+  query,
   houses,
 }: OrdersManagementClientProps) {
+  const t = useTranslations("admin.orders");
   const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
-  const {
-    filters,
-    stats,
-    tabCounts,
-    filteredOrders,
-    sortedOrders,
-    paginatedOrders,
-    sortField,
-    sortDirection,
-    currentPage,
-    pageSize,
-    selectedIds,
-    handleFilterChange,
-    handleResetFilters,
-    handleSort,
-    handleToggleSelect,
-    handleToggleSelectAll,
-    setCurrentPage,
-    setPageSize,
-    setSelectedIds,
-  } = useOrdersFilter(initialOrders);
+  const latestQueryRef = useRef<AdminOrdersQueryParams>(query);
+  useEffect(() => {
+    latestQueryRef.current = query;
+  }, [query]);
 
-  // Dialog / Sheet states
-  const [detailsOrder, setDetailsOrder] = useState<OrderListItemRecord | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [detailState, setDetailState] = useState<{
+    order: OrderListItemRecord;
+    promise: Promise<OrderDetailActionResult>;
+  } | null>(null);
   const [reassignOrder, setReassignOrder] = useState<OrderListItemRecord | null>(null);
   const [cancelOrder, setCancelOrder] = useState<OrderListItemRecord | null>(null);
 
-  function handleExportAllFiltered() {
-    exportOrdersToCSV(sortedOrders);
+  function navigateQuery(next: AdminOrdersQueryParams) {
+    latestQueryRef.current = next;
+    const qs = buildAdminOrdersQueryString(next);
+    startTransition(() => {
+      router.replace(qs ? `${pathname}${qs}` : pathname, { scroll: false });
+    });
   }
 
-  function handleExportSelected() {
-    const selected = initialOrders.filter((o) => selectedIds.includes(o.id));
-    exportOrdersToCSV(selected);
+  function handleFilterChange(partial: Partial<FilterState>) {
+    setSelectedIds([]);
+    navigateQuery({
+      ...latestQueryRef.current,
+      ...partial,
+      page: 1,
+    });
   }
 
-  function handleActionSuccess() {
-    router.refresh();
+  function handleResetFilters() {
+    setSelectedIds([]);
+    navigateQuery({
+      ...DEFAULT_ADMIN_ORDERS_QUERY,
+      pageSize: latestQueryRef.current.pageSize,
+    });
   }
+
+  function handleSort(field: AdminOrderSortField) {
+    const base = latestQueryRef.current;
+    const nextDirection =
+      base.sortField === field
+        ? base.sortDirection === "asc"
+          ? "desc"
+          : "asc"
+        : "desc";
+    setSelectedIds([]);
+    navigateQuery({
+      ...base,
+      sortField: field,
+      sortDirection: nextDirection,
+      page: 1,
+    });
+  }
+
+  function handleToggleSelect(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  }
+
+  function handleToggleSelectAll() {
+    const allSelected =
+      data.orders.length > 0 &&
+      data.orders.every((o) => selectedIds.includes(o.id));
+    setSelectedIds(allSelected ? [] : data.orders.map((o) => o.id));
+  }
+
+  function fetchDetailSafely(orderId: string): Promise<OrderDetailActionResult> {
+    return getAdminOrderDetailAction(orderId).catch(() =>
+      err(t("detailLoadError"))
+    );
+  }
+
+  function openOrderDetails(order: OrderListItemRecord) {
+    setDetailState({
+      order,
+      promise: fetchDetailSafely(order.id),
+    });
+  }
+
+  function refreshOrderDetails() {
+    setDetailState((prev) =>
+      prev
+        ? {
+            order: prev.order,
+            promise: fetchDetailSafely(prev.order.id),
+          }
+        : null
+    );
+    startTransition(() => {
+      router.refresh();
+    });
+  }
+
+  async function handleExportFiltered() {
+    setExportError(null);
+    setIsExporting(true);
+    try {
+      const active = latestQueryRef.current;
+      const res = await exportFilteredAdminOrdersAction({
+        search: active.search,
+        tab: active.tab,
+        dateRange: active.dateRange,
+        houseId: active.houseId,
+        source: active.source,
+        sortField: active.sortField,
+        sortDirection: active.sortDirection,
+      });
+      if (!res.ok) {
+        setExportError(res.error);
+        return;
+      }
+      exportOrdersToCSV(res.value);
+    } catch {
+      setExportError(t("exportOrdersError"));
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  const singleSelectedOrder =
+    selectedIds.length === 1
+      ? data.orders.find((o) => o.id === selectedIds[0])
+      : undefined;
 
   return (
     <div className="space-y-4 font-sans">
-      {/* 1. Clickable Stats Row */}
       <OrdersStatsRow
-        stats={stats}
-        activeTab={filters.tab}
+        stats={data.stats}
+        activeTab={query.tab}
         onSelectTab={(tab) => handleFilterChange({ tab })}
       />
 
-      {/* 2. Filter Bar with Tabs, Search, Dropdowns & Export */}
       <OrdersFilterBar
-        filters={filters}
+        filters={{
+          search: query.search,
+          tab: query.tab,
+          dateRange: query.dateRange,
+          houseId: query.houseId,
+          source: query.source,
+        }}
         onFilterChange={handleFilterChange}
         onResetFilters={handleResetFilters}
-        onExport={handleExportAllFiltered}
+        onExport={handleExportFiltered}
         houses={houses}
-        tabCounts={tabCounts}
-        totalFilteredCount={filteredOrders.length}
+        tabCounts={data.tabCounts}
+        isPending={isPending || isExporting}
       />
 
-      {/* 3. Bulk Action Bar */}
+      {exportError && (
+        <Alert variant="destructive">
+          <AlertDescription className="text-xs">{exportError}</AlertDescription>
+        </Alert>
+      )}
+
       <OrdersBulkActions
         selectedCount={selectedIds.length}
         onClearSelection={() => setSelectedIds([])}
-        onExportSelected={handleExportSelected}
+        onExportSelected={() =>
+          exportOrdersToCSV(data.orders.filter((o) => selectedIds.includes(o.id)))
+        }
         onCancelSelected={
-          selectedIds.length === 1
-            ? () => {
-                const target = initialOrders.find((o) => o.id === selectedIds[0]);
-                if (target) setCancelOrder(target);
-              }
-            : undefined
+          singleSelectedOrder ? () => setCancelOrder(singleSelectedOrder) : undefined
         }
         onReassignSelected={
-          selectedIds.length === 1
-            ? () => {
-                const target = initialOrders.find((o) => o.id === selectedIds[0]);
-                if (target) setReassignOrder(target);
-              }
-            : undefined
+          singleSelectedOrder ? () => setReassignOrder(singleSelectedOrder) : undefined
         }
       />
 
-      {/* 4. Orders Data Table */}
       <OrdersDataTable
-        orders={paginatedOrders}
+        orders={data.orders}
+        isLoading={isPending}
         selectedIds={selectedIds}
         onToggleSelectAll={handleToggleSelectAll}
         onToggleSelect={handleToggleSelect}
-        onOpenDetails={(o) => setDetailsOrder(o)}
-        onOpenReassign={(o) => setReassignOrder(o)}
-        onOpenCancel={(o) => setCancelOrder(o)}
+        onOpenDetails={openOrderDetails}
+        onOpenReassign={setReassignOrder}
+        onOpenCancel={setCancelOrder}
         onResetFilters={handleResetFilters}
-        sortField={sortField}
-        sortDirection={sortDirection}
+        sortField={query.sortField}
+        sortDirection={query.sortDirection}
         onSort={handleSort}
       />
 
-      {/* 5. Pagination */}
       <DataTablePagination
-        page={currentPage}
-        pageSize={pageSize}
-        totalItems={sortedOrders.length}
-        onPageChange={(p) => {
+        page={query.page}
+        pageSize={query.pageSize}
+        totalItems={data.totalCount}
+        onPageChange={(page) => {
           setSelectedIds([]);
-          setCurrentPage(p);
+          navigateQuery({ ...latestQueryRef.current, page });
         }}
-        onPageSizeChange={(s) => {
-          setPageSize(s);
-          setCurrentPage(1);
+        onPageSizeChange={(pageSize) => {
           setSelectedIds([]);
+          navigateQuery({ ...latestQueryRef.current, pageSize, page: 1 });
         }}
         className="rounded-xl border border-border"
       />
 
-      {/* 6. Details Sheet (Audit Timeline + On-Behalf Actions) */}
-      {detailsOrder && (
+      {detailState && (
         <OrderDetailsSheet
-          order={detailsOrder}
-          onClose={() => setDetailsOrder(null)}
+          order={detailState.order}
+          detailPromise={detailState.promise}
+          onRefreshDetail={refreshOrderDetails}
+          onClose={() => setDetailState(null)}
           onOpenReassign={(o) => {
-            setDetailsOrder(null);
+            setDetailState(null);
             setReassignOrder(o);
           }}
           onOpenCancel={(o) => {
-            setDetailsOrder(null);
+            setDetailState(null);
             setCancelOrder(o);
           }}
         />
       )}
 
-      {/* 7. Dialogs */}
       {reassignOrder && (
         <OrderReassignDialog
           order={reassignOrder}
           houses={houses}
           onClose={() => setReassignOrder(null)}
-          onSuccess={handleActionSuccess}
+          onSuccess={() => router.refresh()}
         />
       )}
 
@@ -183,7 +288,7 @@ export function OrdersManagementClient({
         <OrderCancelDialog
           order={cancelOrder}
           onClose={() => setCancelOrder(null)}
-          onSuccess={handleActionSuccess}
+          onSuccess={() => router.refresh()}
         />
       )}
     </div>

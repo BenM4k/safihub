@@ -1,9 +1,16 @@
 "use client";
 
 import { Fragment } from "react";
-import { AlertCircle, CheckCircle2, Clock, Package, XCircle } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Package,
+  XCircle,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Separator } from "@/components/ui/separator";
+import type { AdminOrderTab } from "@/lib/admin-orders-query";
 
 interface OrdersStatsRowProps {
   stats: {
@@ -13,14 +20,25 @@ interface OrdersStatsRowProps {
     delivered: number;
     cancelled: number;
   };
-  activeTab: string;
-  onSelectTab: (tab: string) => void;
+  activeTab: AdminOrderTab;
+  onSelectTab: (tab: AdminOrderTab) => void;
 }
 
-export function OrdersStatsRow({ stats, activeTab, onSelectTab }: OrdersStatsRowProps) {
+export function OrdersStatsRow({
+  stats,
+  activeTab,
+  onSelectTab,
+}: OrdersStatsRowProps) {
   const t = useTranslations("admin.orders");
 
-  const cards = [
+  const cards: Array<{
+    id: AdminOrderTab;
+    label: string;
+    count: number;
+    icon: typeof Clock;
+    colorClass: string;
+    badgeClass: string;
+  }> = [
     {
       id: "today",
       label: t("statsToday"),
@@ -34,8 +52,8 @@ export function OrdersStatsRow({ stats, activeTab, onSelectTab }: OrdersStatsRow
       label: t("statsAwaiting"),
       count: stats.awaiting,
       icon: AlertCircle,
-      colorClass: "text-amber-600 dark:text-amber-400",
-      badgeClass: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+      colorClass: "text-warning",
+      badgeClass: "bg-warning-soft text-warning",
     },
     {
       id: "in_progress",
@@ -50,8 +68,8 @@ export function OrdersStatsRow({ stats, activeTab, onSelectTab }: OrdersStatsRow
       label: t("statsDelivered"),
       count: stats.delivered,
       icon: CheckCircle2,
-      colorClass: "text-emerald-600 dark:text-emerald-400",
-      badgeClass: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+      colorClass: "text-success",
+      badgeClass: "bg-success-soft text-success",
     },
     {
       id: "cancelled",
@@ -59,12 +77,12 @@ export function OrdersStatsRow({ stats, activeTab, onSelectTab }: OrdersStatsRow
       count: stats.cancelled,
       icon: XCircle,
       colorClass: "text-destructive",
-      badgeClass: "bg-destructive/10 text-destructive",
+      badgeClass: "bg-destructive-soft text-destructive",
     },
   ];
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center py-1">
+    <div className="flex flex-col sm:flex-row sm:items-center py-1 animate-stagger">
       {cards.map((c, idx) => {
         const Icon = c.icon;
         const isSelected = activeTab === c.id;
@@ -72,18 +90,23 @@ export function OrdersStatsRow({ stats, activeTab, onSelectTab }: OrdersStatsRow
           <Fragment key={c.id}>
             {idx > 0 && (
               <>
-                <Separator orientation="vertical" className="hidden sm:block h-10 mx-3 shrink-0" />
-                <Separator orientation="horizontal" className="sm:hidden my-2" />
+                <Separator
+                  orientation="vertical"
+                  className="hidden sm:block h-10 mx-3 shrink-0"
+                />
+                <Separator
+                  orientation="horizontal"
+                  className="sm:hidden my-2"
+                />
               </>
             )}
             <button
               type="button"
               onClick={() => onSelectTab(isSelected ? "all" : c.id)}
-              className={`flex-1 text-left p-2.5 rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary ${
-                isSelected
-                  ? "bg-primary/10 text-primary"
-                  : "hover:bg-muted/50"
+              className={`flex-1 min-h-11 text-left p-2.5 rounded-md transition-all press cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                isSelected ? "bg-primary/10 text-primary" : "hover:bg-muted/50"
               }`}
+              aria-pressed={isSelected}
               aria-label={`${c.label}: ${c.count}`}
             >
               <div className="flex items-center justify-between gap-2">

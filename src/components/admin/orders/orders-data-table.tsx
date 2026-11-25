@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { OrderListItemRecord } from "@/dal";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -13,9 +14,13 @@ import {
 import { OrdersTableRow } from "./orders-table-row";
 import { OrdersTableSkeleton } from "./orders-table-skeleton";
 import { OrdersTableEmpty } from "./orders-table-empty";
+import type {
+  AdminOrderSortDirection,
+  AdminOrderSortField,
+} from "@/lib/admin-orders-query";
 
-export type SortField = "date" | "amount" | "code" | "customer";
-export type SortDirection = "asc" | "desc";
+export type SortField = AdminOrderSortField;
+export type SortDirection = AdminOrderSortDirection;
 
 interface OrdersDataTableProps {
   orders: OrderListItemRecord[];
@@ -50,8 +55,10 @@ export function OrdersDataTable({
 }: OrdersDataTableProps) {
   const t = useTranslations("admin.orders");
 
-  const isAllSelected = orders.length > 0 && orders.every((o) => selectedIds.includes(o.id));
-  const isPartiallySelected = !isAllSelected && orders.some((o) => selectedIds.includes(o.id));
+  const isAllSelected =
+    orders.length > 0 && orders.every((o) => selectedIds.includes(o.id));
+  const isPartiallySelected =
+    !isAllSelected && orders.some((o) => selectedIds.includes(o.id));
 
   function renderSortIcon(field: SortField) {
     if (sortField !== field) {
@@ -65,26 +72,26 @@ export function OrdersDataTable({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-background overflow-hidden">
+    <div
+      className={`rounded-lg border border-border bg-background overflow-hidden transition-opacity duration-200 ${
+        isLoading ? "opacity-65" : "opacity-100"
+      }`}
+    >
       <div className="overflow-x-auto max-h-[640px] relative">
         <Table className="w-full text-left text-xs">
           <TableHeader className="sticky top-0 z-10 bg-muted/40 backdrop-blur-xs border-b border-border">
             <TableRow className="border-b border-border hover:bg-muted/40">
-              {/* Checkbox */}
-              <TableHead className="w-10 px-3 py-2 text-center">
-                <input
-                  type="checkbox"
-                  checked={isAllSelected}
-                  ref={(el) => {
-                    if (el) el.indeterminate = isPartiallySelected;
-                  }}
-                  onChange={onToggleSelectAll}
-                  aria-label={t("selectAll")}
-                  className="rounded-sm size-4 accent-primary cursor-pointer"
-                />
+              {/* @ui-sdk/react Checkbox */}
+              <TableHead className="w-11 px-3 py-2 text-center">
+                <div className="flex items-center justify-center">
+                  <Checkbox
+                    checked={isPartiallySelected ? "indeterminate" : isAllSelected}
+                    onCheckedChange={onToggleSelectAll}
+                    aria-label={t("selectAll")}
+                  />
+                </div>
               </TableHead>
 
-              {/* Référence */}
               <TableHead className="px-3 py-2">
                 <button
                   type="button"
@@ -96,7 +103,6 @@ export function OrdersDataTable({
                 </button>
               </TableHead>
 
-              {/* Client */}
               <TableHead className="px-3 py-2">
                 <button
                   type="button"
@@ -108,12 +114,10 @@ export function OrdersDataTable({
                 </button>
               </TableHead>
 
-              {/* Pressing */}
               <TableHead className="px-3 py-2 hidden md:table-cell font-semibold uppercase text-2xs">
                 {t("colPressing")}
               </TableHead>
 
-              {/* Date de création */}
               <TableHead className="px-3 py-2 hidden sm:table-cell">
                 <button
                   type="button"
@@ -125,19 +129,16 @@ export function OrdersDataTable({
                 </button>
               </TableHead>
 
-              {/* Canal */}
               <TableHead className="px-3 py-2 hidden lg:table-cell font-semibold uppercase text-2xs">
                 {t("colChannel")}
               </TableHead>
 
-              {/* Paiement */}
               {showPaymentColumn && (
                 <TableHead className="px-3 py-2 hidden xl:table-cell font-semibold uppercase text-2xs">
                   {t("colPayment")}
                 </TableHead>
               )}
 
-              {/* Montant */}
               <TableHead className="px-3 py-2 text-right">
                 <button
                   type="button"
@@ -149,12 +150,10 @@ export function OrdersDataTable({
                 </button>
               </TableHead>
 
-              {/* Statut */}
               <TableHead className="px-3 py-2 font-semibold uppercase text-2xs">
                 {t("colStatus")}
               </TableHead>
 
-              {/* Actions */}
               <TableHead className="w-10 px-2 py-2 text-right font-semibold uppercase text-2xs">
                 {t("colActions")}
               </TableHead>
@@ -162,7 +161,7 @@ export function OrdersDataTable({
           </TableHeader>
 
           <TableBody>
-            {isLoading ? (
+            {isLoading && orders.length === 0 ? (
               <OrdersTableSkeleton showPaymentColumn={showPaymentColumn} />
             ) : orders.length === 0 ? (
               <OrdersTableEmpty
