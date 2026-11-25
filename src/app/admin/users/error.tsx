@@ -23,9 +23,9 @@ export default function AdminUsersError({
   return (
     <div
       role="alert"
-      className="p-8 my-8 bg-card rounded-2xl border-2 border-border-strong shadow-xs max-w-xl mx-auto space-y-4 text-center"
+      className="p-8 my-8 bg-card rounded-2xl border-2 border-border shadow-xs max-w-xl mx-auto space-y-4 text-center animate-enter"
     >
-      <div className="size-12 rounded-xl bg-destructive-light text-destructive border-2 border-destructive-base/30 flex items-center justify-center mx-auto">
+      <div className="size-12 rounded-xl bg-destructive-soft text-destructive border-2 border-destructive/30 flex items-center justify-center mx-auto">
         <AlertCircle className="size-6" />
       </div>
 

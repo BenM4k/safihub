@@ -5,9 +5,11 @@ import { useTranslations } from "next-intl";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/admin/shared/empty-state";
+import { DataTablePagination } from "@/components/admin/shared/data-table-pagination";
 import { HousesTableToolbar } from "./houses-table-toolbar";
 import { HousesTableHeader } from "./houses-table-header";
 import { HousesTableRow } from "./houses-table-row";
+import { HOUSES_PAGE_SIZE_OPTIONS } from "@/lib/admin-houses-query";
 import type { NeighborhoodRecord } from "@/dal";
 import type { AdminHouseRow, HouseFiltersState } from "./types";
 
@@ -15,6 +17,19 @@ interface HousesTableProps {
   houses: AdminHouseRow[];
   neighborhoods: NeighborhoodRecord[];
   defaultCommissionBps: number;
+  search: string;
+  status: HouseFiltersState["status"];
+  neighborhoodId: string;
+  page: number;
+  pageSize: number;
+  isPending?: boolean;
+  onFiltersChange: (next: {
+    search?: string;
+    status?: HouseFiltersState["status"];
+    neighborhoodId?: string;
+  }) => void;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   onSelectHouse: (house: AdminHouseRow) => void;
   onToggleStatus: (house: AdminHouseRow) => void;
   onViewOrders: (house: AdminHouseRow) => void;
@@ -26,6 +41,15 @@ export function HousesTable({
   houses,
   neighborhoods,
   defaultCommissionBps,
+  search,
+  status,
+  neighborhoodId,
+  page,
+  pageSize,
+  isPending = false,
+  onFiltersChange,
+  onPageChange,
+  onPageSizeChange,
   onSelectHouse,
   onToggleStatus,
   onViewOrders,
@@ -33,44 +57,36 @@ export function HousesTable({
   onOpenCreateDrawer,
 }: HousesTableProps) {
   const t = useTranslations("admin.houses");
-  const [filters, setFilters] = useState<HouseFiltersState>({
-    search: "",
-    status: "all",
-    neighborhoodId: "",
-    sortBy: "name",
-    sortOrder: "asc",
-  });
-
-  const handleFiltersChange = (next: Partial<HouseFiltersState>) => {
-    setFilters((prev) => ({ ...prev, ...next }));
-  };
+  const [sortBy, setSortBy] = useState<HouseFiltersState["sortBy"]>("name");
+  const [sortOrder, setSortOrder] = useState<HouseFiltersState["sortOrder"]>("asc");
 
   const handleSortToggle = (column: HouseFiltersState["sortBy"]) => {
-    if (filters.sortBy === column) {
-      handleFiltersChange({
-        sortOrder: filters.sortOrder === "asc" ? "desc" : "asc",
-      });
+    if (sortBy === column) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
-      handleFiltersChange({ sortBy: column, sortOrder: "asc" });
+      setSortBy(column);
+      setSortOrder("asc");
     }
   };
 
   const filteredAndSortedHouses = useMemo(() => {
     return houses
       .filter((h) => {
-        const query = filters.search.trim().toLowerCase();
+        const query = search.trim().toLowerCase();
         if (query) {
           const nameMatch = h.name.toLowerCase().includes(query);
-          const neighMatch = (h.neighborhoodName || "").toLowerCase().includes(query);
+          const neighMatch = (h.neighborhoodName || "")
+            .toLowerCase()
+            .includes(query);
           const phoneMatch = (h.contactPhone || "").includes(query);
           if (!nameMatch && !neighMatch && !phoneMatch) return false;
         }
 
-        if (filters.status !== "all" && h.status !== filters.status) {
+        if (status !== "all" && h.status !== status) {
           return false;
         }
 
-        if (filters.neighborhoodId && h.neighborhoodId !== filters.neighborhoodId) {
+        if (neighborhoodId && h.neighborhoodId !== neighborhoodId) {
           return false;
         }
 
@@ -78,7 +94,7 @@ export function HousesTable({
       })
       .sort((a, b) => {
         let cmp = 0;
-        switch (filters.sortBy) {
+        switch (sortBy) {
           case "name":
             cmp = a.name.localeCompare(b.name, "fr");
             break;
@@ -101,36 +117,43 @@ export function HousesTable({
             cmp = a.balanceOwedCDF - b.balanceOwedCDF;
             break;
         }
-        return filters.sortOrder === "asc" ? cmp : -cmp;
+        return sortOrder === "asc" ? cmp : -cmp;
       });
-  }, [houses, filters, defaultCommissionBps]);
+  }, [houses, search, status, neighborhoodId, sortBy, sortOrder, defaultCommissionBps]);
+
+  const totalItems = filteredAndSortedHouses.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const pagedHouses = filteredAndSortedHouses.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize
+  );
 
   return (
-    <div className="rounded-xl border border-border bg-background overflow-hidden">
+    <div className="rounded-xl border border-border bg-background overflow-hidden animate-enter-fast">
       <HousesTableToolbar
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
+        filters={{ search, status, neighborhoodId, sortBy, sortOrder }}
+        onFiltersChange={onFiltersChange}
         neighborhoods={neighborhoods}
-        totalFilteredCount={filteredAndSortedHouses.length}
+        totalFilteredCount={totalItems}
+        isPending={isPending}
       />
 
       <div className="overflow-x-auto">
         <Table>
           <HousesTableHeader
-            sortBy={filters.sortBy}
-            sortOrder={filters.sortOrder}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
             onSortToggle={handleSortToggle}
           />
           <TableBody className="divide-y divide-border">
-            {filteredAndSortedHouses.length === 0 ? (
+            {pagedHouses.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="py-12 px-4 text-center">
                   <EmptyState
                     title={houses.length === 0 ? t("emptyTitle") : t("emptyFilteredTitle")}
                     description={
-                      houses.length === 0
-                        ? t("emptyDesc")
-                        : t("emptyFilteredDesc")
+                      houses.length === 0 ? t("emptyDesc") : t("emptyFilteredDesc")
                     }
                     action={
                       <Button
@@ -140,9 +163,14 @@ export function HousesTable({
                         onClick={
                           houses.length === 0
                             ? onOpenCreateDrawer
-                            : () => handleFiltersChange({ search: "", status: "all", neighborhoodId: "" })
+                            : () =>
+                                onFiltersChange({
+                                  search: "",
+                                  status: "all",
+                                  neighborhoodId: "",
+                                })
                         }
-                        className="text-xs h-8 px-3"
+                        className="text-xs min-h-10 px-3 press"
                       >
                         {houses.length === 0 ? t("addHouse") : t("clearFilters")}
                       </Button>
@@ -151,7 +179,7 @@ export function HousesTable({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAndSortedHouses.map((house) => (
+              pagedHouses.map((house) => (
                 <HousesTableRow
                   key={house.id}
                   house={house}
@@ -166,6 +194,16 @@ export function HousesTable({
           </TableBody>
         </Table>
       </div>
+
+      <DataTablePagination
+        page={safePage}
+        pageSize={pageSize}
+        pageSizeOptions={HOUSES_PAGE_SIZE_OPTIONS}
+        totalItems={totalItems}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        hideIfSinglePage
+      />
     </div>
   );
 }

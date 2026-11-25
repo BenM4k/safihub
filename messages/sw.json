@@ -845,7 +845,10 @@
       "viewOrders": "Tazama maagizo",
       "viewSettlements": "Tazama malipo",
       "houseRowAria": "Maelezo ya duka la dobi {name}",
-      "houseActionsAria": "Vitendo vya {name}"
+      "houseActionsAria": "Vitendo vya {name}",
+      "loadingHousesAria": "Inapakia madobi",
+      "allHousesTab": "Madobi yote ({count})",
+      "pendingReviewsTab": "Ya kuthibitisha"
     },
     "couriers": {
       "title": "Usimamizi wa Madereva",
@@ -903,7 +906,12 @@
       "statusInactive": "Haifanyi kazi",
       "manage": "Simamia",
       "courierCount": "Msafirishaji {count}",
-      "defaultCeiling": "Chaguo-msingi"
+      "defaultCeiling": "Chaguo-msingi",
+      "loadingCouriersAria": "Inapakia wajumbe",
+      "searchCouriersPlaceholder": "Tafuta mjumbe kwa jina au simu...",
+      "emptyFilteredCouriers": "Hakuna mjumbe anayelingana na vichujio.",
+      "shiftsZonesSummary": "Zamu {shifts} · Kanda {zones}",
+      "loadError": "Imeshindwa kupakia orodha ya wajumbe."
     },
     "users": {
       "title": "Usimamizi wa Akaunti za Watumiaji",
@@ -1062,7 +1070,8 @@
       "errorTitle": "Hitilafu imetokea wakati wa kupakia watumiaji",
       "errorDescription": "Haikuweza kupata akaunti za watumiaji. Tafadhali angalia muunganisho wako au jaribu tena.",
       "retry": "Jaribu tena",
-      "noReasonSpecified": "Hakuna sababu iliyotajwa"
+      "noReasonSpecified": "Hakuna sababu iliyotajwa",
+      "loadingUsersAria": "Inapakia watumiaji"
     },
     "customers": {
       "title": "Wateja",
@@ -1291,7 +1300,8 @@
         "notesTitle": "Maelezo & Mapendeleo",
         "noNotes": "Hakuna maelezo maalum kwa wasifu huu."
       },
-      "retry": "Jaribu tena"
+      "retry": "Jaribu tena",
+      "loadingCustomersAria": "Inapakia wateja"
     },
     "orders": {
       "title": "Usimamizi wa Maagizo",
@@ -1745,7 +1755,9 @@
       "reversalConsequence": "Athari ya uhasibu : Uingizaji wa kufidia utaandikwa kwenye daftari. Kumbukumbu asili itabaki ikionekana ikiwa na alama ya Iliyofutwa na haitafutwa kamwe.",
       "reversalDescription": "Unakaribia kufuta upatanisho wa dereva {name} kwa tarehe {date}.",
       "deductFromDepositConfirmed": "Makato ya moja kwa moja ya upungufu kutoka kwenye amana ya dereva yameidhinishwa.",
-      "saving": "Inahifadhi..."
+      "saving": "Inahifadhi...",
+      "loadingCashAria": "Inapakia upatanisho wa fedha wa leo",
+      "loadingHistoryAria": "Inapakia historia ya fedha"
     },
     "settlements": {
       "title": "Malipo na Mapato",
@@ -1867,7 +1879,24 @@
       "noPendingHouses": "Hakuna salio la kulipwa kwa madobi katika kipindi hiki",
       "noPendingCouriers": "Hakuna salio la kulipwa kwa madereva katika kipindi hiki",
       "noHistory": "Hakuna kumbukumbu za malipo zilizopatikana",
-      "totalPaid": "Jumla Iliyolipwa"
+      "totalPaid": "Jumla Iliyolipwa",
+      "loadingSettlementsAria": "Inapakia malipo",
+      "housesSectionTitle": "Madobi ({count})",
+      "couriersSectionTitle": "Wajumbe ({count})",
+      "historySearchPlaceholder": "Tafuta mpokeaji, rejea, maelezo...",
+      "filterTypeAll": "Wote",
+      "filterTypeHouses": "Madobi",
+      "filterTypeCouriers": "Wajumbe",
+      "filterStatusAll": "Hali zote",
+      "filterStatusValid": "Zilizothibitishwa",
+      "filterStatusReversed": "Zilizobatilishwa",
+      "filterPeriodAriaLabel": "Chuja kwa kipindi",
+      "filterPeriod7Days": "Siku 7 zilizopita",
+      "filterPeriod30Days": "Siku 30 zilizopita",
+      "filterPeriodAll": "Historia yote",
+      "resetFilters": "Ondoa vichujio",
+      "exportHistoryCsvTitle": "Hamisha historia iliyochujwa kwa CSV",
+      "exportBtn": "Hamisha"
     },
     "applications": {
       "title": "Maombi ya Washirika wa Dobi",
@@ -1930,7 +1959,12 @@
       "whatsappExistingAccountTemplate": "Hujambo {name}, duka lako '{houseName}' limeidhinishwa kwenye SafiHub! Unaweza kuingia ukitumia anwani yako ya barua pepe ({email}) na nenosiri lako la kawaida kupitia {loginUrl}",
       "errorPasswordTooShort": "Nenosiri lazima liwe na angalau herufi 8",
       "errorInvalidApplicationId": "Kitambulisho cha ombi si sahihi",
-      "errorInvalidNeighborhoodId": "Mtaa si sahihi"
+      "errorInvalidNeighborhoodId": "Mtaa si sahihi",
+      "loadingApplicationsAria": "Inapakia maombi ya washirika",
+      "searchPlaceholder": "Tafuta dobi, mwombaji, simu au mtaa...",
+      "loadErrorTitle": "Imeshindwa kupakia maombi",
+      "loadErrorDescription": "Hitilafu imetokea wakati wa kupakia maombi ya washirika. Tafadhali jaribu tena.",
+      "retry": "Jaribu tena"
     },
     "disputes": {
       "title": "Migogoro",

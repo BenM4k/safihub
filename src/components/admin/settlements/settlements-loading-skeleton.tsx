@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 
@@ -5,52 +8,65 @@ interface SettlementsLoadingSkeletonProps {
   label?: string;
 }
 
-export function SettlementsLoadingSkeleton({ label }: SettlementsLoadingSkeletonProps) {
+export function SettlementsLoadingSkeleton({
+  label,
+}: SettlementsLoadingSkeletonProps) {
+  const t = useTranslations("admin.settlements");
+  const resolvedLabel = label ?? t("loadingSettlementsAria");
+
   return (
     <div
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label={label}
+      aria-label={resolvedLabel}
       className="flex flex-col gap-6 font-sans"
     >
-      {label && <span className="sr-only">{label}</span>}
-      {/* Header skeleton */}
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-7 w-64 rounded-lg" />
-        <Skeleton className="h-4 w-96 rounded-lg" />
-      </div>
+      <span className="sr-only">{resolvedLabel}</span>
+      <Skeleton className="h-14 w-full rounded-xl border border-border animate-shimmer" />
 
-      {/* Period bar skeleton */}
-      <Skeleton className="h-14 w-full rounded-xl border border-border" />
-
-      {/* KPI row skeleton */}
-      <div className="flex flex-col sm:flex-row sm:items-center py-1">
+      <div className="flex flex-col sm:flex-row sm:items-center py-1 gap-3">
         {[1, 2].map((i) => (
-          <div key={i} className="flex-1 p-3 space-y-2">
+          <div key={i} className="flex-1 p-3 space-y-2 rounded-xl border border-border bg-card">
             <div className="flex justify-between items-center">
-              <Skeleton className="h-3 w-28 rounded" />
-              <Skeleton className="size-3.5 rounded" />
+              <Skeleton className="h-3 w-28 rounded animate-shimmer" />
+              <Skeleton className="size-3.5 rounded animate-shimmer" />
             </div>
-            <Skeleton className="h-8 w-36 rounded" />
-            <Skeleton className="h-3 w-32 rounded" />
+            <Skeleton className="h-8 w-36 rounded animate-shimmer" />
+            <Skeleton className="h-3 w-32 rounded animate-shimmer" />
           </div>
         ))}
       </div>
 
       <Separator />
 
-      {/* Table 1 skeleton */}
       <div className="flex flex-col gap-3">
-        <Skeleton className="h-5 w-36 rounded" />
-        <Skeleton className="h-64 w-full rounded-xl border border-border" />
+        <Skeleton className="h-5 w-36 rounded animate-shimmer" />
+        <Skeleton className="h-64 w-full rounded-xl border border-border animate-shimmer" />
       </div>
 
-      {/* Table 2 skeleton */}
-      <div className="flex flex-col gap-3 pt-2">
-        <Skeleton className="h-5 w-36 rounded" />
-        <Skeleton className="h-64 w-full rounded-xl border border-border" />
-      </div>
+      <SettlementHistorySkeleton />
+    </div>
+  );
+}
+
+export function SettlementHistorySkeleton({
+  label,
+}: SettlementsLoadingSkeletonProps) {
+  const t = useTranslations("admin.settlements");
+  const resolvedLabel = label ?? t("loadingSettlementsAria");
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={resolvedLabel}
+      className="flex flex-col gap-3 pt-2 font-sans"
+    >
+      <span className="sr-only">{resolvedLabel}</span>
+      <Skeleton className="h-5 w-36 rounded animate-shimmer" />
+      <Skeleton className="h-64 w-full rounded-xl border border-border animate-shimmer" />
     </div>
   );
 }

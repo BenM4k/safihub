@@ -8,10 +8,13 @@ import {
   getHouseApplicationById,
   isHouseSlugAvailable,
   listHouseApplications,
+  listHouseApplicationsPaginated,
   PartnerApplicationApprovalError,
   updateHouseApplication,
   type HouseApplicationRecord,
+  type PaginatedHouseApplicationsResult,
 } from "@/dal/house-application.dal";
+import type { AdminApplicationsQueryParams } from "@/lib/admin-applications-query";
 import { getNeighborhoods } from "@/dal/coverage.dal";
 import { generateUniqueSlug } from "@/lib/slug";
 import { generateSecurePassword } from "@/lib/user-guardrails";
@@ -32,9 +35,33 @@ export async function listAdminPartnerApplications(params?: {
     return ok(data);
   } catch (error) {
     return err(
-      error instanceof Error
-        ? error.message
-        : "Failed to load partner applications"
+      sanitizeServiceError(
+        error,
+        "Failed to load partner applications",
+        "listAdminPartnerApplications"
+      )
+    );
+  }
+}
+
+export async function listAdminPartnerApplicationsPaginated(
+  query: AdminApplicationsQueryParams
+): Promise<Result<PaginatedHouseApplicationsResult>> {
+  try {
+    const data = await listHouseApplicationsPaginated({
+      status: query.status === "all" ? undefined : query.status,
+      search: query.search,
+      page: query.page,
+      pageSize: query.pageSize,
+    });
+    return ok(data);
+  } catch (error) {
+    return err(
+      sanitizeServiceError(
+        error,
+        "Failed to load partner applications",
+        "listAdminPartnerApplicationsPaginated"
+      )
     );
   }
 }

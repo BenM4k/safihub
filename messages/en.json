@@ -845,7 +845,10 @@
       "viewOrders": "View orders",
       "viewSettlements": "View settlements",
       "houseRowAria": "Details for laundry house {name}",
-      "houseActionsAria": "Actions for {name}"
+      "houseActionsAria": "Actions for {name}",
+      "loadingHousesAria": "Loading laundry houses",
+      "allHousesTab": "All houses ({count})",
+      "pendingReviewsTab": "Pending review"
     },
     "couriers": {
       "title": "Courier Management",
@@ -903,7 +906,12 @@
       "statusInactive": "Inactive",
       "manage": "Manage",
       "courierCount": "{count} courier(s)",
-      "defaultCeiling": "Default"
+      "defaultCeiling": "Default",
+      "loadingCouriersAria": "Loading couriers",
+      "searchCouriersPlaceholder": "Search courier by name or phone...",
+      "emptyFilteredCouriers": "No couriers match your filters.",
+      "shiftsZonesSummary": "{shifts} shift(s) · {zones} zone(s)",
+      "loadError": "Unable to load couriers list."
     },
     "users": {
       "title": "User Accounts Management",
@@ -1062,7 +1070,8 @@
       "errorTitle": "An error occurred while loading users",
       "errorDescription": "Unable to load user accounts. Please check your connection or try again.",
       "retry": "Retry",
-      "noReasonSpecified": "No reason specified"
+      "noReasonSpecified": "No reason specified",
+      "loadingUsersAria": "Loading users"
     },
     "customers": {
       "title": "Customers",
@@ -1291,7 +1300,8 @@
         "notesTitle": "Notes & Preferences",
         "noNotes": "No special notes for this profile."
       },
-      "retry": "Retry"
+      "retry": "Retry",
+      "loadingCustomersAria": "Loading customers"
     },
     "orders": {
       "title": "Order Management",
@@ -1745,7 +1755,9 @@
       "reversalConsequence": "Accounting effect: A compensatory reversal entry will be written to the ledger. The original entry remains visible as Cancelled and is never deleted.",
       "reversalDescription": "You are about to cancel the reconciliation for courier {name} for date {date}.",
       "deductFromDepositConfirmed": "Automatic deduction of shortage from courier security deposit authorized.",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "loadingCashAria": "Loading daily cash reconciliation",
+      "loadingHistoryAria": "Loading cash history"
     },
     "settlements": {
       "title": "Settlements and Payouts",
@@ -1867,7 +1879,24 @@
       "noPendingHouses": "No pending balance for pressings in this period",
       "noPendingCouriers": "No pending balance for couriers in this period",
       "noHistory": "No settlement records found in history",
-      "totalPaid": "Total Paid"
+      "totalPaid": "Total Paid",
+      "loadingSettlementsAria": "Loading settlements",
+      "housesSectionTitle": "Laundry houses ({count})",
+      "couriersSectionTitle": "Couriers ({count})",
+      "historySearchPlaceholder": "Search payee, reference, note...",
+      "filterTypeAll": "All",
+      "filterTypeHouses": "Houses",
+      "filterTypeCouriers": "Couriers",
+      "filterStatusAll": "All statuses",
+      "filterStatusValid": "Confirmed",
+      "filterStatusReversed": "Reversed",
+      "filterPeriodAriaLabel": "Filter by period",
+      "filterPeriod7Days": "Last 7 days",
+      "filterPeriod30Days": "Last 30 days",
+      "filterPeriodAll": "All history",
+      "resetFilters": "Reset",
+      "exportHistoryCsvTitle": "Export filtered history to CSV",
+      "exportBtn": "Export"
     },
     "applications": {
       "title": "Partner Laundry Applications",
@@ -1930,7 +1959,12 @@
       "whatsappExistingAccountTemplate": "Hello {name}, your laundry house '{houseName}' has been approved on SafiHub! You can log in with your email address ({email}) and your usual password at {loginUrl}",
       "errorPasswordTooShort": "Password must be at least 8 characters",
       "errorInvalidApplicationId": "Invalid application ID",
-      "errorInvalidNeighborhoodId": "Invalid neighborhood"
+      "errorInvalidNeighborhoodId": "Invalid neighborhood",
+      "loadingApplicationsAria": "Loading partner applications",
+      "searchPlaceholder": "Search laundry house, contact, phone or neighborhood...",
+      "loadErrorTitle": "Unable to load applications",
+      "loadErrorDescription": "An error occurred while loading partner applications. Please try again.",
+      "retry": "Retry"
     },
     "disputes": {
       "title": "Disputes",

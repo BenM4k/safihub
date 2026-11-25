@@ -1,9 +1,16 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Search, Download } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AdminSearchInput } from "@/components/admin/shared/admin-search-input";
 
 export interface HistoryFilterState {
   search: string;
@@ -31,76 +38,89 @@ export function HistoryFilters({
 
   return (
     <div className="p-4 border-b border-border bg-muted/20 flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
-      {/* Search and Dropdowns */}
       <div className="flex items-center gap-2.5 flex-1 flex-wrap">
-        {/* Search */}
-        <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
-          <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <Input
+        <div className="min-w-[240px] flex-1 sm:max-w-sm">
+          <AdminSearchInput
             value={filters.search}
-            onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
+            onSearch={(search) => onFilterChange({ ...filters, search })}
+            onClear={() => onFilterChange({ ...filters, search: "" })}
             placeholder={t("searchPlaceholder")}
-            className="pl-9 h-10 text-xs border-border"
-            aria-label={t("searchPlaceholder")}
+            ariaLabel={t("searchPlaceholder")}
           />
         </div>
 
-        {/* Status */}
-        <select
+        <Select
           value={filters.status}
-          onChange={(e) =>
+          onValueChange={(val) =>
             onFilterChange({
               ...filters,
-              status: e.target.value as HistoryFilterState["status"],
+              status: val as HistoryFilterState["status"],
             })
           }
-          className="h-10 px-3 text-xs rounded-xl border border-border bg-card font-medium focus:ring-2 focus:ring-primary/20 text-foreground"
-          aria-label={t("filterStatus")}
         >
-          <option value="all">{t("filterStatusAll")}</option>
-          <option value="reconciled">{t("filterStatusReconciled")}</option>
-          <option value="discrepancy">{t("filterStatusDiscrepancy")}</option>
-          <option value="cancelled">{t("filterStatusCancelled")}</option>
-        </select>
-
-        {/* Courier */}
-        {courierOptions.length > 0 && (
-          <select
-            value={filters.courierId}
-            onChange={(e) =>
-              onFilterChange({ ...filters, courierId: e.target.value })
-            }
-            className="h-10 px-3 text-xs rounded-xl border border-border bg-card font-medium focus:ring-2 focus:ring-primary/20 max-w-[170px] truncate text-foreground"
-            aria-label={t("filterCourier")}
+          <SelectTrigger
+            className="min-h-11 h-11 text-xs font-medium min-w-[145px]"
+            aria-label={t("filterStatus")}
           >
-            <option value="all">{t("allCouriers")}</option>
-            {courierOptions.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("filterStatusAll")}</SelectItem>
+            <SelectItem value="reconciled">{t("filterStatusReconciled")}</SelectItem>
+            <SelectItem value="discrepancy">
+              {t("filterStatusDiscrepancy")}
+            </SelectItem>
+            <SelectItem value="cancelled">{t("filterStatusCancelled")}</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {courierOptions.length > 0 && (
+          <Select
+            value={filters.courierId}
+            onValueChange={(val) =>
+              onFilterChange({ ...filters, courierId: val })
+            }
+          >
+            <SelectTrigger
+              className="min-h-11 h-11 text-xs font-medium min-w-[165px] max-w-[190px]"
+              aria-label={t("filterCourier")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allCouriers")}</SelectItem>
+              {courierOptions.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
 
-        {/* Period */}
-        <select
+        <Select
           value={filters.period}
-          onChange={(e) =>
+          onValueChange={(val) =>
             onFilterChange({
               ...filters,
-              period: e.target.value as HistoryFilterState["period"],
+              period: val as HistoryFilterState["period"],
             })
           }
-          className="h-10 px-3 text-xs rounded-xl border border-border bg-card font-medium focus:ring-2 focus:ring-primary/20 text-foreground"
-          aria-label={t("filterPeriod")}
         >
-          <option value="30_days">{t("filterPeriod30Days")}</option>
-          <option value="7_days">{t("filterPeriod7Days")}</option>
-          <option value="all">{t("filterPeriodAll")}</option>
-        </select>
+          <SelectTrigger
+            className="min-h-11 h-11 text-xs font-medium min-w-[140px]"
+            aria-label={t("filterPeriod")}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="30_days">{t("filterPeriod30Days")}</SelectItem>
+            <SelectItem value="7_days">{t("filterPeriod7Days")}</SelectItem>
+            <SelectItem value="all">{t("filterPeriodAll")}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Export Button */}
       <div className="flex items-center gap-2.5 self-start md:self-auto">
         <span className="text-xs text-muted-foreground font-medium">
           {t("filterEntriesCount", { count: filteredCount })}
@@ -110,7 +130,7 @@ export function HistoryFilters({
           variant="outline"
           size="sm"
           onClick={onExportCsv}
-          className="h-10 px-3.5 text-xs font-semibold gap-1.5 border-border hover:bg-muted/40"
+          className="min-h-11 px-3.5 text-xs font-semibold gap-1.5 border-border hover:bg-muted/40 press"
           title={t("exportCsv")}
         >
           <Download className="size-3.5" />

@@ -1,13 +1,10 @@
+import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { guardAdminRoute } from "@/services/auth";
-import {
-  getAdminHouseSettlements,
-  getAdminCourierSettlements,
-  getAdminSettlementHistory,
-} from "@/services/admin";
 import { PageHeader } from "@/components/admin/shared/page-header";
-import { SettlementsView } from "@/components/admin/settlements/settlements-view";
 import { getWeekBounds } from "@/components/admin/settlements/period-utils";
+import { SettlementsStreamContent } from "@/components/admin/settlements/settlements-stream-content";
+import { SettlementsLoadingSkeleton } from "@/components/admin/settlements/settlements-loading-skeleton";
 
 interface AdminSettlementsPageProps {
   searchParams: Promise<{ period?: string }>;
@@ -16,9 +13,11 @@ interface AdminSettlementsPageProps {
 export default async function AdminSettlementsPage({
   searchParams,
 }: AdminSettlementsPageProps) {
-  await guardAdminRoute();
-  const t = await getTranslations("admin.settlements");
-  const params = await searchParams;
+  const [, params, t] = await Promise.all([
+    guardAdminRoute(),
+    searchParams,
+    getTranslations("admin.settlements"),
+  ]);
 
   const currentBounds = getWeekBounds();
   const selectedPeriod =
@@ -26,66 +25,15 @@ export default async function AdminSettlementsPage({
       ? params.period
       : currentBounds.weekString;
 
-  const [housesResult, couriersResult, historyResult] = await Promise.all([
-    getAdminHouseSettlements(),
-    getAdminCourierSettlements(),
-    getAdminSettlementHistory(100),
-  ]);
-
-  const housesData = housesResult.ok
-    ? housesResult.value
-    : {
-        houses: [],
-        totalOwedToHousesCDF: 0,
-        housesWithBalanceCount: 0,
-        oldestUnpaidDays: 0,
-      };
-
-  const couriersData = couriersResult.ok
-    ? couriersResult.value
-    : {
-        couriers: [],
-        totalOwedToCouriersCDF: 0,
-        couriersWithBalanceCount: 0,
-        oldestUnpaidDays: 0,
-      };
-
-  const historyLogs = historyResult.ok ? historyResult.value : [];
-
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-      />
+      <div className="animate-enter">
+        <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      </div>
 
-      {(!housesResult.ok || !couriersResult.ok) && (
-        <div
-          role="alert"
-          className="p-4 bg-destructive-light border border-destructive-base/30 rounded-xl text-xs text-destructive-base font-medium"
-        >
-          {housesResult.ok ? "" : housesResult.error}
-          {!housesResult.ok && !couriersResult.ok ? " · " : ""}
-          {couriersResult.ok ? "" : couriersResult.error}
-        </div>
-      )}
-
-      <SettlementsView
-        houses={housesData.houses}
-        couriers={couriersData.couriers}
-        historyLogs={historyLogs}
-        housesSummary={{
-          totalOwedCDF: housesData.totalOwedToHousesCDF,
-          housesWithBalanceCount: housesData.housesWithBalanceCount,
-          oldestUnpaidDays: housesData.oldestUnpaidDays ?? 0,
-        }}
-        couriersSummary={{
-          totalOwedCDF: couriersData.totalOwedToCouriersCDF,
-          couriersWithBalanceCount: couriersData.couriersWithBalanceCount,
-          oldestUnpaidDays: couriersData.oldestUnpaidDays ?? 0,
-        }}
-        periodString={selectedPeriod}
-      />
+      <Suspense fallback={<SettlementsLoadingSkeleton />}>
+        <SettlementsStreamContent selectedPeriod={selectedPeriod} />
+      </Suspense>
     </div>
   );
 }

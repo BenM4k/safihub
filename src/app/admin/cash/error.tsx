@@ -21,9 +21,9 @@ export default function AdminCashError({ error, reset }: AdminCashErrorProps) {
   return (
     <div
       role="alert"
-      className="p-6 my-6 bg-card rounded-2xl border border-destructive-base/30 shadow-xs max-w-xl mx-auto space-y-4 text-center"
+      className="p-6 my-6 bg-card rounded-2xl border border-destructive/30 shadow-xs max-w-xl mx-auto space-y-4 text-center animate-enter"
     >
-      <div className="size-12 rounded-xl bg-destructive-light text-destructive-base border border-destructive-base/30 flex items-center justify-center mx-auto">
+      <div className="size-12 rounded-xl bg-destructive-soft text-destructive border border-destructive/30 flex items-center justify-center mx-auto">
         <AlertCircle className="size-6" />
       </div>
 

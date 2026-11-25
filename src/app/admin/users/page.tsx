@@ -1,11 +1,7 @@
+import { Suspense } from "react";
 import { guardAdminRoute } from "@/services/auth";
-import {
-  getActiveAdminsCount,
-  listAdminHouses,
-  listAdminUsers,
-} from "@/services/admin";
-import { UsersManagementView } from "@/components/admin/users/users-management-view";
-import { UserRow } from "@/components/admin/users/types";
+import { UsersStreamContent } from "@/components/admin/users/users-stream-content";
+import { UsersLoadingSkeleton } from "@/components/admin/users/users-loading-skeleton";
 
 interface PageProps {
   searchParams: Promise<{
@@ -26,6 +22,8 @@ function normalizeParam(val: string | string[] | undefined): string | undefined 
 }
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
+  // Always guard admin route before inspecting/passing data
+  const authCtx = await guardAdminRoute();
   const sp = await searchParams;
 
   const rawSearch = normalizeParam(sp.search)?.trim() ?? "";
@@ -41,35 +39,20 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       ? rawStatus
       : "all";
 
-  const authCtx = await guardAdminRoute();
-  const [usersRes, housesRes, activeAdminsRes] = await Promise.all([
-    listAdminUsers({ roles: ["admin", "house"] }),
-    listAdminHouses(),
-    getActiveAdminsCount(),
-  ]);
   const currentUser = authCtx.user;
-
-  let users = [] as UserRow[];
-  if (usersRes.ok) {
-    users = usersRes.value;
-  }
-
-  const houses = housesRes.ok ? housesRes.value : [];
-  const activeAdminsCount = activeAdminsRes.ok ? activeAdminsRes.value : 0;
   const isAdmin = currentUser?.role === "admin";
 
   return (
-    <UsersManagementView
-      initialUsers={users}
-      houses={houses}
-      currentUserId={currentUser?.id}
-      isAdmin={isAdmin}
-      activeAdminsCount={activeAdminsCount}
-      initialFilters={{
-        search: rawSearch,
-        role,
-        status,
-      }}
-    />
+    <Suspense fallback={<UsersLoadingSkeleton />}>
+      <UsersStreamContent
+        currentUserId={currentUser?.id}
+        isAdmin={isAdmin}
+        initialFilters={{
+          search: rawSearch,
+          role,
+          status,
+        }}
+      />
+    </Suspense>
   );
 }

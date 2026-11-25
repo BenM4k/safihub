@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { Info } from "lucide-react";
 import {
@@ -11,10 +12,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ReconcileCourierDialog, type ReconcileCourierData } from "./reconcile-courier-dialog";
-import { DepositFloatDialog } from "./deposit-float-dialog";
 import { CourierReconciliationRowItem } from "./courier-reconciliation-row-item";
+import type { ReconcileCourierData } from "./reconcile-courier-dialog";
 import type { ReconcileOrder } from "./reconcile-order-breakdown";
+
+const ReconcileCourierDialog = dynamic(
+  () =>
+    import("./reconcile-courier-dialog").then((m) => m.ReconcileCourierDialog),
+  { ssr: false }
+);
+
+const DepositFloatDialog = dynamic(
+  () => import("./deposit-float-dialog").then((m) => m.DepositFloatDialog),
+  { ssr: false }
+);
 
 export interface CourierReconciliationRow {
   courierId: string;

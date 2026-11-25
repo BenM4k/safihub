@@ -1,8 +1,18 @@
 "use client";
 
-import { Search, Download, RotateCcw } from "lucide-react";
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { Download, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { AdminSearchInput } from "@/components/admin/shared/admin-search-input";
 
 export interface SettlementHistoryFiltersState {
   search: string;
@@ -24,115 +34,124 @@ export function SettlementHistoryFilters({
   onReset,
   onExportCsv,
 }: SettlementHistoryFiltersProps) {
+  const t = useTranslations("admin.settlements");
+  const [searchResetKey, setSearchResetKey] = useState(0);
+
+  const hasCustomFilters =
+    filters.search ||
+    filters.payeeType !== "all" ||
+    filters.status !== "all" ||
+    filters.period !== "30_days";
+
+  function handleReset() {
+    setSearchResetKey((prev) => prev + 1);
+    onReset();
+  }
+
   return (
-    <div className="p-3 border-b border-border bg-muted/20 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-      {/* Search */}
-      <div className="relative flex-1 max-w-sm">
-        <Search className="size-4 text-muted-foreground absolute left-2.5 top-2.5 pointer-events-none" />
-        <Input
+    <div className="p-3 border-b border-border bg-muted/20 flex flex-col xl:flex-row xl:items-center justify-between gap-3 text-xs">
+      <div className="flex-1 min-w-[240px] max-w-md">
+        <AdminSearchInput
+          key={searchResetKey}
           value={filters.search}
-          onChange={(e) => onChange({ ...filters, search: e.target.value })}
-          placeholder="Rechercher bénéficiaire, réf, note..."
-          className="pl-8 h-9 text-xs border-border bg-card"
+          onSearch={(search) => onChange({ ...filters, search })}
+          onClear={() => onChange({ ...filters, search: "" })}
+          placeholder={t("historySearchPlaceholder")}
+          ariaLabel={t("historySearchPlaceholder")}
         />
       </div>
 
-      {/* Filter select groups */}
       <div className="flex items-center gap-2 flex-wrap">
-        {/* Type Filter */}
-        <div className="flex items-center bg-card rounded-lg border border-border p-0.5">
-          {(
-            [
-              { id: "all", label: "Tous" },
-              { id: "house", label: "Pressings" },
-              { id: "courier", label: "Coursiers" },
-            ] as const
-          ).map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => onChange({ ...filters, payeeType: t.id })}
-              className={`px-2 py-1 rounded-md text-2xs font-semibold transition-colors cursor-pointer ${
-                filters.payeeType === t.id
-                  ? "bg-primary text-primary-foreground shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <ToggleGroup
+          type="single"
+          value={filters.payeeType}
+          onValueChange={(val) => {
+            if (val === "all" || val === "house" || val === "courier") {
+              onChange({ ...filters, payeeType: val });
+            }
+          }}
+          variant="outline"
+          size="sm"
+        >
+          <ToggleGroupItem value="all" className="min-h-10 px-2.5 text-2xs font-semibold">
+            {t("filterTypeAll")}
+          </ToggleGroupItem>
+          <ToggleGroupItem value="house" className="min-h-10 px-2.5 text-2xs font-semibold">
+            {t("filterTypeHouses")}
+          </ToggleGroupItem>
+          <ToggleGroupItem value="courier" className="min-h-10 px-2.5 text-2xs font-semibold">
+            {t("filterTypeCouriers")}
+          </ToggleGroupItem>
+        </ToggleGroup>
 
-        {/* Status Filter */}
-        <div className="flex items-center bg-card rounded-lg border border-border p-0.5">
-          {(
-            [
-              { id: "all", label: "Tous statuts" },
-              { id: "valid", label: "Validés" },
-              { id: "reversed", label: "Annulés" },
-            ] as const
-          ).map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => onChange({ ...filters, status: s.id })}
-              className={`px-2 py-1 rounded-md text-2xs font-semibold transition-colors cursor-pointer ${
-                filters.status === s.id
-                  ? "bg-primary text-primary-foreground shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        <ToggleGroup
+          type="single"
+          value={filters.status}
+          onValueChange={(val) => {
+            if (val === "all" || val === "valid" || val === "reversed") {
+              onChange({ ...filters, status: val });
+            }
+          }}
+          variant="outline"
+          size="sm"
+        >
+          <ToggleGroupItem value="all" className="min-h-10 px-2.5 text-2xs font-semibold">
+            {t("filterStatusAll")}
+          </ToggleGroupItem>
+          <ToggleGroupItem value="valid" className="min-h-10 px-2.5 text-2xs font-semibold">
+            {t("filterStatusValid")}
+          </ToggleGroupItem>
+          <ToggleGroupItem value="reversed" className="min-h-10 px-2.5 text-2xs font-semibold">
+            {t("filterStatusReversed")}
+          </ToggleGroupItem>
+        </ToggleGroup>
 
-        {/* Period Filter */}
-        <select
+        <Select
           value={filters.period}
-          onChange={(e) =>
+          onValueChange={(val) =>
             onChange({
               ...filters,
-              period: e.target.value as SettlementHistoryFiltersState["period"],
+              period: val as SettlementHistoryFiltersState["period"],
             })
           }
-          className="h-8 px-2 rounded-lg border border-border bg-card text-foreground text-xs font-medium"
-          aria-label="Filtrer par période"
         >
-          <option value="7_days">7 derniers jours</option>
-          <option value="30_days">30 derniers jours</option>
-          <option value="all">Tout l&apos;historique</option>
-        </select>
+          <SelectTrigger
+            className="min-h-10 h-10 text-xs font-medium min-w-[140px]"
+            aria-label={t("filterPeriodAriaLabel")}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7_days">{t("filterPeriod7Days")}</SelectItem>
+            <SelectItem value="30_days">{t("filterPeriod30Days")}</SelectItem>
+            <SelectItem value="all">{t("filterPeriodAll")}</SelectItem>
+          </SelectContent>
+        </Select>
 
-        {/* Reset Filters */}
-        {(filters.search ||
-          filters.payeeType !== "all" ||
-          filters.status !== "all" ||
-          filters.period !== "30_days") && (
+        {hasCustomFilters && (
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            onClick={onReset}
-            className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
-            title="Réinitialiser les filtres"
+            onClick={handleReset}
+            className="min-h-10 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1 press"
+            title={t("resetFilters")}
           >
             <RotateCcw className="size-3.5" />
-            <span className="hidden sm:inline">Réinitialiser</span>
+            <span className="hidden sm:inline">{t("resetFilters")}</span>
           </Button>
         )}
 
-        {/* Export CSV */}
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={onExportCsv}
-          className="h-8 px-2.5 text-xs font-semibold border-border gap-1.5"
-          title="Exporter l'historique filtré en CSV"
+          className="min-h-10 px-3 text-xs font-semibold border-border gap-1.5 press"
+          title={t("exportHistoryCsvTitle")}
         >
           <Download className="size-3.5" />
-          <span>Exporter</span>
+          <span>{t("exportBtn")}</span>
         </Button>
       </div>
     </div>

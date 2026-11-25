@@ -9,23 +9,32 @@ import type {
   SortableField,
 } from "../types";
 
-export function useCustomersFilter(customers: CustomerRow[]) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+export function useCustomersFilter(
+  customers: CustomerRow[],
+  initial?: {
+    filters?: CustomerFiltersState;
+    page?: number;
+    pageSize?: number;
+  }
+) {
+  const [currentPage, setCurrentPage] = useState(initial?.page ?? 1);
+  const [pageSize, setPageSize] = useState(initial?.pageSize ?? 25);
   const [sortState, setSortState] = useState<SortState>({
     field: "createdAt",
     direction: "desc",
   });
 
-  const [filters, setFilters] = useState<CustomerFiltersState>({
-    search: "",
-    status: "all",
-    type: "all",
-    hasOrdered: false,
-    hideTestAccounts: false,
-    dateFrom: "",
-    dateTo: "",
-  });
+  const [filters, setFilters] = useState<CustomerFiltersState>(
+    initial?.filters ?? {
+      search: "",
+      status: "all",
+      type: "all",
+      hasOrdered: false,
+      hideTestAccounts: false,
+      dateFrom: "",
+      dateTo: "",
+    }
+  );
 
   const filteredCustomers = useMemo(() => {
     return customers.filter((c) => {
@@ -81,8 +90,14 @@ export function useCustomersFilter(customers: CustomerRow[]) {
   }, [filteredCustomers, sortState]);
 
   const pagedCustomers = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return sortedCustomers.slice(start, start + pageSize);
+    const safePageSize = Math.max(1, pageSize);
+    const totalPages = Math.max(
+      1,
+      Math.ceil(sortedCustomers.length / safePageSize)
+    );
+    const safePage = Math.min(Math.max(1, currentPage), totalPages);
+    const start = (safePage - 1) * safePageSize;
+    return sortedCustomers.slice(start, start + safePageSize);
   }, [sortedCustomers, currentPage, pageSize]);
 
   const handleSortChange = (field: SortableField) => {
