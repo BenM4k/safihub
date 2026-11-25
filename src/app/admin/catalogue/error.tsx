@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AdminErrorView } from "@/components/admin/admin-error-view";
 
 interface AdminCatalogueErrorProps {
@@ -11,12 +12,14 @@ export default function AdminCatalogueError({
   error,
   reset,
 }: AdminCatalogueErrorProps) {
+  const t = useTranslations("admin.catalogue");
+
   return (
     <AdminErrorView
       error={error}
       reset={reset}
-      title="Erreur du catalogue maître"
-      description="Impossible d'accéder au référentiel des articles, tissus et services de blanchisserie."
+      title={t("errorTitle")}
+      description={t("errorDescription")}
     />
   );
 }

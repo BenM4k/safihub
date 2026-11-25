@@ -8,11 +8,16 @@ import type {
   MasterItemRecord,
   MasterServiceRecord,
 } from "@/dal";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { ItemsTab } from "./items-tab";
 import { FabricsTab } from "./fabrics-tab";
 import { ServicesTab } from "./services-tab";
 import { RequestsTab } from "./requests-tab";
-import { cn } from "@/lib/utils";
 
 interface CatalogueTabsContainerProps {
   services: MasterServiceRecord[];
@@ -21,6 +26,8 @@ interface CatalogueTabsContainerProps {
   requests: ItemRequestRecord[];
 }
 
+type CatalogueTab = "items" | "fabrics" | "services" | "requests";
+
 export function CatalogueTabsContainer({
   services,
   items,
@@ -28,72 +35,52 @@ export function CatalogueTabsContainer({
   requests,
 }: CatalogueTabsContainerProps) {
   const t = useTranslations("admin.catalogue");
-  const [tab, setTab] = useState<"items" | "fabrics" | "services" | "requests">("items");
+  const [tab, setTab] = useState<CatalogueTab>("items");
 
-  const pendingRequestsCount = requests.filter((r) => r.status === "pending").length;
+  const pendingRequestsCount = requests.filter(
+    (r) => r.status === "pending"
+  ).length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-1 border-b border-border pb-1 overflow-x-auto scrollbar-none">
-        <button
-          type="button"
-          onClick={() => setTab("items")}
-          className={cn(
-            "px-3 py-2 text-xs font-medium transition cursor-pointer relative",
-            tab === "items"
-              ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
+    <div className="space-y-6 animate-enter-fast">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as CatalogueTab)}>
+        <TabsList
+          variant="line"
+          aria-label={t("title")}
+          className="w-full justify-start border-b border-border pb-1 overflow-x-auto scrollbar-none"
         >
-          {t("itemsTab")} ({items.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("fabrics")}
-          className={cn(
-            "px-3 py-2 text-xs font-medium transition cursor-pointer relative",
-            tab === "fabrics"
-              ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {t("fabricsTab")} ({fabrics.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("services")}
-          className={cn(
-            "px-3 py-2 text-xs font-medium transition cursor-pointer relative",
-            tab === "services"
-              ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {t("servicesTab")} ({services.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("requests")}
-          className={cn(
-            "px-3 py-2 text-xs font-medium transition cursor-pointer relative flex items-center gap-1.5",
-            tab === "requests"
-              ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <span>{t("requestsTab")}</span>
-          {pendingRequestsCount > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-500/20">
-              {pendingRequestsCount}
-            </span>
-          )}
-        </button>
-      </div>
+          <TabsTrigger value="items" className="min-h-10 px-3 text-xs">
+            {t("itemsTab")} ({items.length})
+          </TabsTrigger>
+          <TabsTrigger value="fabrics" className="min-h-10 px-3 text-xs">
+            {t("fabricsTab")} ({fabrics.length})
+          </TabsTrigger>
+          <TabsTrigger value="services" className="min-h-10 px-3 text-xs">
+            {t("servicesTab")} ({services.length})
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="min-h-10 px-3 text-xs gap-1.5">
+            <span>{t("requestsTab")}</span>
+            {pendingRequestsCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-warning-soft text-warning text-[10px] font-bold border border-warning/20 tabular-nums">
+                {pendingRequestsCount}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-      {tab === "items" && <ItemsTab items={items} />}
-      {tab === "fabrics" && <FabricsTab fabrics={fabrics} />}
-      {tab === "services" && <ServicesTab services={services} />}
-      {tab === "requests" && <RequestsTab requests={requests} />}
+        <TabsContent value="items" keepMounted className="pt-4">
+          <ItemsTab items={items} />
+        </TabsContent>
+        <TabsContent value="fabrics" keepMounted className="pt-4">
+          <FabricsTab fabrics={fabrics} />
+        </TabsContent>
+        <TabsContent value="services" keepMounted className="pt-4">
+          <ServicesTab services={services} />
+        </TabsContent>
+        <TabsContent value="requests" keepMounted className="pt-4">
+          <RequestsTab requests={requests} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

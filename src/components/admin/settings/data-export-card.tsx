@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Download, FileSpreadsheet, FileJson, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Download,
+  FileSpreadsheet,
+  FileJson,
+  Loader2,
+} from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -17,6 +24,7 @@ interface TruncationNotice {
 export function DataExportCard() {
   const t = useTranslations("admin.settings");
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [truncation, setTruncation] = useState<TruncationNotice | null>(null);
 
   const handleDownload = async (
@@ -27,6 +35,7 @@ export function DataExportCard() {
     try {
       const key = `${dataset}-${format}`;
       setDownloading(key);
+      setExportError(null);
       if (offset === 0) {
         setTruncation(null);
       }
@@ -56,14 +65,20 @@ export function DataExportCard() {
       const a = document.createElement("a");
       a.href = url;
       const offsetSuffix = offset > 0 ? `-offset-${offset}` : "";
-      a.download = `safihub-${dataset}-${new Date().toISOString().slice(0, 10)}${offsetSuffix}.${format}`;
+      const bukavuDate = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Africa/Lubumbashi",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date());
+      a.download = `safihub-${dataset}-${bukavuDate}${offsetSuffix}.${format}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err) {
       console.error("Export error:", err);
-      alert(t("exportError"));
+      setExportError(t("exportError"));
     } finally {
       setDownloading(null);
     }
@@ -88,7 +103,7 @@ export function DataExportCard() {
   ];
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+    <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-4">
       <div>
         <div className="flex items-center gap-2">
           <Download className="size-5 text-primary" />
@@ -101,6 +116,13 @@ export function DataExportCard() {
         </p>
       </div>
 
+      {exportError && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription className="text-xs">{exportError}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
         {datasets.map((d) => (
           <div
@@ -109,34 +131,36 @@ export function DataExportCard() {
           >
             <div>
               <h4 className="font-semibold text-sm text-foreground">{d.name}</h4>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{d.description}</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                {d.description}
+              </p>
             </div>
             <div className="flex items-center gap-2 pt-2">
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1 text-xs gap-1.5"
+                className="flex-1 text-xs gap-1.5 press"
                 disabled={downloading !== null}
                 onClick={() => handleDownload(d.id, "csv")}
               >
                 {downloading === `${d.id}-csv` ? (
                   <Loader2 className="size-3.5 animate-spin" />
                 ) : (
-                  <FileSpreadsheet className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <FileSpreadsheet className="size-3.5 text-success" />
                 )}
                 CSV
               </Button>
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1 text-xs gap-1.5"
+                className="flex-1 text-xs gap-1.5 press"
                 disabled={downloading !== null}
                 onClick={() => handleDownload(d.id, "json")}
               >
                 {downloading === `${d.id}-json` ? (
                   <Loader2 className="size-3.5 animate-spin" />
                 ) : (
-                  <FileJson className="size-3.5 text-sky-600 dark:text-sky-400" />
+                  <FileJson className="size-3.5 text-primary" />
                 )}
                 JSON
               </Button>
@@ -148,7 +172,7 @@ export function DataExportCard() {
       {truncation && (
         <Alert className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-start gap-2.5">
-            <AlertTriangle className="size-4 text-amber-600 mt-0.5 shrink-0" />
+            <AlertTriangle className="size-4 text-warning mt-0.5 shrink-0" />
             <div>
               <AlertTitle className="text-xs font-semibold">
                 {t("exportTruncatedTitle", { count: truncation.rowCount })}
@@ -169,7 +193,7 @@ export function DataExportCard() {
                 truncation.nextOffset
               )
             }
-            className="text-xs shrink-0"
+            className="text-xs shrink-0 press"
           >
             {t("exportNextBatch", { nextOffset: truncation.nextOffset })}
           </Button>
@@ -178,4 +202,3 @@ export function DataExportCard() {
     </div>
   );
 }
-

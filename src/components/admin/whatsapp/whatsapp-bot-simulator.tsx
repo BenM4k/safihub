@@ -16,24 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { StatusBadge } from "@/components/admin/shared/status-badge";
+import { isWhatsAppErrorKey } from "./whatsapp-error-utils";
 import type { WhatsAppBotSession } from "@/services/whatsapp";
-
-const WHATSAPP_ERROR_KEYS = new Set([
-  "errors.phoneRequired",
-  "errors.phoneTooLong",
-  "errors.phoneInvalid",
-  "errors.rateLimitSend",
-  "errors.rateLimitSimulate",
-  "errors.invalidParams",
-] as const);
-
-type WhatsAppErrorKey =
-  | "errors.phoneRequired"
-  | "errors.phoneTooLong"
-  | "errors.phoneInvalid"
-  | "errors.rateLimitSend"
-  | "errors.rateLimitSimulate"
-  | "errors.invalidParams";
 
 export function WhatsAppBotSimulator() {
   const t = useTranslations("admin.whatsapp");
@@ -60,8 +44,8 @@ export function WhatsAppBotSimulator() {
         dryRun,
       });
       if (!res.ok) {
-        const message = WHATSAPP_ERROR_KEYS.has(res.error as WhatsAppErrorKey)
-          ? t(res.error as WhatsAppErrorKey)
+        const message = isWhatsAppErrorKey(res.error)
+          ? t(res.error)
           : res.error;
         setErrorMsg(message);
         return;
@@ -79,16 +63,16 @@ export function WhatsAppBotSimulator() {
   }
 
   return (
-    <div className="rounded-2xl border border-[#EAECF0] bg-white p-6 shadow-xs space-y-5">
-      <div className="flex items-center gap-3 border-b border-[#EAECF0] pb-4">
-        <div className="size-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-5 animate-enter-fast">
+      <div className="flex items-center gap-3 border-b border-border pb-4">
+        <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
           <Bot className="size-5" />
         </div>
         <div>
-          <h2 className="text-base font-bold text-[#101828]">
+          <h2 className="text-base font-bold text-heading font-display">
             {t("simulatorTitle")}
           </h2>
-          <p className="text-xs text-[#667085]">{t("simulatorSubtitle")}</p>
+          <p className="text-xs text-muted-foreground">{t("simulatorSubtitle")}</p>
         </div>
       </div>
 
@@ -103,7 +87,7 @@ export function WhatsAppBotSimulator() {
           />
         </div>
 
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface/60 px-3.5 py-2.5">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-3.5 py-2.5">
           <div className="space-y-0.5">
             <Label htmlFor="wa-sim-dryrun" className="text-xs font-semibold">
               {t("dryRunToggleLabel")}
@@ -124,7 +108,7 @@ export function WhatsAppBotSimulator() {
             size="sm"
             disabled={isPending}
             onClick={() => triggerStep("text", "Bonjour")}
-            className="justify-start text-xs"
+            className="justify-start text-xs min-h-9 press"
           >
             <MessageCircle className="size-3.5 mr-1.5" />
             {t("simBtnBonjour")}
@@ -135,7 +119,7 @@ export function WhatsAppBotSimulator() {
             size="sm"
             disabled={isPending}
             onClick={() => triggerStep("button", "START_ORDER")}
-            className="justify-start text-xs"
+            className="justify-start text-xs min-h-9 press"
           >
             <Play className="size-3.5 mr-1.5" />
             {t("simBtnStartOrder")}
@@ -146,7 +130,7 @@ export function WhatsAppBotSimulator() {
             size="sm"
             disabled={isPending}
             onClick={() => triggerStep("location", "La Botte, Ibanda, Bukavu")}
-            className="justify-start text-xs"
+            className="justify-start text-xs min-h-9 press"
           >
             <MapPin className="size-3.5 mr-1.5" />
             {t("simBtnGpsPin")}
@@ -157,7 +141,7 @@ export function WhatsAppBotSimulator() {
             size="sm"
             disabled={isPending}
             onClick={() => triggerStep("reset")}
-            className="justify-start text-xs text-destructive hover:text-destructive"
+            className="justify-start text-xs min-h-9 text-destructive hover:text-destructive press"
           >
             <RotateCcw className="size-3.5 mr-1.5" />
             {t("simBtnReset")}
@@ -171,13 +155,17 @@ export function WhatsAppBotSimulator() {
             placeholder={t("simCustomInputPlaceholder")}
             className="flex-1"
           />
-          <Button type="submit" disabled={isPending || !customText.trim()}>
+          <Button
+            type="submit"
+            disabled={isPending || !customText.trim()}
+            className="press"
+          >
             {t("simSendText")}
           </Button>
         </form>
 
         {errorMsg && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-medium text-red-700 flex items-center gap-2">
+          <div className="rounded-xl border border-destructive/30 bg-destructive-soft px-3.5 py-2.5 text-xs font-medium text-destructive flex items-center gap-2">
             <AlertTriangle className="size-4 shrink-0" />
             <span>{errorMsg}</span>
           </div>
@@ -185,32 +173,40 @@ export function WhatsAppBotSimulator() {
       </div>
 
       {sessionState && (
-        <div className="rounded-xl border border-[#EAECF0] bg-[#F9FAFB] p-4 space-y-2.5 text-xs">
-          <div className="flex items-center justify-between border-b border-[#EAECF0] pb-2">
-            <span className="font-bold text-[#101828]">
+        <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-2.5 text-xs animate-enter-fast">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="font-bold text-heading">
               {t("simSessionStateTitle")}
             </span>
             <StatusBadge tone="info">{sessionState.step}</StatusBadge>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-[#344054]">
+          <div className="grid grid-cols-2 gap-2 text-foreground">
             <div>
-              <span className="text-[#667085] block">{t("simNeighborhoodLabel")}</span>
+              <span className="text-muted-foreground block">
+                {t("simNeighborhoodLabel")}
+              </span>
               <span className="font-semibold">
                 {sessionState.neighborhoodName ?? t("simNone")}
               </span>
             </div>
             <div>
-              <span className="text-[#667085] block">{t("simHouseLabel")}</span>
+              <span className="text-muted-foreground block">
+                {t("simHouseLabel")}
+              </span>
               <span className="font-semibold">
                 {sessionState.houseName ?? t("simNone")}
               </span>
             </div>
             <div>
-              <span className="text-[#667085] block">{t("simItemsCountLabel")}</span>
+              <span className="text-muted-foreground block">
+                {t("simItemsCountLabel")}
+              </span>
               <span className="font-semibold">{sessionState.items.length}</span>
             </div>
             <div>
-              <span className="text-[#667085] block">{t("simLandmarkLabel")}</span>
+              <span className="text-muted-foreground block">
+                {t("simLandmarkLabel")}
+              </span>
               <span className="font-semibold">
                 {sessionState.landmark ?? t("simNone")}
               </span>
@@ -221,4 +217,3 @@ export function WhatsAppBotSimulator() {
     </div>
   );
 }
-

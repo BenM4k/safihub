@@ -1,25 +1,21 @@
 import { getTranslations } from "next-intl/server";
 import { guardAdminRoute } from "@/services/auth";
 import { getWhatsAppIntegrationStatus } from "@/services/whatsapp";
+import { PageHeader } from "@/components/admin/shared/page-header";
 import { WhatsAppConfigCard } from "@/components/admin/whatsapp/whatsapp-config-card";
 import { WhatsAppTestSender } from "@/components/admin/whatsapp/whatsapp-test-sender";
 import { WhatsAppBotSimulator } from "@/components/admin/whatsapp/whatsapp-bot-simulator";
 
 export default async function AdminWhatsAppPage() {
-  await guardAdminRoute();
-  const t = await getTranslations("admin.whatsapp");
+  const [, t] = await Promise.all([
+    guardAdminRoute(),
+    getTranslations("admin.whatsapp"),
+  ]);
   const status = getWhatsAppIntegrationStatus();
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#EAECF0] pb-5">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#101828]">
-            {t("title")}
-          </h1>
-          <p className="text-sm text-[#667085] mt-1">{t("subtitle")}</p>
-        </div>
-      </div>
+    <div className="space-y-6 animate-enter">
+      <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
       <WhatsAppConfigCard status={status} />
 
@@ -30,4 +26,3 @@ export default async function AdminWhatsAppPage() {
     </div>
   );
 }
-

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AdminErrorView } from "@/components/admin/admin-error-view";
 
 interface AdminNeighborhoodsErrorProps {
@@ -11,12 +12,14 @@ export default function AdminNeighborhoodsError({
   error,
   reset,
 }: AdminNeighborhoodsErrorProps) {
+  const t = useTranslations("admin.neighborhoods");
+
   return (
     <AdminErrorView
       error={error}
       reset={reset}
-      title="Erreur du registre des quartiers"
-      description="Impossible de charger la cartographie des quartiers urbains et leurs assignations de zones."
+      title={t("errorTitle")}
+      description={t("errorDescription")}
     />
   );
 }

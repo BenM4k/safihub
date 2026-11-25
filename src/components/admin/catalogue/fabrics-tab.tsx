@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { createMasterFabricAction, toggleMasterFabricActiveAction } from "@/actions/admin-catalog.actions";
+import { AlertCircle } from "lucide-react";
+import {
+  createMasterFabricAction,
+  toggleMasterFabricActiveAction,
+} from "@/actions/admin-catalog.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { StatusBadge } from "@/components/admin/shared/status-badge";
 import {
   Table,
   TableBody,
@@ -25,6 +28,7 @@ interface FabricsTabProps {
 
 export function FabricsTab({ fabrics }: FabricsTabProps) {
   const t = useTranslations("admin.catalogue");
+  const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -37,10 +41,10 @@ export function FabricsTab({ fabrics }: FabricsTabProps) {
       if (!res.ok) {
         setError(res.error);
       } else {
-        (document.getElementById("fabric-form-el") as HTMLFormElement)?.reset();
+        formRef.current?.reset();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("unexpectedError"));
     } finally {
       setLoading(false);
     }
@@ -55,7 +59,7 @@ export function FabricsTab({ fabrics }: FabricsTabProps) {
         setError(res.error);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inattendue");
+      setError(err instanceof Error ? err.message : t("unexpectedError"));
     } finally {
       setTogglingId(null);
     }
@@ -64,9 +68,9 @@ export function FabricsTab({ fabrics }: FabricsTabProps) {
   return (
     <div className="space-y-4">
       <form
-        id="fabric-form-el"
+        ref={formRef}
         action={handleCreate}
-        className="p-4 bg-muted/20 rounded-lg border border-border space-y-3"
+        className="p-4 bg-muted/20 rounded-xl border border-border space-y-3"
       >
         <div className="font-bold text-xs text-foreground">{t("addFabric")}</div>
         {error && (
@@ -78,17 +82,33 @@ export function FabricsTab({ fabrics }: FabricsTabProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label htmlFor="fabricNameFr" className="text-xs font-semibold text-foreground">{t("nameFr")}</Label>
-            <Input id="fabricNameFr" name="nameFr" required placeholder="Coton, Soie, Laine..." className="h-9 text-xs" />
+            <Label htmlFor="fabricNameFr" className="text-xs font-semibold text-foreground">
+              {t("nameFr")}
+            </Label>
+            <Input
+              id="fabricNameFr"
+              name="nameFr"
+              required
+              placeholder={t("fabricNameFrPlaceholder")}
+              className="h-9 text-xs"
+            />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="fabricNameSw" className="text-xs font-semibold text-foreground">{t("nameSw")}</Label>
-            <Input id="fabricNameSw" name="nameSw" required placeholder="Pamba, Hariri..." className="h-9 text-xs" />
+            <Label htmlFor="fabricNameSw" className="text-xs font-semibold text-foreground">
+              {t("nameSw")}
+            </Label>
+            <Input
+              id="fabricNameSw"
+              name="nameSw"
+              required
+              placeholder={t("fabricNameSwPlaceholder")}
+              className="h-9 text-xs"
+            />
           </div>
         </div>
 
         <div className="flex justify-end pt-1">
-          <Button type="submit" disabled={loading} size="sm" className="h-9">
+          <Button type="submit" disabled={loading} size="sm" className="min-h-9 press">
             {loading ? "..." : t("addFabric")}
           </Button>
         </div>
@@ -102,25 +122,18 @@ export function FabricsTab({ fabrics }: FabricsTabProps) {
                 <TableHead className="px-4 py-3 font-semibold text-foreground">{t("nameFr")}</TableHead>
                 <TableHead className="px-4 py-3 font-semibold text-foreground">{t("nameSw")}</TableHead>
                 <TableHead className="px-4 py-3 font-semibold text-foreground">{t("status")}</TableHead>
-                <TableHead className="px-4 py-3 text-right font-semibold text-foreground">Action</TableHead>
+                <TableHead className="px-4 py-3 text-right font-semibold text-foreground">{t("colAction")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {fabrics.map((fabric) => (
-                <TableRow key={fabric.id} className="hover:bg-muted/40 transition">
+                <TableRow key={fabric.id} className="row-interactive">
                   <TableCell className="px-4 py-3 font-semibold text-foreground">{fabric.nameFr}</TableCell>
                   <TableCell className="px-4 py-3 text-muted-foreground">{fabric.nameSw}</TableCell>
                   <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="outline"
-                      className={
-                        fabric.isActive
-                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
-                          : "bg-muted text-muted-foreground border-border"
-                      }
-                    >
+                    <StatusBadge tone={fabric.isActive ? "success" : "secondary"}>
                       {fabric.isActive ? t("active") : t("inactive")}
-                    </Badge>
+                    </StatusBadge>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-right">
                     <Button
@@ -128,9 +141,13 @@ export function FabricsTab({ fabrics }: FabricsTabProps) {
                       size="sm"
                       disabled={togglingId === fabric.id}
                       onClick={() => handleToggle(fabric.id, !fabric.isActive)}
-                      className="h-7 text-xs"
+                      className="min-h-8 text-xs press"
                     >
-                      {togglingId === fabric.id ? "..." : fabric.isActive ? "Désactiver" : "Activer"}
+                      {togglingId === fabric.id
+                        ? "..."
+                        : fabric.isActive
+                          ? t("deactivate")
+                          : t("activate")}
                     </Button>
                   </TableCell>
                 </TableRow>

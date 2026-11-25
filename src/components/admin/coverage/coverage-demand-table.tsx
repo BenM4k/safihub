@@ -41,8 +41,8 @@ export function CoverageDemandTable({ demand }: CoverageDemandTableProps) {
         <h2 className="text-sm font-bold text-foreground">
           {t("coverageRequestsTitle")}
         </h2>
-        <span className="text-xs text-muted-foreground font-semibold">
-          {demand.length} quartier(s) demandés
+        <span className="text-xs text-muted-foreground font-semibold tabular-nums">
+          {t("requestedNeighborhoodsCount", { count: demand.length })}
         </span>
       </div>
 
@@ -50,39 +50,53 @@ export function CoverageDemandTable({ demand }: CoverageDemandTableProps) {
         <Table className="text-xs">
           <TableHeader>
             <TableRow className="border-b border-border bg-muted/40 font-semibold text-foreground hover:bg-muted/40">
-              <TableHead className="px-4 py-3 font-semibold text-foreground">{t("demandRanked")}</TableHead>
-              <TableHead className="px-4 py-3 font-semibold text-foreground">{t("requestsCount")}</TableHead>
-              <TableHead className="px-4 py-3 font-semibold text-foreground">En attente notification</TableHead>
-              <TableHead className="px-4 py-3 text-right font-semibold text-foreground">Actions</TableHead>
+              <TableHead className="px-4 py-3 font-semibold text-foreground">
+                {t("demandRanked")}
+              </TableHead>
+              <TableHead className="px-4 py-3 font-semibold text-foreground">
+                {t("requestsCount")}
+              </TableHead>
+              <TableHead className="px-4 py-3 font-semibold text-foreground">
+                {t("colPendingNotification")}
+              </TableHead>
+              <TableHead className="px-4 py-3 text-right font-semibold text-foreground">
+                {t("colActions")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {demand.map((d, idx) => {
+            {demand.map((d) => {
+              const rowKey = d.neighborhoodId || d.neighborhoodName;
               const samplePhone = d.samplePhones[0];
               const cleanPhone = samplePhone?.replace(/\D/g, "");
               const waUrl = cleanPhone
                 ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-                    `Bonjour, SafiHub dessert maintenant le quartier ${d.neighborhoodName} ! Vous pouvez commander dès maintenant sur safihub.com`
+                    t("whatsappAvailableMessage", {
+                      neighborhood: d.neighborhoodName,
+                    })
                   )}`
                 : null;
 
               return (
-                <TableRow key={idx} className="hover:bg-muted/40 transition">
+                <TableRow key={rowKey} className="row-interactive">
                   <TableCell className="px-4 py-3 font-semibold text-foreground">
                     {d.neighborhoodName}
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-bold">
-                      {d.requestCount} demande(s)
+                    <Badge
+                      variant="outline"
+                      className="bg-primary/10 text-primary border-primary/20 font-bold tabular-nums"
+                    >
+                      {t("requestsBadgeCount", { count: d.requestCount })}
                     </Badge>
                   </TableCell>
                   <TableCell className="px-4 py-3">
                     {d.pendingNotificationCount > 0 ? (
-                      <span className="text-amber-700 dark:text-amber-400 font-semibold">
+                      <span className="text-warning font-semibold tabular-nums">
                         {d.pendingNotificationCount} {t("pendingBadge")}
                       </span>
                     ) : (
-                      <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                      <span className="text-success font-semibold flex items-center gap-1">
                         <CheckCircle2 className="size-3.5" />
                         {t("notifiedBadge")}
                       </span>
@@ -95,32 +109,32 @@ export function CoverageDemandTable({ demand }: CoverageDemandTableProps) {
                           href={waUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-600 text-white font-semibold text-[11px] hover:bg-emerald-700 transition"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded bg-success text-success-foreground font-semibold text-[11px] hover:bg-success/90 transition press"
                         >
                           <MessageCircle className="size-3" />
                           <span>WhatsApp</span>
                         </a>
                       )}
-                      {d.pendingNotificationCount > 0 && ((d.pendingRequestIds && d.pendingRequestIds.length > 0) || d.samplePhones.length > 0) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={notifyingKey === (d.neighborhoodId || d.neighborhoodName)}
-                          onClick={() =>
-                            handleMarkNotified(
-                              d.neighborhoodId || d.neighborhoodName,
-                              d.pendingRequestIds && d.pendingRequestIds.length > 0
-                                ? d.pendingRequestIds
-                                : d.samplePhones
-                            )
-                          }
-                          className="h-7 text-[11px]"
-                        >
-                          {notifyingKey === (d.neighborhoodId || d.neighborhoodName)
-                            ? "..."
-                            : "Marquer notifié"}
-                        </Button>
-                      )}
+                      {d.pendingNotificationCount > 0 &&
+                        ((d.pendingRequestIds && d.pendingRequestIds.length > 0) ||
+                          d.samplePhones.length > 0) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={notifyingKey === rowKey}
+                            onClick={() =>
+                              handleMarkNotified(
+                                rowKey,
+                                d.pendingRequestIds && d.pendingRequestIds.length > 0
+                                  ? d.pendingRequestIds
+                                  : d.samplePhones
+                              )
+                            }
+                            className="h-7 text-[11px] press"
+                          >
+                            {notifyingKey === rowKey ? "..." : t("markNotified")}
+                          </Button>
+                        )}
                     </div>
                   </TableCell>
                 </TableRow>

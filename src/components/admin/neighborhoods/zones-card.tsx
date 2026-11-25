@@ -13,8 +13,8 @@ export async function ZonesCard({ zones }: ZonesCardProps) {
     <div className="bg-card p-5 rounded-xl border border-border shadow-xs space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold text-foreground">{t("zonesCard")}</h2>
-        <span className="text-xs text-muted-foreground font-semibold">
-          {zones.length} zone(s)
+        <span className="text-xs text-muted-foreground font-semibold tabular-nums">
+          {t("zoneCount", { count: zones.length })}
         </span>
       </div>
 
