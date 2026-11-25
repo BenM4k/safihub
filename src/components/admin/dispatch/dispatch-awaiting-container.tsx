@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DispatchAwaitingToolbar } from "./dispatch-awaiting-toolbar";
@@ -54,6 +54,14 @@ interface DispatchAwaitingContainerProps {
   isRefreshing?: boolean;
 }
 
+interface LocalAwaitingState {
+  view: "pressing" | "order";
+  search: string;
+  delay: DelayFilter;
+  sort: SortOption;
+  page: number;
+}
+
 export function DispatchAwaitingContainer({
   orders,
   availablePressings,
@@ -74,6 +82,39 @@ export function DispatchAwaitingContainer({
   const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(new Set());
   const pageSize = 15;
 
+  const latestStateRef = useRef<LocalAwaitingState>({
+    view: initialQuery.view,
+    search: initialQuery.search,
+    delay: initialQuery.delay,
+    sort: initialQuery.sort,
+    page: initialQuery.page,
+  });
+
+  const searchKey = liveSearchParams.toString();
+  const [trackedSearchKey, setTrackedSearchKey] = useState(searchKey);
+
+  if (trackedSearchKey !== searchKey) {
+    setTrackedSearchKey(searchKey);
+    const parsed = parseAdminDispatchSearchParams(
+      Object.fromEntries(new URLSearchParams(searchKey).entries())
+    );
+    setViewMode(parsed.view);
+    setSearch(parsed.search);
+    setDelayFilter(parsed.delay);
+    setSortBy(parsed.sort);
+    setPage(parsed.page);
+  }
+
+  useEffect(() => {
+    latestStateRef.current = {
+      view: viewMode,
+      search,
+      delay: delayFilter,
+      sort: sortBy,
+      page,
+    };
+  }, [viewMode, search, delayFilter, sortBy, page]);
+
   const {
     selectedOrderForDetails,
     setSelectedOrderForDetails,
@@ -86,11 +127,30 @@ export function DispatchAwaitingContainer({
     closeReassignModal,
   } = useDispatchModals();
 
-  function syncUrl(partial: Partial<AdminDispatchQueryParams>) {
-    const current = parseAdminDispatchSearchParams(
+  function applyStateAndSyncUrl(partial: Partial<LocalAwaitingState>) {
+    const nextState: LocalAwaitingState = {
+      ...latestStateRef.current,
+      ...partial,
+    };
+    latestStateRef.current = nextState;
+
+    setViewMode(nextState.view);
+    setSearch(nextState.search);
+    setDelayFilter(nextState.delay);
+    setSortBy(nextState.sort);
+    setPage(nextState.page);
+
+    const urlParsed = parseAdminDispatchSearchParams(
       Object.fromEntries(liveSearchParams.entries())
     );
-    const qs = buildAdminDispatchQueryString({ ...current, ...partial });
+    const qs = buildAdminDispatchQueryString({
+      tab: urlParsed.tab,
+      view: nextState.view,
+      search: nextState.search,
+      delay: nextState.delay,
+      sort: nextState.sort,
+      page: nextState.page,
+    });
     startTransition(() => {
       router.replace(qs ? `${pathname}${qs}` : pathname, { scroll: false });
     });
@@ -133,28 +193,13 @@ export function DispatchAwaitingContainer({
       <DispatchAwaitingToolbar
         totalOrdersCount={orders.length}
         viewMode={viewMode}
-        onChangeViewMode={(mode) => {
-          setViewMode(mode);
-          setPage(1);
-          syncUrl({ view: mode, page: 1 });
-        }}
+        onChangeViewMode={(mode) => applyStateAndSyncUrl({ view: mode, page: 1 })}
         search={search}
-        onSearchChange={(s) => {
-          setSearch(s);
-          setPage(1);
-          syncUrl({ search: s, page: 1 });
-        }}
+        onSearchChange={(s) => applyStateAndSyncUrl({ search: s, page: 1 })}
         delayFilter={delayFilter}
-        onDelayFilterChange={(f) => {
-          setDelayFilter(f);
-          setPage(1);
-          syncUrl({ delay: f, page: 1 });
-        }}
+        onDelayFilterChange={(f) => applyStateAndSyncUrl({ delay: f, page: 1 })}
         sortBy={sortBy}
-        onSortByChange={(s) => {
-          setSortBy(s);
-          syncUrl({ sort: s });
-        }}
+        onSortByChange={(s) => applyStateAndSyncUrl({ sort: s })}
         onRefresh={onRefresh}
         isRefreshing={isRefreshing || isPending}
       />
@@ -194,10 +239,7 @@ export function DispatchAwaitingContainer({
         page={currentPage}
         pageSize={pageSize}
         totalItems={totalItems}
-        onPageChange={(nextPage) => {
-          setPage(nextPage);
-          syncUrl({ page: nextPage });
-        }}
+        onPageChange={(nextPage) => applyStateAndSyncUrl({ page: nextPage })}
         hideIfSinglePage
       />
 

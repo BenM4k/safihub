@@ -1,7 +1,12 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 export function OrdersStreamSkeleton() {
+  const t = useTranslations("admin.orders");
+
   return (
-    <div className="space-y-4" aria-busy="true" aria-label="Loading orders">
-      {/* Stats bar skeleton */}
+    <div className="space-y-4" aria-busy="true" aria-label={t("loadingOrdersAria")}>
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {Array.from({ length: 5 }).map((_, idx) => (
           <div
@@ -14,7 +19,6 @@ export function OrdersStreamSkeleton() {
         ))}
       </div>
 
-      {/* Filter bar skeleton */}
       <div className="space-y-3">
         <div className="h-10 w-full rounded-lg animate-shimmer" />
         <div className="flex flex-col lg:flex-row gap-2.5">
@@ -27,7 +31,6 @@ export function OrdersStreamSkeleton() {
         </div>
       </div>
 
-      {/* Table skeleton */}
       <div className="rounded-lg border border-border bg-background overflow-hidden">
         <div className="divide-y divide-border">
           <div className="h-10 bg-muted/40" />

@@ -58,7 +58,7 @@ export function OrdersActiveFilterChips({
       {filters.dateRange !== "30d" && (
         <FilterChip
           onRemove={() => onFilterChange({ dateRange: "30d" })}
-          removeAriaLabel={t("resetFilters")}
+          removeAriaLabel={t("removeDateRangeFilter")}
         >
           {t("chipPeriod", {
             period:

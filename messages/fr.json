@@ -17,6 +17,10 @@
       "fr": "Français",
       "en": "English",
       "sw": "Kiswahili"
+    },
+    "orderEvents": {
+      "disputeResolved": "Litige résolu",
+      "disputeResolvedWithCompensation": "Litige résolu ({amount} {currency})"
     }
   },
   "appShell": {
@@ -680,7 +684,9 @@
       "operationsLoadError": "Erreur de chargement des opérations",
       "customerFallback": "Client",
       "houseFallback": "Pressing",
-      "assignedCourierLabel": "Coursier assigné"
+      "assignedCourierLabel": "Coursier assigné",
+      "loadingMetricsAria": "Chargement des indicateurs",
+      "loadingOperationsAria": "Chargement des opérations en direct"
     },
     "neighborhoods": {
       "title": "Quartiers & Zones de livraison",
@@ -1486,7 +1492,11 @@
       "paymentToPay": "À payer",
       "timelineTransition": "Transition",
       "timelineActorBy": "Par",
-      "neighborhoodLabel": "Quartier"
+      "neighborhoodLabel": "Quartier",
+      "loadingOrdersAria": "Chargement des commandes",
+      "removeDateRangeFilter": "Réinitialiser le filtre de période",
+      "detailLoadError": "Impossible de charger les détails de la commande.",
+      "exportOrdersError": "Impossible d'exporter les commandes filtrées."
     },
     "dispatch": {
       "title": "Écran de Dispatch Opérationnel",
@@ -1570,7 +1580,9 @@
       "missionSlotLabel": "Créneau",
       "missionLandmarkLabel": "Repère",
       "selectCourierWithCount": "Sélectionner un coursier ({count})",
-      "assigningCourier": "Assignation..."
+      "assigningCourier": "Assignation...",
+      "loadingDispatchAria": "Chargement du dispatch",
+      "assignMissionError": "Impossible d'assigner le coursier. Veuillez réessayer."
     },
     "settings": {
       "title": "Paramètres de la plateforme",
@@ -1945,7 +1957,14 @@
       "currencyLabel": "Devise",
       "cancelResolve": "Annuler",
       "resolving": "Validation...",
-      "confirmResolve": "Confirmer la résolution"
+      "confirmResolve": "Confirmer la résolution",
+      "loadingDisputesAria": "Chargement des litiges",
+      "errorGeneric": "Impossible de résoudre le litige. Veuillez réessayer.",
+      "errorNetworkReconcile": "La connexion a été interrompue. L'état du litige a été actualisé.",
+      "errorUnauthorized": "Accès non autorisé pour résoudre ce litige.",
+      "errorNotFound": "Ce litige est introuvable.",
+      "errorAlreadyResolved": "Ce litige a déjà été résolu.",
+      "errorInvalidInput": "Les informations saisies sont invalides."
     },
     "whatsapp": {
       "title": "Console de Test WhatsApp Cloud API",

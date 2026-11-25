@@ -34,6 +34,7 @@ import type {
   RelanceEventSummary,
 } from "@/lib/dispatch-grouping";
 import type { AdminOrdersQueryParams } from "@/lib/admin-orders-query";
+import { clampExportLimit, MAX_EXPORT_LIMIT } from "@/lib/export-limits";
 
 export type OrderEventType = (typeof orderEventTypeEnum.enumValues)[number];
 
@@ -234,9 +235,7 @@ const CANCELLED_STATUSES: OrderStatus[] = [
   "disputed",
 ];
 
-export async function getOrdersPaginated(
-  params: AdminOrdersQueryParams
-): Promise<PaginatedOrdersResult> {
+function buildAdminOrdersQueryParts(params: AdminOrdersQueryParams) {
   const { dateString: bukavuToday } = toBukavuDateTime(new Date());
   const todayStart = fromBukavuDateTime(bukavuToday, "00:00");
   const sevenDaysStart = new Date(todayStart.getTime() - 6 * 86_400_000);
@@ -295,36 +294,47 @@ export async function getOrdersPaginated(
       ? orderFn(schema.user.name)
       : orderFn(schema.orders.createdAt);
 
+  return { todayStart, whereClause, sortExpr };
+}
+
+function getAdminOrderSelectFields() {
+  return {
+    id: schema.orders.id,
+    code: schema.orders.code,
+    trackingToken: schema.orders.trackingToken,
+    customerId: schema.orders.customerId,
+    customerName: schema.user.name,
+    customerEmail: schema.user.email,
+    isCustomerGuest: schema.user.isGuest,
+    customerPhone: schema.orders.contactPhone,
+    houseId: schema.orders.houseId,
+    houseName: schema.houses.name,
+    housePhone: schema.houses.contactPhone,
+    neighborhoodId: schema.orders.neighborhoodId,
+    neighborhoodName: schema.neighborhoods.name,
+    status: schema.orders.status,
+    source: schema.orders.source,
+    totalDue: schema.orders.totalDue,
+    currency: schema.orders.currency,
+    itemsTotal: schema.orders.itemsTotal,
+    deliveryFee: schema.orders.deliveryFee,
+    commissionAmount: schema.orders.commissionAmount,
+    pickupSlotStart: schema.orders.pickupSlotStart,
+    pickupSlotEnd: schema.orders.pickupSlotEnd,
+    createdAt: schema.orders.createdAt,
+    acceptanceDeadlineAt: schema.orders.acceptanceDeadlineAt,
+  };
+}
+
+export async function getOrdersPaginated(
+  params: AdminOrdersQueryParams
+): Promise<PaginatedOrdersResult> {
+  const { todayStart, whereClause, sortExpr } = buildAdminOrdersQueryParts(params);
   const offset = (params.page - 1) * params.pageSize;
 
   const [rows, [countRow], [statsRow]] = await Promise.all([
     db
-      .select({
-        id: schema.orders.id,
-        code: schema.orders.code,
-        trackingToken: schema.orders.trackingToken,
-        customerId: schema.orders.customerId,
-        customerName: schema.user.name,
-        customerEmail: schema.user.email,
-        isCustomerGuest: schema.user.isGuest,
-        customerPhone: schema.orders.contactPhone,
-        houseId: schema.orders.houseId,
-        houseName: schema.houses.name,
-        housePhone: schema.houses.contactPhone,
-        neighborhoodId: schema.orders.neighborhoodId,
-        neighborhoodName: schema.neighborhoods.name,
-        status: schema.orders.status,
-        source: schema.orders.source,
-        totalDue: schema.orders.totalDue,
-        currency: schema.orders.currency,
-        itemsTotal: schema.orders.itemsTotal,
-        deliveryFee: schema.orders.deliveryFee,
-        commissionAmount: schema.orders.commissionAmount,
-        pickupSlotStart: schema.orders.pickupSlotStart,
-        pickupSlotEnd: schema.orders.pickupSlotEnd,
-        createdAt: schema.orders.createdAt,
-        acceptanceDeadlineAt: schema.orders.acceptanceDeadlineAt,
-      })
+      .select(getAdminOrderSelectFields())
       .from(schema.orders)
       .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
       .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
@@ -333,7 +343,7 @@ export async function getOrdersPaginated(
         eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
       )
       .where(whereClause)
-      .orderBy(sortExpr, desc(schema.orders.createdAt))
+      .orderBy(sortExpr, desc(schema.orders.createdAt), desc(schema.orders.id))
       .limit(params.pageSize)
       .offset(offset),
     db
@@ -377,6 +387,26 @@ export async function getOrdersPaginated(
       cancelled: stats.cancelled,
     },
   };
+}
+
+export async function getOrdersForFilteredExport(
+  params: AdminOrdersQueryParams
+): Promise<OrderListItemRecord[]> {
+  const { whereClause, sortExpr } = buildAdminOrdersQueryParts(params);
+  const maxLimit = clampExportLimit(MAX_EXPORT_LIMIT);
+
+  return await db
+    .select(getAdminOrderSelectFields())
+    .from(schema.orders)
+    .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+    .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
+    .innerJoin(
+      schema.neighborhoods,
+      eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+    )
+    .where(whereClause)
+    .orderBy(sortExpr, desc(schema.orders.createdAt), desc(schema.orders.id))
+    .limit(maxLimit);
 }
 
 export async function getOrderById(

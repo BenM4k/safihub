@@ -187,6 +187,11 @@ export function DisputesList({
             });
           }}
           onResolved={applyOptimisticResolve}
+          onReconcile={() => {
+            startTransition(() => {
+              router.refresh();
+            });
+          }}
         />
       )}
     </div>

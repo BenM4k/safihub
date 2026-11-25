@@ -1,5 +1,9 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Clock, Loader2, Package } from "lucide-react";
 import { formatAmount, formatDateTime } from "@/lib/order-formatters";
+import { getStructuredDisputeResolution } from "@/lib/order-event-formatters";
 import type { PartnerOrderListItemDTO } from "@/dal/partner-order.dal";
 import type { OrderEventRecord, OrderItemRecord } from "@/dal/order.dal";
 
@@ -58,6 +62,8 @@ export function OrderDetailTimeline({
   events,
   title,
 }: OrderDetailTimelineProps) {
+  const tEvents = useTranslations("common.orderEvents");
+
   if (events.length === 0) return null;
 
   return (
@@ -67,17 +73,34 @@ export function OrderDetailTimeline({
         <span>{title}</span>
       </h3>
       <div className="space-y-3 pl-2 border-l border-border/70 ml-1.5">
-        {events.map((ev) => (
-          <div key={ev.id} className="pl-3 space-y-0.5 relative">
-            <div className="size-1.5 rounded-full bg-primary absolute -left-[17px] top-1.5" />
-            <div className="font-semibold text-foreground text-xs">
-              {ev.note || ev.type}
+        {events.map((ev) => {
+          const disputeMeta = getStructuredDisputeResolution(ev.payload);
+          const categoryLabel = disputeMeta
+            ? disputeMeta.compensationAmount !== null
+              ? tEvents("disputeResolvedWithCompensation", {
+                  amount: disputeMeta.compensationAmount,
+                  currency: disputeMeta.currency,
+                })
+              : tEvents("disputeResolved")
+            : null;
+
+          return (
+            <div key={ev.id} className="pl-3 space-y-0.5 relative">
+              <div className="size-1.5 rounded-full bg-primary absolute -left-[17px] top-1.5" />
+              {categoryLabel && (
+                <div className="font-semibold text-primary text-[11px]">
+                  {categoryLabel}
+                </div>
+              )}
+              <div className="font-semibold text-foreground text-xs">
+                {ev.note || ev.type}
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                {formatDateTime(ev.createdAt)}
+              </div>
             </div>
-            <div className="text-[10px] text-muted-foreground">
-              {formatDateTime(ev.createdAt)}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

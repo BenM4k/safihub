@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { OrderListItemRecord, PaginatedOrdersResult } from "@/dal";
-import { getAdminOrderDetailAction } from "@/actions/admin-order.actions";
+import {
+  exportFilteredAdminOrdersAction,
+  getAdminOrderDetailAction,
+} from "@/actions/admin-order.actions";
+import { err } from "@/lib/result";
 import { exportOrdersToCSV } from "@/lib/order-formatters";
 import {
   buildAdminOrdersQueryString,
@@ -12,6 +17,7 @@ import {
   type AdminOrdersQueryParams,
   type AdminOrderSortField,
 } from "@/lib/admin-orders-query";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { OrdersStatsRow } from "./orders-stats-row";
 import { OrdersFilterBar, type FilterState } from "./orders-filter-bar";
 import { OrdersBulkActions } from "./orders-bulk-actions";
@@ -21,17 +27,17 @@ import type { OrderDetailActionResult } from "./order-details-async-body";
 
 const OrderDetailsSheet = dynamic(
   () => import("./order-details-sheet").then((m) => m.OrderDetailsSheet),
-  { ssr: false },
+  { ssr: false }
 );
 
 const OrderReassignDialog = dynamic(
   () => import("./order-reassign-dialog").then((m) => m.OrderReassignDialog),
-  { ssr: false },
+  { ssr: false }
 );
 
 const OrderCancelDialog = dynamic(
   () => import("./order-cancel-dialog").then((m) => m.OrderCancelDialog),
-  { ssr: false },
+  { ssr: false }
 );
 
 interface OrdersManagementClientProps {
@@ -45,22 +51,28 @@ export function OrdersManagementClient({
   query,
   houses,
 }: OrdersManagementClientProps) {
+  const t = useTranslations("admin.orders");
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  const latestQueryRef = useRef<AdminOrdersQueryParams>(query);
+  useEffect(() => {
+    latestQueryRef.current = query;
+  }, [query]);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [detailState, setDetailState] = useState<{
     order: OrderListItemRecord;
     promise: Promise<OrderDetailActionResult>;
   } | null>(null);
-  const [reassignOrder, setReassignOrder] =
-    useState<OrderListItemRecord | null>(null);
-  const [cancelOrder, setCancelOrder] = useState<OrderListItemRecord | null>(
-    null,
-  );
+  const [reassignOrder, setReassignOrder] = useState<OrderListItemRecord | null>(null);
+  const [cancelOrder, setCancelOrder] = useState<OrderListItemRecord | null>(null);
 
   function navigateQuery(next: AdminOrdersQueryParams) {
+    latestQueryRef.current = next;
     const qs = buildAdminOrdersQueryString(next);
     startTransition(() => {
       router.replace(qs ? `${pathname}${qs}` : pathname, { scroll: false });
@@ -70,7 +82,7 @@ export function OrdersManagementClient({
   function handleFilterChange(partial: Partial<FilterState>) {
     setSelectedIds([]);
     navigateQuery({
-      ...query,
+      ...latestQueryRef.current,
       ...partial,
       page: 1,
     });
@@ -80,19 +92,21 @@ export function OrdersManagementClient({
     setSelectedIds([]);
     navigateQuery({
       ...DEFAULT_ADMIN_ORDERS_QUERY,
-      pageSize: query.pageSize,
+      pageSize: latestQueryRef.current.pageSize,
     });
   }
 
   function handleSort(field: AdminOrderSortField) {
+    const base = latestQueryRef.current;
     const nextDirection =
-      query.sortField === field
-        ? query.sortDirection === "asc"
+      base.sortField === field
+        ? base.sortDirection === "asc"
           ? "desc"
           : "asc"
         : "desc";
+    setSelectedIds([]);
     navigateQuery({
-      ...query,
+      ...base,
       sortField: field,
       sortDirection: nextDirection,
       page: 1,
@@ -101,7 +115,7 @@ export function OrdersManagementClient({
 
   function handleToggleSelect(id: string) {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   }
 
@@ -112,10 +126,16 @@ export function OrdersManagementClient({
     setSelectedIds(allSelected ? [] : data.orders.map((o) => o.id));
   }
 
+  function fetchDetailSafely(orderId: string): Promise<OrderDetailActionResult> {
+    return getAdminOrderDetailAction(orderId).catch(() =>
+      err(t("detailLoadError"))
+    );
+  }
+
   function openOrderDetails(order: OrderListItemRecord) {
     setDetailState({
       order,
-      promise: getAdminOrderDetailAction(order.id),
+      promise: fetchDetailSafely(order.id),
     });
   }
 
@@ -124,13 +144,39 @@ export function OrdersManagementClient({
       prev
         ? {
             order: prev.order,
-            promise: getAdminOrderDetailAction(prev.order.id),
+            promise: fetchDetailSafely(prev.order.id),
           }
-        : null,
+        : null
     );
     startTransition(() => {
       router.refresh();
     });
+  }
+
+  async function handleExportFiltered() {
+    setExportError(null);
+    setIsExporting(true);
+    try {
+      const active = latestQueryRef.current;
+      const res = await exportFilteredAdminOrdersAction({
+        search: active.search,
+        tab: active.tab,
+        dateRange: active.dateRange,
+        houseId: active.houseId,
+        source: active.source,
+        sortField: active.sortField,
+        sortDirection: active.sortDirection,
+      });
+      if (!res.ok) {
+        setExportError(res.error);
+        return;
+      }
+      exportOrdersToCSV(res.value);
+    } catch {
+      setExportError(t("exportOrdersError"));
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   const singleSelectedOrder =
@@ -156,29 +202,29 @@ export function OrdersManagementClient({
         }}
         onFilterChange={handleFilterChange}
         onResetFilters={handleResetFilters}
-        onExport={() => exportOrdersToCSV(data.orders)}
+        onExport={handleExportFiltered}
         houses={houses}
         tabCounts={data.tabCounts}
-        isPending={isPending}
+        isPending={isPending || isExporting}
       />
+
+      {exportError && (
+        <Alert variant="destructive">
+          <AlertDescription className="text-xs">{exportError}</AlertDescription>
+        </Alert>
+      )}
 
       <OrdersBulkActions
         selectedCount={selectedIds.length}
         onClearSelection={() => setSelectedIds([])}
         onExportSelected={() =>
-          exportOrdersToCSV(
-            data.orders.filter((o) => selectedIds.includes(o.id)),
-          )
+          exportOrdersToCSV(data.orders.filter((o) => selectedIds.includes(o.id)))
         }
         onCancelSelected={
-          singleSelectedOrder
-            ? () => setCancelOrder(singleSelectedOrder)
-            : undefined
+          singleSelectedOrder ? () => setCancelOrder(singleSelectedOrder) : undefined
         }
         onReassignSelected={
-          singleSelectedOrder
-            ? () => setReassignOrder(singleSelectedOrder)
-            : undefined
+          singleSelectedOrder ? () => setReassignOrder(singleSelectedOrder) : undefined
         }
       />
 
@@ -203,11 +249,11 @@ export function OrdersManagementClient({
         totalItems={data.totalCount}
         onPageChange={(page) => {
           setSelectedIds([]);
-          navigateQuery({ ...query, page });
+          navigateQuery({ ...latestQueryRef.current, page });
         }}
         onPageSizeChange={(pageSize) => {
           setSelectedIds([]);
-          navigateQuery({ ...query, pageSize, page: 1 });
+          navigateQuery({ ...latestQueryRef.current, pageSize, page: 1 });
         }}
         className="rounded-xl border border-border"
       />

@@ -1,7 +1,12 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 export function DashboardMetricsSkeleton() {
+  const t = useTranslations("admin.dashboard");
+
   return (
-    <div className="space-y-6" aria-busy="true" aria-label="Loading metrics">
-      {/* Alert card skeleton */}
+    <div className="space-y-6" aria-busy="true" aria-label={t("loadingMetricsAria")}>
       <div className="rounded-xl border border-border bg-card p-5 sm:p-6 space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
@@ -16,7 +21,6 @@ export function DashboardMetricsSkeleton() {
         </div>
       </div>
 
-      {/* Stat chips skeleton */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {Array.from({ length: 3 }).map((_, idx) => (
           <div
@@ -26,7 +30,6 @@ export function DashboardMetricsSkeleton() {
         ))}
       </div>
 
-      {/* Overview KPI strip skeleton */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, idx) => (
           <div
@@ -39,7 +42,6 @@ export function DashboardMetricsSkeleton() {
         ))}
       </div>
 
-      {/* Scorecard skeleton */}
       <div className="rounded-xl border border-border bg-card p-5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-2">
@@ -59,11 +61,13 @@ export function DashboardMetricsSkeleton() {
 }
 
 export function DashboardOperationsSkeleton() {
+  const t = useTranslations("admin.dashboard");
+
   return (
     <div
       className="grid grid-cols-1 lg:grid-cols-3 gap-6"
       aria-busy="true"
-      aria-label="Loading live operations"
+      aria-label={t("loadingOperationsAria")}
     >
       <div className="lg:col-span-2 rounded-xl border border-border bg-card p-5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">

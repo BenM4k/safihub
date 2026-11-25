@@ -17,6 +17,10 @@
       "fr": "Français",
       "en": "English",
       "sw": "Kiswahili"
+    },
+    "orderEvents": {
+      "disputeResolved": "Dispute resolved",
+      "disputeResolvedWithCompensation": "Dispute resolved ({amount} {currency})"
     }
   },
   "appShell": {
@@ -680,7 +684,9 @@
       "operationsLoadError": "Error loading operations data",
       "customerFallback": "Customer",
       "houseFallback": "Laundry House",
-      "assignedCourierLabel": "Assigned Courier"
+      "assignedCourierLabel": "Assigned Courier",
+      "loadingMetricsAria": "Loading metrics",
+      "loadingOperationsAria": "Loading live operations"
     },
     "neighborhoods": {
       "title": "Neighborhoods & Delivery Zones",
@@ -1486,7 +1492,11 @@
       "paymentToPay": "To pay",
       "timelineTransition": "Transition",
       "timelineActorBy": "By",
-      "neighborhoodLabel": "Neighborhood"
+      "neighborhoodLabel": "Neighborhood",
+      "loadingOrdersAria": "Loading orders",
+      "removeDateRangeFilter": "Reset period filter",
+      "detailLoadError": "Unable to load order details.",
+      "exportOrdersError": "Unable to export filtered orders."
     },
     "dispatch": {
       "title": "Operational Dispatch",
@@ -1570,7 +1580,9 @@
       "missionSlotLabel": "Slot",
       "missionLandmarkLabel": "Landmark",
       "selectCourierWithCount": "Select a courier ({count})",
-      "assigningCourier": "Assigning..."
+      "assigningCourier": "Assigning...",
+      "loadingDispatchAria": "Loading dispatch",
+      "assignMissionError": "Unable to assign courier. Please try again."
     },
     "settings": {
       "title": "Platform Settings",
@@ -1945,7 +1957,14 @@
       "currencyLabel": "Currency",
       "cancelResolve": "Cancel",
       "resolving": "Resolving...",
-      "confirmResolve": "Confirm resolution"
+      "confirmResolve": "Confirm resolution",
+      "loadingDisputesAria": "Loading disputes",
+      "errorGeneric": "Unable to resolve dispute. Please try again.",
+      "errorNetworkReconcile": "Request failed. Dispute state has been refreshed.",
+      "errorUnauthorized": "You are not authorized to resolve this dispute.",
+      "errorNotFound": "Dispute not found.",
+      "errorAlreadyResolved": "This dispute has already been resolved.",
+      "errorInvalidInput": "The submitted resolution details are invalid."
     },
     "whatsapp": {
       "title": "WhatsApp Cloud API Test Console",

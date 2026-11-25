@@ -35,12 +35,16 @@ interface ResolveDisputeDialogProps {
     compensationAmount: number | null;
     currency: "CDF" | "USD";
   }) => void;
+  onReconcile: () => void;
 }
+
+const MAX_COMPENSATION = 10_000_000;
 
 export function ResolveDisputeDialog({
   dispute,
   onClose,
   onResolved,
+  onReconcile,
 }: ResolveDisputeDialogProps) {
   const t = useTranslations("admin.disputes");
   const [resolution, setResolution] = useState("");
@@ -51,6 +55,26 @@ export function ResolveDisputeDialog({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  function mapErrorCode(code: string): string {
+    switch (code) {
+      case "DISPUTE_ALREADY_RESOLVED":
+        return t("errorAlreadyResolved");
+      case "DISPUTE_NOT_FOUND":
+        return t("errorNotFound");
+      case "UNAUTHORIZED":
+        return t("errorUnauthorized");
+      case "RESOLUTION_TOO_SHORT":
+        return t("resolutionMinError");
+      case "INVALID_COMPENSATION":
+        return t("compensationInvalidError");
+      case "INVALID_DISPUTE_ID":
+      case "INVALID_INPUT":
+        return t("errorInvalidInput");
+      default:
+        return t("errorGeneric");
+    }
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = resolution.trim();
@@ -60,9 +84,14 @@ export function ResolveDisputeDialog({
     }
 
     let compensationAmount: number | null = null;
-    if (compensationRaw.trim()) {
-      const parsed = Number.parseInt(compensationRaw.trim(), 10);
-      if (!Number.isFinite(parsed) || parsed < 0) {
+    const compTrimmed = compensationRaw.trim();
+    if (compTrimmed !== "") {
+      const parsed = Number(compTrimmed);
+      if (
+        !Number.isSafeInteger(parsed) ||
+        parsed < 0 ||
+        parsed > MAX_COMPENSATION
+      ) {
         setError(t("compensationInvalidError"));
         return;
       }
@@ -71,24 +100,31 @@ export function ResolveDisputeDialog({
 
     setError(null);
     startTransition(async () => {
-      onResolved({
-        disputeId: dispute.id,
-        resolution: trimmed,
-        compensationAmount,
-        currency,
-      });
+      try {
+        const res = await resolveAdminDisputeAction({
+          disputeId: dispute.id,
+          resolution: trimmed,
+          compensationAmount,
+          currency,
+        });
 
-      const res = await resolveAdminDisputeAction({
-        disputeId: dispute.id,
-        resolution: trimmed,
-        compensationAmount,
-        currency,
-      });
-
-      if (res.ok) {
-        onClose();
-      } else {
-        setError(res.error);
+        if (res.ok) {
+          onResolved({
+            disputeId: dispute.id,
+            resolution: trimmed,
+            compensationAmount,
+            currency,
+          });
+          onClose();
+        } else {
+          setError(mapErrorCode(res.error));
+          if (res.error === "DISPUTE_ALREADY_RESOLVED") {
+            onReconcile();
+          }
+        }
+      } catch {
+        setError(t("errorNetworkReconcile"));
+        onReconcile();
       }
     });
   }
@@ -138,6 +174,7 @@ export function ResolveDisputeDialog({
                 <Input
                   type="number"
                   min={0}
+                  max={MAX_COMPENSATION}
                   step={1}
                   value={compensationRaw}
                   onChange={(e) => setCompensationRaw(e.target.value)}

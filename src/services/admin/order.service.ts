@@ -13,6 +13,7 @@ import {
   getOrderEvents,
   getOrderItems,
   getOrders,
+  getOrdersForFilteredExport,
   getOrdersPaginated,
   getSettings,
   getUserByContactPhone,
@@ -72,8 +73,8 @@ export async function resolveAdminDispute(params: {
 }): Promise<Result<{ orderId: string; resolvedAt: Date }>> {
   try {
     const trimmed = params.resolution.trim();
-    if (!trimmed) {
-      return err("Resolution summary is required");
+    if (trimmed.length < 5) {
+      return err("RESOLUTION_TOO_SHORT");
     }
 
     const res = await resolveAdminDisputeTransaction({
@@ -85,16 +86,32 @@ export async function resolveAdminDispute(params: {
     });
 
     if (res.status === "not_found") {
-      return err("Dispute not found");
+      return err("DISPUTE_NOT_FOUND");
     }
     if (res.status === "already_resolved") {
-      return err("Dispute is already resolved");
+      return err("DISPUTE_ALREADY_RESOLVED");
     }
 
     return ok({ orderId: res.orderId, resolvedAt: res.resolvedAt });
   } catch (error) {
+    sanitizeServiceError(error, "Failed to resolve dispute", "resolveAdminDispute");
+    return err("RESOLVE_FAILED");
+  }
+}
+
+export async function listFilteredAdminOrdersForExport(
+  params: AdminOrdersQueryParams
+): Promise<Result<OrderListItemRecord[]>> {
+  try {
+    const orders = await getOrdersForFilteredExport(params);
+    return ok(orders);
+  } catch (error) {
     return err(
-      sanitizeServiceError(error, "Failed to resolve dispute", "resolveAdminDispute")
+      sanitizeServiceError(
+        error,
+        "Failed to export orders",
+        "listFilteredAdminOrdersForExport"
+      )
     );
   }
 }

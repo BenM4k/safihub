@@ -1,10 +1,11 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useOptimistic, useRef, useState, useTransition } from "react";
 import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { OrderEventRecord } from "@/dal";
 import { addOrderTimelineNoteAction } from "@/actions/admin-order.actions";
+import { getStructuredDisputeResolution } from "@/lib/order-event-formatters";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,7 +25,9 @@ export function OrderDetailsTimeline({
   onEventAdded,
 }: OrderDetailsTimelineProps) {
   const t = useTranslations("admin.orders");
+  const tEvents = useTranslations("common.orderEvents");
   const [noteText, setNoteText] = useState("");
+  const draftRef = useRef("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -36,12 +39,17 @@ export function OrderDetailsTimeline({
     ]
   );
 
+  function updateDraft(next: string) {
+    draftRef.current = next;
+    setNoteText(next);
+  }
+
   function handleAddNote(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = noteText.trim();
     if (!trimmed) return;
     setError(null);
-    setNoteText("");
+    updateDraft("");
 
     startTransition(async () => {
       addOptimisticEvent({
@@ -66,12 +74,21 @@ export function OrderDetailsTimeline({
       fd.append("orderId", orderId);
       fd.append("note", trimmed);
 
-      const res = await addOrderTimelineNoteAction(fd);
-      if (res.ok) {
-        onEventAdded();
-      } else {
-        setNoteText(trimmed);
-        setError(res.error || t("screeningError"));
+      try {
+        const res = await addOrderTimelineNoteAction(fd);
+        if (res.ok) {
+          onEventAdded();
+        } else {
+          if (draftRef.current === "") {
+            updateDraft(trimmed);
+          }
+          setError(res.error || t("screeningError"));
+        }
+      } catch (err) {
+        if (draftRef.current === "") {
+          updateDraft(trimmed);
+        }
+        setError(err instanceof Error ? err.message : t("screeningError"));
       }
     });
   }
@@ -92,40 +109,58 @@ export function OrderDetailsTimeline({
         </p>
       ) : (
         <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-          {optimisticEvents.map((ev) => (
-            <div
-              key={ev.id}
-              className="p-2.5 rounded-lg bg-muted/20 border border-border text-xs space-y-1 animate-enter-fast"
-            >
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="font-bold text-foreground uppercase tracking-wide">
-                  {ev.type}
-                </span>
-                <span className="text-muted-foreground font-mono">
-                  {formatDateTime(ev.createdAt)}
-                </span>
+          {optimisticEvents.map((ev) => {
+            const disputeMeta = getStructuredDisputeResolution(ev.payload);
+            const categoryLabel = disputeMeta
+              ? disputeMeta.compensationAmount !== null
+                ? tEvents("disputeResolvedWithCompensation", {
+                    amount: disputeMeta.compensationAmount,
+                    currency: disputeMeta.currency,
+                  })
+                : tEvents("disputeResolved")
+              : null;
+
+            return (
+              <div
+                key={ev.id}
+                className="p-2.5 rounded-lg bg-muted/20 border border-border text-xs space-y-1 animate-enter-fast"
+              >
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-bold text-foreground uppercase tracking-wide">
+                    {ev.type}
+                  </span>
+                  <span className="text-muted-foreground font-mono">
+                    {formatDateTime(ev.createdAt)}
+                  </span>
+                </div>
+
+                {categoryLabel && (
+                  <p className="text-[11px] font-semibold text-success">
+                    {categoryLabel}
+                  </p>
+                )}
+
+                {ev.fromStatus && ev.toStatus && (
+                  <p className="text-foreground">
+                    <span className="text-muted-foreground">{ev.fromStatus}</span> →{" "}
+                    <span className="font-semibold text-foreground">{ev.toStatus}</span>
+                  </p>
+                )}
+
+                {ev.onBehalfOfHouseId && (
+                  <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-warning-soft text-warning border border-warning/20">
+                    {t("auditActionOnBehalf", { house: ev.onBehalfOfHouseName || t("house") })}
+                  </span>
+                )}
+
+                {ev.note && (
+                  <p className="text-foreground bg-background p-1.5 rounded-md border border-border text-[11px] whitespace-pre-wrap">
+                    {ev.note}
+                  </p>
+                )}
               </div>
-
-              {ev.fromStatus && ev.toStatus && (
-                <p className="text-foreground">
-                  <span className="text-muted-foreground">{ev.fromStatus}</span> →{" "}
-                  <span className="font-semibold text-foreground">{ev.toStatus}</span>
-                </p>
-              )}
-
-              {ev.onBehalfOfHouseId && (
-                <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-warning-soft text-warning border border-warning/20">
-                  {t("auditActionOnBehalf", { house: ev.onBehalfOfHouseName || t("house") })}
-                </span>
-              )}
-
-              {ev.note && (
-                <p className="text-foreground bg-background p-1.5 rounded-md border border-border text-[11px] whitespace-pre-wrap">
-                  {ev.note}
-                </p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -137,7 +172,7 @@ export function OrderDetailsTimeline({
         )}
         <Textarea
           value={noteText}
-          onChange={(e) => setNoteText(e.target.value)}
+          onChange={(e) => updateDraft(e.target.value)}
           placeholder={t("notePlaceholder")}
           rows={2}
           className="text-base sm:text-xs resize-none"

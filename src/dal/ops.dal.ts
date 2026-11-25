@@ -394,30 +394,8 @@ export async function getAdminDisputesPaginated(params: {
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-  const offset = (page - 1) * pageSize;
 
-  const [rows, [filteredCount], [statusCounts]] = await Promise.all([
-    db
-      .select({
-        id: schema.disputes.id,
-        orderId: schema.disputes.orderId,
-        orderCode: schema.orders.code,
-        openedBy: schema.disputes.openedBy,
-        type: schema.disputes.type,
-        description: schema.disputes.description,
-        status: schema.disputes.status,
-        resolution: schema.disputes.resolution,
-        compensationAmount: schema.disputes.compensationAmount,
-        currency: schema.disputes.currency,
-        resolvedAt: schema.disputes.resolvedAt,
-        createdAt: schema.disputes.createdAt,
-      })
-      .from(schema.disputes)
-      .leftJoin(schema.orders, eq(schema.disputes.orderId, schema.orders.id))
-      .where(whereClause)
-      .orderBy(desc(schema.disputes.createdAt))
-      .limit(pageSize)
-      .offset(offset),
+  const [[filteredCount], [statusCounts]] = await Promise.all([
     db
       .select({ total: count() })
       .from(schema.disputes)
@@ -432,13 +410,40 @@ export async function getAdminDisputesPaginated(params: {
       .from(schema.disputes),
   ]);
 
+  const totalCount = Number(filteredCount?.total ?? 0);
+  const totalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 1;
+  const effectivePage = totalCount > 0 ? Math.min(page, totalPages) : 1;
+  const offset = (effectivePage - 1) * pageSize;
+
+  const rows = await db
+    .select({
+      id: schema.disputes.id,
+      orderId: schema.disputes.orderId,
+      orderCode: schema.orders.code,
+      openedBy: schema.disputes.openedBy,
+      type: schema.disputes.type,
+      description: schema.disputes.description,
+      status: schema.disputes.status,
+      resolution: schema.disputes.resolution,
+      compensationAmount: schema.disputes.compensationAmount,
+      currency: schema.disputes.currency,
+      resolvedAt: schema.disputes.resolvedAt,
+      createdAt: schema.disputes.createdAt,
+    })
+    .from(schema.disputes)
+    .leftJoin(schema.orders, eq(schema.disputes.orderId, schema.orders.id))
+    .where(whereClause)
+    .orderBy(desc(schema.disputes.createdAt), desc(schema.disputes.id))
+    .limit(pageSize)
+    .offset(offset);
+
   return {
     disputes: rows,
-    totalCount: Number(filteredCount?.total ?? 0),
+    totalCount,
     openCount: statusCounts?.openCount ?? 0,
     resolvedCount: statusCounts?.resolvedCount ?? 0,
     totalAllCount: statusCounts?.totalAllCount ?? 0,
-    page,
+    page: effectivePage,
     pageSize,
   };
 }
@@ -489,18 +494,19 @@ export async function resolveAdminDisputeTransaction(params: {
       })
       .where(eq(schema.disputes.id, params.disputeId));
 
-    const compLabel =
-      params.compensationAmount && params.compensationAmount > 0
-        ? ` (${params.compensationAmount} ${resolvedCurrency})`
-        : "";
-
     await tx.insert(schema.orderEvents).values({
       orderId: locked.orderId,
       type: "note",
       actorId: params.adminId,
       actorRole: "admin",
       recordedBy: params.adminId,
-      note: `Litige résolu${compLabel} : ${params.resolution}`,
+      note: params.resolution,
+      payload: {
+        category: "dispute_resolved",
+        disputeId: params.disputeId,
+        compensationAmount: params.compensationAmount ?? null,
+        currency: resolvedCurrency,
+      },
     });
 
     return {

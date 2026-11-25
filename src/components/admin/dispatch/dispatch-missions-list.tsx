@@ -67,13 +67,19 @@ export function DispatchMissionsList({
       if (mission.customerZoneId) fd.append("customerZoneId", mission.customerZoneId);
       if (mission.houseZoneId) fd.append("houseZoneId", mission.houseZoneId);
 
-      const res = await assignMissionAction(fd);
-      setAssigningId(null);
-
-      if (!res.ok) {
-        setError(res.error);
-      } else {
+      try {
+        const res = await assignMissionAction(fd);
+        if (!res.ok) {
+          setError(res.error);
+          onAssigned?.();
+        } else {
+          onAssigned?.();
+        }
+      } catch {
+        setError(t("assignMissionError"));
         onAssigned?.();
+      } finally {
+        setAssigningId(null);
       }
     });
   }

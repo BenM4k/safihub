@@ -17,6 +17,10 @@
       "fr": "Français",
       "en": "English",
       "sw": "Kiswahili"
+    },
+    "orderEvents": {
+      "disputeResolved": "Mgogoro umetatuliwa",
+      "disputeResolvedWithCompensation": "Mgogoro umetatuliwa ({amount} {currency})"
     }
   },
   "appShell": {
@@ -680,7 +684,9 @@
       "operationsLoadError": "Hitilafu ya kupakia shughuli",
       "customerFallback": "Mteja",
       "houseFallback": "Dobi",
-      "assignedCourierLabel": "Mjumbe aliyeteuliwa"
+      "assignedCourierLabel": "Mjumbe aliyeteuliwa",
+      "loadingMetricsAria": "Inapakia takwimu",
+      "loadingOperationsAria": "Inapakia shughuli za moja kwa moja"
     },
     "neighborhoods": {
       "title": "Mitaa & Kanda za Usafirishaji",
@@ -1486,7 +1492,11 @@
       "paymentToPay": "Ya kulipa",
       "timelineTransition": "Mabadiliko",
       "timelineActorBy": "Na",
-      "neighborhoodLabel": "Mtaa"
+      "neighborhoodLabel": "Mtaa",
+      "loadingOrdersAria": "Inapakia maagizo",
+      "removeDateRangeFilter": "Ondoa kichujio cha muda",
+      "detailLoadError": "Imeshindwa kupakia maelezo ya agizo.",
+      "exportOrdersError": "Imeshindwa kuhamisha maagizo yaliyochujwa."
     },
     "dispatch": {
       "title": "Dashibodi ya Ugawaji wa Kazi",
@@ -1570,7 +1580,9 @@
       "missionSlotLabel": "Muda",
       "missionLandmarkLabel": "Alama",
       "selectCourierWithCount": "Chagua mjumbe ({count})",
-      "assigningCourier": "Inateua..."
+      "assigningCourier": "Inateua...",
+      "loadingDispatchAria": "Inapakia ugawaji",
+      "assignMissionError": "Imeshindwa kumteua mjumbe. Tafadhali jaribu tena."
     },
     "settings": {
       "title": "Mipangilio ya Mfumo",
@@ -1945,7 +1957,14 @@
       "currencyLabel": "Sarafu",
       "cancelResolve": "Ghairi",
       "resolving": "Inatatua...",
-      "confirmResolve": "Thibitisha utatuzi"
+      "confirmResolve": "Thibitisha utatuzi",
+      "loadingDisputesAria": "Inapakia migogoro",
+      "errorGeneric": "Imeshindwa kutatua mgogoro. Tafadhali jaribu tena.",
+      "errorNetworkReconcile": "Muunganisho umekatika. Hali ya mgogoro imesasishwa.",
+      "errorUnauthorized": "Huna idhini ya kutatua mgogoro huu.",
+      "errorNotFound": "Mgogoro haujapatikana.",
+      "errorAlreadyResolved": "Mgogoro huu tayari umetatuliwa.",
+      "errorInvalidInput": "Taarifa za utatuzi hazifai."
     },
     "whatsapp": {
       "title": "Dashibodi ya Majaribio ya WhatsApp Cloud API",

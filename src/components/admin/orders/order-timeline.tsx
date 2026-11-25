@@ -1,8 +1,9 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useOptimistic, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { addOrderTimelineNoteAction } from "@/actions/admin-order.actions";
+import { getStructuredDisputeResolution } from "@/lib/order-event-formatters";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -17,7 +18,9 @@ interface OrderTimelineProps {
 
 export function OrderTimeline({ orderId, events }: OrderTimelineProps) {
   const t = useTranslations("admin.orders");
+  const tEvents = useTranslations("common.orderEvents");
   const [note, setNote] = useState("");
+  const draftRef = useRef("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -29,12 +32,17 @@ export function OrderTimeline({ orderId, events }: OrderTimelineProps) {
     ]
   );
 
+  function updateDraft(next: string) {
+    draftRef.current = next;
+    setNote(next);
+  }
+
   function handleAddNote(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = note.trim();
     if (!trimmed) return;
     setError(null);
-    setNote("");
+    updateDraft("");
 
     startTransition(async () => {
       addOptimisticEvent({
@@ -59,10 +67,19 @@ export function OrderTimeline({ orderId, events }: OrderTimelineProps) {
       fd.append("orderId", orderId);
       fd.append("note", trimmed);
 
-      const res = await addOrderTimelineNoteAction(fd);
-      if (!res.ok) {
-        setNote(trimmed);
-        setError(res.error);
+      try {
+        const res = await addOrderTimelineNoteAction(fd);
+        if (!res.ok) {
+          if (draftRef.current === "") {
+            updateDraft(trimmed);
+          }
+          setError(res.error);
+        }
+      } catch (err) {
+        if (draftRef.current === "") {
+          updateDraft(trimmed);
+        }
+        setError(err instanceof Error ? err.message : t("screeningError"));
       }
     });
   }
@@ -76,53 +93,71 @@ export function OrderTimeline({ orderId, events }: OrderTimelineProps) {
       </div>
 
       <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
-        {optimisticEvents.map((ev) => (
-          <div key={ev.id} className="relative group animate-enter-fast">
-            <div className="absolute -left-6 top-1 size-3.5 rounded-full border-2 border-background bg-primary shadow-xs" />
-            <div className="bg-muted/30 rounded-lg p-3 border border-border space-y-1.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-semibold text-xs text-foreground uppercase tracking-wide">
-                  {ev.type}
-                </span>
-                <span className="text-[11px] text-muted-foreground font-mono">
-                  {formatDateTime(ev.createdAt)}
-                </span>
-              </div>
+        {optimisticEvents.map((ev) => {
+          const disputeMeta = getStructuredDisputeResolution(ev.payload);
+          const categoryLabel = disputeMeta
+            ? disputeMeta.compensationAmount !== null
+              ? tEvents("disputeResolvedWithCompensation", {
+                  amount: disputeMeta.compensationAmount,
+                  currency: disputeMeta.currency,
+                })
+              : tEvents("disputeResolved")
+            : null;
 
-              {ev.fromStatus && ev.toStatus && (
-                <div className="text-xs text-foreground">
-                  {t("timelineTransition")}:{" "}
-                  <span className="font-medium text-muted-foreground">{ev.fromStatus}</span> →{" "}
-                  <span className="font-semibold text-foreground">{ev.toStatus}</span>
-                </div>
-              )}
-
-              {ev.onBehalfOfHouseId && (
-                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-warning-soft text-warning border border-warning/20">
-                  <span>
-                    {t("auditActionOnBehalf", {
-                      house: ev.onBehalfOfHouseName || ev.onBehalfOfHouseId,
-                    })}
+          return (
+            <div key={ev.id} className="relative group animate-enter-fast">
+              <div className="absolute -left-6 top-1 size-3.5 rounded-full border-2 border-background bg-primary shadow-xs" />
+              <div className="bg-muted/30 rounded-lg p-3 border border-border space-y-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-semibold text-xs text-foreground uppercase tracking-wide">
+                    {ev.type}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-mono">
+                    {formatDateTime(ev.createdAt)}
                   </span>
                 </div>
-              )}
 
-              {ev.actorRole && (
-                <div className="text-[11px] text-muted-foreground">
-                  {t("timelineActorBy")}:{" "}
-                  <span className="font-medium capitalize text-foreground">{ev.actorRole}</span>
-                  {ev.actorName && ` (${ev.actorName})`}
-                </div>
-              )}
+                {categoryLabel && (
+                  <div className="text-xs font-semibold text-success">
+                    {categoryLabel}
+                  </div>
+                )}
 
-              {ev.note && (
-                <p className="text-xs text-foreground bg-background p-2 rounded-md border border-border mt-1 whitespace-pre-wrap">
-                  {ev.note}
-                </p>
-              )}
+                {ev.fromStatus && ev.toStatus && (
+                  <div className="text-xs text-foreground">
+                    {t("timelineTransition")}:{" "}
+                    <span className="font-medium text-muted-foreground">{ev.fromStatus}</span> →{" "}
+                    <span className="font-semibold text-foreground">{ev.toStatus}</span>
+                  </div>
+                )}
+
+                {ev.onBehalfOfHouseId && (
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-warning-soft text-warning border border-warning/20">
+                    <span>
+                      {t("auditActionOnBehalf", {
+                        house: ev.onBehalfOfHouseName || ev.onBehalfOfHouseId,
+                      })}
+                    </span>
+                  </div>
+                )}
+
+                {ev.actorRole && (
+                  <div className="text-[11px] text-muted-foreground">
+                    {t("timelineActorBy")}:{" "}
+                    <span className="font-medium capitalize text-foreground">{ev.actorRole}</span>
+                    {ev.actorName && ` (${ev.actorName})`}
+                  </div>
+                )}
+
+                {ev.note && (
+                  <p className="text-xs text-foreground bg-background p-2 rounded-md border border-border mt-1 whitespace-pre-wrap">
+                    {ev.note}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <form onSubmit={handleAddNote} className="pt-4 border-t border-border space-y-3">
@@ -132,7 +167,7 @@ export function OrderTimeline({ orderId, events }: OrderTimelineProps) {
           </FieldLabel>
           <Textarea
             value={note}
-            onChange={(e) => setNote(e.target.value)}
+            onChange={(e) => updateDraft(e.target.value)}
             placeholder={t("notePlaceholder")}
             rows={2}
             className="text-base sm:text-xs resize-none"

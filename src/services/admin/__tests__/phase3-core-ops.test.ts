@@ -5,9 +5,11 @@ import {
 } from "@/lib/admin-orders-query";
 import { parseAdminDispatchSearchParams } from "@/lib/admin-dispatch-query";
 import { parseAdminDisputesSearchParams } from "@/lib/admin-disputes-query";
+import { getStructuredDisputeResolution } from "@/lib/order-event-formatters";
 
 const dalMocks = vi.hoisted(() => ({
   getOrdersPaginated: vi.fn(),
+  getOrdersForFilteredExport: vi.fn(),
   getAdminDisputesPaginated: vi.fn(),
   resolveAdminDisputeTransaction: vi.fn(),
 }));
@@ -17,6 +19,7 @@ vi.mock("@/dal", async (importOriginal) => {
   return {
     ...actual,
     getOrdersPaginated: dalMocks.getOrdersPaginated,
+    getOrdersForFilteredExport: dalMocks.getOrdersForFilteredExport,
     getAdminDisputesPaginated: dalMocks.getAdminDisputesPaginated,
     resolveAdminDisputeTransaction: dalMocks.resolveAdminDisputeTransaction,
   };
@@ -25,6 +28,7 @@ vi.mock("@/dal", async (importOriginal) => {
 import {
   listAdminDisputesPaginated,
   listAdminOrdersPaginated,
+  listFilteredAdminOrdersForExport,
   resolveAdminDispute,
 } from "../order.service";
 
@@ -82,7 +86,7 @@ describe("Phase 3 Core Ops Query Parsers & Services", () => {
     });
   });
 
-  describe("dispatch & disputes URL param parsers", () => {
+  describe("dispatch & disputes URL param parsers & event formatters", () => {
     it("parses valid and fallback values cleanly", () => {
       expect(
         parseAdminDispatchSearchParams({
@@ -114,10 +118,25 @@ describe("Phase 3 Core Ops Query Parsers & Services", () => {
         page: 1,
         pageSize: 20,
       });
+
+      expect(
+        getStructuredDisputeResolution({
+          category: "dispute_resolved",
+          compensationAmount: 5000,
+          currency: "CDF",
+        })
+      ).toEqual({
+        category: "dispute_resolved",
+        disputeId: undefined,
+        compensationAmount: 5000,
+        currency: "CDF",
+      });
+
+      expect(getStructuredDisputeResolution({ unrelated: true })).toBeNull();
     });
   });
 
-  describe("listAdminOrdersPaginated & resolveAdminDispute", () => {
+  describe("listAdminOrdersPaginated, filtered export & resolveAdminDispute", () => {
     it("delegates paginated order queries cleanly", async () => {
       const payload = {
         orders: [],
@@ -141,6 +160,16 @@ describe("Phase 3 Core Ops Query Parsers & Services", () => {
       if (res.ok) expect(res.value).toEqual(payload);
     });
 
+    it("delegates filtered order export queries across active filters", async () => {
+      const exportedRows = [{ id: "ord-1", code: "SF-001" }];
+      dalMocks.getOrdersForFilteredExport.mockResolvedValue(exportedRows);
+
+      const query = parseAdminOrdersSearchParams({ tab: "awaiting", search: "SF-001" });
+      const res = await listFilteredAdminOrdersForExport(query);
+      expect(dalMocks.getOrdersForFilteredExport).toHaveBeenCalledWith(query);
+      expect(res).toEqual({ ok: true, value: exportedRows });
+    });
+
     it("delegates paginated dispute queries cleanly", async () => {
       const payload = {
         disputes: [],
@@ -159,13 +188,13 @@ describe("Phase 3 Core Ops Query Parsers & Services", () => {
       expect(res).toEqual({ ok: true, value: payload });
     });
 
-    it("rejects empty resolution or non-open disputes safely", async () => {
-      const emptyRes = await resolveAdminDispute({
+    it("returns stable error codes on short resolution or non-open disputes", async () => {
+      const shortRes = await resolveAdminDispute({
         disputeId: "d1",
         resolution: "   ",
         adminId: "a1",
       });
-      expect(emptyRes.ok).toBe(false);
+      expect(shortRes).toEqual({ ok: false, error: "RESOLUTION_TOO_SHORT" });
 
       dalMocks.resolveAdminDisputeTransaction.mockResolvedValue({
         status: "already_resolved",
@@ -175,7 +204,7 @@ describe("Phase 3 Core Ops Query Parsers & Services", () => {
         resolution: "Remboursement validé",
         adminId: "a1",
       });
-      expect(dupRes).toEqual({ ok: false, error: "Dispute is already resolved" });
+      expect(dupRes).toEqual({ ok: false, error: "DISPUTE_ALREADY_RESOLVED" });
     });
 
     it("resolves an open dispute cleanly", async () => {

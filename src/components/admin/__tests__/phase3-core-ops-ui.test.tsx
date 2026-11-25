@@ -3,7 +3,7 @@
 import "@/test/ui-sdk-setup";
 import type { ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import frMessages from "../../../../messages/fr.json";
@@ -14,6 +14,10 @@ const navMocks = vi.hoisted(() => ({
   refresh: vi.fn(),
   pathname: "/admin/disputes",
   searchParams: new URLSearchParams(),
+}));
+
+const actionMocks = vi.hoisted(() => ({
+  resolveAdminDisputeAction: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -28,11 +32,9 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/actions/admin-order.actions", () => ({
   addOrderTimelineNoteAction: vi.fn(async () => ({ ok: true, value: undefined })),
-  resolveAdminDisputeAction: vi.fn(async () => ({
-    ok: true,
-    value: { orderId: "ord-1", resolvedAt: new Date() },
-  })),
+  resolveAdminDisputeAction: actionMocks.resolveAdminDisputeAction,
   getAdminOrderDetailAction: vi.fn(),
+  exportFilteredAdminOrdersAction: vi.fn(),
 }));
 
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -40,6 +42,7 @@ import { PilotScorecard } from "../dashboard/pilot-success/pilot-scorecard";
 import { DispatchRefreshTicker } from "../dispatch/dispatch-refresh-ticker";
 import { OrderDetailsSheet } from "../orders/order-details-sheet";
 import { DisputesList } from "../disputes/disputes-list";
+import { ResolveDisputeDialog } from "../disputes/resolve-dispute-dialog";
 
 function renderWithIntl(ui: ReactNode) {
   return render(
@@ -53,9 +56,13 @@ describe("Phase 3 Core Ops UI & RSC Patterns", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     navMocks.searchParams = new URLSearchParams();
+    actionMocks.resolveAdminDisputeAction.mockResolvedValue({
+      ok: true,
+      value: { orderId: "ord-1", resolvedAt: new Date() },
+    });
   });
 
-  it("PilotScorecard Donut collapsible expands/collapses slotted server children", async () => {
+  it("PilotScorecard Donut collapsible hides and re-shows slotted server children across collapse/expand cycle", async () => {
     const user = userEvent.setup();
     renderWithIntl(
       <PilotScorecard
@@ -74,25 +81,30 @@ describe("Phase 3 Core Ops UI & RSC Patterns", () => {
           noData: "Aucune donnée",
         }}
       >
-        <div data-testid="slotted-server-table">Contenu Serveur</div>
+        <div>Contenu Serveur</div>
       </PilotScorecard>
     );
 
-    expect(screen.getByTestId("slotted-server-table")).toBeTruthy();
+    expect(screen.getByText("Contenu Serveur")).toBeTruthy();
 
-    const trigger = screen.getByRole("button", {
-      name: frMessages.admin.dashboard.collapseScorecard,
-    });
-    await user.click(trigger);
+    await user.click(
+      screen.getByRole("button", {
+        name: frMessages.admin.dashboard.collapseScorecard,
+      })
+    );
 
-    expect(
+    const collapsedNode = screen.queryByText("Contenu Serveur");
+    expect(collapsedNode === null || Boolean(collapsedNode.closest("[hidden]"))).toBe(true);
+
+    await user.click(
       screen.getByRole("button", {
         name: frMessages.admin.dashboard.expandScorecard,
       })
-    ).toBeTruthy();
+    );
+    expect(screen.getByText("Contenu Serveur")).toBeTruthy();
   });
 
-  it("DispatchRefreshTicker triggers auto-refresh countdown and manual refresh cleanly", async () => {
+  it("DispatchRefreshTicker triggers auto-refresh countdown cleanly", async () => {
     vi.useFakeTimers();
     try {
       const onRefresh = vi.fn();
@@ -240,5 +252,79 @@ describe("Phase 3 Core Ops UI & RSC Patterns", () => {
     });
     expect(resolveButtons).toHaveLength(1);
     expect(screen.getByText("Monnaie rendue au client")).toBeTruthy();
+  });
+
+  it("ResolveDisputeDialog validates numeric full-value compensation, maps error codes, and reconciles on rejection", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const onResolved = vi.fn();
+    const onReconcile = vi.fn();
+
+    renderWithIntl(
+      <ResolveDisputeDialog
+        dispute={{
+          id: "22222222-2222-4222-8222-222222222222",
+          orderId: "ord-1",
+          orderCode: "SF-100",
+          openedBy: "u-1",
+          type: "damage",
+          description: "Test dispute",
+          status: "open",
+          resolution: null,
+          compensationAmount: null,
+          currency: "CDF",
+          resolvedAt: null,
+          createdAt: new Date(),
+        }}
+        onClose={onClose}
+        onResolved={onResolved}
+        onReconcile={onReconcile}
+      />
+    );
+
+    const resolutionBox = screen.getByPlaceholderText(
+      frMessages.admin.disputes.resolutionPlaceholder
+    );
+    await user.type(resolutionBox, "Remboursement approuvé");
+
+    const compInput = screen.getByPlaceholderText("0");
+    await user.type(compInput, "1e3");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: frMessages.admin.disputes.confirmResolve,
+      })
+    );
+
+    expect(actionMocks.resolveAdminDisputeAction).toHaveBeenCalledWith({
+      disputeId: "22222222-2222-4222-8222-222222222222",
+      resolution: "Remboursement approuvé",
+      compensationAmount: 1000,
+      currency: "CDF",
+    });
+    expect(onResolved).toHaveBeenCalled();
+
+    // Test out-of-range compensation rejection client-side
+    actionMocks.resolveAdminDisputeAction.mockClear();
+    fireEvent.change(compInput, { target: { value: "10000001" } });
+    fireEvent.submit(compInput.closest("form")!);
+    expect(
+      screen.getByText(frMessages.admin.disputes.compensationInvalidError)
+    ).toBeTruthy();
+    expect(actionMocks.resolveAdminDisputeAction).not.toHaveBeenCalled();
+
+    // Test rejection handling + reconcile call
+    fireEvent.change(compInput, { target: { value: "" } });
+    actionMocks.resolveAdminDisputeAction.mockRejectedValueOnce(new Error("boom"));
+    await user.click(
+      screen.getByRole("button", {
+        name: frMessages.admin.disputes.confirmResolve,
+      })
+    );
+
+    expect(
+      await screen.findByText(frMessages.admin.disputes.errorNetworkReconcile)
+    ).toBeTruthy();
+    expect(onReconcile).toHaveBeenCalled();
   });
 });
