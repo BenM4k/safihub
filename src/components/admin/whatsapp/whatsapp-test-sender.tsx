@@ -7,6 +7,7 @@ import { sendAdminWhatsAppTestAction } from "@/actions/admin-whatsapp.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { StatusBadge } from "@/components/admin/shared/status-badge";
 import type {
   ExecuteWhatsAppTestResult,
@@ -18,7 +19,8 @@ export function WhatsAppTestSender() {
   const t = useTranslations("admin.whatsapp");
   const [isPending, startTransition] = useTransition();
 
-  const [recipientPhone, setRecipientPhone] = useState("+243991234567");
+  const [recipientPhone, setRecipientPhone] = useState("");
+  const [dryRun, setDryRun] = useState(true);
   const [scenario, setScenario] = useState<WhatsAppTestScenario>("order_status");
   const [locale, setLocale] = useState<WhatsAppLocale>("fr");
   const [orderCode, setOrderCode] = useState("ORD-20261105-4821");
@@ -46,6 +48,7 @@ export function WhatsAppTestSender() {
         amountCdf: Number(amountCdf) || 0,
         verificationCode,
         customText,
+        dryRun,
       });
       if (!res.ok) {
         setErrorMsg(res.error);
@@ -139,6 +142,20 @@ export function WhatsAppTestSender() {
             <span>{errorMsg}</span>
           </div>
         )}
+
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface/60 px-3.5 py-2.5">
+          <div className="space-y-0.5">
+            <Label htmlFor="wa-sender-dryrun" className="text-xs font-semibold">
+              {t("dryRunToggleLabel")}
+            </Label>
+            <p className="text-xs text-muted-foreground">{t("dryRunToggleHint")}</p>
+          </div>
+          <Switch
+            id="wa-sender-dryrun"
+            checked={dryRun}
+            onCheckedChange={setDryRun}
+          />
+        </div>
 
         <Button type="submit" disabled={isPending} className="w-full">
           <Send className="size-4 mr-2" />

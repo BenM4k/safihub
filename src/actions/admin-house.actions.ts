@@ -21,31 +21,31 @@ import {
 } from "@/services/admin";
 
 const createHouseSchema = z.object({
-  name: z.string().min(1, "Nom du pressing requis"),
+  name: z.string().trim().min(1, "Nom du pressing requis").max(120),
   neighborhoodId: z.string().uuid("Quartier invalide"),
-  contactPhone: z.string().optional().nullable(),
-  addressNote: z.string().optional().nullable(),
-  commissionBps: z.coerce.number().min(0).max(10000).optional().nullable(),
-  minimumOrderAmount: z.coerce.number().min(0).default(0),
-  cutoffMinutes: z.coerce.number().min(0).default(120),
-  turnaroundHours: z.coerce.number().min(1).default(48),
-  dailyCapacity: z.coerce.number().optional().nullable(),
-  maxDistanceLevel: z.coerce.number().min(1).max(3).optional().nullable(),
+  contactPhone: z.string().trim().max(32).optional().nullable(),
+  addressNote: z.string().trim().max(500).optional().nullable(),
+  commissionBps: z.coerce.number().int().min(0).max(10000).optional().nullable(),
+  minimumOrderAmount: z.coerce.number().int().min(0).default(0),
+  cutoffMinutes: z.coerce.number().int().min(0).default(120),
+  turnaroundHours: z.coerce.number().int().min(1).default(48),
+  dailyCapacity: z.coerce.number().int().min(1).optional().nullable(),
+  maxDistanceLevel: z.coerce.number().int().min(1).max(3).optional().nullable(),
   isOwnerHouse: z.boolean().optional().default(false),
 });
 
 const updateHouseSchema = z.object({
   houseId: z.string().uuid("ID de pressing invalide"),
-  name: z.string().min(1, "Nom du pressing requis"),
+  name: z.string().trim().min(1, "Nom du pressing requis").max(120),
   neighborhoodId: z.string().uuid("Quartier invalide"),
-  contactPhone: z.string().optional().nullable(),
-  addressNote: z.string().optional().nullable(),
-  commissionBps: z.coerce.number().min(0).max(10000).optional().nullable(),
-  minimumOrderAmount: z.coerce.number().min(0).default(0),
-  cutoffMinutes: z.coerce.number().min(0).default(120),
-  turnaroundHours: z.coerce.number().min(1).default(48),
-  dailyCapacity: z.coerce.number().optional().nullable(),
-  maxDistanceLevel: z.coerce.number().min(1).max(3).optional().nullable(),
+  contactPhone: z.string().trim().max(32).optional().nullable(),
+  addressNote: z.string().trim().max(500).optional().nullable(),
+  commissionBps: z.coerce.number().int().min(0).max(10000).optional().nullable(),
+  minimumOrderAmount: z.coerce.number().int().min(0).default(0),
+  cutoffMinutes: z.coerce.number().int().min(0).default(120),
+  turnaroundHours: z.coerce.number().int().min(1).default(48),
+  dailyCapacity: z.coerce.number().int().min(1).optional().nullable(),
+  maxDistanceLevel: z.coerce.number().int().min(1).max(3).optional().nullable(),
   isActive: z.boolean().default(true),
   isPaused: z.boolean().default(false),
 });
@@ -196,6 +196,66 @@ export async function toggleHouseActiveStatusAction(params: {
   return res;
 }
 
+const houseUuidSchema = z.string().uuid("ID de pressing invalide");
+const timeHmSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "Format horaire invalide (HH:MM)");
+const dateYmdSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide (AAAA-MM-JJ)");
+
+const updateHouseHoursSchema = z.object({
+  houseId: houseUuidSchema,
+  hours: z
+    .array(
+      z.object({
+        weekday: z.number().int().min(1).max(7),
+        opensAt: timeHmSchema,
+        closesAt: timeHmSchema,
+      })
+    )
+    .max(21),
+});
+
+const addHouseClosureSchema = z.object({
+  houseId: houseUuidSchema,
+  startsOn: dateYmdSchema,
+  endsOn: dateYmdSchema,
+  reason: z.string().trim().max(500).nullable(),
+});
+
+const removeHouseClosureSchema = z.object({
+  closureId: z.string().uuid("ID de fermeture invalide"),
+  houseId: houseUuidSchema,
+});
+
+const addHouseExclusionSchema = z
+  .object({
+    houseId: houseUuidSchema,
+    itemId: z.string().uuid("Article invalide").nullable(),
+    fabricId: z.string().uuid("Tissu invalide").nullable(),
+    note: z.string().trim().max(500).nullable(),
+  })
+  .refine((d) => Boolean(d.itemId || d.fabricId), {
+    message: "Un article ou un tissu doit être sélectionné",
+  });
+
+const removeHouseExclusionSchema = z.object({
+  exclusionId: z.string().uuid("ID d'exclusion invalide"),
+  houseId: houseUuidSchema,
+});
+
+const toggleHouseCoverageSchema = z.object({
+  houseId: houseUuidSchema,
+  neighborhoodId: z.string().uuid("Quartier invalide"),
+  isActive: z.boolean(),
+});
+
+const houseStaffLinkSchema = z.object({
+  houseId: houseUuidSchema,
+  userId: z.string().trim().min(1, "Identifiant utilisateur requis").max(128),
+});
+
 export async function updateHouseHoursAction(
   houseId: string,
   hours: Array<{ weekday: number; opensAt: string; closesAt: string }>
@@ -203,11 +263,16 @@ export async function updateHouseHoursAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const res = await updateAdminHouseHours(houseId, hours);
+  const parsed = updateHouseHoursSchema.safeParse({ houseId, hours });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Horaires invalides");
+  }
+
+  const res = await updateAdminHouseHours(parsed.data.houseId, parsed.data.hours);
   if (res.ok) {
     revalidateTag(CACHE_TAGS.housesList, "max");
-    revalidateTag(CACHE_TAGS.house(houseId), "max");
-    revalidatePath(`/admin/houses/${houseId}`);
+    revalidateTag(CACHE_TAGS.house(parsed.data.houseId), "max");
+    revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
   return res;
 }
@@ -216,16 +281,22 @@ export async function addHouseClosureAction(formData: FormData): Promise<Result<
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const houseId = String(formData.get("houseId"));
-  const startsOn = String(formData.get("startsOn"));
-  const endsOn = String(formData.get("endsOn"));
-  const reason = formData.get("reason") ? String(formData.get("reason")) : null;
+  const rawReason = formData.get("reason");
+  const parsed = addHouseClosureSchema.safeParse({
+    houseId: formData.get("houseId"),
+    startsOn: formData.get("startsOn"),
+    endsOn: formData.get("endsOn"),
+    reason: typeof rawReason === "string" && rawReason.trim() ? rawReason.trim() : null,
+  });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
 
-  const res = await addAdminHouseClosure({ houseId, startsOn, endsOn, reason });
+  const res = await addAdminHouseClosure(parsed.data);
   if (res.ok) {
     revalidateTag(CACHE_TAGS.housesList, "max");
-    revalidateTag(CACHE_TAGS.house(houseId), "max");
-    revalidatePath(`/admin/houses/${houseId}`);
+    revalidateTag(CACHE_TAGS.house(parsed.data.houseId), "max");
+    revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
   return res;
 }
@@ -237,11 +308,16 @@ export async function removeHouseClosureAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const res = await removeAdminHouseClosure(closureId);
+  const parsed = removeHouseClosureSchema.safeParse({ closureId, houseId });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
+  const res = await removeAdminHouseClosure(parsed.data.closureId);
   if (res.ok) {
     revalidateTag(CACHE_TAGS.housesList, "max");
-    revalidateTag(CACHE_TAGS.house(houseId), "max");
-    revalidatePath(`/admin/houses/${houseId}`);
+    revalidateTag(CACHE_TAGS.house(parsed.data.houseId), "max");
+    revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
   return res;
 }
@@ -250,16 +326,25 @@ export async function addHouseExclusionAction(formData: FormData): Promise<Resul
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const houseId = String(formData.get("houseId"));
-  const itemId = formData.get("itemId") ? String(formData.get("itemId")) : null;
-  const fabricId = formData.get("fabricId") ? String(formData.get("fabricId")) : null;
-  const note = formData.get("note") ? String(formData.get("note")) : null;
+  const rawItemId = formData.get("itemId");
+  const rawFabricId = formData.get("fabricId");
+  const rawNote = formData.get("note");
 
-  const res = await addAdminHouseExclusion({ houseId, itemId, fabricId, note });
+  const parsed = addHouseExclusionSchema.safeParse({
+    houseId: formData.get("houseId"),
+    itemId: typeof rawItemId === "string" && rawItemId.trim() ? rawItemId.trim() : null,
+    fabricId: typeof rawFabricId === "string" && rawFabricId.trim() ? rawFabricId.trim() : null,
+    note: typeof rawNote === "string" && rawNote.trim() ? rawNote.trim() : null,
+  });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
+  const res = await addAdminHouseExclusion(parsed.data);
   if (res.ok) {
     revalidateTag(CACHE_TAGS.housesList, "max");
-    revalidateTag(CACHE_TAGS.house(houseId), "max");
-    revalidatePath(`/admin/houses/${houseId}`);
+    revalidateTag(CACHE_TAGS.house(parsed.data.houseId), "max");
+    revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
   return res;
 }
@@ -271,11 +356,16 @@ export async function removeHouseExclusionAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const res = await removeAdminHouseExclusion(exclusionId);
+  const parsed = removeHouseExclusionSchema.safeParse({ exclusionId, houseId });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
+  const res = await removeAdminHouseExclusion(parsed.data.exclusionId);
   if (res.ok) {
     revalidateTag(CACHE_TAGS.housesList, "max");
-    revalidateTag(CACHE_TAGS.house(houseId), "max");
-    revalidatePath(`/admin/houses/${houseId}`);
+    revalidateTag(CACHE_TAGS.house(parsed.data.houseId), "max");
+    revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
   return res;
 }
@@ -288,11 +378,16 @@ export async function toggleHouseCoverageAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const res = await toggleAdminHouseCoverage({ houseId, neighborhoodId, isActive });
+  const parsed = toggleHouseCoverageSchema.safeParse({ houseId, neighborhoodId, isActive });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
+  const res = await toggleAdminHouseCoverage(parsed.data);
   if (res.ok) {
     revalidateTag(CACHE_TAGS.housesList, "max");
-    revalidateTag(CACHE_TAGS.house(houseId), "max");
-    revalidatePath(`/admin/houses/${houseId}`);
+    revalidateTag(CACHE_TAGS.house(parsed.data.houseId), "max");
+    revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
   return res;
 }
@@ -304,9 +399,14 @@ export async function linkHouseStaffAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const res = await linkAdminHouseStaffUser({ houseId, userId });
+  const parsed = houseStaffLinkSchema.safeParse({ houseId, userId });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
+  const res = await linkAdminHouseStaffUser(parsed.data);
   if (res.ok) {
-    revalidatePath(`/admin/houses/${houseId}`);
+    revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
   return res;
 }
@@ -318,9 +418,14 @@ export async function unlinkHouseStaffAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const res = await unlinkAdminHouseStaffUser({ houseId, userId });
+  const parsed = houseStaffLinkSchema.safeParse({ houseId, userId });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
+  const res = await unlinkAdminHouseStaffUser(parsed.data);
   if (res.ok) {
-    revalidatePath(`/admin/houses/${houseId}`);
+    revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
   return res;
 }

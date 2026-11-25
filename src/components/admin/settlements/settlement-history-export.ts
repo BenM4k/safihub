@@ -1,14 +1,6 @@
 import { formatFrenchDate } from "@/lib/cash-formatters";
+import { escapeCsvCell } from "@/lib/csv-utils";
 import type { SettlementHistoryRow } from "./types";
-
-function escapeCsvField(value: string | null | undefined): string {
-  if (!value) return '""';
-  let str = value;
-  if (/^[=+\-@]/.test(str)) {
-    str = `'${str}`;
-  }
-  return `"${str.replace(/"/g, '""')}"`;
-}
 
 export function exportSettlementHistoryCsv(
   logs: SettlementHistoryRow[],
@@ -36,17 +28,17 @@ export function exportSettlementHistoryCsv(
 
   const rows = logs.map((log) => {
     return [
-      `"${formatFrenchDate(log.createdAt)}"`,
-      escapeCsvField(log.payeeName),
-      `"${log.payeeType === "house" ? "Pressing" : "Coursier"}"`,
-      `"${log.period || ""}"`,
-      `"${log.amount}"`,
-      `"${log.currency}"`,
-      `"${methodLabels[log.method] || log.method}"`,
-      escapeCsvField(log.reference),
-      escapeCsvField(log.operatorName),
-      `"${log.isReversed ? "Annulée" : "Validé"}"`,
-      escapeCsvField(log.reversalReason),
+      escapeCsvCell(formatFrenchDate(log.createdAt), { alwaysQuote: true }),
+      escapeCsvCell(log.payeeName, { alwaysQuote: true }),
+      escapeCsvCell(log.payeeType === "house" ? "Pressing" : "Coursier", { alwaysQuote: true }),
+      escapeCsvCell(log.period || "", { alwaysQuote: true }),
+      escapeCsvCell(log.amount, { alwaysQuote: true }),
+      escapeCsvCell(log.currency, { alwaysQuote: true }),
+      escapeCsvCell(methodLabels[log.method] || log.method, { alwaysQuote: true }),
+      escapeCsvCell(log.reference, { alwaysQuote: true }),
+      escapeCsvCell(log.operatorName, { alwaysQuote: true }),
+      escapeCsvCell(log.isReversed ? "Annulée" : "Validé", { alwaysQuote: true }),
+      escapeCsvCell(log.reversalReason, { alwaysQuote: true }),
     ].join(";");
   });
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { guardAdminRoute } from "@/services/auth";
-import { getAdminDisputes } from "@/dal";
+import { listAdminDisputes } from "@/services/admin";
 import { DisputesList } from "@/components/admin/disputes/disputes-list";
 
 export const metadata: Metadata = {
@@ -11,10 +11,11 @@ export const metadata: Metadata = {
 
 export default async function AdminDisputesPage() {
   await guardAdminRoute();
-  const [tAdmin, disputes] = await Promise.all([
+  const [tAdmin, disputesRes] = await Promise.all([
     getTranslations("admin"),
-    getAdminDisputes(),
+    listAdminDisputes(),
   ]);
+  const disputes = disputesRes.ok ? disputesRes.value : [];
 
   const openCount = disputes.filter((d) => d.status === "open").length;
 

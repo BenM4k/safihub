@@ -93,7 +93,7 @@ describe("Admin User & Customer Fetch Methods", () => {
       const res = await listAdminUsers();
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toBe("Database connection lost");
+        expect(res.error).toBe("Impossible de charger les utilisateurs.");
       }
     });
   });
@@ -114,7 +114,7 @@ describe("Admin User & Customer Fetch Methods", () => {
       const res = await getActiveAdminsCount();
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toBe("Query failed");
+        expect(res.error).toBe("Impossible de compter les administrateurs actifs.");
       }
     });
   });
@@ -137,7 +137,7 @@ describe("Admin User & Customer Fetch Methods", () => {
       const res = await listAdminCustomers();
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error).toBe("DB timeout");
+        expect(res.error).toBe("Erreur chargement clients");
       }
     });
   });

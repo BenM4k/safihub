@@ -225,7 +225,17 @@ export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics>
   };
 }
 
-export async function getAdminOrdersExportData() {
+const DEFAULT_EXPORT_LIMIT = 5000;
+const MAX_EXPORT_LIMIT = 10000;
+
+function clampExportLimit(limit?: number): number {
+  if (typeof limit !== "number" || !Number.isFinite(limit)) {
+    return DEFAULT_EXPORT_LIMIT;
+  }
+  return Math.max(1, Math.min(MAX_EXPORT_LIMIT, Math.trunc(limit)));
+}
+
+export async function getAdminOrdersExportData(options?: { limit?: number }) {
   return await db
     .select({
       id: schema.orders.id,
@@ -254,10 +264,11 @@ export async function getAdminOrdersExportData() {
       schema.neighborhoods,
       eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
     )
-    .orderBy(desc(schema.orders.createdAt));
+    .orderBy(desc(schema.orders.createdAt))
+    .limit(clampExportLimit(options?.limit));
 }
 
-export async function getAdminLedgerExportData() {
+export async function getAdminLedgerExportData(options?: { limit?: number }) {
   return await db
     .select({
       id: schema.cashLedger.id,
@@ -271,10 +282,11 @@ export async function getAdminLedgerExportData() {
       createdAt: schema.cashLedger.createdAt,
     })
     .from(schema.cashLedger)
-    .orderBy(desc(schema.cashLedger.createdAt));
+    .orderBy(desc(schema.cashLedger.createdAt))
+    .limit(clampExportLimit(options?.limit));
 }
 
-export async function getAdminCustomersExportData() {
+export async function getAdminCustomersExportData(options?: { limit?: number }) {
   return await db
     .select({
       id: schema.user.id,
@@ -287,7 +299,8 @@ export async function getAdminCustomersExportData() {
     })
     .from(schema.user)
     .where(eq(schema.user.role, "customer"))
-    .orderBy(desc(schema.user.createdAt));
+    .orderBy(desc(schema.user.createdAt))
+    .limit(clampExportLimit(options?.limit));
 }
 
 export interface AdminDisputeRecord {

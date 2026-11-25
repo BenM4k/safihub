@@ -1,8 +1,10 @@
 import { getTranslations } from "next-intl/server";
+import { guardAdminRoute } from "@/services/auth";
 import { listAdminCatalog } from "@/services/admin";
 import { CatalogueTabsContainer } from "@/components/admin/catalogue/catalogue-tabs-container";
 
 export default async function AdminCataloguePage() {
+  await guardAdminRoute();
   const t = await getTranslations("admin.catalogue");
   const catalogRes = await listAdminCatalog();
 

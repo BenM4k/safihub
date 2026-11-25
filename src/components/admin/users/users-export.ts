@@ -1,4 +1,5 @@
 import { formatDateTime } from "@/lib/order-formatters";
+import { escapeCsvCell } from "@/lib/csv-utils";
 import { formatUserEmail, getRoleBadgeInfo } from "@/lib/user-formatters";
 import type { UserRow } from "./types";
 
@@ -35,16 +36,6 @@ export function exportUsersCsv(
     labels?.createdAt ?? "Date de création",
   ];
 
-  const escapeCell = (str: string | null | undefined): string => {
-    if (!str) return '""';
-    let val = str;
-    if (/^[=+\-@\t\r]/.test(val)) {
-      val = `'${val}`;
-    }
-    const clean = val.replace(/"/g, '""');
-    return `"${clean}"`;
-  };
-
   const rows = users.map((u) => {
     const isBlocked = u.banned || u.status === "blocked";
     const statusLabel = isBlocked
@@ -55,17 +46,18 @@ export function exportUsersCsv(
     const roleInfo = getRoleBadgeInfo(u.role);
 
     return [
-      escapeCell(u.id),
-      escapeCell(u.name),
-      escapeCell(formatUserEmail(u.email)),
-      escapeCell(u.contactPhone || "—"),
-      escapeCell(roleInfo.label),
-      escapeCell(u.houseName || "—"),
-      escapeCell(statusLabel),
-      escapeCell(
-        u.lastLoginAt ? formatDateTime(u.lastLoginAt) : (labels?.neverLoggedIn ?? "Jamais connecté")
+      escapeCsvCell(u.id, { alwaysQuote: true }),
+      escapeCsvCell(u.name, { alwaysQuote: true }),
+      escapeCsvCell(formatUserEmail(u.email), { alwaysQuote: true }),
+      escapeCsvCell(u.contactPhone || "—", { alwaysQuote: true }),
+      escapeCsvCell(roleInfo.label, { alwaysQuote: true }),
+      escapeCsvCell(u.houseName || "—", { alwaysQuote: true }),
+      escapeCsvCell(statusLabel, { alwaysQuote: true }),
+      escapeCsvCell(
+        u.lastLoginAt ? formatDateTime(u.lastLoginAt) : (labels?.neverLoggedIn ?? "Jamais connecté"),
+        { alwaysQuote: true }
       ),
-      escapeCell(formatDateTime(u.createdAt)),
+      escapeCsvCell(formatDateTime(u.createdAt), { alwaysQuote: true }),
     ].join(",");
   });
 

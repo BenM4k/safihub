@@ -14,7 +14,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { db, schema } from "./db";
+import { db, escapeLikePattern, schema } from "./db";
 import { computeAcceptanceDeadlines } from "@/services/order/deadlines";
 import {
   toBukavuDateTime,
@@ -136,7 +136,7 @@ export async function getOrders(filters?: {
   }
 
   if (filters?.search && filters.search.trim()) {
-    const q = `%${filters.search.trim()}%`;
+    const q = `%${escapeLikePattern(filters.search.trim())}%`;
     conditions.push(
       or(
         ilike(schema.orders.code, q),

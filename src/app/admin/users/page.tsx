@@ -1,4 +1,4 @@
-import { getCurrentUser } from "@/services/auth";
+import { guardAdminRoute } from "@/services/auth";
 import {
   getActiveAdminsCount,
   listAdminHouses,
@@ -41,14 +41,15 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       ? rawStatus
       : "all";
 
-  const [currentUser, usersRes, housesRes, activeAdminsRes] = await Promise.all(
+  const [authCtx, usersRes, housesRes, activeAdminsRes] = await Promise.all(
     [
-      getCurrentUser(),
+      guardAdminRoute(),
       listAdminUsers({ roles: ["admin", "house"] }),
       listAdminHouses(),
       getActiveAdminsCount(),
     ],
   );
+  const currentUser = authCtx.user;
 
   let users = [] as UserRow[];
   if (usersRes.ok) {

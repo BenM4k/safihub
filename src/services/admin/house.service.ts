@@ -1,5 +1,7 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
+import { runAfterSafe } from "@/lib/after-safe";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import {
   addHouseMember,
   createHouse,
@@ -60,7 +62,7 @@ export async function listAdminHouses(): Promise<Result<HouseRecord[]>> {
     const houses = await getHouses();
     return ok(houses);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load houses");
+    return err(sanitizeServiceError(error, "Failed to load houses", "listAdminHouses"));
   }
 }
 
@@ -105,7 +107,7 @@ export async function getAdminHouseDetail(
       masterFabrics,
     });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load house detail");
+    return err(sanitizeServiceError(error, "Failed to load house detail", "getAdminHouseDetail"));
   }
 }
 
@@ -140,7 +142,7 @@ export async function createAdminHouse(params: {
     const created = await createHouse(params);
     return ok(created);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to create house");
+    return err(sanitizeServiceError(error, "Failed to create house", "createAdminHouse"));
   }
 }
 
@@ -166,7 +168,7 @@ export async function updateAdminHouseProfile(
     await updateHouse(houseId, params);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update house");
+    return err(sanitizeServiceError(error, "Failed to update house", "updateAdminHouseProfile"));
   }
 }
 
@@ -186,7 +188,7 @@ export async function updateAdminHouseHours(
     await setHouseHours(houseId, hours);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to set house hours");
+    return err(sanitizeServiceError(error, "Failed to set house hours", "updateAdminHouseHours"));
   }
 }
 
@@ -203,7 +205,7 @@ export async function addAdminHouseClosure(params: {
     await createHouseClosure(params);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to add closure");
+    return err(sanitizeServiceError(error, "Failed to add closure", "addAdminHouseClosure"));
   }
 }
 
@@ -214,7 +216,7 @@ export async function removeAdminHouseClosure(
     await deleteHouseClosure(closureId);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to delete closure");
+    return err(sanitizeServiceError(error, "Failed to delete closure", "removeAdminHouseClosure"));
   }
 }
 
@@ -231,7 +233,7 @@ export async function addAdminHouseExclusion(params: {
     await createHouseExclusion(params);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to add exclusion");
+    return err(sanitizeServiceError(error, "Failed to add exclusion", "addAdminHouseExclusion"));
   }
 }
 
@@ -242,7 +244,7 @@ export async function removeAdminHouseExclusion(
     await deleteHouseExclusion(exclusionId);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to delete exclusion");
+    return err(sanitizeServiceError(error, "Failed to delete exclusion", "removeAdminHouseExclusion"));
   }
 }
 
@@ -255,7 +257,7 @@ export async function toggleAdminHouseCoverage(params: {
     await upsertHouseCoverage(params);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update house coverage");
+    return err(sanitizeServiceError(error, "Failed to update house coverage", "toggleAdminHouseCoverage"));
   }
 }
 
@@ -265,13 +267,13 @@ export async function linkAdminHouseStaffUser(params: {
 }): Promise<Result<void>> {
   try {
     await addHouseMember(params);
-    try {
+    runAfterSafe(async () => {
       const [house, user] = await Promise.all([
         getHouseById(params.houseId),
         getUserById(params.userId),
       ]);
       if (house && user?.email) {
-        void queueEmailNotification({
+        await queueEmailNotification({
           kind: "house_staff_linked",
           houseId: house.id,
           email: user.email,
@@ -279,16 +281,12 @@ export async function linkAdminHouseStaffUser(params: {
           houseName: house.name,
           houseSlug: house.slug,
           eventId: `${params.userId}-${Date.now()}`,
-        }).catch((err) => {
-          console.error("[linkAdminHouseStaffUser] Email queue warning:", err);
         });
       }
-    } catch (notifyErr) {
-      console.error("[linkAdminHouseStaffUser] Failed to dispatch staff linked notification:", notifyErr);
-    }
+    });
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to link staff member");
+    return err(sanitizeServiceError(error, "Failed to link staff member", "linkAdminHouseStaffUser"));
   }
 }
 
@@ -300,7 +298,7 @@ export async function unlinkAdminHouseStaffUser(params: {
     await removeHouseMember(params);
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to unlink staff member");
+    return err(sanitizeServiceError(error, "Failed to unlink staff member", "unlinkAdminHouseStaffUser"));
   }
 }
 
@@ -418,7 +416,7 @@ export async function listAdminHousesEnriched(): Promise<
     });
   } catch (error) {
     return err(
-      error instanceof Error ? error.message : "Failed to load enriched houses"
+      sanitizeServiceError(error, "Failed to load enriched houses", "listAdminHousesEnriched")
     );
   }
 }
@@ -447,36 +445,37 @@ export async function toggleAdminHouseActiveStatus(params: {
       timestamp: new Date().toISOString(),
     });
 
-    try {
+    runAfterSafe(async () => {
       const [house, staffMembers] = await Promise.all([
         getHouseById(params.houseId),
         getHouseStaff(params.houseId),
       ]);
 
       if (house && staffMembers.length > 0) {
-        for (const member of staffMembers) {
-          if (!member.email) continue;
-          void queueEmailNotification({
-            kind: "house_status_changed",
-            houseId: house.id,
-            email: member.email,
-            houseName: house.name,
-            isActive: params.isActive,
-            reason: params.reason,
-            eventId: `${params.houseId}-${params.isActive}-${Date.now()}`,
-          }).catch((err) => {
-            console.error("[toggleAdminHouseActiveStatus] Email queue warning:", err);
-          });
-        }
+        await Promise.all(
+          staffMembers
+            .filter((member) => Boolean(member.email))
+            .map((member) =>
+              queueEmailNotification({
+                kind: "house_status_changed",
+                houseId: house.id,
+                email: member.email!,
+                houseName: house.name,
+                isActive: params.isActive,
+                reason: params.reason,
+                eventId: `${params.houseId}-${params.isActive}-${Date.now()}`,
+              }).catch((emailErr) => {
+                console.error("[toggleAdminHouseActiveStatus] Email queue warning:", emailErr);
+              })
+            )
+        );
       }
-    } catch (notifyErr) {
-      console.error("[toggleAdminHouseActiveStatus] Failed to dispatch house status notification:", notifyErr);
-    }
+    });
 
     return ok(undefined);
   } catch (error) {
     return err(
-      error instanceof Error ? error.message : "Failed to toggle house status"
+      sanitizeServiceError(error, "Failed to toggle house status", "toggleAdminHouseActiveStatus")
     );
   }
 }

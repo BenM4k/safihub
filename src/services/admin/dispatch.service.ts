@@ -1,7 +1,7 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import {
-  addOrderEvent,
   assignMission,
   getAllCourierZones,
   getCourierCashBalances,
@@ -181,7 +181,7 @@ export async function getAdminDispatchData(): Promise<
       availablePressings,
     });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load dispatch data");
+    return err(sanitizeServiceError(error, "Failed to load dispatch data", "getAdminDispatchData"));
   }
 }
 
@@ -206,7 +206,13 @@ export async function logPressingFollowUp(params: {
     });
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors de l'enregistrement de la relance");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors de l'enregistrement de la relance",
+        "logPressingFollowUp"
+      )
+    );
   }
 }
 
@@ -288,23 +294,16 @@ export async function assignMissionToCourier(params: {
       }
     }
 
-    const assigned = await assignMission(params.missionId, params.courierId, params.adminId);
-    if (!assigned) {
-      return err("Failed to assign mission: mission is no longer unassigned");
-    }
-
-    const orderId = params.orderId ?? mission.orderId;
-    await addOrderEvent({
-      orderId,
-      type: "assignment",
-      actorId: params.adminId,
-      actorRole: "admin",
-      recordedBy: params.adminId,
-      note: `Assigned mission ${params.missionId} to courier ${params.courierId}`,
+    const assigned = await assignMission(params.missionId, params.courierId, params.adminId, {
+      enforceCashCeiling: true,
+      assignmentNote: `Assigned mission ${params.missionId} to courier ${params.courierId}`,
     });
+    if (!assigned) {
+      return err("Failed to assign mission: mission is no longer unassigned or cash ceiling exceeded");
+    }
 
     return ok(undefined);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to assign mission");
+    return err(sanitizeServiceError(error, "Failed to assign mission", "assignMissionToCourier"));
   }
 }

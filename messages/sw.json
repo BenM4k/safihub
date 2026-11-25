@@ -1913,7 +1913,9 @@
       "simHouseLabel": "Dobi Aliyechaguliwa",
       "simItemsCountLabel": "Nguo Kwenye Kikapu",
       "simLandmarkLabel": "Alama / GPS",
-      "simNone": "Hakuna"
+      "simNone": "Hakuna",
+      "dryRunToggleLabel": "Hali Salama ya Majaribio (Dry-Run)",
+      "dryRunToggleHint": "Zima tu ikiwa unataka kutuma ujumbe halisi au kuendesha boti moja kwa moja."
     }
   },
   "house": {

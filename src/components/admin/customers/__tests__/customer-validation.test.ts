@@ -26,6 +26,10 @@ vi.mock("@/dal", () => ({
   updateUserRoleAndStatus: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/services/auth/guards", () => ({
+  clearSessionMemoryCache: vi.fn(),
+}));
+
 describe("Customer Administration & Merge Validation Rules", () => {
   describe("Merge candidate validation", () => {
     const validGuest = {
@@ -246,6 +250,23 @@ describe("Customer Administration & Merge Validation Rules", () => {
     });
 
     it("transitions blocked account to active via production unblockAdminCustomer", async () => {
+      vi.mocked(getUserById).mockResolvedValueOnce({
+        id: "cust_123",
+        name: "Test Customer",
+        role: "customer",
+        status: "blocked",
+        banned: true,
+        email: "test@safihub.cd",
+        emailVerified: true,
+        image: null,
+        contactPhone: "+243999537712",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        banReason: "Fraude",
+        banExpires: null,
+        isGuest: false,
+        mustChangePassword: false,
+      });
       const result = await unblockAdminCustomer("cust_123");
 
       expect(result.ok).toBe(true);

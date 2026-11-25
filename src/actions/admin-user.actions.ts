@@ -81,15 +81,48 @@ export async function updateUserRoleAction(formData: FormData): Promise<Result<u
   return res;
 }
 
+const userIdSchema = z
+  .string()
+  .trim()
+  .min(1, "Identifiant utilisateur requis")
+  .max(128, "Identifiant utilisateur invalide");
+
+const blockUserSchema = z.object({
+  userId: userIdSchema,
+  reason: z
+    .string()
+    .trim()
+    .min(1, "Un motif est obligatoire pour bloquer un compte utilisateur")
+    .max(500, "Le motif ne doit pas dépasser 500 caractères"),
+});
+
+const resetUserPasswordSchema = z.object({
+  userId: userIdSchema,
+  newPassword: z
+    .string()
+    .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+    .max(128, "Le mot de passe ne doit pas dépasser 128 caractères"),
+});
+
+const mergeGuestSchema = z.object({
+  guestUserId: userIdSchema,
+  targetUserId: userIdSchema,
+});
+
 export async function blockUserAction(formData: FormData): Promise<Result<unknown>> {
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const userId = String(formData.get("userId"));
-  const reason = String(formData.get("reason"));
+  const parsed = blockUserSchema.safeParse({
+    userId: formData.get("userId"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
 
   // Guardrail: self block protection
-  if (auth.value.user.id === userId) {
+  if (auth.value.user.id === parsed.data.userId) {
     const confirmed = formData.get("confirmedSelfAction") === "true";
     if (!confirmed) {
       return err(
@@ -98,7 +131,7 @@ export async function blockUserAction(formData: FormData): Promise<Result<unknow
     }
   }
 
-  const res = await blockAdminUser({ userId, reason });
+  const res = await blockAdminUser(parsed.data);
   if (res.ok) {
     revalidatePath("/admin/users");
     revalidatePath("/admin/customers");
@@ -110,9 +143,12 @@ export async function unblockUserAction(formData: FormData): Promise<Result<unkn
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const userId = String(formData.get("userId"));
+  const parsed = userIdSchema.safeParse(formData.get("userId"));
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Identifiant utilisateur requis");
+  }
 
-  const res = await unblockAdminUser(userId);
+  const res = await unblockAdminUser(parsed.data);
   if (res.ok) {
     revalidatePath("/admin/users");
     revalidatePath("/admin/customers");
@@ -124,10 +160,18 @@ export async function resetUserPasswordAction(formData: FormData): Promise<Resul
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const userId = String(formData.get("userId"));
-  const newPassword = String(formData.get("newPassword"));
+  const parsed = resetUserPasswordSchema.safeParse({
+    userId: formData.get("userId"),
+    newPassword: formData.get("newPassword"),
+  });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
 
-  const res = await resetAdminUserPassword({ userId, newPassword });
+  const res = await resetAdminUserPassword({
+    ...parsed.data,
+    operatorId: auth.value.user.id,
+  });
   if (res.ok) {
     revalidatePath("/admin/users");
   }
@@ -164,10 +208,15 @@ export async function mergeGuestAccountAction(formData: FormData): Promise<Resul
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const guestUserId = String(formData.get("guestUserId"));
-  const targetUserId = String(formData.get("targetUserId"));
+  const parsed = mergeGuestSchema.safeParse({
+    guestUserId: formData.get("guestUserId"),
+    targetUserId: formData.get("targetUserId"),
+  });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
 
-  const res = await mergeAdminGuestCustomer({ guestUserId, targetUserId });
+  const res = await mergeAdminGuestCustomer(parsed.data);
   if (res.ok) {
     revalidatePath("/admin/users");
     revalidatePath("/admin/customers");

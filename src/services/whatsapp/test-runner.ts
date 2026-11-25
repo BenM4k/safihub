@@ -56,6 +56,7 @@ export interface ExecuteWhatsAppTestInput {
   courierName?: string;
   amountCdf?: number;
   verificationCode?: string;
+  dryRun?: boolean;
 }
 
 export interface ExecuteWhatsAppTestResult extends WhatsAppSendResult {
@@ -69,7 +70,7 @@ export interface ExecuteWhatsAppTestResult extends WhatsAppSendResult {
 function maskIdentifier(val: string | undefined): string | null {
   if (!val || !val.trim()) return null;
   const trimmed = val.trim();
-  if (trimmed.length <= 6) return trimmed;
+  if (trimmed.length <= 6) return "••••";
   return `${trimmed.slice(0, 4)}••••${trimmed.slice(-4)}`;
 }
 
@@ -110,6 +111,16 @@ export async function executeAdminWhatsAppTest(
   const normalizedPhone = normalizeWhatsAppPhone(input.recipientPhone);
   if (!normalizedPhone || normalizedPhone.length < 8) {
     return err("Numéro de téléphone WhatsApp invalide");
+  }
+
+  if (input.dryRun) {
+    return ok({
+      messageId: `wamid.dry_run_${crypto.randomUUID().slice(0, 8)}`,
+      recipientPhone: normalizedPhone,
+      dryRun: true,
+      scenario: input.scenario,
+      sentAtIso: new Date().toISOString(),
+    });
   }
 
   const locale = input.locale || "fr";
@@ -243,10 +254,28 @@ export async function simulateAdminWhatsAppBotStep(params: {
   phone: string;
   actionType: "text" | "button" | "list" | "location" | "reset";
   value?: string;
+  dryRun?: boolean;
 }): Promise<Result<WhatsAppBotSession, string>> {
   const normalizedPhone = normalizeWhatsAppPhone(params.phone);
   if (!normalizedPhone || normalizedPhone.length < 8) {
     return err("Numéro de téléphone invalide");
+  }
+
+  if (params.dryRun) {
+    const existing = await getWhatsAppBotSession(normalizedPhone);
+    if (params.actionType === "reset") {
+      return ok({
+        ...existing,
+        step: "IDLE",
+        items: [],
+        neighborhoodId: undefined,
+        neighborhoodName: undefined,
+        houseId: undefined,
+        houseName: undefined,
+        landmark: undefined,
+      });
+    }
+    return ok(existing);
   }
 
   if (params.actionType === "reset") {

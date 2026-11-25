@@ -1913,7 +1913,9 @@
       "simHouseLabel": "Selected House",
       "simItemsCountLabel": "Cart Items",
       "simLandmarkLabel": "Landmark / GPS",
-      "simNone": "None"
+      "simNone": "None",
+      "dryRunToggleLabel": "Safe Dry-Run Mode (no live send)",
+      "dryRunToggleHint": "Disable only to dispatch a live message or mutate the live bot session."
     }
   },
   "house": {

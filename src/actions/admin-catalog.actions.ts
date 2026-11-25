@@ -16,23 +16,28 @@ import {
 } from "@/services/admin";
 
 const createItemSchema = z.object({
-  nameFr: z.string().min(1, "Nom en français requis"),
-  nameSw: z.string().min(1, "Nom en swahili requis"),
-  category: z.string().optional().nullable(),
-  sortOrder: z.coerce.number().optional().default(0),
+  nameFr: z.string().trim().min(1, "Nom en français requis").max(120),
+  nameSw: z.string().trim().min(1, "Nom en swahili requis").max(120),
+  category: z.string().trim().max(80).optional().nullable(),
+  sortOrder: z.coerce.number().int().min(0).max(10000).optional().default(0),
 });
 
 const createFabricSchema = z.object({
-  nameFr: z.string().min(1, "Nom en français requis"),
-  nameSw: z.string().min(1, "Nom en swahili requis"),
-  sortOrder: z.coerce.number().optional().default(0),
+  nameFr: z.string().trim().min(1, "Nom en français requis").max(120),
+  nameSw: z.string().trim().min(1, "Nom en swahili requis").max(120),
+  sortOrder: z.coerce.number().int().min(0).max(10000).optional().default(0),
 });
 
 const createServiceSchema = z.object({
-  slug: z.string().min(1, "Identifiant (slug) requis"),
-  nameFr: z.string().min(1, "Nom en français requis"),
-  nameSw: z.string().min(1, "Nom en swahili requis"),
-  sortOrder: z.coerce.number().optional().default(0),
+  slug: z.string().trim().min(1, "Identifiant (slug) requis").max(80),
+  nameFr: z.string().trim().min(1, "Nom en français requis").max(120),
+  nameSw: z.string().trim().min(1, "Nom en swahili requis").max(120),
+  sortOrder: z.coerce.number().int().min(0).max(10000).optional().default(0),
+});
+
+const toggleCatalogActiveSchema = z.object({
+  id: z.string().uuid("Identifiant invalide"),
+  isActive: z.boolean(),
 });
 
 const approveRequestSchema = z.object({
@@ -77,7 +82,12 @@ export async function toggleMasterItemActiveAction(itemId: string, isActive: boo
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const res = await toggleAdminMasterItemActive(itemId, isActive);
+  const parsed = toggleCatalogActiveSchema.safeParse({ id: itemId, isActive });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
+  const res = await toggleAdminMasterItemActive(parsed.data.id, parsed.data.isActive);
   if (res.ok) {
     revalidateTag(CACHE_TAGS.catalogItems, "max");
     revalidateTag(CACHE_TAGS.housesList, "max");
@@ -113,7 +123,12 @@ export async function toggleMasterFabricActiveAction(fabricId: string, isActive:
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const res = await toggleAdminMasterFabricActive(fabricId, isActive);
+  const parsed = toggleCatalogActiveSchema.safeParse({ id: fabricId, isActive });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
+  const res = await toggleAdminMasterFabricActive(parsed.data.id, parsed.data.isActive);
   if (res.ok) {
     revalidateTag(CACHE_TAGS.catalogItems, "max");
     revalidateTag(CACHE_TAGS.housesList, "max");

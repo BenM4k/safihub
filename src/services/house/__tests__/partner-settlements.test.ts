@@ -24,7 +24,13 @@ vi.mock("@/dal/db", () => {
       })),
     },
     schema: {
-      houses: { id: "id", name: "name", slug: "slug", contactPhone: "contact_phone", commissionBps: "commission_bps" },
+      houses: {
+        id: "id",
+        name: "name",
+        slug: "slug",
+        contactPhone: "contact_phone",
+        commissionBps: "commission_bps",
+      },
       orders: {
         id: "id",
         code: "code",
@@ -68,6 +74,13 @@ vi.mock("@/dal/db", () => {
         status: "status",
       },
       user: { id: "id", name: "name" },
+      exchangeRates: {
+        rate: "rate",
+        baseCurrency: "base_currency",
+        quoteCurrency: "quote_currency",
+        effectiveDate: "effective_date",
+        createdAt: "created_at",
+      },
     },
   };
 });
@@ -93,14 +106,29 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
 
     it("computes period bounds for week, month, and last30 correctly", () => {
       const fixedDate = new Date("2026-10-15T12:00:00Z");
-      const weekBounds = computePeriodBounds("week", undefined, undefined, fixedDate);
+      const weekBounds = computePeriodBounds(
+        "week",
+        undefined,
+        undefined,
+        fixedDate,
+      );
       expect(weekBounds.start.getDay()).toBe(1); // Monday
       expect(weekBounds.end.getDay()).toBe(0); // Sunday
 
-      const monthBounds = computePeriodBounds("month", undefined, undefined, fixedDate);
+      const monthBounds = computePeriodBounds(
+        "month",
+        undefined,
+        undefined,
+        fixedDate,
+      );
       expect(monthBounds.start.getDate()).toBe(1);
 
-      const customBounds = computePeriodBounds("custom", "2026-10-01", "2026-10-10", fixedDate);
+      const customBounds = computePeriodBounds(
+        "custom",
+        "2026-10-01",
+        "2026-10-10",
+        fixedDate,
+      );
       const bukavuStart = toBukavuDateTime(customBounds.start);
       expect(bukavuStart.year).toBe(2026);
       expect(bukavuStart.month).toBe(10);
@@ -131,7 +159,10 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
     it("guarantees Net gagné − Déjà versé = Reste dû on all-time hero figures", () => {
       const totalAllTimeNetCDF = 350000;
       const totalAllTimeSettledCDF = 220000;
-      const balanceOwedCDF = Math.max(0, totalAllTimeNetCDF - totalAllTimeSettledCDF);
+      const balanceOwedCDF = Math.max(
+        0,
+        totalAllTimeNetCDF - totalAllTimeSettledCDF,
+      );
 
       expect(totalAllTimeNetCDF - totalAllTimeSettledCDF).toBe(balanceOwedCDF);
       expect(balanceOwedCDF).toBe(130000);
@@ -140,14 +171,20 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
     it("guarantees balance cannot be negative if settlements exceed net", () => {
       const totalAllTimeNetCDF = 100000;
       const totalAllTimeSettledCDF = 120000;
-      const balanceOwedCDF = Math.max(0, totalAllTimeNetCDF - totalAllTimeSettledCDF);
+      const balanceOwedCDF = Math.max(
+        0,
+        totalAllTimeNetCDF - totalAllTimeSettledCDF,
+      );
 
       expect(balanceOwedCDF).toBe(0);
     });
   });
 
   describe("FIFO Settlement to Order Allocation (Production getPartnerSettlementsData)", () => {
-    function setupDbMocks(options: { settlements: unknown[]; orders: unknown[] }) {
+    function setupDbMocks(options: {
+      settlements: unknown[];
+      orders: unknown[];
+    }) {
       const houseRecord = [
         {
           id: "house-1",
@@ -166,18 +203,20 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
         let result: unknown = [];
         if (callCount === 1) result = houseRecord;
         else if (callCount === 2) result = reversedSubquery;
-        else if (callCount === 3) result = options.settlements;
-        else if (callCount === 4) result = reversedSettlements;
-        else if (callCount === 5) result = options.orders;
+        else if (callCount === 3) result = [{ rate: 2800 }];
+        else if (callCount === 4) result = options.settlements;
+        else if (callCount === 5) result = reversedSettlements;
+        else if (callCount === 6) result = options.orders;
 
         const chain = {
           from: vi.fn().mockReturnThis(),
           where: vi.fn().mockReturnThis(),
-          orderBy: vi.fn().mockImplementation(() => Promise.resolve(result)),
-          limit: vi.fn().mockImplementation(() => Promise.resolve(result)),
+          orderBy: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
           innerJoin: vi.fn().mockReturnThis(),
           leftJoin: vi.fn().mockReturnThis(),
-          then: (resolve: (val: unknown) => unknown) => Promise.resolve(result).then(resolve),
+          then: (resolve: (val: unknown) => unknown) =>
+            Promise.resolve(result).then(resolve),
         };
         return chain as unknown as ReturnType<typeof db.select>;
       });
@@ -247,7 +286,10 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
 
       setupDbMocks({ settlements, orders });
 
-      const data = await getPartnerSettlementsData({ houseId: "house-1", period: "month" });
+      const data = await getPartnerSettlementsData({
+        houseId: "house-1",
+        period: "month",
+      });
 
       const ord1 = data.orders.find((o) => o.id === "ord-1");
       const ord2 = data.orders.find((o) => o.id === "ord-2");
@@ -259,7 +301,10 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
 
       const payout = data.payouts.find((p) => p.id === "set-1");
       expect(payout?.ordersCount).toBe(2);
-      expect(payout?.includedOrders.map((o) => o.id)).toEqual(["ord-1", "ord-2"]);
+      expect(payout?.includedOrders.map((o) => o.id)).toEqual([
+        "ord-1",
+        "ord-2",
+      ]);
     });
 
     it("handles multiple settlements with remainder accumulation and stops when next order cannot be covered", async () => {
@@ -324,7 +369,10 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
 
       setupDbMocks({ settlements, orders });
 
-      const data = await getPartnerSettlementsData({ houseId: "house-1", period: "month" });
+      const data = await getPartnerSettlementsData({
+        houseId: "house-1",
+        period: "month",
+      });
 
       const ord1 = data.orders.find((o) => o.id === "ord-1");
       const ord2 = data.orders.find((o) => o.id === "ord-2");
@@ -377,7 +425,10 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
 
       setupDbMocks({ settlements, orders });
 
-      const data = await getPartnerSettlementsData({ houseId: "house-1", period: "month" });
+      const data = await getPartnerSettlementsData({
+        houseId: "house-1",
+        period: "month",
+      });
 
       const ord1 = data.orders.find((o) => o.id === "ord-1");
       const ord2 = data.orders.find((o) => o.id === "ord-2");
@@ -409,7 +460,10 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([
-              { id: "e93f6b4a-2895-4670-bc2d-53909772c91a", houseId: "house-1" },
+              {
+                id: "e93f6b4a-2895-4670-bc2d-53909772c91a",
+                houseId: "house-1",
+              },
             ]),
           }),
         }),
@@ -422,7 +476,8 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
         targetType: "order",
         orderId: "e93f6b4a-2895-4670-bc2d-53909772c91a",
         reasonCategory: "Montant incorrect",
-        message: "Le montant d'articles facturé ne correspond pas au bordereau.",
+        message:
+          "Le montant d'articles facturé ne correspond pas au bordereau.",
       });
 
       expect(res.ok).toBe(true);

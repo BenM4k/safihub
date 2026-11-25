@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/services/auth";
 import { err, type Result } from "@/lib/result";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
   confirmAdminDailyReconciliation,
   holdAdminCourierDeposit,
@@ -14,26 +15,28 @@ import {
   reverseAdminCourierReconciliation,
 } from "@/services/admin";
 
+const courierIdSchema = z.string().trim().min(1, "Coursier requis").max(128);
+
 const confirmReconciliationSchema = z.object({
-  courierId: z.string().min(1, "Coursier requis"),
+  courierId: courierIdSchema,
   businessDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date requise (AAAA-MM-JJ)"),
   currency: z.enum(["CDF", "USD"]).default("CDF"),
   expectedAmount: z.number().int().nonnegative(),
   receivedAmount: z.number().int().nonnegative("Montant reçu invalide"),
-  note: z.string().optional(),
+  note: z.string().trim().max(500).optional(),
   deductFromDeposit: z.boolean().optional(),
 });
 
 const depositFloatSchema = z.object({
-  courierId: z.string().min(1, "Coursier requis"),
+  courierId: courierIdSchema,
   amount: z.number().int().positive("Le montant doit être supérieur à zéro"),
   currency: z.enum(["CDF", "USD"]).default("CDF"),
-  note: z.string().optional(),
+  note: z.string().trim().max(500).optional(),
 });
 
 const reverseLedgerSchema = z.object({
-  entryId: z.string().min(1, "Écriture requise"),
-  reason: z.string().min(3, "Un motif d'annulation est requis"),
+  entryId: z.string().uuid("Identifiant d'écriture invalide"),
+  reason: z.string().trim().min(3, "Un motif d'annulation est requis").max(500),
 });
 
 export async function confirmDailyReconciliationAction(
@@ -50,6 +53,8 @@ export async function confirmDailyReconciliationAction(
     reconciledBy: auth.value.user.id,
   });
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.adminCash, "max");
+    revalidateTag(CACHE_TAGS.courierMissions(parsed.data.courierId), "max");
     revalidatePath("/admin/cash");
     revalidatePath("/admin/couriers");
   }
@@ -70,6 +75,7 @@ export async function holdCourierDepositAction(
     adminId: auth.value.user.id,
   });
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.adminCash, "max");
     revalidatePath("/admin/cash");
     revalidatePath("/admin/couriers");
   }
@@ -90,6 +96,7 @@ export async function releaseCourierDepositAction(
     adminId: auth.value.user.id,
   });
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.adminCash, "max");
     revalidatePath("/admin/cash");
     revalidatePath("/admin/couriers");
   }
@@ -110,6 +117,7 @@ export async function issueCourierFloatAction(
     adminId: auth.value.user.id,
   });
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.adminCash, "max");
     revalidatePath("/admin/cash");
     revalidatePath("/admin/couriers");
   }
@@ -130,6 +138,7 @@ export async function returnCourierFloatAction(
     adminId: auth.value.user.id,
   });
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.adminCash, "max");
     revalidatePath("/admin/cash");
     revalidatePath("/admin/couriers");
   }
@@ -150,6 +159,7 @@ export async function reverseLedgerEntryAction(
     reversedBy: auth.value.user.id,
   });
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.adminCash, "max");
     revalidatePath("/admin/cash");
     revalidatePath("/admin/settlements");
   }
@@ -157,8 +167,8 @@ export async function reverseLedgerEntryAction(
 }
 
 const reverseReconciliationSchema = z.object({
-  reconciliationId: z.string().min(1, "Identifiant de réconciliation requis"),
-  reason: z.string().min(3, "Un motif d'annulation est requis (au moins 3 caractères)"),
+  reconciliationId: z.string().uuid("Identifiant de réconciliation invalide"),
+  reason: z.string().trim().min(3, "Un motif d'annulation est requis (au moins 3 caractères)").max(500),
 });
 
 export async function reverseCourierReconciliationAction(
@@ -175,6 +185,7 @@ export async function reverseCourierReconciliationAction(
     reversedBy: auth.value.user.id,
   });
   if (res.ok) {
+    revalidateTag(CACHE_TAGS.adminCash, "max");
     revalidatePath("/admin/cash");
     revalidatePath("/admin/couriers");
   }

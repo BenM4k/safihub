@@ -1,6 +1,6 @@
 import "server-only";
 
-export { db, getDatabaseUrl, type Database, schema } from "./db";
+export { db, escapeLikePattern, getDatabaseUrl, type Database, schema } from "./db";
 export * from "./auth.dal";
 export * from "./house.dal";
 export * from "./coverage.dal";

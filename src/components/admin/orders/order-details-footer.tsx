@@ -33,6 +33,7 @@ export function OrderDetailsFooter({
         <Link
           href={`/track/${order.trackingToken}`}
           target="_blank"
+          rel="noopener noreferrer"
           className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
         >
           <span>{t("clientTracking")}</span>

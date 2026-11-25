@@ -39,9 +39,30 @@ const setNeighborhoodStatusSchema = z.object({
 const setZoneFeePairSchema = z.object({
   customerZoneId: z.string().uuid(),
   houseZoneId: z.string().uuid(),
-  deliveryFee: z.coerce.number().int().min(0, "Frais de livraison >= 0"),
-  distanceLevel: z.coerce.number().int().min(1, "Niveau de distance >= 1"),
+  deliveryFee: z.coerce.number().int().positive("Frais de livraison > 0"),
+  distanceLevel: z.coerce.number().int().min(1, "Niveau de distance >= 1").max(3, "Niveau de distance <= 3"),
 });
+
+const globalDistanceLimitSchema = z.coerce
+  .number()
+  .int("La limite de distance doit être un entier")
+  .min(1, "La limite de distance globale doit être comprise entre 1 et 3")
+  .max(3, "La limite de distance globale doit être comprise entre 1 et 3");
+
+const houseDistanceOverrideSchema = z.object({
+  houseId: z.string().uuid("ID de pressing invalide"),
+  maxDistanceLevel: z
+    .number()
+    .int("La dérogation doit être un entier")
+    .min(1, "La dérogation de distance doit être comprise entre 1 et 3 ou vide")
+    .max(3, "La dérogation de distance doit être comprise entre 1 et 3 ou vide")
+    .nullable(),
+});
+
+const notifyCoverageRequestsSchema = z
+  .array(z.string().trim().min(1).max(128))
+  .min(1, "Aucune demande sélectionnée pour notification")
+  .max(200, "Trop de demandes sélectionnées");
 
 export async function createZoneAction(formData: FormData): Promise<Result<unknown>> {
   const auth = await requireRole(["admin"]);
@@ -145,12 +166,15 @@ export async function updateGlobalDistanceLimitAction(formData: FormData): Promi
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const limit = Number(formData.get("maxCoverageDistanceLevel"));
-  if (isNaN(limit) || limit < 1 || limit > 3) {
-    return err("La limite de distance globale doit être comprise entre 1 et 3");
+  const parsed = globalDistanceLimitSchema.safeParse(formData.get("maxCoverageDistanceLevel"));
+  if (!parsed.success) {
+    return err(
+      parsed.error.issues[0]?.message ??
+        "La limite de distance globale doit être comprise entre 1 et 3"
+    );
   }
 
-  const res = await updateAdminGlobalDistanceLimit(limit);
+  const res = await updateAdminGlobalDistanceLimit(parsed.data);
   if (res.ok) {
     revalidateTag(CACHE_TAGS.coverageZones, "max");
     revalidateTag(CACHE_TAGS.housesList, "max");
@@ -164,25 +188,25 @@ export async function updateHouseDistanceOverrideAction(formData: FormData): Pro
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const houseIdParsed = z.string().uuid("ID de pressing invalide").safeParse(formData.get("houseId"));
-  if (!houseIdParsed.success) {
-    return err(houseIdParsed.error.issues[0]?.message ?? "ID de pressing invalide");
-  }
-  const houseId = houseIdParsed.data;
-
   const rawOverride = formData.get("maxDistanceLevel");
-  const maxDistanceLevel = rawOverride && rawOverride !== "" ? Number(rawOverride) : null;
-  if (maxDistanceLevel !== null && (isNaN(maxDistanceLevel) || maxDistanceLevel < 1 || maxDistanceLevel > 3)) {
-    return err("La dérogation de distance doit être comprise entre 1 et 3 ou vide");
+  const parsed = houseDistanceOverrideSchema.safeParse({
+    houseId: formData.get("houseId"),
+    maxDistanceLevel:
+      typeof rawOverride === "string" && rawOverride.trim() !== ""
+        ? Number(rawOverride)
+        : null,
+  });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
   }
 
-  const res = await updateAdminHouseDistanceOverride({ houseId, maxDistanceLevel });
+  const res = await updateAdminHouseDistanceOverride(parsed.data);
   if (res.ok) {
     revalidateTag(CACHE_TAGS.coverageZones, "max");
     revalidateTag(CACHE_TAGS.housesList, "max");
-    revalidateTag(CACHE_TAGS.house(houseId), "max");
+    revalidateTag(CACHE_TAGS.house(parsed.data.houseId), "max");
     revalidatePath("/admin/coverage");
-    revalidatePath(`/admin/houses/${houseId}`);
+    revalidatePath(`/admin/houses/${parsed.data.houseId}`);
   }
   return res;
 }
@@ -191,11 +215,12 @@ export async function notifyCoverageRequestsAction(phonesOrIds: string[]): Promi
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  if (!Array.isArray(phonesOrIds) || phonesOrIds.length === 0) {
-    return err("Aucune demande sélectionnée pour notification");
+  const parsed = notifyCoverageRequestsSchema.safeParse(phonesOrIds);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Aucune demande sélectionnée pour notification");
   }
 
-  const res = await notifyAdminCoverageRequests(phonesOrIds);
+  const res = await notifyAdminCoverageRequests(parsed.data);
   if (res.ok) {
     revalidatePath("/admin/coverage");
   }

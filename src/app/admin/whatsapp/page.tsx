@@ -1,10 +1,12 @@
 import { getTranslations } from "next-intl/server";
+import { guardAdminRoute } from "@/services/auth";
 import { getWhatsAppIntegrationStatus } from "@/services/whatsapp";
 import { WhatsAppConfigCard } from "@/components/admin/whatsapp/whatsapp-config-card";
 import { WhatsAppTestSender } from "@/components/admin/whatsapp/whatsapp-test-sender";
 import { WhatsAppBotSimulator } from "@/components/admin/whatsapp/whatsapp-bot-simulator";
 
 export default async function AdminWhatsAppPage() {
+  await guardAdminRoute();
   const t = await getTranslations("admin.whatsapp");
   const status = getWhatsAppIntegrationStatus();
 

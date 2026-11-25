@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { createManualOrderAction } from "@/actions/admin-order.actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -56,6 +56,7 @@ export function ManualOrderForm({
     code: string;
     trackingToken: string;
   } | null>(null);
+  const idempotencyKeyRef = useRef<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -90,7 +91,12 @@ export function ManualOrderForm({
         isoEnd = endDate.toISOString();
       }
 
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = crypto.randomUUID();
+      }
+
       const res = await createManualOrderAction({
+        idempotencyKey: idempotencyKeyRef.current,
         customerPhone: phone,
         customerName: name || undefined,
         houseId,
@@ -105,6 +111,7 @@ export function ManualOrderForm({
       if (!res.ok) {
         setError(res.error);
       } else {
+        idempotencyKeyRef.current = null;
         setCreatedOrder({
           code: res.value.code,
           trackingToken: res.value.trackingToken,

@@ -241,6 +241,25 @@ export async function approveHouseApplicationTransaction(params: {
   passwordApplied: boolean;
 }> {
   return await db.transaction(async (tx) => {
+    // 0. Lock and verify pending application first so concurrent approvals fail safely
+    const [pendingApp] = await tx
+      .select({ id: schema.houseApplications.id, status: schema.houseApplications.status })
+      .from(schema.houseApplications)
+      .where(
+        and(
+          eq(schema.houseApplications.id, params.applicationId),
+          eq(schema.houseApplications.status, "pending")
+        )
+      )
+      .for("update")
+      .limit(1);
+
+    if (!pendingApp) {
+      throw new Error(
+        `Application "${params.applicationId}" not found or not in pending status.`
+      );
+    }
+
     // 1. Create house (isActive: false until configured)
     const [createdHouse] = await tx
       .insert(schema.houses)
@@ -262,6 +281,7 @@ export async function approveHouseApplicationTransaction(params: {
       .select({ id: schema.user.id, role: schema.user.role })
       .from(schema.user)
       .where(eq(schema.user.email, params.user.email.toLowerCase()))
+      .for("update")
       .limit(1);
 
     let userId: string;
@@ -275,7 +295,7 @@ export async function approveHouseApplicationTransaction(params: {
       userId = existingUser.id;
       await tx
         .update(schema.user)
-        .set({ role: "house", updatedAt: new Date() })
+        .set({ role: "house", emailVerified: true, updatedAt: new Date() })
         .where(eq(schema.user.id, userId));
     } else {
       userId = params.user.id;
@@ -289,7 +309,8 @@ export async function approveHouseApplicationTransaction(params: {
         isGuest: false,
         status: "active",
         banned: false,
-        emailVerified: false,
+        emailVerified: true,
+        mustChangePassword: Boolean(params.hashedPassword),
       });
     }
 

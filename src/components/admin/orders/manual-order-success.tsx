@@ -39,6 +39,7 @@ export function ManualOrderSuccess({
         <Link
           href={`/track/${createdOrder.trackingToken}`}
           target="_blank"
+          rel="noopener noreferrer"
           className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-md hover:bg-primary/90"
         >
           {t("trackLink")}

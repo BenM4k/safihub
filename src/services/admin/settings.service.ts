@@ -1,5 +1,6 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import {
   createExchangeRate,
   getAdminDashboardMetrics,
@@ -10,6 +11,15 @@ import {
   type ExchangeRateRecord,
   type SettingsRecord,
 } from "@/dal";
+
+export async function getAdminPlatformSettings(): Promise<Result<SettingsRecord>> {
+  try {
+    const settings = await getSettings();
+    return ok(settings);
+  } catch (error) {
+    return err(sanitizeServiceError(error, "Failed to load platform settings", "getAdminPlatformSettings"));
+  }
+}
 
 export async function getAdminSettingsData(): Promise<
   Result<{
@@ -25,7 +35,7 @@ export async function getAdminSettingsData(): Promise<
 
     return ok({ settings, rates });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load platform settings");
+    return err(sanitizeServiceError(error, "Failed to load platform settings", "getAdminSettingsData"));
   }
 }
 
@@ -60,7 +70,7 @@ export async function updateAdminPlatformSettings(
     const updated = await updateSettings(params);
     return ok(updated);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update platform settings");
+    return err(sanitizeServiceError(error, "Failed to update platform settings", "updateAdminPlatformSettings"));
   }
 }
 
@@ -94,7 +104,7 @@ export async function recordAdminDailyExchangeRate(params: {
 
     return ok(created);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to record exchange rate");
+    return err(sanitizeServiceError(error, "Failed to record exchange rate", "recordAdminDailyExchangeRate"));
   }
 }
 
@@ -103,6 +113,6 @@ export async function getAdminMetricsSummary(): Promise<Result<AdminDashboardMet
     const metrics = await getAdminDashboardMetrics();
     return ok(metrics);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to load dashboard metrics");
+    return err(sanitizeServiceError(error, "Failed to load dashboard metrics", "getAdminMetricsSummary"));
   }
 }

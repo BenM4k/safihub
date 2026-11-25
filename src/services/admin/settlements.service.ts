@@ -1,5 +1,7 @@
 import "server-only";
 import { err, ok, type Result } from "@/lib/result";
+import { runAfterSafe } from "@/lib/after-safe";
+import { sanitizeServiceError } from "@/lib/service-errors";
 import * as dal from "@/dal";
 import { sendWhatsAppBusinessSettlementNotice } from "@/services/whatsapp";
 import { queueEmailNotification } from "@/services/email";
@@ -9,7 +11,13 @@ export async function getAdminHouseSettlements() {
     const data = await dal.getHouseSettlementsOverview();
     return ok(data);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du chargement des règlements de pressings");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors du chargement des règlements de pressings",
+        "getAdminHouseSettlements"
+      )
+    );
   }
 }
 
@@ -46,52 +54,55 @@ export async function settleAdminHouse(params: {
 
     if (!res.ok) return err(res.error || "Échec du règlement du pressing");
 
-    // Non-blocking WhatsApp notification to the partner laundry house
-    Promise.resolve()
-      .then(async () => {
-        let houseName = params.houseName;
-        let contactPhone = params.contactPhone;
+    // Non-blocking WhatsApp and email notifications via Next.js after()
+    runAfterSafe(async () => {
+      let houseName = params.houseName;
+      let contactPhone = params.contactPhone;
 
-        if (!contactPhone && "getHouseById" in dal && typeof dal.getHouseById === "function") {
-          const house = await dal.getHouseById(params.houseId);
-          houseName = houseName || house?.name;
-          contactPhone = house?.contactPhone ?? undefined;
-        }
+      if (!contactPhone && "getHouseById" in dal && typeof dal.getHouseById === "function") {
+        const house = await dal.getHouseById(params.houseId);
+        houseName = houseName || house?.name;
+        contactPhone = house?.contactPhone ?? undefined;
+      }
 
-        if (contactPhone) {
-          await sendWhatsAppBusinessSettlementNotice({
-            houseId: params.houseId,
+      if (contactPhone) {
+        await sendWhatsAppBusinessSettlementNotice({
+          houseId: params.houseId,
+          houseName: houseName || "Pressing Partenaire",
+          contactPhone,
+          amount: params.amount,
+          currency: params.currency ?? "CDF",
+          reference: params.reference?.trim() || res.settlementId || "CASH",
+          method: params.method,
+          period: params.period,
+        });
+      }
+
+      const staff = await dal.getHouseStaff(params.houseId).catch(() => []);
+      const primaryRecipient = staff.find((s) => s.email && s.email.includes("@")) || null;
+      if (primaryRecipient?.email) {
+        const payoutCdf = res.amountCDF ?? (params.currency === "CDF" ? params.amount : undefined);
+        if (typeof payoutCdf === "number") {
+          await queueEmailNotification({
+            kind: "house_settlement_disbursed",
+            settlementId: res.settlementId || params.reference?.trim() || `settle-${Date.now()}`,
+            email: primaryRecipient.email,
             houseName: houseName || "Pressing Partenaire",
-            contactPhone,
-            amount: params.amount,
-            currency: params.currency ?? "CDF",
-            reference: params.reference?.trim() || res.settlementId || "CASH",
-            method: params.method,
-            period: params.period,
-          });
+            netPayoutAmountCdf: payoutCdf,
+          }).catch(() => {});
         }
-
-        // Idempotent background email notification to house manager/owner
-        const staff = await dal.getHouseStaff(params.houseId).catch(() => []);
-        const primaryRecipient = staff.find((s) => s.email && s.email.includes("@")) || null;
-        if (primaryRecipient?.email) {
-          const payoutCdf = res.amountCDF ?? (params.currency === "CDF" ? params.amount : undefined);
-          if (typeof payoutCdf === "number") {
-            await queueEmailNotification({
-              kind: "house_settlement_disbursed",
-              settlementId: res.settlementId || params.reference?.trim() || `settle-${Date.now()}`,
-              email: primaryRecipient.email,
-              houseName: houseName || "Pressing Partenaire",
-              netPayoutAmountCdf: payoutCdf,
-            }).catch(() => {});
-          }
-        }
-      })
-      .catch(() => {});
+      }
+    });
 
     return ok({ settlementId: res.settlementId, newBalanceCDF: res.newBalanceCDF });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du règlement du pressing");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors du règlement du pressing",
+        "settleAdminHouse"
+      )
+    );
   }
 }
 
@@ -100,7 +111,13 @@ export async function getAdminCourierSettlements() {
     const data = await dal.getCourierSettlementsOverview();
     return ok(data);
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du chargement des règlements de coursiers");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors du chargement des règlements de coursiers",
+        "getAdminCourierSettlements"
+      )
+    );
   }
 }
 
@@ -136,7 +153,13 @@ export async function settleAdminCourier(params: {
     if (!res.ok) return err(res.error || "Échec du règlement du coursier");
     return ok({ settlementId: res.settlementId, newBalanceCDF: res.newBalanceCDF });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors du règlement du coursier");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors du règlement du coursier",
+        "settleAdminCourier"
+      )
+    );
   }
 }
 
@@ -146,7 +169,11 @@ export async function getAdminSettlementHistory(limit = 100) {
     return ok(data);
   } catch (error) {
     return err(
-      error instanceof Error ? error.message : "Erreur lors du chargement de l'historique des règlements"
+      sanitizeServiceError(
+        error,
+        "Erreur lors du chargement de l'historique des règlements",
+        "getAdminSettlementHistory"
+      )
     );
   }
 }
@@ -169,8 +196,14 @@ export async function reverseAdminSettlement(params: {
     });
 
     if (!res.ok) return err(res.error || "Échec de l'annulation du règlement");
-    return ok(res);
+    return ok({ reversalId: res.reversalId });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Erreur lors de l'annulation du règlement");
+    return err(
+      sanitizeServiceError(
+        error,
+        "Erreur lors de l'annulation du règlement",
+        "reverseAdminSettlement"
+      )
+    );
   }
 }

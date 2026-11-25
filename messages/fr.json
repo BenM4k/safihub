@@ -1913,7 +1913,9 @@
       "simHouseLabel": "Pressing choisi",
       "simItemsCountLabel": "Articles au panier",
       "simLandmarkLabel": "Repère / GPS",
-      "simNone": "Aucun"
+      "simNone": "Aucun",
+      "dryRunToggleLabel": "Mode simulation sans envoi réel (Dry-Run)",
+      "dryRunToggleHint": "Désactivez uniquement pour envoyer un vrai message ou exécuter le bot en direct."
     }
   },
   "house": {

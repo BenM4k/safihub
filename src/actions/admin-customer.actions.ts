@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireRole } from "@/services/auth";
 import { err, type Result } from "@/lib/result";
 import type { GuestMergeResult } from "@/dal";
-import { deleteUserSessions } from "@/dal";
 import {
   blockAdminCustomer,
   executeCustomerMerge,
@@ -16,21 +16,52 @@ import {
   type CustomerMergePreview,
 } from "@/services/admin";
 
+const userIdSchema = z
+  .string()
+  .trim()
+  .min(1, "Identifiant client manquant.")
+  .max(128, "Identifiant client invalide.");
+
+const blockCustomerSchema = z.object({
+  customerId: userIdSchema,
+  reason: z
+    .string()
+    .trim()
+    .min(1, "Un motif de blocage est obligatoire.")
+    .max(500, "Le motif ne doit pas dépasser 500 caractères."),
+});
+
+const resetCustomerPasswordSchema = z.object({
+  customerId: userIdSchema,
+  newPassword: z
+    .string()
+    .trim()
+    .min(8, "Le mot de passe doit comporter au moins 8 caractères.")
+    .max(128, "Le mot de passe ne doit pas dépasser 128 caractères."),
+});
+
+const mergeCustomerSchema = z.object({
+  guestUserId: userIdSchema,
+  targetUserId: userIdSchema,
+});
+
 export async function blockCustomerAction(
   formData: FormData
 ): Promise<Result<void>> {
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const customerId = String(formData.get("userId") || "").trim();
-  const reason = String(formData.get("reason") || "").trim();
-
-  if (!customerId) return err("Identifiant client manquant.");
-  if (!reason) return err("Un motif de blocage est obligatoire.");
+  const parsed = blockCustomerSchema.safeParse({
+    customerId: formData.get("userId"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides.");
+  }
 
   const res = await blockAdminCustomer({
-    customerId,
-    reason,
+    customerId: parsed.data.customerId,
+    reason: parsed.data.reason,
     operatorName: auth.value.user.name || auth.value.user.email,
   });
 
@@ -48,10 +79,12 @@ export async function unblockCustomerAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const customerId = String(formData.get("userId") || "").trim();
-  if (!customerId) return err("Identifiant client manquant.");
+  const parsed = userIdSchema.safeParse(formData.get("userId"));
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Identifiant client manquant.");
+  }
 
-  const res = await unblockAdminCustomer(customerId);
+  const res = await unblockAdminCustomer(parsed.data);
   if (res.ok) {
     revalidatePath("/admin/customers");
     revalidatePath("/admin/users");
@@ -66,21 +99,22 @@ export async function resetCustomerPasswordAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const customerId = String(formData.get("userId") || "").trim();
-  const newPassword = String(formData.get("newPassword") || "").trim();
-
-  if (!customerId) return err("Identifiant client manquant.");
-  if (!newPassword || newPassword.length < 8) {
-    return err("Le mot de passe doit comporter au moins 8 caractères.");
+  const parsed = resetCustomerPasswordSchema.safeParse({
+    customerId: formData.get("userId"),
+    newPassword: formData.get("newPassword"),
+  });
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides.");
   }
 
   const res = await resetAdminUserPassword({
-    userId: customerId,
-    newPassword,
+    userId: parsed.data.customerId,
+    newPassword: parsed.data.newPassword,
+    operatorId: auth.value.user.id,
+    requireCustomerRole: true,
   });
 
   if (res.ok) {
-    await deleteUserSessions(customerId);
     revalidatePath("/admin/customers");
     revalidatePath("/admin/users");
   }
@@ -95,11 +129,12 @@ export async function previewCustomerMergeAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  if (!guestUserId || !targetUserId) {
+  const parsed = mergeCustomerSchema.safeParse({ guestUserId, targetUserId });
+  if (!parsed.success) {
     return err("Veuillez sélectionner les deux comptes à fusionner.");
   }
 
-  return previewCustomerMerge({ guestUserId, targetUserId });
+  return previewCustomerMerge(parsed.data);
 }
 
 export async function mergeCustomerAccountsAction(
@@ -108,16 +143,17 @@ export async function mergeCustomerAccountsAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  const guestUserId = String(formData.get("guestUserId") || "").trim();
-  const targetUserId = String(formData.get("targetUserId") || "").trim();
-
-  if (!guestUserId || !targetUserId) {
+  const parsed = mergeCustomerSchema.safeParse({
+    guestUserId: formData.get("guestUserId"),
+    targetUserId: formData.get("targetUserId"),
+  });
+  if (!parsed.success) {
     return err("Identifiants des comptes manquants pour la fusion.");
   }
 
   const res = await executeCustomerMerge({
-    guestUserId,
-    targetUserId,
+    guestUserId: parsed.data.guestUserId,
+    targetUserId: parsed.data.targetUserId,
     operatorName: auth.value.user.name || auth.value.user.email,
     operatorId: auth.value.user.id,
   });
@@ -137,7 +173,8 @@ export async function getCustomerDetailsAction(
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return err(auth.error);
 
-  if (!userId) return err("Identifiant requis.");
+  const parsed = userIdSchema.safeParse(userId);
+  if (!parsed.success) return err("Identifiant requis.");
 
-  return getCustomerDetailedProfile(userId);
+  return getCustomerDetailedProfile(parsed.data);
 }

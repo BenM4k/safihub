@@ -1,7 +1,7 @@
 import "server-only";
 import { and, count, desc, eq, gte, ilike, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 import { err, ok, type Result } from "@/lib/result";
-import { db, schema } from "./db";
+import { db, escapeLikePattern, schema } from "./db";
 
 export interface UserRecord {
   id: string;
@@ -69,7 +69,7 @@ export async function getAdminUsers(params?: {
   }
 
   if (params?.query && params.query.trim()) {
-    const q = `%${params.query.trim()}%`;
+    const q = `%${escapeLikePattern(params.query.trim())}%`;
     conditions.push(
       or(
         ilike(schema.user.name, q),
@@ -170,11 +170,32 @@ export async function countActiveAdmins(): Promise<number> {
 export async function blockAdminUserWithGuard(params: {
   userId: string;
   reason: string;
-  isTargetActiveAdmin: boolean;
+  isTargetActiveAdmin?: boolean;
 }): Promise<Result<void>> {
   try {
     return await db.transaction(async (tx) => {
-      if (params.isTargetActiveAdmin) {
+      const [target] = await tx
+        .select({
+          id: schema.user.id,
+          role: schema.user.role,
+          status: schema.user.status,
+          banned: schema.user.banned,
+        })
+        .from(schema.user)
+        .where(eq(schema.user.id, params.userId))
+        .for("update")
+        .limit(1);
+
+      if (!target) {
+        return err("Utilisateur introuvable");
+      }
+
+      const targetIsActiveAdmin =
+        target.role === "admin" &&
+        !target.banned &&
+        target.status !== "blocked";
+
+      if (targetIsActiveAdmin) {
         const activeAdmins = await tx
           .select({ id: schema.user.id })
           .from(schema.user)
@@ -209,7 +230,8 @@ export async function blockAdminUserWithGuard(params: {
       return ok(undefined);
     });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to block user");
+    console.error("[blockAdminUserWithGuard]", error);
+    return err("Erreur lors du blocage de l'utilisateur");
   }
 }
 
@@ -217,11 +239,33 @@ export async function updateUserRoleWithHouseAndGuard(params: {
   userId: string;
   newRole: string;
   houseId?: string | null;
-  isTargetActiveAdminDemotion: boolean;
+  isTargetActiveAdminDemotion?: boolean;
 }): Promise<Result<void>> {
   try {
     return await db.transaction(async (tx) => {
-      if (params.isTargetActiveAdminDemotion) {
+      const [target] = await tx
+        .select({
+          id: schema.user.id,
+          role: schema.user.role,
+          status: schema.user.status,
+          banned: schema.user.banned,
+        })
+        .from(schema.user)
+        .where(eq(schema.user.id, params.userId))
+        .for("update")
+        .limit(1);
+
+      if (!target) {
+        return err("Utilisateur introuvable");
+      }
+
+      const targetIsActiveAdminDemotion =
+        target.role === "admin" &&
+        params.newRole !== "admin" &&
+        !target.banned &&
+        target.status !== "blocked";
+
+      if (targetIsActiveAdminDemotion) {
         const activeAdmins = await tx
           .select({ id: schema.user.id })
           .from(schema.user)
@@ -263,7 +307,8 @@ export async function updateUserRoleWithHouseAndGuard(params: {
       return ok(undefined);
     });
   } catch (error) {
-    return err(error instanceof Error ? error.message : "Failed to update user role");
+    console.error("[updateUserRoleWithHouseAndGuard]", error);
+    return err("Erreur lors de la mise à jour du rôle");
   }
 }
 
@@ -310,6 +355,7 @@ export async function createStaffUser(data: {
       role: data.role,
       contactPhone: data.contactPhone?.trim() ?? null,
       isGuest: false,
+      emailVerified: true,
       status: "active",
       banned: false,
     })
@@ -363,9 +409,10 @@ export async function createStaffAccountTransaction(params: {
       role: params.user.role,
       contactPhone: params.user.contactPhone?.trim() ?? null,
       isGuest: false,
+      emailVerified: true,
       status: "active",
       banned: false,
-      mustChangePassword: params.mustChangePassword ?? (params.user.role === "house"),
+      mustChangePassword: params.mustChangePassword ?? Boolean(params.hashedPassword),
     });
 
     if (params.hashedPassword) {
@@ -435,7 +482,7 @@ export async function getAdminCustomers(params?: GetAdminCustomersParams): Promi
   }
 
   if (params?.query && params.query.trim()) {
-    const q = `%${params.query.trim()}%`;
+    const q = `%${escapeLikePattern(params.query.trim())}%`;
     conditions.push(
       or(
         ilike(schema.user.name, q),
@@ -516,9 +563,23 @@ export async function getAdminCustomers(params?: GetAdminCustomersParams): Promi
 }
 
 export async function getMergedGuestAccounts(targetUserId: string): Promise<UserRecord[]> {
-  const sanitizedTargetId = targetUserId.replace(/[%_\\]/g, "\\$&");
+  const sanitizedTargetId = escapeLikePattern(targetUserId);
   return db
-    .select()
+    .select({
+      id: schema.user.id,
+      name: schema.user.name,
+      email: schema.user.email,
+      emailVerified: schema.user.emailVerified,
+      image: schema.user.image,
+      role: schema.user.role,
+      status: schema.user.status,
+      banned: schema.user.banned,
+      banReason: schema.user.banReason,
+      isGuest: schema.user.isGuest,
+      contactPhone: schema.user.contactPhone,
+      createdAt: schema.user.createdAt,
+      updatedAt: schema.user.updatedAt,
+    })
     .from(schema.user)
     .where(
       and(

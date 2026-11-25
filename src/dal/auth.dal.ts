@@ -182,25 +182,54 @@ export async function mergeGuestUser({
       return err("Cannot merge a user account into itself.");
     }
 
-    const guestUser = await getUserById(guestUserId);
-    if (!guestUser) {
-      return err(`Guest user with ID ${guestUserId} not found.`);
-    }
-
-    if (!guestUser.isGuest) {
-      return err(`User ${guestUserId} is not a guest account.`);
-    }
-
-    const targetUser = await getUserById(targetUserId);
-    if (!targetUser) {
-      return err(`Target user with ID ${targetUserId} not found.`);
-    }
-
-    if (targetUser.isGuest) {
-      return err(`Target user ${targetUserId} cannot be a guest account.`);
-    }
-
     return await db.transaction(async (tx) => {
+      const [guestUser] = await tx
+        .select({
+          id: schema.user.id,
+          role: schema.user.role,
+          isGuest: schema.user.isGuest,
+          status: schema.user.status,
+          banned: schema.user.banned,
+        })
+        .from(schema.user)
+        .where(eq(schema.user.id, guestUserId))
+        .for("update")
+        .limit(1);
+
+      if (!guestUser) {
+        return err(`Guest user with ID ${guestUserId} not found.`);
+      }
+
+      if (guestUser.role !== "customer" || !guestUser.isGuest) {
+        return err(`User ${guestUserId} is not a guest customer account.`);
+      }
+
+      const [targetUser] = await tx
+        .select({
+          id: schema.user.id,
+          role: schema.user.role,
+          isGuest: schema.user.isGuest,
+          status: schema.user.status,
+          banned: schema.user.banned,
+        })
+        .from(schema.user)
+        .where(eq(schema.user.id, targetUserId))
+        .for("update")
+        .limit(1);
+
+      if (!targetUser) {
+        return err(`Target user with ID ${targetUserId} not found.`);
+      }
+
+      if (
+        targetUser.role !== "customer" ||
+        targetUser.isGuest ||
+        targetUser.status !== "active" ||
+        targetUser.banned
+      ) {
+        return err(`Target user ${targetUserId} is not an active registered customer account.`);
+      }
+
       // 1. Reassign orders from guest customer to registered user
       const updatedOrders = await tx
         .update(schema.orders)
@@ -215,7 +244,7 @@ export async function mergeGuestUser({
         .where(eq(schema.customerAddresses.userId, guestUserId))
         .returning({ id: schema.customerAddresses.id });
 
-      // 3. Mark the guest account as merged and blocked from further orders
+      // 3. Mark the guest account as merged and blocked from further orders, and revoke sessions
       await tx
         .update(schema.user)
         .set({
@@ -227,6 +256,8 @@ export async function mergeGuestUser({
           updatedAt: new Date(),
         })
         .where(eq(schema.user.id, guestUserId));
+
+      await tx.delete(schema.session).where(eq(schema.session.userId, guestUserId));
 
       return ok({
         guestUserId,

@@ -1,10 +1,12 @@
 import { getTranslations } from "next-intl/server";
+import { guardAdminRoute } from "@/services/auth";
 import { listAdminNeighborhoods, listAdminZones } from "@/services/admin";
 import { ZonesCard } from "@/components/admin/neighborhoods/zones-card";
 import { NeighborhoodsTable } from "@/components/admin/neighborhoods/neighborhoods-table";
 import { NeighborhoodForm } from "@/components/admin/neighborhoods/neighborhood-form";
 
 export default async function AdminNeighborhoodsPage() {
+  await guardAdminRoute();
   const t = await getTranslations("admin.neighborhoods");
 
   const [zonesRes, neighRes] = await Promise.all([

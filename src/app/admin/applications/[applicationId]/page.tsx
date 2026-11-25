@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
+import { guardAdminRoute } from "@/services/auth";
+import { listAdminNeighborhoods } from "@/services/admin";
 import { getAdminPartnerApplication } from "@/services/admin/partner-application.service";
-import { getNeighborhoods } from "@/dal";
 import { ApplicationReviewActions } from "@/components/admin/applications/application-review-actions";
 import { ApplicationApplicantCard } from "@/components/admin/applications/detail/application-applicant-card";
 import { ApplicationLocationCard } from "@/components/admin/applications/detail/application-location-card";
@@ -27,13 +28,15 @@ interface PageProps {
 }
 
 export default async function AdminApplicationDetailPage({ params }: PageProps) {
+  await guardAdminRoute();
   const t = await getTranslations("admin.applications");
   const { applicationId } = await params;
 
-  const [appRes, neighborhoods] = await Promise.all([
+  const [appRes, neighborhoodsRes] = await Promise.all([
     getAdminPartnerApplication(applicationId),
-    getNeighborhoods(),
+    listAdminNeighborhoods(),
   ]);
+  const neighborhoods = neighborhoodsRes.ok ? neighborhoodsRes.value : [];
 
   if (!appRes.ok) {
     notFound();

@@ -331,8 +331,9 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       };
 
       vi.spyOn(dal, "getOrderById").mockResolvedValue(mockAs(mockOrder));
-      const updateStatusSpy = vi.spyOn(dal, "updateOrderStatusIfCurrent").mockResolvedValue(true);
-      const addEventSpy = vi.spyOn(dal, "addOrderEvent").mockResolvedValue(mockAs({}));
+      const transitionSpy = vi
+        .spyOn(dal, "transitionOrderStatusAtomic")
+        .mockResolvedValue(true);
 
       const res = await adminRejectFirstOrder({
         orderId: mockOrder.id,
@@ -341,14 +342,18 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       });
 
       expect(res.ok).toBe(true);
-      expect(updateStatusSpy).toHaveBeenCalledWith(mockOrder.id, "awaiting_confirmation", "cancelled");
-      expect(addEventSpy).toHaveBeenCalledWith(
+      expect(transitionSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           orderId: mockOrder.id,
-          fromStatus: "awaiting_confirmation",
-          toStatus: "cancelled",
-          actorRole: "admin",
-          note: "Numéro de téléphone inaccessible après 3 appels",
+          expectedStatus: "awaiting_confirmation",
+          newStatus: "cancelled",
+          event: expect.objectContaining({
+            orderId: mockOrder.id,
+            fromStatus: "awaiting_confirmation",
+            toStatus: "cancelled",
+            actorRole: "admin",
+            note: "Numéro de téléphone inaccessible après 3 appels",
+          }),
         })
       );
     });
@@ -358,7 +363,7 @@ describe("Phase 10.2: Optional First-Order Screening (AC 16)", () => {
       vi.spyOn(dal, "getOrderById").mockResolvedValue(
         mockAs({ id: "ord_race", status: "awaiting_confirmation", houseId })
       );
-      vi.spyOn(dal, "updateOrderStatusIfCurrent").mockResolvedValue(false);
+      vi.spyOn(dal, "transitionOrderStatusAtomic").mockResolvedValue(false);
       const addEventSpy = vi.spyOn(dal, "addOrderEvent").mockResolvedValue(mockAs({}));
 
       const res = await adminRejectFirstOrder({

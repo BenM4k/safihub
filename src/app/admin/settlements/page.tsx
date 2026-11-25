@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { guardAdminRoute } from "@/services/auth";
 import {
   getAdminHouseSettlements,
   getAdminCourierSettlements,
@@ -15,6 +16,7 @@ interface AdminSettlementsPageProps {
 export default async function AdminSettlementsPage({
   searchParams,
 }: AdminSettlementsPageProps) {
+  await guardAdminRoute();
   const t = await getTranslations("admin.settlements");
   const params = await searchParams;
 

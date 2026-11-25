@@ -14,6 +14,7 @@ import { simulateAdminWhatsAppBotStepAction } from "@/actions/admin-whatsapp.act
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { StatusBadge } from "@/components/admin/shared/status-badge";
 import type { WhatsAppBotSession } from "@/services/whatsapp";
 
@@ -21,7 +22,8 @@ export function WhatsAppBotSimulator() {
   const t = useTranslations("admin.whatsapp");
   const [isPending, startTransition] = useTransition();
 
-  const [phone, setPhone] = useState("+243991234567");
+  const [phone, setPhone] = useState("");
+  const [dryRun, setDryRun] = useState(true);
   const [customText, setCustomText] = useState("");
   const [sessionState, setSessionState] = useState<WhatsAppBotSession | null>(
     null
@@ -38,6 +40,7 @@ export function WhatsAppBotSimulator() {
         phone,
         actionType,
         value,
+        dryRun,
       });
       if (!res.ok) {
         setErrorMsg(res.error);
@@ -77,6 +80,20 @@ export function WhatsAppBotSimulator() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder={t("recipientPhonePlaceholder")}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface/60 px-3.5 py-2.5">
+          <div className="space-y-0.5">
+            <Label htmlFor="wa-sim-dryrun" className="text-xs font-semibold">
+              {t("dryRunToggleLabel")}
+            </Label>
+            <p className="text-xs text-muted-foreground">{t("dryRunToggleHint")}</p>
+          </div>
+          <Switch
+            id="wa-sim-dryrun"
+            checked={dryRun}
+            onCheckedChange={setDryRun}
           />
         </div>
 
