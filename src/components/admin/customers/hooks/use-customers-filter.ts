@@ -90,8 +90,14 @@ export function useCustomersFilter(
   }, [filteredCustomers, sortState]);
 
   const pagedCustomers = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return sortedCustomers.slice(start, start + pageSize);
+    const safePageSize = Math.max(1, pageSize);
+    const totalPages = Math.max(
+      1,
+      Math.ceil(sortedCustomers.length / safePageSize)
+    );
+    const safePage = Math.min(Math.max(1, currentPage), totalPages);
+    const start = (safePage - 1) * safePageSize;
+    return sortedCustomers.slice(start, start + safePageSize);
   }, [sortedCustomers, currentPage, pageSize]);
 
   const handleSortChange = (field: SortableField) => {

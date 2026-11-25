@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/admin/shared/status-badge";
 import { DataTablePagination } from "@/components/admin/shared/data-table-pagination";
+import { APPLICATIONS_PAGE_SIZE_OPTIONS } from "@/lib/admin-applications-query";
 import type { HouseApplicationRecord } from "@/dal/house-application.dal";
 
 interface ApplicationsTableProps {
@@ -145,6 +146,7 @@ export async function ApplicationsTable({
           urlMode
           page={page}
           pageSize={pageSize}
+          pageSizeOptions={APPLICATIONS_PAGE_SIZE_OPTIONS}
           totalItems={effectiveTotal}
           hideIfSinglePage
         />

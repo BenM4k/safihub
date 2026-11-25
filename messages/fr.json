@@ -1963,6 +1963,7 @@
       "loadingApplicationsAria": "Chargement des candidatures partenaires",
       "searchPlaceholder": "Rechercher pressing, gérant, téléphone ou quartier...",
       "loadErrorTitle": "Impossible de charger les candidatures",
+      "loadErrorDescription": "Une erreur est survenue lors du chargement des candidatures partenaires. Veuillez réessayer.",
       "retry": "Réessayer"
     },
     "disputes": {

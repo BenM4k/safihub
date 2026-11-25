@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import {
   getAdminCourierSettlements,
   getAdminHouseSettlements,
-  getAdminSettlementHistory,
 } from "@/services/admin";
 import { SettlementsView } from "./settlements-view";
+import { SettlementHistoryStream } from "./settlement-history-stream";
+import { SettlementHistorySkeleton } from "./settlements-loading-skeleton";
 
 interface SettlementsStreamContentProps {
   selectedPeriod: string;
@@ -12,10 +14,9 @@ interface SettlementsStreamContentProps {
 export async function SettlementsStreamContent({
   selectedPeriod,
 }: SettlementsStreamContentProps) {
-  const [housesResult, couriersResult, historyResult] = await Promise.all([
+  const [housesResult, couriersResult] = await Promise.all([
     getAdminHouseSettlements(),
     getAdminCourierSettlements(),
-    getAdminSettlementHistory(100),
   ]);
 
   const housesData = housesResult.ok
@@ -36,8 +37,6 @@ export async function SettlementsStreamContent({
         oldestUnpaidDays: 0,
       };
 
-  const historyLogs = historyResult.ok ? historyResult.value : [];
-
   return (
     <div className="space-y-6 animate-enter">
       {(!housesResult.ok || !couriersResult.ok) && (
@@ -54,7 +53,11 @@ export async function SettlementsStreamContent({
       <SettlementsView
         houses={housesData.houses}
         couriers={couriersData.couriers}
-        historyLogs={historyLogs}
+        historySlot={
+          <Suspense fallback={<SettlementHistorySkeleton />}>
+            <SettlementHistoryStream />
+          </Suspense>
+        }
         housesSummary={{
           totalOwedCDF: housesData.totalOwedToHousesCDF,
           housesWithBalanceCount: housesData.housesWithBalanceCount,

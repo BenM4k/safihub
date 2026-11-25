@@ -1963,6 +1963,7 @@
       "loadingApplicationsAria": "Inapakia maombi ya washirika",
       "searchPlaceholder": "Tafuta dobi, mwombaji, simu au mtaa...",
       "loadErrorTitle": "Imeshindwa kupakia maombi",
+      "loadErrorDescription": "Hitilafu imetokea wakati wa kupakia maombi ya washirika. Tafadhali jaribu tena.",
       "retry": "Jaribu tena"
     },
     "disputes": {

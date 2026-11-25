@@ -45,10 +45,28 @@ export function SettlementsLoadingSkeleton({
         <Skeleton className="h-64 w-full rounded-xl border border-border animate-shimmer" />
       </div>
 
-      <div className="flex flex-col gap-3 pt-2">
-        <Skeleton className="h-5 w-36 rounded animate-shimmer" />
-        <Skeleton className="h-64 w-full rounded-xl border border-border animate-shimmer" />
-      </div>
+      <SettlementHistorySkeleton />
+    </div>
+  );
+}
+
+export function SettlementHistorySkeleton({
+  label,
+}: SettlementsLoadingSkeletonProps) {
+  const t = useTranslations("admin.settlements");
+  const resolvedLabel = label ?? t("loadingSettlementsAria");
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={resolvedLabel}
+      className="flex flex-col gap-3 pt-2 font-sans"
+    >
+      <span className="sr-only">{resolvedLabel}</span>
+      <Skeleton className="h-5 w-36 rounded animate-shimmer" />
+      <Skeleton className="h-64 w-full rounded-xl border border-border animate-shimmer" />
     </div>
   );
 }

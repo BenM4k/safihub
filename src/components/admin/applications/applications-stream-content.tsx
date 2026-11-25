@@ -27,7 +27,7 @@ export async function ApplicationsStreamContent({
         </div>
         <div className="space-y-1">
           <p className="text-sm font-bold text-heading">{t("loadErrorTitle")}</p>
-          <p className="text-xs text-destructive">{res.error}</p>
+          <p className="text-xs text-destructive">{t("loadErrorDescription")}</p>
         </div>
         <Button asChild size="sm" className="min-h-10 text-xs">
           <Link href="/admin/applications">

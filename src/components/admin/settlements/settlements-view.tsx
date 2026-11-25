@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { Building2, Bike } from "lucide-react";
@@ -8,11 +8,9 @@ import { SettlementPeriodSelector } from "./settlement-period-selector";
 import { SettlementKpiCards } from "./settlement-kpi-cards";
 import { HousesSettlementsTable } from "./houses-settlements-table";
 import { CouriersSettlementsTable } from "./couriers-settlements-table";
-import { SettlementHistoryTable } from "./settlement-history-table";
 import type {
   HouseSettlementRow,
   CourierSettlementRow,
-  SettlementHistoryRow,
   PayeeSettlementTarget,
   DeliveredOrderBreakdown,
   SettlementReceiptData,
@@ -38,7 +36,7 @@ const SettlementReceiptModal = dynamic(
 interface SettlementsViewProps {
   houses: HouseSettlementRow[];
   couriers: CourierSettlementRow[];
-  historyLogs: SettlementHistoryRow[];
+  historySlot?: ReactNode;
   housesSummary: {
     totalOwedCDF: number;
     housesWithBalanceCount: number;
@@ -55,7 +53,7 @@ interface SettlementsViewProps {
 export function SettlementsView({
   houses,
   couriers,
-  historyLogs,
+  historySlot,
   housesSummary,
   couriersSummary,
   periodString,
@@ -136,9 +134,7 @@ export function SettlementsView({
         </section>
       )}
 
-      <section className="pt-2">
-        <SettlementHistoryTable logs={historyLogs} />
-      </section>
+      <section className="pt-2">{historySlot}</section>
 
       {settleTarget && (
         <SettlePayeeDialog

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Download, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ export function SettlementHistoryFilters({
   onExportCsv,
 }: SettlementHistoryFiltersProps) {
   const t = useTranslations("admin.settlements");
+  const [searchResetKey, setSearchResetKey] = useState(0);
 
   const hasCustomFilters =
     filters.search ||
@@ -41,10 +43,16 @@ export function SettlementHistoryFilters({
     filters.status !== "all" ||
     filters.period !== "30_days";
 
+  function handleReset() {
+    setSearchResetKey((prev) => prev + 1);
+    onReset();
+  }
+
   return (
     <div className="p-3 border-b border-border bg-muted/20 flex flex-col xl:flex-row xl:items-center justify-between gap-3 text-xs">
       <div className="flex-1 min-w-[240px] max-w-md">
         <AdminSearchInput
+          key={searchResetKey}
           value={filters.search}
           onSearch={(search) => onChange({ ...filters, search })}
           onClear={() => onChange({ ...filters, search: "" })}
@@ -125,7 +133,7 @@ export function SettlementHistoryFilters({
             type="button"
             variant="ghost"
             size="sm"
-            onClick={onReset}
+            onClick={handleReset}
             className="min-h-10 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1 press"
             title={t("resetFilters")}
           >

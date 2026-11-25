@@ -9,6 +9,7 @@ import { DataTablePagination } from "@/components/admin/shared/data-table-pagina
 import { HousesTableToolbar } from "./houses-table-toolbar";
 import { HousesTableHeader } from "./houses-table-header";
 import { HousesTableRow } from "./houses-table-row";
+import { HOUSES_PAGE_SIZE_OPTIONS } from "@/lib/admin-houses-query";
 import type { NeighborhoodRecord } from "@/dal";
 import type { AdminHouseRow, HouseFiltersState } from "./types";
 
@@ -197,6 +198,7 @@ export function HousesTable({
       <DataTablePagination
         page={safePage}
         pageSize={pageSize}
+        pageSizeOptions={HOUSES_PAGE_SIZE_OPTIONS}
         totalItems={totalItems}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}

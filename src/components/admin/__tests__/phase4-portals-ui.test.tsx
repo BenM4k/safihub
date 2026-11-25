@@ -3,7 +3,7 @@
 import "@/test/ui-sdk-setup";
 import type { ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
-import { render, screen } from "@testing-library/react";
+import { render, renderHook, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import frMessages from "../../../../messages/fr.json";
@@ -32,6 +32,8 @@ import { CustomersTableToolbar } from "../customers/customers-table-toolbar";
 import { UsersTableToolbar } from "../users/users-table-toolbar";
 import { HistoryFilters } from "../cash/history-filters";
 import { SettlementHistoryFilters } from "../settlements/settlement-history-filters";
+import { useCustomersFilter } from "../customers/hooks/use-customers-filter";
+import type { CustomerRow } from "../customers/types";
 
 function renderWithIntl(ui: ReactNode) {
   return render(
@@ -206,5 +208,95 @@ describe("Phase 4 Ops Portals UI Toolbars & @ui-sdk/react Controls", () => {
     expect(onSettlementChange).toHaveBeenCalledWith(
       expect.objectContaining({ payeeType: "house" })
     );
+  });
+
+  it("SettlementHistoryFilters clears unsubmitted search draft on reset even when applied search is empty", async () => {
+    const user = userEvent.setup();
+    const onReset = vi.fn();
+
+    renderWithIntl(
+      <SettlementHistoryFilters
+        filters={{
+          search: "",
+          payeeType: "house",
+          status: "all",
+          period: "30_days",
+        }}
+        onChange={vi.fn()}
+        onReset={onReset}
+        onExportCsv={vi.fn()}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(
+      frMessages.admin.settlements.historySearchPlaceholder
+    ) as HTMLInputElement;
+    await user.type(searchInput, "unsubmitted draft");
+    expect(searchInput.value).toBe("unsubmitted draft");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: frMessages.admin.settlements.resetFilters,
+      })
+    );
+
+    expect(onReset).toHaveBeenCalledTimes(1);
+    const updatedInput = screen.getByPlaceholderText(
+      frMessages.admin.settlements.historySearchPlaceholder
+    ) as HTMLInputElement;
+    expect(updatedInput.value).toBe("");
+  });
+
+  it("useCustomersFilter clamps out-of-range page before slicing pagedCustomers", () => {
+    const sampleCustomers: CustomerRow[] = [
+      {
+        id: "cust-1",
+        name: "Aline",
+        email: "aline@example.com",
+        emailVerified: true,
+        role: "customer",
+        contactPhone: "+243990000001",
+        isGuest: false,
+        banned: false,
+        banReason: null,
+        status: "active",
+        ordersCount: 2,
+        totalSpentCDF: 25000,
+        lastOrderAt: null,
+        hasActiveOrders: false,
+        firstOrderSource: "web",
+        createdAt: new Date("2026-01-01T10:00:00Z"),
+        updatedAt: new Date("2026-01-01T10:00:00Z"),
+      },
+      {
+        id: "cust-2",
+        name: "Benoit",
+        email: "benoit@example.com",
+        emailVerified: true,
+        role: "customer",
+        contactPhone: "+243990000002",
+        isGuest: false,
+        banned: false,
+        banReason: null,
+        status: "active",
+        ordersCount: 1,
+        totalSpentCDF: 10000,
+        lastOrderAt: null,
+        hasActiveOrders: false,
+        firstOrderSource: "web",
+        createdAt: new Date("2026-01-02T10:00:00Z"),
+        updatedAt: new Date("2026-01-02T10:00:00Z"),
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useCustomersFilter(sampleCustomers, { page: 5, pageSize: 10 })
+    );
+    expect(result.current.pagedCustomers).toHaveLength(2);
+
+    const { result: emptyResult } = renderHook(() =>
+      useCustomersFilter([], { page: 4, pageSize: 10 })
+    );
+    expect(emptyResult.current.pagedCustomers).toEqual([]);
   });
 });

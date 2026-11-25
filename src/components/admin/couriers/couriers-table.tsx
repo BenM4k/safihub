@@ -12,7 +12,10 @@ import {
 import { StatusBadge } from "@/components/admin/shared/status-badge";
 import { DataTablePagination } from "@/components/admin/shared/data-table-pagination";
 import { CouriersToolbar } from "./couriers-toolbar";
-import type { AdminCouriersQueryParams } from "@/lib/admin-couriers-query";
+import {
+  COURIERS_PAGE_SIZE_OPTIONS,
+  type AdminCouriersQueryParams,
+} from "@/lib/admin-couriers-query";
 import type { CourierRecord } from "@/dal";
 
 interface CouriersTableProps {
@@ -157,6 +160,7 @@ export async function CouriersTable({ couriers, query }: CouriersTableProps) {
         urlMode
         page={safePage}
         pageSize={activeQuery.pageSize}
+        pageSizeOptions={COURIERS_PAGE_SIZE_OPTIONS}
         totalItems={totalItems}
         hideIfSinglePage
       />

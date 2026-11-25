@@ -14,8 +14,10 @@ export const DEFAULT_COURIERS_QUERY: AdminCouriersQueryParams = {
   pageSize: 15,
 };
 
+export const COURIERS_PAGE_SIZE_OPTIONS = [10, 15, 25, 50];
+
 const VALID_STATUSES = new Set<CouriersStatusTab>(["all", "active", "inactive"]);
-const ALLOWED_PAGE_SIZES = new Set([10, 15, 25, 50]);
+const ALLOWED_PAGE_SIZES = new Set<number>(COURIERS_PAGE_SIZE_OPTIONS);
 
 function pickSingle(v: string | string[] | undefined | null): string {
   if (Array.isArray(v)) return v[0] ?? "";

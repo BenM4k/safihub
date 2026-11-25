@@ -64,6 +64,16 @@ export function UsersManagementView({
     });
   }
 
+  const handleResetAll = () => {
+    handleResetFilters();
+    syncUrlFilters({
+      search: "",
+      role: "all",
+      status: "all",
+      hideTestAccounts: true,
+    });
+  };
+
   // Sheets & Dialogs State
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -129,15 +139,7 @@ export function UsersManagementView({
           setCurrentPage(1);
           syncUrlFilters(next);
         }}
-        onReset={() => {
-          handleResetFilters();
-          syncUrlFilters({
-            search: "",
-            role: "all",
-            status: "all",
-            hideTestAccounts: true,
-          });
-        }}
+        onReset={handleResetAll}
         isPending={isPending}
         onExport={() =>
           exportUsersCsv(sortedUsers, {
@@ -176,7 +178,7 @@ export function UsersManagementView({
           setPageSize(sz);
           setCurrentPage(1);
         }}
-        onResetFilters={handleResetFilters}
+        onResetFilters={handleResetAll}
         onSelectUser={(u) => handleSelectUser(u, "profile")}
         onViewProfile={(u) => handleSelectUser(u, "profile")}
         onChangeRole={(u) => setUserToChangeRole(u)}

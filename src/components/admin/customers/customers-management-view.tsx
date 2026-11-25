@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertCircle, GitMerge, UserCheck, Users, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,13 +10,9 @@ import { PageHeader } from "@/components/admin/shared/page-header";
 import { exportCustomersCsv } from "./customers-export";
 import { CustomersTable } from "./customers-table";
 import { CustomersTableToolbar } from "./customers-table-toolbar";
-import { useCustomersFilter } from "./hooks/use-customers-filter";
-import {
-  buildAdminCustomersQueryString,
-  parseAdminCustomersSearchParams,
-  type AdminCustomersUrlState,
-} from "@/lib/admin-customers-query";
-import type { CustomerDetailsTab, CustomerFiltersState, CustomerRow } from "./types";
+import { useCustomersUrlState } from "./hooks/use-customers-url-state";
+import type { AdminCustomersUrlState } from "@/lib/admin-customers-query";
+import type { CustomerDetailsTab, CustomerRow } from "./types";
 
 const CustomerDetailsSheet = dynamic(
   () =>
@@ -58,40 +53,24 @@ export function CustomersManagementView({
   isAdmin,
   initialUrlState,
 }: CustomersManagementViewProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const liveSearchParams = useSearchParams();
   const t = useTranslations("admin.customers");
-  const [isPending, startTransition] = useTransition();
-
   const {
     currentPage,
-    setCurrentPage,
     pageSize,
-    setPageSize,
     sortState,
     filters,
-    setFilters,
     sortedCustomers,
     pagedCustomers,
     handleSortChange,
-    handleResetFilters,
     registeredCount,
     guestCount,
-  } = useCustomersFilter(initialCustomers, initialUrlState);
-
-  const searchKey = liveSearchParams.toString();
-  const [trackedSearchKey, setTrackedSearchKey] = useState(searchKey);
-
-  if (trackedSearchKey !== searchKey) {
-    setTrackedSearchKey(searchKey);
-    const parsed = parseAdminCustomersSearchParams(
-      Object.fromEntries(new URLSearchParams(searchKey).entries())
-    );
-    setFilters(parsed.filters);
-    setCurrentPage(parsed.page);
-    setPageSize(parsed.pageSize);
-  }
+    isPending,
+    handleFiltersUpdate,
+    handleResetAll,
+    handlePageChange,
+    handlePageSizeChange,
+    handleRefresh,
+  } = useCustomersUrlState(initialCustomers, initialUrlState);
 
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
   const [preselectedGuest, setPreselectedGuest] = useState<CustomerRow | null>(null);
@@ -99,42 +78,6 @@ export function CustomersManagementView({
   const [activeTab, setActiveTab] = useState<CustomerDetailsTab>("profile");
   const [customerToBlock, setCustomerToBlock] = useState<CustomerRow | null>(null);
   const [customerToReset, setCustomerToReset] = useState<CustomerRow | null>(null);
-
-  function syncUrl(next: AdminCustomersUrlState) {
-    const qs = buildAdminCustomersQueryString(next);
-    startTransition(() => {
-      router.replace(qs ? `${pathname}${qs}` : pathname, { scroll: false });
-    });
-  }
-
-  function handleFiltersUpdate(nextFilters: CustomerFiltersState) {
-    setFilters(nextFilters);
-    setCurrentPage(1);
-    syncUrl({ filters: nextFilters, page: 1, pageSize });
-  }
-
-  function handleResetAll() {
-    handleResetFilters();
-    syncUrl({
-      filters: {
-        search: "",
-        status: "all",
-        type: "all",
-        hasOrdered: false,
-        hideTestAccounts: false,
-        dateFrom: "",
-        dateTo: "",
-      },
-      page: 1,
-      pageSize,
-    });
-  }
-
-  const handleRefresh = () => {
-    startTransition(() => {
-      router.refresh();
-    });
-  };
 
   const handleRowSelect = (
     customer: CustomerRow,
@@ -211,15 +154,8 @@ export function CustomersManagementView({
         isAdmin={isAdmin}
         sortState={sortState}
         onSortChange={handleSortChange}
-        onPageChange={(page) => {
-          setCurrentPage(page);
-          syncUrl({ filters, page, pageSize });
-        }}
-        onPageSizeChange={(sz) => {
-          setPageSize(sz);
-          setCurrentPage(1);
-          syncUrl({ filters, page: 1, pageSize: sz });
-        }}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
         onResetFilters={handleResetAll}
         onSelectCustomer={(c) => handleRowSelect(c, "profile")}
         onViewProfile={(c) => handleRowSelect(c, "profile")}

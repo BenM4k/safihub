@@ -32,7 +32,7 @@ export async function HousesStreamContent({ query }: HousesStreamContentProps) {
           <h2 className="text-base font-bold text-heading font-display">
             {t("errorTitle")}
           </h2>
-          <p className="text-xs text-destructive">{housesRes.error}</p>
+          <p className="text-xs text-destructive">{t("errorDescription")}</p>
         </div>
         <Button asChild size="sm" className="min-h-11 px-4 text-xs">
           <Link href="/admin/houses">

@@ -1,10 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildAdminHousesQueryString,
+  HOUSES_PAGE_SIZE_OPTIONS,
   parseAdminHousesSearchParams,
 } from "@/lib/admin-houses-query";
-import { parseAdminApplicationsSearchParams } from "@/lib/admin-applications-query";
-import { parseAdminCouriersSearchParams } from "@/lib/admin-couriers-query";
+import {
+  APPLICATIONS_PAGE_SIZE_OPTIONS,
+  parseAdminApplicationsSearchParams,
+} from "@/lib/admin-applications-query";
+import {
+  COURIERS_PAGE_SIZE_OPTIONS,
+  parseAdminCouriersSearchParams,
+} from "@/lib/admin-couriers-query";
 import {
   buildAdminCustomersQueryString,
   parseAdminCustomersSearchParams,
@@ -50,6 +57,28 @@ describe("Phase 4 Ops Portals Query Parsers & Services", () => {
     });
     expect(buildAdminHousesQueryString(parsed)).toContain("tab=reviews");
     expect(buildAdminHousesQueryString(parsed)).toContain(`neighborhoodId=${validUuid}`);
+
+    const upperUuid = "11111111-1111-4111-8111-111111111111".toUpperCase();
+    const upperParsed = parseAdminHousesSearchParams({
+      neighborhoodId: upperUuid,
+    });
+    expect(upperParsed.neighborhoodId).toBe(upperUuid.toLowerCase());
+
+    expect(HOUSES_PAGE_SIZE_OPTIONS).toEqual([10, 15, 25, 50]);
+    expect(APPLICATIONS_PAGE_SIZE_OPTIONS).toEqual([10, 15, 25, 50]);
+    expect(COURIERS_PAGE_SIZE_OPTIONS).toEqual([10, 15, 25, 50]);
+    for (const size of [10, 15, 25, 50]) {
+      expect(
+        parseAdminHousesSearchParams({ pageSize: String(size) }).pageSize
+      ).toBe(size);
+      expect(
+        parseAdminApplicationsSearchParams({ pageSize: String(size) }).pageSize
+      ).toBe(size);
+      expect(
+        parseAdminCouriersSearchParams({ pageSize: String(size) }).pageSize
+      ).toBe(size);
+    }
+    expect(parseAdminCouriersSearchParams({ pageSize: "100" }).pageSize).toBe(15);
 
     const fallback = parseAdminHousesSearchParams({
       tab: "other",

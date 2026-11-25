@@ -21,6 +21,8 @@ export const DEFAULT_HOUSES_QUERY: AdminHousesQueryParams = {
   pageSize: 15,
 };
 
+export const HOUSES_PAGE_SIZE_OPTIONS = [10, 15, 25, 50];
+
 const VALID_STATUSES = new Set<HousesStatusFilter>([
   "all",
   "active",
@@ -28,7 +30,7 @@ const VALID_STATUSES = new Set<HousesStatusFilter>([
   "closed_today",
   "suspended",
 ]);
-const ALLOWED_PAGE_SIZES = new Set([10, 15, 25, 50]);
+const ALLOWED_PAGE_SIZES = new Set<number>(HOUSES_PAGE_SIZE_OPTIONS);
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -51,7 +53,9 @@ export function parseAdminHousesSearchParams(
     tab: tabRaw === "reviews" ? "reviews" : "all",
     search,
     status: VALID_STATUSES.has(statusRaw) ? statusRaw : "all",
-    neighborhoodId: UUID_REGEX.test(neighborhoodRaw) ? neighborhoodRaw : "",
+    neighborhoodId: UUID_REGEX.test(neighborhoodRaw)
+      ? neighborhoodRaw.toLowerCase()
+      : "",
     page: Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1,
     pageSize: ALLOWED_PAGE_SIZES.has(pageSizeRaw)
       ? pageSizeRaw

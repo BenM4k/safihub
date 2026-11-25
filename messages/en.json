@@ -1963,6 +1963,7 @@
       "loadingApplicationsAria": "Loading partner applications",
       "searchPlaceholder": "Search laundry house, contact, phone or neighborhood...",
       "loadErrorTitle": "Unable to load applications",
+      "loadErrorDescription": "An error occurred while loading partner applications. Please try again.",
       "retry": "Retry"
     },
     "disputes": {

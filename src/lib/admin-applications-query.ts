@@ -16,13 +16,15 @@ export const DEFAULT_APPLICATIONS_QUERY: AdminApplicationsQueryParams = {
   pageSize: 15,
 };
 
+export const APPLICATIONS_PAGE_SIZE_OPTIONS = [10, 15, 25, 50];
+
 const VALID_STATUSES = new Set<ApplicationStatusTab>([
   "all",
   "pending",
   "approved",
   "rejected",
 ]);
-const ALLOWED_PAGE_SIZES = new Set([10, 15, 25, 50]);
+const ALLOWED_PAGE_SIZES = new Set<number>(APPLICATIONS_PAGE_SIZE_OPTIONS);
 
 function pickSingle(v: string | string[] | undefined | null): string {
   if (Array.isArray(v)) return v[0] ?? "";

@@ -185,7 +185,8 @@ export async function listHouseApplicationsPaginated(params: {
         ilike(schema.houseApplications.contactName, q),
         ilike(schema.houseApplications.phone, q),
         ilike(schema.houseApplications.email, q),
-        ilike(schema.houseApplications.neighborhoodText, q)
+        ilike(schema.houseApplications.neighborhoodText, q),
+        ilike(schema.neighborhoods.name, q)
       )
     );
   }
@@ -196,6 +197,10 @@ export async function listHouseApplicationsPaginated(params: {
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(schema.houseApplications)
+      .leftJoin(
+        schema.neighborhoods,
+        eq(schema.houseApplications.neighborhoodId, schema.neighborhoods.id)
+      )
       .where(whereClause),
     db
       .select({
