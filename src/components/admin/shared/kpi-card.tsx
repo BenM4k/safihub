@@ -1,5 +1,11 @@
 import { type ReactNode, type ElementType } from "react";
 import { Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export type KpiCardVariant = "default" | "success" | "warning" | "destructive";
 
@@ -24,24 +30,24 @@ const variantStyles: Record<
   }
 > = {
   default: {
-    container: "bg-card border-border-strong hover:border-ink-400 shadow-xs",
-    iconWrapper: "bg-surface text-ink-600 border-border-strong",
+    container: "bg-card border-border hover:border-ink-400 shadow-xs",
+    iconWrapper: "bg-surface text-ink-600 border-border",
     valueClass: "text-heading",
   },
   success: {
-    container: "bg-success-light/50 border-success-base/50 hover:border-success-base/70 shadow-xs",
-    iconWrapper: "bg-success-light text-success-base border-success-base/40",
-    valueClass: "text-success-base",
+    container: "bg-success-soft/50 border-success/40 hover:border-success/70 shadow-xs",
+    iconWrapper: "bg-success-soft text-success border-success/30",
+    valueClass: "text-success",
   },
   warning: {
-    container: "bg-warning-light/50 border-warning-base/50 hover:border-warning-base/70 shadow-xs",
-    iconWrapper: "bg-warning-light text-warning-base border-warning-base/40",
-    valueClass: "text-warning-base",
+    container: "bg-warning-soft/50 border-warning/40 hover:border-warning/70 shadow-xs",
+    iconWrapper: "bg-warning-soft text-warning border-warning/30",
+    valueClass: "text-warning",
   },
   destructive: {
-    container: "bg-destructive-light/50 border-destructive-base/50 hover:border-destructive-base/70 shadow-xs",
-    iconWrapper: "bg-destructive-light text-destructive-base border-destructive-base/40",
-    valueClass: "text-destructive-base",
+    container: "bg-destructive-soft/50 border-destructive/40 hover:border-destructive/70 shadow-xs",
+    iconWrapper: "bg-destructive-soft text-destructive border-destructive/30",
+    valueClass: "text-destructive",
   },
 };
 
@@ -57,59 +63,82 @@ export function KpiCard({
   isSelected,
 }: KpiCardProps) {
   const styles = variantStyles[variant];
+  const tooltipText = formula
+    ? `${formula}${tooltip ? ` · ${tooltip}` : ""}`
+    : tooltip;
 
-  const content = (
-    <div
-      className={`p-4 rounded-xl border-2 shadow-xs transition-all flex flex-col justify-between gap-3 ${
-        styles.container
-      } ${
-        isSelected
-          ? "ring-2 ring-primary border-primary shadow-sm"
-          : ""
-      } ${onClick ? "cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary" : ""}`}
-      tabIndex={onClick ? 0 : undefined}
-      role={onClick ? "button" : undefined}
-      onClick={onClick}
-      onKeyDown={onClick ? (e) => (e.key === "Enter" || e.key === " ") && onClick() : undefined}
-    >
-      <div className="flex items-start justify-between gap-2">
+  const sharedClassName = cn(
+    "p-4 rounded-xl border shadow-xs transition-all flex flex-col justify-between gap-3 w-full text-left",
+    styles.container,
+    isSelected && "ring-2 ring-primary border-primary shadow-sm",
+    onClick &&
+      "cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
+  );
+
+  const inner = (
+    <>
+      <div className="flex items-start justify-between gap-2 w-full">
         <div className="flex items-center gap-1.5 flex-wrap">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             {label}
           </p>
-          {(tooltip || formula) && (
-            <span
-              className="inline-flex items-center text-ink-400 hover:text-ink-600 transition-colors cursor-help"
-              title={formula ? `${formula}${tooltip ? ` · ${tooltip}` : ""}` : tooltip}
-              aria-label={tooltip ?? formula}
-            >
-              <Info className="size-3.5" />
-            </span>
+          {tooltipText && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span
+                    tabIndex={0}
+                    className="inline-flex items-center text-muted-foreground hover:text-heading transition-colors cursor-help"
+                    aria-label={tooltip ?? formula}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                }
+              >
+                <Info className="size-3.5" aria-hidden="true" />
+              </TooltipTrigger>
+              <TooltipContent>{tooltipText}</TooltipContent>
+            </Tooltip>
           )}
         </div>
 
         {Icon && (
           <div
-            className={`size-9 rounded-lg flex items-center justify-center border shrink-0 ${styles.iconWrapper}`}
+            className={cn(
+              "size-9 rounded-lg flex items-center justify-center border shrink-0",
+              styles.iconWrapper
+            )}
           >
-            <Icon className="size-4.5" />
+            <Icon className="size-4.5" aria-hidden="true" />
           </div>
         )}
       </div>
 
-      <div className="space-y-1">
-        <p className={`text-2xl font-bold font-mono tabular-nums tracking-tight ${styles.valueClass}`}>
+      <div className="space-y-1 w-full">
+        <p
+          className={cn(
+            "text-2xl font-bold font-mono tabular-nums tracking-tight",
+            styles.valueClass
+          )}
+        >
           {value}
         </p>
 
         {secondary && (
-          <div className="text-xs text-muted-foreground pt-1.5 border-t border-border-strong/70">
+          <div className="text-xs text-muted-foreground pt-1.5 border-t border-border">
             {secondary}
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 
-  return content;
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={sharedClassName}>
+        {inner}
+      </button>
+    );
+  }
+
+  return <div className={sharedClassName}>{inner}</div>;
 }

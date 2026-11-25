@@ -31,6 +31,10 @@ interface DataTableProps<T> {
   pageSize?: number;
   totalItems?: number;
   onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  pageSizeOptions?: number[];
+  urlMode?: boolean;
+  showFirstLast?: boolean;
   isLoading?: boolean;
 }
 
@@ -44,6 +48,10 @@ export function DataTable<T>({
   pageSize,
   totalItems,
   onPageChange,
+  onPageSizeChange,
+  pageSizeOptions,
+  urlMode,
+  showFirstLast,
   isLoading,
 }: DataTableProps<T>) {
   const t = useTranslations("admin.shared");
@@ -52,15 +60,15 @@ export function DataTable<T>({
     page !== undefined &&
     pageSize !== undefined &&
     totalItems !== undefined &&
-    totalItems > pageSize;
+    (totalItems > pageSize || Boolean(onPageSizeChange) || Boolean(urlMode));
 
   return (
-    <div className="bg-card rounded-xl border border-border-strong shadow-xs overflow-hidden flex flex-col">
+    <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden flex flex-col">
       <div className="overflow-x-auto relative">
         <Table className="w-full text-left border-collapse text-xs">
           {caption && <caption className="sr-only">{caption}</caption>}
           <TableHeader>
-            <TableRow className="border-b border-border-strong bg-surface/95 backdrop-blur-xs text-ink-700 font-semibold sticky top-0 z-10 hover:bg-surface/95">
+            <TableRow className="border-b border-border bg-surface/95 backdrop-blur-xs text-ink-700 font-semibold sticky top-0 z-10 hover:bg-surface/95">
               {columns.map((col) => (
                 <TableHead
                   key={col.id}
@@ -79,7 +87,7 @@ export function DataTable<T>({
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-border-strong/80">
+          <TableBody className="divide-y divide-border">
             {isLoading ? (
               <TableRow>
                 <TableCell
@@ -106,7 +114,7 @@ export function DataTable<T>({
               data.map((row, idx) => (
                 <TableRow
                   key={keyExtractor(row, idx)}
-                  className="hover:bg-surface/60 transition-colors border-b border-border-strong/80"
+                  className="hover:bg-surface/60 transition-colors border-b border-border"
                 >
                   {columns.map((col) => (
                     <TableCell
@@ -129,12 +137,17 @@ export function DataTable<T>({
         </Table>
       </div>
 
-      {hasPagination && onPageChange && (
+      {hasPagination && (onPageChange || urlMode) && (
         <DataTablePagination
           page={page}
           pageSize={pageSize}
           totalItems={totalItems}
           onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+          pageSizeOptions={pageSizeOptions}
+          urlMode={urlMode}
+          showFirstLast={showFirstLast}
+          isLoading={isLoading}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -49,7 +49,6 @@ export function ConfirmDialog({
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const reasonInputRef = useRef<HTMLInputElement>(null);
 
   const isDestructive = variant === "destructive";
   const finalConfirmLabel = confirmLabel ?? t("confirm");
@@ -63,16 +62,6 @@ export function ConfirmDialog({
     setErrorMessage(null);
     onClose();
   };
-
-  useEffect(() => {
-    if (!isOpen || !requireReason) return;
-
-    const timer = setTimeout(() => {
-      reasonInputRef.current?.focus();
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, [isOpen, requireReason]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,7 +106,7 @@ export function ConfirmDialog({
             className={cn(
               "size-8 rounded-lg flex items-center justify-center border shrink-0",
               isDestructive
-                ? "bg-destructive-light text-destructive-base border-destructive-base/30"
+                ? "bg-destructive-soft text-destructive border-destructive/30"
                 : "bg-primary-soft text-primary border-primary/20",
             )}
           >
@@ -148,15 +137,15 @@ export function ConfirmDialog({
             <Field className="gap-1.5">
               <FieldLabel className="text-xs font-semibold text-heading">
                 {finalReasonLabel}{" "}
-                <span className="text-destructive-base">*</span>
+                <span className="text-destructive">*</span>
               </FieldLabel>
               <Input
-                ref={reasonInputRef}
+                autoFocus
                 required
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder={finalReasonPlaceholder}
-                className="text-xs h-10 min-h-[40px] rounded-lg"
+                className="text-base sm:text-sm min-h-11 rounded-lg"
                 disabled={loading}
               />
             </Field>
@@ -169,7 +158,7 @@ export function ConfirmDialog({
               size="sm"
               onClick={handleClose}
               disabled={loading}
-              className="w-full sm:w-auto min-h-[40px] px-4 text-xs font-semibold rounded-lg cursor-pointer"
+              className="w-full sm:w-auto min-h-11 sm:min-h-10 px-4 text-xs font-semibold rounded-lg cursor-pointer"
             >
               {finalCancelLabel}
             </Button>
@@ -178,7 +167,7 @@ export function ConfirmDialog({
               variant={isDestructive ? "destructive" : "default"}
               size="sm"
               disabled={loading}
-              className="w-full sm:w-auto min-h-[40px] px-4 text-xs font-bold rounded-lg cursor-pointer"
+              className="w-full sm:w-auto min-h-11 sm:min-h-10 px-4 text-xs font-bold rounded-lg cursor-pointer"
             >
               {loading && <Spinner className="size-3.5 mr-1.5" />}
               <span>{finalConfirmLabel}</span>

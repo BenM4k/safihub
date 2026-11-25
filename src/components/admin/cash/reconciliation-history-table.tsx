@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { HistoryFilters, type HistoryFilterState } from "./history-filters";
 import { HistoryTableRow } from "./history-table-row";
-import { HistoryPagination } from "./history-pagination";
+import { DataTablePagination } from "@/components/admin/shared/data-table-pagination";
 import { exportReconciliationHistoryCsv } from "./history-export";
 import { FileText } from "lucide-react";
 
@@ -171,11 +171,12 @@ export function ReconciliationHistoryTable({ logs }: ReconciliationHistoryTableP
         </Table>
       </div>
 
-      <HistoryPagination
+      <DataTablePagination
         page={page}
         totalItems={filteredLogs.length}
         pageSize={PAGE_SIZE}
         onPageChange={setPage}
+        hideIfSinglePage
       />
     </div>
   );

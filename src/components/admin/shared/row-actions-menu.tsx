@@ -47,7 +47,7 @@ export function RowActionsMenu({
           size="icon"
           aria-label={ariaLabel}
           className={cn(
-            "size-8 rounded-lg border-2 border-border-strong bg-card hover:bg-surface text-ink-600 hover:text-heading flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-2xs",
+            "min-h-9 min-w-9 sm:size-8 rounded-lg border border-border bg-card hover:bg-surface text-ink-600 hover:text-heading flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-2xs",
             className
           )}
         >
@@ -56,7 +56,7 @@ export function RowActionsMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align={align}
-        className="w-56 rounded-xl bg-card border-2 border-border-strong shadow-lg py-1.5"
+        className="w-56 rounded-xl bg-card border border-border shadow-lg py-1.5"
       >
         {items
           ? items.map((item) => (

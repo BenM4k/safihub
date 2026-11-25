@@ -1,16 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { computePagination } from "../data-table-pagination";
 
 describe("Admin Shared Primitives Logic", () => {
-  describe("DataTable Pagination Calculations", () => {
-    function computePagination(page: number, pageSize: number, totalItems: number) {
-      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-      const start = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
-      const end = Math.min(page * pageSize, totalItems);
-      const hasNext = page < totalPages;
-      const hasPrev = page > 1;
-
-      return { totalPages, start, end, hasNext, hasPrev };
-    }
+  describe("DataTable Pagination Calculations (Production computePagination)", () => {
 
     it("handles first page of multi-page data", () => {
       const res = computePagination(1, 10, 45);

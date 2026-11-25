@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { SettlementHistoryFilters, type SettlementHistoryFiltersState } from "./settlement-history-filters";
 import { SettlementHistoryRowItem } from "./settlement-history-row";
-import { SettlementHistoryPagination } from "./settlement-history-pagination";
+import { DataTablePagination } from "@/components/admin/shared/data-table-pagination";
 import { exportSettlementHistoryCsv } from "./settlement-history-export";
 import type { SettlementHistoryRow } from "./types";
 
@@ -126,11 +126,12 @@ export function SettlementHistoryTable({ logs }: SettlementHistoryTableProps) {
           </Table>
         </div>
 
-        <SettlementHistoryPagination
-          currentPage={currentPage}
+        <DataTablePagination
+          page={currentPage}
           totalItems={filteredLogs.length}
           pageSize={PAGE_SIZE}
           onPageChange={setCurrentPage}
+          hideIfSinglePage
         />
       </div>
     </div>

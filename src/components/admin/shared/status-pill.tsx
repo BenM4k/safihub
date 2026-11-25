@@ -1,4 +1,9 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { CheckCircle2, Clock, ShieldAlert, AlertCircle, Ban } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { StatusBadge, type StatusBadgeTone } from "./status-badge";
 
 export type StatusPillType =
   | "pending"
@@ -20,94 +25,49 @@ interface StatusPillProps {
   title?: string;
 }
 
-const statusConfig: Record<
+const STATUS_META: Record<
   StatusPillType,
   {
-    label: string;
+    tone: StatusBadgeTone;
     icon: typeof Clock;
-    classes: string;
-    dotClass: string;
+    className?: string;
   }
 > = {
-  pending: {
-    label: "En attente",
-    icon: Clock,
-    classes: "bg-surface text-ink-700 border-border-strong",
-    dotClass: "bg-ink-400",
-  },
-  reconciled: {
-    label: "Réconcilié",
-    icon: CheckCircle2,
-    classes: "bg-success-light text-success-base border-success-base/30",
-    dotClass: "bg-success-base",
-  },
-  zero_discrepancy: {
-    label: "Aucun écart",
-    icon: CheckCircle2,
-    classes: "bg-success-light text-success-base border-success-base/30",
-    dotClass: "bg-success-base",
-  },
-  shortage: {
-    label: "Manquant",
-    icon: ShieldAlert,
-    classes: "bg-destructive-light text-destructive-base border-destructive-base/30 font-bold",
-    dotClass: "bg-destructive-base",
-  },
-  surplus: {
-    label: "Excédent",
-    icon: AlertCircle,
-    classes: "bg-warning-light text-warning-base border-warning-base/30 font-bold",
-    dotClass: "bg-warning-base",
-  },
+  pending: { tone: "secondary", icon: Clock },
+  reconciled: { tone: "success", icon: CheckCircle2 },
+  zero_discrepancy: { tone: "success", icon: CheckCircle2 },
+  shortage: { tone: "destructive", icon: ShieldAlert, className: "font-bold" },
+  surplus: { tone: "warning", icon: AlertCircle, className: "font-bold" },
   cancelled: {
-    label: "Annulée",
+    tone: "secondary",
     icon: Ban,
-    classes: "bg-ink-100 text-ink-600 border-ink-300 line-through decoration-ink-400",
-    dotClass: "bg-ink-500",
+    className: "line-through text-muted-foreground",
   },
-  to_settle: {
-    label: "À régler",
-    icon: Clock,
-    classes: "bg-warning-light text-warning-base border-warning-base/40 font-semibold",
-    dotClass: "bg-warning-base",
-  },
-  settled: {
-    label: "À jour",
-    icon: CheckCircle2,
-    classes: "bg-success-light text-success-base border-success-base/40 font-semibold",
-    dotClass: "bg-success-base",
-  },
-  overdue: {
-    label: "En retard",
-    icon: ShieldAlert,
-    classes: "bg-destructive-light text-destructive-base border-destructive-base/40 font-bold",
-    dotClass: "bg-destructive-base",
-  },
-  active: {
-    label: "Actif",
-    icon: CheckCircle2,
-    classes: "bg-emerald-50 text-emerald-700 border-emerald-300 font-semibold",
-    dotClass: "bg-emerald-600",
-  },
-  blocked: {
-    label: "Bloqué",
-    icon: Ban,
-    classes: "bg-destructive-light text-destructive-base border-destructive-base/40 font-bold",
-    dotClass: "bg-destructive-base",
-  },
+  to_settle: { tone: "warning", icon: Clock, className: "font-semibold" },
+  settled: { tone: "success", icon: CheckCircle2, className: "font-semibold" },
+  overdue: { tone: "destructive", icon: ShieldAlert, className: "font-bold" },
+  active: { tone: "success", icon: CheckCircle2, className: "font-semibold" },
+  blocked: { tone: "destructive", icon: Ban, className: "font-bold" },
 };
 
-export function StatusPill({ status, customLabel, className = "", title }: StatusPillProps) {
-  const cfg = statusConfig[status] ?? statusConfig.pending;
+export function StatusPill({
+  status,
+  customLabel,
+  className = "",
+  title,
+}: StatusPillProps) {
+  const t = useTranslations("admin.shared.status");
+  const cfg = STATUS_META[status] ?? STATUS_META.pending;
   const Icon = cfg.icon;
 
   return (
-    <span
+    <StatusBadge
+      tone={cfg.tone}
       title={title}
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border-2 border-border-strong shadow-2xs transition-colors whitespace-nowrap ${cfg.classes} ${className}`}
+      icon={<Icon className="size-3.5" aria-hidden="true" />}
+      className={cn(cfg.className, className)}
     >
-      <Icon className="size-3.5 shrink-0" aria-hidden="true" />
-      <span>{customLabel || cfg.label}</span>
-    </span>
+      {customLabel || t(status in STATUS_META ? status : "pending")}
+    </StatusBadge>
   );
 }

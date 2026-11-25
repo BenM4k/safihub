@@ -22,9 +22,9 @@ export function FilterChip({
     <Badge
       variant="secondary"
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border-2 shadow-none",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border shadow-none",
         tone === "default"
-          ? "bg-surface border-border-strong text-ink-800 hover:bg-surface"
+          ? "bg-surface border-border text-ink-800 hover:bg-surface"
           : "bg-warning-soft border-warning/40 text-warning hover:bg-warning-soft",
         className
       )}
