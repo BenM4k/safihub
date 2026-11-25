@@ -18,6 +18,23 @@ import { Switch } from "@/components/ui/switch";
 import { StatusBadge } from "@/components/admin/shared/status-badge";
 import type { WhatsAppBotSession } from "@/services/whatsapp";
 
+const WHATSAPP_ERROR_KEYS = new Set([
+  "errors.phoneRequired",
+  "errors.phoneTooLong",
+  "errors.phoneInvalid",
+  "errors.rateLimitSend",
+  "errors.rateLimitSimulate",
+  "errors.invalidParams",
+] as const);
+
+type WhatsAppErrorKey =
+  | "errors.phoneRequired"
+  | "errors.phoneTooLong"
+  | "errors.phoneInvalid"
+  | "errors.rateLimitSend"
+  | "errors.rateLimitSimulate"
+  | "errors.invalidParams";
+
 export function WhatsAppBotSimulator() {
   const t = useTranslations("admin.whatsapp");
   const [isPending, startTransition] = useTransition();
@@ -43,7 +60,10 @@ export function WhatsAppBotSimulator() {
         dryRun,
       });
       if (!res.ok) {
-        setErrorMsg(res.error);
+        const message = WHATSAPP_ERROR_KEYS.has(res.error as WhatsAppErrorKey)
+          ? t(res.error as WhatsAppErrorKey)
+          : res.error;
+        setErrorMsg(message);
         return;
       }
       setSessionState(res.value);

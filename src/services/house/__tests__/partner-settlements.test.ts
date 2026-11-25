@@ -436,6 +436,75 @@ describe("Partner Settlements Earnings & Reconciliation", () => {
       expect(ord1?.settlementStatus).toBe("disputed");
       expect(ord2?.settlementStatus).toBe("settled");
     });
+
+    it("preserves historical posting-time CDF value on USD payouts even when active rate changes", async () => {
+      const orders = [
+        {
+          id: "ord-1",
+          code: "SF-1001",
+          itemsTotal: 35000,
+          adjustedItemsTotal: null,
+          commissionAmount: 7000, // net 28000
+          commissionBps: 2000,
+          updatedAt: new Date("2026-10-01T10:00:00Z"),
+          deliveredAt: new Date("2026-10-01T10:00:00Z"),
+          customerRawName: "Alice Mwamba",
+          disputeId: null,
+          disputeStatus: null,
+        },
+      ];
+
+      const settlements = [
+        {
+          id: "set-usd-1",
+          amount: 10,
+          currency: "USD",
+          note: "Règlement [RÉF: SETT-USD] [CDF: 28000 @ 2800]",
+          createdAt: new Date("2026-10-05T10:00:00Z"),
+        },
+      ];
+
+      setupDbMocks({ settlements, orders });
+      // Override active rate call to a newer 3200 rate; stored 28000 CDF must win
+      let selectIdx = 0;
+      vi.mocked(db.select).mockImplementation(() => {
+        selectIdx++;
+        let result: unknown = [];
+        if (selectIdx === 1) {
+          result = [
+            {
+              id: "house-1",
+              name: "Pressing Test",
+              slug: "test-slug",
+              contactPhone: "+243991234567",
+              commissionBps: 2000,
+            },
+          ];
+        } else if (selectIdx === 3) {
+          result = [{ rate: 3200 }];
+        } else if (selectIdx === 4) {
+          result = settlements;
+        } else if (selectIdx === 6) {
+          result = orders;
+        }
+
+        const chain = {
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          orderBy: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          innerJoin: vi.fn().mockReturnThis(),
+          leftJoin: vi.fn().mockReturnThis(),
+          then: (resolve: (val: unknown) => unknown) => Promise.resolve(result).then(resolve),
+        };
+        return chain as unknown as ReturnType<typeof db.select>;
+      });
+
+      const data = await getPartnerSettlementsData({ houseId: "house-1", period: "month" });
+      expect(data.hero.totalAllTimeSettledCDF).toBe(28000);
+      expect(data.kpis.totalSettledCDF).toBe(28000);
+      expect(data.hero.balanceOwedCDF).toBe(0);
+    });
   });
 
   describe("Support Ticket Reporting Action", () => {

@@ -228,10 +228,13 @@ export async function approveItemRequestTransaction(params: {
   nameSw: string;
   category?: string | null;
   adminNote?: string;
-}): Promise<{ createdId: string } | null> {
+}): Promise<{ createdId: string } | { kindMismatch: true } | null> {
   return await db.transaction(async (tx) => {
     const [pendingRequest] = await tx
-      .select({ id: schema.itemRequests.id })
+      .select({
+        id: schema.itemRequests.id,
+        kind: schema.itemRequests.kind,
+      })
       .from(schema.itemRequests)
       .where(
         and(
@@ -244,6 +247,10 @@ export async function approveItemRequestTransaction(params: {
 
     if (!pendingRequest) {
       return null;
+    }
+
+    if (pendingRequest.kind !== params.kind) {
+      return { kindMismatch: true as const };
     }
 
     let createdItemId: string | null = null;

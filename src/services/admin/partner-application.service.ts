@@ -8,6 +8,7 @@ import {
   getHouseApplicationById,
   isHouseSlugAvailable,
   listHouseApplications,
+  PartnerApplicationApprovalError,
   updateHouseApplication,
   type HouseApplicationRecord,
 } from "@/dal/house-application.dal";
@@ -162,6 +163,9 @@ export async function approvePartnerApplication(params: {
       passwordApplied,
     });
   } catch (error) {
+    if (error instanceof PartnerApplicationApprovalError) {
+      return err(error.message);
+    }
     return err(
       sanitizeServiceError(
         error,

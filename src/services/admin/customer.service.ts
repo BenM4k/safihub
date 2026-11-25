@@ -197,7 +197,15 @@ export async function blockAdminCustomer(params: {
     const operatorPart = params.operatorName ? ` par ${params.operatorName}` : "";
     const auditReason = `${params.reason.trim()}${activeWarning} (Enregistré le ${timestamp}${operatorPart})`;
 
-    await blockUserAndRevokeSessions(params.customerId, auditReason);
+    const blockRes = await blockUserAndRevokeSessions(
+      params.customerId,
+      auditReason,
+      { requireRole: "customer" }
+    );
+    if (!blockRes.ok) {
+      return err(blockRes.error);
+    }
+
     clearSessionMemoryCache();
     safeRevalidateAuthTags(params.customerId);
 

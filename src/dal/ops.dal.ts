@@ -1,6 +1,14 @@
 import "server-only";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "./db";
+import {
+  clampExportLimit,
+  clampExportOffset,
+  DEFAULT_EXPORT_LIMIT,
+  MAX_EXPORT_LIMIT,
+} from "@/lib/export-limits";
+
+export { clampExportLimit, clampExportOffset, DEFAULT_EXPORT_LIMIT, MAX_EXPORT_LIMIT };
 import { getSuccessCriteriaDashboard } from "./cash-ledger.dal";
 
 export interface SettingsRecord {
@@ -225,17 +233,15 @@ export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics>
   };
 }
 
-const DEFAULT_EXPORT_LIMIT = 5000;
-const MAX_EXPORT_LIMIT = 10000;
-
-function clampExportLimit(limit?: number): number {
-  if (typeof limit !== "number" || !Number.isFinite(limit)) {
-    return DEFAULT_EXPORT_LIMIT;
-  }
-  return Math.max(1, Math.min(MAX_EXPORT_LIMIT, Math.trunc(limit)));
+export interface AdminExportQueryOptions {
+  limit?: number;
+  offset?: number;
+  probeExtraRow?: boolean;
 }
 
-export async function getAdminOrdersExportData(options?: { limit?: number }) {
+export async function getAdminOrdersExportData(options?: AdminExportQueryOptions) {
+  const effectiveLimit = clampExportLimit(options?.limit);
+  const queryLimit = options?.probeExtraRow ? effectiveLimit + 1 : effectiveLimit;
   return await db
     .select({
       id: schema.orders.id,
@@ -265,10 +271,13 @@ export async function getAdminOrdersExportData(options?: { limit?: number }) {
       eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
     )
     .orderBy(desc(schema.orders.createdAt))
-    .limit(clampExportLimit(options?.limit));
+    .limit(queryLimit)
+    .offset(clampExportOffset(options?.offset));
 }
 
-export async function getAdminLedgerExportData(options?: { limit?: number }) {
+export async function getAdminLedgerExportData(options?: AdminExportQueryOptions) {
+  const effectiveLimit = clampExportLimit(options?.limit);
+  const queryLimit = options?.probeExtraRow ? effectiveLimit + 1 : effectiveLimit;
   return await db
     .select({
       id: schema.cashLedger.id,
@@ -283,10 +292,13 @@ export async function getAdminLedgerExportData(options?: { limit?: number }) {
     })
     .from(schema.cashLedger)
     .orderBy(desc(schema.cashLedger.createdAt))
-    .limit(clampExportLimit(options?.limit));
+    .limit(queryLimit)
+    .offset(clampExportOffset(options?.offset));
 }
 
-export async function getAdminCustomersExportData(options?: { limit?: number }) {
+export async function getAdminCustomersExportData(options?: AdminExportQueryOptions) {
+  const effectiveLimit = clampExportLimit(options?.limit);
+  const queryLimit = options?.probeExtraRow ? effectiveLimit + 1 : effectiveLimit;
   return await db
     .select({
       id: schema.user.id,
@@ -300,7 +312,8 @@ export async function getAdminCustomersExportData(options?: { limit?: number }) 
     .from(schema.user)
     .where(eq(schema.user.role, "customer"))
     .orderBy(desc(schema.user.createdAt))
-    .limit(clampExportLimit(options?.limit));
+    .limit(queryLimit)
+    .offset(clampExportOffset(options?.offset));
 }
 
 export interface AdminDisputeRecord {

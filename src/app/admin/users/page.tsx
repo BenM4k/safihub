@@ -41,14 +41,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       ? rawStatus
       : "all";
 
-  const [authCtx, usersRes, housesRes, activeAdminsRes] = await Promise.all(
-    [
-      guardAdminRoute(),
-      listAdminUsers({ roles: ["admin", "house"] }),
-      listAdminHouses(),
-      getActiveAdminsCount(),
-    ],
-  );
+  const authCtx = await guardAdminRoute();
+  const [usersRes, housesRes, activeAdminsRes] = await Promise.all([
+    listAdminUsers({ roles: ["admin", "house"] }),
+    listAdminHouses(),
+    getActiveAdminsCount(),
+  ]);
   const currentUser = authCtx.user;
 
   let users = [] as UserRow[];

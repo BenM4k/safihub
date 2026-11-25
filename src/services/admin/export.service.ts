@@ -2,11 +2,12 @@ import "server-only";
 import { ok, err, type Result } from "@/lib/result";
 import { escapeCsvCell } from "@/lib/csv-utils";
 import { sanitizeServiceError } from "@/lib/service-errors";
+import { clampExportLimit, clampExportOffset } from "@/lib/export-limits";
 import {
   getAdminOrdersExportData,
   getAdminLedgerExportData,
   getAdminCustomersExportData,
-} from "@/dal";
+} from "@/dal/ops.dal";
 
 export type ExportDataset = "orders" | "ledger" | "customers";
 export type ExportFormat = "csv" | "json";
@@ -16,6 +17,10 @@ export interface ExportResultData {
   filename: string;
   mimeType: string;
   rowCount: number;
+  truncated: boolean;
+  limit: number;
+  offset: number;
+  nextOffset: number | null;
 }
 
 /**
@@ -31,72 +36,110 @@ function convertToCsv<T extends Record<string, unknown>>(data: T[]): string {
   return [headerLine, ...rows].join("\r\n");
 }
 
+function buildExportResponse<T extends Record<string, unknown>>(params: {
+  datasetPrefix: string;
+  rawRows: T[];
+  format: ExportFormat;
+  limit: number;
+  offset: number;
+  timestamp: string;
+}): ExportResultData {
+  const truncated = params.rawRows.length > params.limit;
+  const rows = truncated ? params.rawRows.slice(0, params.limit) : params.rawRows;
+  const offsetSuffix = params.offset > 0 ? `-offset-${params.offset}` : "";
+  const filename = `${params.datasetPrefix}-${params.timestamp}${offsetSuffix}.${params.format}`;
+  const nextOffset = truncated ? params.offset + rows.length : null;
+
+  if (params.format === "json") {
+    return {
+      content: JSON.stringify(rows, null, 2),
+      filename,
+      mimeType: "application/json",
+      rowCount: rows.length,
+      truncated,
+      limit: params.limit,
+      offset: params.offset,
+      nextOffset,
+    };
+  }
+
+  return {
+    content: convertToCsv(rows),
+    filename,
+    mimeType: "text/csv; charset=utf-8",
+    rowCount: rows.length,
+    truncated,
+    limit: params.limit,
+    offset: params.offset,
+    nextOffset,
+  };
+}
+
 /**
  * Exports data for admin operations and reporting.
  */
 export async function exportAdminDataset(
   dataset: ExportDataset,
   format: ExportFormat = "csv",
-  options?: { limit?: number }
+  options?: { limit?: number; offset?: number }
 ): Promise<Result<ExportResultData>> {
   try {
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const limit = clampExportLimit(options?.limit);
+    const offset = clampExportOffset(options?.offset);
 
     if (dataset === "orders") {
-      const orders = await getAdminOrdersExportData({ limit: options?.limit });
-      const filename = `safihub-orders-${timestamp}.${format}`;
-      if (format === "json") {
-        return ok({
-          content: JSON.stringify(orders, null, 2),
-          filename,
-          mimeType: "application/json",
-          rowCount: orders.length,
-        });
-      }
-      return ok({
-        content: convertToCsv(orders),
-        filename,
-        mimeType: "text/csv; charset=utf-8",
-        rowCount: orders.length,
+      const rawRows = await getAdminOrdersExportData({
+        limit,
+        offset,
+        probeExtraRow: true,
       });
+      return ok(
+        buildExportResponse({
+          datasetPrefix: "safihub-orders",
+          rawRows,
+          format,
+          limit,
+          offset,
+          timestamp,
+        })
+      );
     }
 
     if (dataset === "ledger") {
-      const ledger = await getAdminLedgerExportData({ limit: options?.limit });
-      const filename = `safihub-cash-ledger-${timestamp}.${format}`;
-      if (format === "json") {
-        return ok({
-          content: JSON.stringify(ledger, null, 2),
-          filename,
-          mimeType: "application/json",
-          rowCount: ledger.length,
-        });
-      }
-      return ok({
-        content: convertToCsv(ledger),
-        filename,
-        mimeType: "text/csv; charset=utf-8",
-        rowCount: ledger.length,
+      const rawRows = await getAdminLedgerExportData({
+        limit,
+        offset,
+        probeExtraRow: true,
       });
+      return ok(
+        buildExportResponse({
+          datasetPrefix: "safihub-cash-ledger",
+          rawRows,
+          format,
+          limit,
+          offset,
+          timestamp,
+        })
+      );
     }
 
     if (dataset === "customers") {
-      const customers = await getAdminCustomersExportData({ limit: options?.limit });
-      const filename = `safihub-customers-${timestamp}.${format}`;
-      if (format === "json") {
-        return ok({
-          content: JSON.stringify(customers, null, 2),
-          filename,
-          mimeType: "application/json",
-          rowCount: customers.length,
-        });
-      }
-      return ok({
-        content: convertToCsv(customers),
-        filename,
-        mimeType: "text/csv; charset=utf-8",
-        rowCount: customers.length,
+      const rawRows = await getAdminCustomersExportData({
+        limit,
+        offset,
+        probeExtraRow: true,
       });
+      return ok(
+        buildExportResponse({
+          datasetPrefix: "safihub-customers",
+          rawRows,
+          format,
+          limit,
+          offset,
+          timestamp,
+        })
+      );
     }
 
     return err(`Type de jeu de données inconnu : ${dataset}`);

@@ -141,6 +141,16 @@ export async function unblockAdminUser(userId: string): Promise<Result<void>> {
   }
 }
 
+const SAFE_CREDENTIAL_ERRORS = new Set([
+  "Utilisateur introuvable",
+  "Cette action est réservée aux comptes clients.",
+  "Impossible de réinitialiser le mot de passe d'un autre administrateur.",
+  "Échec de la mise à jour du mot de passe.",
+  "Un enregistrement identique existe déjà.",
+  "Référence invalide ou introuvable.",
+  "Format d'identifiant invalide.",
+]);
+
 export async function resetAdminUserPassword(params: {
   userId: string;
   newPassword: string;
@@ -173,9 +183,18 @@ export async function resetAdminUserPassword(params: {
     const credRes = await setUserPasswordCredential({
       userId: params.userId,
       hashedPassword,
+      operatorId: params.operatorId,
+      requireCustomerRole: params.requireCustomerRole,
     });
     if (!credRes.ok) {
-      return err(credRes.error);
+      const safeMessage = SAFE_CREDENTIAL_ERRORS.has(credRes.error)
+        ? credRes.error
+        : sanitizeServiceError(
+            new Error(credRes.error),
+            "Échec de la mise à jour du mot de passe.",
+            "resetAdminUserPassword"
+          );
+      return err(safeMessage);
     }
 
     // Revoke all active sessions immediately

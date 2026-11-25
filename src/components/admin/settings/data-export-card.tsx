@@ -2,25 +2,61 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Download, FileSpreadsheet, FileJson, Loader2 } from "lucide-react";
+import { AlertTriangle, Download, FileSpreadsheet, FileJson, Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+
+interface TruncationNotice {
+  dataset: "orders" | "ledger" | "customers";
+  format: "csv" | "json";
+  rowCount: number;
+  limit: number;
+  nextOffset: number;
+}
 
 export function DataExportCard() {
   const t = useTranslations("admin.settings");
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [truncation, setTruncation] = useState<TruncationNotice | null>(null);
 
-  const handleDownload = async (dataset: "orders" | "ledger" | "customers", format: "csv" | "json") => {
+  const handleDownload = async (
+    dataset: "orders" | "ledger" | "customers",
+    format: "csv" | "json",
+    offset = 0
+  ) => {
     try {
       const key = `${dataset}-${format}`;
       setDownloading(key);
-      const res = await fetch(`/api/admin/export?dataset=${dataset}&format=${format}`);
+      if (offset === 0) {
+        setTruncation(null);
+      }
+
+      const params = new URLSearchParams({ dataset, format });
+      if (offset > 0) {
+        params.set("offset", String(offset));
+      }
+
+      const res = await fetch(`/api/admin/export?${params.toString()}`);
       if (!res.ok) throw new Error("Export download failed");
+
+      const isTruncated = res.headers.get("X-Export-Truncated") === "true";
+      const rowCount = Number(res.headers.get("X-Export-Row-Count")) || 0;
+      const limit = Number(res.headers.get("X-Export-Limit")) || 5000;
+      const nextOffsetHeader = res.headers.get("X-Export-Next-Offset");
+      const nextOffset = nextOffsetHeader ? Number(nextOffsetHeader) : null;
+
+      if (isTruncated && nextOffset !== null && Number.isFinite(nextOffset)) {
+        setTruncation({ dataset, format, rowCount, limit, nextOffset });
+      } else {
+        setTruncation(null);
+      }
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `safihub-${dataset}-${new Date().toISOString().slice(0, 10)}.${format}`;
+      const offsetSuffix = offset > 0 ? `-offset-${offset}` : "";
+      a.download = `safihub-${dataset}-${new Date().toISOString().slice(0, 10)}${offsetSuffix}.${format}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -108,6 +144,37 @@ export function DataExportCard() {
           </div>
         ))}
       </div>
+
+      {truncation && (
+        <Alert className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="size-4 text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <AlertTitle className="text-xs font-semibold">
+                {t("exportTruncatedTitle", { count: truncation.rowCount })}
+              </AlertTitle>
+              <AlertDescription className="text-xs text-muted-foreground mt-0.5">
+                {t("exportTruncatedDesc", { limit: truncation.limit })}
+              </AlertDescription>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={downloading !== null}
+            onClick={() =>
+              handleDownload(
+                truncation.dataset,
+                truncation.format,
+                truncation.nextOffset
+              )
+            }
+            className="text-xs shrink-0"
+          >
+            {t("exportNextBatch", { nextOffset: truncation.nextOffset })}
+          </Button>
+        </Alert>
+      )}
     </div>
   );
 }

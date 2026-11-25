@@ -14,12 +14,12 @@ import {
 const phoneSchema = z
   .string()
   .trim()
-  .min(8, "Un numéro de téléphone WhatsApp valide est requis")
-  .max(24, "Numéro de téléphone trop long")
+  .min(8, "errors.phoneRequired")
+  .max(24, "errors.phoneTooLong")
   .refine((v) => {
     const digits = v.replace(/\D/g, "");
     return digits.length >= 8 && digits.length <= 15;
-  }, "Numéro de téléphone WhatsApp invalide (8 à 15 chiffres attendus)");
+  }, "errors.phoneInvalid");
 
 const sendTestSchema = z.object({
   scenario: z.enum([
@@ -60,12 +60,12 @@ export async function sendAdminWhatsAppTestAction(
 
   const rl = await recordRateLimitHit(`admin-wa-test:${auth.value.user.id}`, 15, 60);
   if (!rl.allowed) {
-    return err("Trop de tests WhatsApp envoyés. Veuillez patienter une minute.");
+    return err("errors.rateLimitSend");
   }
 
   const parsed = sendTestSchema.safeParse(rawInput);
   if (!parsed.success) {
-    return err(parsed.error.issues[0]?.message ?? "Paramètres invalides");
+    return err(parsed.error.issues[0]?.message ?? "errors.invalidParams");
   }
 
   return executeAdminWhatsAppTest(parsed.data);
@@ -82,12 +82,12 @@ export async function simulateAdminWhatsAppBotStepAction(
 
   const rl = await recordRateLimitHit(`admin-wa-sim:${auth.value.user.id}`, 30, 60);
   if (!rl.allowed) {
-    return err("Trop de simulations effectuées. Veuillez patienter une minute.");
+    return err("errors.rateLimitSimulate");
   }
 
   const parsed = simulateBotSchema.safeParse(rawInput);
   if (!parsed.success) {
-    return err(parsed.error.issues[0]?.message ?? "Paramètres invalides");
+    return err(parsed.error.issues[0]?.message ?? "errors.invalidParams");
   }
 
   return simulateAdminWhatsAppBotStep(parsed.data);

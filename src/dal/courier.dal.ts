@@ -1,10 +1,11 @@
 import "server-only";
 import { randomInt, timingSafeEqual } from "node:crypto";
-import { and, asc, desc, eq, inArray, isNull, ne, notInArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lte, ne, notInArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "./db";
 import { DEFAULT_RETRY_FEE_CDF, RETRY_FEE_FAILED_PICKUP_COUNT } from "@/lib/fees";
 import { transitionOrder } from "@/services/order/transitions";
+import { toBukavuDateTime } from "@/services/availability/bukavu-time";
 
 type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -60,13 +61,15 @@ async function isCourierCashCeilingExceededTx(
 
   let policyRate = 2800;
   if (effectiveHeldUSD > 0) {
+    const todayBukavu = toBukavuDateTime(new Date()).dateString;
     const [latestRate] = await tx
       .select({ rate: schema.exchangeRates.rate })
       .from(schema.exchangeRates)
       .where(
         and(
           eq(schema.exchangeRates.baseCurrency, "USD"),
-          eq(schema.exchangeRates.quoteCurrency, "CDF")
+          eq(schema.exchangeRates.quoteCurrency, "CDF"),
+          lte(schema.exchangeRates.effectiveDate, todayBukavu)
         )
       )
       .orderBy(desc(schema.exchangeRates.effectiveDate), desc(schema.exchangeRates.createdAt))

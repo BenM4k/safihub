@@ -335,6 +335,22 @@ export async function createManualAdminOrder(params: {
     }
 
     const val = validation.value;
+    if (val.isDuplicate && val.existingOrderId) {
+      const existing = context.existingOrders.find((o) => o.id === val.existingOrderId);
+      let trackingToken = existing?.trackingToken;
+      let existingCode = existing?.code;
+      if (!trackingToken || !existingCode) {
+        const dbOrder = await getOrderById(val.existingOrderId);
+        trackingToken = dbOrder?.trackingToken || trackingToken || "";
+        existingCode = dbOrder?.code || existingCode;
+      }
+      return ok({
+        orderId: val.existingOrderId,
+        code: existingCode || "EXISTING",
+        trackingToken,
+      });
+    }
+
     const code = `SF-${randomInt(100000, 1000000)}`;
     const trackingToken = crypto.randomUUID();
     const deadlines = computeAcceptanceDeadlines(

@@ -134,23 +134,111 @@ export async function deleteUserSessions(userId: string): Promise<void> {
   await db.delete(schema.session).where(eq(schema.session.userId, userId));
 }
 
+const ADMIN_ROLE_GUARD_LOCK_KEY = "safihub:admin_role_guard";
+const ALLOWED_DB_ERROR_CODES = new Set([
+  "23505",
+  "23503",
+  "22P02",
+  "40001",
+  "40P01",
+  "55P03",
+]);
+
+function logSafeDbOperationError(operation: string, error: unknown): void {
+  const errObj = error as { code?: unknown; cause?: { code?: unknown } } | null;
+  const code =
+    typeof errObj?.code === "string"
+      ? errObj.code
+      : typeof errObj?.cause?.code === "string"
+        ? errObj.cause.code
+        : undefined;
+
+  if (code && ALLOWED_DB_ERROR_CODES.has(code)) {
+    console.error(`[${operation}] Database constraint/transaction error`, { code });
+    return;
+  }
+
+  console.error(`[${operation}] Database operation failed`);
+}
+
+type UserTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function acquireAdminRoleGuardLock(tx: UserTx): Promise<void> {
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${ADMIN_ROLE_GUARD_LOCK_KEY}))`);
+}
+
 export async function blockUserAndRevokeSessions(
   userId: string,
-  banReason: string
-): Promise<void> {
-  await db.transaction(async (tx) => {
-    await tx
-      .update(schema.user)
-      .set({
-        banned: true,
-        status: "blocked",
-        banReason,
-        updatedAt: new Date(),
-      })
-      .where(eq(schema.user.id, userId));
+  banReason: string,
+  options?: { requireRole?: string }
+): Promise<Result<void>> {
+  try {
+    return await db.transaction(async (tx) => {
+      await acquireAdminRoleGuardLock(tx);
 
-    await tx.delete(schema.session).where(eq(schema.session.userId, userId));
-  });
+      const [target] = await tx
+        .select({
+          id: schema.user.id,
+          role: schema.user.role,
+          status: schema.user.status,
+          banned: schema.user.banned,
+        })
+        .from(schema.user)
+        .where(eq(schema.user.id, userId))
+        .for("update")
+        .limit(1);
+
+      if (!target) {
+        return err("Utilisateur introuvable");
+      }
+
+      if (options?.requireRole && target.role !== options.requireRole) {
+        return err("Cette action est réservée aux comptes clients.");
+      }
+
+      const targetIsActiveAdmin =
+        target.role === "admin" &&
+        !target.banned &&
+        target.status !== "blocked";
+
+      if (targetIsActiveAdmin) {
+        const activeAdmins = await tx
+          .select({ id: schema.user.id })
+          .from(schema.user)
+          .where(
+            and(
+              eq(schema.user.role, "admin"),
+              or(eq(schema.user.status, "active"), eq(schema.user.status, "invitation_sent")),
+              or(eq(schema.user.banned, false), sql`${schema.user.banned} is null`)
+            )
+          )
+          .for("update");
+
+        if (activeAdmins.length <= 1) {
+          return err(
+            "Impossible de bloquer le dernier administrateur actif de la plateforme."
+          );
+        }
+      }
+
+      await tx
+        .update(schema.user)
+        .set({
+          banned: true,
+          status: "blocked",
+          banReason,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.user.id, userId));
+
+      await tx.delete(schema.session).where(eq(schema.session.userId, userId));
+
+      return ok(undefined);
+    });
+  } catch (error) {
+    logSafeDbOperationError("blockUserAndRevokeSessions", error);
+    return err("Erreur lors du blocage de l'utilisateur");
+  }
 }
 
 export async function countActiveAdmins(): Promise<number> {
@@ -174,6 +262,8 @@ export async function blockAdminUserWithGuard(params: {
 }): Promise<Result<void>> {
   try {
     return await db.transaction(async (tx) => {
+      await acquireAdminRoleGuardLock(tx);
+
       const [target] = await tx
         .select({
           id: schema.user.id,
@@ -230,7 +320,7 @@ export async function blockAdminUserWithGuard(params: {
       return ok(undefined);
     });
   } catch (error) {
-    console.error("[blockAdminUserWithGuard]", error);
+    logSafeDbOperationError("blockAdminUserWithGuard", error);
     return err("Erreur lors du blocage de l'utilisateur");
   }
 }
@@ -243,6 +333,8 @@ export async function updateUserRoleWithHouseAndGuard(params: {
 }): Promise<Result<void>> {
   try {
     return await db.transaction(async (tx) => {
+      await acquireAdminRoleGuardLock(tx);
+
       const [target] = await tx
         .select({
           id: schema.user.id,
@@ -307,7 +399,7 @@ export async function updateUserRoleWithHouseAndGuard(params: {
       return ok(undefined);
     });
   } catch (error) {
-    console.error("[updateUserRoleWithHouseAndGuard]", error);
+    logSafeDbOperationError("updateUserRoleWithHouseAndGuard", error);
     return err("Erreur lors de la mise à jour du rôle");
   }
 }

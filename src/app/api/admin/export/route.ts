@@ -30,6 +30,12 @@ export async function GET(request: NextRequest) {
     parsedLimit !== undefined && Number.isFinite(parsedLimit)
       ? Math.max(1, Math.min(10000, Math.trunc(parsedLimit)))
       : undefined;
+  const rawOffset = searchParams.get("offset");
+  const parsedOffset = rawOffset ? Number(rawOffset) : undefined;
+  const offset =
+    parsedOffset !== undefined && Number.isFinite(parsedOffset)
+      ? Math.max(0, Math.trunc(parsedOffset))
+      : undefined;
 
   if (!["orders", "ledger", "customers"].includes(dataset)) {
     return new NextResponse("Invalid dataset", { status: 400 });
@@ -39,17 +45,27 @@ export async function GET(request: NextRequest) {
     return new NextResponse("Invalid format", { status: 400 });
   }
 
-  const result = await exportAdminDataset(dataset, format, { limit });
+  const result = await exportAdminDataset(dataset, format, { limit, offset });
   if (!result.ok) {
     return new NextResponse("Export failed", { status: 500 });
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": result.value.mimeType,
+    "Content-Disposition": `attachment; filename="${result.value.filename}"`,
+    "Cache-Control": "no-store, max-age=0",
+    "X-Export-Truncated": result.value.truncated ? "true" : "false",
+    "X-Export-Row-Count": String(result.value.rowCount),
+    "X-Export-Limit": String(result.value.limit),
+    "X-Export-Offset": String(result.value.offset),
+  };
+
+  if (result.value.nextOffset !== null) {
+    headers["X-Export-Next-Offset"] = String(result.value.nextOffset);
+  }
+
   return new NextResponse(result.value.content, {
     status: 200,
-    headers: {
-      "Content-Type": result.value.mimeType,
-      "Content-Disposition": `attachment; filename="${result.value.filename}"`,
-      "Cache-Control": "no-store, max-age=0",
-    },
+    headers,
   });
 }

@@ -143,6 +143,10 @@ export async function approveAdminItemRequest(params: {
       return err("Item request is not pending or does not exist");
     }
 
+    if ("kindMismatch" in approved) {
+      return err("Item request kind does not match the approval payload");
+    }
+
     return ok({ createdId: approved.createdId });
   } catch (error) {
     return err(sanitizeServiceError(error, "Failed to approve item request", "approveAdminItemRequest"));
