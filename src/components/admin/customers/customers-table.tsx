@@ -12,8 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EmptyState } from "@/components/admin/shared/empty-state";
+import { DataTablePagination } from "@/components/admin/shared/data-table-pagination";
 import { CustomersTableRow } from "./customers-table-row";
-import { CustomersTablePagination } from "./customers-table-pagination";
 import type { CustomerRow, SortState, SortableField } from "./types";
 
 interface CustomersTableProps {
@@ -157,8 +157,8 @@ export function CustomersTable({
         </Table>
       </div>
 
-      <CustomersTablePagination
-        currentPage={currentPage}
+      <DataTablePagination
+        page={currentPage}
         pageSize={pageSize}
         totalItems={totalItems}
         isLoading={isLoading}

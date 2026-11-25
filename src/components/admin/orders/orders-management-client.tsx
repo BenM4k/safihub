@@ -9,7 +9,7 @@ import { OrdersStatsRow } from "./orders-stats-row";
 import { OrdersFilterBar } from "./orders-filter-bar";
 import { OrdersBulkActions } from "./orders-bulk-actions";
 import { OrdersDataTable } from "./orders-data-table";
-import { OrdersPagination } from "./orders-pagination";
+import { DataTablePagination } from "@/components/admin/shared/data-table-pagination";
 import { useOrdersFilter } from "./use-orders-filter";
 
 const OrderDetailsSheet = dynamic(
@@ -137,8 +137,8 @@ export function OrdersManagementClient({
       />
 
       {/* 5. Pagination */}
-      <OrdersPagination
-        currentPage={currentPage}
+      <DataTablePagination
+        page={currentPage}
         pageSize={pageSize}
         totalItems={sortedOrders.length}
         onPageChange={(p) => {
@@ -150,6 +150,7 @@ export function OrdersManagementClient({
           setCurrentPage(1);
           setSelectedIds([]);
         }}
+        className="rounded-xl border border-border"
       />
 
       {/* 6. Details Sheet (Audit Timeline + On-Behalf Actions) */}

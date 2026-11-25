@@ -1,11 +1,22 @@
 import { ReactNode } from "react";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { getLocale, getMessages } from "next-intl/server";
 import { guardAdminRoute } from "@/services/auth";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { constructMetadata } from "@/lib/seo";
+
+const ADMIN_CLIENT_NAMESPACES = [
+  "admin",
+  "appShell",
+  "auth",
+  "common",
+  "errors",
+  "mapLocation",
+  "notifications",
+  "preferences",
+] as const;
 
 export const metadata: Metadata = constructMetadata({
   title: "Console Opérations Admin",
@@ -23,13 +34,17 @@ export default async function AdminLayout({
 }) {
   await guardAdminRoute();
 
-  const messages = await getMessages();
-  const adminMessages = { ...(messages as Record<string, unknown>) };
-  // Strip the bulky house portal namespace (~47KB) while keeping shared namespaces (auth, notifications, mapLocation, etc.).
-  delete adminMessages.house;
+  const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
+  const raw = messages as Record<string, unknown>;
+  const adminMessages: Record<string, unknown> = {};
+  for (const ns of ADMIN_CLIENT_NAMESPACES) {
+    if (ns in raw) {
+      adminMessages[ns] = raw[ns];
+    }
+  }
 
   return (
-    <NextIntlClientProvider messages={adminMessages}>
+    <NextIntlClientProvider locale={locale} messages={adminMessages}>
       <div className="min-h-screen bg-surface/50 text-foreground flex font-sans">
         <div className="hidden md:block shrink-0 sticky top-0 h-screen">
           <AdminSidebar className="h-full" />

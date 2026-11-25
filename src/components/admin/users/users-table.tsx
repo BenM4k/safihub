@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UsersTablePagination } from "./users-table-pagination";
+import { DataTablePagination } from "@/components/admin/shared/data-table-pagination";
 import { UsersTableRow } from "./users-table-row";
 import type { SortableUserField, UserRow, UserSortState } from "./types";
 
@@ -165,12 +165,13 @@ export function UsersTable({
       </div>
 
       {/* Pagination Footer */}
-      <UsersTablePagination
+      <DataTablePagination
         totalItems={totalItems}
-        currentPage={currentPage}
+        page={currentPage}
         pageSize={pageSize}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
+        showFirstLast
       />
     </div>
   );

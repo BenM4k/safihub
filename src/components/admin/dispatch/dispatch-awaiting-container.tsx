@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { DispatchAwaitingToolbar } from "./dispatch-awaiting-toolbar";
 import { DispatchAwaitingEmpty } from "./dispatch-awaiting-empty";
-import { DispatchAwaitingPagination } from "./dispatch-awaiting-pagination";
+import { DataTablePagination } from "@/components/admin/shared/data-table-pagination";
 import { DispatchPressingGroupCard } from "./dispatch-pressing-group-card";
 import { DispatchOrderRow } from "./dispatch-order-row";
 import { useDispatchModals } from "./use-dispatch-modals";
@@ -154,12 +154,12 @@ export function DispatchAwaitingContainer({
         </div>
       )}
 
-      <DispatchAwaitingPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
+      <DataTablePagination
+        page={currentPage}
         pageSize={pageSize}
         totalItems={totalItems}
         onPageChange={setPage}
+        hideIfSinglePage
       />
 
       {selectedOrderForDetails && (

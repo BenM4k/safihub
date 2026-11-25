@@ -15,6 +15,8 @@ interface StatusBadgeProps {
   tone?: StatusBadgeTone;
   icon?: ReactNode;
   dot?: boolean;
+  pill?: boolean;
+  title?: string;
   className?: string;
 }
 
@@ -23,6 +25,8 @@ export function StatusBadge({
   tone = "secondary",
   icon,
   dot,
+  pill = false,
+  title,
   className,
 }: StatusBadgeProps) {
   const dotColorClass =
@@ -39,8 +43,10 @@ export function StatusBadge({
   return (
     <Badge
       variant={tone}
+      title={title}
       className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium border shadow-none",
+        "inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-medium border shadow-none whitespace-nowrap",
+        pill ? "rounded-full" : "rounded-md",
         className
       )}
     >

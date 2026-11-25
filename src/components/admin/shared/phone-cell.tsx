@@ -59,8 +59,8 @@ export function PhoneCell({
           href={`tel:${rawTelDigits}`}
           onClick={(e) => e.stopPropagation()}
           className="inline-flex items-center gap-1.5 text-xs text-ink-700 hover:text-primary hover:underline transition-colors font-medium"
-          title={`Appeler le ${formatted}`}
-          aria-label={`Appeler le ${formatted}`}
+          title={t("callNumber", { phone: formatted })}
+          aria-label={t("callNumber", { phone: formatted })}
         >
           {showIcon && <Phone className="size-3 text-ink-500 shrink-0" aria-hidden="true" />}
           <span>{formatted}</span>
@@ -78,7 +78,7 @@ export function PhoneCell({
           variant="ghost"
           size="icon"
           onClick={handleCopy}
-          className="size-6 p-0 rounded-sm text-ink-400 hover:text-heading hover:bg-surface transition-colors focus-visible:ring-1 focus-visible:ring-primary"
+          className="min-h-9 min-w-9 sm:size-7 p-0 rounded-md text-muted-foreground hover:text-heading hover:bg-surface transition-colors focus-visible:ring-1 focus-visible:ring-primary"
           title={copied ? t("numberCopied") : t("copyNumber")}
           aria-label={copied ? t("numberCopied") : t("copyNumber")}
         >

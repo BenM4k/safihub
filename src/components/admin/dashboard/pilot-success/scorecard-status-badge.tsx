@@ -1,5 +1,5 @@
-import React from "react";
 import { CheckCircle2, AlertTriangle, XCircle, MinusCircle } from "lucide-react";
+import { StatusBadge, type StatusBadgeTone } from "@/components/admin/shared/status-badge";
 
 export type MetricStatus = "met" | "at-risk" | "failing" | "no-data";
 
@@ -13,37 +13,30 @@ interface ScorecardStatusBadgeProps {
   };
 }
 
-export function ScorecardStatusBadge({ status, labels }: ScorecardStatusBadgeProps) {
-  switch (status) {
-    case "met":
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-          <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
-          <span>{labels.met}</span>
-        </span>
-      );
-    case "at-risk":
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
-          <AlertTriangle className="size-3.5 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
-          <span>{labels.atRisk}</span>
-        </span>
-      );
-    case "failing":
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
-          <XCircle className="size-3.5 text-rose-600 dark:text-rose-400 shrink-0" aria-hidden="true" />
-          <span>{labels.failing}</span>
-        </span>
-      );
-    case "no-data":
-    default:
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-muted text-muted-foreground border border-border">
-          <MinusCircle className="size-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-          <span>{labels.noData}</span>
-        </span>
-      );
+const METRIC_META: Record<
+  MetricStatus,
+  {
+    tone: StatusBadgeTone;
+    icon: typeof CheckCircle2;
+    labelKey: keyof ScorecardStatusBadgeProps["labels"];
   }
-}
+> = {
+  met: { tone: "success", icon: CheckCircle2, labelKey: "met" },
+  "at-risk": { tone: "warning", icon: AlertTriangle, labelKey: "atRisk" },
+  failing: { tone: "destructive", icon: XCircle, labelKey: "failing" },
+  "no-data": { tone: "secondary", icon: MinusCircle, labelKey: "noData" },
+};
 
+export function ScorecardStatusBadge({ status, labels }: ScorecardStatusBadgeProps) {
+  const cfg = METRIC_META[status] ?? METRIC_META["no-data"];
+  const Icon = cfg.icon;
+
+  return (
+    <StatusBadge
+      tone={cfg.tone}
+      icon={<Icon className="size-3.5" aria-hidden="true" />}
+    >
+      {labels[cfg.labelKey]}
+    </StatusBadge>
+  );
+}
