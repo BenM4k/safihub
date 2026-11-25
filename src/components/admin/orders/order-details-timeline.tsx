@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { OrderEventRecord } from "@/dal";
@@ -25,54 +25,77 @@ export function OrderDetailsTimeline({
 }: OrderDetailsTimelineProps) {
   const t = useTranslations("admin.orders");
   const [noteText, setNoteText] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  async function handleAddNote(e: React.FormEvent) {
-    e.preventDefault();
-    if (!noteText.trim()) return;
-    setIsSubmitting(true);
-    setError(null);
+  const [optimisticEvents, addOptimisticEvent] = useOptimistic(
+    events,
+    (state: OrderEventRecord[], optimisticNote: OrderEventRecord) => [
+      optimisticNote,
+      ...state,
+    ]
+  );
 
-    try {
+  function handleAddNote(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = noteText.trim();
+    if (!trimmed) return;
+    setError(null);
+    setNoteText("");
+
+    startTransition(async () => {
+      addOptimisticEvent({
+        id: `optimistic-${trimmed.slice(0, 12)}`,
+        orderId,
+        type: "note",
+        fromStatus: null,
+        toStatus: null,
+        actorId: null,
+        actorName: null,
+        actorRole: "admin",
+        onBehalfOfHouseId: null,
+        onBehalfOfHouseName: null,
+        approvalMethod: null,
+        recordedBy: null,
+        note: trimmed,
+        payload: null,
+        createdAt: new Date(),
+      });
+
       const fd = new FormData();
       fd.append("orderId", orderId);
-      fd.append("note", noteText.trim());
+      fd.append("note", trimmed);
 
       const res = await addOrderTimelineNoteAction(fd);
       if (res.ok) {
-        setNoteText("");
         onEventAdded();
       } else {
+        setNoteText(trimmed);
         setError(res.error || t("screeningError"));
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("screeningError"));
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   }
 
   return (
     <div className="space-y-3 pt-2">
       <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-        {t("timelineTitle")} ({events.length})
+        {t("timelineTitle")} ({optimisticEvents.length})
       </h3>
 
       {isLoading ? (
         <div className="py-6 text-center text-xs text-muted-foreground animate-pulse">
           {t("loadingAudit")}
         </div>
-      ) : events.length === 0 ? (
+      ) : optimisticEvents.length === 0 ? (
         <p className="text-xs text-muted-foreground italic bg-muted/20 p-3 rounded-lg border border-border">
           {t("noAuditEvents")}
         </p>
       ) : (
         <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-          {events.map((ev) => (
+          {optimisticEvents.map((ev) => (
             <div
               key={ev.id}
-              className="p-2.5 rounded-lg bg-muted/20 border border-border text-xs space-y-1"
+              className="p-2.5 rounded-lg bg-muted/20 border border-border text-xs space-y-1 animate-enter-fast"
             >
               <div className="flex items-center justify-between text-[11px]">
                 <span className="font-bold text-foreground uppercase tracking-wide">
@@ -91,8 +114,8 @@ export function OrderDetailsTimeline({
               )}
 
               {ev.onBehalfOfHouseId && (
-                <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
-                  {t("auditActionOnBehalf", { house: ev.onBehalfOfHouseName || "Pressing" })}
+                <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-warning-soft text-warning border border-warning/20">
+                  {t("auditActionOnBehalf", { house: ev.onBehalfOfHouseName || t("house") })}
                 </span>
               )}
 
@@ -106,7 +129,6 @@ export function OrderDetailsTimeline({
         </div>
       )}
 
-      {/* Note form */}
       <form onSubmit={handleAddNote} className="space-y-2 pt-2">
         {error && (
           <Alert variant="destructive">
@@ -118,16 +140,16 @@ export function OrderDetailsTimeline({
           onChange={(e) => setNoteText(e.target.value)}
           placeholder={t("notePlaceholder")}
           rows={2}
-          className="text-xs resize-none"
+          className="text-base sm:text-xs resize-none"
         />
         <Button
           type="submit"
           size="sm"
-          disabled={isSubmitting || !noteText.trim()}
-          className="h-8 text-xs font-semibold gap-1.5"
+          disabled={isPending || !noteText.trim()}
+          className="min-h-10 text-xs font-semibold gap-1.5 press"
         >
           <Send className="size-3" />
-          <span>{isSubmitting ? t("addingNote") : t("saveNote")}</span>
+          <span>{isPending ? t("addingNote") : t("saveNote")}</span>
         </Button>
       </form>
     </div>

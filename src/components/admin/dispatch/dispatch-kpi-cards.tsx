@@ -25,8 +25,8 @@ export function DispatchKpiCards({
   const t = useTranslations("admin.dispatch");
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center py-1">
-      {/* Card 1: En attente d'acceptation */}
+    <div className="flex flex-col sm:flex-row sm:items-center py-1 animate-stagger">
+      {/* Card 1: Awaiting acceptance */}
       <button
         type="button"
         onClick={() => {
@@ -35,11 +35,10 @@ export function DispatchKpiCards({
             onFilterOverdue();
           }
         }}
-        className={`flex-1 text-left p-3 rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary ${
-          activeTab === "relances"
-            ? "bg-primary/10 text-primary"
-            : "hover:bg-muted/50"
+        className={`flex-1 min-h-11 text-left p-3 rounded-md transition-all press cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          activeTab === "relances" ? "bg-primary/10 text-primary" : "hover:bg-muted/50"
         }`}
+        aria-pressed={activeTab === "relances"}
         aria-label={`${t("kpiAwaiting")}: ${awaitingCount}`}
       >
         <div className="flex items-center justify-between gap-2">
@@ -70,7 +69,7 @@ export function DispatchKpiCards({
               {t("kpiAwaitingOverdue", { count: overdueCount })}
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium text-[11px]">
+            <span className="inline-flex items-center gap-1 text-success font-medium text-[11px]">
               <CheckCircle2 className="size-3" />
               {t("kpiAwaitingOk")}
             </span>
@@ -81,15 +80,14 @@ export function DispatchKpiCards({
       <Separator orientation="vertical" className="hidden sm:block h-12 mx-4 shrink-0" />
       <Separator orientation="horizontal" className="sm:hidden my-2" />
 
-      {/* Card 2: Missions à assigner */}
+      {/* Card 2: Missions to assign */}
       <button
         type="button"
         onClick={() => onSelectTab("missions")}
-        className={`flex-1 text-left p-3 rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary ${
-          activeTab === "missions"
-            ? "bg-primary/10 text-primary"
-            : "hover:bg-muted/50"
+        className={`flex-1 min-h-11 text-left p-3 rounded-md transition-all press cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          activeTab === "missions" ? "bg-primary/10 text-primary" : "hover:bg-muted/50"
         }`}
+        aria-pressed={activeTab === "missions"}
         aria-label={`${t("kpiMissions")}: ${unassignedMissionsCount}`}
       >
         <div className="flex items-center justify-between gap-2">
@@ -123,7 +121,7 @@ export function DispatchKpiCards({
       <Separator orientation="vertical" className="hidden sm:block h-12 mx-4 shrink-0" />
       <Separator orientation="horizontal" className="sm:hidden my-2" />
 
-      {/* Card 3: Coursiers disponibles */}
+      {/* Card 3: Courier availability */}
       <div className="flex-1 p-3 space-y-1">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
@@ -132,7 +130,7 @@ export function DispatchKpiCards({
           <Users className="size-3.5 text-muted-foreground shrink-0" />
         </div>
         <div className="flex items-baseline gap-2 mt-1">
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">
+          <p className="text-2xl font-bold text-success font-mono tabular-nums">
             {courierStats.available}
           </p>
           <span className="text-[11px] text-muted-foreground font-medium">
@@ -140,15 +138,15 @@ export function DispatchKpiCards({
           </span>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px]">
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium">
-            <span className="size-1.5 rounded-full bg-emerald-500" />
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-success-soft text-success font-medium">
+            <span className="size-1.5 rounded-full bg-success" />
             {t("courierDispoCount", { count: courierStats.available })}
           </span>
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 font-medium">
-            <span className="size-1.5 rounded-full bg-amber-500" />
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-warning-soft text-warning font-medium">
+            <span className="size-1.5 rounded-full bg-warning" />
             {t("courierOnMissionCount", { count: courierStats.onMission })}
           </span>
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground font-medium">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
             <span className="size-1.5 rounded-full bg-muted-foreground/50" />
             {t("courierOfflineCount", { count: courierStats.offline })}
           </span>

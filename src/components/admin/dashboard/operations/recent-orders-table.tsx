@@ -12,6 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatusBadge } from "@/components/admin/shared/status-badge";
 
 export interface DashboardOrderItem {
   id: string;
@@ -44,7 +46,7 @@ export function RecentOrdersTable({
   });
 
   return (
-    <div className="bg-card border border-border rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+    <div className="bg-card border border-border rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between animate-enter">
       <div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
           <div>
@@ -52,32 +54,27 @@ export function RecentOrdersTable({
             <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
           </div>
 
-          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-lg text-xs font-medium self-start sm:self-auto border border-border">
-            {(["all", "active", "delivered"] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer capitalize text-xs ${
-                  activeTab === tab
-                    ? "bg-card text-foreground font-semibold shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab === "all"
-                  ? t("recentOrdersAll")
-                  : tab === "active"
-                  ? t("recentOrdersInProgress")
-                  : t("recentOrdersDelivered")}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as "all" | "active" | "delivered")}
+          >
+            <TabsList className="h-9">
+              <TabsTrigger value="all" className="text-xs px-2.5">
+                {t("recentOrdersAll")}
+              </TabsTrigger>
+              <TabsTrigger value="active" className="text-xs px-2.5">
+                {t("recentOrdersInProgress")}
+              </TabsTrigger>
+              <TabsTrigger value="delivered" className="text-xs px-2.5">
+                {t("recentOrdersDelivered")}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        {/* Table Body */}
         <div className="overflow-x-auto mt-2 rounded-lg border border-border">
           {filtered.length === 0 ? (
-            <div className="py-10 text-center">
+            <div className="py-10 text-center animate-enter-fast">
               <div className="size-10 rounded-full bg-muted text-muted-foreground mx-auto flex items-center justify-center mb-2">
                 <ShoppingBag className="size-5" />
               </div>
@@ -98,7 +95,7 @@ export function RecentOrdersTable({
               </TableHeader>
               <TableBody>
                 {filtered.map((order) => (
-                  <TableRow key={order.id}>
+                  <TableRow key={order.id} className="row-interactive animate-enter-fast">
                     <TableCell className="py-3 px-3 font-mono font-medium text-primary">
                       <Link href={`/admin/orders/${order.id}`} className="hover:underline">
                         {order.code}
@@ -109,18 +106,24 @@ export function RecentOrdersTable({
                     <TableCell className="py-3 px-3 text-muted-foreground">{order.courierName}</TableCell>
                     <TableCell className="py-3 px-3">
                       {order.status === "delivered" ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                          <CheckCircle2 className="size-3 text-emerald-600 dark:text-emerald-400" />
-                          <span>{t("recentOrdersDelivered")}</span>
-                        </span>
+                        <StatusBadge
+                          tone="success"
+                          icon={<CheckCircle2 className="size-3" />}
+                          className="rounded-md"
+                        >
+                          {t("recentOrdersDelivered")}
+                        </StatusBadge>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                          <RefreshCw className="size-3" />
-                          <span>{t("recentOrdersInProgress")}</span>
-                        </span>
+                        <StatusBadge
+                          tone="info"
+                          icon={<RefreshCw className="size-3" />}
+                          className="rounded-md"
+                        >
+                          {t("recentOrdersInProgress")}
+                        </StatusBadge>
                       )}
                     </TableCell>
-                    <TableCell className="py-3 px-3 text-right font-medium text-foreground">
+                    <TableCell className="py-3 px-3 text-right font-medium tabular-nums text-foreground">
                       <div>CDF {order.totalDueCDF.toLocaleString(locale)}</div>
                       <span className="text-[10px] text-muted-foreground font-normal">{order.timeAgo}</span>
                     </TableCell>
@@ -134,12 +137,11 @@ export function RecentOrdersTable({
 
       <div className="pt-4 mt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
         <span>{t("recentOrdersShowingCount", { count: filtered.length })}</span>
-        <Link href="/admin/orders" className="font-medium text-primary hover:underline inline-flex items-center gap-1">
+        <Link href="/admin/orders" className="font-medium text-primary hover:underline inline-flex items-center gap-1 group">
           <span>{t("recentOrdersViewAll")}</span>
-          <ChevronRight className="size-3.5" />
+          <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
     </div>
   );
 }
-

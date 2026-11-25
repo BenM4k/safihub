@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { OrderListItemRecord } from "@/dal";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TableCell, TableRow } from "@/components/ui/table";
 import {
   DropdownMenuItem,
@@ -56,32 +57,32 @@ export function OrdersTableRow({
   return (
     <TableRow
       onClick={() => onOpenDetails(order)}
-      className={`h-12 cursor-pointer transition-colors ${
+      className={`h-12 cursor-pointer row-interactive animate-enter-fast ${
         isSelected ? "bg-primary/10 hover:bg-primary/15" : ""
       }`}
     >
-      {/* Checkbox */}
+      {/* @ui-sdk/react Checkbox */}
       <TableCell
-        className="w-10 px-3 py-2 text-center"
+        className="w-11 px-3 py-2 text-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => onToggleSelect(order.id)}
-          aria-label={t("selectOrder", { code: reference })}
-          className="rounded-sm size-4 accent-primary cursor-pointer"
-        />
+        <div className="flex items-center justify-center">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onToggleSelect(order.id)}
+            aria-label={t("selectOrder", { code: reference })}
+          />
+        </div>
       </TableCell>
 
-      {/* Référence */}
+      {/* Reference */}
       <TableCell className="px-3 py-2 whitespace-nowrap">
         <span className="font-mono font-bold text-xs text-foreground select-all">
           {reference}
         </span>
       </TableCell>
 
-      {/* Client */}
+      {/* Customer */}
       <TableCell className="px-3 py-2">
         <div className="space-y-0.5">
           {customer.displayName ? (
@@ -92,7 +93,7 @@ export function OrdersTableRow({
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-mono">
             <span>{customer.formattedPhone}</span>
             {customer.isGuest && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full font-medium bg-warning-soft text-warning border border-warning/20">
                 {t("guestTag")}
               </span>
             )}
@@ -100,12 +101,12 @@ export function OrdersTableRow({
         </div>
       </TableCell>
 
-      {/* Pressing */}
+      {/* House */}
       <TableCell className="px-3 py-2 hidden md:table-cell text-xs text-muted-foreground font-medium truncate max-w-[160px]">
         {order.houseName || "—"}
       </TableCell>
 
-      {/* Date de création */}
+      {/* Created At */}
       <TableCell className="px-3 py-2 hidden sm:table-cell whitespace-nowrap">
         <div title={new Date(order.createdAt).toISOString()} className="space-y-0.5">
           <div className="text-xs text-foreground font-medium">
@@ -117,11 +118,11 @@ export function OrdersTableRow({
         </div>
       </TableCell>
 
-      {/* Canal */}
+      {/* Channel */}
       <TableCell className="px-3 py-2 hidden lg:table-cell whitespace-nowrap">
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-foreground border border-border">
           {sourceConfig.iconName === "whatsapp" ? (
-            <MessageSquare className="size-3 text-emerald-600 dark:text-emerald-400" />
+            <MessageSquare className="size-3 text-success" />
           ) : sourceConfig.iconName === "phone" ? (
             <Phone className="size-3 text-muted-foreground" />
           ) : (
@@ -131,23 +132,22 @@ export function OrdersTableRow({
         </span>
       </TableCell>
 
-      {/* Paiement */}
       {showPaymentColumn && (
         <TableCell className="px-3 py-2 hidden xl:table-cell whitespace-nowrap">
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-muted text-muted-foreground border border-border">
-            À payer
+            {t("paymentToPay")}
           </span>
         </TableCell>
       )}
 
-      {/* Montant */}
+      {/* Amount */}
       <TableCell className="px-3 py-2 text-right whitespace-nowrap">
         <span className="font-mono tabular-nums text-xs font-bold text-foreground">
           {formatAmount(order.totalDue, order.currency)}
         </span>
       </TableCell>
 
-      {/* Statut */}
+      {/* Status */}
       <TableCell className="px-3 py-2 whitespace-nowrap">
         <span
           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border ${statusConfig.badgeClass}`}
@@ -157,7 +157,7 @@ export function OrdersTableRow({
         </span>
       </TableCell>
 
-      {/* Row Actions Menu */}
+      {/* Actions Menu */}
       <TableCell
         className="w-10 px-2 py-2 text-right"
         onClick={(e) => e.stopPropagation()}

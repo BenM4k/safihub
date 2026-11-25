@@ -1,9 +1,68 @@
 /*
- * Motion utilities with low-power 3G & prefers-reduced-motion awareness
+ * Motion utilities with low-power 3G & prefers-reduced-motion awareness.
+ * Zero extra runtime dependencies; GPU-composited transforms & opacity only.
  */
+@keyframes sf-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sf-enter-fast {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sf-badge-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes sf-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes sf-bar-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 @layer utilities {
   .hover-lift {
-    transition: transform var(--duration-micro, 150ms) var(--ease-soft), box-shadow var(--duration-micro, 150ms) var(--ease-soft);
+    transition:
+      transform var(--duration-micro, 150ms) var(--ease-soft),
+      box-shadow var(--duration-micro, 150ms) var(--ease-soft),
+      border-color var(--duration-micro, 150ms) var(--ease-soft);
   }
   @media (hover: hover) and (pointer: fine) {
     .hover-lift:hover {
@@ -26,5 +85,98 @@
     .group:hover .img-zoom {
       transform: scale(1.05);
     }
+  }
+
+  .animate-enter {
+    animation: sf-enter 260ms var(--ease-soft) both;
+  }
+
+  .animate-enter-fast {
+    animation: sf-enter-fast 180ms var(--ease-soft) both;
+  }
+
+  .animate-badge-pop {
+    animation: sf-badge-pop 240ms var(--ease-soft) both;
+  }
+
+  .animate-bar-fill {
+    transform-origin: left;
+    animation: sf-bar-fill 520ms var(--ease-soft) both;
+  }
+
+  .animate-shimmer {
+    background-color: var(--color-muted);
+    background-image: linear-gradient(
+      90deg,
+      var(--color-muted) 0%,
+      color-mix(in oklab, var(--color-muted) 68%, var(--color-card)) 50%,
+      var(--color-muted) 100%
+    );
+    background-size: 200% 100%;
+    animation: sf-shimmer 1.4s ease-in-out infinite;
+  }
+
+  .animate-stagger > * {
+    animation: sf-enter 260ms var(--ease-soft) both;
+  }
+  .animate-stagger > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .animate-stagger > *:nth-child(2) {
+    animation-delay: 35ms;
+  }
+  .animate-stagger > *:nth-child(3) {
+    animation-delay: 70ms;
+  }
+  .animate-stagger > *:nth-child(4) {
+    animation-delay: 105ms;
+  }
+  .animate-stagger > *:nth-child(5) {
+    animation-delay: 140ms;
+  }
+  .animate-stagger > *:nth-child(n + 6) {
+    animation-delay: 175ms;
+  }
+
+  .row-interactive {
+    transition:
+      background-color var(--duration-micro, 150ms) var(--ease-soft),
+      transform var(--duration-micro, 150ms) var(--ease-soft);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .row-interactive:hover {
+      background-color: color-mix(in oklab, var(--color-muted) 45%, transparent);
+    }
+  }
+  .row-interactive:active {
+    transform: scale(0.996);
+  }
+
+  .collapsible-smooth {
+    transition:
+      opacity 220ms var(--ease-soft),
+      transform 220ms var(--ease-soft);
+  }
+  .collapsible-smooth[data-starting-style],
+  .collapsible-smooth[data-ending-style] {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-enter,
+  .animate-enter-fast,
+  .animate-badge-pop,
+  .animate-bar-fill,
+  .animate-shimmer,
+  .animate-stagger > * {
+    animation: none !important;
+    transform: none !important;
+  }
+  .hover-lift:hover,
+  .row-interactive:active,
+  .press:active {
+    transform: none !important;
   }
 }

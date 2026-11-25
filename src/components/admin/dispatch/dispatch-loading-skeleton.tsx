@@ -1,55 +1,47 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-
-interface DispatchLoadingSkeletonProps {
-  label?: string;
-}
-
-export function DispatchLoadingSkeleton({ label }: DispatchLoadingSkeletonProps) {
+export function DispatchLoadingSkeleton() {
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-      aria-label={label}
-      className="flex flex-col gap-6 font-sans"
-    >
-      {label && <span className="sr-only">{label}</span>}
-      {/* Header skeleton */}
+    <div className="space-y-6" aria-busy="true" aria-label="Loading dispatch">
+      {/* Header + ticker skeleton */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-5">
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-8 w-64 rounded-lg" />
-          <Skeleton className="h-4 w-96 rounded-md" />
+        <div className="space-y-2">
+          <div className="h-7 w-52 rounded animate-shimmer" />
+          <div className="h-4 w-72 max-w-full rounded animate-shimmer" />
         </div>
+        <div className="h-9 w-48 rounded-full animate-shimmer" />
       </div>
 
-      {/* KPI Cards skeleton */}
-      <div className="flex flex-col sm:flex-row sm:items-center py-1">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="contents">
-            {i > 1 && (
-              <>
-                <Separator orientation="vertical" className="hidden sm:block h-12 mx-4 shrink-0" />
-                <Separator orientation="horizontal" className="sm:hidden my-2" />
-              </>
-            )}
-            <div className="flex-1 p-3 space-y-2">
-              <Skeleton className="h-3 w-32 rounded" />
-              <Skeleton className="h-7 w-16 rounded" />
-              <Skeleton className="h-3 w-40 rounded" />
-            </div>
+      {/* KPI cards skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {Array.from({ length: 3 }).map((_, idx) => (
+          <div
+            key={idx}
+            className="h-24 rounded-xl border border-border bg-card p-4 space-y-2.5"
+          >
+            <div className="h-3 w-28 rounded animate-shimmer" />
+            <div className="h-7 w-16 rounded animate-shimmer" />
+            <div className="h-3 w-36 rounded animate-shimmer" />
           </div>
         ))}
       </div>
 
-      {/* List skeleton */}
-      <div className="p-4 flex flex-col gap-4">
-        <Skeleton className="h-10 w-full rounded-lg" />
-        {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-md" />
-        ))}
+      {/* Tabs skeleton */}
+      <div className="h-10 w-72 rounded-lg animate-shimmer" />
+
+      {/* Container skeleton */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="p-4 border-b border-border space-y-3">
+          <div className="flex justify-between gap-3">
+            <div className="h-5 w-48 rounded animate-shimmer" />
+            <div className="h-9 w-44 rounded-lg animate-shimmer" />
+          </div>
+          <div className="h-11 w-full rounded-lg animate-shimmer" />
+        </div>
+        <div className="p-4 space-y-3">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="h-24 rounded-xl animate-shimmer" />
+          ))}
+        </div>
       </div>
     </div>
   );
 }
-

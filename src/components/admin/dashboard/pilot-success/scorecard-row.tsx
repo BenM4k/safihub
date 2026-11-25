@@ -1,20 +1,24 @@
-"use client";
-
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { HelpCircle } from "lucide-react";
 import { ScorecardStatusBadge, type MetricStatus } from "./scorecard-status-badge";
+import { ScorecardInfoTooltip } from "./scorecard-info-tooltip";
 import { TableRow, TableCell } from "@/components/ui/table";
 
 export interface ScorecardRowData {
   id: string;
   metric: string;
   formula: string;
+  definitionAriaLabel: string;
   currentDisplay: string;
   targetDisplay: string;
   progressPercent: number | null;
   status: MetricStatus;
 }
+
+const BAR_TONE_CLASS: Record<MetricStatus, string> = {
+  met: "bg-success",
+  "at-risk": "bg-warning",
+  failing: "bg-destructive",
+  "no-data": "bg-muted-foreground/40",
+};
 
 export function ScorecardRow({
   data,
@@ -28,45 +32,23 @@ export function ScorecardRow({
     noData: string;
   };
 }) {
-  const t = useTranslations("admin.dashboard");
-  const [showTooltip, setShowTooltip] = useState(false);
-
-  const tooltipId = `tooltip-formula-${data.id}`;
+  const barTone = BAR_TONE_CLASS[data.status] ?? BAR_TONE_CLASS["no-data"];
 
   return (
-    <TableRow>
+    <TableRow className="row-interactive">
       {/* Metric Name + Formula Tooltip */}
       <TableCell className="py-3.5 px-5 sm:px-6">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className="font-medium text-foreground">{data.metric}</span>
-          <div className="relative">
-            <button
-              type="button"
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-              onFocus={() => setShowTooltip(true)}
-              onBlur={() => setShowTooltip(false)}
-              className="text-muted-foreground hover:text-foreground cursor-help"
-              aria-label={t("definitionAriaLabel", { metric: data.metric })}
-              aria-describedby={tooltipId}
-            >
-              <HelpCircle className="size-3.5" />
-            </button>
-            {showTooltip && (
-              <div
-                id={tooltipId}
-                role="tooltip"
-                className="absolute left-6 top-1/2 -translate-y-1/2 z-20 w-64 p-2.5 bg-popover text-popover-foreground border border-border text-xs rounded-lg shadow-lg pointer-events-none leading-relaxed"
-              >
-                {data.formula}
-              </div>
-            )}
-          </div>
+          <ScorecardInfoTooltip
+            formula={data.formula}
+            ariaLabel={data.definitionAriaLabel}
+          />
         </div>
       </TableCell>
 
       {/* Current Value */}
-      <TableCell className="py-3.5 px-4 font-semibold text-foreground">
+      <TableCell className="py-3.5 px-4 font-semibold tabular-nums text-foreground">
         {data.currentDisplay}
       </TableCell>
 
@@ -81,17 +63,11 @@ export function ScorecardRow({
           <div className="w-32 flex items-center gap-2">
             <div className="flex-1 h-2 bg-muted border border-border rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full ${
-                  data.status === "met"
-                    ? "bg-emerald-500"
-                    : data.status === "at-risk"
-                    ? "bg-amber-500"
-                    : "bg-rose-500"
-                }`}
+                className={`h-full rounded-full animate-bar-fill ${barTone}`}
                 style={{ width: `${Math.min(data.progressPercent, 100)}%` }}
               />
             </div>
-            <span className="text-xs font-mono text-muted-foreground w-8">
+            <span className="text-xs font-mono tabular-nums text-muted-foreground w-8">
               {Math.round(data.progressPercent)}%
             </span>
           </div>
@@ -107,4 +83,3 @@ export function ScorecardRow({
     </TableRow>
   );
 }
-

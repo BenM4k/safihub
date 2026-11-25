@@ -2266,36 +2266,8 @@ export async function getSuccessCriteriaDashboard(): Promise<{
   totalDeliveredOrders: number;
   totalCollectedCashCDF: number;
 }> {
-  // 1. Orders per week (count orders in last 7 days)
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000);
 
-  const [recentOrders] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(schema.orders)
-    .where(sql`${schema.orders.createdAt} >= ${sevenDaysAgo}`);
-
-  const ordersPerWeek = recentOrders?.count ?? 0;
-
-  // 2. Acceptance rate: accepted / (accepted + rejected + expired)
-  const [acceptedOrders] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(schema.orders)
-    .where(
-      sql`${schema.orders.acceptedAt} is not null or ${schema.orders.status} in ('accepted', 'pickup_assigned', 'pickup_in_progress', 'picked_up', 'received', 'washing', 'ready', 'delivery_assigned', 'delivery_in_progress', 'delivered')`
-    );
-
-  const [terminalBeforeAccepted] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(schema.orders)
-    .where(sql`${schema.orders.status} in ('rejected', 'expired')`);
-
-  const acceptedCount = acceptedOrders?.count ?? 0;
-  const rejectedExpiredCount = terminalBeforeAccepted?.count ?? 0;
-  const totalDecided = acceptedCount + rejectedExpiredCount;
-  const acceptanceRatePercent =
-    totalDecided > 0 ? Math.round((acceptedCount / totalDecided) * 100) : 100;
-
-  // 3. Margin per order (CDF): sum(owed_to_owner) / delivered orders count
   const reversedSubquery = db
     .select({ id: schema.cashLedger.reversalOfId })
     .from(schema.cashLedger)
@@ -2306,92 +2278,125 @@ export async function getSuccessCriteriaDashboard(): Promise<{
       )
     );
 
-  const [deliveredOrders] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(schema.orders)
-    .where(eq(schema.orders.status, "delivered"));
+  const [
+    [recentOrders],
+    [acceptedOrders],
+    [terminalBeforeAccepted],
+    [deliveredOrders],
+    ownerEntries,
+    collectedEntries,
+    discrepancyEntries,
+    [allOrdersTotal],
+    [disputesTotal],
+    fallbackUsdRate,
+  ] = await Promise.all([
+    // 1. Orders per week (last 7 days)
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.orders)
+      .where(sql`${schema.orders.createdAt} >= ${sevenDaysAgo}`),
+    // 2a. Accepted orders
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.orders)
+      .where(
+        sql`${schema.orders.acceptedAt} is not null or ${schema.orders.status} in ('accepted', 'pickup_assigned', 'pickup_in_progress', 'picked_up', 'received', 'washing', 'ready', 'delivery_assigned', 'delivery_in_progress', 'delivered')`
+      ),
+    // 2b. Rejected/expired before acceptance
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.orders)
+      .where(sql`${schema.orders.status} in ('rejected', 'expired')`),
+    // 3a. Delivered orders count
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.orders)
+      .where(eq(schema.orders.status, "delivered")),
+    // 3b. Owner margin entries
+    db
+      .select({
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+        exchangeRateUsed: schema.orders.exchangeRateUsed,
+      })
+      .from(schema.cashLedger)
+      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
+      .where(
+        and(
+          eq(schema.cashLedger.entryType, "owed_to_owner"),
+          notInArray(schema.cashLedger.id, reversedSubquery)
+        )
+      ),
+    // 4a. Cash collected entries
+    db
+      .select({
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+        exchangeRateUsed: schema.orders.exchangeRateUsed,
+      })
+      .from(schema.cashLedger)
+      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
+      .where(
+        and(
+          eq(schema.cashLedger.entryType, "cash_collected"),
+          notInArray(schema.cashLedger.id, reversedSubquery)
+        )
+      ),
+    // 4b. Cash discrepancy entries
+    db
+      .select({
+        amount: schema.cashLedger.amount,
+        currency: schema.cashLedger.currency,
+        exchangeRateUsed: schema.orders.exchangeRateUsed,
+      })
+      .from(schema.cashLedger)
+      .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
+      .where(
+        and(
+          eq(schema.cashLedger.entryType, "discrepancy"),
+          sql`${schema.cashLedger.missionId} is not null`,
+          notInArray(schema.cashLedger.id, reversedSubquery)
+        )
+      ),
+    // 5a. Total orders
+    db.select({ count: sql<number>`count(*)::int` }).from(schema.orders),
+    // 5b. Total disputes
+    db.select({ count: sql<number>`count(*)::int` }).from(schema.disputes),
+    // Active USD->CDF rate fallback for legacy entries without frozen rate
+    getActiveUsdToCdfRate(db),
+  ]);
+
+  const ordersPerWeek = recentOrders?.count ?? 0;
+
+  const acceptedCount = acceptedOrders?.count ?? 0;
+  const rejectedExpiredCount = terminalBeforeAccepted?.count ?? 0;
+  const totalDecided = acceptedCount + rejectedExpiredCount;
+  const acceptanceRatePercent =
+    totalDecided > 0 ? Math.round((acceptedCount / totalDecided) * 100) : 100;
 
   const deliveredCount = deliveredOrders?.count ?? 0;
 
-  const ownerEntries = await db
-    .select({
-      amount: schema.cashLedger.amount,
-      currency: schema.cashLedger.currency,
-      exchangeRateUsed: schema.orders.exchangeRateUsed,
-    })
-    .from(schema.cashLedger)
-    .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
-    .where(
-      and(
-        eq(schema.cashLedger.entryType, "owed_to_owner"),
-        notInArray(schema.cashLedger.id, reversedSubquery)
-      )
-    );
+  const toCdf = (entry: {
+    amount: number;
+    currency: string;
+    exchangeRateUsed: string | number | null;
+  }) => {
+    const rate = Number(entry.exchangeRateUsed) || fallbackUsdRate;
+    return entry.currency === "USD" ? Math.round(entry.amount * rate) : entry.amount;
+  };
 
-  const totalOwnerMargin = ownerEntries.reduce((sum, e) => {
-    const rate = Number(e.exchangeRateUsed) || 2800;
-    return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
-  }, 0);
-
+  const totalOwnerMargin = ownerEntries.reduce((sum, e) => sum + toCdf(e), 0);
   const marginPerOrderCDF =
     deliveredCount > 0 ? Math.round(totalOwnerMargin / deliveredCount) : 0;
 
-  // 4. Cash discrepancies: count and % of cash collected
-  const collectedEntries = await db
-    .select({
-      amount: schema.cashLedger.amount,
-      currency: schema.cashLedger.currency,
-      exchangeRateUsed: schema.orders.exchangeRateUsed,
-    })
-    .from(schema.cashLedger)
-    .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
-    .where(
-      and(
-        eq(schema.cashLedger.entryType, "cash_collected"),
-        notInArray(schema.cashLedger.id, reversedSubquery)
-      )
-    );
-
-  const totalCollectedCashCDF = collectedEntries.reduce((sum, e) => {
-    const rate = Number(e.exchangeRateUsed) || 2800;
-    return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
-  }, 0);
-
-  const discrepancyEntries = await db
-    .select({
-      amount: schema.cashLedger.amount,
-      currency: schema.cashLedger.currency,
-      exchangeRateUsed: schema.orders.exchangeRateUsed,
-    })
-    .from(schema.cashLedger)
-    .leftJoin(schema.orders, eq(schema.cashLedger.orderId, schema.orders.id))
-    .where(
-      and(
-        eq(schema.cashLedger.entryType, "discrepancy"),
-        sql`${schema.cashLedger.missionId} is not null`,
-        notInArray(schema.cashLedger.id, reversedSubquery)
-      )
-    );
-
+  const totalCollectedCashCDF = collectedEntries.reduce((sum, e) => sum + toCdf(e), 0);
   const discrepanciesCount = discrepancyEntries.length;
-  const sumDiscrepancyAmount = discrepancyEntries.reduce((sum, e) => {
-    const rate = Number(e.exchangeRateUsed) || 2800;
-    return sum + (e.currency === "USD" ? Math.round(e.amount * rate) : e.amount);
-  }, 0);
+  const sumDiscrepancyAmount = discrepancyEntries.reduce((sum, e) => sum + toCdf(e), 0);
 
   const cashDiscrepancyPercent =
     totalCollectedCashCDF > 0
       ? Number(((sumDiscrepancyAmount / totalCollectedCashCDF) * 100).toFixed(1))
       : 0;
-
-  // 5. Dispute rate: orders ending in dispute or cancellation after pickup / total orders picked up
-  const [allOrdersTotal] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(schema.orders);
-
-  const [disputesTotal] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(schema.disputes);
 
   const totalOrdersCount = allOrdersTotal?.count ?? 0;
   const totalDisputesCount = disputesTotal?.count ?? 0;

@@ -33,6 +33,7 @@ import type {
   FollowUpOutcome,
   RelanceEventSummary,
 } from "@/lib/dispatch-grouping";
+import type { AdminOrdersQueryParams } from "@/lib/admin-orders-query";
 
 export type OrderEventType = (typeof orderEventTypeEnum.enumValues)[number];
 
@@ -191,6 +192,191 @@ export async function getOrders(filters?: {
   }
 
   return query;
+}
+
+export interface PaginatedOrdersResult {
+  orders: OrderListItemRecord[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  stats: {
+    today: number;
+    awaiting: number;
+    inProgress: number;
+    delivered: number;
+    cancelled: number;
+    all: number;
+  };
+  tabCounts: Record<string, number>;
+}
+
+const AWAITING_STATUSES: OrderStatus[] = ["created", "price_adjusted"];
+const IN_PROGRESS_STATUSES: OrderStatus[] = [
+  "accepted",
+  "pickup_assigned",
+  "pickup_in_progress",
+  "picked_up",
+  "received",
+  "washing",
+  "ready",
+  "delivery_slot_confirmed",
+  "delivery_assigned",
+  "delivery_in_progress",
+];
+const DELIVERED_STATUSES: OrderStatus[] = ["delivered"];
+const CANCELLED_STATUSES: OrderStatus[] = [
+  "cancelled",
+  "rejected",
+  "expired",
+  "pickup_failed",
+  "price_declined",
+  "delivery_failed",
+  "disputed",
+];
+
+export async function getOrdersPaginated(
+  params: AdminOrdersQueryParams
+): Promise<PaginatedOrdersResult> {
+  const { dateString: bukavuToday } = toBukavuDateTime(new Date());
+  const todayStart = fromBukavuDateTime(bukavuToday, "00:00");
+  const sevenDaysStart = new Date(todayStart.getTime() - 6 * 86_400_000);
+  const thirtyDaysStart = new Date(todayStart.getTime() - 29 * 86_400_000);
+
+  const conditions = [];
+
+  if (params.tab === "today") {
+    conditions.push(gte(schema.orders.createdAt, todayStart));
+  } else if (params.tab === "awaiting") {
+    conditions.push(inArray(schema.orders.status, AWAITING_STATUSES));
+  } else if (params.tab === "in_progress") {
+    conditions.push(inArray(schema.orders.status, IN_PROGRESS_STATUSES));
+  } else if (params.tab === "delivered") {
+    conditions.push(inArray(schema.orders.status, DELIVERED_STATUSES));
+  } else if (params.tab === "cancelled") {
+    conditions.push(inArray(schema.orders.status, CANCELLED_STATUSES));
+  }
+
+  if (params.dateRange === "today") {
+    conditions.push(gte(schema.orders.createdAt, todayStart));
+  } else if (params.dateRange === "7d") {
+    conditions.push(gte(schema.orders.createdAt, sevenDaysStart));
+  } else if (params.dateRange === "30d") {
+    conditions.push(gte(schema.orders.createdAt, thirtyDaysStart));
+  }
+
+  if (params.houseId) {
+    conditions.push(eq(schema.orders.houseId, params.houseId));
+  }
+
+  if (params.source) {
+    conditions.push(eq(schema.orders.source, params.source));
+  }
+
+  if (params.search.trim()) {
+    const q = `%${escapeLikePattern(params.search.trim())}%`;
+    conditions.push(
+      or(
+        ilike(schema.orders.code, q),
+        ilike(schema.orders.contactPhone, q),
+        ilike(schema.user.name, q),
+        ilike(schema.houses.name, q)
+      )
+    );
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+  const orderFn = params.sortDirection === "asc" ? asc : desc;
+  const sortExpr =
+    params.sortField === "amount"
+      ? orderFn(schema.orders.totalDue)
+      : params.sortField === "code"
+      ? orderFn(schema.orders.code)
+      : params.sortField === "customer"
+      ? orderFn(schema.user.name)
+      : orderFn(schema.orders.createdAt);
+
+  const offset = (params.page - 1) * params.pageSize;
+
+  const [rows, [countRow], [statsRow]] = await Promise.all([
+    db
+      .select({
+        id: schema.orders.id,
+        code: schema.orders.code,
+        trackingToken: schema.orders.trackingToken,
+        customerId: schema.orders.customerId,
+        customerName: schema.user.name,
+        customerEmail: schema.user.email,
+        isCustomerGuest: schema.user.isGuest,
+        customerPhone: schema.orders.contactPhone,
+        houseId: schema.orders.houseId,
+        houseName: schema.houses.name,
+        housePhone: schema.houses.contactPhone,
+        neighborhoodId: schema.orders.neighborhoodId,
+        neighborhoodName: schema.neighborhoods.name,
+        status: schema.orders.status,
+        source: schema.orders.source,
+        totalDue: schema.orders.totalDue,
+        currency: schema.orders.currency,
+        itemsTotal: schema.orders.itemsTotal,
+        deliveryFee: schema.orders.deliveryFee,
+        commissionAmount: schema.orders.commissionAmount,
+        pickupSlotStart: schema.orders.pickupSlotStart,
+        pickupSlotEnd: schema.orders.pickupSlotEnd,
+        createdAt: schema.orders.createdAt,
+        acceptanceDeadlineAt: schema.orders.acceptanceDeadlineAt,
+      })
+      .from(schema.orders)
+      .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+      .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
+      .innerJoin(
+        schema.neighborhoods,
+        eq(schema.orders.neighborhoodId, schema.neighborhoods.id)
+      )
+      .where(whereClause)
+      .orderBy(sortExpr, desc(schema.orders.createdAt))
+      .limit(params.pageSize)
+      .offset(offset),
+    db
+      .select({ total: count() })
+      .from(schema.orders)
+      .innerJoin(schema.user, eq(schema.orders.customerId, schema.user.id))
+      .innerJoin(schema.houses, eq(schema.orders.houseId, schema.houses.id))
+      .where(whereClause),
+    db
+      .select({
+        all: sql<number>`count(*)::int`,
+        today: sql<number>`count(*) filter (where ${schema.orders.createdAt} >= ${todayStart})::int`,
+        awaiting: sql<number>`count(*) filter (where ${inArray(schema.orders.status, AWAITING_STATUSES)})::int`,
+        inProgress: sql<number>`count(*) filter (where ${inArray(schema.orders.status, IN_PROGRESS_STATUSES)})::int`,
+        delivered: sql<number>`count(*) filter (where ${inArray(schema.orders.status, DELIVERED_STATUSES)})::int`,
+        cancelled: sql<number>`count(*) filter (where ${inArray(schema.orders.status, CANCELLED_STATUSES)})::int`,
+      })
+      .from(schema.orders),
+  ]);
+
+  const stats = {
+    today: statsRow?.today ?? 0,
+    awaiting: statsRow?.awaiting ?? 0,
+    inProgress: statsRow?.inProgress ?? 0,
+    delivered: statsRow?.delivered ?? 0,
+    cancelled: statsRow?.cancelled ?? 0,
+    all: statsRow?.all ?? 0,
+  };
+
+  return {
+    orders: rows,
+    totalCount: Number(countRow?.total ?? 0),
+    page: params.page,
+    pageSize: params.pageSize,
+    stats,
+    tabCounts: {
+      all: stats.all,
+      awaiting: stats.awaiting,
+      in_progress: stats.inProgress,
+      delivered: stats.delivered,
+      cancelled: stats.cancelled,
+    },
+  };
 }
 
 export async function getOrderById(

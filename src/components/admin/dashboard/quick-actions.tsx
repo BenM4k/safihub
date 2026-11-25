@@ -64,14 +64,14 @@ export async function QuickActions() {
         {t("quickShortcuts")}
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
         {actions.map((act) => {
           const Icon = act.icon;
           return (
             <Link
               key={act.id}
               href={act.href}
-              className="p-5 rounded-xl bg-card border border-border shadow-xs hover:bg-muted/40 transition-colors group flex items-start gap-4 cursor-pointer"
+              className="p-5 rounded-xl bg-card border border-border shadow-xs hover:bg-muted/40 hover-lift press transition-colors group flex items-start gap-4 cursor-pointer"
             >
               <div className="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors shadow-2xs">
                 <Icon className="size-5" strokeWidth={1.75} />

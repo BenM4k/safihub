@@ -12,6 +12,7 @@ import {
   createManualAdminOrder,
   executeAdminOnBehalfAction,
   getAdminOrderDetail,
+  resolveAdminDispute,
 } from "@/services/admin";
 import type { OrderDetailRecord, OrderEventRecord, OrderItemRecord } from "@/dal";
 import {
@@ -258,5 +259,54 @@ export async function getAdminOrderDetailAction(orderId: string): Promise<
   }
 
   return getAdminOrderDetail(parsed.data);
+}
+
+const resolveDisputeSchema = z.object({
+  disputeId: z.string().uuid("Identifiant de litige invalide"),
+  resolution: z
+    .string()
+    .trim()
+    .min(5, "Veuillez saisir une résolution (min. 5 caractères)")
+    .max(1000),
+  compensationAmount: z
+    .number()
+    .int()
+    .min(0)
+    .max(10_000_000)
+    .nullable()
+    .optional(),
+  currency: z.enum(["CDF", "USD"]).optional(),
+});
+
+export async function resolveAdminDisputeAction(input: {
+  disputeId: string;
+  resolution: string;
+  compensationAmount?: number | null;
+  currency?: "CDF" | "USD";
+}): Promise<Result<{ orderId: string; resolvedAt: Date }>> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return err(auth.error);
+
+  const parsed = resolveDisputeSchema.safeParse(input);
+  if (!parsed.success) {
+    return err(parsed.error.issues[0]?.message ?? "Données invalides");
+  }
+
+  const res = await resolveAdminDispute({
+    disputeId: parsed.data.disputeId,
+    resolution: parsed.data.resolution,
+    compensationAmount: parsed.data.compensationAmount ?? null,
+    currency: parsed.data.currency,
+    adminId: auth.value.user.id,
+  });
+
+  if (res.ok) {
+    revalidateTag(CACHE_TAGS.order(res.value.orderId), "max");
+    revalidatePath(`/admin/orders/${res.value.orderId}`);
+    revalidatePath("/admin/disputes");
+    revalidatePath("/admin");
+  }
+
+  return res;
 }
 

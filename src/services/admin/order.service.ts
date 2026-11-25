@@ -6,22 +6,29 @@ import {
   addOrderEvent,
   createGuestUser,
   getAdminDisputes,
+  getAdminDisputesPaginated,
   getHouseClosures,
   getHouseHours,
   getOrderById,
   getOrderEvents,
   getOrderItems,
   getOrders,
+  getOrdersPaginated,
   getSettings,
   getUserByContactPhone,
   insertOrderWithDetails,
+  resolveAdminDisputeTransaction,
   transitionOrderStatusAtomic,
   type AdminDisputeRecord,
   type OrderDetailRecord,
   type OrderEventRecord,
   type OrderItemRecord,
   type OrderListItemRecord,
+  type PaginatedAdminDisputesResult,
+  type PaginatedOrdersResult,
 } from "@/dal";
+import type { AdminOrdersQueryParams } from "@/lib/admin-orders-query";
+import type { AdminDisputesQueryParams } from "@/lib/admin-disputes-query";
 import {
   computeAcceptanceDeadlines,
   transitionOrder,
@@ -39,6 +46,59 @@ export async function listAdminDisputes(): Promise<Result<AdminDisputeRecord[]>>
   }
 }
 
+export async function listAdminDisputesPaginated(
+  params: AdminDisputesQueryParams
+): Promise<Result<PaginatedAdminDisputesResult>> {
+  try {
+    const result = await getAdminDisputesPaginated(params);
+    return ok(result);
+  } catch (error) {
+    return err(
+      sanitizeServiceError(
+        error,
+        "Failed to load disputes",
+        "listAdminDisputesPaginated"
+      )
+    );
+  }
+}
+
+export async function resolveAdminDispute(params: {
+  disputeId: string;
+  resolution: string;
+  compensationAmount?: number | null;
+  currency?: "CDF" | "USD";
+  adminId: string;
+}): Promise<Result<{ orderId: string; resolvedAt: Date }>> {
+  try {
+    const trimmed = params.resolution.trim();
+    if (!trimmed) {
+      return err("Resolution summary is required");
+    }
+
+    const res = await resolveAdminDisputeTransaction({
+      disputeId: params.disputeId,
+      resolution: trimmed,
+      compensationAmount: params.compensationAmount,
+      currency: params.currency,
+      adminId: params.adminId,
+    });
+
+    if (res.status === "not_found") {
+      return err("Dispute not found");
+    }
+    if (res.status === "already_resolved") {
+      return err("Dispute is already resolved");
+    }
+
+    return ok({ orderId: res.orderId, resolvedAt: res.resolvedAt });
+  } catch (error) {
+    return err(
+      sanitizeServiceError(error, "Failed to resolve dispute", "resolveAdminDispute")
+    );
+  }
+}
+
 export async function listAdminOrders(filters?: {
   status?: OrderStatus;
   houseId?: string;
@@ -52,6 +112,23 @@ export async function listAdminOrders(filters?: {
     return ok(orders);
   } catch (error) {
     return err(sanitizeServiceError(error, "Failed to load orders", "listAdminOrders"));
+  }
+}
+
+export async function listAdminOrdersPaginated(
+  params: AdminOrdersQueryParams
+): Promise<Result<PaginatedOrdersResult>> {
+  try {
+    const result = await getOrdersPaginated(params);
+    return ok(result);
+  } catch (error) {
+    return err(
+      sanitizeServiceError(
+        error,
+        "Failed to load orders",
+        "listAdminOrdersPaginated"
+      )
+    );
   }
 }
 

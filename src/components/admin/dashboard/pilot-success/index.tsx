@@ -1,7 +1,14 @@
 import { getTranslations } from "next-intl/server";
 import type { AdminDashboardMetrics } from "@/dal";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PilotScorecard } from "./pilot-scorecard";
-import type { ScorecardRowData } from "./scorecard-row";
+import { ScorecardRow, type ScorecardRowData } from "./scorecard-row";
 
 interface PilotSuccessSectionProps {
   metrics: AdminDashboardMetrics;
@@ -15,6 +22,7 @@ export async function PilotSuccessSection({ metrics }: PilotSuccessSectionProps)
       id: "orders_per_week",
       metric: t("ordersPerWeek"),
       formula: t("ordersPerWeekDesc"),
+      definitionAriaLabel: t("definitionAriaLabel", { metric: t("ordersPerWeek") }),
       currentDisplay: t("ordersPerWeekUnit", { count: metrics.ordersPerWeek }),
       targetDisplay: t("ordersPerWeekTarget"),
       progressPercent: Math.min(100, Math.round((metrics.ordersPerWeek / 20) * 100)),
@@ -24,6 +32,7 @@ export async function PilotSuccessSection({ metrics }: PilotSuccessSectionProps)
       id: "acceptance_rate",
       metric: t("acceptanceRate"),
       formula: t("acceptanceRateDesc"),
+      definitionAriaLabel: t("definitionAriaLabel", { metric: t("acceptanceRate") }),
       currentDisplay: `${metrics.acceptanceRatePercent}%`,
       targetDisplay: t("acceptanceRateTarget"),
       progressPercent: metrics.acceptanceRatePercent,
@@ -33,6 +42,7 @@ export async function PilotSuccessSection({ metrics }: PilotSuccessSectionProps)
       id: "net_margin",
       metric: t("marginPerOrder"),
       formula: t("marginPerOrderDesc"),
+      definitionAriaLabel: t("definitionAriaLabel", { metric: t("marginPerOrder") }),
       currentDisplay: `CDF ${metrics.marginPerOrderCDF.toLocaleString("en-US")}`,
       targetDisplay: t("marginPerOrderTarget"),
       progressPercent: metrics.marginPerOrderCDF > 0 ? 100 : 0,
@@ -42,6 +52,7 @@ export async function PilotSuccessSection({ metrics }: PilotSuccessSectionProps)
       id: "cash_discrepancy",
       metric: t("cashDiscrepancies"),
       formula: t("cashDiscrepanciesDesc"),
+      definitionAriaLabel: t("definitionAriaLabel", { metric: t("cashDiscrepancies") }),
       currentDisplay: `${metrics.cashDiscrepancyPercent.toFixed(1)}%`,
       targetDisplay: t("cashDiscrepanciesTarget"),
       progressPercent: Math.min(100, Math.round((metrics.cashDiscrepancyPercent / 2) * 100)),
@@ -51,6 +62,7 @@ export async function PilotSuccessSection({ metrics }: PilotSuccessSectionProps)
       id: "dispute_rate",
       metric: t("disputeRate"),
       formula: t("disputeRateDesc"),
+      definitionAriaLabel: t("definitionAriaLabel", { metric: t("disputeRate") }),
       currentDisplay: `${metrics.disputeRatePercent.toFixed(1)}%`,
       targetDisplay: t("disputeRateTarget"),
       progressPercent: Math.min(100, Math.round((metrics.disputeRatePercent / 5) * 100)),
@@ -60,6 +72,7 @@ export async function PilotSuccessSection({ metrics }: PilotSuccessSectionProps)
       id: "admin_minutes",
       metric: t("adminMinutesPerOrder"),
       formula: t("adminMinutesDesc"),
+      definitionAriaLabel: t("definitionAriaLabel", { metric: t("adminMinutesPerOrder") }),
       currentDisplay: metrics.adminMinutesPerOrder !== null ? `${metrics.adminMinutesPerOrder} min` : "—",
       targetDisplay: t("adminMinutesPerOrderTarget"),
       progressPercent:
@@ -77,6 +90,12 @@ export async function PilotSuccessSection({ metrics }: PilotSuccessSectionProps)
 
   const metCount = criteria.filter((c) => c.status === "met").length;
   const totalCount = criteria.length;
+  const statusLabels = {
+    met: t("statusMet"),
+    atRisk: t("statusAtRisk"),
+    failing: t("statusFailing"),
+    noData: t("statusNoData"),
+  };
 
   return (
     <section aria-labelledby="scorecard-heading">
@@ -84,20 +103,41 @@ export async function PilotSuccessSection({ metrics }: PilotSuccessSectionProps)
         title={t("successCriteriaTitle")}
         subtitle={t("successCriteriaSubtitle")}
         phaseBadge={t("pilotPhaseBadge")}
-        criteria={criteria}
-        labels={{
-          summary: t("pilotHealthSummary", { metCount, totalCount }),
-          colMetric: t("colMetric"),
-          colCurrent: t("colCurrent"),
-          colTarget: t("colTarget"),
-          colProgress: t("colProgress"),
-          colStatus: t("colStatus"),
-          statusMet: t("statusMet"),
-          statusAtRisk: t("statusAtRisk"),
-          statusFailing: t("statusFailing"),
-          statusNoData: t("statusNoData"),
-        }}
-      />
+        summaryText={t("pilotHealthSummary", { metCount, totalCount })}
+        segments={criteria.map((c) => ({
+          id: c.id,
+          metric: c.metric,
+          status: c.status,
+        }))}
+        statusLabels={statusLabels}
+      >
+        <Table className="text-xs">
+          <TableHeader className="bg-muted/40">
+            <TableRow>
+              <TableHead className="h-9 py-2 px-5 sm:px-6 uppercase font-semibold text-foreground">
+                {t("colMetric")}
+              </TableHead>
+              <TableHead className="h-9 py-2 px-4 uppercase font-semibold text-foreground">
+                {t("colCurrent")}
+              </TableHead>
+              <TableHead className="h-9 py-2 px-4 uppercase font-semibold text-foreground">
+                {t("colTarget")}
+              </TableHead>
+              <TableHead className="h-9 py-2 px-4 uppercase font-semibold text-foreground">
+                {t("colProgress")}
+              </TableHead>
+              <TableHead className="h-9 py-2 px-5 sm:px-6 text-right uppercase font-semibold text-foreground">
+                {t("colStatus")}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {criteria.map((c) => (
+              <ScorecardRow key={c.id} data={c} labels={statusLabels} />
+            ))}
+          </TableBody>
+        </Table>
+      </PilotScorecard>
     </section>
   );
 }

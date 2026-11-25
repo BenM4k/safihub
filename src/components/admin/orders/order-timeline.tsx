@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { addOrderTimelineNoteAction } from "@/actions/admin-order.actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -18,45 +18,66 @@ interface OrderTimelineProps {
 export function OrderTimeline({ orderId, events }: OrderTimelineProps) {
   const t = useTranslations("admin.orders");
   const [note, setNote] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  async function handleAddNote(e: React.FormEvent) {
+  const [optimisticEvents, addOptimisticEvent] = useOptimistic(
+    events,
+    (state: OrderEventRecord[], optimisticNote: OrderEventRecord) => [
+      optimisticNote,
+      ...state,
+    ]
+  );
+
+  function handleAddNote(e: React.FormEvent) {
     e.preventDefault();
-    if (!note.trim()) return;
-
-    setLoading(true);
+    const trimmed = note.trim();
+    if (!trimmed) return;
     setError(null);
+    setNote("");
 
-    try {
+    startTransition(async () => {
+      addOptimisticEvent({
+        id: `optimistic-${trimmed.slice(0, 12)}`,
+        orderId,
+        type: "note",
+        fromStatus: null,
+        toStatus: null,
+        actorId: null,
+        actorName: null,
+        actorRole: "admin",
+        onBehalfOfHouseId: null,
+        onBehalfOfHouseName: null,
+        approvalMethod: null,
+        recordedBy: null,
+        note: trimmed,
+        payload: null,
+        createdAt: new Date(),
+      });
+
       const fd = new FormData();
       fd.append("orderId", orderId);
-      fd.append("note", note.trim());
+      fd.append("note", trimmed);
 
       const res = await addOrderTimelineNoteAction(fd);
       if (!res.ok) {
+        setNote(trimmed);
         setError(res.error);
-      } else {
-        setNote("");
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("screeningError"));
-    } finally {
-      setLoading(false);
-    }
+    });
   }
 
   return (
-    <div className="rounded-lg border border-border bg-background p-5 space-y-6">
+    <div className="rounded-lg border border-border bg-background p-5 space-y-6 animate-enter">
       <div className="flex items-center justify-between border-b border-border pb-3">
         <h3 className="font-semibold text-sm text-foreground">
-          {t("timelineTitle")} ({events.length})
+          {t("timelineTitle")} ({optimisticEvents.length})
         </h3>
       </div>
 
       <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
-        {events.map((ev) => (
-          <div key={ev.id} className="relative group">
+        {optimisticEvents.map((ev) => (
+          <div key={ev.id} className="relative group animate-enter-fast">
             <div className="absolute -left-6 top-1 size-3.5 rounded-full border-2 border-background bg-primary shadow-xs" />
             <div className="bg-muted/30 rounded-lg p-3 border border-border space-y-1.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -70,21 +91,26 @@ export function OrderTimeline({ orderId, events }: OrderTimelineProps) {
 
               {ev.fromStatus && ev.toStatus && (
                 <div className="text-xs text-foreground">
-                  Transition: <span className="font-medium text-muted-foreground">{ev.fromStatus}</span> →{" "}
+                  {t("timelineTransition")}:{" "}
+                  <span className="font-medium text-muted-foreground">{ev.fromStatus}</span> →{" "}
                   <span className="font-semibold text-foreground">{ev.toStatus}</span>
                 </div>
               )}
 
-              {/* On-behalf-of highlighted indicator */}
               {ev.onBehalfOfHouseId && (
-                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
-                  <span>🏢 {t("auditActionOnBehalf", { house: ev.onBehalfOfHouseName || ev.onBehalfOfHouseId })}</span>
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-warning-soft text-warning border border-warning/20">
+                  <span>
+                    {t("auditActionOnBehalf", {
+                      house: ev.onBehalfOfHouseName || ev.onBehalfOfHouseId,
+                    })}
+                  </span>
                 </div>
               )}
 
               {ev.actorRole && (
                 <div className="text-[11px] text-muted-foreground">
-                  Par: <span className="font-medium capitalize text-foreground">{ev.actorRole}</span>
+                  {t("timelineActorBy")}:{" "}
+                  <span className="font-medium capitalize text-foreground">{ev.actorRole}</span>
                   {ev.actorName && ` (${ev.actorName})`}
                 </div>
               )}
@@ -109,7 +135,7 @@ export function OrderTimeline({ orderId, events }: OrderTimelineProps) {
             onChange={(e) => setNote(e.target.value)}
             placeholder={t("notePlaceholder")}
             rows={2}
-            className="text-xs resize-none"
+            className="text-base sm:text-xs resize-none"
           />
         </Field>
         {error && (
@@ -118,8 +144,8 @@ export function OrderTimeline({ orderId, events }: OrderTimelineProps) {
           </Alert>
         )}
         <div className="flex justify-end">
-          <Button type="submit" size="sm" disabled={loading || !note.trim()}>
-            {loading ? t("addingNote") : t("addNoteBtn")}
+          <Button type="submit" size="sm" disabled={isPending || !note.trim()} className="min-h-10 press">
+            {isPending ? t("addingNote") : t("addNoteBtn")}
           </Button>
         </div>
       </form>

@@ -1,13 +1,28 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DispatchAwaitingToolbar } from "./dispatch-awaiting-toolbar";
 import { DispatchAwaitingEmpty } from "./dispatch-awaiting-empty";
 import { DataTablePagination } from "@/components/admin/shared/data-table-pagination";
 import { DispatchPressingGroupCard } from "./dispatch-pressing-group-card";
 import { DispatchOrderRow } from "./dispatch-order-row";
 import { useDispatchModals } from "./use-dispatch-modals";
+import {
+  buildAdminDispatchQueryString,
+  parseAdminDispatchSearchParams,
+  type AdminDispatchQueryParams,
+} from "@/lib/admin-dispatch-query";
+import {
+  filterAndSortGroups,
+  filterAndSortOrders,
+  groupOrdersByPressing,
+  type DelayFilter,
+  type EnrichedDispatchOrder,
+  type SortOption,
+} from "@/lib/dispatch-grouping";
+import type { AvailablePressingOption } from "@/services/admin";
 
 const DispatchOrderDetailsSheet = dynamic(
   () =>
@@ -30,19 +45,11 @@ const DispatchReassignDialog = dynamic(
     import("./dispatch-reassign-dialog").then((m) => m.DispatchReassignDialog),
   { ssr: false }
 );
-import {
-  filterAndSortGroups,
-  filterAndSortOrders,
-  groupOrdersByPressing,
-  type DelayFilter,
-  type EnrichedDispatchOrder,
-  type SortOption,
-} from "@/lib/dispatch-grouping";
-import type { AvailablePressingOption } from "@/services/admin";
 
 interface DispatchAwaitingContainerProps {
   orders: EnrichedDispatchOrder[];
   availablePressings: AvailablePressingOption[];
+  initialQuery: AdminDispatchQueryParams;
   onRefresh: () => void;
   isRefreshing?: boolean;
 }
@@ -50,15 +57,21 @@ interface DispatchAwaitingContainerProps {
 export function DispatchAwaitingContainer({
   orders,
   availablePressings,
+  initialQuery,
   onRefresh,
   isRefreshing,
 }: DispatchAwaitingContainerProps) {
-  const [viewMode, setViewMode] = useState<"pressing" | "order">("pressing");
-  const [search, setSearch] = useState("");
-  const [delayFilter, setDelayFilter] = useState<DelayFilter>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("oldest");
+  const router = useRouter();
+  const pathname = usePathname();
+  const liveSearchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
+  const [viewMode, setViewMode] = useState<"pressing" | "order">(initialQuery.view);
+  const [search, setSearch] = useState(initialQuery.search);
+  const [delayFilter, setDelayFilter] = useState<DelayFilter>(initialQuery.delay);
+  const [sortBy, setSortBy] = useState<SortOption>(initialQuery.sort);
+  const [page, setPage] = useState(initialQuery.page);
   const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(new Set());
-  const [page, setPage] = useState(1);
   const pageSize = 15;
 
   const {
@@ -72,6 +85,16 @@ export function DispatchAwaitingContainer({
     closeOutcomeModal,
     closeReassignModal,
   } = useDispatchModals();
+
+  function syncUrl(partial: Partial<AdminDispatchQueryParams>) {
+    const current = parseAdminDispatchSearchParams(
+      Object.fromEntries(liveSearchParams.entries())
+    );
+    const qs = buildAdminDispatchQueryString({ ...current, ...partial });
+    startTransition(() => {
+      router.replace(qs ? `${pathname}${qs}` : pathname, { scroll: false });
+    });
+  }
 
   const rawGroups = useMemo(() => groupOrdersByPressing(orders), [orders]);
   const filteredGroups = useMemo(
@@ -92,11 +115,18 @@ export function DispatchAwaitingContainer({
     });
   }
 
-  const totalItems = viewMode === "pressing" ? filteredGroups.length : filteredOrders.length;
+  const totalItems =
+    viewMode === "pressing" ? filteredGroups.length : filteredOrders.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const paginatedGroups = filteredGroups.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const paginatedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginatedGroups = filteredGroups.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <div className="rounded-xl border border-border bg-background overflow-hidden">
@@ -106,27 +136,33 @@ export function DispatchAwaitingContainer({
         onChangeViewMode={(mode) => {
           setViewMode(mode);
           setPage(1);
+          syncUrl({ view: mode, page: 1 });
         }}
         search={search}
         onSearchChange={(s) => {
           setSearch(s);
           setPage(1);
+          syncUrl({ search: s, page: 1 });
         }}
         delayFilter={delayFilter}
         onDelayFilterChange={(f) => {
           setDelayFilter(f);
           setPage(1);
+          syncUrl({ delay: f, page: 1 });
         }}
         sortBy={sortBy}
-        onSortByChange={(s) => setSortBy(s)}
+        onSortByChange={(s) => {
+          setSortBy(s);
+          syncUrl({ sort: s });
+        }}
         onRefresh={onRefresh}
-        isRefreshing={isRefreshing}
+        isRefreshing={isRefreshing || isPending}
       />
 
       {totalItems === 0 ? (
         <DispatchAwaitingEmpty />
       ) : viewMode === "pressing" ? (
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3 animate-stagger">
           {paginatedGroups.map((group) => (
             <DispatchPressingGroupCard
               key={group.houseId}
@@ -141,7 +177,7 @@ export function DispatchAwaitingContainer({
           ))}
         </div>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-border animate-stagger">
           {paginatedOrders.map((order) => (
             <DispatchOrderRow
               key={order.id}
@@ -158,7 +194,10 @@ export function DispatchAwaitingContainer({
         page={currentPage}
         pageSize={pageSize}
         totalItems={totalItems}
-        onPageChange={setPage}
+        onPageChange={(nextPage) => {
+          setPage(nextPage);
+          syncUrl({ page: nextPage });
+        }}
         hideIfSinglePage
       />
 

@@ -677,7 +677,10 @@
       "recentOrdersColAmount": "Amount",
       "recentOrdersShowingCount": "Showing {count} orders",
       "recentOrdersViewAll": "View all orders",
-      "operationsLoadError": "Error loading operations data"
+      "operationsLoadError": "Error loading operations data",
+      "customerFallback": "Customer",
+      "houseFallback": "Laundry House",
+      "assignedCourierLabel": "Assigned Courier"
     },
     "neighborhoods": {
       "title": "Neighborhoods & Delivery Zones",
@@ -1476,7 +1479,14 @@
         "unexpectedError": "Unexpected error during creation"
       },
       "errorLoadingOrders": "Error loading orders",
-      "retryOrders": "Retry"
+      "retryOrders": "Retry",
+      "channelApp": "Customer App",
+      "channelWhatsapp": "WhatsApp",
+      "channelPhone": "Phone Call",
+      "paymentToPay": "To pay",
+      "timelineTransition": "Transition",
+      "timelineActorBy": "By",
+      "neighborhoodLabel": "Neighborhood"
     },
     "dispatch": {
       "title": "Operational Dispatch",
@@ -1547,7 +1557,20 @@
       "urgencyUrgent": "Urgent",
       "urgencyOverdue": "Overdue (+{minutes} min)",
       "errorLoadingDispatch": "Error loading dispatch data",
-      "retryDispatch": "Retry"
+      "retryDispatch": "Retry",
+      "slaSubtitle": "45 min SLA · Proactive follow-up with partner laundry houses",
+      "filterDelayAriaLabel": "Filter by delay",
+      "sortAriaLabel": "Sort orders",
+      "missionsAc20Subtitle": "Strict AC 20 assignment (courier must cover both pickup and house zones)",
+      "missionTypePickup": "Pickup",
+      "missionTypeDelivery": "Delivery",
+      "missionRouteLabel": "Route:",
+      "missionZoneClient": "Customer Zone ({zone})",
+      "missionZoneHouse": "Laundry Zone ({zone})",
+      "missionSlotLabel": "Slot",
+      "missionLandmarkLabel": "Landmark",
+      "selectCourierWithCount": "Select a courier ({count})",
+      "assigningCourier": "Assigning..."
     },
     "settings": {
       "title": "Platform Settings",
@@ -1907,7 +1930,22 @@
       "retry": "Retry",
       "statusOpen": "Open",
       "statusResolved": "Resolved",
-      "orderLink": "Order #{code}"
+      "orderLink": "Order #{code}",
+      "tabAll": "All",
+      "searchPlaceholder": "Search by order code, description or type...",
+      "resolutionSummaryTitle": "Resolution decision",
+      "resolveButton": "Resolve dispute",
+      "resolveDialogTitle": "Resolve dispute",
+      "resolveDialogDesc": "Order #{code} — Document the final decision and any compensation.",
+      "resolutionLabel": "Resolution summary",
+      "resolutionPlaceholder": "e.g., Partial refund approved after verification...",
+      "resolutionMinError": "Please enter at least 5 characters for the resolution.",
+      "compensationLabel": "Compensation (optional)",
+      "compensationInvalidError": "Compensation amount must be a non-negative integer.",
+      "currencyLabel": "Currency",
+      "cancelResolve": "Cancel",
+      "resolving": "Resolving...",
+      "confirmResolve": "Confirm resolution"
     },
     "whatsapp": {
       "title": "WhatsApp Cloud API Test Console",

@@ -58,15 +58,15 @@ export function OrdersActiveFilterChips({
       {filters.dateRange !== "30d" && (
         <FilterChip
           onRemove={() => onFilterChange({ dateRange: "30d" })}
-          removeAriaLabel="Reset period"
+          removeAriaLabel={t("resetFilters")}
         >
           {t("chipPeriod", {
             period:
               filters.dateRange === "today"
                 ? t("dateRangeToday")
                 : filters.dateRange === "7d"
-                ? t("dateRange7d")
-                : t("dateRangeAll"),
+                  ? t("dateRange7d")
+                  : t("dateRangeAll"),
           })}
         </FilterChip>
       )}
