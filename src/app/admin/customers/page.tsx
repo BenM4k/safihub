@@ -1,23 +1,30 @@
+import { Suspense } from "react";
 import { guardAdminRoute } from "@/services/auth";
-import { listAdminCustomers } from "@/services/admin";
-import { CustomersManagementView } from "@/components/admin/customers/customers-management-view";
+import { parseAdminCustomersSearchParams } from "@/lib/admin-customers-query";
+import { CustomersStreamContent } from "@/components/admin/customers/customers-stream-content";
+import { CustomersLoadingSkeleton } from "@/components/admin/customers/customers-loading-skeleton";
 
-export default async function AdminCustomersPage() {
-  const authCtx = await guardAdminRoute();
-  const res = await listAdminCustomers({ limit: 500 });
+interface AdminCustomersPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
 
-  if (!res.ok) {
-    throw new Error(res.error);
-  }
+export default async function AdminCustomersPage({
+  searchParams,
+}: AdminCustomersPageProps) {
+  const [authCtx, rawSearchParams] = await Promise.all([
+    guardAdminRoute(),
+    searchParams,
+  ]);
 
-  const { customers, totalCount } = res.value;
   const isAdmin = authCtx.user.role === "admin";
+  const initialUrlState = parseAdminCustomersSearchParams(rawSearchParams);
 
   return (
-    <CustomersManagementView
-      initialCustomers={customers}
-      totalCustomersCount={totalCount}
-      isAdmin={isAdmin}
-    />
+    <Suspense fallback={<CustomersLoadingSkeleton />}>
+      <CustomersStreamContent
+        isAdmin={isAdmin}
+        initialUrlState={initialUrlState}
+      />
+    </Suspense>
   );
 }

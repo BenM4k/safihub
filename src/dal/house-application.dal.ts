@@ -1,6 +1,6 @@
 import "server-only";
-import { and, desc, eq, sql } from "drizzle-orm";
-import { db, schema } from "./db";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { db, escapeLikePattern, schema } from "./db";
 import type { ApplicationStatus } from "@/services/db/schema";
 
 export class PartnerApplicationApprovalError extends Error {
@@ -147,6 +147,116 @@ export async function listHouseApplications(options?: {
   return {
     applications: rows,
     total: countResult[0]?.count ?? 0,
+  };
+}
+
+export interface PaginatedHouseApplicationsResult {
+  applications: HouseApplicationRecord[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  counts: {
+    all: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+  };
+}
+
+export async function listHouseApplicationsPaginated(params: {
+  status?: ApplicationStatus;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<PaginatedHouseApplicationsResult> {
+  const page = Math.max(1, params.page ?? 1);
+  const pageSize = Math.min(50, Math.max(1, params.pageSize ?? 15));
+  const search = params.search?.trim() ?? "";
+
+  const conditions = [];
+  if (params.status) {
+    conditions.push(eq(schema.houseApplications.status, params.status));
+  }
+  if (search) {
+    const q = `%${escapeLikePattern(search)}%`;
+    conditions.push(
+      or(
+        ilike(schema.houseApplications.houseName, q),
+        ilike(schema.houseApplications.contactName, q),
+        ilike(schema.houseApplications.phone, q),
+        ilike(schema.houseApplications.email, q),
+        ilike(schema.houseApplications.neighborhoodText, q)
+      )
+    );
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [[filteredCount], [statusCounts]] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.houseApplications)
+      .where(whereClause),
+    db
+      .select({
+        all: sql<number>`count(*)::int`,
+        pending: sql<number>`count(*) filter (where ${schema.houseApplications.status} = 'pending')::int`,
+        approved: sql<number>`count(*) filter (where ${schema.houseApplications.status} = 'approved')::int`,
+        rejected: sql<number>`count(*) filter (where ${schema.houseApplications.status} = 'rejected')::int`,
+      })
+      .from(schema.houseApplications),
+  ]);
+
+  const totalCount = Number(filteredCount?.count ?? 0);
+  const totalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 1;
+  const effectivePage = totalCount > 0 ? Math.min(page, totalPages) : 1;
+  const offset = (effectivePage - 1) * pageSize;
+
+  const rows = await db
+    .select({
+      id: schema.houseApplications.id,
+      houseName: schema.houseApplications.houseName,
+      contactName: schema.houseApplications.contactName,
+      phone: schema.houseApplications.phone,
+      email: schema.houseApplications.email,
+      neighborhoodId: schema.houseApplications.neighborhoodId,
+      neighborhoodText: schema.houseApplications.neighborhoodText,
+      neighborhoodName: schema.neighborhoods.name,
+      addressNote: schema.houseApplications.addressNote,
+      servicesNote: schema.houseApplications.servicesNote,
+      hoursNote: schema.houseApplications.hoursNote,
+      message: schema.houseApplications.message,
+      status: schema.houseApplications.status,
+      adminNote: schema.houseApplications.adminNote,
+      reviewedBy: schema.houseApplications.reviewedBy,
+      reviewedAt: schema.houseApplications.reviewedAt,
+      createdHouseId: schema.houseApplications.createdHouseId,
+      createdAt: schema.houseApplications.createdAt,
+    })
+    .from(schema.houseApplications)
+    .leftJoin(
+      schema.neighborhoods,
+      eq(schema.houseApplications.neighborhoodId, schema.neighborhoods.id)
+    )
+    .where(whereClause)
+    .orderBy(
+      desc(schema.houseApplications.createdAt),
+      desc(schema.houseApplications.id)
+    )
+    .limit(pageSize)
+    .offset(offset);
+
+  return {
+    applications: rows,
+    totalCount,
+    page: effectivePage,
+    pageSize,
+    counts: {
+      all: statusCounts?.all ?? 0,
+      pending: statusCounts?.pending ?? 0,
+      approved: statusCounts?.approved ?? 0,
+      rejected: statusCounts?.rejected ?? 0,
+    },
   };
 }
 

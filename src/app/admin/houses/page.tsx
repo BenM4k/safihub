@@ -1,36 +1,26 @@
+import { Suspense } from "react";
 import { guardAdminRoute } from "@/services/auth";
-import {
-  listAdminHousesEnriched,
-  listAdminNeighborhoods,
-  listAdminPendingReviews,
-} from "@/services/admin";
-import { HousesManagementView } from "@/components/admin/houses/houses-management-view";
+import { parseAdminHousesSearchParams } from "@/lib/admin-houses-query";
+import { HousesStreamContent } from "@/components/admin/houses/houses-stream-content";
+import { HousesLoadingSkeleton } from "@/components/admin/houses/houses-loading-skeleton";
 
-export default async function AdminHousesPage() {
-  await guardAdminRoute();
+interface AdminHousesPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
 
-  const [housesRes, neighRes, pendingReviews] = await Promise.all([
-    listAdminHousesEnriched(),
-    listAdminNeighborhoods(),
-    listAdminPendingReviews(),
+export default async function AdminHousesPage({
+  searchParams,
+}: AdminHousesPageProps) {
+  const [, rawSearchParams] = await Promise.all([
+    guardAdminRoute(),
+    searchParams,
   ]);
 
-  if (!housesRes.ok) {
-    throw new Error(housesRes.error || "Failed to load partner houses");
-  }
-
-  const housesData = housesRes.value;
-  const neighborhoods = neighRes.ok ? neighRes.value : [];
+  const query = parseAdminHousesSearchParams(rawSearchParams);
 
   return (
-    <HousesManagementView
-      houses={housesData.houses}
-      neighborhoods={neighborhoods}
-      defaultCommissionBps={housesData.defaultCommissionBps}
-      totalHousesCount={housesData.totalHousesCount}
-      activeHousesCount={housesData.activeHousesCount}
-      totalBalanceOwedCDF={housesData.totalBalanceOwedCDF}
-      pendingReviews={pendingReviews}
-    />
+    <Suspense fallback={<HousesLoadingSkeleton />}>
+      <HousesStreamContent query={query} />
+    </Suspense>
   );
 }

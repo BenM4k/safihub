@@ -845,7 +845,10 @@
       "viewOrders": "Voir les commandes",
       "viewSettlements": "Voir les règlements",
       "houseRowAria": "Détails du pressing {name}",
-      "houseActionsAria": "Actions pour {name}"
+      "houseActionsAria": "Actions pour {name}",
+      "loadingHousesAria": "Chargement des pressings",
+      "allHousesTab": "Tous les pressings ({count})",
+      "pendingReviewsTab": "À valider"
     },
     "couriers": {
       "title": "Gestion des coursiers",
@@ -903,7 +906,12 @@
       "statusInactive": "Inactif",
       "manage": "Gérer",
       "courierCount": "{count} coursier(s)",
-      "defaultCeiling": "Défaut"
+      "defaultCeiling": "Défaut",
+      "loadingCouriersAria": "Chargement des coursiers",
+      "searchCouriersPlaceholder": "Rechercher un coursier par nom ou téléphone...",
+      "emptyFilteredCouriers": "Aucun coursier ne correspond à vos filtres.",
+      "shiftsZonesSummary": "{shifts} créneau(x) · {zones} zone(s)",
+      "loadError": "Impossible de charger la liste des coursiers."
     },
     "users": {
       "title": "Gestion des comptes utilisateurs",
@@ -1062,7 +1070,8 @@
       "errorTitle": "Une erreur est survenue lors du chargement des utilisateurs",
       "errorDescription": "Impossible de récupérer les comptes utilisateurs. Veuillez vérifier votre connexion ou réessayer.",
       "retry": "Réessayer",
-      "noReasonSpecified": "Aucune raison spécifiée"
+      "noReasonSpecified": "Aucune raison spécifiée",
+      "loadingUsersAria": "Chargement des utilisateurs"
     },
     "customers": {
       "title": "Clients",
@@ -1291,7 +1300,8 @@
         "notesTitle": "Notes & Préférences",
         "noNotes": "Aucune note particulière pour ce profil."
       },
-      "retry": "Réessayer"
+      "retry": "Réessayer",
+      "loadingCustomersAria": "Chargement des clients"
     },
     "orders": {
       "title": "Gestion des commandes",
@@ -1745,7 +1755,9 @@
       "reversalConsequence": "Conséquence comptable : Une contre-passation compensatoire sera inscrite dans le grand livre. L'écriture d'origine restera visible avec la mention Annulée et ne sera jamais supprimée.",
       "reversalDescription": "Vous êtes sur le point d'annuler la réconciliation du coursier {name} pour la date du {date}.",
       "deductFromDepositConfirmed": "Déduction automatique du déficit sur la caution du coursier autorisée.",
-      "saving": "Enregistrement..."
+      "saving": "Enregistrement...",
+      "loadingCashAria": "Chargement de la caisse du jour",
+      "loadingHistoryAria": "Chargement de l'historique de caisse"
     },
     "settlements": {
       "title": "Règlements et paiements",
@@ -1867,7 +1879,24 @@
       "noPendingHouses": "Aucun solde à régler pour les pressings sur cette période",
       "noPendingCouriers": "Aucun solde à régler pour les coursiers sur cette période",
       "noHistory": "Aucun règlement enregistré dans l'historique",
-      "totalPaid": "Total réglé"
+      "totalPaid": "Total réglé",
+      "loadingSettlementsAria": "Chargement des règlements",
+      "housesSectionTitle": "Pressings ({count})",
+      "couriersSectionTitle": "Coursiers ({count})",
+      "historySearchPlaceholder": "Rechercher bénéficiaire, réf., note...",
+      "filterTypeAll": "Tous",
+      "filterTypeHouses": "Pressings",
+      "filterTypeCouriers": "Coursiers",
+      "filterStatusAll": "Tous statuts",
+      "filterStatusValid": "Validés",
+      "filterStatusReversed": "Annulés",
+      "filterPeriodAriaLabel": "Filtrer par période",
+      "filterPeriod7Days": "7 derniers jours",
+      "filterPeriod30Days": "30 derniers jours",
+      "filterPeriodAll": "Tout l'historique",
+      "resetFilters": "Réinitialiser",
+      "exportHistoryCsvTitle": "Exporter l'historique filtré en CSV",
+      "exportBtn": "Exporter"
     },
     "applications": {
       "title": "Candidatures Partenaires Pressing",
@@ -1930,7 +1959,11 @@
       "whatsappExistingAccountTemplate": "Bonjour {name}, votre pressing '{houseName}' a été approuvé sur SafiHub ! Vous pouvez vous connecter avec votre adresse e-mail ({email}) et votre mot de passe habituel sur {loginUrl}",
       "errorPasswordTooShort": "Le mot de passe doit comporter au moins 8 caractères",
       "errorInvalidApplicationId": "ID de candidature invalide",
-      "errorInvalidNeighborhoodId": "Quartier invalide"
+      "errorInvalidNeighborhoodId": "Quartier invalide",
+      "loadingApplicationsAria": "Chargement des candidatures partenaires",
+      "searchPlaceholder": "Rechercher pressing, gérant, téléphone ou quartier...",
+      "loadErrorTitle": "Impossible de charger les candidatures",
+      "retry": "Réessayer"
     },
     "disputes": {
       "title": "Litiges",

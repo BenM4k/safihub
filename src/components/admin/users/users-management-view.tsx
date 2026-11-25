@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,9 @@ export function UsersManagementView({
   initialFilters,
 }: UsersManagementViewProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const t = useTranslations("admin.users");
+  const [isPending, startTransition] = useTransition();
 
   const {
     currentPage,
@@ -50,6 +52,17 @@ export function UsersManagementView({
     activeCount,
     blockedCount,
   } = useUsersFilter(initialUsers, initialFilters);
+
+  function syncUrlFilters(next: UserFiltersState) {
+    const sp = new URLSearchParams();
+    if (next.search.trim()) sp.set("search", next.search.trim());
+    if (next.role !== "all") sp.set("role", next.role);
+    if (next.status !== "all") sp.set("status", next.status);
+    const qs = sp.toString();
+    startTransition(() => {
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    });
+  }
 
   // Sheets & Dialogs State
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
@@ -82,7 +95,7 @@ export function UsersManagementView({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-enter">
       {/* Page Header with primary action & KPI badges */}
       <PageHeader
         title={t("title")}
@@ -92,7 +105,7 @@ export function UsersManagementView({
             type="button"
             disabled={!isAdmin}
             onClick={() => setCreateSheetOpen(true)}
-            className="gap-2"
+            className="min-h-10 gap-2 press"
             aria-label={t("addMember")}
           >
             <UserPlus className="size-4" />
@@ -114,8 +127,18 @@ export function UsersManagementView({
         onChange={(next) => {
           setFilters(next);
           setCurrentPage(1);
+          syncUrlFilters(next);
         }}
-        onReset={handleResetFilters}
+        onReset={() => {
+          handleResetFilters();
+          syncUrlFilters({
+            search: "",
+            role: "all",
+            status: "all",
+            hideTestAccounts: true,
+          });
+        }}
+        isPending={isPending}
         onExport={() =>
           exportUsersCsv(sortedUsers, {
             id: t("colUserId"),

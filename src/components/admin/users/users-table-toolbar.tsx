@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Download, Search, Users, X } from "lucide-react";
+import { Download, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AdminSearchInput } from "@/components/admin/shared/admin-search-input";
 import { UsersFilterChips } from "./users-filter-chips";
 import type { UserFiltersState } from "./types";
 
@@ -19,6 +21,7 @@ interface UsersTableToolbarProps {
   onReset: () => void;
   onExport: () => void;
   totalFiltered: number;
+  isPending?: boolean;
 }
 
 export function UsersTableToolbar({
@@ -27,73 +30,66 @@ export function UsersTableToolbar({
   onReset,
   onExport,
   totalFiltered,
+  isPending = false,
 }: UsersTableToolbarProps) {
   const t = useTranslations("admin.users");
 
   return (
     <div className="flex flex-col gap-3 py-1">
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        {/* Search input with input-group matching auth style */}
         <div className="flex-1 min-w-[260px]">
-          <InputGroup className="min-h-11">
-            <InputGroupAddon align="inline-start">
-              <Search className="size-4 text-muted-foreground" />
-            </InputGroupAddon>
-            <InputGroupInput
-              value={filters.search}
-              onChange={(e) => onChange({ ...filters, search: e.target.value })}
-              placeholder={t("searchPlaceholder")}
-              className="text-sm"
-              aria-label={t("searchPlaceholder")}
-            />
-            {filters.search && (
-              <InputGroupAddon align="inline-end">
-                <InputGroupButton
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => onChange({ ...filters, search: "" })}
-                  aria-label={t("clearSearch")}
-                >
-                  <X className="size-3.5" />
-                </InputGroupButton>
-              </InputGroupAddon>
-            )}
-          </InputGroup>
+          <AdminSearchInput
+            value={filters.search}
+            onSearch={(search) => onChange({ ...filters, search })}
+            onClear={() => onChange({ ...filters, search: "" })}
+            placeholder={t("searchPlaceholder")}
+            ariaLabel={t("searchPlaceholder")}
+            isLoading={isPending}
+          />
         </div>
 
-        {/* Filter dropdowns */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Role filter */}
-          <select
+          <Select
             value={filters.role}
-            onChange={(e) => onChange({ ...filters, role: e.target.value })}
-            className="h-11 px-3 rounded-xl border border-border-strong bg-card text-xs font-medium text-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 outline-none cursor-pointer"
-            aria-label={t("filterRole")}
+            onValueChange={(val) => onChange({ ...filters, role: val })}
           >
-            <option value="all">{t("roleAll")}</option>
-            <option value="admin">{t("roleAdmin")}</option>
-            <option value="house">{t("roleHouse")}</option>
-          </select>
+            <SelectTrigger
+              className="min-h-11 h-11 px-3 rounded-xl border border-border bg-card text-xs font-medium min-w-[135px]"
+              aria-label={t("filterRole")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("roleAll")}</SelectItem>
+              <SelectItem value="admin">{t("roleAdmin")}</SelectItem>
+              <SelectItem value="house">{t("roleHouse")}</SelectItem>
+            </SelectContent>
+          </Select>
 
-          {/* Status filter */}
-          <select
+          <Select
             value={filters.status}
-            onChange={(e) => onChange({ ...filters, status: e.target.value })}
-            className="h-11 px-3 rounded-xl border border-border-strong bg-card text-xs font-medium text-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 outline-none cursor-pointer"
-            aria-label={t("filterStatus")}
+            onValueChange={(val) => onChange({ ...filters, status: val })}
           >
-            <option value="all">{t("statusAll")}</option>
-            <option value="active">{t("statusActive")}</option>
-            <option value="blocked">{t("statusBlocked")}</option>
-            <option value="invitation_sent">{t("statusInvited")}</option>
-          </select>
+            <SelectTrigger
+              className="min-h-11 h-11 px-3 rounded-xl border border-border bg-card text-xs font-medium min-w-[140px]"
+              aria-label={t("filterStatus")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("statusAll")}</SelectItem>
+              <SelectItem value="active">{t("statusActive")}</SelectItem>
+              <SelectItem value="blocked">{t("statusBlocked")}</SelectItem>
+              <SelectItem value="invitation_sent">
+                {t("statusInvited")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
 
-          {/* Link to Customers screen */}
           <Button
             asChild
             variant="outline"
-            className="h-11 px-3 text-xs font-medium gap-1.5"
+            className="min-h-11 px-3 text-xs font-medium gap-1.5 press"
           >
             <Link href="/admin/customers" title={t("customersScreenTitle")}>
               <Users className="size-4 text-primary" />
@@ -101,13 +97,12 @@ export function UsersTableToolbar({
             </Link>
           </Button>
 
-          {/* Export CSV button */}
           <Button
             type="button"
             variant="outline"
             onClick={onExport}
             disabled={totalFiltered === 0}
-            className="h-11 px-3 text-xs font-medium gap-1.5"
+            className="min-h-11 px-3 text-xs font-medium gap-1.5 press"
             aria-label={t("export")}
           >
             <Download className="size-4" />
@@ -116,7 +111,6 @@ export function UsersTableToolbar({
         </div>
       </div>
 
-      {/* Filter chips */}
       <UsersFilterChips
         filters={filters}
         onChange={onChange}

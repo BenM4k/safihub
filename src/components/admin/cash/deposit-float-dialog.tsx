@@ -16,6 +16,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   holdCourierDepositAction,
   releaseCourierDepositAction,
   issueCourierFloatAction,
@@ -106,20 +113,36 @@ export function DepositFloatDialog({ isOpen, onClose, courier }: DepositFloatDia
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="operation-type-select" className="text-xs font-semibold text-foreground">
+            <Label className="text-xs font-semibold text-foreground">
               {t("operationType")}
             </Label>
-            <select
-              id="operation-type-select"
+            <Select
               value={operation}
-              onChange={(e) => setOperation(e.target.value as "hold_deposit" | "release_deposit" | "issue_float" | "return_float")}
-              className="w-full h-10 px-3 text-xs rounded-xl border border-input bg-card font-medium focus:outline-hidden focus:ring-2 focus:ring-primary/20 text-foreground"
+              onValueChange={(val) =>
+                setOperation(
+                  val as
+                    | "hold_deposit"
+                    | "release_deposit"
+                    | "issue_float"
+                    | "return_float"
+                )
+              }
             >
-              <option value="issue_float">{t("opIssueFloat")}</option>
-              <option value="return_float">{t("opReturnFloat")}</option>
-              <option value="hold_deposit">{t("opHoldDeposit")}</option>
-              <option value="release_deposit">{t("opReleaseDeposit")}</option>
-            </select>
+              <SelectTrigger
+                className="w-full min-h-11 h-11 text-xs font-medium"
+                aria-label={t("operationType")}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="issue_float">{t("opIssueFloat")}</SelectItem>
+                <SelectItem value="return_float">{t("opReturnFloat")}</SelectItem>
+                <SelectItem value="hold_deposit">{t("opHoldDeposit")}</SelectItem>
+                <SelectItem value="release_deposit">
+                  {t("opReleaseDeposit")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">

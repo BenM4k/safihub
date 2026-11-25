@@ -1,15 +1,18 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Download, Filter, Search, X } from "lucide-react";
+import { Download, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AdminSearchInput } from "@/components/admin/shared/admin-search-input";
 import { CustomersFilterChips } from "./customers-filter-chips";
 import type { CustomerFiltersState } from "./types";
 
@@ -19,6 +22,7 @@ interface CustomersTableToolbarProps {
   onReset: () => void;
   onExport: () => void;
   totalFiltered: number;
+  isPending?: boolean;
 }
 
 export function CustomersTableToolbar({
@@ -27,76 +31,89 @@ export function CustomersTableToolbar({
   onReset,
   onExport,
   totalFiltered,
+  isPending = false,
 }: CustomersTableToolbarProps) {
   const t = useTranslations("admin.customers");
 
   return (
     <div className="space-y-3">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        {/* Search input using auth InputGroup style */}
-        <div className="flex-1 min-w-[280px] max-w-md">
-          <InputGroup className="h-9">
-            <InputGroupAddon>
-              <Search className="size-4 text-muted-foreground" />
-            </InputGroupAddon>
-            <InputGroupInput
-              value={filters.search}
-              onChange={(e) => onChange({ ...filters, search: e.target.value })}
-              placeholder={t("searchPlaceholder")}
-              className="text-xs"
-            />
-            {filters.search && (
-              <InputGroupButton
-                type="button"
-                onClick={() => onChange({ ...filters, search: "" })}
-                aria-label={t("clearSearch")}
-              >
-                <X className="size-3.5" />
-              </InputGroupButton>
-            )}
-          </InputGroup>
+        <div className="flex-1 min-w-[260px] max-w-md">
+          <AdminSearchInput
+            value={filters.search}
+            onSearch={(search) => onChange({ ...filters, search })}
+            onClear={() => onChange({ ...filters, search: "" })}
+            placeholder={t("searchPlaceholder")}
+            ariaLabel={t("searchPlaceholder")}
+            isLoading={isPending}
+          />
         </div>
 
-        {/* Filter controls */}
         <div className="flex items-center gap-2 flex-wrap">
-          <select
+          <Select
             value={filters.status}
-            onChange={(e) => onChange({ ...filters, status: e.target.value as CustomerFiltersState["status"] })}
-            className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus-visible:ring-1 focus-visible:ring-ring"
-            aria-label={t("filterStatus")}
+            onValueChange={(val) =>
+              onChange({
+                ...filters,
+                status: val as CustomerFiltersState["status"],
+              })
+            }
           >
-            <option value="all">{t("filterStatus")}: {t("filterAll")}</option>
-            <option value="active">{t("statusActive")}</option>
-            <option value="blocked">{t("statusBlocked")}</option>
-          </select>
+            <SelectTrigger
+              className="min-h-11 h-11 text-xs font-medium min-w-[140px]"
+              aria-label={t("filterStatus")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {t("filterStatus")}: {t("filterAll")}
+              </SelectItem>
+              <SelectItem value="active">{t("statusActive")}</SelectItem>
+              <SelectItem value="blocked">{t("statusBlocked")}</SelectItem>
+            </SelectContent>
+          </Select>
 
-          <select
+          <Select
             value={filters.type}
-            onChange={(e) => onChange({ ...filters, type: e.target.value as CustomerFiltersState["type"] })}
-            className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus-visible:ring-1 focus-visible:ring-ring"
-            aria-label={t("filterType")}
+            onValueChange={(val) =>
+              onChange({
+                ...filters,
+                type: val as CustomerFiltersState["type"],
+              })
+            }
           >
-            <option value="all">{t("filterType")}: {t("filterAll")}</option>
-            <option value="registered">{t("typeRegistered")}</option>
-            <option value="guest">{t("typeGuest")}</option>
-          </select>
+            <SelectTrigger
+              className="min-h-11 h-11 text-xs font-medium min-w-[140px]"
+              aria-label={t("filterType")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {t("filterType")}: {t("filterAll")}
+              </SelectItem>
+              <SelectItem value="registered">{t("typeRegistered")}</SelectItem>
+              <SelectItem value="guest">{t("typeGuest")}</SelectItem>
+            </SelectContent>
+          </Select>
 
-          <label className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-background text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
-            <input
-              type="checkbox"
+          <label className="inline-flex items-center gap-2 min-h-11 px-3 rounded-lg border border-border bg-background text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
+            <Checkbox
               checked={filters.hasOrdered}
-              onChange={(e) => onChange({ ...filters, hasOrdered: e.target.checked })}
-              className="rounded-sm size-3.5 accent-primary"
+              onCheckedChange={(checked) =>
+                onChange({ ...filters, hasOrdered: checked })
+              }
             />
             <span>{t("filterHasOrdered")}</span>
           </label>
 
-          <label className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-background text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
-            <input
-              type="checkbox"
+          <label className="inline-flex items-center gap-2 min-h-11 px-3 rounded-lg border border-border bg-background text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
+            <Checkbox
               checked={filters.hideTestAccounts}
-              onChange={(e) => onChange({ ...filters, hideTestAccounts: e.target.checked })}
-              className="rounded-sm size-3.5 accent-primary"
+              onCheckedChange={(checked) =>
+                onChange({ ...filters, hideTestAccounts: checked })
+              }
             />
             <span>{t("filterHideTest")}</span>
           </label>
@@ -106,7 +123,7 @@ export function CustomersTableToolbar({
             variant="outline"
             size="sm"
             onClick={onExport}
-            className="h-9 text-xs font-semibold inline-flex items-center gap-1.5"
+            className="min-h-11 text-xs font-semibold inline-flex items-center gap-1.5 press"
             aria-label={t("export")}
           >
             <Download className="size-3.5" />
@@ -115,28 +132,33 @@ export function CustomersTableToolbar({
         </div>
       </div>
 
-      {/* Date range */}
       <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground pt-1 border-t border-border">
         <span className="font-semibold text-foreground flex items-center gap-1">
           <Filter className="size-3 text-muted-foreground" />
           <span>{t("dateRange")} :</span>
         </span>
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] text-muted-foreground">{t("dateFrom")}</span>
+          <span className="text-[11px] text-muted-foreground">
+            {t("dateFrom")}
+          </span>
           <Input
             type="date"
             value={filters.dateFrom}
-            onChange={(e) => onChange({ ...filters, dateFrom: e.target.value })}
-            className="h-8 text-xs w-36 border border-border rounded-md bg-background"
+            onChange={(e) =>
+              onChange({ ...filters, dateFrom: e.target.value })
+            }
+            className="min-h-10 text-base sm:text-xs w-40 border border-border rounded-md bg-background"
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] text-muted-foreground">{t("dateTo")}</span>
+          <span className="text-[11px] text-muted-foreground">
+            {t("dateTo")}
+          </span>
           <Input
             type="date"
             value={filters.dateTo}
             onChange={(e) => onChange({ ...filters, dateTo: e.target.value })}
-            className="h-8 text-xs w-36 border border-border rounded-md bg-background"
+            className="min-h-10 text-base sm:text-xs w-40 border border-border rounded-md bg-background"
           />
         </div>
       </div>

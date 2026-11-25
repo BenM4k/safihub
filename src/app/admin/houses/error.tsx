@@ -18,8 +18,8 @@ export default function HousesError({ error, reset }: HousesErrorProps) {
   }, [error]);
 
   return (
-    <div className="p-8 bg-destructive-light/40 border-2 border-destructive-base/30 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 my-8">
-      <div className="size-12 rounded-full bg-destructive-light flex items-center justify-center text-destructive-base border border-destructive-base/40">
+    <div className="p-8 bg-destructive-soft border-2 border-destructive/30 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 my-8 animate-enter">
+      <div className="size-12 rounded-full bg-destructive/10 flex items-center justify-center text-destructive border border-destructive/30">
         <AlertCircle className="size-6" />
       </div>
 

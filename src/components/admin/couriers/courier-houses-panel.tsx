@@ -1,18 +1,23 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { AlertCircle, Search, Check } from "lucide-react";
+import dynamic from "next/dynamic";
+import { AlertCircle, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   assignCourierHousesAction,
   unassignCourierHouseAction,
 } from "@/actions/admin-courier.actions";
 import { CourierHouseRow } from "./courier-house-row";
-import { UnassignHouseDialog } from "./unassign-house-dialog";
+import { AdminSearchInput } from "@/components/admin/shared/admin-search-input";
 import type { CourierAssignedHouse } from "@/services/admin";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const UnassignHouseDialog = dynamic(
+  () => import("./unassign-house-dialog").then((m) => m.UnassignHouseDialog),
+  { ssr: false }
+);
 
 interface CourierHousesPanelProps {
   courierId: string;
@@ -92,14 +97,16 @@ export function CourierHousesPanel({
 
   return (
     <div className="space-y-4">
-      <UnassignHouseDialog
-        isOpen={Boolean(unassignTarget)}
-        house={unassignTarget}
-        siblingHouses={siblingHouses}
-        isPending={isPending}
-        onConfirm={handleConfirmUnassign}
-        onCancel={() => setUnassignTarget(null)}
-      />
+      {unassignTarget && (
+        <UnassignHouseDialog
+          isOpen
+          house={unassignTarget}
+          siblingHouses={siblingHouses}
+          isPending={isPending}
+          onConfirm={handleConfirmUnassign}
+          onCancel={() => setUnassignTarget(null)}
+        />
+      )}
 
       {!hasShifts && (
         <Alert className="border-amber-500/30 text-amber-800 dark:text-amber-300 bg-amber-500/10">
@@ -148,17 +155,13 @@ export function CourierHousesPanel({
           </div>
         </div>
 
-        <InputGroup className="h-9 min-h-0 bg-background border-border">
-          <InputGroupAddon align="inline-start">
-            <Search className="size-3.5 text-muted-foreground" />
-          </InputGroupAddon>
-          <InputGroupInput
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("searchHouses")}
-            className="text-xs"
-          />
-        </InputGroup>
+        <AdminSearchInput
+          value={search}
+          onSearch={setSearch}
+          onClear={() => setSearch("")}
+          placeholder={t("searchHouses")}
+          ariaLabel={t("searchHouses")}
+        />
 
         {msg && (
           <Alert
